@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wod2sim"
+version = "0.1.0"
+description = "Code and paper release for adapting WOD-style driving policies to AlpaSim closed-loop execution"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.26",
+    "PyYAML>=6",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4",
+]
+alpasim = [
+    "pandas>=2",
+    "pyarrow>=16",
+    "scipy>=1.11",
+]
+tuning = ["optuna>=3.6"]
+viz = ["Pillow>=10"]
+
+[project.entry-points."alpasim.models"]
+spotlight_reflex = "minimal_shot_av.simulator.alpasim_spotlight:SpotlightReflexAlpaSimModel"
+token_dagger_bc = "minimal_shot_av.simulator.alpasim_token_bc:TokenBCAlpaSimModel"
+direct_actor_planner = "minimal_shot_av.simulator.alpasim_direct_actor_planner:DirectActorPlannerAlpaSimModel"
+
+[project.entry-points."alpasim.configs"]
+spotlight_reflex = "minimal_shot_av.simulator.alpasim_configs"
+
+[project.scripts]
+wod2sim-setup = "minimal_shot_av.cli.commands.setup_alpasim_local_plugin:main"
+wod2sim-ready = "minimal_shot_av.cli.commands.check_alpasim_readiness:main"
+wod2sim-launch = "minimal_shot_av.cli.commands.run_alpasim_local_external:main"
+wod2sim-batch = "minimal_shot_av.cli.commands.run_alpasim_scene_batch:main"
+wod2sim-audit-signal = "minimal_shot_av.cli.commands.audit_alpasignal_bridge:main"
+wod2sim-evidence = "minimal_shot_av.neutral.alpasim_metrics:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"minimal_shot_av.simulator.alpasim_configs" = ["**/*.yaml"]
+"minimal_shot_av.simulator" = ["alpasim_scene_presets/*.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

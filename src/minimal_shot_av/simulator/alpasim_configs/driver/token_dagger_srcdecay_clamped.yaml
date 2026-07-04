@@ -1,0 +1,35 @@
+# Source-decayed Token-DAgger policy bridge with AlpaSim-safe lateral projection.
+
+defaults:
+  - _self_
+
+log_level: ${wizard.log_level}
+
+model:
+  model_type: token_dagger_bc
+  checkpoint_path: "artifacts/bc_models_iter3_srcdecay/token_dagger_bc.pt"
+  device: "cuda"
+
+host: "0.0.0.0"
+port: 6789
+
+inference:
+  use_cameras:
+    - camera_front_wide_120fov
+  max_batch_size: 1
+  subsample_factor: 1
+  context_length: 1
+  output_frequency_hz: 4
+
+route:
+  default_command: 2
+  use_waypoint_commands: true
+  command_distance_threshold: 2.0
+  min_lookahead_distance: 20.0
+
+output_dir: "/mnt/output/driver"
+
+trajectory_optimizer:
+  enabled: false
+
+plot_debug_images: false

@@ -1,0 +1,35 @@
+# Build command (run from alpasim repo root):
+#   docker build -f Dockerfile.amd64 -t alpasim-base:0.66.0 .
+
+FROM nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+RUN apt-get update && apt-get install -y \
+    git \
+    ffmpeg \
+    curl \
+    build-essential \
+    libgl1 \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+COPY . /repo
+
+ENV UV_LINK_MODE=copy
+
+WORKDIR /repo/src/grpc
+RUN --mount=type=secret,id=netrc,target=/root/.netrc \
+    --mount=type=cache,target=/root/.cache/uv \
+    sh -c 'if [ -f /root/.netrc ]; then export NETRC=/root/.netrc; fi && uv sync'
+RUN uv run compile-protos --no-sync
+
+WORKDIR /repo
+RUN --mount=type=secret,id=netrc,target=/root/.netrc \
+    --mount=type=cache,target=/root/.cache/uv \
+    sh -c 'if [ -f /root/.netrc ]; then export NETRC=/root/.netrc; fi && uv sync --extra all'
+
+ENV UV_CACHE_DIR=/tmp/uv-cache
+ENV UV_NO_SYNC=1
