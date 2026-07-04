@@ -2,10 +2,18 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from importlib.metadata import PackageNotFoundError, distribution
 from pathlib import Path
 
+from minimal_shot_av.cli.commands.check_alpasim_readiness import _preflight_alpasim_base_image
+from minimal_shot_av.cli.commands.check_alpasim_readiness import _preflight_docker_access
+from minimal_shot_av.cli.commands.check_alpasim_readiness import _preflight_nvidia_container_runtime
+from minimal_shot_av.cli.commands.check_alpasim_readiness import _preflight_platform_compatibility
+from minimal_shot_av.cli.commands.check_alpasim_readiness import _preflight_scene_artifacts
+from minimal_shot_av.cli.commands.check_alpasim_readiness import _scene_ids
+from minimal_shot_av.cli.commands.check_alpasim_readiness import _validate_alpasim_checkout
 from minimal_shot_av.cli.commands.run_alpasim_local_external import MODEL_PRESETS, PUBLIC_RELEASE_MODELS, SCENE_PRESETS
 
 
@@ -38,6 +46,24 @@ def _parse_args() -> argparse.Namespace:
         description="Validate the public WOD2Sim release surface before wiring it into AlpaSim."
     )
     parser.add_argument(
+        "--alpasim-root",
+        type=Path,
+        default=None,
+        help="Optional AlpaSim checkout root to validate alongside the WOD2Sim release surface.",
+    )
+    parser.add_argument(
+        "--scene-preset",
+        choices=tuple(SCENE_PRESETS),
+        default="fresh_3scene",
+        help="Scene preset whose artifacts should be checked when validating an AlpaSim root.",
+    )
+    parser.add_argument(
+        "--scene-id",
+        action="append",
+        default=[],
+        help="Explicit scene id override. If set, replaces the preset scene list for doctor checks.",
+    )
+    parser.add_argument(
         "--json",
         action="store_true",
         help="Print the doctor report as JSON.",
@@ -48,6 +74,26 @@ def _parse_args() -> argparse.Namespace:
         help="Require installed console-script entry points instead of allowing source-tree wrappers.",
     )
     parser.add_argument(
+        "--skip-docker",
+        action="store_true",
+        help="Skip checking Docker daemon access when validating an AlpaSim root.",
+    )
+    parser.add_argument(
+        "--skip-gpu-runtime",
+        action="store_true",
+        help="Skip checking NVIDIA container runtime access when validating an AlpaSim root.",
+    )
+    parser.add_argument(
+        "--skip-image",
+        action="store_true",
+        help="Skip checking for the local alpasim-base image when validating an AlpaSim root.",
+    )
+    parser.add_argument(
+        "--skip-scene-artifacts",
+        action="store_true",
+        help="Skip checking gated/local scene artifacts when validating an AlpaSim root.",
+    )
+    parser.add_argument(
         "--output",
         type=Path,
         default=None,
@@ -56,7 +102,104 @@ def _parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def build_report() -> dict[str, object]:
+def _requested_alpasim_root(cli_value: Path | None) -> Path | None:
+    if cli_value is not None:
+        return cli_value.resolve()
+    env_value = os.getenv("ALPASIM_ROOT", "").strip()
+    if env_value:
+        return Path(env_value).expanduser().resolve()
+    return None
+
+
+def _run_check(func, *args, **kwargs) -> tuple[str, str | None]:
+    try:
+        func(*args, **kwargs)
+    except SystemExit as exc:
+        return "failed", str(exc)
+    except Exception as exc:  # pragma: no cover - defensive fallback
+        return "failed", f"{type(exc).__name__}: {exc}"
+    return "ok", None
+
+
+def _build_environment_report(
+    *,
+    alpasim_root: Path,
+    scene_preset: str,
+    explicit_scene_ids: list[str],
+    skip_docker: bool,
+    skip_gpu_runtime: bool,
+    skip_image: bool,
+    skip_scene_artifacts: bool,
+) -> dict[str, object]:
+    scene_ids = _scene_ids(scene_preset, explicit_scene_ids)
+    statuses: dict[str, str] = {}
+    errors: dict[str, str] = {}
+
+    def record(name: str, status: str, error: str | None) -> None:
+        statuses[name] = status
+        if error:
+            errors[name] = error
+
+    status, error = _run_check(_validate_alpasim_checkout, alpasim_root)
+    record("alpasim_checkout", status, error)
+
+    status, error = _run_check(_preflight_platform_compatibility)
+    record("platform_compatibility", status, error)
+
+    if skip_docker:
+        statuses["docker_access"] = "skipped"
+    else:
+        status, error = _run_check(_preflight_docker_access)
+        record("docker_access", status, error)
+
+    if skip_image:
+        statuses["base_image"] = "skipped"
+    else:
+        status, error = _run_check(_preflight_alpasim_base_image)
+        record("base_image", status, error)
+
+    if skip_gpu_runtime:
+        statuses["gpu_runtime"] = "skipped"
+    else:
+        status, error = _run_check(_preflight_nvidia_container_runtime)
+        record("gpu_runtime", status, error)
+
+    if skip_scene_artifacts:
+        statuses["scene_artifacts"] = "skipped"
+    elif statuses["alpasim_checkout"] != "ok":
+        statuses["scene_artifacts"] = "blocked"
+        errors["scene_artifacts"] = "AlpaSim checkout validation failed; scene artifact check not run."
+    else:
+        status, error = _run_check(
+            _preflight_scene_artifacts,
+            alpasim_root=alpasim_root,
+            scene_ids=scene_ids,
+        )
+        record("scene_artifacts", status, error)
+
+    valid = all(status in {"ok", "skipped"} for status in statuses.values())
+    return {
+        "requested": True,
+        "alpasim_root": str(alpasim_root),
+        "scene_preset": scene_preset,
+        "scene_ids": scene_ids,
+        "statuses": statuses,
+        "errors": errors,
+        "valid": valid,
+    }
+
+
+def build_report(
+    *,
+    alpasim_root: Path | None = None,
+    scene_preset: str = "fresh_3scene",
+    explicit_scene_ids: list[str] | None = None,
+    skip_docker: bool = False,
+    skip_gpu_runtime: bool = False,
+    skip_image: bool = False,
+    skip_scene_artifacts: bool = False,
+) -> dict[str, object]:
+    explicit_scene_ids = explicit_scene_ids or []
     installed_entry_points: list[str] = []
     installed_entry_points_missing = list(EXPECTED_CONSOLE_SCRIPTS)
     package_version: str | None = None
@@ -104,6 +247,19 @@ def build_report() -> dict[str, object]:
     else:
         release_surface_mode = "missing"
 
+    requested_alpasim_root = _requested_alpasim_root(alpasim_root)
+    environment = None
+    if requested_alpasim_root is not None:
+        environment = _build_environment_report(
+            alpasim_root=requested_alpasim_root,
+            scene_preset=scene_preset,
+            explicit_scene_ids=explicit_scene_ids,
+            skip_docker=skip_docker,
+            skip_gpu_runtime=skip_gpu_runtime,
+            skip_image=skip_image,
+            skip_scene_artifacts=skip_scene_artifacts,
+        )
+
     report = {
         "schema": "wod2sim_doctor_v1",
         "valid": bool(
@@ -112,6 +268,7 @@ def build_report() -> dict[str, object]:
             and checks["scene_presets_present"]
             and checks["public_model_configs_present"]
             and release_surface_ok
+            and (environment is None or environment["valid"])
         ),
         "install_mode": install_mode,
         "release_surface_mode": release_surface_mode,
@@ -131,6 +288,7 @@ def build_report() -> dict[str, object]:
             "docs_integration_guide": str(ROOT / "docs" / "integration_guide.md"),
             "paper_pdf": str(ROOT / "paper" / "paper.pdf"),
         },
+        "environment": environment,
     }
     return report
 
@@ -159,15 +317,40 @@ def _print_human_report(report: dict[str, object], *, strict_installed: bool) ->
             if values:
                 print(f"    {name}: {', '.join(values)}")
 
+    environment = report["environment"]
+    if environment is None:
+        print("  alpasim environment: not requested")
+    else:
+        print(f"  alpasim environment: {'valid' if environment['valid'] else 'invalid'}")
+        print(f"    root: {environment['alpasim_root']}")
+        print(f"    scene preset: {environment['scene_preset']}")
+        print(f"    scene count: {len(environment['scene_ids'])}")
+        for name, status in environment["statuses"].items():
+            print(f"    {name}: {status}")
+        for name, error in environment["errors"].items():
+            print(f"    {name} error: {error}")
+
     print("  next:")
     print("    1. Read docs/integration_guide.md")
-    print("    2. Run wod2sim-ready --alpasim-root /path/to/alpasim")
-    print("    3. Start with wod2sim-launch --mode print --model spotlight_reflex")
+    if environment is None:
+        print("    2. Run wod2sim-doctor --alpasim-root /path/to/alpasim")
+        print("    3. Run wod2sim-ready --alpasim-root /path/to/alpasim")
+    else:
+        print("    2. Fix any failing environment checks above")
+        print("    3. Start with wod2sim-launch --mode print --model spotlight_reflex")
 
 
 def main() -> int:
     args = _parse_args()
-    report = build_report()
+    report = build_report(
+        alpasim_root=args.alpasim_root,
+        scene_preset=args.scene_preset,
+        explicit_scene_ids=list(args.scene_id),
+        skip_docker=args.skip_docker,
+        skip_gpu_runtime=args.skip_gpu_runtime,
+        skip_image=args.skip_image,
+        skip_scene_artifacts=args.skip_scene_artifacts,
+    )
     if args.strict_installed and report["missing"]["installed_entry_points"]:
         report["valid"] = False
 

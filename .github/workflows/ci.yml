@@ -38,6 +38,10 @@ jobs:
             tests/test_audit_alpasignal_bridge.py \
             tests/test_wod2sim_doctor.py
 
+      - name: Run strict installed doctor
+        run: |
+          .venv/bin/wod2sim-doctor --strict-installed --json
+
       - name: Build package
         run: |
           .venv/bin/python -m build

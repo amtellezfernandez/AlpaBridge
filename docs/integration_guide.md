@@ -31,7 +31,13 @@ uv pip install --python .venv/bin/python -e ".[dev]"
 wod2sim-doctor
 ```
 
-3. Validate your AlpaSim environment.
+3. Validate your AlpaSim environment with the same doctor path or the narrower readiness command.
+
+```bash
+wod2sim-doctor --alpasim-root /path/to/alpasim
+```
+
+or
 
 ```bash
 wod2sim-ready --alpasim-root /path/to/alpasim

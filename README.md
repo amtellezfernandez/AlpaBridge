@@ -57,6 +57,12 @@ Smoke-test the public release surface:
 make smoke
 ```
 
+If you also want the same command to diagnose a real AlpaSim checkout:
+
+```bash
+wod2sim-doctor --alpasim-root /path/to/alpasim
+```
+
 If you have a local AlpaSim checkout, the main bridge flow is:
 
 ```bash
