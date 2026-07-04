@@ -1,14 +1,14 @@
-TEX := paper
+.PHONY: paper test clean
 
-.PHONY: all clean
+paper:
+	$(MAKE) -C paper
 
-all: $(TEX).pdf
-
-$(TEX).pdf: $(TEX).tex $(TEX).bib wod_alpasim_2026.sty wodalpasimabbrvnat.bst
-	pdflatex $(TEX)
-	bibtex $(TEX)
-	pdflatex $(TEX)
-	pdflatex $(TEX)
+test:
+	pytest tests/test_alpasim_integration.py \
+		tests/test_alpasim_setup_scripts.py \
+		tests/test_check_alpasim_readiness.py \
+		tests/test_run_alpasim_scene_batch.py \
+		tests/test_audit_alpasignal_bridge.py
 
 clean:
-	rm -f $(TEX).aux $(TEX).bbl $(TEX).blg $(TEX).log $(TEX).out $(TEX).pdf
+	$(MAKE) -C paper clean

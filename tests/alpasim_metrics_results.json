@@ -1,0 +1,6 @@
+{
+  "n_rollouts": 910,
+  "alpasim_score": 0.82,
+  "collision_at_fault": 0.0,
+  "dist_to_gt_trajectory": 1.9
+}

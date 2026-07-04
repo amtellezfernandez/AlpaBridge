@@ -1,0 +1,56 @@
+diff --git a/src/driver/src/alpasim_driver/main.py b/src/driver/src/alpasim_driver/main.py
+index b619b7a..c401046 100644
+--- a/src/driver/src/alpasim_driver/main.py
++++ b/src/driver/src/alpasim_driver/main.py
+@@ -170,6 +170,7 @@ class Session:
+     poses: list[PoseAtTime] = field(default_factory=list)
+     dynamic_states: list[tuple[int, DynamicState]] = field(default_factory=list)
+     current_command: DriveCommand = DriveCommand.STRAIGHT  # Default to straight
++    current_route: Route | None = None
+ 
+     @staticmethod
+     def create(
+@@ -373,6 +374,9 @@ class Session:
+             min_lookahead_distance: Minimum forward distance (meters) to consider
+                 a waypoint as the target for command derivation.
+         """
++        self.current_route = Route()
++        self.current_route.CopyFrom(route)
++
+         if not use_waypoint_commands or len(route.waypoints) < 1:
+             return
+ 
+@@ -397,6 +401,13 @@ class Session:
+             self.current_command.name,
+         )
+ 
++    def route_waypoints_for_prediction(self) -> list[Vec3] | None:
++        """Return the latest route waypoints in the current rig frame."""
++
++        if self.current_route is None:
++            return None
++        return list(self.current_route.waypoints)
++
+ 
+ def async_log_call(func: Callable) -> Callable:
+     """Helper to add logging for gRPC calls (sync or async)."""
+@@ -725,6 +736,7 @@ class EgoDriverService(EgodriverServiceServicer):
+                     speed=speed,
+                     acceleration=acceleration,
+                     ego_pose_history=job.session.poses,
++                    route_waypoints=job.session.route_waypoints_for_prediction(),
+                 )
+             )
+         return self._model.predict_batch(inputs)
+diff --git a/src/driver/src/alpasim_driver/models/base.py b/src/driver/src/alpasim_driver/models/base.py
+index a03afd0..36209c0 100644
+--- a/src/driver/src/alpasim_driver/models/base.py
++++ b/src/driver/src/alpasim_driver/models/base.py
+@@ -53,6 +53,7 @@ class PredictionInput:
+     speed: float  # m/s
+     acceleration: float  # m/s²
+     ego_pose_history: list[Any]  # list[PoseAtTime]
++    route_waypoints: list[Any] | None = None  # list[Vec3] in current rig frame
+ 
+ 
+ @dataclass
