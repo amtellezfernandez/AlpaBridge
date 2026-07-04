@@ -45,6 +45,7 @@ direct_actor_planner = "minimal_shot_av.simulator.alpasim_direct_actor_planner:D
 spotlight_reflex = "minimal_shot_av.simulator.alpasim_configs"
 
 [project.scripts]
+wod2sim-doctor = "minimal_shot_av.cli.commands.wod2sim_doctor:main"
 wod2sim-setup = "minimal_shot_av.cli.commands.setup_alpasim_local_plugin:main"
 wod2sim-ready = "minimal_shot_av.cli.commands.check_alpasim_readiness:main"
 wod2sim-launch = "minimal_shot_av.cli.commands.run_alpasim_local_external:main"

@@ -51,9 +51,16 @@ Run the lightweight bridge checks:
 make test
 ```
 
+Smoke-test the public release surface:
+
+```bash
+make smoke
+```
+
 If you have a local AlpaSim checkout, the main bridge flow is:
 
 ```bash
+wod2sim-doctor
 wod2sim-setup --alpasim-root /path/to/alpasim
 wod2sim-ready --alpasim-root /path/to/alpasim
 wod2sim-launch --mode print --model spotlight_reflex
@@ -76,6 +83,9 @@ wod2sim-launch --mode print --model spotlight_reflex
 wod2sim-launch --mode print --model token_dagger_bc --checkpoint /path/to/token_dagger_bc.pt
 wod2sim-launch --mode print --model direct_actor_planner --oracle-actor-proxy /path/to/oracle.json
 ```
+
+For a fuller first-time setup path and failure triage notes, see
+[`docs/integration_guide.md`](docs/integration_guide.md).
 
 ## Repo Layout
 

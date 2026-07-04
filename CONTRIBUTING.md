@@ -26,6 +26,12 @@ Run the focused bridge checks before opening a change:
 make test
 ```
 
+Run the public release smoke check with:
+
+```bash
+make smoke
+```
+
 If you touch the paper:
 
 ```bash
