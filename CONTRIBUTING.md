@@ -23,17 +23,25 @@ python -m pip install -e ".[dev]"
 Run the focused bridge checks before opening a change:
 
 ```bash
-pytest tests/test_alpasim_integration.py \
-       tests/test_alpasim_setup_scripts.py \
-       tests/test_check_alpasim_readiness.py \
-       tests/test_run_alpasim_scene_batch.py \
-       tests/test_audit_alpasignal_bridge.py
+make test
 ```
 
 If you touch the paper:
 
 ```bash
 make paper
+```
+
+For the full public verification path:
+
+```bash
+make verify
+```
+
+To remove generated local artifacts:
+
+```bash
+make clean
 ```
 
 ## Scope

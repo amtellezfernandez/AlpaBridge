@@ -48,11 +48,7 @@ uv pip install --python .venv/bin/python -e ".[dev]"
 Run the lightweight bridge checks:
 
 ```bash
-pytest tests/test_alpasim_integration.py \
-       tests/test_alpasim_setup_scripts.py \
-       tests/test_check_alpasim_readiness.py \
-       tests/test_run_alpasim_scene_batch.py \
-       tests/test_audit_alpasignal_bridge.py
+make test
 ```
 
 If you have a local AlpaSim checkout, the main bridge flow is:
@@ -84,8 +80,22 @@ make paper
 
 The resulting source and PDF live under [`paper/`](paper).
 
+## Release Checks
+
+Run the public verification path with:
+
+```bash
+make verify
+```
+
+Clean generated local artifacts with:
+
+```bash
+make clean
+```
+
 ## Production Notes
 
-- The package, focused bridge tests, and paper build are all exercised in the release workflow.
+- The GitHub CI runs focused bridge tests, package build, and paper build.
 - Learned presets still depend on external checkpoints not shipped in this repo.
 - Full AlpaSim execution still requires a separate checkout, local Docker access, and any gated scene assets.

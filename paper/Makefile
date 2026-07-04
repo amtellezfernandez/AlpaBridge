@@ -11,4 +11,4 @@ $(TEX).pdf: $(TEX).tex $(TEX).bib wod_alpasim_2026.sty wodalpasimabbrvnat.bst
 	pdflatex $(TEX)
 
 clean:
-	rm -f $(TEX).aux $(TEX).bbl $(TEX).blg $(TEX).log $(TEX).out
+	rm -f $(TEX).aux $(TEX).bbl $(TEX).blg $(TEX).log $(TEX).out $(TEX).synctex.gz $(TEX).toc

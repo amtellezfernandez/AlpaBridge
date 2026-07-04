@@ -5,8 +5,11 @@ on:
     branches: ["main"]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
-  test:
+  package:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -38,3 +41,35 @@ jobs:
         run: |
           .venv/bin/python -m pip install build
           .venv/bin/python -m build
+
+      - name: Check tracked-file hygiene
+        run: |
+          if git ls-files | grep -E '(__pycache__/|\.pyc$|\.egg-info/)'; then
+            echo "Tracked generated artifacts detected"
+            exit 1
+          fi
+          test -z "$(git status --porcelain)"
+
+      - name: Upload package artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wod2sim-dist
+          path: dist/*
+
+  paper:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build paper
+        uses: xu-cheng/latex-action@v4
+        with:
+          root_file: paper.tex
+          working_directory: paper
+
+      - name: Upload paper artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wod2sim-paper
+          path: paper/paper.pdf
