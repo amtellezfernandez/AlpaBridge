@@ -54,9 +54,27 @@ make test
 If you have a local AlpaSim checkout, the main bridge flow is:
 
 ```bash
-python scripts/setup_alpasim_local_plugin.py --alpasim-root /path/to/alpasim
-python scripts/check_alpasim_readiness.py --alpasim-root /path/to/alpasim
-python scripts/run_alpasim_local_external.py --mode print --model spotlight_reflex
+wod2sim-setup --alpasim-root /path/to/alpasim
+wod2sim-ready --alpasim-root /path/to/alpasim
+wod2sim-launch --mode print --model spotlight_reflex
+```
+
+## Public Model Surface
+
+This release intentionally exposes a small public launch surface:
+
+- `spotlight_reflex`: checkpoint-free smoke-test adapter
+- `token_dagger_bc`: learned policy adapter; requires `--checkpoint /path/to/token_dagger_bc.pt`
+- `direct_actor_planner`: planner adapter; requires `--oracle-actor-proxy /path/to/oracle.json`
+
+Research-only presets from the original private tree are not advertised in the public CLI for this repo.
+
+Examples:
+
+```bash
+wod2sim-launch --mode print --model spotlight_reflex
+wod2sim-launch --mode print --model token_dagger_bc --checkpoint /path/to/token_dagger_bc.pt
+wod2sim-launch --mode print --model direct_actor_planner --oracle-actor-proxy /path/to/oracle.json
 ```
 
 ## Repo Layout

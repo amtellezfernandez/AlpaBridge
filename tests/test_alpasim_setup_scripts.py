@@ -14,6 +14,8 @@ from minimal_shot_av.cli.commands.run_alpasim_local_external import _preflight_a
 from minimal_shot_av.cli.commands.run_alpasim_local_external import _validate_alpasim_checkout as validate_run_checkout
 from minimal_shot_av.cli.commands.run_alpasim_local_external import (
     MODEL_PRESETS,
+    PUBLIC_RELEASE_MODELS,
+    _build_parser as build_run_parser,
     _driver_env,
     _driver_command,
     _preflight_platform_compatibility,
@@ -30,6 +32,7 @@ from minimal_shot_av.cli.commands.setup_alpasim_local_plugin import (
     _resolve_alpasim_root as resolve_setup_root,
     _validate_alpasim_checkout as validate_setup_checkout,
 )
+from minimal_shot_av.cli.commands.run_alpasim_scene_batch import _build_parser as build_batch_parser
 
 
 class AlpaSimSetupScriptTests(unittest.TestCase):
@@ -191,6 +194,25 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
             "{oracle_actor_proxy_path}",
             preset["driver_env"]["MSA_DIRECT_PLANNER_ORACLE_ACTOR_PROXY_PATH"],
         )
+
+    def test_public_release_models_match_curated_surface(self) -> None:
+        self.assertEqual(
+            ("spotlight_reflex", "token_dagger_bc", "direct_actor_planner"),
+            PUBLIC_RELEASE_MODELS,
+        )
+
+    def test_launch_parser_only_exposes_public_release_models(self) -> None:
+        parser = build_run_parser()
+        model_action = next(action for action in parser._actions if action.dest == "model")
+
+        self.assertEqual("spotlight_reflex", parser.get_default("model"))
+        self.assertEqual(PUBLIC_RELEASE_MODELS, model_action.choices)
+
+    def test_batch_parser_only_exposes_public_release_models(self) -> None:
+        parser = build_batch_parser()
+        model_action = next(action for action in parser._actions if action.dest == "model")
+
+        self.assertEqual(PUBLIC_RELEASE_MODELS, model_action.choices)
 
     def test_setup_script_applies_repo_tracked_overrides(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

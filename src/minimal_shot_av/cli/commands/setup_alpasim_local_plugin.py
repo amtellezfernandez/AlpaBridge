@@ -131,7 +131,7 @@ def main() -> None:
         "  ALPASIM_ROOT="
         + shlex_quote(str(alpasim_root))
         + " ./.venv/bin/python scripts/run_alpasim_local_external.py "
-        "--mode print --model token_dagger_iter2_hybrid_clamped --scene-preset fresh_3scene"
+        "--mode print --model spotlight_reflex --scene-preset fresh_3scene"
     )
 
 

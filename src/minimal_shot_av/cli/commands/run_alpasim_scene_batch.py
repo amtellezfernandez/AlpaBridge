@@ -11,10 +11,10 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[4]
 
-from minimal_shot_av.cli.commands.run_alpasim_local_external import DEFAULT_RUNS_ROOT, MODEL_PRESETS, SCENE_PRESETS, _scene_ids
+from minimal_shot_av.cli.commands.run_alpasim_local_external import DEFAULT_RUNS_ROOT, PUBLIC_RELEASE_MODELS, SCENE_PRESETS, _scene_ids
 
 
-def _parse_args() -> argparse.Namespace:
+def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
             "Run AlpaSim local-external evaluations scene-by-scene so each scene becomes a clean "
@@ -22,7 +22,7 @@ def _parse_args() -> argparse.Namespace:
         )
     )
     parser.add_argument("--mode", choices=("print", "both"), default="print")
-    parser.add_argument("--model", choices=tuple(MODEL_PRESETS), required=True)
+    parser.add_argument("--model", choices=PUBLIC_RELEASE_MODELS, required=True)
     parser.add_argument("--scene-preset", choices=tuple(SCENE_PRESETS), default="fresh_3scene")
     parser.add_argument("--scene-id", action="append", default=[])
     parser.add_argument("--batch-dir", type=Path, default=None)
@@ -44,7 +44,11 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--continue-on-error", action="store_true")
     parser.add_argument("--scene-offset", type=int, default=0)
     parser.add_argument("--scene-limit", type=int, default=None)
-    return parser.parse_args()
+    return parser
+
+
+def _parse_args() -> argparse.Namespace:
+    return _build_parser().parse_args()
 
 
 def main() -> int:

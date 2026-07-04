@@ -53,5 +53,11 @@ Keep this repo focused on the WOD-to-AlpaSim bridge surface:
 - patched-upstream AlpaSim integration files
 - public-facing tests and docs
 
+Keep the public CLI surface aligned with the release README:
+
+- `spotlight_reflex`
+- `token_dagger_bc`
+- `direct_actor_planner`
+
 Avoid reintroducing unrelated research command surfaces from the larger private tree
 unless they are required for the bridge release itself.

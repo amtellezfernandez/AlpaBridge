@@ -28,6 +28,31 @@ MODEL_PRESETS = {
         "checkpoint": None,
         "driver_env": {},
     },
+    "token_dagger_bc": {
+        "config_file": ROOT / "src" / "minimal_shot_av" / "simulator" / "alpasim_configs" / "driver" / "token_dagger_bc.yaml",
+        "wizard_driver": "spotlight_reflex",
+        "checkpoint": None,
+        "checkpoint_required": True,
+        "driver_env": {},
+    },
+    "direct_actor_planner": {
+        "config_file": ROOT
+        / "src"
+        / "minimal_shot_av"
+        / "simulator"
+        / "alpasim_configs"
+        / "driver"
+        / "direct_actor_planner.yaml",
+        "wizard_driver": "spotlight_reflex",
+        "checkpoint": None,
+        "requires_oracle_actor_proxy": True,
+        "force_cuda": False,
+        "driver_env": {
+            "MSA_DIRECT_PLANNER_ORACLE_ACTOR_PROXY_PATH": "{oracle_actor_proxy_path}",
+            "MSA_DIRECT_PLANNER_ORACLE_ACTOR_PROXY_TOLERANCE_US": "50000",
+            "MSA_DIRECT_PLANNER_LOG_PATH": "{run_dir}/driver/direct-planner-log.jsonl",
+        },
+    },
     "direct_actor_planner_oracle": {
         "config_file": ROOT
         / "src"
@@ -273,8 +298,14 @@ SCENE_PRESETS = {
     "front_camera_collision18": SCENE_PRESET_ROOT / "front_camera_collision18.yaml",
 }
 
+PUBLIC_RELEASE_MODELS = (
+    "spotlight_reflex",
+    "token_dagger_bc",
+    "direct_actor_planner",
+)
 
-def _parse_args() -> argparse.Namespace:
+
+def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Plan or launch matched AlpaSim local external-driver runs."
     )
@@ -286,21 +317,26 @@ def _parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--model",
-        choices=tuple(MODEL_PRESETS),
-        default="token_dagger_iter2",
-        help="Model/checkpoint preset to evaluate.",
+        choices=PUBLIC_RELEASE_MODELS,
+        default="spotlight_reflex",
+        help=(
+            "Public release model preset to evaluate. "
+            "Use spotlight_reflex for checkpoint-free smoke tests, "
+            "token_dagger_bc with --checkpoint, or direct_actor_planner "
+            "with --oracle-actor-proxy."
+        ),
     )
     parser.add_argument(
         "--checkpoint",
         type=Path,
         default=None,
-        help="Optional checkpoint override for learned models.",
+        help="Checkpoint path for learned-policy presets such as token_dagger_bc.",
     )
     parser.add_argument(
         "--oracle-actor-proxy",
         type=Path,
         default=None,
-        help="Oracle actor-proxy JSON from scripts/build_alpasim_oracle_actor_proxy.py.",
+        help="Oracle actor-proxy JSON from scripts/build_alpasim_oracle_actor_proxy.py for direct_actor_planner.",
     )
     parser.add_argument(
         "--scene-preset",
@@ -377,7 +413,11 @@ def _parse_args() -> argparse.Namespace:
         action="store_true",
         help="Reuse an existing run dir instead of failing.",
     )
-    return parser.parse_args()
+    return parser
+
+
+def _parse_args() -> argparse.Namespace:
+    return _build_parser().parse_args()
 
 
 def main() -> None:
@@ -414,6 +454,8 @@ def main() -> None:
     if oracle_actor_proxy is not None and not oracle_actor_proxy.is_file():
         raise SystemExit(f"Oracle actor proxy not found: {oracle_actor_proxy}")
     checkpoint = args.checkpoint.resolve() if args.checkpoint else model_preset["checkpoint"]
+    if model_preset.get("checkpoint_required") and checkpoint is None:
+        raise SystemExit(f"Model preset {args.model!r} requires --checkpoint")
     if checkpoint is not None:
         checkpoint = Path(checkpoint).resolve()
         if not checkpoint.is_file():
