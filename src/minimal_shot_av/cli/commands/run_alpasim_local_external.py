@@ -15,34 +15,31 @@ from typing import Any
 
 import yaml
 
+from minimal_shot_av.cli.runtime_paths import package_path, workspace_path
 
-ROOT = Path(__file__).resolve().parents[4]
-DEFAULT_ALPASIM_ROOT = ROOT / "workspace" / "alpasim"
-DEFAULT_RUNS_ROOT = ROOT / "runs"
-SCENE_PRESET_ROOT = ROOT / "src" / "minimal_shot_av" / "simulator" / "alpasim_scene_presets"
+
+DEFAULT_ALPASIM_ROOT = workspace_path("workspace", "alpasim")
+DEFAULT_RUNS_ROOT = workspace_path("runs")
+SCENE_PRESET_ROOT = package_path("simulator", "alpasim_scene_presets")
+CONFIG_ROOT = package_path("simulator", "alpasim_configs", "driver")
+ARTIFACT_ROOT = workspace_path("artifacts")
 
 MODEL_PRESETS = {
     "spotlight_reflex": {
-        "config_file": ROOT / "src" / "minimal_shot_av" / "simulator" / "alpasim_configs" / "driver" / "spotlight_reflex.yaml",
+        "config_file": CONFIG_ROOT / "spotlight_reflex.yaml",
         "wizard_driver": "spotlight_reflex",
         "checkpoint": None,
         "driver_env": {},
     },
     "token_dagger_bc": {
-        "config_file": ROOT / "src" / "minimal_shot_av" / "simulator" / "alpasim_configs" / "driver" / "token_dagger_bc.yaml",
+        "config_file": CONFIG_ROOT / "token_dagger_bc.yaml",
         "wizard_driver": "spotlight_reflex",
         "checkpoint": None,
         "checkpoint_required": True,
         "driver_env": {},
     },
     "direct_actor_planner": {
-        "config_file": ROOT
-        / "src"
-        / "minimal_shot_av"
-        / "simulator"
-        / "alpasim_configs"
-        / "driver"
-        / "direct_actor_planner.yaml",
+        "config_file": CONFIG_ROOT / "direct_actor_planner.yaml",
         "wizard_driver": "spotlight_reflex",
         "checkpoint": None,
         "requires_oracle_actor_proxy": True,
@@ -54,13 +51,7 @@ MODEL_PRESETS = {
         },
     },
     "direct_actor_planner_oracle": {
-        "config_file": ROOT
-        / "src"
-        / "minimal_shot_av"
-        / "simulator"
-        / "alpasim_configs"
-        / "driver"
-        / "direct_actor_planner.yaml",
+        "config_file": CONFIG_ROOT / "direct_actor_planner.yaml",
         "wizard_driver": "spotlight_reflex",
         "checkpoint": None,
         "requires_oracle_actor_proxy": True,
@@ -72,13 +63,7 @@ MODEL_PRESETS = {
         },
     },
     "direct_actor_planner_max_clearance_oracle": {
-        "config_file": ROOT
-        / "src"
-        / "minimal_shot_av"
-        / "simulator"
-        / "alpasim_configs"
-        / "driver"
-        / "direct_actor_planner.yaml",
+        "config_file": CONFIG_ROOT / "direct_actor_planner.yaml",
         "wizard_driver": "spotlight_reflex",
         "checkpoint": None,
         "requires_oracle_actor_proxy": True,
@@ -91,36 +76,30 @@ MODEL_PRESETS = {
         },
     },
     "token_dagger_iter2": {
-        "config_file": ROOT / "src" / "minimal_shot_av" / "simulator" / "alpasim_configs" / "driver" / "token_dagger_bc.yaml",
+        "config_file": CONFIG_ROOT / "token_dagger_bc.yaml",
         "wizard_driver": "spotlight_reflex",
-        "checkpoint": ROOT / "artifacts" / "bc_models_iter2" / "token_dagger_bc.pt",
+        "checkpoint": ARTIFACT_ROOT / "bc_models_iter2" / "token_dagger_bc.pt",
         "driver_env": {},
     },
     "token_dagger_srcdecay": {
-        "config_file": ROOT / "src" / "minimal_shot_av" / "simulator" / "alpasim_configs" / "driver" / "token_dagger_srcdecay.yaml",
+        "config_file": CONFIG_ROOT / "token_dagger_srcdecay.yaml",
         "wizard_driver": "spotlight_reflex",
-        "checkpoint": ROOT / "artifacts" / "bc_models_iter3_srcdecay" / "token_dagger_bc.pt",
+        "checkpoint": ARTIFACT_ROOT / "bc_models_iter3_srcdecay" / "token_dagger_bc.pt",
         "driver_env": {},
     },
     "token_dagger_iter2_clamped": {
-        "config_file": ROOT
-        / "src"
-        / "minimal_shot_av"
-        / "simulator"
-        / "alpasim_configs"
-        / "driver"
-        / "token_dagger_bc_clamped.yaml",
+        "config_file": CONFIG_ROOT / "token_dagger_bc_clamped.yaml",
         "wizard_driver": "spotlight_reflex",
-        "checkpoint": ROOT / "artifacts" / "bc_models_iter2" / "token_dagger_bc.pt",
+        "checkpoint": ARTIFACT_ROOT / "bc_models_iter2" / "token_dagger_bc.pt",
         "driver_env": {
             "MSA_TOKENBC_TRAJECTORY_MODE": "clamped_lateral",
             "MSA_TOKENBC_MAX_LATERAL_OFFSET_M": "2.0",
         },
     },
     "token_dagger_iter2_hybrid": {
-        "config_file": ROOT / "src" / "minimal_shot_av" / "simulator" / "alpasim_configs" / "driver" / "token_dagger_bc.yaml",
+        "config_file": CONFIG_ROOT / "token_dagger_bc.yaml",
         "wizard_driver": "spotlight_reflex",
-        "checkpoint": ROOT / "artifacts" / "bc_models_iter2" / "token_dagger_bc.pt",
+        "checkpoint": ARTIFACT_ROOT / "bc_models_iter2" / "token_dagger_bc.pt",
         "driver_env": {
             "MSA_TOKENBC_SELECTION_MODE": "hybrid_veto",
             "MSA_TOKENBC_HYBRID_TOP_K": "3",
@@ -132,15 +111,9 @@ MODEL_PRESETS = {
         },
     },
     "token_dagger_iter2_hybrid_clamped": {
-        "config_file": ROOT
-        / "src"
-        / "minimal_shot_av"
-        / "simulator"
-        / "alpasim_configs"
-        / "driver"
-        / "token_dagger_bc_clamped.yaml",
+        "config_file": CONFIG_ROOT / "token_dagger_bc_clamped.yaml",
         "wizard_driver": "spotlight_reflex",
-        "checkpoint": ROOT / "artifacts" / "bc_models_iter2" / "token_dagger_bc.pt",
+        "checkpoint": ARTIFACT_ROOT / "bc_models_iter2" / "token_dagger_bc.pt",
         "driver_env": {
             "MSA_TOKENBC_SELECTION_MODE": "hybrid_veto",
             "MSA_TOKENBC_HYBRID_TOP_K": "3",
@@ -154,15 +127,9 @@ MODEL_PRESETS = {
         },
     },
     "token_dagger_iter2_axis_constrained_clamped": {
-        "config_file": ROOT
-        / "src"
-        / "minimal_shot_av"
-        / "simulator"
-        / "alpasim_configs"
-        / "driver"
-        / "token_dagger_bc_clamped.yaml",
+        "config_file": CONFIG_ROOT / "token_dagger_bc_clamped.yaml",
         "wizard_driver": "spotlight_reflex",
-        "checkpoint": ROOT / "artifacts" / "bc_models_iter2" / "token_dagger_bc.pt",
+        "checkpoint": ARTIFACT_ROOT / "bc_models_iter2" / "token_dagger_bc.pt",
         "driver_env": {
             "MSA_TOKENBC_SELECTION_MODE": "axis_constrained",
             "MSA_TOKENBC_HYBRID_TOP_K": "3",
@@ -173,15 +140,9 @@ MODEL_PRESETS = {
         },
     },
     "token_dagger_iter2_axis_constrained_oracle_actor_clamped": {
-        "config_file": ROOT
-        / "src"
-        / "minimal_shot_av"
-        / "simulator"
-        / "alpasim_configs"
-        / "driver"
-        / "token_dagger_bc_clamped.yaml",
+        "config_file": CONFIG_ROOT / "token_dagger_bc_clamped.yaml",
         "wizard_driver": "spotlight_reflex",
-        "checkpoint": ROOT / "artifacts" / "bc_models_iter2" / "token_dagger_bc.pt",
+        "checkpoint": ARTIFACT_ROOT / "bc_models_iter2" / "token_dagger_bc.pt",
         "requires_oracle_actor_proxy": True,
         "driver_env": {
             "MSA_TOKENBC_SELECTION_MODE": "axis_constrained",
@@ -195,15 +156,9 @@ MODEL_PRESETS = {
         },
     },
     "token_dagger_iter2_axis_lexicographic_oracle_actor_clamped": {
-        "config_file": ROOT
-        / "src"
-        / "minimal_shot_av"
-        / "simulator"
-        / "alpasim_configs"
-        / "driver"
-        / "token_dagger_bc_clamped.yaml",
+        "config_file": CONFIG_ROOT / "token_dagger_bc_clamped.yaml",
         "wizard_driver": "spotlight_reflex",
-        "checkpoint": ROOT / "artifacts" / "bc_models_iter2" / "token_dagger_bc.pt",
+        "checkpoint": ARTIFACT_ROOT / "bc_models_iter2" / "token_dagger_bc.pt",
         "requires_oracle_actor_proxy": True,
         "driver_env": {
             "MSA_TOKENBC_SELECTION_MODE": "axis_lexicographic",
@@ -217,15 +172,9 @@ MODEL_PRESETS = {
         },
     },
     "token_dagger_iter2_actor_axis_oracle_actor_clamped": {
-        "config_file": ROOT
-        / "src"
-        / "minimal_shot_av"
-        / "simulator"
-        / "alpasim_configs"
-        / "driver"
-        / "token_dagger_bc_clamped.yaml",
+        "config_file": CONFIG_ROOT / "token_dagger_bc_clamped.yaml",
         "wizard_driver": "spotlight_reflex",
-        "checkpoint": ROOT / "artifacts" / "bc_models_iter2" / "token_dagger_bc.pt",
+        "checkpoint": ARTIFACT_ROOT / "bc_models_iter2" / "token_dagger_bc.pt",
         "requires_oracle_actor_proxy": True,
         "driver_env": {
             "MSA_TOKENBC_SELECTION_MODE": "actor_axis_constrained",
@@ -239,24 +188,18 @@ MODEL_PRESETS = {
         },
     },
     "token_dagger_srcdecay_clamped": {
-        "config_file": ROOT
-        / "src"
-        / "minimal_shot_av"
-        / "simulator"
-        / "alpasim_configs"
-        / "driver"
-        / "token_dagger_srcdecay_clamped.yaml",
+        "config_file": CONFIG_ROOT / "token_dagger_srcdecay_clamped.yaml",
         "wizard_driver": "spotlight_reflex",
-        "checkpoint": ROOT / "artifacts" / "bc_models_iter3_srcdecay" / "token_dagger_bc.pt",
+        "checkpoint": ARTIFACT_ROOT / "bc_models_iter3_srcdecay" / "token_dagger_bc.pt",
         "driver_env": {
             "MSA_TOKENBC_TRAJECTORY_MODE": "clamped_lateral",
             "MSA_TOKENBC_MAX_LATERAL_OFFSET_M": "2.0",
         },
     },
     "token_dagger_srcdecay_hybrid": {
-        "config_file": ROOT / "src" / "minimal_shot_av" / "simulator" / "alpasim_configs" / "driver" / "token_dagger_srcdecay.yaml",
+        "config_file": CONFIG_ROOT / "token_dagger_srcdecay.yaml",
         "wizard_driver": "spotlight_reflex",
-        "checkpoint": ROOT / "artifacts" / "bc_models_iter3_srcdecay" / "token_dagger_bc.pt",
+        "checkpoint": ARTIFACT_ROOT / "bc_models_iter3_srcdecay" / "token_dagger_bc.pt",
         "driver_env": {
             "MSA_TOKENBC_SELECTION_MODE": "hybrid_veto",
             "MSA_TOKENBC_HYBRID_TOP_K": "3",
@@ -268,15 +211,9 @@ MODEL_PRESETS = {
         },
     },
     "token_dagger_srcdecay_hybrid_clamped": {
-        "config_file": ROOT
-        / "src"
-        / "minimal_shot_av"
-        / "simulator"
-        / "alpasim_configs"
-        / "driver"
-        / "token_dagger_srcdecay_clamped.yaml",
+        "config_file": CONFIG_ROOT / "token_dagger_srcdecay_clamped.yaml",
         "wizard_driver": "spotlight_reflex",
-        "checkpoint": ROOT / "artifacts" / "bc_models_iter3_srcdecay" / "token_dagger_bc.pt",
+        "checkpoint": ARTIFACT_ROOT / "bc_models_iter3_srcdecay" / "token_dagger_bc.pt",
         "driver_env": {
             "MSA_TOKENBC_SELECTION_MODE": "hybrid_veto",
             "MSA_TOKENBC_HYBRID_TOP_K": "3",

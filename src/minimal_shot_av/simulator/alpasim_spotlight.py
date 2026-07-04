@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 from typing import Any
 
 import numpy as np
@@ -89,6 +90,7 @@ class SpotlightReflexAlpaSimModel(BaseTrajectoryModel):
         self._camera_ids = camera_ids or list(self._DEFAULT_CAMERA_IDS)
         self._context_length = context_length
         self._output_frequency_hz = output_frequency_hz
+        self._sensor_freshness_guard = _SensorFreshnessGuard(self.__class__.__name__)
 
     @property
     def camera_ids(self) -> list[str]:
@@ -118,6 +120,7 @@ class SpotlightReflexAlpaSimModel(BaseTrajectoryModel):
                     f"SpotlightReflexAlpaSimModel expects {self._context_length} "
                     f"frame(s) for {camera_id}, got {len(frames)}"
                 )
+        self._sensor_freshness_guard.validate(prediction_input)
 
         command = self._encode_command(prediction_input.command)
         speed_mps = max(0.25, float(prediction_input.speed))
@@ -177,6 +180,163 @@ class SpotlightReflexAlpaSimModel(BaseTrajectoryModel):
             headings=headings,
             reasoning_text=reasoning_text,
         )
+
+
+class _SensorFreshnessGuard:
+    _MAX_POSE_CAMERA_LAG_US = 50_000
+
+    def __init__(self, model_name: str) -> None:
+        self._model_name = model_name
+        self._last_camera_timestamp_us: int | None = None
+        self._last_pose_signature: tuple[float, float, float] | None = None
+
+    def validate(self, prediction_input: Any) -> None:
+        camera_timestamp_us = _latest_camera_timestamp_us(prediction_input)
+        pose_signature = _current_pose_signature(prediction_input)
+        pose_timestamp_us = _current_pose_timestamp_us(prediction_input)
+        if camera_timestamp_us is None or pose_signature is None:
+            return
+        if (
+            pose_timestamp_us is not None
+            and pose_timestamp_us - camera_timestamp_us > self._MAX_POSE_CAMERA_LAG_US
+        ):
+            lag_us = pose_timestamp_us - camera_timestamp_us
+            raise RuntimeError(
+                f"{self._model_name} detected a stale camera stream: latest ego pose timestamp "
+                f"{pose_timestamp_us} leads the newest camera frame {camera_timestamp_us} by "
+                f"{lag_us} us. The vehicle is moving while camera frames are not updating; "
+                "check the upstream AlpaSim/sensorsim camera pipeline."
+            )
+
+        previous_pose = self._last_pose_signature
+        previous_camera_timestamp = self._last_camera_timestamp_us
+        self._last_pose_signature = pose_signature
+        self._last_camera_timestamp_us = camera_timestamp_us
+
+        if previous_pose is None or previous_camera_timestamp is None:
+            return
+        if not _pose_changed(previous_pose, pose_signature):
+            return
+        if camera_timestamp_us > previous_camera_timestamp:
+            return
+
+        raise RuntimeError(
+            f"{self._model_name} detected a stale camera stream: ego pose changed from "
+            f"{previous_pose} to {pose_signature}, but the latest camera timestamp stayed at "
+            f"{camera_timestamp_us}. The vehicle is moving while camera frames are not updating; "
+            "check the upstream AlpaSim/sensorsim camera pipeline."
+        )
+
+
+def _latest_camera_timestamp_us(prediction_input: Any) -> int | None:
+    camera_images = getattr(prediction_input, "camera_images", {}) or {}
+    latest_timestamp: int | None = None
+    for frames in camera_images.values():
+        if not frames:
+            continue
+        frame = frames[-1]
+        timestamp = getattr(frame, "timestamp_us", None)
+        if timestamp is None and isinstance(frame, (tuple, list)) and frame:
+            timestamp = frame[0]
+        if timestamp is None:
+            continue
+        timestamp_int = int(timestamp)
+        if latest_timestamp is None or timestamp_int > latest_timestamp:
+            latest_timestamp = timestamp_int
+    return latest_timestamp
+
+
+def _current_pose_signature(prediction_input: Any) -> tuple[float, float, float] | None:
+    ego_pose_history = getattr(prediction_input, "ego_pose_history", []) or []
+    for pose in reversed(list(ego_pose_history)):
+        parsed = _pose_like_to_signature(pose)
+        if parsed is not None:
+            return parsed
+    ego_pose = getattr(prediction_input, "ego_pose", None)
+    if ego_pose is not None:
+        return _pose_like_to_signature(ego_pose)
+    return None
+
+
+def _current_pose_timestamp_us(prediction_input: Any) -> int | None:
+    ego_pose_history = getattr(prediction_input, "ego_pose_history", []) or []
+    for pose in reversed(list(ego_pose_history)):
+        timestamp = getattr(pose, "timestamp_us", None)
+        if timestamp is not None:
+            try:
+                return int(timestamp)
+            except (TypeError, ValueError):
+                continue
+    ego_pose = getattr(prediction_input, "ego_pose", None)
+    if ego_pose is not None:
+        timestamp = getattr(ego_pose, "timestamp_us", None)
+        if timestamp is not None:
+            try:
+                return int(timestamp)
+            except (TypeError, ValueError):
+                return None
+    return None
+
+
+def _pose_like_to_signature(pose: Any) -> tuple[float, float, float] | None:
+    raw_pose = getattr(pose, "pose", None)
+    if raw_pose is not None:
+        pose = raw_pose
+
+    x = _first_float_attr(pose, ("x", "world_x"))
+    y = _first_float_attr(pose, ("y", "world_y"))
+    vec = getattr(pose, "vec", None)
+    if x is None and vec is not None:
+        x = _first_float_attr(vec, ("x",))
+    if y is None and vec is not None:
+        y = _first_float_attr(vec, ("y",))
+    position = getattr(pose, "position", None)
+    if x is None and position is not None:
+        x = _first_float_attr(position, ("x",))
+    if y is None and position is not None:
+        y = _first_float_attr(position, ("y",))
+    translation = getattr(pose, "translation", None)
+    if x is None and translation is not None:
+        x = _first_float_attr(translation, ("x",))
+    if y is None and translation is not None:
+        y = _first_float_attr(translation, ("y",))
+    if x is None or y is None:
+        return None
+
+    yaw = _first_float_attr(pose, ("yaw", "heading", "heading_rad", "world_heading"))
+    if yaw is None:
+        quat = getattr(pose, "quat", getattr(pose, "quaternion", None))
+        yaw = _yaw_from_quat_like(quat) if quat is not None else 0.0
+    return (round(float(x), 4), round(float(y), 4), round(float(yaw), 6))
+
+
+def _first_float_attr(obj: Any, names: tuple[str, ...]) -> float | None:
+    for name in names:
+        value = getattr(obj, name, None)
+        if value is None:
+            continue
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            continue
+    return None
+
+
+def _yaw_from_quat_like(quat: Any) -> float | None:
+    if quat is None:
+        return None
+    z = _first_float_attr(quat, ("z",))
+    w = _first_float_attr(quat, ("w",))
+    if z is None or w is None:
+        return None
+    return math.atan2(2.0 * w * z, 1.0 - 2.0 * z * z)
+
+
+def _pose_changed(previous_pose: tuple[float, float, float], current_pose: tuple[float, float, float]) -> bool:
+    dx = abs(current_pose[0] - previous_pose[0])
+    dy = abs(current_pose[1] - previous_pose[1])
+    dheading = abs(current_pose[2] - previous_pose[2])
+    return dx > 0.05 or dy > 0.05 or dheading > 0.01
 
 
 def _resample_to_frequency(

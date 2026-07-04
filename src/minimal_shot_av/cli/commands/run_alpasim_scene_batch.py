@@ -9,9 +9,12 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[4]
+from minimal_shot_av.cli.runtime_paths import workspace_path
 
 from minimal_shot_av.cli.commands.run_alpasim_local_external import DEFAULT_RUNS_ROOT, PUBLIC_RELEASE_MODELS, SCENE_PRESETS, _scene_ids
+
+
+RUNNER_CWD = workspace_path()
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -96,7 +99,7 @@ def main() -> int:
             continue
 
         run_dir.mkdir(parents=True, exist_ok=True)
-        returncode, attempts = _run_scene_with_retries(command, cwd=ROOT, max_retries=args.max_retries)
+        returncode, attempts = _run_scene_with_retries(command, cwd=RUNNER_CWD, max_retries=args.max_retries)
         result = "completed" if returncode == 0 else "failed"
         statuses.append(
             {
@@ -156,7 +159,8 @@ def _prepare_batch_dir(batch_dir: Path, *, allow_existing: bool) -> None:
 def _scene_command(args: argparse.Namespace, *, scene_id: str, run_dir: Path) -> list[str]:
     command = [
         str(args.python),
-        str(ROOT / "scripts" / "run_alpasim_local_external.py"),
+        "-m",
+        "minimal_shot_av.cli.commands.run_alpasim_local_external",
         "--mode",
         args.mode,
         "--model",

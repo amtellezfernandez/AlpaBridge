@@ -9,8 +9,7 @@ from typing import Any
 
 import numpy as np
 
-
-ROOT = Path(__file__).resolve().parents[4]
+from minimal_shot_av.cli.runtime_paths import workspace_path
 
 from minimal_shot_av.simulator.alpasim_signal import extract_alpasim_signal, scenario_from_command
 from minimal_shot_av.simulator.alpasim_spotlight import DriveCommand, SpotlightReflexAlpaSimModel
@@ -18,7 +17,7 @@ from minimal_shot_av.simulator.alpasim_spotlight import DriveCommand, SpotlightR
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Audit the AlpaSignal-to-Spotlight Reflex bridge.")
-    parser.add_argument("--output", type=Path, default=ROOT / "artifacts" / "alpasignal_bridge_audit.json")
+    parser.add_argument("--output", type=Path, default=workspace_path("artifacts", "alpasignal_bridge_audit.json"))
     args = parser.parse_args()
 
     report = build_report()

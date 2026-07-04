@@ -67,6 +67,10 @@ class AlpaSimIntegrationTests(unittest.TestCase):
             pyproject['project.entry-points."alpasim.configs"']["spotlight_reflex"],
             "minimal_shot_av.simulator.alpasim_configs",
         )
+        self.assertEqual(
+            pyproject["project.scripts"]["wod2sim-build-oracle-proxy"],
+            "minimal_shot_av.cli.commands.build_alpasim_oracle_actor_proxy:main",
+        )
 
     def test_alpasim_driver_config_exists(self) -> None:
         config_path = Path("src/minimal_shot_av/simulator/alpasim_configs/driver/spotlight_reflex.yaml")
@@ -1362,6 +1366,97 @@ class AlpaSimIntegrationTests(unittest.TestCase):
         self.assertAlmostEqual(3.0, pose["world_x"])
         self.assertAlmostEqual(4.0, pose["world_y"])
         self.assertAlmostEqual(0.5, pose["world_heading"])
+
+    def test_spotlight_adapter_rejects_stale_camera_stream_when_ego_pose_moves(self) -> None:
+        model = SpotlightReflexAlpaSimModel(camera_ids=["front"], context_length=1, output_frequency_hz=4)
+        first_input = SimpleNamespace(
+            camera_images={"front": [SimpleNamespace(timestamp_us=1000, image=np.full((4, 4, 3), 180, dtype=np.uint8))]},
+            command=DriveCommand.STRAIGHT,
+            speed=6.0,
+            acceleration=0.0,
+            ego_pose_history=[SimpleNamespace(timestamp_us=1000, x=0.0, y=0.0, yaw=0.0)],
+        )
+        second_input = SimpleNamespace(
+            camera_images={"front": [SimpleNamespace(timestamp_us=1000, image=np.full((4, 4, 3), 180, dtype=np.uint8))]},
+            command=DriveCommand.STRAIGHT,
+            speed=6.0,
+            acceleration=0.0,
+            ego_pose_history=[SimpleNamespace(timestamp_us=1100, x=1.0, y=0.0, yaw=0.0)],
+        )
+
+        model.predict(first_input)
+        with self.assertRaises(RuntimeError) as ctx:
+            model.predict(second_input)
+
+        self.assertIn("stale camera stream", str(ctx.exception))
+
+    def test_spotlight_adapter_rejects_first_call_when_pose_time_leads_camera(self) -> None:
+        model = SpotlightReflexAlpaSimModel(camera_ids=["front"], context_length=1, output_frequency_hz=4)
+        prediction_input = SimpleNamespace(
+            camera_images={"front": [SimpleNamespace(timestamp_us=1000, image=np.full((4, 4, 3), 180, dtype=np.uint8))]},
+            command=DriveCommand.STRAIGHT,
+            speed=6.0,
+            acceleration=0.0,
+            ego_pose_history=[SimpleNamespace(timestamp_us=110000, x=1.0, y=0.0, yaw=0.0)],
+        )
+
+        with self.assertRaises(RuntimeError) as ctx:
+            model.predict(prediction_input)
+
+        self.assertIn("latest ego pose timestamp", str(ctx.exception))
+
+    def test_direct_actor_planner_rejects_stale_camera_stream_when_ego_pose_moves(self) -> None:
+        model = DirectActorPlannerAlpaSimModel(camera_ids=["front"], context_length=1, output_frequency_hz=4)
+        first_input = SimpleNamespace(
+            camera_images={"front": [SimpleNamespace(timestamp_us=1000, image=np.full((4, 4, 3), 180, dtype=np.uint8))]},
+            command=DriveCommand.STRAIGHT,
+            speed=6.0,
+            acceleration=0.0,
+            ego_pose_history=[SimpleNamespace(timestamp_us=1000, x=0.0, y=0.0, yaw=0.0)],
+            route_waypoints=[
+                {"x": 0.0, "y": 0.0, "z": 0.0},
+                {"x": 20.0, "y": 0.0, "z": 0.0},
+            ],
+            alpasignal={"hazards": []},
+        )
+        second_input = SimpleNamespace(
+            camera_images={"front": [SimpleNamespace(timestamp_us=1000, image=np.full((4, 4, 3), 180, dtype=np.uint8))]},
+            command=DriveCommand.STRAIGHT,
+            speed=6.0,
+            acceleration=0.0,
+            ego_pose_history=[SimpleNamespace(timestamp_us=1100, x=1.0, y=0.0, yaw=0.0)],
+            route_waypoints=[
+                {"x": 0.0, "y": 0.0, "z": 0.0},
+                {"x": 20.0, "y": 0.0, "z": 0.0},
+            ],
+            alpasignal={"hazards": []},
+        )
+
+        model.predict(first_input)
+        with self.assertRaises(RuntimeError) as ctx:
+            model.predict(second_input)
+
+        self.assertIn("stale camera stream", str(ctx.exception))
+
+    def test_direct_actor_planner_rejects_first_call_when_pose_time_leads_camera(self) -> None:
+        model = DirectActorPlannerAlpaSimModel(camera_ids=["front"], context_length=1, output_frequency_hz=4)
+        prediction_input = SimpleNamespace(
+            camera_images={"front": [SimpleNamespace(timestamp_us=1000, image=np.full((4, 4, 3), 180, dtype=np.uint8))]},
+            command=DriveCommand.STRAIGHT,
+            speed=6.0,
+            acceleration=0.0,
+            ego_pose_history=[SimpleNamespace(timestamp_us=110000, x=1.0, y=0.0, yaw=0.0)],
+            route_waypoints=[
+                {"x": 0.0, "y": 0.0, "z": 0.0},
+                {"x": 20.0, "y": 0.0, "z": 0.0},
+            ],
+            alpasignal={"hazards": []},
+        )
+
+        with self.assertRaises(RuntimeError) as ctx:
+            model.predict(prediction_input)
+
+        self.assertIn("latest ego pose timestamp", str(ctx.exception))
 
     def test_token_bc_alpasim_adapter_rejects_unknown_checkpoint_tokens(self) -> None:
         with TemporaryDirectory() as tmp:

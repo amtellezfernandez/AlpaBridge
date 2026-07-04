@@ -49,6 +49,31 @@ jobs:
         run: |
           .venv/bin/python -m build
 
+      - name: Smoke test built wheel install
+        run: |
+          uv venv /tmp/wod2sim-wheel-smoke
+          uv pip install --python /tmp/wod2sim-wheel-smoke/bin/python dist/*.whl
+          /tmp/wod2sim-wheel-smoke/bin/wod2sim-doctor --strict-installed --json
+          /tmp/wod2sim-wheel-smoke/bin/wod2sim-build-oracle-proxy --help > /dev/null
+          /tmp/wod2sim-wheel-smoke/bin/python - <<'PY'
+          from pathlib import Path
+          from minimal_shot_av.cli.commands.run_alpasim_local_external import MODEL_PRESETS, SCENE_PRESETS
+          from minimal_shot_av.cli.commands.setup_alpasim_local_plugin import ALPASIM_OVERRIDE_ROOT
+
+          assert ALPASIM_OVERRIDE_ROOT.is_dir(), ALPASIM_OVERRIDE_ROOT
+          assert all(Path(spec["config_file"]).is_file() for spec in MODEL_PRESETS.values())
+          assert all(Path(path).is_file() for path in SCENE_PRESETS.values())
+          print("wheel config and override payload OK")
+          PY
+          /tmp/wod2sim-wheel-smoke/bin/wod2sim-audit-signal --output /tmp/wod2sim-wheel-audit.json
+          /tmp/wod2sim-wheel-smoke/bin/wod2sim-batch \
+            --mode print \
+            --model spotlight_reflex \
+            --scene-limit 1 \
+            --batch-dir /tmp/wod2sim-wheel-batch
+          test -f /tmp/wod2sim-wheel-audit.json
+          test -f /tmp/wod2sim-wheel-batch/batch-status.json
+
       - name: Check tracked-file hygiene
         run: |
           if git ls-files | grep -E '(__pycache__/|\.pyc$|\.egg-info/)'; then

@@ -19,7 +19,14 @@ except ImportError:  # pragma: no cover - exercised only in non-alpasim installs
     nn = None
 
 from .alpasim_signal import extract_alpasim_signal, scenario_from_command
-from .alpasim_spotlight import BaseTrajectoryModel, DriveCommand, ModelPrediction, PredictionInput, _resample_to_frequency
+from .alpasim_spotlight import (
+    BaseTrajectoryModel,
+    DriveCommand,
+    ModelPrediction,
+    PredictionInput,
+    _SensorFreshnessGuard,
+    _resample_to_frequency,
+)
 from .environment import (
     DEFAULT_EGO_RADIUS_M,
     SIM_TICK_DT_S,
@@ -206,6 +213,7 @@ class TokenBCAlpaSimModel(BaseTrajectoryModel):
         )
         self._selection_log_lock = Lock()
         self._prediction_counter = 0
+        self._sensor_freshness_guard = _SensorFreshnessGuard(self.__class__.__name__)
         self._model, self._feat_mean, self._feat_std, self._token_order = _load_checkpoint(
             Path(checkpoint_path),
             device=self._device,
@@ -239,6 +247,7 @@ class TokenBCAlpaSimModel(BaseTrajectoryModel):
                     f"TokenBCAlpaSimModel expects {self._context_length} frame(s) "
                     f"for {camera_id}, got {len(frames)}"
                 )
+        self._sensor_freshness_guard.validate(prediction_input)
 
         command = self._encode_command(prediction_input.command)
         speed_mps = max(0.25, float(prediction_input.speed))

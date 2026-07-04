@@ -43,6 +43,12 @@ or
 wod2sim-ready --alpasim-root /path/to/alpasim
 ```
 
+If you only want to validate host/runtime prerequisites before syncing gated assets, skip the scene-cache gate explicitly:
+
+```bash
+wod2sim-doctor --alpasim-root /path/to/alpasim --skip-scene-artifacts
+```
+
 4. Generate a non-executing launch plan first.
 
 ```bash
@@ -58,6 +64,7 @@ wod2sim-launch --mode print --model spotlight_reflex
   - requires `--checkpoint /path/to/token_dagger_bc.pt`
 - `direct_actor_planner`
   - requires `--oracle-actor-proxy /path/to/oracle.json`
+  - build that file with `wod2sim-build-oracle-proxy --run-dir /path/to/run --output /path/to/oracle.json`
 
 ## Expected Outputs
 
@@ -82,10 +89,14 @@ For `wod2sim-batch`, a successful planning or execution pass creates:
   - build it with `scripts/build_alpasim_base_image.sh`
 - scene artifacts missing
   - sync the gated assets locally or provide `HF_TOKEN`
+  - if you only need host/runtime validation first, rerun `wod2sim-doctor --alpasim-root /path/to/alpasim --skip-scene-artifacts`
 - checkpoint not found
   - pass an explicit `--checkpoint` for `token_dagger_bc`
 - oracle actor proxy missing
   - generate it before using `direct_actor_planner`
+- `stale camera stream`
+  - the ego pose advanced but camera timestamps did not
+  - this is upstream of the policy adapter; inspect the AlpaSim/sensorsim camera pipeline instead of tuning the policy
 
 ## What This Repo Does Not Promise
 

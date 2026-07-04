@@ -87,6 +87,11 @@ class RunAlpaSimSceneBatchTests(unittest.TestCase):
         )
 
         self.assertEqual("python", command[0])
+        self.assertEqual("-m", command[1])
+        self.assertEqual(
+            "minimal_shot_av.cli.commands.run_alpasim_local_external",
+            command[2],
+        )
         self.assertIn("--scene-id", command)
         self.assertIn("clipgt-scene-1", command)
         self.assertIn("--allow-existing-run-dir", command)

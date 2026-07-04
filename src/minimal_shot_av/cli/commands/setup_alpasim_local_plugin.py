@@ -8,10 +8,14 @@ from pathlib import Path
 from shutil import which
 import shutil
 
+from minimal_shot_av.cli.runtime_paths import package_path, repo_path, workspace_path
 
-ROOT = Path(__file__).resolve().parents[4]
-DEFAULT_ALPASIM_ROOT = ROOT / "workspace" / "alpasim"
-ALPASIM_OVERRIDE_ROOT = ROOT / "third_party" / "alpasim_overrides"
+
+DEFAULT_ALPASIM_ROOT = workspace_path("workspace", "alpasim")
+ALPASIM_OVERRIDE_ROOT = package_path("alpasim_overrides")
+REPO_ROOT = repo_path()
+INSTALL_ROOT = REPO_ROOT or Path.cwd()
+UV_CACHE_DIR = workspace_path(".uv-cache")
 REQUIRED_MODELS = ("spotlight_reflex", "token_dagger_bc", "direct_actor_planner")
 TORCH_PACKAGE = "torch==2.11.0+cu129"
 TORCH_INDEX_URL = "https://download.pytorch.org/whl/cu129"
@@ -84,7 +88,6 @@ def _parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = _parse_args()
-    uv_bin = _require_uv()
     alpasim_root = _resolve_alpasim_root(args.alpasim_root)
     _validate_alpasim_checkout(alpasim_root)
     driver_project = alpasim_root / "src" / "driver"
@@ -92,27 +95,39 @@ def main() -> None:
 
     if not driver_project.is_dir():
         raise SystemExit(f"AlpaSim driver project not found: {driver_project}")
-    if not args.skip_overrides:
-        _apply_local_alpasim_overrides(alpasim_root)
-    _bootstrap_alpasim_venv(alpasim_root, uv_bin=uv_bin)
-    if not venv_python.is_file():
-        raise SystemExit(f"AlpaSim virtualenv python not found after bootstrap: {venv_python}")
-
-    if not args.check_only:
+    if args.check_only:
+        if not venv_python.is_file():
+            raise SystemExit(
+                "AlpaSim virtualenv python not found for --check-only mode: "
+                f"{venv_python}. Run wod2sim-setup without --check-only first."
+            )
+    else:
+        if REPO_ROOT is None:
+            raise SystemExit(
+                "Full `wod2sim-setup` requires a source checkout so the package can be installed "
+                "into the AlpaSim environment. Re-run from a cloned WOD2Sim repo, or use "
+                "`wod2sim-setup --check-only` with an environment that already has WOD2Sim installed."
+            )
+        uv_bin = _require_uv()
+        if not args.skip_overrides:
+            _apply_local_alpasim_overrides(alpasim_root)
+        _bootstrap_alpasim_venv(alpasim_root, uv_bin=uv_bin)
+        if not venv_python.is_file():
+            raise SystemExit(f"AlpaSim virtualenv python not found after bootstrap: {venv_python}")
         _run(
             [
                 uv_bin,
                 "pip",
                 "install",
                 "--cache-dir",
-                str(ROOT / ".uv-cache"),
+                str(UV_CACHE_DIR),
                 "--python",
                 str(venv_python),
                 "--no-deps",
                 "-e",
-                str(ROOT),
+                str(INSTALL_ROOT),
             ],
-            cwd=ROOT,
+            cwd=INSTALL_ROOT,
         )
 
     plugin_names = _plugin_names(venv_python)
@@ -130,8 +145,7 @@ def main() -> None:
     print(
         "  ALPASIM_ROOT="
         + shlex_quote(str(alpasim_root))
-        + " ./.venv/bin/python scripts/run_alpasim_local_external.py "
-        "--mode print --model spotlight_reflex --scene-preset fresh_3scene"
+        + " wod2sim-launch --mode print --model spotlight_reflex --scene-preset fresh_3scene"
     )
 
 
@@ -182,7 +196,10 @@ def _require_uv() -> str:
 
 def _apply_local_alpasim_overrides(alpasim_root: Path) -> None:
     if not ALPASIM_OVERRIDE_ROOT.is_dir():
-        return
+        raise SystemExit(
+            "WOD2Sim override payload is missing from this installation: "
+            f"{ALPASIM_OVERRIDE_ROOT}"
+        )
     patch_files = sorted(ALPASIM_OVERRIDE_ROOT.rglob("*.patch"))
     for patch_file in patch_files:
         _apply_alpasim_patch(alpasim_root, patch_file)
@@ -240,14 +257,14 @@ def _bootstrap_alpasim_venv(alpasim_root: Path, *, uv_bin: str) -> None:
 
     _run(
         [
-            uv_bin,
-            "pip",
-            "install",
-            "--cache-dir",
-            str(ROOT / ".uv-cache"),
-            "--python",
-            str(venv_python),
-            *ALPASIM_CORE_DEPENDENCIES,
+                uv_bin,
+                "pip",
+                "install",
+                "--cache-dir",
+                str(UV_CACHE_DIR),
+                "--python",
+                str(venv_python),
+                *ALPASIM_CORE_DEPENDENCIES,
         ],
         cwd=alpasim_root,
     )
@@ -266,7 +283,7 @@ def _bootstrap_alpasim_venv(alpasim_root: Path, *, uv_bin: str) -> None:
                 "pip",
                 "install",
                 "--cache-dir",
-                str(ROOT / ".uv-cache"),
+                str(UV_CACHE_DIR),
                 "--python",
                 str(venv_python),
                 "--no-deps",
@@ -322,7 +339,7 @@ def _install_torch_for_alpasim(*, uv_bin: str, venv_python: Path, cwd: Path) -> 
         "pip",
         "install",
         "--cache-dir",
-        str(ROOT / ".uv-cache"),
+        str(UV_CACHE_DIR),
         "--python",
         str(venv_python),
         "--index-url",
@@ -399,7 +416,7 @@ def _plugin_names(venv_python: Path) -> list[str]:
             "print('\\n'.join(names))",
         ]
     )
-    result = _run([str(venv_python), "-c", script], cwd=ROOT, capture_output=True)
+    result = _run([str(venv_python), "-c", script], cwd=INSTALL_ROOT, capture_output=True)
     return [line.strip() for line in result.stdout.splitlines() if line.strip()]
 
 

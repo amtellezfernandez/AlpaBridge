@@ -50,6 +50,7 @@ wod2sim-setup = "minimal_shot_av.cli.commands.setup_alpasim_local_plugin:main"
 wod2sim-ready = "minimal_shot_av.cli.commands.check_alpasim_readiness:main"
 wod2sim-launch = "minimal_shot_av.cli.commands.run_alpasim_local_external:main"
 wod2sim-batch = "minimal_shot_av.cli.commands.run_alpasim_scene_batch:main"
+wod2sim-build-oracle-proxy = "minimal_shot_av.cli.commands.build_alpasim_oracle_actor_proxy:main"
 wod2sim-audit-signal = "minimal_shot_av.cli.commands.audit_alpasignal_bridge:main"
 wod2sim-evidence = "minimal_shot_av.neutral.alpasim_metrics:main"
 
@@ -67,6 +68,7 @@ where = ["src"]
 [tool.setuptools.package-data]
 "minimal_shot_av.simulator.alpasim_configs" = ["**/*.yaml"]
 "minimal_shot_av.simulator" = ["alpasim_scene_presets/*.yaml"]
+"minimal_shot_av.alpasim_overrides" = ["**/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

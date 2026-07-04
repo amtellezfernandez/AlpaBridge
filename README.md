@@ -63,6 +63,12 @@ If you also want the same command to diagnose a real AlpaSim checkout:
 wod2sim-doctor --alpasim-root /path/to/alpasim
 ```
 
+If that checkout is not fully synced yet and you only want host/runtime validation:
+
+```bash
+wod2sim-doctor --alpasim-root /path/to/alpasim --skip-scene-artifacts
+```
+
 If you have a local AlpaSim checkout, the main bridge flow is:
 
 ```bash
@@ -85,6 +91,7 @@ Research-only presets from the original private tree are not advertised in the p
 Examples:
 
 ```bash
+wod2sim-build-oracle-proxy --run-dir /path/to/run --output /path/to/oracle.json
 wod2sim-launch --mode print --model spotlight_reflex
 wod2sim-launch --mode print --model token_dagger_bc --checkpoint /path/to/token_dagger_bc.pt
 wod2sim-launch --mode print --model direct_actor_planner --oracle-actor-proxy /path/to/oracle.json
@@ -92,6 +99,8 @@ wod2sim-launch --mode print --model direct_actor_planner --oracle-actor-proxy /p
 
 For a fuller first-time setup path and failure triage notes, see
 [`docs/integration_guide.md`](docs/integration_guide.md).
+
+One important runtime invariant: if ego pose updates continue while camera timestamps stay frozen, the public adapters now fail fast with a `stale camera stream` error instead of silently planning on stale frames.
 
 ## Repo Layout
 

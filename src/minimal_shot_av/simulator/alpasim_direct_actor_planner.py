@@ -17,6 +17,7 @@ from .alpasim_spotlight import (
     DriveCommand,
     ModelPrediction,
     PredictionInput,
+    _SensorFreshnessGuard,
     _resample_to_frequency,
 )
 from .alpasim_token_bc import (
@@ -217,6 +218,7 @@ class DirectActorPlannerAlpaSimModel(BaseTrajectoryModel):
         self._log_path = log_path
         self._log_lock = Lock()
         self._prediction_counter = 0
+        self._sensor_freshness_guard = _SensorFreshnessGuard(self.__class__.__name__)
 
     @property
     def camera_ids(self) -> list[str]:
@@ -246,6 +248,7 @@ class DirectActorPlannerAlpaSimModel(BaseTrajectoryModel):
                     f"DirectActorPlannerAlpaSimModel expects {self._context_length} frame(s) "
                     f"for {camera_id}, got {len(frames)}"
                 )
+        self._sensor_freshness_guard.validate(prediction_input)
 
         self._prediction_counter += 1
         command = self._encode_command(prediction_input.command)

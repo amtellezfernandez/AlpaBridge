@@ -6,7 +6,17 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 import subprocess
+import argparse
+import sys
 
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+import minimal_shot_av.cli.commands.setup_alpasim_local_plugin as setup_cmd
 from minimal_shot_av.cli.commands.run_alpasim_local_external import _resolve_alpasim_root as resolve_run_root
 from minimal_shot_av.cli.commands.run_alpasim_local_external import _preflight_scene_artifacts
 from minimal_shot_av.cli.commands.run_alpasim_local_external import _preflight_docker_access
@@ -58,6 +68,32 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
             env_root.mkdir()
             with patch.dict(os.environ, {"ALPASIM_ROOT": str(env_root)}, clear=False):
                 self.assertEqual(env_root.resolve(), resolve_setup_root(None))
+
+    def test_setup_check_only_does_not_bootstrap_or_install(self) -> None:
+        args = argparse.Namespace(
+            alpasim_root=Path("/tmp/alpasim"),
+            check_only=True,
+            skip_overrides=False,
+        )
+        with patch.object(setup_cmd, "_parse_args", return_value=args), patch.object(
+            setup_cmd, "_validate_alpasim_checkout"
+        ), patch.object(
+            setup_cmd, "_plugin_names", return_value=list(setup_cmd.REQUIRED_MODELS)
+        ), patch.object(
+            setup_cmd, "_apply_local_alpasim_overrides"
+        ) as apply_overrides, patch.object(
+            setup_cmd, "_bootstrap_alpasim_venv"
+        ) as bootstrap, patch.object(
+            setup_cmd, "_run"
+        ) as run_install, patch.object(
+            setup_cmd, "_resolve_alpasim_root", return_value=Path("/tmp/alpasim")
+        ):
+            with patch.object(Path, "is_file", return_value=True), patch.object(Path, "is_dir", return_value=True):
+                setup_cmd.main()
+
+        apply_overrides.assert_not_called()
+        bootstrap.assert_not_called()
+        run_install.assert_not_called()
 
     def test_checkout_validation_rejects_missing_git_marker(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

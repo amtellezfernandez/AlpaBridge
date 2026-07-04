@@ -12,9 +12,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Iterable
 
+from minimal_shot_av.cli.runtime_paths import workspace_path
 
-ROOT = Path(__file__).resolve().parents[4]
-DEFAULT_ALPASIM_ROOT = ROOT / "workspace" / "alpasim"
+DEFAULT_ALPASIM_ROOT = workspace_path("workspace", "alpasim")
 
 
 @dataclass(frozen=True)
@@ -149,8 +149,7 @@ async def _build_proxy(args: argparse.Namespace, asl_files: list[Path]) -> dict[
     except ImportError as exc:
         raise SystemExit(
             f"Could not import AlpaSim logging protobufs ({exc}). Run with the AlpaSim environment, for example:\n"
-            "  PYTHONPATH=alpasim/src/grpc alpasim/.venv/bin/python "
-            "scripts/build_alpasim_oracle_actor_proxy.py ..."
+            "  ALPASIM_ROOT=/path/to/alpasim wod2sim-build-oracle-proxy --run-dir /path/to/run --output oracle.json"
         ) from exc
 
     async def read_pb_log(fname: str, raise_on_malformed: bool = False) -> Any:

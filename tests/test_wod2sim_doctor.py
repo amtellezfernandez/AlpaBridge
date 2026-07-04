@@ -5,6 +5,7 @@ import importlib.util
 import json
 import subprocess
 import sys
+from io import StringIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
@@ -96,6 +97,35 @@ class WOD2SimDoctorTests(unittest.TestCase):
         self.assertEqual("failed", report["environment"]["statuses"]["docker_access"])
         self.assertEqual("blocked", report["environment"]["statuses"]["scene_artifacts"])
         self.assertIn("missing checkout", report["environment"]["errors"]["alpasim_checkout"])
+
+    def test_human_report_suggests_scene_artifact_bypass_when_cache_is_missing(self) -> None:
+        module = _load_module()
+        report = module.build_report()
+        report["environment"] = {
+            "valid": False,
+            "alpasim_root": "/tmp/alpasim",
+            "scene_preset": "fresh_3scene",
+            "scene_ids": ["scene-1"],
+            "statuses": {
+                "alpasim_checkout": "ok",
+                "platform_compatibility": "ok",
+                "docker_access": "ok",
+                "base_image": "ok",
+                "gpu_runtime": "ok",
+                "scene_artifacts": "failed",
+            },
+            "errors": {
+                "scene_artifacts": "missing assets",
+            },
+        }
+        report["valid"] = False
+
+        with patch("sys.stdout", new_callable=StringIO) as stdout:
+            module._print_human_report(report, strict_installed=False)
+
+        rendered = stdout.getvalue()
+        self.assertIn("--skip-scene-artifacts", rendered)
+        self.assertIn("--scene-preset", rendered)
 
     def test_script_can_write_json_report(self) -> None:
         _load_script_module()

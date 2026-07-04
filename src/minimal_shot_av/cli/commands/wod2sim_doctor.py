@@ -7,6 +7,7 @@ import sys
 from importlib.metadata import PackageNotFoundError, distribution
 from pathlib import Path
 
+from minimal_shot_av.cli.runtime_paths import SOURCE_REPO_ROOT, package_path, repo_path
 from minimal_shot_av.cli.commands.check_alpasim_readiness import _preflight_alpasim_base_image
 from minimal_shot_av.cli.commands.check_alpasim_readiness import _preflight_docker_access
 from minimal_shot_av.cli.commands.check_alpasim_readiness import _preflight_nvidia_container_runtime
@@ -16,24 +17,24 @@ from minimal_shot_av.cli.commands.check_alpasim_readiness import _scene_ids
 from minimal_shot_av.cli.commands.check_alpasim_readiness import _validate_alpasim_checkout
 from minimal_shot_av.cli.commands.run_alpasim_local_external import MODEL_PRESETS, PUBLIC_RELEASE_MODELS, SCENE_PRESETS
 
-
-ROOT = Path(__file__).resolve().parents[4]
 EXPECTED_CONSOLE_SCRIPTS = (
     "wod2sim-doctor",
     "wod2sim-setup",
     "wod2sim-ready",
     "wod2sim-launch",
     "wod2sim-batch",
+    "wod2sim-build-oracle-proxy",
     "wod2sim-audit-signal",
     "wod2sim-evidence",
 )
 EXPECTED_WRAPPERS = {
-    "wod2sim-doctor": ROOT / "scripts" / "wod2sim_doctor.py",
-    "wod2sim-setup": ROOT / "scripts" / "setup_alpasim_local_plugin.py",
-    "wod2sim-ready": ROOT / "scripts" / "check_alpasim_readiness.py",
-    "wod2sim-launch": ROOT / "scripts" / "run_alpasim_local_external.py",
-    "wod2sim-batch": ROOT / "scripts" / "run_alpasim_scene_batch.py",
-    "wod2sim-audit-signal": ROOT / "scripts" / "audit_alpasignal_bridge.py",
+    "wod2sim-doctor": "scripts/wod2sim_doctor.py",
+    "wod2sim-setup": "scripts/setup_alpasim_local_plugin.py",
+    "wod2sim-ready": "scripts/check_alpasim_readiness.py",
+    "wod2sim-launch": "scripts/run_alpasim_local_external.py",
+    "wod2sim-batch": "scripts/run_alpasim_scene_batch.py",
+    "wod2sim-build-oracle-proxy": "scripts/build_alpasim_oracle_actor_proxy.py",
+    "wod2sim-audit-signal": "scripts/audit_alpasignal_bridge.py",
 }
 PUBLIC_MODEL_CONFIGS = {
     model: Path(MODEL_PRESETS[model]["config_file"]).resolve()
@@ -220,9 +221,15 @@ def build_report(
     except PackageNotFoundError:
         pass
 
-    wrapper_missing = [
-        name for name, path in EXPECTED_WRAPPERS.items() if not path.is_file()
-    ]
+    repo_root = repo_path()
+    wrapper_missing: list[str] = []
+    wrapper_scripts_present = False
+    if repo_root is not None:
+        wrapper_scripts_present = True
+        wrapper_missing = [
+            name for name, relative in EXPECTED_WRAPPERS.items() if not (repo_root / relative).is_file()
+        ]
+        wrapper_scripts_present = not wrapper_missing
     missing_scene_presets = [
         name for name, path in SCENE_PRESETS.items() if not Path(path).is_file()
     ]
@@ -236,7 +243,7 @@ def build_report(
         == ("spotlight_reflex", "token_dagger_bc", "direct_actor_planner"),
         "scene_presets_present": not missing_scene_presets,
         "public_model_configs_present": not missing_model_configs,
-        "wrapper_scripts_present": not wrapper_missing,
+        "wrapper_scripts_present": wrapper_scripts_present,
         "installed_entry_points_present": not installed_entry_points_missing,
     }
     release_surface_ok = checks["installed_entry_points_present"] or checks["wrapper_scripts_present"]
@@ -284,9 +291,11 @@ def build_report(
             "model_configs": missing_model_configs,
         },
         "artifacts": {
-            "repo_root": str(ROOT),
-            "docs_integration_guide": str(ROOT / "docs" / "integration_guide.md"),
-            "paper_pdf": str(ROOT / "paper" / "paper.pdf"),
+            "repo_root": None if repo_root is None else str(repo_root),
+            "docs_integration_guide": None if repo_root is None else str(repo_root / "docs" / "integration_guide.md"),
+            "paper_pdf": None if repo_root is None else str(repo_root / "paper" / "paper.pdf"),
+            "package_root": str(package_path()),
+            "source_repo_root": None if SOURCE_REPO_ROOT is None else str(SOURCE_REPO_ROOT),
         },
         "environment": environment,
     }
@@ -296,6 +305,7 @@ def build_report(
 def _print_human_report(report: dict[str, object], *, strict_installed: bool) -> None:
     checks = report["checks"]
     missing = report["missing"]
+    environment = report["environment"]
 
     print("WOD2Sim doctor")
     print(f"  valid: {report['valid']}")
@@ -317,7 +327,6 @@ def _print_human_report(report: dict[str, object], *, strict_installed: bool) ->
             if values:
                 print(f"    {name}: {', '.join(values)}")
 
-    environment = report["environment"]
     if environment is None:
         print("  alpasim environment: not requested")
     else:
@@ -337,7 +346,12 @@ def _print_human_report(report: dict[str, object], *, strict_installed: bool) ->
         print("    3. Run wod2sim-ready --alpasim-root /path/to/alpasim")
     else:
         print("    2. Fix any failing environment checks above")
-        print("    3. Start with wod2sim-launch --mode print --model spotlight_reflex")
+        if environment["statuses"].get("scene_artifacts") == "failed":
+            print("    3. If you only want host/runtime validation, rerun with --skip-scene-artifacts")
+            print("    4. Or point doctor at a different cached preset with --scene-preset ...")
+            print("    5. After the cache issue is fixed, start with wod2sim-launch --mode print --model spotlight_reflex")
+        else:
+            print("    3. Start with wod2sim-launch --mode print --model spotlight_reflex")
 
 
 def main() -> int:
