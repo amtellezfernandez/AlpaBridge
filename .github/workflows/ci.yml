@@ -39,7 +39,6 @@ jobs:
 
       - name: Build package
         run: |
-          .venv/bin/python -m pip install build
           .venv/bin/python -m build
 
       - name: Check tracked-file hygiene
