@@ -8,9 +8,19 @@ version = "0.1.0"
 description = "Code and paper release for adapting WOD-style driving policies to AlpaSim closed-loop execution"
 readme = "README.md"
 requires-python = ">=3.10"
+license = "BSD-3-Clause"
+license-files = ["LICENSE"]
 dependencies = [
     "numpy>=1.26",
     "PyYAML>=6",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 
 [project.optional-dependencies]
@@ -40,6 +50,11 @@ wod2sim-launch = "minimal_shot_av.cli.commands.run_alpasim_local_external:main"
 wod2sim-batch = "minimal_shot_av.cli.commands.run_alpasim_scene_batch:main"
 wod2sim-audit-signal = "minimal_shot_av.cli.commands.audit_alpasignal_bridge:main"
 wod2sim-evidence = "minimal_shot_av.neutral.alpasim_metrics:main"
+
+[project.urls]
+Homepage = "https://github.com/amtellezfernandez/wod2sim"
+Repository = "https://github.com/amtellezfernandez/wod2sim"
+Issues = "https://github.com/amtellezfernandez/wod2sim/issues"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

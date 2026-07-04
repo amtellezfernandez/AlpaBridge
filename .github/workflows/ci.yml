@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Install package
+        run: |
+          uv venv .venv
+          uv pip install --python .venv/bin/python -e ".[dev]"
+
+      - name: Run focused bridge tests
+        run: |
+          .venv/bin/pytest \
+            tests/test_alpasim_integration.py \
+            tests/test_alpasim_setup_scripts.py \
+            tests/test_check_alpasim_readiness.py \
+            tests/test_run_alpasim_scene_batch.py \
+            tests/test_audit_alpasignal_bridge.py
+
+      - name: Build package
+        run: |
+          .venv/bin/python -m pip install build
+          .venv/bin/python -m build

@@ -38,6 +38,13 @@ python -m pip install -U pip
 python -m pip install -e ".[dev]"
 ```
 
+Or with `uv`:
+
+```bash
+uv venv .venv
+uv pip install --python .venv/bin/python -e ".[dev]"
+```
+
 Run the lightweight bridge checks:
 
 ```bash
@@ -76,3 +83,9 @@ make paper
 ```
 
 The resulting source and PDF live under [`paper/`](paper).
+
+## Production Notes
+
+- The package, focused bridge tests, and paper build are all exercised in the release workflow.
+- Learned presets still depend on external checkpoints not shipped in this repo.
+- Full AlpaSim execution still requires a separate checkout, local Docker access, and any gated scene assets.
