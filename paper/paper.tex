@@ -11,8 +11,8 @@
 \usetikzlibrary{arrows.meta,positioning}
 \raggedbottom
 
-\title{Adapting WOD-Style Driving Policies\\
-to Closed-Loop Simulation}
+\title{WOD2Sim: Adapting WOD-Style Driving Policies\\
+to Closed-Loop AlpaSim Evaluation}
 
 \author{
   Alba Maria Tellez Fernandez\\
@@ -31,7 +31,7 @@ route waypoints. Model discovery could import Alpamayo or VAM before an external
 was selected. Closed sessions could still receive image, egomotion, route, or close
 messages. Local runs depended on Hydra, Docker, GPU runtime, scene-artifact, and checkout
 state that was not recorded with the experiment. We call the resulting adapter
-\emph{WOD2ALPAsim}; it extends the AlpaSim
+\emph{WOD2Sim}; it extends the AlpaSim
 external-driver contract at these four points: route geometry, model discovery, session
 lifecycle, and launch state. The implementation patches \texttt{PredictionInput} and the
 driver session, makes built-in model imports lazy, treats late session messages
@@ -64,7 +64,7 @@ package could require unselected Alpamayo or VAM backends, late session messages
 terminate batch runs, and launch assumptions lived outside the experiment record.
 
 This paper is about extending that simulator-side contract so WOD-style policies can run
-as ordinary AlpaSim external drivers. WOD2ALPAsim preserves route geometry at
+as ordinary AlpaSim external drivers. WOD2Sim preserves route geometry at
 prediction time, decouples external plugin discovery from unrelated built-in backends,
 makes session handling idempotent under normal service ordering, and records launch state
 before rollout. On top of that contract, the project registers a reflex policy, a learned
@@ -89,7 +89,7 @@ lists the contract points we had to change.
 \small
 \begin{tabular}{p{0.23\linewidth}p{0.31\linewidth}p{0.34\linewidth}}
 \toprule
-Contract point & Stock AlpaSim behavior & WOD2ALPAsim behavior \\
+Contract point & Stock AlpaSim behavior & WOD2Sim behavior \\
 \midrule
 Route input & route used mainly for command & route waypoints preserved for prediction \\
 Model imports & eager built-in backend imports & lazy imports for external plugin envs \\
@@ -173,7 +173,7 @@ local WOD-style plugin may need only \texttt{BaseTrajectoryModel}, \texttt{Predi
 and the \texttt{alpasim.models} entry point. If those imports also load Alpamayo or VAM,
 the driver can fail before the requested external model is selected.
 
-WOD2ALPAsim therefore separates the stable base contract from heavyweight backend
+WOD2Sim therefore separates the stable base contract from heavyweight backend
 availability. The important claim is not that lazy loading is more convenient; it is that
 external driver execution requires \texttt{BaseTrajectoryModel},
 \texttt{PredictionInput}, \texttt{ModelPrediction}, and related base types to be
@@ -205,7 +205,7 @@ The final contract gap is outside the model API. A local AlpaSim external-driver
 depends on a matched driver command, wizard command, topology, base port, scene IDs,
 Docker image, GPU runtime, platform constraints, and gated scene artifacts. If those
 values live only in shell history or ad hoc Hydra overrides, the policy cannot be
-re-executed as a reviewable artifact. WOD2ALPAsim therefore treats launch state as part
+re-executed as a reviewable artifact. WOD2Sim therefore treats launch state as part
 of the external-driver contract: setup checks plugin discovery, readiness checks runtime
 preconditions, and print mode emits the exact driver and wizard commands before rollout.
 
@@ -354,7 +354,7 @@ address, topology, scene IDs, log directory, base port, and timeout.
 
 These files are part of the artifact. Without them, an AlpaSim run depends on a hidden
 mixture of Hydra overrides, Docker image state, plugin installation state, gated scene
-artifacts, and host-specific GPU behavior. WOD2ALPAsim writes those assumptions before
+artifacts, and host-specific GPU behavior. WOD2Sim writes those assumptions before
 the rollout starts.
 
 \section{Contract Validation}
@@ -458,7 +458,7 @@ integration failures before closed-loop rollouts.}
 
 \section{What Generalizes}
 
-WOD2ALPAsim is specific to this project, but the adapter pattern is not. The same
+WOD2Sim is specific to this project, but the adapter pattern is not. The same
 external-driver shape should transfer to other dataset-trained or benchmark-trained
 trajectory policies that are not written as native AlpaSim drivers.
 
@@ -477,7 +477,7 @@ offline learning or log-based evaluation rather than for a persistent simulator 
 
 \section{Limitations}
 
-WOD2ALPAsim does not claim to reconstruct the full WOD world state inside AlpaSim. Its
+WOD2Sim does not claim to reconstruct the full WOD world state inside AlpaSim. Its
 primary claim is execution compatibility: making WOD-style and project policies run as
 native AlpaSim drivers. Richer traffic reconstruction, broader WOD subset release,
 dataset-terms packaging, and standard public baselines are natural next steps. The
@@ -486,7 +486,7 @@ timing, plugin loading, deployment, and simulator-driver interaction.
 
 \section{Conclusion}
 
-WOD2ALPAsim extends AlpaSim's external-driver contract for WOD-style trajectory policies.
+WOD2Sim extends AlpaSim's external-driver contract for WOD-style trajectory policies.
 The extension preserves route geometry at prediction time, decouples external plugin
 discovery from unselected built-in backends, treats late session messages idempotently,
 and records launch state before rollout. Project policies then run as ordinary

@@ -9,7 +9,8 @@ rollout video.
 | Slot | README path | Source requirement |
 | --- | --- | --- |
 | Dataset frame | official external Waymo image URL or `docs/assets/readme/dataset-frame.jpg` | Prefer official Waymo-hosted imagery unless redistribution rights are explicit. |
-| AlpaSim rollout | `docs/assets/readme/alpasim-rollout.mp4` | A short local closed-loop rollout video with explicit redistribution rights. |
+| AlpaSim rollout screenshot | `docs/assets/readme/alpasim-rollout-screenshot.jpg` | A selected frame from a local closed-loop rollout. |
+| AlpaSim rollout clip | `docs/assets/readme/alpasim-rollout.mp4` | A short local closed-loop rollout video with explicit redistribution rights. |
 | Integration screenshot | `docs/assets/readme/integration-terminal.svg` | A terminal-style rendering of actual `wod2sim-reproduce`, `wod2sim-audit-run`, or `wod2sim-benchmark-summary` output. |
 | Evidence plot | `docs/assets/readme/evidence-metrics.png` | A metrics image generated from a local run, with no gated scene pixels. |
 
@@ -18,6 +19,7 @@ rollout video.
 | Asset | Source | Redistribution note |
 | --- | --- | --- |
 | Waymo Motion image | Linked from the official Waymo Motion page. | Not copied into the repository. |
+| `docs/assets/readme/alpasim-rollout-screenshot.jpg` | Frame at 2 seconds from `runs/closed_loop_spotlight_reflex_one_scene/...camera_front_wide_120fov_default.mp4`. | Single README screenshot from the local AlpaSim rollout; full video and support bundle remain untracked. |
 | `docs/assets/readme/evidence-metrics.png` | `runs/closed_loop_spotlight_reflex_one_scene/metrics_plot.png`. | Runtime metrics plot only; no raw scene pixels. |
 | `docs/assets/readme/integration-terminal.svg` | The recorded one-scene `spotlight_reflex` evidence summary. | Textual evidence rendering only; no gated scene media. |
 
@@ -32,10 +34,12 @@ runs/closed_loop_spotlight_reflex_one_scene/rollouts/...camera_front_wide_120fov
 workspace/alpasim/docs/assets/images/alpasim-architecture.png
 ```
 
-Do not copy raw scene media into tracked docs until the redistribution rights are
-clear. `runs/` can contain AlpaSim/WOD-derived media, and `workspace/` contains a
-third-party AlpaSim checkout. Metrics plots and textual evidence renderings are
-safe to track when they do not expose gated scene pixels.
+Do not copy full raw scene videos, support bundles, or broad scene dumps into
+tracked docs until the redistribution rights are clear. `runs/` can contain
+AlpaSim/WOD-derived media, and `workspace/` contains a third-party AlpaSim
+checkout. Small README screenshots, metrics plots, and textual evidence
+renderings are acceptable when they are tied to a documented run and do not
+expose private checkpoints or support-bundle contents.
 
 The official Waymo Motion page includes `Open/Data/Motion Hero` and
 `Open/Hero Dots` imagery, plus dataset visualization images. Do not copy those
