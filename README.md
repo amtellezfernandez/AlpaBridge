@@ -1,11 +1,7 @@
 # WOD2Sim
 
 <p align="center">
-  <img src="docs/assets/wod2sim-hero.svg" alt="WOD2Sim visual overview" width="100%">
-</p>
-
-<p align="center">
-  <a href="https://github.com/amtellezfernandez/wayspan/actions/workflows/ci.yml"><img src="https://github.com/amtellezfernandez/wayspan/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/amtellezfernandez/WOD2Sim/actions/workflows/ci.yml"><img src="https://github.com/amtellezfernandez/WOD2Sim/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-BSD--3--Clause-blue.svg" alt="BSD-3-Clause license"></a>
   <img src="https://img.shields.io/badge/python-3.10%2B-0f766e.svg" alt="Python 3.10+">
   <img src="https://img.shields.io/badge/evidence-manifest%20%2B%20audit%20%2B%20bundle-d97928.svg" alt="Evidence workflow">
@@ -16,11 +12,22 @@ WOD-style driving-policy outputs to NVIDIA AlpaSim's closed-loop external-driver
 runtime. It is a bridge and evidence workflow, not a redistributor of AlpaSim,
 Waymo assets, private checkpoints, or gated scene caches.
 
-## Visual Overview
+## Media Gallery
 
-<p align="center">
-  <img src="docs/assets/wod2sim-flow.svg" alt="WOD2Sim public and gated workflow" width="100%">
-</p>
+The README should show real media from three places: the dataset scene, the
+AlpaSim closed-loop rollout, and the WOD2Sim integration/evidence output. Those
+assets are not tracked yet because the local candidates live under ignored
+`runs/` and `workspace/` paths and may be gated or third-party.
+
+| Media | Status | Expected tracked path |
+| --- | --- | --- |
+| Dataset frame | Waiting for redistribution-approved WOD/AlpaSim frame | `docs/assets/readme/dataset-frame.jpg` |
+| AlpaSim rollout video | Waiting for redistribution-approved rollout clip | `docs/assets/readme/alpasim-rollout.mp4` |
+| Integration screenshot | Waiting for a real terminal or UI capture | `docs/assets/readme/integration-terminal.png` |
+| Evidence metrics | Waiting for approved local-run metrics export | `docs/assets/readme/evidence-metrics.png` |
+
+See [`docs/readme_media.md`](docs/readme_media.md) for the exact media slots and
+the local candidates that should be reviewed before publishing.
 
 ## What This Repo Gives You
 
@@ -30,10 +37,6 @@ Waymo assets, private checkpoints, or gated scene caches.
 | Reproduction command planning | Yes | manifest with commands, provenance, and `valid_claim_evidence: false` |
 | AlpaSim closed-loop execution | Requires local AlpaSim and gated/user assets | driver logs, audit JSON, support bundle |
 | Benchmark packet summary | Yes, if evidence JSON is present | compact JSON across one or more reproduction runs |
-
-<p align="center">
-  <img src="docs/assets/wod2sim-evidence-card.svg" alt="WOD2Sim evidence contract" width="100%">
-</p>
 
 ## What Is In Scope
 
