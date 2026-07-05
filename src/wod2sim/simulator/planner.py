@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import math
+from dataclasses import dataclass
 
 from .perception import ScenePerception, perceived_obstacle_signed_distance
 from .world_model import WorldState

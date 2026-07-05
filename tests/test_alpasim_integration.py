@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import json
-from tempfile import TemporaryDirectory
-from types import SimpleNamespace
-from pathlib import Path
 import sys
 import unittest
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from types import SimpleNamespace
 
 import numpy as np
 
@@ -22,7 +22,6 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from tests.pyproject_helpers import load_string_tables
-
 from wod2sim.audit.alpasim_export import export_alpasim_audit_log
 from wod2sim.neutral.alpasim_metrics import build_alpasim_evidence, load_alpasim_metrics
 from wod2sim.simulator.alpasim_direct_actor_planner import (
@@ -35,11 +34,11 @@ from wod2sim.simulator.alpasim_spotlight import DriveCommand, SpotlightReflexAlp
 from wod2sim.simulator.alpasim_token_bc import (
     TOKEN_ORDER,
     TokenBCAlpaSimModel,
-    _GeomMLP,
     _actor_axis_route_guard_required,
     _actor_route_stable_violation,
     _adapter_spotlight_config,
     _candidate_axis_signals,
+    _GeomMLP,
     _prediction_ego_pose_world,
     _prediction_timestamp_us,
 )

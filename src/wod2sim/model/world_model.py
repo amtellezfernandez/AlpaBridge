@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
 import json
 import math
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, Iterable, Sequence
 
@@ -17,7 +17,6 @@ from .learned_trajectory_model import (
 )
 from .rfs_metric import Trajectory
 from .wod_e2e import WodCameraImage, WodE2EPreferenceFrame
-
 
 FEATURE_MODE_EGO_TEMPORAL = "ego_temporal"
 FEATURE_MODE_SCENE_TOKENS = "scene_tokens"
@@ -940,9 +939,9 @@ def _jpeg_luma_stats(jpeg: bytes) -> tuple[float, float, float]:
 
 def _decode_jpeg_luma(jpeg: bytes) -> np.ndarray | None:
     try:
-        from PIL import Image
-
         from io import BytesIO
+
+        from PIL import Image
 
         with Image.open(BytesIO(jpeg)) as image:
             return np.asarray(image.convert("L"))

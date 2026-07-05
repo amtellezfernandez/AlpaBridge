@@ -1,12 +1,29 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 import math
+from dataclasses import dataclass, field
 
-from .environment import DEFAULT_EGO_RADIUS_M, SIM_TICK_DT_S, Actor, Obstacle, Scenario, actor_to_obstacle_at_time, min_segment_clearance, min_time_swept_clearance, static_obstacles_at_time
+from .environment import (
+    DEFAULT_EGO_RADIUS_M,
+    SIM_TICK_DT_S,
+    Actor,
+    Obstacle,
+    Scenario,
+    actor_to_obstacle_at_time,
+    min_segment_clearance,
+    min_time_swept_clearance,
+    static_obstacles_at_time,
+)
 from .perception import ScenePerception, perceived_obstacle_axis_extent
 from .planner import PlannedAction
-from .trajectory_selector import TrajectoryCandidate, TrajectoryReference, TrajectorySelectorScore, TrajectorySelectorConfig, Trajectory, score_candidate
+from .trajectory_selector import (
+    Trajectory,
+    TrajectoryCandidate,
+    TrajectoryReference,
+    TrajectorySelectorConfig,
+    TrajectorySelectorScore,
+    score_candidate,
+)
 from .world_model import WorldState
 
 

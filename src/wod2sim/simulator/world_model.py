@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import math
+from dataclasses import dataclass
 
 from .environment import Scenario, route_centerline
 from .perception import ScenePerception, perceived_obstacle_axis_extent

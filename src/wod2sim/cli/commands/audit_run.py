@@ -8,7 +8,6 @@ from typing import Any
 
 from wod2sim.audit import export_alpasim_audit_log, summarize_audit_log
 
-
 DRIVER_LOG_SPECS = (
     ("spotlight_reflex", "spotlight", "driver/spotlight-log.jsonl"),
     ("token_dagger_bc", "selection", "driver/selection-log.jsonl"),

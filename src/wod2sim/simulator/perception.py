@@ -1,9 +1,15 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import math
+from dataclasses import dataclass
 
-from .environment import Obstacle, Scenario, nearest_lane_point, obstacle_signed_distance, route_centerline
+from .environment import (
+    Obstacle,
+    Scenario,
+    nearest_lane_point,
+    obstacle_signed_distance,
+    route_centerline,
+)
 
 
 @dataclass

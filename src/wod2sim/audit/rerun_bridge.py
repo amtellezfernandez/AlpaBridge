@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from .review import as_float, bookmarks_for_frame, frame_bookmarks, severity_policy
+from .review import bookmarks_for_frame, frame_bookmarks, severity_policy
 
 
 def load_audit_log(root: Path) -> tuple[dict[str, Any], list[dict[str, Any]]]:

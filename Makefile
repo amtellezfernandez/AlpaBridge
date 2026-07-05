@@ -1,6 +1,6 @@
 PYTHON ?= python3
 
-.PHONY: paper paper-verify test smoke build verify clean
+.PHONY: paper paper-verify lint coverage test smoke build verify clean
 
 paper:
 	$(MAKE) -C paper
@@ -15,6 +15,12 @@ paper-verify:
 test:
 	pytest tests/
 
+lint:
+	ruff check .
+
+coverage:
+	pytest --cov
+
 smoke:
 	$(PYTHON) scripts/release_bootstrap_smoke.py
 
@@ -25,7 +31,7 @@ build:
 		$(PYTHON) -m build; \
 	fi
 
-verify: test smoke build paper-verify
+verify: lint coverage smoke build paper-verify
 
 clean:
 	rm -rf .pytest_cache build dist src/*.egg-info

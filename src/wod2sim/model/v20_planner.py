@@ -12,7 +12,6 @@ from .neural_planner import (
     trajectory_constraint_penalty,
 )
 
-
 __all__ = [
     "NEURAL_PLANNER_MODEL_TYPE",
     "PLANNER_FRAME_CACHE_SCHEMA",

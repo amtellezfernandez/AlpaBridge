@@ -5,10 +5,9 @@ import importlib.util
 import json
 import subprocess
 import sys
+import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
-import unittest
-
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"

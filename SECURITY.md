@@ -1,0 +1,18 @@
+# Security Policy
+
+## Supported Versions
+
+Security fixes are handled on the `main` branch until the project starts publishing
+versioned release branches.
+
+## Reporting a Vulnerability
+
+Please report suspected vulnerabilities privately by emailing the repository owner
+instead of opening a public issue. Include:
+
+- the affected commit or release
+- the command or workflow that exposes the issue
+- any relevant logs, stack traces, or reproduction steps
+
+The maintainer will acknowledge valid reports and coordinate a fix before public
+disclosure when the issue affects released code.

@@ -6,11 +6,15 @@ from typing import Any, Iterable, Sequence
 
 import numpy as np
 
-from .learned_trajectory_model import FUTURE_WAYPOINTS, PAST_WAYPOINTS, OUTPUT_DIM, _trajectory_from_output
+from .learned_trajectory_model import (
+    FUTURE_WAYPOINTS,
+    OUTPUT_DIM,
+    PAST_WAYPOINTS,
+    _trajectory_from_output,
+)
 from .neural_trajectory_model import load_neural_training_frame_cache
 from .rfs_metric import Trajectory
 from .wod_e2e import WodE2EPreferenceFrame
-
 
 TRANSFORMER_MODEL_TYPE = "transformer_trajectory_proposal_model_v1"
 

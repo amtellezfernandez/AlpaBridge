@@ -17,7 +17,6 @@ import yaml
 
 from wod2sim.cli.runtime_paths import package_path, workspace_path
 
-
 DEFAULT_ALPASIM_ROOT = workspace_path("workspace", "alpasim")
 DEFAULT_RUNS_ROOT = workspace_path("runs")
 SCENE_PRESET_ROOT = package_path("simulator", "alpasim_scene_presets")

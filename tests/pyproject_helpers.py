@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from pathlib import Path
 import re
-
+from pathlib import Path
 
 _SECTION_RE = re.compile(r"^\[(?P<section>.+)]$")
 _STRING_ASSIGNMENT_RE = re.compile(r'^(?P<key>[A-Za-z0-9_.-]+)\s*=\s*"(?P<value>.*)"\s*$')

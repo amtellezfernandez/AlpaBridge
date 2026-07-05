@@ -1,17 +1,17 @@
 from __future__ import annotations
 
+import argparse
+import importlib.util
 import json
 import os
+import subprocess
+import sys
 import tempfile
+import types
 import unittest
-import importlib.util
 from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
-import subprocess
-import argparse
-import sys
-import types
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
@@ -20,44 +20,54 @@ if str(ROOT) not in sys.path:
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-import wod2sim.cli.commands.setup_alpasim_local_plugin as setup_cmd
 import wod2sim.cli.commands.run_alpasim_local_external as launch_cmd
-from wod2sim.cli.commands.run_alpasim_local_external import _resolve_alpasim_root as resolve_run_root
-from wod2sim.cli.commands.run_alpasim_local_external import _preflight_scene_artifacts
-from wod2sim.cli.commands.run_alpasim_local_external import _preflight_docker_access
-from wod2sim.cli.commands.run_alpasim_local_external import _preflight_alpasim_base_image
-from wod2sim.cli.commands.run_alpasim_local_external import _validate_alpasim_checkout as validate_run_checkout
+import wod2sim.cli.commands.setup_alpasim_local_plugin as setup_cmd
 from wod2sim.cli.commands.run_alpasim_local_external import (
+    _ALL_MODEL_PRESETS,
     MODEL_PRESETS,
     PUBLIC_RELEASE_MODELS,
-    _ALL_MODEL_PRESETS,
     _aggregate_status,
-    _build_parser as build_run_parser,
     _complete_run_status,
-    _driver_env,
     _driver_command,
+    _driver_env,
     _planned_run_status,
+    _preflight_alpasim_base_image,
+    _preflight_docker_access,
     _preflight_platform_compatibility,
-    _write_run_status,
+    _preflight_scene_artifacts,
+    _scene_ids,
     _wizard_command,
     _wizard_deploy_target,
+    _write_run_status,
 )
-from wod2sim.cli.commands.run_alpasim_local_external import _scene_ids
+from wod2sim.cli.commands.run_alpasim_local_external import (
+    _build_parser as build_run_parser,
+)
+from wod2sim.cli.commands.run_alpasim_local_external import (
+    _resolve_alpasim_root as resolve_run_root,
+)
+from wod2sim.cli.commands.run_alpasim_local_external import (
+    _validate_alpasim_checkout as validate_run_checkout,
+)
+from wod2sim.cli.commands.run_alpasim_scene_batch import _build_parser as build_batch_parser
 from wod2sim.cli.commands.setup_alpasim_local_plugin import (
-    _apply_local_alpasim_overrides,
+    ALPASIM_CORE_DEPENDENCIES,
+    ALPASIM_EDITABLE_PACKAGES,
     _apply_alpasim_patch,
+    _apply_local_alpasim_overrides,
     _bootstrap_alpasim_venv,
     _compile_alpasim_protos,
     _install_torch_for_alpasim,
     _patch_effectively_present,
     _remove_conflicting_wod2sim_distributions,
     _should_copy_override_path,
-    ALPASIM_CORE_DEPENDENCIES,
-    ALPASIM_EDITABLE_PACKAGES,
+)
+from wod2sim.cli.commands.setup_alpasim_local_plugin import (
     _resolve_alpasim_root as resolve_setup_root,
+)
+from wod2sim.cli.commands.setup_alpasim_local_plugin import (
     _validate_alpasim_checkout as validate_setup_checkout,
 )
-from wod2sim.cli.commands.run_alpasim_scene_batch import _build_parser as build_batch_parser
 
 
 class AlpaSimSetupScriptTests(unittest.TestCase):

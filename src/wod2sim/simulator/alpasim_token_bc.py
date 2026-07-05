@@ -24,24 +24,28 @@ from .alpasim_spotlight import (
     DriveCommand,
     ModelPrediction,
     PredictionInput,
-    _SensorFreshnessGuard,
     _resample_to_frequency,
+    _SensorFreshnessGuard,
 )
 from .environment import (
     DEFAULT_EGO_RADIUS_M,
     SIM_TICK_DT_S,
     actor_to_obstacle_at_time,
-    min_time_swept_clearance,
     min_segment_clearance,
+    min_time_swept_clearance,
     nearest_lane_point,
     route_centerline,
     scenario_at_tick,
     static_obstacles_at_time,
 )
 from .perception import perceive_scene
-from .spotlight_reflex import DEFAULT_SPOTLIGHT_CONFIG, evaluate_maneuver_candidates, generate_maneuver_candidates, _planning_heading
+from .spotlight_reflex import (
+    DEFAULT_SPOTLIGHT_CONFIG,
+    _planning_heading,
+    evaluate_maneuver_candidates,
+    generate_maneuver_candidates,
+)
 from .world_model import update_world_state
-
 
 N_FEATURES = 10
 N_TOKENS = 9

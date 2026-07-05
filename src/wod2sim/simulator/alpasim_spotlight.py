@@ -3,10 +3,10 @@ from __future__ import annotations
 import json
 import math
 import os
+import zlib
 from pathlib import Path
 from threading import Lock
 from typing import Any
-import zlib
 
 import numpy as np
 
