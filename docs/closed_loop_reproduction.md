@@ -115,6 +115,22 @@ log. The evidence directory also contains:
 The support bundle packages the run metadata, generated driver/wizard commands,
 driver logs, aggregate outputs when present, and normalized audit export.
 
+For multiple reproduction runs, aggregate the evidence directories into one
+compact benchmark summary:
+
+```bash
+wod2sim-benchmark-summary \
+  --evidence-dir /tmp/wod2sim-repro-spotlight/evidence \
+  --evidence-dir /tmp/wod2sim-repro-token-bc/evidence \
+  --output /tmp/wod2sim-benchmark-summary.json \
+  --json
+```
+
+Add `--strict` when publishing benchmark claims. Strict mode exits nonzero unless
+every included run is completed, audit-valid, sensor-clean, and has a support
+bundle. Plan-only manifests remain useful for command review, but they keep
+`valid_claim_evidence: false`.
+
 ## Recorded Local Evidence
 
 This repository includes a compact summary of one locally executed
@@ -137,8 +153,8 @@ gated-scene-derived artifacts.
 - WOD-derived files unless their redistribution rights are explicit
 
 If you publish a result based on this repo, publish the reproduction manifest,
-support bundle, exact command line, commit SHA, model artifact provenance, and a
-clear statement of which gated assets were used.
+support bundle, benchmark summary JSON, exact command line, commit SHA, model
+artifact provenance, and a clear statement of which gated assets were used.
 
 For a stricter benchmark-style protocol and the remaining reasons this is not a
 Waymo-grade artifact yet, see [`waymo_readiness.md`](waymo_readiness.md).

@@ -164,6 +164,7 @@ def run_release_bootstrap_smoke(*, source_root: Path, keep_temp: bool, installer
     audit_json = checkout_root / "bootstrap-audit.json"
     batch_dir = checkout_root / "bootstrap-batch"
     reproduce_dir = checkout_root / "bootstrap-reproduce"
+    benchmark_summary_json = checkout_root / "bootstrap-benchmark-summary.json"
 
     step_specs = [
         *_bootstrap_install_steps(
@@ -198,6 +199,7 @@ def run_release_bootstrap_smoke(*, source_root: Path, keep_temp: bool, installer
         ("audit_run_help", [str(venv_bin / "wod2sim-audit-run"), "--help"]),
         ("support_bundle_help", [str(venv_bin / "wod2sim-support-bundle"), "--help"]),
         ("reproduce_help", [str(venv_bin / "wod2sim-reproduce"), "--help"]),
+        ("benchmark_summary_help", [str(venv_bin / "wod2sim-benchmark-summary"), "--help"]),
         (
             "reproduce_plan",
             [
@@ -208,6 +210,17 @@ def run_release_bootstrap_smoke(*, source_root: Path, keep_temp: bool, installer
                 str(reproduce_dir / "run"),
                 "--evidence-dir",
                 str(reproduce_dir / "evidence"),
+            ],
+        ),
+        (
+            "benchmark_summary_plan",
+            [
+                str(venv_bin / "wod2sim-benchmark-summary"),
+                "--evidence-dir",
+                str(reproduce_dir / "evidence"),
+                "--output",
+                str(benchmark_summary_json),
+                "--json",
             ],
         ),
         ("audit_signal", [str(venv_bin / "wod2sim-audit-signal"), "--output", str(audit_json)]),
@@ -246,6 +259,7 @@ def run_release_bootstrap_smoke(*, source_root: Path, keep_temp: bool, installer
         "reproduce_manifest": str(
             reproduce_dir / "evidence" / "closed-loop-reproduction-manifest.json"
         ),
+        "benchmark_summary_json": str(benchmark_summary_json),
     }
     if ok:
         installed_summary = _doctor_summary(doctor_json)
@@ -259,6 +273,7 @@ def run_release_bootstrap_smoke(*, source_root: Path, keep_temp: bool, installer
             and source_summary["public_model_registry_curated"]
             and audit_json.is_file()
             and (reproduce_dir / "evidence" / "closed-loop-reproduction-manifest.json").is_file()
+            and benchmark_summary_json.is_file()
             and (batch_dir / "batch-status.json").is_file()
         )
 

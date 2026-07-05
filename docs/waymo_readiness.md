@@ -35,7 +35,7 @@ benchmark packet over user-provided assets:
 - exact `wod2sim-reproduce --execute` command lines
 - one manifest per run with git/package/runtime provenance
 - support-bundle hashes and audit summaries
-- aggregate metrics copied into a compact, redistributable summary
+- aggregate metrics copied into a compact `wod2sim-benchmark-summary` JSON
 - a clear statement of which assets were local/gated and therefore not shipped
 
 After that, the stronger milestone is a simulator-neutral interface: the same
@@ -75,12 +75,24 @@ wod2sim-reproduce \
   --json
 ```
 
+After all runs finish, publish a compact summary instead of raw gated artifacts:
+
+```bash
+wod2sim-benchmark-summary \
+  --evidence-dir runs/benchmark_spotlight_reflex_10scene/evidence \
+  --evidence-dir runs/benchmark_token_dagger_bc_10scene/evidence \
+  --output runs/wod2sim-benchmark-summary.json \
+  --strict \
+  --json
+```
+
 Publish only redistributable summaries unless you have explicit rights to share
 the underlying AlpaSim/WOD-derived artifacts. At minimum, publish:
 
 - `closed-loop-reproduction-manifest.json`
 - `run-audit.json`
 - `support-bundle-report.json`
+- `wod2sim-benchmark-summary.json`
 - support-bundle SHA256
 - aggregate metric text or a manually extracted metric table
 - exact WOD2Sim commit SHA and package version
