@@ -66,20 +66,18 @@ review the run.
 For the detailed dataset and simulator positioning, see
 [`docs/waymo_motion_and_alpasim.md`](docs/waymo_motion_and_alpasim.md).
 
-## Paper Positioning
+## Research Scope
 
-WOD2Sim is best read as a systems, benchmark, and simulator-adapter artifact. It
-does not introduce a new autonomous driving policy. The contribution is the
-bridge that makes WOD-style trajectory policies executable inside AlpaSim's
-closed-loop external-driver runtime, then packages the run as reviewable
-evidence.
+WOD2Sim is a systems and evaluation artifact. It does not introduce a new
+autonomous driving policy. Its contribution is the bridge that makes WOD-style
+trajectory policies executable inside AlpaSim's closed-loop external-driver
+runtime, then packages the run as reviewable evidence.
 
-The current public evidence is strongest for integration and reproducibility:
-setup checks, launch materialization, driver logs, audits, support-bundle
-hashes, and a recorded one-scene `spotlight_reflex` run. Stronger benchmark
-claims should add multi-scene evaluation, baselines, failure taxonomy, and
-ablations for route waypoints, model discovery, session lifecycle, and launch
-state.
+The current public release focuses on integration and reproducibility: setup
+checks, launch materialization, driver logs, audits, support-bundle hashes, and a
+recorded one-scene `spotlight_reflex` run. Large multi-scene benchmark studies,
+policy-quality comparisons, and full Waymo-to-AlpaSim scene reconstruction are
+outside this release.
 
 ## Quick Start Without Private Assets
 
