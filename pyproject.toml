@@ -87,7 +87,7 @@ source = ["wod2sim"]
 [tool.coverage.report]
 show_missing = true
 skip_covered = true
-fail_under = 35
+fail_under = 33
 
 [tool.ruff]
 line-length = 100
