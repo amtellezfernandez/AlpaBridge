@@ -16,7 +16,9 @@ Waymo-to-AlpaSim dataset converter. The current artifact reports integration and
 reproducibility evidence, including public setup checks, contract tests, launch
 commands, audits, support-bundle hashes, and one recorded AlpaSim closed-loop
 run. Larger multi-scene benchmark studies and policy-quality comparisons are
-left outside this release.
+left outside this release. The public benchmark claim boundary and metric
+protocol are documented in
+[`docs/evaluation_protocol.md`](../docs/evaluation_protocol.md).
 
 Build locally with:
 
