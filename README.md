@@ -110,6 +110,19 @@ wod2sim-doctor --alpasim-root /path/to/alpasim --scene-preset front_camera_10sce
 wod2sim-launch --mode both --model spotlight_reflex --scene-preset front_camera_10scene_smoke
 ```
 
+For the evidence-oriented closed-loop reproduction workflow, use:
+
+```bash
+wod2sim-reproduce --execute --alpasim-root /path/to/alpasim --model spotlight_reflex
+```
+
+Without `--execute`, the same command writes a public command manifest without
+requiring private AlpaSim assets. See
+[`docs/closed_loop_reproduction.md`](docs/closed_loop_reproduction.md) for the
+claim boundary, gated-asset requirements, and recorded evidence format.
+One compact recorded evidence summary is tracked at
+[`docs/evidence/closed_loop_spotlight_reflex_one_scene.json`](docs/evidence/closed_loop_spotlight_reflex_one_scene.json).
+
 If you already have the gated USDZ cache in another local checkout, import it into
 this repo's nested AlpaSim tree without Docker-breaking absolute symlinks:
 
@@ -174,6 +187,8 @@ failure so multi-scene triage does not collapse to `partial` or `missing`.
 - [`scripts/`](scripts) provides top-level entry wrappers for the public workflows.
 - [`third_party/alpasim_overrides/`](third_party/alpasim_overrides) contains the tracked
   AlpaSim override files and patch sets needed by the reproduction path.
+- [`docs/closed_loop_reproduction.md`](docs/closed_loop_reproduction.md) documents
+  the actual closed-loop evidence workflow and gated asset boundaries.
 - [`paper/`](paper) contains the LaTeX source for the paper.
 
 ## Paper

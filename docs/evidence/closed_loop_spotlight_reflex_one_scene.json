@@ -1,0 +1,95 @@
+{
+  "schema": "wod2sim_recorded_closed_loop_evidence_summary_v1",
+  "recorded_at": "2026-07-05T13:40:43+02:00",
+  "recorded_worktree": "local worktree based on e815a9f with the reproduction workflow added before this summary was committed",
+  "claim": "One public WOD2Sim adapter completed a real AlpaSim external-driver closed-loop run using user-provided local AlpaSim assets.",
+  "claim_scope": {
+    "supports": [
+      "WOD2Sim can wire the public spotlight_reflex adapter into AlpaSim external-driver closed-loop execution.",
+      "The run produced structured driver logs, aggregate metrics, a normalized audit export, and a support bundle.",
+      "The sensor freshness audit found no camera-pipeline failures for this run."
+    ],
+    "does_not_support": [
+      "Redistribution of AlpaSim, gated scene assets, or private checkpoints.",
+      "A claim that synthetic dry runs or command plans are closed-loop evidence.",
+      "A learned-model quality claim for token_dagger_bc or direct_actor_planner."
+    ]
+  },
+  "command": [
+    "uv",
+    "run",
+    "--extra",
+    "dev",
+    "wod2sim-reproduce",
+    "--execute",
+    "--alpasim-root",
+    "workspace/alpasim",
+    "--model",
+    "spotlight_reflex",
+    "--scene-id",
+    "clipgt-a309e228-26e1-423e-a44c-cb00aa7378cb",
+    "--run-dir",
+    "runs/closed_loop_spotlight_reflex_one_scene",
+    "--evidence-dir",
+    "runs/closed_loop_spotlight_reflex_one_scene/evidence",
+    "--timeout",
+    "300",
+    "--driver-warmup-seconds",
+    "5",
+    "--json"
+  ],
+  "environment_requirements_observed": {
+    "alpasim_checkout": "workspace/alpasim",
+    "docker_image": "alpasim-base:0.66.0",
+    "docker_access": "ok",
+    "nvidia_container_runtime": "ok",
+    "scene_artifacts": "ok"
+  },
+  "run": {
+    "model": "spotlight_reflex",
+    "scene_ids": [
+      "clipgt-a309e228-26e1-423e-a44c-cb00aa7378cb"
+    ],
+    "mode": "both",
+    "phase": "both",
+    "state": "completed",
+    "driver_returncode": 0,
+    "wizard_returncode": 0,
+    "aggregate_status": "completed"
+  },
+  "audit": {
+    "valid": true,
+    "frame_count": 199,
+    "audit_frame_count": 199,
+    "bookmark_count": 581,
+    "driver_log_kind": "spotlight",
+    "sensor_pipeline_ok": true,
+    "sensor_failure_count": 0,
+    "max_pose_camera_lag_us": 0,
+    "result_counts": {
+      "ok": 199
+    },
+    "sensor_status_counts": {
+      "ok_camera_advanced": 41,
+      "ok_initial": 1,
+      "ok_pose_static": 157
+    }
+  },
+  "support_bundle": {
+    "valid": true,
+    "copied_file_count": 11,
+    "missing_file_count": 2,
+    "missing_files": [
+      "aggregate/*.csv",
+      "aggregate/*.json"
+    ],
+    "local_path": "runs/closed_loop_spotlight_reflex_one_scene/evidence/support-bundle.tar.gz",
+    "sha256": "76f96e8664c6bc21119b1e6c514c2639db23c2341555af6e9178ae1710873aa9"
+  },
+  "local_evidence_hashes": {
+    "closed-loop-reproduction-manifest.json": "0c7379b881dd84335cf28f5a0bf5d0ccba6fba16d8ec409c4b3615026a57b8c3",
+    "run-audit.json": "b03b0937718f561967b468ddeceb52d34d4cd1ef8afcc84f93324657baafd4bd",
+    "support-bundle.tar.gz": "76f96e8664c6bc21119b1e6c514c2639db23c2341555af6e9178ae1710873aa9"
+  },
+  "redistribution_note": "The full run directory and support bundle are intentionally not tracked because they may contain AlpaSim/gated-scene-derived artifacts. This summary records the command, audit outcome, and local hashes."
+}

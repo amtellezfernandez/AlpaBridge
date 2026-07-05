@@ -163,6 +163,7 @@ def run_release_bootstrap_smoke(*, source_root: Path, keep_temp: bool, installer
     source_doctor_json = checkout_root / "bootstrap-doctor-source.json"
     audit_json = checkout_root / "bootstrap-audit.json"
     batch_dir = checkout_root / "bootstrap-batch"
+    reproduce_dir = checkout_root / "bootstrap-reproduce"
 
     step_specs = [
         *_bootstrap_install_steps(
@@ -196,6 +197,19 @@ def run_release_bootstrap_smoke(*, source_root: Path, keep_temp: bool, installer
         ("oracle_proxy_help", [str(venv_bin / "wod2sim-build-oracle-proxy"), "--help"]),
         ("audit_run_help", [str(venv_bin / "wod2sim-audit-run"), "--help"]),
         ("support_bundle_help", [str(venv_bin / "wod2sim-support-bundle"), "--help"]),
+        ("reproduce_help", [str(venv_bin / "wod2sim-reproduce"), "--help"]),
+        (
+            "reproduce_plan",
+            [
+                str(venv_bin / "wod2sim-reproduce"),
+                "--scene-id",
+                "bootstrap-scene",
+                "--run-dir",
+                str(reproduce_dir / "run"),
+                "--evidence-dir",
+                str(reproduce_dir / "evidence"),
+            ],
+        ),
         ("audit_signal", [str(venv_bin / "wod2sim-audit-signal"), "--output", str(audit_json)]),
         (
             "batch_print",
@@ -229,6 +243,9 @@ def run_release_bootstrap_smoke(*, source_root: Path, keep_temp: bool, installer
         "source_doctor_json": str(source_doctor_json),
         "audit_json": str(audit_json),
         "batch_dir": str(batch_dir),
+        "reproduce_manifest": str(
+            reproduce_dir / "evidence" / "closed-loop-reproduction-manifest.json"
+        ),
     }
     if ok:
         installed_summary = _doctor_summary(doctor_json)
@@ -241,6 +258,7 @@ def run_release_bootstrap_smoke(*, source_root: Path, keep_temp: bool, installer
             and installed_summary["public_model_registry_curated"]
             and source_summary["public_model_registry_curated"]
             and audit_json.is_file()
+            and (reproduce_dir / "evidence" / "closed-loop-reproduction-manifest.json").is_file()
             and (batch_dir / "batch-status.json").is_file()
         )
 

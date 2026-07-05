@@ -81,6 +81,17 @@ wod2sim-doctor --alpasim-root /path/to/alpasim --scene-preset front_camera_10sce
 wod2sim-launch --mode both --model spotlight_reflex --scene-preset front_camera_10scene_smoke
 ```
 
+For a claim-verification run that records the exact commands, audit output, and
+support bundle in one place, prefer:
+
+```bash
+wod2sim-reproduce --execute --alpasim-root /path/to/alpasim --model spotlight_reflex --scene-preset front_camera_10scene_smoke
+```
+
+The same command without `--execute` writes a plan-only manifest that does not
+require private assets and does not count as closed-loop evidence. See
+[`closed_loop_reproduction.md`](closed_loop_reproduction.md).
+
 If you want the repo to prepare its own local `.venv` and wire the nested
 AlpaSim checkout in one pass, use:
 
@@ -196,4 +207,5 @@ actionable without opening each run directory by hand.
 - it does not ship AlpaSim itself
 - it does not ship private checkpoints
 - it does not ship gated scene assets
+- it does not claim a dry-run, synthetic smoke, or `--mode print` plan is WOD-to-closed-loop evidence
 - it does not claim that unpublished research presets are supported in the public release
