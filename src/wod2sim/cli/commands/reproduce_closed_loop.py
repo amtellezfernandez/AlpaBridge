@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import platform
 import subprocess
 import sys
 from datetime import datetime
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any
 
@@ -223,6 +225,7 @@ def _initial_manifest(args: argparse.Namespace, plan: list[dict[str, Any]]) -> d
         "mode": "execute" if args.execute else "plan",
         "created_at": _timestamp(),
         "updated_at": _timestamp(),
+        "provenance": _provenance(),
         "alpasim_root": str(args.alpasim_root.resolve()),
         "model": args.model,
         "scene_preset": args.scene_preset,
@@ -313,6 +316,35 @@ def _run_step(step: dict[str, Any], *, evidence_dir: Path) -> dict[str, Any]:
         "stdout_log": str(stdout_log),
         "stderr_log": str(stderr_log),
     }
+
+
+def _provenance() -> dict[str, Any]:
+    return {
+        "python": sys.version.split()[0],
+        "platform": platform.platform(),
+        "machine": platform.machine(),
+        "wod2sim_version": _package_version(),
+        "git": {
+            "commit": _git_output(["git", "rev-parse", "HEAD"]),
+            "branch": _git_output(["git", "branch", "--show-current"]),
+            "dirty": bool(_git_output(["git", "status", "--porcelain"])),
+        },
+    }
+
+
+def _package_version() -> str | None:
+    try:
+        return version("wod2sim")
+    except PackageNotFoundError:
+        return None
+
+
+def _git_output(command: list[str]) -> str | None:
+    result = subprocess.run(command, capture_output=True, check=False, text=True)
+    if result.returncode != 0:
+        return None
+    output = result.stdout.strip()
+    return output or None
 
 
 def _resolve_run_dir(args: argparse.Namespace) -> Path:

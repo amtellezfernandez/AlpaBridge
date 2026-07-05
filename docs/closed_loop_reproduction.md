@@ -38,8 +38,8 @@ This writes:
 ```
 
 The manifest records the commands that would be run, the required gated inputs,
-and the expected evidence files. It sets `valid_claim_evidence: false` because no
-closed-loop rollout has executed.
+the git/package/runtime provenance, and the expected evidence files. It sets
+`valid_claim_evidence: false` because no closed-loop rollout has executed.
 
 ## Execute With User-Provided AlpaSim Assets
 
@@ -139,3 +139,6 @@ gated-scene-derived artifacts.
 If you publish a result based on this repo, publish the reproduction manifest,
 support bundle, exact command line, commit SHA, model artifact provenance, and a
 clear statement of which gated assets were used.
+
+For a stricter benchmark-style protocol and the remaining reasons this is not a
+Waymo-grade artifact yet, see [`waymo_readiness.md`](waymo_readiness.md).
