@@ -189,6 +189,8 @@ failure so multi-scene triage does not collapse to `partial` or `missing`.
   AlpaSim override files and patch sets needed by the reproduction path.
 - [`docs/closed_loop_reproduction.md`](docs/closed_loop_reproduction.md) documents
   the actual closed-loop evidence workflow and gated asset boundaries.
+- [`docs/waymo_readiness.md`](docs/waymo_readiness.md) records the remaining gap
+  between this research bridge and a broader benchmark or production-grade tool.
 - [`paper/`](paper) contains the LaTeX source for the paper.
 
 ## Paper

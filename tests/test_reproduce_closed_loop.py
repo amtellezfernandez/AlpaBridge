@@ -81,4 +81,7 @@ class ReproduceClosedLoopTests(unittest.TestCase):
         self.assertEqual("plan", manifest["mode"])
         self.assertEqual(["scene-a"], manifest["scene_ids"])
         self.assertIn("claim_boundary", manifest)
+        self.assertIn("provenance", manifest)
+        self.assertIn("git", manifest["provenance"])
+        self.assertIn("dirty", manifest["provenance"]["git"])
         self.assertEqual([], manifest["executed_steps"])
