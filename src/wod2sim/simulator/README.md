@@ -19,20 +19,13 @@ Use it for:
 
 - `spotlight_reflex.py` — primary geometry-first driving policy
 - `environment.py` — simulator loop and rollout execution
-- `compositional_scenarios.py` — long-tail scenario generation
-- `wod_scenarios.py` — WOD-style scenario families
-- `compass.py` — simulator benchmark scoring
 
 ## File Map
 
 - `perception.py` — obstacle / route state extraction
 - `world_model.py` — simulator-visible state bundle
-- `planner.py` / `policy.py` — maneuver planning interfaces
+- `planner.py` — maneuver planning interfaces
 - `trajectory_selector.py` — candidate scoring / ranking in the simulator tier
-- `safety.py` — safety filters and penalties
-- `render.py` — visual rendering utilities
-- `certification.py` — readiness and constraint checks
-- `interaction_features.py` — interaction-derived simulator features
 
 ## AlpaSim Lives Inside This Stack
 

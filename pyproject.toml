@@ -29,11 +29,8 @@ dev = [
     "pytest>=7.4",
 ]
 alpasim = [
-    "pandas>=2",
     "pyarrow>=16",
-    "scipy>=1.11",
 ]
-tuning = ["optuna>=3.6"]
 viz = ["Pillow>=10"]
 
 [project.entry-points."alpasim.models"]
@@ -57,9 +54,9 @@ wod2sim-support-bundle = "wod2sim.cli.commands.support_bundle:main"
 wod2sim-evidence = "wod2sim.neutral.alpasim_metrics:main"
 
 [project.urls]
-Homepage = "https://github.com/amtellezfernandez/wod2sim"
-Repository = "https://github.com/amtellezfernandez/wod2sim"
-Issues = "https://github.com/amtellezfernandez/wod2sim/issues"
+Homepage = "https://github.com/amtellezfernandez/wayspan"
+Repository = "https://github.com/amtellezfernandez/wayspan"
+Issues = "https://github.com/amtellezfernandez/wayspan/issues"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

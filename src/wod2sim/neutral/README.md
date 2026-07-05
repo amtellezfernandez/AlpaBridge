@@ -5,14 +5,10 @@ the simulator policy itself and not the WOD candidate stack itself.
 
 Use it for:
 
-- benchmark report generation
-- benchmark-to-benchmark comparison
 - AlpaSim metric normalization helpers
 
 ## Files
 
-- `benchmark_reports.py` — report builders over benchmark outputs
-- `benchmark_compare.py` — paired benchmark comparisons
 - `alpasim_metrics.py` — metric import / normalization helpers for AlpaSim outputs
 
 ## Boundary
