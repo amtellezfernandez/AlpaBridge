@@ -236,6 +236,8 @@ SCENE_PRESETS = {
     "fresh_3scene": SCENE_PRESET_ROOT / "fresh_3scene.yaml",
     "front_camera_10scene_smoke": SCENE_PRESET_ROOT / "front_camera_10scene_smoke.yaml",
     "front_camera_30scene_merged": SCENE_PRESET_ROOT / "front_camera_30scene_merged.yaml",
+    "front_camera_50scene_public2602": SCENE_PRESET_ROOT / "front_camera_50scene_public2602.yaml",
+    "front_camera_100scene_public2602": SCENE_PRESET_ROOT / "front_camera_100scene_public2602.yaml",
     "front_camera_collision18": SCENE_PRESET_ROOT / "front_camera_collision18.yaml",
 }
 
