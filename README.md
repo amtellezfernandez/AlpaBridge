@@ -77,7 +77,8 @@ The current public release focuses on integration and reproducibility: setup
 checks, launch materialization, driver logs, audits, support-bundle hashes, and a
 recorded one-scene `spotlight_reflex` run. Large multi-scene benchmark studies,
 policy-quality comparisons, and full Waymo-to-AlpaSim scene reconstruction are
-outside this release.
+outside this release. For benchmark claims and expected metrics, see
+[`docs/evaluation_protocol.md`](docs/evaluation_protocol.md).
 
 ## Quick Start Without Private Assets
 
