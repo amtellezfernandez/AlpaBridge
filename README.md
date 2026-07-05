@@ -4,65 +4,42 @@
   <a href="https://github.com/amtellezfernandez/WOD2Sim/actions/workflows/ci.yml"><img src="https://github.com/amtellezfernandez/WOD2Sim/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-BSD--3--Clause-blue.svg" alt="BSD-3-Clause license"></a>
   <img src="https://img.shields.io/badge/python-3.10%2B-0f766e.svg" alt="Python 3.10+">
-  <img src="https://img.shields.io/badge/evidence-manifest%20%2B%20audit%20%2B%20bundle-d97928.svg" alt="Evidence workflow">
+  <img src="https://img.shields.io/badge/output-manifest%20%2B%20audit%20%2B%20bundle-d97928.svg" alt="Evidence output">
 </p>
 
-`WOD2Sim` is an installable Python package and public CLI for adapting
-WOD-style driving-policy outputs to NVIDIA AlpaSim's closed-loop external-driver
-runtime. It is a bridge and evidence workflow, not a redistributor of AlpaSim,
-Waymo assets, private checkpoints, or gated scene caches.
+WOD2Sim is an **unofficial research bridge** for running WOD-style driving
+policy adapters inside NVIDIA AlpaSim closed-loop simulation and packaging the
+result as auditable evidence.
 
-## Dataset And Simulator
+It connects three surfaces:
 
-WOD2Sim is built around the gap between logged motion data and closed-loop
-simulation:
+| Surface | Role |
+| --- | --- |
+| [Waymo Open Motion Dataset](https://waymo.com/open/data/motion/) | Logged multi-agent tracks, maps, Scenario protos, tensor examples, and public motion benchmarks. |
+| [NVIDIA AlpaSim](https://github.com/NVlabs/alpasim) | Closed-loop AV simulation where policy decisions affect future observations. |
+| WOD2Sim | Adapter code, launch CLI, run audit, support bundle, and benchmark summary JSON. |
 
-| Surface | Link | Why it matters |
-| --- | --- | --- |
-| Waymo Open Motion Dataset | [waymo.com/open/data/motion](https://waymo.com/open/data/motion/) | Logged multi-agent trajectories, map context, Scenario protos, tensorized `tf.Example` records, and public motion benchmarks. |
-| 2025 WOD motion challenges | [Interaction Prediction, Sim Agents, Scenario Generation](https://waymo.com/open/challenges/) | The benchmark framing for forecasting, simulated agents, and scenario generation. |
-| NVIDIA AlpaSim | [NVIDIA simulation overview](https://developer.nvidia.com/drive/simulation), [AlpaSim docs](https://nvlabs-alpasim.mintlify.app/introduction), and [NVlabs/alpasim](https://github.com/NVlabs/alpasim) | Closed-loop AV simulation where a policy's decisions affect the rollout. |
+This repository is not affiliated with Waymo or NVIDIA. It does not redistribute
+Waymo data, AlpaSim, gated scene assets, private checkpoints, or raw rollout
+media.
 
-Waymo Motion provides the data foundation: 103,354 segments with 20 seconds of
-object tracks at 10 Hz plus map data, broken into 9 second windows with 1 second
-of history and 8 seconds of future. Train/validation windows expose 91 samples
-per scenario; challenge test windows expose only history/current state while
-hiding future ground truth.
+## Why This Exists
 
-Waymo Motion alone is not enough for this repo's claim because it is logged data,
-not policy-in-the-loop execution. WOD2Sim adds the adapter and evidence layer
-needed to run WOD-style policies inside AlpaSim and publish auditable closed-loop
-artifacts. See [`docs/waymo_motion_and_alpasim.md`](docs/waymo_motion_and_alpasim.md)
-for the full dataset and simulator explanation.
+Waymo Motion is excellent for training and benchmarking motion behavior from
+logged trajectories. It is not, by itself, a closed-loop runtime: the world does
+not react to a submitted policy.
 
-## What This Repo Gives You
+AlpaSim tests a different failure mode: what happens when the policy's own
+actions change the rollout. WOD2Sim provides the bridge from WOD-style policy
+signals to AlpaSim external-driver execution, then records the evidence needed to
+review the run.
 
-| Surface | Public without private assets? | Output |
-| --- | --- | --- |
-| Package install and doctor checks | Yes | importable `wod2sim`, CLI health report |
-| Reproduction command planning | Yes | manifest with commands, provenance, and `valid_claim_evidence: false` |
-| AlpaSim closed-loop execution | Requires local AlpaSim and gated/user assets | driver logs, audit JSON, support bundle |
-| Benchmark packet summary | Yes, if evidence JSON is present | compact JSON across one or more reproduction runs |
+For the detailed dataset and simulator positioning, see
+[`docs/waymo_motion_and_alpasim.md`](docs/waymo_motion_and_alpasim.md).
 
-## What Is In Scope
+## Quick Start Without Private Assets
 
-- AlpaSim model adapters:
-  `spotlight_reflex`, `token_dagger_bc`, and `direct_actor_planner`
-- policy-facing signal reconstruction from AlpaSim prediction inputs
-- route-waypoint adapter behavior and tracked AlpaSim override files
-- local setup, readiness, launch, and scene-batch orchestration
-- simulator-side policy code used by the adapter surface
-- the paper and its build assets
-
-## What Is Not Bundled
-
-- AlpaSim itself: this repo expects a separate nested AlpaSim checkout
-- private checkpoints or large local artifacts from the original research tree
-- gated scene assets and local Docker images
-
-## First 5 Minutes
-
-Install and run the public checks:
+Install the package and run the public checks:
 
 ```bash
 uv venv .venv
@@ -71,7 +48,7 @@ wod2sim-doctor
 make test
 ```
 
-Create a public reproduction plan without AlpaSim or gated scene assets:
+Create a reproduction plan. This does not need AlpaSim or gated assets:
 
 ```bash
 wod2sim-reproduce \
@@ -81,7 +58,7 @@ wod2sim-reproduce \
   --json
 ```
 
-Turn that plan evidence into a benchmark-shaped summary:
+Summarize the planned evidence:
 
 ```bash
 wod2sim-benchmark-summary \
@@ -90,14 +67,13 @@ wod2sim-benchmark-summary \
   --json
 ```
 
-That summary is useful for review, but it intentionally remains
-`valid_claim_evidence: false` until the workflow is executed against real local
-AlpaSim assets.
+The output is useful for reviewing the command path, but it intentionally reports
+`valid_claim_evidence: false` until a real AlpaSim run executes.
 
-## Closed-Loop Evidence
+## Closed-Loop Run With AlpaSim
 
-With a local AlpaSim checkout, Docker/GPU runtime, and any model-specific user
-artifact, execute the workflow:
+With a local AlpaSim checkout, Docker/GPU runtime, cached scenes, and any
+model-specific artifacts:
 
 ```bash
 wod2sim-reproduce \
@@ -110,7 +86,7 @@ wod2sim-reproduce \
   --json
 ```
 
-Then publish the compact evidence, not raw gated assets:
+Then publish a compact benchmark summary instead of raw gated artifacts:
 
 ```bash
 wod2sim-benchmark-summary \
@@ -120,129 +96,113 @@ wod2sim-benchmark-summary \
   --json
 ```
 
-The tracked local evidence summary records one executed `spotlight_reflex`
-closed-loop run: 1 scene, 199 audited frames, and 0 sensor failures. See
-[`docs/evidence/closed_loop_spotlight_reflex_one_scene.json`](docs/evidence/closed_loop_spotlight_reflex_one_scene.json).
+A local one-scene `spotlight_reflex` run is summarized in
+[`docs/evidence/closed_loop_spotlight_reflex_one_scene.json`](docs/evidence/closed_loop_spotlight_reflex_one_scene.json):
+199 audited frames and 0 sensor failures. The raw rollout media and support
+bundle are not tracked because they may contain AlpaSim or gated-scene-derived
+content.
 
-## Demo Media Boundary
+## Evidence Contract
 
-This README uses SVG diagrams instead of a checked-in rollout video because raw
-AlpaSim/WOD-derived media may contain gated assets. If you have redistribution
-rights for a rollout, attach the video to a GitHub Release and link it here.
-Until then, the public visual artifact is the evidence trail: manifest, audit
-JSON, support-bundle report, hashes, and benchmark summary.
+A closed-loop claim should include:
 
-## Runtime Setup
+| Artifact | Purpose |
+| --- | --- |
+| `closed-loop-reproduction-manifest.json` | Exact commands, model, scenes, provenance, and claim boundary. |
+| `run-audit.json` | Driver-log summary, frame counts, result counts, and sensor freshness status. |
+| `support-bundle-report.json` | Report for the packaged run logs, configs, and normalized audit export. |
+| `support-bundle.tar.gz` hash | Local artifact integrity without redistributing gated files by default. |
+| `wod2sim-benchmark-summary.json` | Multi-run aggregate with strict evidence validation. |
 
-For a fuller first-time setup path and failure triage notes, see
-[`docs/integration_guide.md`](docs/integration_guide.md).
+Dry-run plans are valid review artifacts. They are not closed-loop evidence.
 
-If you also want the doctor command to diagnose a real AlpaSim checkout:
+## Waymo Motion Dataset Context
 
-```bash
-wod2sim-doctor --alpasim-root /path/to/alpasim
-```
+WOD2Sim is designed around the Waymo Open Motion Dataset format and benchmark
+framing:
 
-If that checkout is not fully synced yet and you only want host/runtime validation:
+| Feature | Waymo Motion |
+| --- | --- |
+| Storage | Sharded TFRecord files containing protocol buffer data. |
+| Splits | 70% training, 15% validation, 15% testing. |
+| Scale | 103,354 segments, each with 20 seconds of object tracks at 10 Hz plus map data. |
+| Model windows | 9 seconds: 1 second history and 8 seconds future. |
+| Scenario proto | Object tracks, dynamic map states, static map features, SDC track index, objects of interest, prediction targets, and current time index. |
+| Tensor format | `tf.Example` protos for model training pipelines. |
+| Benchmarks | Interaction Prediction, Sim Agents, and Scenario Generation among the WOD challenge tracks. |
 
-```bash
-wod2sim-doctor --alpasim-root /path/to/alpasim --skip-scene-artifacts
-```
-
-If `fresh_3scene` is not fully cached yet, a more reliable first live smoke is:
-
-```bash
-wod2sim-doctor --alpasim-root /path/to/alpasim --scene-preset front_camera_10scene_smoke
-wod2sim-launch --mode both --model spotlight_reflex --scene-preset front_camera_10scene_smoke
-```
-
-If you already have the gated USDZ cache in another local checkout, import it into
-this repo's nested AlpaSim tree without Docker-breaking absolute symlinks:
-
-```bash
-./scripts/import_alpasim_scene_cache.sh --source-root /path/to/other/alpasim
-```
+The official Waymo page includes dataset imagery such as `Open/Data/Motion Hero`
+and `Open/Hero Dots`. This repo links to the official page instead of copying
+those assets.
 
 ## Public Model Surface
 
-This release intentionally exposes a small public launch surface:
-
-- `spotlight_reflex`: checkpoint-free smoke-test adapter
-- `token_dagger_bc`: learned policy adapter; requires `--checkpoint /path/to/token_dagger_bc.pt`
-- `direct_actor_planner`: planner adapter; requires `--oracle-actor-proxy /path/to/oracle.json`
-
-Research-only presets outside this release are not advertised in the public CLI.
+| Model | Use |
+| --- | --- |
+| `spotlight_reflex` | Checkpoint-free smoke-test adapter. |
+| `token_dagger_bc` | Learned policy adapter; requires `--checkpoint /path/to/token_dagger_bc.pt`. |
+| `direct_actor_planner` | Planner adapter; requires `--oracle-actor-proxy /path/to/oracle.json`. |
 
 Examples:
 
 ```bash
-wod2sim-build-oracle-proxy --run-dir /path/to/run --output /path/to/oracle.json
 wod2sim-launch --mode print --model spotlight_reflex
 wod2sim-launch --mode print --model token_dagger_bc --checkpoint /path/to/token_dagger_bc.pt
+wod2sim-build-oracle-proxy --run-dir /path/to/run --output /path/to/oracle.json
 wod2sim-launch --mode print --model direct_actor_planner --oracle-actor-proxy /path/to/oracle.json
 ```
 
-After an executed run, summarize the public driver logs with:
+## Main Commands
+
+| Command | Purpose |
+| --- | --- |
+| `wod2sim-doctor` | Validate package install and optional AlpaSim environment. |
+| `wod2sim-setup` | Wire WOD2Sim into a local AlpaSim checkout. |
+| `wod2sim-ready` | Validate AlpaSim runtime and scene readiness. |
+| `wod2sim-launch` | Print or launch AlpaSim external-driver runs. |
+| `wod2sim-reproduce` | Plan or execute the full closed-loop evidence workflow. |
+| `wod2sim-audit-run` | Summarize executed run logs and sensor freshness. |
+| `wod2sim-support-bundle` | Package key run logs, configs, and audit output. |
+| `wod2sim-benchmark-summary` | Aggregate evidence directories into one benchmark JSON. |
+
+## Media Policy
+
+Public README media should come from redistribution-approved dataset frames,
+AlpaSim rollout clips, integration screenshots, or evidence plots. Local
+candidates under `runs/` and `workspace/` are intentionally ignored because they
+may contain gated or third-party content.
+
+See [`docs/readme_media.md`](docs/readme_media.md) before adding images or video.
+
+## Repository Layout
+
+| Path | Contents |
+| --- | --- |
+| `src/wod2sim/` | Python package. |
+| `src/wod2sim/simulator/` | AlpaSim adapters and simulator-facing logic. |
+| `src/wod2sim/cli/commands/` | Runtime and evidence CLI implementations. |
+| `scripts/` | Top-level wrappers for public workflows. |
+| `third_party/alpasim_overrides/` | Tracked AlpaSim override layer and patches. |
+| `docs/` | Integration, evidence, media, and Waymo/AlpaSim positioning docs. |
+| `paper/` | LaTeX paper source. |
+| `tests/` | Contract and release-surface tests. |
+
+## Development
+
+Run the standard checks:
 
 ```bash
-wod2sim-audit-run --run-dir /path/to/run
-wod2sim-audit-run --run-dir /path/to/run --audit-dir /path/to/audit --json
+make test
+make verify
 ```
 
-To package the key run logs, configs, and audit output into one shareable tarball:
-
-```bash
-wod2sim-support-bundle --run-dir /path/to/run
-wod2sim-support-bundle --run-dir /path/to/run --output /tmp/run_support_bundle.tar.gz --json
-```
-
-One important runtime invariant: if ego pose updates continue while camera timestamps stay frozen, the public adapters now fail fast with a `stale camera stream` error instead of silently planning on stale frames.
-Each public model also writes a structured per-frame driver log under `run_dir/driver/`:
-`spotlight-log.jsonl`, `selection-log.jsonl`, or `direct-planner-log.jsonl`.
-Those records include `sensor_freshness` fields with the latest camera timestamp,
-ego pose timestamp, lag, and failure status so upstream camera-pipeline faults are
-auditable after the run.
-Executed runs also write `run-status.json`, which records the launch mode, current
-phase, return codes, aggregate-output status, and key log paths.
-Batch runs now preserve a per-scene `diagnostics` block in `batch-status.json`
-with each scene's `run-status` summary, driver-log presence, and first camera-pipeline
-failure so multi-scene triage does not collapse to `partial` or `missing`.
-
-## Repo Layout
-
-- [`src/wod2sim/simulator/`](src/wod2sim/simulator) contains the
-  simulator logic and AlpaSim adapters.
-- [`src/wod2sim/cli/commands/`](src/wod2sim/cli/commands) contains the
-  runtime-facing command implementations.
-- [`scripts/`](scripts) provides top-level entry wrappers for the public workflows.
-- [`third_party/alpasim_overrides/`](third_party/alpasim_overrides) contains the tracked
-  AlpaSim override files and patch sets needed by the reproduction path.
-- [`docs/closed_loop_reproduction.md`](docs/closed_loop_reproduction.md) documents
-  the actual closed-loop evidence workflow and gated asset boundaries.
-- [`docs/waymo_readiness.md`](docs/waymo_readiness.md) records the remaining gap
-  between this research bridge and a broader benchmark or production-grade tool.
-- [`paper/`](paper) contains the LaTeX source for the paper.
-
-## Paper
-
-Build the paper with:
+Build the paper:
 
 ```bash
 make paper
 ```
 
-The source lives under [`paper/`](paper). CI publishes the compiled PDF as a build
-artifact instead of tracking generated PDFs in git.
-
-## Release Checks
-
-Run the public verification path with:
-
-```bash
-make verify
-```
-
-Clean generated local artifacts with:
+Clean generated local artifacts:
 
 ```bash
 make clean
@@ -258,9 +218,3 @@ If you use this repository in academic work, cite the software metadata in
 The repository is distributed under the BSD 3-Clause License. Some packaged
 AlpaSim override files carry separate third-party notices; see
 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
-
-## Production Notes
-
-- The GitHub CI runs lint, coverage, package build, wheel smoke, and paper build.
-- Learned presets still depend on external checkpoints not shipped in this repo.
-- Full AlpaSim execution still requires a separate checkout, local Docker access, and any gated scene assets.
