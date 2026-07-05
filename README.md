@@ -123,6 +123,17 @@ claim boundary, gated-asset requirements, and recorded evidence format.
 One compact recorded evidence summary is tracked at
 [`docs/evidence/closed_loop_spotlight_reflex_one_scene.json`](docs/evidence/closed_loop_spotlight_reflex_one_scene.json).
 
+For benchmark packets spanning multiple executed runs, aggregate the evidence
+directories with:
+
+```bash
+wod2sim-benchmark-summary --evidence-dir /path/to/evidence --output /tmp/wod2sim-benchmark-summary.json --json
+```
+
+Use `--strict` when the summary is meant to support a closed-loop benchmark
+claim; dry-run manifests remain valid command plans but do not count as claim
+evidence.
+
 If you already have the gated USDZ cache in another local checkout, import it into
 this repo's nested AlpaSim tree without Docker-breaking absolute symlinks:
 
