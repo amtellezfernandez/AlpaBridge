@@ -9,7 +9,7 @@ description = "Standalone code and paper release for adapting WOD-style driving 
 readme = "README.md"
 requires-python = ">=3.10"
 license = "BSD-3-Clause"
-license-files = ["LICENSE"]
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md", "LICENSES/*"]
 dependencies = [
     "numpy>=1.26",
     "PyYAML>=6",
