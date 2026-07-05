@@ -28,6 +28,15 @@ Do not copy these into tracked docs until the redistribution rights are clear.
 `runs/` can contain AlpaSim/WOD-derived media, and `workspace/` contains a
 third-party AlpaSim checkout.
 
+The official Waymo Motion page includes `Open/Data/Motion Hero` and
+`Open/Hero Dots` imagery, plus dataset visualization images. Do not copy those
+images into this repo unless their terms allow redistribution. Link to the
+official dataset page instead:
+
+```text
+https://waymo.com/open/data/motion/
+```
+
 ## How To Add Real Media
 
 When rights are confirmed, put the approved files under:

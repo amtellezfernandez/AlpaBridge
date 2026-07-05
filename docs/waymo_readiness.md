@@ -4,6 +4,9 @@ This repo should not be framed as something Waymo would adopt directly today.
 It is a WOD-style-policy to AlpaSim bridge and evidence workflow, not a Waymo
 simulator, planner, dataset product, or production evaluation stack.
 
+For the dataset/simulator positioning, see
+[`waymo_motion_and_alpasim.md`](waymo_motion_and_alpasim.md).
+
 ## Current Strength
 
 - The public adapters can be installed as a normal Python package.

@@ -12,22 +12,28 @@ WOD-style driving-policy outputs to NVIDIA AlpaSim's closed-loop external-driver
 runtime. It is a bridge and evidence workflow, not a redistributor of AlpaSim,
 Waymo assets, private checkpoints, or gated scene caches.
 
-## Media Gallery
+## Dataset And Simulator
 
-The README should show real media from three places: the dataset scene, the
-AlpaSim closed-loop rollout, and the WOD2Sim integration/evidence output. Those
-assets are not tracked yet because the local candidates live under ignored
-`runs/` and `workspace/` paths and may be gated or third-party.
+WOD2Sim is built around the gap between logged motion data and closed-loop
+simulation:
 
-| Media | Status | Expected tracked path |
+| Surface | Link | Why it matters |
 | --- | --- | --- |
-| Dataset frame | Waiting for redistribution-approved WOD/AlpaSim frame | `docs/assets/readme/dataset-frame.jpg` |
-| AlpaSim rollout video | Waiting for redistribution-approved rollout clip | `docs/assets/readme/alpasim-rollout.mp4` |
-| Integration screenshot | Waiting for a real terminal or UI capture | `docs/assets/readme/integration-terminal.png` |
-| Evidence metrics | Waiting for approved local-run metrics export | `docs/assets/readme/evidence-metrics.png` |
+| Waymo Open Motion Dataset | [waymo.com/open/data/motion](https://waymo.com/open/data/motion/) | Logged multi-agent trajectories, map context, Scenario protos, tensorized `tf.Example` records, and public motion benchmarks. |
+| 2025 WOD motion challenges | [Interaction Prediction, Sim Agents, Scenario Generation](https://waymo.com/open/challenges/) | The benchmark framing for forecasting, simulated agents, and scenario generation. |
+| NVIDIA AlpaSim | [NVIDIA simulation overview](https://developer.nvidia.com/drive/simulation), [AlpaSim docs](https://nvlabs-alpasim.mintlify.app/introduction), and [NVlabs/alpasim](https://github.com/NVlabs/alpasim) | Closed-loop AV simulation where a policy's decisions affect the rollout. |
 
-See [`docs/readme_media.md`](docs/readme_media.md) for the exact media slots and
-the local candidates that should be reviewed before publishing.
+Waymo Motion provides the data foundation: 103,354 segments with 20 seconds of
+object tracks at 10 Hz plus map data, broken into 9 second windows with 1 second
+of history and 8 seconds of future. Train/validation windows expose 91 samples
+per scenario; challenge test windows expose only history/current state while
+hiding future ground truth.
+
+Waymo Motion alone is not enough for this repo's claim because it is logged data,
+not policy-in-the-loop execution. WOD2Sim adds the adapter and evidence layer
+needed to run WOD-style policies inside AlpaSim and publish auditable closed-loop
+artifacts. See [`docs/waymo_motion_and_alpasim.md`](docs/waymo_motion_and_alpasim.md)
+for the full dataset and simulator explanation.
 
 ## What This Repo Gives You
 
