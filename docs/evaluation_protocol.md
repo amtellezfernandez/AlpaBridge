@@ -54,9 +54,34 @@ Closed-loop reports should include:
 | Evidence validity | manifest present, audit valid, support bundle valid, support bundle hash present |
 | Failure taxonomy | route drift, stale observations, heading-error compounding, recovery failure, lifecycle crash |
 
+`wod2sim-batch-summary` is the compact artifact for multi-scene AlpaSim batches.
+It reports per-scene completion, audited frames, closed-loop metric rates,
+failure taxonomy, and local artifact hashes without embedding rollout videos or
+scene assets.
+
 ## Scene Coverage
 
 A workshop-scale evaluation should cover at least a small multi-scene set across
 straight driving, turns, dense traffic, route merges, occlusion, and stop/go
 cases. A stronger benchmark claim should scale to dozens of scenes and report
 success/failure counts per route type.
+
+Recommended progression:
+
+| Stage | Preset | Claim strength |
+| --- | --- | --- |
+| Pilot | `front_camera_10scene_smoke` | Runtime stability and concrete closed-loop evidence. |
+| Workshop-scale | `front_camera_50scene_public2602` | Multi-scene failure taxonomy and baseline comparison. |
+| Stronger benchmark | `front_camera_100scene_public2602` | More credible aggregate rates and scenario diversity. |
+
+The 50/100-scene stages require a complete local AlpaSim scene cache or token
+access to the public scene artifacts. Public releases should publish compact
+JSON summaries, metric tables, hashes, and redistribution-cleared images only.
+
+Current tracked pilot evidence:
+
+| Artifact | Result |
+| --- | --- |
+| [`docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json`](evidence/closed_loop_spotlight_reflex_10scene_batch.json) | 10/10 completed scenes, 1,990 audited frames, 0 failed scenes, 0 sensor-pipeline failures. |
+| Failure taxonomy | 5 collision scenes, 2 at-fault collision scenes, 3 wrong-lane scenes, 0 offroad scenes, 7 low-progress scenes. |
+| Claim boundary | Closed-loop integration evidence for `spotlight_reflex`, not a policy-quality benchmark claim. |

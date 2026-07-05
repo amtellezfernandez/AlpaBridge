@@ -35,10 +35,11 @@ The next credible milestone is not more README language. It is a reproducible
 benchmark packet over user-provided assets:
 
 - a declared scene set, preferably `front_camera_10scene_smoke` first
-- exact `wod2sim-reproduce --execute` command lines
+- exact `wod2sim-batch --mode both` or `wod2sim-reproduce --execute` command lines
 - one manifest per run with git/package/runtime provenance
 - support-bundle hashes and audit summaries
-- aggregate metrics copied into a compact `wod2sim-benchmark-summary` JSON
+- aggregate metrics copied into compact `wod2sim-batch-summary` and
+  `wod2sim-benchmark-summary` JSON
 - a clear statement of which assets were local/gated and therefore not shipped
 
 After that, the stronger milestone is a simulator-neutral interface: the same
@@ -81,6 +82,23 @@ wod2sim-reproduce \
 After all runs finish, publish a compact summary instead of raw gated artifacts:
 
 ```bash
+wod2sim-batch \
+  --mode both \
+  --model spotlight_reflex \
+  --scene-preset front_camera_10scene_smoke \
+  --alpasim-root /path/to/alpasim \
+  --batch-dir runs/benchmark_spotlight_reflex_10scene \
+  --timeout 900 \
+  --driver-warmup-seconds 5 \
+  --max-retries 1 \
+  --continue-on-error
+
+wod2sim-batch-summary \
+  --batch-dir runs/benchmark_spotlight_reflex_10scene \
+  --output runs/benchmark_spotlight_reflex_10scene/wod2sim-batch-summary.json \
+  --strict \
+  --json
+
 wod2sim-benchmark-summary \
   --evidence-dir runs/benchmark_spotlight_reflex_10scene/evidence \
   --evidence-dir runs/benchmark_token_dagger_bc_10scene/evidence \
@@ -96,6 +114,27 @@ the underlying AlpaSim/WOD-derived artifacts. At minimum, publish:
 - `run-audit.json`
 - `support-bundle-report.json`
 - `wod2sim-benchmark-summary.json`
+- `wod2sim-batch-summary.json`
 - support-bundle SHA256
 - aggregate metric text or a manually extracted metric table
 - exact WOD2Sim commit SHA and package version
+
+## Scene-Scale Path
+
+Use the 10-scene preset first to validate runtime stability and evidence
+generation. The larger public-scene presets are:
+
+| Preset | Purpose |
+| --- | --- |
+| `front_camera_10scene_smoke` | Local pilot and screenshot/evidence generation. |
+| `front_camera_50scene_public2602` | Workshop-scale batch once scene cache and token access are ready. |
+| `front_camera_100scene_public2602` | Stronger systems benchmark claim with the same public AlpaSim catalog. |
+
+The 50/100-scene presets still require local access to the public AlpaSim scene
+artifacts, typically through a populated Hugging Face cache or an `HF_TOKEN`.
+
+The current public evidence artifact is
+[`docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json`](evidence/closed_loop_spotlight_reflex_10scene_batch.json).
+It records a completed 10-scene `spotlight_reflex` pilot with 1,990 audited
+frames, 0 failed scenes, and 0 sensor-pipeline failures while keeping raw
+AlpaSim/WOD-derived media out of git.

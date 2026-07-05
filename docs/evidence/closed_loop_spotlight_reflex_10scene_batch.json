@@ -1,0 +1,724 @@
+{
+  "aggregate": {
+    "aggregate_status_counts": {
+      "completed": 10
+    },
+    "completed_scene_count": 10,
+    "failed_scene_count": 0,
+    "missing_aggregate_scene_count": 0,
+    "observed_scene_count": 10,
+    "planned_scene_count": 10,
+    "result_counts": {
+      "completed": 10
+    },
+    "run_state_counts": {
+      "completed": 10
+    },
+    "sensor_failure_scene_count": 0,
+    "total_audited_frames": 1990
+  },
+  "artifact_policy": {
+    "local_video_hashes_are_recorded": true,
+    "raw_rollout_videos_included": false,
+    "raw_scene_assets_included": false,
+    "redistribution_note": "Do not publish rollout frames or videos unless the Waymo/AlpaSim asset terms explicitly permit redistribution."
+  },
+  "claim_boundary": "This is local closed-loop AlpaSim evidence generated from user-provided or gated scene assets. The summary intentionally excludes raw scene assets and videos.",
+  "clean_closed_loop_batch": true,
+  "created_at": "2026-07-05T21:45:56",
+  "failure_taxonomy": {
+    "at_fault_collision_scene_count": 2,
+    "black_image_scene_count": 0,
+    "collision_scene_count": 5,
+    "high_plan_deviation_scene_count": 2,
+    "low_progress_scene_count": 7,
+    "offroad_scene_count": 0,
+    "runtime_failed_scene_count": 0,
+    "safety_monitor_scene_count": 0,
+    "sensor_pipeline_failure_scene_count": 0,
+    "thresholds": {
+      "high_plan_deviation_gt_m": 4.0,
+      "low_progress_lt": 0.5
+    },
+    "wrong_lane_scene_count": 3
+  },
+  "metrics": {
+    "collision_any": {
+      "count": 10,
+      "interpretation": "scene_rate",
+      "max": 1.0,
+      "mean": 0.5,
+      "min": 0.0
+    },
+    "collision_at_fault": {
+      "count": 10,
+      "interpretation": "scene_rate",
+      "max": 1.0,
+      "mean": 0.2,
+      "min": 0.0
+    },
+    "dist_to_gt_location": {
+      "count": 10,
+      "max": 82.5,
+      "mean": 28.13,
+      "min": 4.88
+    },
+    "dist_to_gt_trajectory": {
+      "count": 10,
+      "max": 4.45,
+      "mean": 1.756,
+      "min": 0.14
+    },
+    "dist_traveled_m": {
+      "count": 10,
+      "max": 256.28,
+      "mean": 93.042,
+      "min": 26.21
+    },
+    "duration_frac_20s": {
+      "count": 10,
+      "max": 0.91,
+      "mean": 0.504,
+      "min": 0.05
+    },
+    "img_is_black": {
+      "count": 10,
+      "interpretation": "scene_rate",
+      "max": 0.0,
+      "mean": 0.0,
+      "min": 0.0
+    },
+    "offroad": {
+      "count": 10,
+      "interpretation": "scene_rate",
+      "max": 0.0,
+      "mean": 0.0,
+      "min": 0.0
+    },
+    "offroad_or_collision": {
+      "count": 10,
+      "interpretation": "scene_rate",
+      "max": 1.0,
+      "mean": 0.5,
+      "min": 0.0
+    },
+    "offroad_or_collision_at_fault": {
+      "count": 10,
+      "interpretation": "scene_rate",
+      "max": 1.0,
+      "mean": 0.2,
+      "min": 0.0
+    },
+    "plan_deviation": {
+      "count": 10,
+      "max": 8.82,
+      "mean": 1.692,
+      "min": 0.14
+    },
+    "progress": {
+      "count": 10,
+      "max": 1.0,
+      "mean": 0.512,
+      "min": 0.11
+    },
+    "progress_rel": {
+      "count": 10,
+      "max": 0.9,
+      "mean": 0.741,
+      "min": 0.3
+    },
+    "safety_monitor_triggered": {
+      "count": 10,
+      "interpretation": "scene_rate",
+      "max": 0.0,
+      "mean": 0.0,
+      "min": 0.0
+    },
+    "wrong_lane": {
+      "count": 10,
+      "interpretation": "scene_rate",
+      "max": 1.0,
+      "mean": 0.3,
+      "min": 0.0
+    }
+  },
+  "open_loop_closed_loop_mismatch": {
+    "advice": "Add paired open-loop metrics per scene to claim measured mismatch; this file currently reports closed-loop failures that open-loop evaluation should be compared against.",
+    "closed_loop_failure_indicators": {
+      "collision_scene_count": 5,
+      "high_plan_deviation_scene_count": 2,
+      "low_progress_scene_count": 7,
+      "offroad_scene_count": 0,
+      "wrong_lane_scene_count": 3
+    },
+    "open_loop_reference_available": false,
+    "status": "closed_loop_only_summary"
+  },
+  "run_config": {
+    "max_retries": 1,
+    "mode": "both",
+    "model": "spotlight_reflex",
+    "scene_preset": "front_camera_10scene_smoke",
+    "timeout": 900,
+    "topology": "1gpu"
+  },
+  "runs": [
+    {
+      "aggregate_status": "completed",
+      "artifacts": {
+        "metrics_results_png": {
+          "bytes": 96498,
+          "gated_scene_media": false,
+          "path": "001_clipgt-a309e228-26e1-423e-a44c-cb00aa7378cb/aggregate/metrics_results.png",
+          "sha256": "525864e8940de473355de9f6784ef6a9fcc0fb393b83ded9aba6f4a2de320bd5"
+        },
+        "metrics_results_txt": {
+          "bytes": 4991,
+          "gated_scene_media": false,
+          "path": "001_clipgt-a309e228-26e1-423e-a44c-cb00aa7378cb/aggregate/metrics_results.txt",
+          "sha256": "f216292839d4aee294ce6657a4a7a1c3a111b2820ac6ecc144f50e98549e9e7c"
+        },
+        "rollout_video_count": 1,
+        "rollout_videos": [
+          {
+            "bytes": 1621553,
+            "gated_scene_media": true,
+            "path": "001_clipgt-a309e228-26e1-423e-a44c-cb00aa7378cb/rollouts/clipgt-a309e228-26e1-423e-a44c-cb00aa7378cb/712564da-78a5-11f1-bf74-43f14721f022/clipgt-a309e228-26e1-423e-a44c-cb00aa7378cb_712564da-78a5-11f1-bf74-43f14721f022_camera_front_wide_120fov_default.mp4",
+            "sha256": "0c859a0511ec8d71f7a0dfaa3a785302fcfe6db7942aacd37f83f2e6ff94d96c"
+          }
+        ]
+      },
+      "attempts": 1,
+      "first_sensor_failure": null,
+      "frame_count": 199,
+      "index": 1,
+      "metrics": {
+        "collision_any": 1.0,
+        "collision_at_fault": 1.0,
+        "dist_to_gt_location": 4.88,
+        "dist_to_gt_trajectory": 2.11,
+        "dist_traveled_m": 32.85,
+        "duration_frac_20s": 0.06,
+        "img_is_black": 0.0,
+        "offroad": 0.0,
+        "offroad_or_collision": 1.0,
+        "offroad_or_collision_at_fault": 1.0,
+        "plan_deviation": 8.82,
+        "progress": 0.36,
+        "progress_rel": 0.88,
+        "safety_monitor_triggered": 0.0,
+        "wrong_lane": 1.0
+      },
+      "result": "completed",
+      "returncode": 0,
+      "run_dir": "001_clipgt-a309e228-26e1-423e-a44c-cb00aa7378cb",
+      "scene_id": "clipgt-a309e228-26e1-423e-a44c-cb00aa7378cb",
+      "sensor_failure_count": 0,
+      "sensor_pipeline_ok": true,
+      "state": "completed",
+      "status": "completed"
+    },
+    {
+      "aggregate_status": "completed",
+      "artifacts": {
+        "metrics_results_png": {
+          "bytes": 97524,
+          "gated_scene_media": false,
+          "path": "002_clipgt-804afc4a-fd1e-4f58-bd39-a4c486a916e5/aggregate/metrics_results.png",
+          "sha256": "c0d5a3cd49cfe2885f8f54950b58011a6cf5741044f4eaabcf1816d3eb7b168a"
+        },
+        "metrics_results_txt": {
+          "bytes": 4989,
+          "gated_scene_media": false,
+          "path": "002_clipgt-804afc4a-fd1e-4f58-bd39-a4c486a916e5/aggregate/metrics_results.txt",
+          "sha256": "04613894ec9f703d6acab5ca9780e6984755ffd6c37009239cf2d392c6839d90"
+        },
+        "rollout_video_count": 1,
+        "rollout_videos": [
+          {
+            "bytes": 2813152,
+            "gated_scene_media": true,
+            "path": "002_clipgt-804afc4a-fd1e-4f58-bd39-a4c486a916e5/rollouts/clipgt-804afc4a-fd1e-4f58-bd39-a4c486a916e5/f447853c-78a5-11f1-8a97-573aae4ba895/clipgt-804afc4a-fd1e-4f58-bd39-a4c486a916e5_f447853c-78a5-11f1-8a97-573aae4ba895_camera_front_wide_120fov_default.mp4",
+            "sha256": "237a0fb10c22e0612bae667f61bef159fdf8cd2b9be1d65910f2adea5fb52c4f"
+          }
+        ]
+      },
+      "attempts": 1,
+      "first_sensor_failure": null,
+      "frame_count": 199,
+      "index": 2,
+      "metrics": {
+        "collision_any": 0.0,
+        "collision_at_fault": 0.0,
+        "dist_to_gt_location": 16.8,
+        "dist_to_gt_trajectory": 3.97,
+        "dist_traveled_m": 256.28,
+        "duration_frac_20s": 0.91,
+        "img_is_black": 0.0,
+        "offroad": 0.0,
+        "offroad_or_collision": 0.0,
+        "offroad_or_collision_at_fault": 0.0,
+        "plan_deviation": 0.21,
+        "progress": 0.97,
+        "progress_rel": 0.9,
+        "safety_monitor_triggered": 0.0,
+        "wrong_lane": 0.0
+      },
+      "result": "completed",
+      "returncode": 0,
+      "run_dir": "002_clipgt-804afc4a-fd1e-4f58-bd39-a4c486a916e5",
+      "scene_id": "clipgt-804afc4a-fd1e-4f58-bd39-a4c486a916e5",
+      "sensor_failure_count": 0,
+      "sensor_pipeline_ok": true,
+      "state": "completed",
+      "status": "completed"
+    },
+    {
+      "aggregate_status": "completed",
+      "artifacts": {
+        "metrics_results_png": {
+          "bytes": 98207,
+          "gated_scene_media": false,
+          "path": "003_clipgt-81b0e06d-96e6-4832-99c1-a4084b54ca97/aggregate/metrics_results.png",
+          "sha256": "426dbb5cc4311348ee4471e77c2359383a89791f5d890aa33e53ed8ebab7e203"
+        },
+        "metrics_results_txt": {
+          "bytes": 4990,
+          "gated_scene_media": false,
+          "path": "003_clipgt-81b0e06d-96e6-4832-99c1-a4084b54ca97/aggregate/metrics_results.txt",
+          "sha256": "fdd521dc2b40aa3c5a10ab0654edf2bf48df6b3a6cba9aaebec86ad6a7132dee"
+        },
+        "rollout_video_count": 1,
+        "rollout_videos": [
+          {
+            "bytes": 2513504,
+            "gated_scene_media": true,
+            "path": "003_clipgt-81b0e06d-96e6-4832-99c1-a4084b54ca97/rollouts/clipgt-81b0e06d-96e6-4832-99c1-a4084b54ca97/6ee7b4c4-78a6-11f1-b71d-a96e54d679e4/clipgt-81b0e06d-96e6-4832-99c1-a4084b54ca97_6ee7b4c4-78a6-11f1-b71d-a96e54d679e4_camera_front_wide_120fov_default.mp4",
+            "sha256": "3a5a88478fd440cd0ae2f1a69c2ea829e67a1d40ee5807af448aedd2277e02df"
+          }
+        ]
+      },
+      "attempts": 1,
+      "first_sensor_failure": null,
+      "frame_count": 199,
+      "index": 3,
+      "metrics": {
+        "collision_any": 1.0,
+        "collision_at_fault": 1.0,
+        "dist_to_gt_location": 23.97,
+        "dist_to_gt_trajectory": 0.22,
+        "dist_traveled_m": 111.0,
+        "duration_frac_20s": 0.54,
+        "img_is_black": 0.0,
+        "offroad": 0.0,
+        "offroad_or_collision": 1.0,
+        "offroad_or_collision_at_fault": 1.0,
+        "plan_deviation": 0.17,
+        "progress": 0.65,
+        "progress_rel": 0.82,
+        "safety_monitor_triggered": 0.0,
+        "wrong_lane": 1.0
+      },
+      "result": "completed",
+      "returncode": 0,
+      "run_dir": "003_clipgt-81b0e06d-96e6-4832-99c1-a4084b54ca97",
+      "scene_id": "clipgt-81b0e06d-96e6-4832-99c1-a4084b54ca97",
+      "sensor_failure_count": 0,
+      "sensor_pipeline_ok": true,
+      "state": "completed",
+      "status": "completed"
+    },
+    {
+      "aggregate_status": "completed",
+      "artifacts": {
+        "metrics_results_png": {
+          "bytes": 98867,
+          "gated_scene_media": false,
+          "path": "004_clipgt-9b3509c2-a5fa-42c0-b0e5-feb617e9bf4e/aggregate/metrics_results.png",
+          "sha256": "424acbb21d867b4452738ae6dc7208caedfa30e5fdd285d00b8a71d0a89bcea5"
+        },
+        "metrics_results_txt": {
+          "bytes": 4990,
+          "gated_scene_media": false,
+          "path": "004_clipgt-9b3509c2-a5fa-42c0-b0e5-feb617e9bf4e/aggregate/metrics_results.txt",
+          "sha256": "df31ac4cbb6cdad79d07c385b5680a3d5a0f61fe2fe21a4bba96493b7b27351a"
+        },
+        "rollout_video_count": 1,
+        "rollout_videos": [
+          {
+            "bytes": 1943409,
+            "gated_scene_media": true,
+            "path": "004_clipgt-9b3509c2-a5fa-42c0-b0e5-feb617e9bf4e/rollouts/clipgt-9b3509c2-a5fa-42c0-b0e5-feb617e9bf4e/e2ccca78-78a6-11f1-8e49-c7a26b7a3a18/clipgt-9b3509c2-a5fa-42c0-b0e5-feb617e9bf4e_e2ccca78-78a6-11f1-8e49-c7a26b7a3a18_camera_front_wide_120fov_default.mp4",
+            "sha256": "4d1f909610cc5eb9d084a5db1020997b041d54f15e5e0a7fb116f17e0bf0c87a"
+          }
+        ]
+      },
+      "attempts": 1,
+      "first_sensor_failure": null,
+      "frame_count": 199,
+      "index": 4,
+      "metrics": {
+        "collision_any": 1.0,
+        "collision_at_fault": 0.0,
+        "dist_to_gt_location": 44.5,
+        "dist_to_gt_trajectory": 0.34,
+        "dist_traveled_m": 145.51,
+        "duration_frac_20s": 0.47,
+        "img_is_black": 0.0,
+        "offroad": 0.0,
+        "offroad_or_collision": 1.0,
+        "offroad_or_collision_at_fault": 0.0,
+        "plan_deviation": 0.34,
+        "progress": 0.4,
+        "progress_rel": 0.77,
+        "safety_monitor_triggered": 0.0,
+        "wrong_lane": 0.0
+      },
+      "result": "completed",
+      "returncode": 0,
+      "run_dir": "004_clipgt-9b3509c2-a5fa-42c0-b0e5-feb617e9bf4e",
+      "scene_id": "clipgt-9b3509c2-a5fa-42c0-b0e5-feb617e9bf4e",
+      "sensor_failure_count": 0,
+      "sensor_pipeline_ok": true,
+      "state": "completed",
+      "status": "completed"
+    },
+    {
+      "aggregate_status": "completed",
+      "artifacts": {
+        "metrics_results_png": {
+          "bytes": 96791,
+          "gated_scene_media": false,
+          "path": "005_clipgt-90d1908c-9fdc-40ea-a5a1-351240aa323e/aggregate/metrics_results.png",
+          "sha256": "5b8216b115b3928e610a044d45794cfc54a971a5b4786bd1e55a99c7fed3b9e4"
+        },
+        "metrics_results_txt": {
+          "bytes": 4991,
+          "gated_scene_media": false,
+          "path": "005_clipgt-90d1908c-9fdc-40ea-a5a1-351240aa323e/aggregate/metrics_results.txt",
+          "sha256": "b12270b61f0179e93b54da8984a990e17d360130daf3c0b2074edf78b02a1af4"
+        },
+        "rollout_video_count": 1,
+        "rollout_videos": [
+          {
+            "bytes": 1182615,
+            "gated_scene_media": true,
+            "path": "005_clipgt-90d1908c-9fdc-40ea-a5a1-351240aa323e/rollouts/clipgt-90d1908c-9fdc-40ea-a5a1-351240aa323e/6ed55990-78a7-11f1-85a3-f5a7371e8b07/clipgt-90d1908c-9fdc-40ea-a5a1-351240aa323e_6ed55990-78a7-11f1-85a3-f5a7371e8b07_camera_front_wide_120fov_default.mp4",
+            "sha256": "f66a93bd81e914f811a565d23efe00ad4ca092964d93e4f3b6ae24a55ca797bf"
+          }
+        ]
+      },
+      "attempts": 1,
+      "first_sensor_failure": null,
+      "frame_count": 199,
+      "index": 5,
+      "metrics": {
+        "collision_any": 0.0,
+        "collision_at_fault": 0.0,
+        "dist_to_gt_location": 8.24,
+        "dist_to_gt_trajectory": 4.15,
+        "dist_traveled_m": 26.21,
+        "duration_frac_20s": 0.05,
+        "img_is_black": 0.0,
+        "offroad": 0.0,
+        "offroad_or_collision": 0.0,
+        "offroad_or_collision_at_fault": 0.0,
+        "plan_deviation": 6.33,
+        "progress": 0.11,
+        "progress_rel": 0.77,
+        "safety_monitor_triggered": 0.0,
+        "wrong_lane": 0.0
+      },
+      "result": "completed",
+      "returncode": 0,
+      "run_dir": "005_clipgt-90d1908c-9fdc-40ea-a5a1-351240aa323e",
+      "scene_id": "clipgt-90d1908c-9fdc-40ea-a5a1-351240aa323e",
+      "sensor_failure_count": 0,
+      "sensor_pipeline_ok": true,
+      "state": "completed",
+      "status": "completed"
+    },
+    {
+      "aggregate_status": "completed",
+      "artifacts": {
+        "metrics_results_png": {
+          "bytes": 98341,
+          "gated_scene_media": false,
+          "path": "006_clipgt-88d1e61e-d4a6-443a-8b3f-ad0f1de4d0f5/aggregate/metrics_results.png",
+          "sha256": "1282ede231890107a8a6c898ca207de29c27af27bc7cd0ca445d733371bf2f11"
+        },
+        "metrics_results_txt": {
+          "bytes": 4989,
+          "gated_scene_media": false,
+          "path": "006_clipgt-88d1e61e-d4a6-443a-8b3f-ad0f1de4d0f5/aggregate/metrics_results.txt",
+          "sha256": "75a008378f91564cfc17f5f868ad7ba238e9f4d40d6eba9600678243bf1e10c1"
+        },
+        "rollout_video_count": 1,
+        "rollout_videos": [
+          {
+            "bytes": 2404725,
+            "gated_scene_media": true,
+            "path": "006_clipgt-88d1e61e-d4a6-443a-8b3f-ad0f1de4d0f5/rollouts/clipgt-88d1e61e-d4a6-443a-8b3f-ad0f1de4d0f5/e24b779c-78a7-11f1-bb9d-db4d4f5bf8d6/clipgt-88d1e61e-d4a6-443a-8b3f-ad0f1de4d0f5_e24b779c-78a7-11f1-bb9d-db4d4f5bf8d6_camera_front_wide_120fov_default.mp4",
+            "sha256": "60a53343b76e31a58366ad4e1044d1bab7e8282a40963de8dbf4469c71749027"
+          }
+        ]
+      },
+      "attempts": 1,
+      "first_sensor_failure": null,
+      "frame_count": 199,
+      "index": 6,
+      "metrics": {
+        "collision_any": 0.0,
+        "collision_at_fault": 0.0,
+        "dist_to_gt_location": 67.43,
+        "dist_to_gt_trajectory": 1.23,
+        "dist_traveled_m": 59.64,
+        "duration_frac_20s": 0.91,
+        "img_is_black": 0.0,
+        "offroad": 0.0,
+        "offroad_or_collision": 0.0,
+        "offroad_or_collision_at_fault": 0.0,
+        "plan_deviation": 0.25,
+        "progress": 0.47,
+        "progress_rel": 0.47,
+        "safety_monitor_triggered": 0.0,
+        "wrong_lane": 0.0
+      },
+      "result": "completed",
+      "returncode": 0,
+      "run_dir": "006_clipgt-88d1e61e-d4a6-443a-8b3f-ad0f1de4d0f5",
+      "scene_id": "clipgt-88d1e61e-d4a6-443a-8b3f-ad0f1de4d0f5",
+      "sensor_failure_count": 0,
+      "sensor_pipeline_ok": true,
+      "state": "completed",
+      "status": "completed"
+    },
+    {
+      "aggregate_status": "completed",
+      "artifacts": {
+        "metrics_results_png": {
+          "bytes": 98427,
+          "gated_scene_media": false,
+          "path": "007_clipgt-8aaa1135-573f-4f6c-8ff8-7ac6bd6ea5d6/aggregate/metrics_results.png",
+          "sha256": "53d6c24879bc5178aa97735cbbe5861d82fe980430412d051faa35116b1e8d92"
+        },
+        "metrics_results_txt": {
+          "bytes": 4991,
+          "gated_scene_media": false,
+          "path": "007_clipgt-8aaa1135-573f-4f6c-8ff8-7ac6bd6ea5d6/aggregate/metrics_results.txt",
+          "sha256": "5adda5d89a0ed978769a6ae4fc2f8fcda643c0398636d47d25c42b65d76a4c3e"
+        },
+        "rollout_video_count": 1,
+        "rollout_videos": [
+          {
+            "bytes": 1545998,
+            "gated_scene_media": true,
+            "path": "007_clipgt-8aaa1135-573f-4f6c-8ff8-7ac6bd6ea5d6/rollouts/clipgt-8aaa1135-573f-4f6c-8ff8-7ac6bd6ea5d6/52873640-78a8-11f1-a3b2-fd7b0aa6e215/clipgt-8aaa1135-573f-4f6c-8ff8-7ac6bd6ea5d6_52873640-78a8-11f1-a3b2-fd7b0aa6e215_camera_front_wide_120fov_default.mp4",
+            "sha256": "719fc35db63b7787f470a9cf497234668ce43d836caacb65403f21b78185a215"
+          }
+        ]
+      },
+      "attempts": 1,
+      "first_sensor_failure": null,
+      "frame_count": 199,
+      "index": 7,
+      "metrics": {
+        "collision_any": 1.0,
+        "collision_at_fault": 0.0,
+        "dist_to_gt_location": 8.65,
+        "dist_to_gt_trajectory": 0.14,
+        "dist_traveled_m": 57.42,
+        "duration_frac_20s": 0.3,
+        "img_is_black": 0.0,
+        "offroad": 0.0,
+        "offroad_or_collision": 1.0,
+        "offroad_or_collision_at_fault": 0.0,
+        "plan_deviation": 0.24,
+        "progress": 0.49,
+        "progress_rel": 0.87,
+        "safety_monitor_triggered": 0.0,
+        "wrong_lane": 0.0
+      },
+      "result": "completed",
+      "returncode": 0,
+      "run_dir": "007_clipgt-8aaa1135-573f-4f6c-8ff8-7ac6bd6ea5d6",
+      "scene_id": "clipgt-8aaa1135-573f-4f6c-8ff8-7ac6bd6ea5d6",
+      "sensor_failure_count": 0,
+      "sensor_pipeline_ok": true,
+      "state": "completed",
+      "status": "completed"
+    },
+    {
+      "aggregate_status": "completed",
+      "artifacts": {
+        "metrics_results_png": {
+          "bytes": 101074,
+          "gated_scene_media": false,
+          "path": "008_clipgt-9f8acd00-e8f5-467a-867d-b205f8d4d75d/aggregate/metrics_results.png",
+          "sha256": "843e746ae89d1650a82b0d468cd518e14166529a09ca24de3d35c99ad159593b"
+        },
+        "metrics_results_txt": {
+          "bytes": 4991,
+          "gated_scene_media": false,
+          "path": "008_clipgt-9f8acd00-e8f5-467a-867d-b205f8d4d75d/aggregate/metrics_results.txt",
+          "sha256": "2f5eb47bfdd9b534c5b61b160fe08d39cd8fd4e0be8963b9b3d6f78575d2851d"
+        },
+        "rollout_video_count": 1,
+        "rollout_videos": [
+          {
+            "bytes": 2716102,
+            "gated_scene_media": true,
+            "path": "008_clipgt-9f8acd00-e8f5-467a-867d-b205f8d4d75d/rollouts/clipgt-9f8acd00-e8f5-467a-867d-b205f8d4d75d/d186bed4-78a8-11f1-9264-bd2bd9959cf0/clipgt-9f8acd00-e8f5-467a-867d-b205f8d4d75d_d186bed4-78a8-11f1-9264-bd2bd9959cf0_camera_front_wide_120fov_default.mp4",
+            "sha256": "c52e855f1c5818fd4614e1da6aa5dfd281d94511759fc98a50bcec2b37140ca3"
+          }
+        ]
+      },
+      "attempts": 1,
+      "first_sensor_failure": null,
+      "frame_count": 199,
+      "index": 8,
+      "metrics": {
+        "collision_any": 0.0,
+        "collision_at_fault": 0.0,
+        "dist_to_gt_location": 11.23,
+        "dist_to_gt_trajectory": 4.45,
+        "dist_traveled_m": 165.05,
+        "duration_frac_20s": 0.6,
+        "img_is_black": 0.0,
+        "offroad": 0.0,
+        "offroad_or_collision": 0.0,
+        "offroad_or_collision_at_fault": 0.0,
+        "plan_deviation": 0.24,
+        "progress": 1.0,
+        "progress_rel": 0.88,
+        "safety_monitor_triggered": 0.0,
+        "wrong_lane": 0.0
+      },
+      "result": "completed",
+      "returncode": 0,
+      "run_dir": "008_clipgt-9f8acd00-e8f5-467a-867d-b205f8d4d75d",
+      "scene_id": "clipgt-9f8acd00-e8f5-467a-867d-b205f8d4d75d",
+      "sensor_failure_count": 0,
+      "sensor_pipeline_ok": true,
+      "state": "completed",
+      "status": "completed"
+    },
+    {
+      "aggregate_status": "completed",
+      "artifacts": {
+        "metrics_results_png": {
+          "bytes": 98529,
+          "gated_scene_media": false,
+          "path": "009_clipgt-97a2e621-a27b-4b87-9a58-b6b740fc1b4e/aggregate/metrics_results.png",
+          "sha256": "b3793dbda1d1bb29013580df8b9aeb51b59372732a2a7ba79d88c3cb94cde779"
+        },
+        "metrics_results_txt": {
+          "bytes": 4991,
+          "gated_scene_media": false,
+          "path": "009_clipgt-97a2e621-a27b-4b87-9a58-b6b740fc1b4e/aggregate/metrics_results.txt",
+          "sha256": "da864e1d516c4b1fd714bae02551fa2e33ed52afc0dd658d4a856b7098d4c1f8"
+        },
+        "rollout_video_count": 1,
+        "rollout_videos": [
+          {
+            "bytes": 3498828,
+            "gated_scene_media": true,
+            "path": "009_clipgt-97a2e621-a27b-4b87-9a58-b6b740fc1b4e/rollouts/clipgt-97a2e621-a27b-4b87-9a58-b6b740fc1b4e/4b7a4422-78a9-11f1-9272-61790720e7a3/clipgt-97a2e621-a27b-4b87-9a58-b6b740fc1b4e_4b7a4422-78a9-11f1-9272-61790720e7a3_camera_front_wide_120fov_default.mp4",
+            "sha256": "3006972fddd30a65f96003ac48a4cd9943c9a983191bdedfa30b2b4befd07ccf"
+          }
+        ]
+      },
+      "attempts": 1,
+      "first_sensor_failure": null,
+      "frame_count": 199,
+      "index": 9,
+      "metrics": {
+        "collision_any": 1.0,
+        "collision_at_fault": 0.0,
+        "dist_to_gt_location": 13.1,
+        "dist_to_gt_trajectory": 0.41,
+        "dist_traveled_m": 40.69,
+        "duration_frac_20s": 0.29,
+        "img_is_black": 0.0,
+        "offroad": 0.0,
+        "offroad_or_collision": 1.0,
+        "offroad_or_collision_at_fault": 0.0,
+        "plan_deviation": 0.18,
+        "progress": 0.37,
+        "progress_rel": 0.75,
+        "safety_monitor_triggered": 0.0,
+        "wrong_lane": 0.0
+      },
+      "result": "completed",
+      "returncode": 0,
+      "run_dir": "009_clipgt-97a2e621-a27b-4b87-9a58-b6b740fc1b4e",
+      "scene_id": "clipgt-97a2e621-a27b-4b87-9a58-b6b740fc1b4e",
+      "sensor_failure_count": 0,
+      "sensor_pipeline_ok": true,
+      "state": "completed",
+      "status": "completed"
+    },
+    {
+      "aggregate_status": "completed",
+      "artifacts": {
+        "metrics_results_png": {
+          "bytes": 99422,
+          "gated_scene_media": false,
+          "path": "010_clipgt-93982b71-92af-4cf6-8447-00d619f50ad3/aggregate/metrics_results.png",
+          "sha256": "4f29fdf01e82ac4f98ff65eb07c82553c3865ebc9d1a2b898defc886573266f6"
+        },
+        "metrics_results_txt": {
+          "bytes": 4989,
+          "gated_scene_media": false,
+          "path": "010_clipgt-93982b71-92af-4cf6-8447-00d619f50ad3/aggregate/metrics_results.txt",
+          "sha256": "91407d03a1114391e9ce12dcb0fd8e8669ecd3c94182988826299d95d0935356"
+        },
+        "rollout_video_count": 1,
+        "rollout_videos": [
+          {
+            "bytes": 1971373,
+            "gated_scene_media": true,
+            "path": "010_clipgt-93982b71-92af-4cf6-8447-00d619f50ad3/rollouts/clipgt-93982b71-92af-4cf6-8447-00d619f50ad3/c0dcf0ca-78a9-11f1-bef8-e514b421b916/clipgt-93982b71-92af-4cf6-8447-00d619f50ad3_c0dcf0ca-78a9-11f1-bef8-e514b421b916_camera_front_wide_120fov_default.mp4",
+            "sha256": "67c24f7e2a169b59542c1788167583ab39aa1e1106bfbf91fd8c3aa3973c9fc3"
+          }
+        ]
+      },
+      "attempts": 1,
+      "first_sensor_failure": null,
+      "frame_count": 199,
+      "index": 10,
+      "metrics": {
+        "collision_any": 0.0,
+        "collision_at_fault": 0.0,
+        "dist_to_gt_location": 82.5,
+        "dist_to_gt_trajectory": 0.54,
+        "dist_traveled_m": 35.77,
+        "duration_frac_20s": 0.91,
+        "img_is_black": 0.0,
+        "offroad": 0.0,
+        "offroad_or_collision": 0.0,
+        "offroad_or_collision_at_fault": 0.0,
+        "plan_deviation": 0.14,
+        "progress": 0.3,
+        "progress_rel": 0.3,
+        "safety_monitor_triggered": 0.0,
+        "wrong_lane": 1.0
+      },
+      "result": "completed",
+      "returncode": 0,
+      "run_dir": "010_clipgt-93982b71-92af-4cf6-8447-00d619f50ad3",
+      "scene_id": "clipgt-93982b71-92af-4cf6-8447-00d619f50ad3",
+      "sensor_failure_count": 0,
+      "sensor_pipeline_ok": true,
+      "state": "completed",
+      "status": "completed"
+    }
+  ],
+  "schema": "wod2sim_closed_loop_batch_summary_v1",
+  "source": {
+    "batch_dir_name": "benchmark_spotlight_reflex_10scene_fresh",
+    "batch_manifest": "batch-manifest.json",
+    "batch_status": "batch-status.json"
+  },
+  "valid": true
+}

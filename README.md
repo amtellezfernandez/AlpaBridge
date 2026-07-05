@@ -129,15 +129,44 @@ wod2sim-reproduce \
   --json
 ```
 
-Then publish a compact benchmark summary instead of raw gated artifacts:
+For multi-scene closed-loop pilots, run scenes as independent statistical units:
 
 ```bash
+wod2sim-batch \
+  --mode both \
+  --model spotlight_reflex \
+  --scene-preset front_camera_10scene_smoke \
+  --alpasim-root /path/to/alpasim \
+  --batch-dir runs/benchmark_spotlight_reflex_10scene \
+  --timeout 900 \
+  --driver-warmup-seconds 5 \
+  --max-retries 1 \
+  --continue-on-error
+```
+
+Then publish compact summaries instead of raw gated artifacts:
+
+```bash
+wod2sim-batch-summary \
+  --batch-dir runs/benchmark_spotlight_reflex_10scene \
+  --output runs/benchmark_spotlight_reflex_10scene/wod2sim-batch-summary.json \
+  --strict \
+  --json
+
 wod2sim-benchmark-summary \
   --evidence-dir runs/benchmark_spotlight_reflex_10scene/evidence \
   --output runs/wod2sim-benchmark-summary.json \
   --strict \
   --json
 ```
+
+A local 10-scene `spotlight_reflex` pilot is summarized in
+[`docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json`](docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json):
+10/10 scenes completed, 1,990 audited frames, 0 failed scenes, and 0
+sensor-pipeline failures. The closed-loop failure taxonomy for that pilot is 5
+collision scenes, 2 at-fault collision scenes, 3 wrong-lane scenes, 0 offroad
+scenes, and 7 low-progress scenes. These are policy/runtime evidence metrics,
+not a claim that the current adapter is a strong driving policy.
 
 A local one-scene `spotlight_reflex` run is summarized in
 [`docs/evidence/closed_loop_spotlight_reflex_one_scene.json`](docs/evidence/closed_loop_spotlight_reflex_one_scene.json):
@@ -156,6 +185,7 @@ A closed-loop claim should include:
 | `support-bundle-report.json` | Report for the packaged run logs, configs, and normalized audit export. |
 | `support-bundle.tar.gz` hash | Local artifact integrity without redistributing gated files by default. |
 | `wod2sim-benchmark-summary.json` | Multi-run aggregate with strict evidence validation. |
+| `wod2sim-batch-summary.json` | Multi-scene batch metrics, failure taxonomy, and local artifact hashes without raw media. |
 
 Dry-run plans are valid review artifacts. They are not closed-loop evidence.
 
@@ -207,15 +237,18 @@ wod2sim-launch --mode print --model direct_actor_planner --oracle-actor-proxy /p
 | `wod2sim-audit-run` | Summarize executed run logs and sensor freshness. |
 | `wod2sim-support-bundle` | Package key run logs, configs, and audit output. |
 | `wod2sim-benchmark-summary` | Aggregate evidence directories into one benchmark JSON. |
+| `wod2sim-batch-summary` | Summarize `wod2sim-batch` scene runs into public-safe metrics and hashes. |
 
 ## Media Policy
 
 Public README media should come from official external links,
-redistribution-approved dataset frames, AlpaSim rollout screenshots or clips,
-integration screenshots, or evidence plots. Local candidates under `runs/` and
-`workspace/` are intentionally ignored because they may contain gated or
-third-party content. The tracked AlpaSim screenshot and metrics plot are derived
-from the recorded one-scene `spotlight_reflex` run.
+redistribution-approved dataset frames, AlpaSim rollout screenshots or clips that
+are explicitly cleared for redistribution, integration screenshots, or evidence
+plots. Local candidates under `runs/` and `workspace/` are intentionally ignored
+because they may contain gated or third-party content. The tracked AlpaSim
+screenshot and metrics plot are derived from a local `spotlight_reflex` run; raw
+rollout videos and support bundles stay local unless the relevant asset terms
+permit publication.
 
 See [`docs/readme_media.md`](docs/readme_media.md) before adding images or video.
 
