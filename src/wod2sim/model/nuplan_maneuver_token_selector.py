@@ -1,19 +1,19 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import json
 import math
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
-from typing import Mapping
+from typing import Any, Mapping
 
 import numpy as np
 
-from .nuplan_maneuver_token_adapter import ManeuverTokenCandidate
-from .nuplan_maneuver_token_adapter import TOKEN_ORDER
-from .nuplan_maneuver_token_adapter import build_maneuver_token_candidates
-from .nuplan_maneuver_token_adapter import build_scene_diagnostic_record
-
+from .nuplan_maneuver_token_adapter import (
+    TOKEN_ORDER,
+    ManeuverTokenCandidate,
+    build_maneuver_token_candidates,
+    build_scene_diagnostic_record,
+)
 
 SELECTOR_FEATURE_NAMES = (
     "obstacle_pressure",

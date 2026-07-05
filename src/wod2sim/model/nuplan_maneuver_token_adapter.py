@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
-from dataclasses import asdict
-from dataclasses import dataclass
 import math
+from collections.abc import Mapping
+from dataclasses import asdict, dataclass
 from typing import Any
 
 import numpy as np
-
 
 TOKEN_ORDER = (
     "stop",

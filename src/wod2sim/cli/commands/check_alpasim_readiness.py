@@ -6,8 +6,6 @@ import argparse
 import os
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[4]
-
 from wod2sim.cli.commands.run_alpasim_local_external import (
     SCENE_PRESETS,
     _preflight_alpasim_base_image,

@@ -2,20 +2,23 @@
 from __future__ import annotations
 
 import argparse
-from collections import Counter
 import json
 import subprocess
 import sys
+from collections import Counter
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from wod2sim.cli.runtime_paths import workspace_path
-
 from wod2sim.cli.commands.audit_run import build_report as build_run_audit_report
-from wod2sim.cli.commands.run_alpasim_local_external import RUN_STATUS_FILENAME
-from wod2sim.cli.commands.run_alpasim_local_external import DEFAULT_RUNS_ROOT, PUBLIC_RELEASE_MODELS, SCENE_PRESETS, _scene_ids
-
+from wod2sim.cli.commands.run_alpasim_local_external import (
+    DEFAULT_RUNS_ROOT,
+    PUBLIC_RELEASE_MODELS,
+    RUN_STATUS_FILENAME,
+    SCENE_PRESETS,
+    _scene_ids,
+)
+from wod2sim.cli.runtime_paths import workspace_path
 
 RUNNER_CWD = workspace_path()
 

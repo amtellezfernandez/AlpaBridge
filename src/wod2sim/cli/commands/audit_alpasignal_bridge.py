@@ -10,7 +10,6 @@ from typing import Any
 import numpy as np
 
 from wod2sim.cli.runtime_paths import workspace_path
-
 from wod2sim.simulator.alpasim_signal import extract_alpasim_signal, scenario_from_command
 from wod2sim.simulator.alpasim_spotlight import DriveCommand, SpotlightReflexAlpaSimModel
 

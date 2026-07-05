@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
 import argparse
 import csv
 import json
-from pathlib import Path
 import re
+from dataclasses import asdict, dataclass, field
+from pathlib import Path
 from typing import Any
-
 
 DEFAULT_ALPASIM_METRIC_ALIASES = {
     "collision": ("collision_at_fault", "offroad_or_collision_at_fault", "collision_any"),

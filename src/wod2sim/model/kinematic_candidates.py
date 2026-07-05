@@ -7,7 +7,6 @@ from typing import Iterable, Sequence
 from .rfs_metric import Trajectory
 from .wod_e2e import WodE2EPreferenceFrame
 
-
 WOD_FUTURE_WAYPOINTS = 20
 
 

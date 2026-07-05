@@ -3,14 +3,13 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
 from shutil import which
-import shutil
 
 from wod2sim.cli.runtime_paths import package_path, repo_path, workspace_path
-
 
 DEFAULT_ALPASIM_ROOT = workspace_path("workspace", "alpasim")
 ALPASIM_OVERRIDE_ROOT = package_path("alpasim_overrides")

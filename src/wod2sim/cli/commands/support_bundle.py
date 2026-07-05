@@ -9,7 +9,6 @@ from typing import Any
 
 from wod2sim.cli.commands.audit_run import build_report as build_run_audit_report
 
-
 BUNDLE_INCLUDE_PATTERNS = (
     "launch-metadata.json",
     "run-status.json",

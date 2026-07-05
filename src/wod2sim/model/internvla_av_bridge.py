@@ -1,15 +1,14 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import json
 import math
-from pathlib import Path
 import re
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Iterable, Sequence
 
 from .rfs_metric import Trajectory
 from .wod_e2e import WodE2EPreferenceFrame
-
 
 WOD_FUTURE_WAYPOINTS = 20
 _COORDINATE_RE = re.compile(r"[-+]?\d+(?:\.\d+)?")

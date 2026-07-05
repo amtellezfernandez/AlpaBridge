@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field, replace
 import json
 import math
 import random
+from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 from typing import Any
-
 
 SIM_TICK_DT_S = 0.25
 DEFAULT_TIME_SWEEP_MAX_DEPTH = 3

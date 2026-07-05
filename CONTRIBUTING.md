@@ -20,10 +20,22 @@ python -m pip install -e ".[dev]"
 
 ## Local Verification
 
-Run the focused bridge checks before opening a change:
+Run the test suite before opening a change:
 
 ```bash
 make test
+```
+
+Run static checks with:
+
+```bash
+make lint
+```
+
+Run tests with the coverage gate with:
+
+```bash
+make coverage
 ```
 
 Run the public release smoke check with:
@@ -42,6 +54,12 @@ For the full public verification path:
 
 ```bash
 make verify
+```
+
+Install pre-commit hooks if you want local Ruff checks before each commit:
+
+```bash
+pre-commit install
 ```
 
 To remove generated local artifacts:

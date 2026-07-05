@@ -7,15 +7,21 @@ import sys
 from importlib.metadata import PackageNotFoundError, distribution, distributions
 from pathlib import Path
 
+from wod2sim.cli.commands.check_alpasim_readiness import (
+    _preflight_alpasim_base_image,
+    _preflight_docker_access,
+    _preflight_nvidia_container_runtime,
+    _preflight_platform_compatibility,
+    _preflight_scene_artifacts,
+    _scene_ids,
+    _validate_alpasim_checkout,
+)
+from wod2sim.cli.commands.run_alpasim_local_external import (
+    MODEL_PRESETS,
+    PUBLIC_RELEASE_MODELS,
+    SCENE_PRESETS,
+)
 from wod2sim.cli.runtime_paths import SOURCE_REPO_ROOT, package_path, repo_path, workspace_path
-from wod2sim.cli.commands.check_alpasim_readiness import _preflight_alpasim_base_image
-from wod2sim.cli.commands.check_alpasim_readiness import _preflight_docker_access
-from wod2sim.cli.commands.check_alpasim_readiness import _preflight_nvidia_container_runtime
-from wod2sim.cli.commands.check_alpasim_readiness import _preflight_platform_compatibility
-from wod2sim.cli.commands.check_alpasim_readiness import _preflight_scene_artifacts
-from wod2sim.cli.commands.check_alpasim_readiness import _scene_ids
-from wod2sim.cli.commands.check_alpasim_readiness import _validate_alpasim_checkout
-from wod2sim.cli.commands.run_alpasim_local_external import MODEL_PRESETS, PUBLIC_RELEASE_MODELS, SCENE_PRESETS
 
 EXPECTED_CONSOLE_SCRIPTS = (
     "wod2sim-doctor",
@@ -387,7 +393,7 @@ def build_report(
         "artifacts": {
             "repo_root": None if repo_root is None else str(repo_root),
             "docs_integration_guide": None if repo_root is None else str(repo_root / "docs" / "integration_guide.md"),
-            "paper_pdf": None if repo_root is None else str(repo_root / "paper" / "paper.pdf"),
+            "paper_source": None if repo_root is None else str(repo_root / "paper"),
             "package_root": str(package_path()),
             "source_repo_root": None if SOURCE_REPO_ROOT is None else str(SOURCE_REPO_ROOT),
         },

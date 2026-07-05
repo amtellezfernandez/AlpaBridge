@@ -1,16 +1,20 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import json
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Sequence
 
 import numpy as np
 
-from .learned_trajectory_model import FUTURE_WAYPOINTS, PAST_WAYPOINTS, OUTPUT_DIM, _trajectory_from_output
+from .learned_trajectory_model import (
+    FUTURE_WAYPOINTS,
+    OUTPUT_DIM,
+    PAST_WAYPOINTS,
+    _trajectory_from_output,
+)
 from .rfs_metric import RfsReference, Trajectory
 from .wod_e2e import WodE2EPreferenceFrame
-
 
 NEURAL_PLANNER_MODEL_TYPE = "neural_system2_planner_v1"
 PLANNER_FRAME_CACHE_SCHEMA = "wod_neural_system2_planner_frames_v1"

@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import json
 import math
 import os
+import time
+from dataclasses import dataclass
 from pathlib import Path
 from threading import Lock
-import time
 from typing import Any
 
 import numpy as np
@@ -17,9 +17,9 @@ from .alpasim_spotlight import (
     DriveCommand,
     ModelPrediction,
     PredictionInput,
-    _SensorFreshnessGuard,
     _prediction_scene_id,
     _resample_to_frequency,
+    _SensorFreshnessGuard,
 )
 from .alpasim_token_bc import (
     _cfg_value,

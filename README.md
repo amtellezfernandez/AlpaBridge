@@ -1,5 +1,8 @@
 # WOD2Sim
 
+[![CI](https://github.com/amtellezfernandez/wayspan/actions/workflows/ci.yml/badge.svg)](https://github.com/amtellezfernandez/wayspan/actions/workflows/ci.yml)
+[![License: BSD-3-Clause](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](LICENSE)
+
 `WOD2Sim` packages the code and paper for adapting WOD-style driving policies to
 AlpaSim's closed-loop external-driver runtime.
 
@@ -171,7 +174,7 @@ failure so multi-scene triage does not collapse to `partial` or `missing`.
 - [`scripts/`](scripts) provides top-level entry wrappers for the public workflows.
 - [`third_party/alpasim_overrides/`](third_party/alpasim_overrides) contains the tracked
   AlpaSim override files and patch sets needed by the reproduction path.
-- [`paper/`](paper) contains the LaTeX source and compiled PDF for the paper.
+- [`paper/`](paper) contains the LaTeX source for the paper.
 
 ## Paper
 
@@ -181,7 +184,8 @@ Build the paper with:
 make paper
 ```
 
-The resulting source and PDF live under [`paper/`](paper).
+The source lives under [`paper/`](paper). CI publishes the compiled PDF as a build
+artifact instead of tracking generated PDFs in git.
 
 ## Release Checks
 
@@ -197,8 +201,19 @@ Clean generated local artifacts with:
 make clean
 ```
 
+## Citation
+
+If you use this repository in academic work, cite the software metadata in
+[`CITATION.cff`](CITATION.cff) and the paper under [`paper/`](paper).
+
+## License
+
+The repository is distributed under the BSD 3-Clause License. Some packaged
+AlpaSim override files carry separate third-party notices; see
+[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+
 ## Production Notes
 
-- The GitHub CI runs focused runtime tests, package build, and paper build.
+- The GitHub CI runs lint, coverage, package build, wheel smoke, and paper build.
 - Learned presets still depend on external checkpoints not shipped in this repo.
 - Full AlpaSim execution still requires a separate checkout, local Docker access, and any gated scene assets.

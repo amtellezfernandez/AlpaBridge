@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import json
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Sequence
 
@@ -9,7 +9,6 @@ import numpy as np
 
 from .rfs_metric import Trajectory
 from .wod_e2e import WodE2EPreferenceFrame
-
 
 PAST_WAYPOINTS = 16
 FUTURE_WAYPOINTS = 20

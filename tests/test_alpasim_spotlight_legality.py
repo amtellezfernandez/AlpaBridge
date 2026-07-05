@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 import json
-from types import SimpleNamespace
-from pathlib import Path
 import sys
 import unittest
+from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
-
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"

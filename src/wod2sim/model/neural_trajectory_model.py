@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import json
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Sequence
 
@@ -19,7 +19,6 @@ from .learned_trajectory_model import (
 )
 from .rfs_metric import Trajectory
 from .wod_e2e import WodE2EPreferenceFrame
-
 
 NEURAL_MODEL_TYPE = "neural_anchor_residual_trajectory_model_v1"
 
@@ -219,7 +218,6 @@ def fit_neural_anchor_residual_trajectory_model(
     if hidden_dim <= 0 or epochs <= 0 or batch_size <= 0 or learning_rate <= 0.0:
         raise ValueError("hidden_dim, epochs, batch_size, and learning_rate must be positive")
 
-    rng = np.random.default_rng(seed)
     x_raw = np.asarray([_frame_features_for_model(frame, feature_set) for frame in rows], dtype=np.float64)
     y = np.asarray([_output_from_trajectory(frame.future_trajectory) for frame in rows], dtype=np.float64)
     feature_mean = x_raw.mean(axis=0)

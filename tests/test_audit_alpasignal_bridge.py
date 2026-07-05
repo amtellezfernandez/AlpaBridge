@@ -3,10 +3,9 @@ from __future__ import annotations
 import importlib.util
 import subprocess
 import sys
+import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
-import unittest
-
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "audit_alpasignal_bridge.py"
@@ -35,7 +34,7 @@ class AuditAlpaSignalBridgeTests(unittest.TestCase):
         self.assertTrue(report["gates"]["low_visibility_adds_caution_zone"])
 
     def test_main_writes_report(self) -> None:
-        module = _load_module()
+        _load_module()
         with TemporaryDirectory() as tmpdir:
             output = Path(tmpdir) / "alpasignal_bridge_audit.json"
 

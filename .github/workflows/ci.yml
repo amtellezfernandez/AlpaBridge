@@ -31,9 +31,13 @@ jobs:
           uv venv .venv
           uv pip install --python .venv/bin/python -e ".[dev]"
 
-      - name: Run focused bridge tests
+      - name: Run static checks
         run: |
-          PATH="$PWD/.venv/bin:$PATH" make test
+          PATH="$PWD/.venv/bin:$PATH" make lint
+
+      - name: Run tests with coverage
+        run: |
+          PATH="$PWD/.venv/bin:$PATH" make coverage
 
       - name: Run strict installed doctor
         run: |

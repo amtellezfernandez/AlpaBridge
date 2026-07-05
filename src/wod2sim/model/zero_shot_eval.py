@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import argparse
-from dataclasses import asdict, dataclass, field, replace
 import importlib.util
 import json
 import statistics
+from dataclasses import asdict, dataclass, field, replace
 from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Iterable

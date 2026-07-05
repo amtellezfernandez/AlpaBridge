@@ -1,5 +1,6 @@
 __pycache__/
 .pytest_cache/
+.coverage
 .venv/
 build/
 dist/
@@ -9,6 +10,7 @@ dist/
 runs/
 workspace/
 .uv-cache/
+uv.lock
 
 paper/*.aux
 paper/*.bbl

@@ -2,11 +2,10 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
-from unittest import mock
 import tempfile
-from pathlib import Path
 import unittest
-
+from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "run_alpasim_scene_batch.py"

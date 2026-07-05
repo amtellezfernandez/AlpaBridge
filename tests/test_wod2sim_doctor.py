@@ -5,13 +5,12 @@ import importlib.util
 import json
 import subprocess
 import sys
+import unittest
 from io import StringIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
-import unittest
-from unittest.mock import patch
 from types import SimpleNamespace
-
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"

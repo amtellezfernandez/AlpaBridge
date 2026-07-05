@@ -1,13 +1,9 @@
 from __future__ import annotations
 
-import json
 import math
-from pathlib import Path
-import subprocess
 import sys
-import tempfile
 import unittest
-
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
@@ -20,23 +16,13 @@ from wod2sim.simulator.environment import (
     Obstacle,
     Scenario,
     actor_to_obstacle_at_time,
-    generate_scenario,
-    interpolate_lane,
     min_segment_clearance,
     min_time_swept_clearance,
     moving_obstacle_segment_clearance,
     obstacle_signed_distance,
     scenario_at_tick,
 )
-from wod2sim.simulator.perception import ScenePerception, perceive_scene
-from wod2sim.simulator.planner import PlannedAction
-from wod2sim.simulator.trajectory_selector import (
-    TrajectoryCandidate,
-    TrajectoryReference,
-    score_candidate,
-    speed_scale,
-    trajectory_region_score,
-)
+from wod2sim.simulator.perception import perceive_scene
 from wod2sim.simulator.spotlight_reflex import (
     DEFAULT_SPOTLIGHT_CONFIG,
     SimulatorBackedScoreConfig,
@@ -46,8 +32,14 @@ from wod2sim.simulator.spotlight_reflex import (
     generate_maneuver_candidates,
     select_maneuver,
 )
-from wod2sim.simulator.world_model import WorldState, update_world_state
-
+from wod2sim.simulator.trajectory_selector import (
+    TrajectoryCandidate,
+    TrajectoryReference,
+    score_candidate,
+    speed_scale,
+    trajectory_region_score,
+)
+from wod2sim.simulator.world_model import update_world_state
 
 SELECTOR_3S_INDEX = DEFAULT_SPOTLIGHT_CONFIG.selector.index_3s
 SELECTOR_5S_INDEX = DEFAULT_SPOTLIGHT_CONFIG.selector.index_5s

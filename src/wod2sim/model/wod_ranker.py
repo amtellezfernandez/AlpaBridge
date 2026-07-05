@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from io import BytesIO
-from dataclasses import dataclass
 import json
 import math
+from dataclasses import dataclass
+from io import BytesIO
 from pathlib import Path
 from typing import Any, Sequence
 
@@ -12,7 +12,6 @@ import numpy as np
 from .rfs_metric import Trajectory
 from .wod_e2e import WodE2EPreferenceFrame
 from .wod_preference import trajectory_features
-
 
 DEFAULT_NUMERIC_FEATURES = [
     "intent",
