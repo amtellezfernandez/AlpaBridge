@@ -38,8 +38,8 @@ driver session, makes built-in model imports lazy, treats late session messages
 idempotently, registers three project policies through \texttt{alpasim.models}, converts
 AlpaSim prediction inputs into policy-facing route and scene signal, and provides setup,
 readiness, launch, and validation commands. The contribution is not a new driving policy
-or a log converter; it is a reusable external-driver contract extension that makes
-WOD-style trajectory policies executable under AlpaSim's closed-loop runtime.
+or a log converter. WOD2Sim defines and validates an adapter contract that turns
+WOD-style logged-policy evaluation into auditable closed-loop execution inside AlpaSim.
 \end{abstract}
 
 \section{Introduction}
@@ -73,6 +73,18 @@ token BC/DAgger policy, and a direct actor-aware planner through
 provides setup, readiness, launch, and validation commands. The artifact claim is narrow:
 this is not a new autonomy method, but a reusable external-driver contract extension for
 turning dataset-style trajectory policies into executable AlpaSim drivers.
+
+The contributions are:
+\begin{itemize}
+\item an AlpaSim external-driver contract extension for WOD-style trajectory policies,
+including route geometry, trajectory resampling, and policy-facing scene signal;
+\item simulator-runtime hardening for lazy model discovery, late session messages, and
+idempotent close behavior that would otherwise corrupt batch evaluation;
+\item launch-state materialization and readiness checks for reproducing runs under local
+Docker, GPU, scene-artifact, and checkout constraints;
+\item an evidence pipeline that emits manifests, audits, support-bundle reports, hashes,
+and benchmark summaries while avoiding redistribution of gated assets.
+\end{itemize}
 
 \section{External-Driver Contract Gaps}
 
@@ -455,6 +467,49 @@ signal conversion.
 integration failures before closed-loop rollouts.}
 \label{fig:artifact_path}
 \end{figure}
+
+\section{Evaluation Protocol and Claim Boundary}
+
+WOD2Sim should be evaluated as a closed-loop evaluation interface, not as a new driving
+model. The minimal claim is execution validity: a WOD-style policy can be exposed as an
+AlpaSim external driver, receive route and scene state through a stable contract, return
+runtime trajectories, and produce auditable evidence. A stronger benchmark claim requires
+executed scenes, baselines, and closed-loop failure analysis. Table~\ref{tab:eval_protocol}
+summarizes the evaluation protocol supported by the artifact.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{p{0.26\linewidth}p{0.33\linewidth}p{0.30\linewidth}}
+\toprule
+Category & Report & Purpose \\
+\midrule
+Baselines & open-loop WOD-style evaluation, replay or constant-velocity driver,
+route-following driver, stock AlpaSim external-driver path, and WOD2Sim ablations without
+route reconstruction or lifecycle hardening & show what closed-loop execution and the
+adapter contract add beyond a simple API wrapper \\
+Closed-loop metrics & collision rate, off-road rate, route progress, completion,
+timeout rate, valid-frame ratio, sensor freshness, action latency, late-message rate, and
+support-bundle validity & separate policy behavior from runtime and evidence failures \\
+Scene coverage & straight, turn, lane-change, dense-traffic, occlusion, and route-merge
+scenes across at least a small multi-scene set & support claims beyond a single recorded
+scene \\
+Failure taxonomy & route drift, stale observations, heading-error compounding, recovery
+failure, lifecycle crashes, and audit invalidation & expose failures hidden by open-loop
+log replay \\
+\bottomrule
+\end{tabular}
+\caption{Evaluation protocol for claims built on WOD2Sim. The current release validates
+the contract and records one closed-loop run; broader benchmark claims require larger
+scene counts and baselines.}
+\label{tab:eval_protocol}
+\end{table}
+
+The claim boundary is therefore precise: WOD2Sim bridges WOD-style policy
+interfaces to AlpaSim closed-loop execution. It does not claim full Waymo scene
+reconstruction, a new simulator, or a new autonomy model. That boundary is important
+because a full Waymo-to-AlpaSim converter would need to reconstruct maps, actors, dynamic
+agents, traffic lights, sensor setup, and dataset terms at a scope beyond this artifact.
 
 \section{What Generalizes}
 
