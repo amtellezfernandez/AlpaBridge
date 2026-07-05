@@ -23,15 +23,16 @@ if str(SRC) not in sys.path:
 
 from tests.pyproject_helpers import load_string_tables
 
-from minimal_shot_av.neutral.alpasim_metrics import build_alpasim_evidence, load_alpasim_metrics
-from minimal_shot_av.simulator.alpasim_direct_actor_planner import (
+from wod2sim.audit.alpasim_export import export_alpasim_audit_log
+from wod2sim.neutral.alpasim_metrics import build_alpasim_evidence, load_alpasim_metrics
+from wod2sim.simulator.alpasim_direct_actor_planner import (
     DirectActorPlannerAlpaSimModel,
     DirectPlannerConfig,
     plan_direct_actor_trajectory,
 )
-from minimal_shot_av.simulator.alpasim_signal import extract_alpasim_signal, scenario_from_command
-from minimal_shot_av.simulator.alpasim_spotlight import DriveCommand, SpotlightReflexAlpaSimModel
-from minimal_shot_av.simulator.alpasim_token_bc import (
+from wod2sim.simulator.alpasim_signal import extract_alpasim_signal, scenario_from_command
+from wod2sim.simulator.alpasim_spotlight import DriveCommand, SpotlightReflexAlpaSimModel
+from wod2sim.simulator.alpasim_token_bc import (
     TOKEN_ORDER,
     TokenBCAlpaSimModel,
     _GeomMLP,
@@ -42,10 +43,10 @@ from minimal_shot_av.simulator.alpasim_token_bc import (
     _prediction_ego_pose_world,
     _prediction_timestamp_us,
 )
-from minimal_shot_av.simulator.environment import scenario_at_tick
-from minimal_shot_av.simulator.perception import perceive_scene
-from minimal_shot_av.simulator.spotlight_reflex import evaluate_maneuver_candidates
-from minimal_shot_av.simulator.world_model import update_world_state
+from wod2sim.simulator.environment import scenario_at_tick
+from wod2sim.simulator.perception import perceive_scene
+from wod2sim.simulator.spotlight_reflex import evaluate_maneuver_candidates
+from wod2sim.simulator.world_model import update_world_state
 
 
 class AlpaSimIntegrationTests(unittest.TestCase):
@@ -53,33 +54,41 @@ class AlpaSimIntegrationTests(unittest.TestCase):
         pyproject = load_string_tables("pyproject.toml")
         self.assertEqual(
             pyproject['project.entry-points."alpasim.models"']["spotlight_reflex"],
-            "minimal_shot_av.simulator.alpasim_spotlight:SpotlightReflexAlpaSimModel",
+            "wod2sim.simulator.alpasim_spotlight:SpotlightReflexAlpaSimModel",
         )
         self.assertEqual(
             pyproject['project.entry-points."alpasim.models"']["token_dagger_bc"],
-            "minimal_shot_av.simulator.alpasim_token_bc:TokenBCAlpaSimModel",
+            "wod2sim.simulator.alpasim_token_bc:TokenBCAlpaSimModel",
         )
         self.assertEqual(
             pyproject['project.entry-points."alpasim.models"']["direct_actor_planner"],
-            "minimal_shot_av.simulator.alpasim_direct_actor_planner:DirectActorPlannerAlpaSimModel",
+            "wod2sim.simulator.alpasim_direct_actor_planner:DirectActorPlannerAlpaSimModel",
         )
         self.assertEqual(
             pyproject['project.entry-points."alpasim.configs"']["spotlight_reflex"],
-            "minimal_shot_av.simulator.alpasim_configs",
+            "wod2sim.simulator.alpasim_configs",
         )
         self.assertEqual(
             pyproject["project.scripts"]["wod2sim-build-oracle-proxy"],
-            "minimal_shot_av.cli.commands.build_alpasim_oracle_actor_proxy:main",
+            "wod2sim.cli.commands.build_alpasim_oracle_actor_proxy:main",
+        )
+        self.assertEqual(
+            pyproject["project.scripts"]["wod2sim-audit-run"],
+            "wod2sim.cli.commands.audit_run:main",
+        )
+        self.assertEqual(
+            pyproject["project.scripts"]["wod2sim-support-bundle"],
+            "wod2sim.cli.commands.support_bundle:main",
         )
 
     def test_alpasim_driver_config_exists(self) -> None:
-        config_path = Path("src/minimal_shot_av/simulator/alpasim_configs/driver/spotlight_reflex.yaml")
+        config_path = Path("src/wod2sim/simulator/alpasim_configs/driver/spotlight_reflex.yaml")
         config = config_path.read_text()
         self.assertIn("model_type: spotlight_reflex", config)
         self.assertIn("output_frequency_hz: 4", config)
 
     def test_direct_actor_planner_config_exists(self) -> None:
-        config_path = Path("src/minimal_shot_av/simulator/alpasim_configs/driver/direct_actor_planner.yaml")
+        config_path = Path("src/wod2sim/simulator/alpasim_configs/driver/direct_actor_planner.yaml")
         config = config_path.read_text()
         self.assertIn("model_type: direct_actor_planner", config)
         self.assertIn('device: "cpu"', config)
@@ -92,7 +101,7 @@ class AlpaSimIntegrationTests(unittest.TestCase):
             "token_dagger_bc_clamped.yaml",
             "token_dagger_srcdecay_clamped.yaml",
         ):
-            config_path = Path("src/minimal_shot_av/simulator/alpasim_configs/driver") / name
+            config_path = Path("src/wod2sim/simulator/alpasim_configs/driver") / name
             config = config_path.read_text()
             self.assertIn("model_type: token_dagger_bc", config)
             self.assertIn('device: "cuda"', config)
@@ -1405,6 +1414,115 @@ class AlpaSimIntegrationTests(unittest.TestCase):
 
         self.assertIn("latest ego pose timestamp", str(ctx.exception))
 
+    def test_spotlight_adapter_rejects_frozen_camera_content_when_timestamps_advance(self) -> None:
+        model = SpotlightReflexAlpaSimModel(camera_ids=["front"], context_length=1, output_frequency_hz=4)
+        first_input = SimpleNamespace(
+            camera_images={"front": [SimpleNamespace(timestamp_us=1000, image=np.full((4, 4, 3), 180, dtype=np.uint8))]},
+            command=DriveCommand.STRAIGHT,
+            speed=6.0,
+            acceleration=0.0,
+            ego_pose_history=[SimpleNamespace(timestamp_us=1000, x=0.0, y=0.0, yaw=0.0)],
+        )
+        second_input = SimpleNamespace(
+            camera_images={"front": [SimpleNamespace(timestamp_us=1100, image=np.full((4, 4, 3), 180, dtype=np.uint8))]},
+            command=DriveCommand.STRAIGHT,
+            speed=6.0,
+            acceleration=0.0,
+            ego_pose_history=[SimpleNamespace(timestamp_us=1100, x=1.0, y=0.0, yaw=0.0)],
+        )
+
+        model.predict(first_input)
+        with self.assertRaises(RuntimeError) as ctx:
+            model.predict(second_input)
+
+        self.assertIn("frozen camera stream", str(ctx.exception))
+
+    def test_spotlight_adapter_writes_sensor_freshness_log(self) -> None:
+        with TemporaryDirectory() as tmp:
+            log_path = Path(tmp) / "spotlight-log.jsonl"
+            model = SpotlightReflexAlpaSimModel(
+                camera_ids=["front"],
+                context_length=1,
+                output_frequency_hz=4,
+                log_path=log_path,
+            )
+            prediction_input = SimpleNamespace(
+                camera_images={"front": [SimpleNamespace(timestamp_us=1000, image=np.full((4, 4, 3), 180, dtype=np.uint8))]},
+                command=DriveCommand.STRAIGHT,
+                speed=6.0,
+                acceleration=0.0,
+                ego_pose_history=[SimpleNamespace(timestamp_us=1000, x=0.0, y=0.0, yaw=0.0)],
+                scene_id="clipgt-spotlight-log",
+            )
+
+            prediction = model.predict(prediction_input)
+            reasoning = json.loads(prediction.reasoning_text or "{}")
+            records = [json.loads(line) for line in log_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+        self.assertEqual("ok_initial", reasoning["sensor_freshness"]["status"])
+        self.assertEqual(1, len(records))
+        self.assertEqual("clipgt-spotlight-log", records[0]["scene_id"])
+        self.assertEqual("ok", records[0]["result"])
+        self.assertEqual("ok_initial", records[0]["sensor_freshness"]["status"])
+
+    def test_spotlight_adapter_logs_sensor_failure_before_raising(self) -> None:
+        with TemporaryDirectory() as tmp:
+            log_path = Path(tmp) / "spotlight-log.jsonl"
+            model = SpotlightReflexAlpaSimModel(
+                camera_ids=["front"],
+                context_length=1,
+                output_frequency_hz=4,
+                log_path=log_path,
+            )
+            first_input = SimpleNamespace(
+                camera_images={"front": [SimpleNamespace(timestamp_us=1000, image=np.full((4, 4, 3), 180, dtype=np.uint8))]},
+                command=DriveCommand.STRAIGHT,
+                speed=6.0,
+                acceleration=0.0,
+                ego_pose_history=[SimpleNamespace(timestamp_us=1000, x=0.0, y=0.0, yaw=0.0)],
+                scene_id="clipgt-spotlight-log",
+            )
+            second_input = SimpleNamespace(
+                camera_images={"front": [SimpleNamespace(timestamp_us=1000, image=np.full((4, 4, 3), 180, dtype=np.uint8))]},
+                command=DriveCommand.STRAIGHT,
+                speed=6.0,
+                acceleration=0.0,
+                ego_pose_history=[SimpleNamespace(timestamp_us=1100, x=1.0, y=0.0, yaw=0.0)],
+                scene_id="clipgt-spotlight-log",
+            )
+
+            model.predict(first_input)
+            with self.assertRaises(RuntimeError):
+                model.predict(second_input)
+            records = [json.loads(line) for line in log_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+        self.assertEqual(2, len(records))
+        self.assertEqual("sensor_failure", records[-1]["result"])
+        self.assertEqual("stale_camera_timestamp", records[-1]["sensor_freshness"]["status"])
+        self.assertIn("stale camera stream", records[-1]["sensor_error"])
+
+    def test_spotlight_adapter_allows_advancing_camera_content_when_pose_moves(self) -> None:
+        model = SpotlightReflexAlpaSimModel(camera_ids=["front"], context_length=1, output_frequency_hz=4)
+        first_input = SimpleNamespace(
+            camera_images={"front": [SimpleNamespace(timestamp_us=1000, image=np.full((4, 4, 3), 180, dtype=np.uint8))]},
+            command=DriveCommand.STRAIGHT,
+            speed=6.0,
+            acceleration=0.0,
+            ego_pose_history=[SimpleNamespace(timestamp_us=1000, x=0.0, y=0.0, yaw=0.0)],
+        )
+        second_input = SimpleNamespace(
+            camera_images={"front": [SimpleNamespace(timestamp_us=1100, image=np.full((4, 4, 3), 181, dtype=np.uint8))]},
+            command=DriveCommand.STRAIGHT,
+            speed=6.0,
+            acceleration=0.0,
+            ego_pose_history=[SimpleNamespace(timestamp_us=1100, x=1.0, y=0.0, yaw=0.0)],
+        )
+
+        model.predict(first_input)
+        prediction = model.predict(second_input)
+
+        self.assertEqual((20, 2), prediction.trajectory_xy.shape)
+
     def test_direct_actor_planner_rejects_stale_camera_stream_when_ego_pose_moves(self) -> None:
         model = DirectActorPlannerAlpaSimModel(camera_ids=["front"], context_length=1, output_frequency_hz=4)
         first_input = SimpleNamespace(
@@ -1457,6 +1575,161 @@ class AlpaSimIntegrationTests(unittest.TestCase):
             model.predict(prediction_input)
 
         self.assertIn("latest ego pose timestamp", str(ctx.exception))
+
+    def test_direct_actor_planner_log_includes_sensor_freshness(self) -> None:
+        with TemporaryDirectory() as tmp:
+            log_path = Path(tmp) / "direct-planner-log.jsonl"
+            model = DirectActorPlannerAlpaSimModel(
+                camera_ids=["front"],
+                context_length=1,
+                output_frequency_hz=4,
+                log_path=log_path,
+            )
+            prediction_input = SimpleNamespace(
+                camera_images={"front": [SimpleNamespace(timestamp_us=1000, image=np.full((4, 4, 3), 180, dtype=np.uint8))]},
+                command=DriveCommand.STRAIGHT,
+                speed=6.0,
+                acceleration=0.0,
+                ego_pose_history=[SimpleNamespace(timestamp_us=1000, x=0.0, y=0.0, yaw=0.0)],
+                route_waypoints=[
+                    {"x": 0.0, "y": 0.0, "z": 0.0},
+                    {"x": 20.0, "y": 0.0, "z": 0.0},
+                ],
+                alpasignal={"hazards": []},
+                scene_id="clipgt-direct-log",
+            )
+
+            prediction = model.predict(prediction_input)
+            reasoning = json.loads(prediction.reasoning_text or "{}")
+            records = [json.loads(line) for line in log_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+        self.assertEqual("ok_initial", reasoning["sensor_freshness"]["status"])
+        self.assertEqual(1, len(records))
+        self.assertEqual("clipgt-direct-log", records[0]["scene_id"])
+        self.assertEqual("ok", records[0]["result"])
+        self.assertEqual("ok_initial", records[0]["sensor_freshness"]["status"])
+
+    def test_direct_actor_planner_rejects_frozen_camera_content_when_timestamps_advance(self) -> None:
+        model = DirectActorPlannerAlpaSimModel(camera_ids=["front"], context_length=1, output_frequency_hz=4)
+        first_input = SimpleNamespace(
+            camera_images={"front": [SimpleNamespace(timestamp_us=1000, image=np.full((4, 4, 3), 180, dtype=np.uint8))]},
+            command=DriveCommand.STRAIGHT,
+            speed=6.0,
+            acceleration=0.0,
+            ego_pose_history=[SimpleNamespace(timestamp_us=1000, x=0.0, y=0.0, yaw=0.0)],
+            route_waypoints=[
+                {"x": 0.0, "y": 0.0, "z": 0.0},
+                {"x": 20.0, "y": 0.0, "z": 0.0},
+            ],
+            alpasignal={"hazards": []},
+        )
+        second_input = SimpleNamespace(
+            camera_images={"front": [SimpleNamespace(timestamp_us=1100, image=np.full((4, 4, 3), 180, dtype=np.uint8))]},
+            command=DriveCommand.STRAIGHT,
+            speed=6.0,
+            acceleration=0.0,
+            ego_pose_history=[SimpleNamespace(timestamp_us=1100, x=1.0, y=0.0, yaw=0.0)],
+            route_waypoints=[
+                {"x": 0.0, "y": 0.0, "z": 0.0},
+                {"x": 20.0, "y": 0.0, "z": 0.0},
+            ],
+            alpasignal={"hazards": []},
+        )
+
+        model.predict(first_input)
+        with self.assertRaises(RuntimeError) as ctx:
+            model.predict(second_input)
+
+        self.assertIn("frozen camera stream", str(ctx.exception))
+
+    def test_token_bc_selection_log_includes_sensor_freshness(self) -> None:
+        if torch is None:
+            self.skipTest("torch is not installed")
+        with TemporaryDirectory() as tmp:
+            checkpoint_path = Path(tmp) / "token_dagger_bc.pt"
+            selection_log_path = Path(tmp) / "selection-log.jsonl"
+            model = _GeomMLP(len(TOKEN_ORDER))
+            for parameter in model.parameters():
+                parameter.data.zero_()
+            torch.save(
+                {
+                    "state_dict": model.state_dict(),
+                    "feat_mean": np.zeros(10, dtype=np.float32),
+                    "feat_std": np.ones(10, dtype=np.float32),
+                    "token_names": list(TOKEN_ORDER),
+                },
+                checkpoint_path,
+            )
+            adapter = TokenBCAlpaSimModel(
+                checkpoint_path=checkpoint_path,
+                device="cpu",
+                camera_ids=["front"],
+                context_length=1,
+                output_frequency_hz=4,
+                selection_log_path=selection_log_path,
+            )
+            prediction_input = SimpleNamespace(
+                camera_images={"front": [SimpleNamespace(timestamp_us=1000, image=np.full((4, 4, 3), 180, dtype=np.uint8))]},
+                command=DriveCommand.STRAIGHT,
+                speed=6.0,
+                acceleration=0.0,
+                ego_pose_history=[SimpleNamespace(timestamp_us=1000, x=0.0, y=0.0, yaw=0.0)],
+                scene_id="clipgt-tokenbc-log",
+            )
+
+            prediction = adapter.predict(prediction_input)
+            reasoning = json.loads(prediction.reasoning_text or "{}")
+            records = [
+                json.loads(line)
+                for line in selection_log_path.read_text(encoding="utf-8").splitlines()
+                if line.strip()
+            ]
+
+        self.assertEqual("ok_initial", reasoning["sensor_freshness"]["status"])
+        self.assertEqual(1, len(records))
+        self.assertEqual("clipgt-tokenbc-log", records[0]["scene_id"])
+        self.assertEqual("ok", records[0]["result"])
+        self.assertEqual("ok_initial", records[0]["sensor_freshness"]["status"])
+
+    def test_export_alpasim_audit_log_reads_spotlight_logs(self) -> None:
+        with TemporaryDirectory() as tmp:
+            run_dir = Path(tmp) / "run"
+            output_dir = Path(tmp) / "audit"
+            (run_dir / "driver").mkdir(parents=True)
+            (run_dir / "launch-metadata.json").write_text(
+                json.dumps({"model": "spotlight_reflex", "scene_preset": "fresh_3scene", "scene_ids": ["clipgt-1"]}),
+                encoding="utf-8",
+            )
+            (run_dir / "driver" / "spotlight-log.jsonl").write_text(
+                json.dumps(
+                    {
+                        "frame_index": 1,
+                        "scene_id": "clipgt-1",
+                        "command": "straight",
+                        "speed_mps": 6.0,
+                        "selected_maneuver": "maintain",
+                        "candidate_count": 9,
+                        "reference_count": 2,
+                        "alpasim_signal": {"structured_hazards": [], "route_waypoints": []},
+                        "sensor_freshness": {"status": "ok_initial"},
+                        "result": "ok",
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            manifest = export_alpasim_audit_log(run_dir, output_dir)
+            frames = [
+                json.loads(line)
+                for line in (output_dir / "frames.jsonl").read_text(encoding="utf-8").splitlines()
+                if line.strip()
+            ]
+
+        self.assertEqual(1, manifest["frame_count"])
+        self.assertEqual(1, len(frames))
+        self.assertEqual("ok_initial", frames[0]["trigger_state"]["sensor_freshness"]["status"])
+        self.assertEqual("maintain", frames[0]["step"]["selected_maneuver"])
 
     def test_token_bc_alpasim_adapter_rejects_unknown_checkpoint_tokens(self) -> None:
         with TemporaryDirectory() as tmp:

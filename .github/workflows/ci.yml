@@ -33,17 +33,15 @@ jobs:
 
       - name: Run focused bridge tests
         run: |
-          .venv/bin/pytest \
-            tests/test_alpasim_integration.py \
-            tests/test_alpasim_setup_scripts.py \
-            tests/test_check_alpasim_readiness.py \
-            tests/test_run_alpasim_scene_batch.py \
-            tests/test_audit_alpasignal_bridge.py \
-            tests/test_wod2sim_doctor.py
+          PATH="$PWD/.venv/bin:$PATH" make test
 
       - name: Run strict installed doctor
         run: |
           .venv/bin/wod2sim-doctor --strict-installed --json
+
+      - name: Run fresh-checkout bootstrap smoke
+        run: |
+          PATH="$PWD/.venv/bin:$PATH" make smoke
 
       - name: Build package
         run: |
@@ -55,15 +53,36 @@ jobs:
           uv pip install --python /tmp/wod2sim-wheel-smoke/bin/python dist/*.whl
           /tmp/wod2sim-wheel-smoke/bin/wod2sim-doctor --strict-installed --json
           /tmp/wod2sim-wheel-smoke/bin/wod2sim-build-oracle-proxy --help > /dev/null
+          /tmp/wod2sim-wheel-smoke/bin/wod2sim-audit-run --help > /dev/null
+          /tmp/wod2sim-wheel-smoke/bin/wod2sim-support-bundle --help > /dev/null
           /tmp/wod2sim-wheel-smoke/bin/python - <<'PY'
           from pathlib import Path
-          from minimal_shot_av.cli.commands.run_alpasim_local_external import MODEL_PRESETS, SCENE_PRESETS
-          from minimal_shot_av.cli.commands.setup_alpasim_local_plugin import ALPASIM_OVERRIDE_ROOT
+          from wod2sim.cli.commands.run_alpasim_local_external import MODEL_PRESETS, SCENE_PRESETS
+          from wod2sim.cli.commands.setup_alpasim_local_plugin import ALPASIM_OVERRIDE_ROOT
 
+          assert tuple(MODEL_PRESETS) == (
+              "spotlight_reflex",
+              "token_dagger_bc",
+              "direct_actor_planner",
+          ), tuple(MODEL_PRESETS)
           assert ALPASIM_OVERRIDE_ROOT.is_dir(), ALPASIM_OVERRIDE_ROOT
           assert all(Path(spec["config_file"]).is_file() for spec in MODEL_PRESETS.values())
           assert all(Path(path).is_file() for path in SCENE_PRESETS.values())
           print("wheel config and override payload OK")
+          PY
+          /tmp/wod2sim-wheel-smoke/bin/python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+
+          wheel_path = next(Path("dist").glob("*.whl"))
+          with ZipFile(wheel_path) as archive:
+              bad_paths = [
+                  name
+                  for name in archive.namelist()
+                  if "__pycache__/" in name or name.endswith((".pyc", ".pyo"))
+              ]
+          assert not bad_paths, bad_paths
+          print("wheel artifact hygiene OK")
           PY
           /tmp/wod2sim-wheel-smoke/bin/wod2sim-audit-signal --output /tmp/wod2sim-wheel-audit.json
           /tmp/wod2sim-wheel-smoke/bin/wod2sim-batch \

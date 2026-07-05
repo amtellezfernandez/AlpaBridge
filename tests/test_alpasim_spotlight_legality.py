@@ -14,7 +14,7 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from minimal_shot_av.simulator.alpasim_spotlight import DriveCommand, SpotlightReflexAlpaSimModel
+from wod2sim.simulator.alpasim_spotlight import DriveCommand, SpotlightReflexAlpaSimModel
 
 
 class AlpaSimSpotlightLegalityTests(unittest.TestCase):

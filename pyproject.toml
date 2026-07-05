@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "wod2sim"
 version = "0.1.0"
-description = "Code and paper release for adapting WOD-style driving policies to AlpaSim closed-loop execution"
+description = "Standalone code and paper release for adapting WOD-style driving policies to AlpaSim closed-loop execution"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "BSD-3-Clause"
@@ -37,22 +37,24 @@ tuning = ["optuna>=3.6"]
 viz = ["Pillow>=10"]
 
 [project.entry-points."alpasim.models"]
-spotlight_reflex = "minimal_shot_av.simulator.alpasim_spotlight:SpotlightReflexAlpaSimModel"
-token_dagger_bc = "minimal_shot_av.simulator.alpasim_token_bc:TokenBCAlpaSimModel"
-direct_actor_planner = "minimal_shot_av.simulator.alpasim_direct_actor_planner:DirectActorPlannerAlpaSimModel"
+spotlight_reflex = "wod2sim.simulator.alpasim_spotlight:SpotlightReflexAlpaSimModel"
+token_dagger_bc = "wod2sim.simulator.alpasim_token_bc:TokenBCAlpaSimModel"
+direct_actor_planner = "wod2sim.simulator.alpasim_direct_actor_planner:DirectActorPlannerAlpaSimModel"
 
 [project.entry-points."alpasim.configs"]
-spotlight_reflex = "minimal_shot_av.simulator.alpasim_configs"
+spotlight_reflex = "wod2sim.simulator.alpasim_configs"
 
 [project.scripts]
-wod2sim-doctor = "minimal_shot_av.cli.commands.wod2sim_doctor:main"
-wod2sim-setup = "minimal_shot_av.cli.commands.setup_alpasim_local_plugin:main"
-wod2sim-ready = "minimal_shot_av.cli.commands.check_alpasim_readiness:main"
-wod2sim-launch = "minimal_shot_av.cli.commands.run_alpasim_local_external:main"
-wod2sim-batch = "minimal_shot_av.cli.commands.run_alpasim_scene_batch:main"
-wod2sim-build-oracle-proxy = "minimal_shot_av.cli.commands.build_alpasim_oracle_actor_proxy:main"
-wod2sim-audit-signal = "minimal_shot_av.cli.commands.audit_alpasignal_bridge:main"
-wod2sim-evidence = "minimal_shot_av.neutral.alpasim_metrics:main"
+wod2sim-doctor = "wod2sim.cli.commands.wod2sim_doctor:main"
+wod2sim-setup = "wod2sim.cli.commands.setup_alpasim_local_plugin:main"
+wod2sim-ready = "wod2sim.cli.commands.check_alpasim_readiness:main"
+wod2sim-launch = "wod2sim.cli.commands.run_alpasim_local_external:main"
+wod2sim-batch = "wod2sim.cli.commands.run_alpasim_scene_batch:main"
+wod2sim-build-oracle-proxy = "wod2sim.cli.commands.build_alpasim_oracle_actor_proxy:main"
+wod2sim-audit-signal = "wod2sim.cli.commands.audit_alpasignal_bridge:main"
+wod2sim-audit-run = "wod2sim.cli.commands.audit_run:main"
+wod2sim-support-bundle = "wod2sim.cli.commands.support_bundle:main"
+wod2sim-evidence = "wod2sim.neutral.alpasim_metrics:main"
 
 [project.urls]
 Homepage = "https://github.com/amtellezfernandez/wod2sim"
@@ -66,9 +68,12 @@ package-dir = {"" = "src"}
 where = ["src"]
 
 [tool.setuptools.package-data]
-"minimal_shot_av.simulator.alpasim_configs" = ["**/*.yaml"]
-"minimal_shot_av.simulator" = ["alpasim_scene_presets/*.yaml"]
-"minimal_shot_av.alpasim_overrides" = ["**/*"]
+"wod2sim.simulator.alpasim_configs" = ["**/*.yaml"]
+"wod2sim.simulator" = ["alpasim_scene_presets/*.yaml"]
+"wod2sim.alpasim_overrides" = ["**/*"]
+
+[tool.setuptools.exclude-package-data]
+"*" = ["__pycache__/*", "*.pyc", "*.pyo"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -89,7 +89,7 @@ class RunAlpaSimSceneBatchTests(unittest.TestCase):
         self.assertEqual("python", command[0])
         self.assertEqual("-m", command[1])
         self.assertEqual(
-            "minimal_shot_av.cli.commands.run_alpasim_local_external",
+            "wod2sim.cli.commands.run_alpasim_local_external",
             command[2],
         )
         self.assertIn("--scene-id", command)
@@ -147,6 +147,93 @@ class RunAlpaSimSceneBatchTests(unittest.TestCase):
             self.assertEqual("partial", module._scene_status(partial))
             self.assertEqual("completed", module._scene_status(completed.parent))
             self.assertEqual("completed", module._scene_status(completed_alt.parent))
+
+    def test_scene_diagnostics_include_run_status_and_sensor_failure_summary(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            run_dir = Path(tmp) / "run"
+            driver_dir = run_dir / "driver"
+            aggregate_dir = run_dir / "aggregate"
+            driver_dir.mkdir(parents=True)
+            aggregate_dir.mkdir(parents=True)
+            (aggregate_dir / "metrics_results.txt").write_text("ok\n", encoding="utf-8")
+            (run_dir / "launch-metadata.json").write_text(
+                '{"model":"spotlight_reflex","scene_ids":["clipgt-scene-1"]}\n',
+                encoding="utf-8",
+            )
+            (run_dir / "run-status.json").write_text(
+                (
+                    "{\n"
+                    '  "state": "failed",\n'
+                    '  "phase": "both",\n'
+                    '  "aggregate_status": "completed",\n'
+                    '  "driver_returncode": 1,\n'
+                    '  "wizard_returncode": 2\n'
+                    "}\n"
+                ),
+                encoding="utf-8",
+            )
+            (driver_dir / "spotlight-log.jsonl").write_text(
+                (
+                    '{"frame_index":0,"result":"sensor_failure","scene_id":"clipgt-scene-1",'
+                    '"sensor_error":"stale camera stream",'
+                    '"sensor_freshness":{"status":"stale_camera_timestamp","pose_camera_lag_us":42000}}\n'
+                ),
+                encoding="utf-8",
+            )
+
+            diagnostics = module._scene_diagnostics(run_dir)
+
+        self.assertTrue(diagnostics["run_status_present"])
+        self.assertEqual("failed", diagnostics["state"])
+        self.assertEqual("both", diagnostics["phase"])
+        self.assertEqual("completed", diagnostics["aggregate_status"])
+        self.assertEqual(1, diagnostics["driver_returncode"])
+        self.assertEqual(2, diagnostics["wizard_returncode"])
+        self.assertTrue(diagnostics["driver_log_present"])
+        self.assertEqual("spotlight", diagnostics["driver_log_kind"])
+        self.assertEqual(1, diagnostics["sensor_failure_count"])
+        self.assertEqual("stale_camera_timestamp", diagnostics["first_sensor_failure"]["status"])
+
+    def test_build_batch_summary_rolls_up_diagnostics(self) -> None:
+        module = _load_module()
+        statuses = [
+            {
+                "run_dir": "/tmp/run1",
+                "result": "completed",
+                "status": "completed",
+                "diagnostics": {
+                    "state": "completed",
+                    "aggregate_status": "completed",
+                    "sensor_failure_count": 0,
+                },
+            },
+            {
+                "run_dir": "/tmp/run2",
+                "result": "failed",
+                "status": "partial",
+                "diagnostics": {
+                    "state": "failed",
+                    "aggregate_status": "partial",
+                    "sensor_failure_count": 1,
+                },
+            },
+        ]
+
+        summary = module._build_batch_summary(
+            batch_dir=Path("/tmp/batch"),
+            mode="both",
+            model="spotlight_reflex",
+            scene_count=2,
+            statuses=statuses,
+        )
+
+        self.assertEqual({"completed": 1, "partial": 1}, summary["status_counts"])
+        self.assertEqual({"completed": 1, "failed": 1}, summary["result_counts"])
+        self.assertEqual({"completed": 1, "failed": 1}, summary["run_state_counts"])
+        self.assertEqual({"completed": 1, "partial": 1}, summary["aggregate_status_counts"])
+        self.assertEqual(["/tmp/run2"], summary["sensor_failure_runs"])
+        self.assertEqual(["/tmp/run2"], summary["failed_runs"])
 
     def test_run_scene_with_retries_retries_once_then_succeeds(self) -> None:
         module = _load_module()

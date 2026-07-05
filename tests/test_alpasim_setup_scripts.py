@@ -1,13 +1,17 @@
 from __future__ import annotations
 
+import json
 import os
 import tempfile
 import unittest
+import importlib.util
+from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
 import subprocess
 import argparse
 import sys
+import types
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
@@ -16,36 +20,75 @@ if str(ROOT) not in sys.path:
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-import minimal_shot_av.cli.commands.setup_alpasim_local_plugin as setup_cmd
-from minimal_shot_av.cli.commands.run_alpasim_local_external import _resolve_alpasim_root as resolve_run_root
-from minimal_shot_av.cli.commands.run_alpasim_local_external import _preflight_scene_artifacts
-from minimal_shot_av.cli.commands.run_alpasim_local_external import _preflight_docker_access
-from minimal_shot_av.cli.commands.run_alpasim_local_external import _preflight_alpasim_base_image
-from minimal_shot_av.cli.commands.run_alpasim_local_external import _validate_alpasim_checkout as validate_run_checkout
-from minimal_shot_av.cli.commands.run_alpasim_local_external import (
+import wod2sim.cli.commands.setup_alpasim_local_plugin as setup_cmd
+import wod2sim.cli.commands.run_alpasim_local_external as launch_cmd
+from wod2sim.cli.commands.run_alpasim_local_external import _resolve_alpasim_root as resolve_run_root
+from wod2sim.cli.commands.run_alpasim_local_external import _preflight_scene_artifacts
+from wod2sim.cli.commands.run_alpasim_local_external import _preflight_docker_access
+from wod2sim.cli.commands.run_alpasim_local_external import _preflight_alpasim_base_image
+from wod2sim.cli.commands.run_alpasim_local_external import _validate_alpasim_checkout as validate_run_checkout
+from wod2sim.cli.commands.run_alpasim_local_external import (
     MODEL_PRESETS,
     PUBLIC_RELEASE_MODELS,
+    _ALL_MODEL_PRESETS,
+    _aggregate_status,
     _build_parser as build_run_parser,
+    _complete_run_status,
     _driver_env,
     _driver_command,
+    _planned_run_status,
     _preflight_platform_compatibility,
+    _write_run_status,
     _wizard_command,
     _wizard_deploy_target,
 )
-from minimal_shot_av.cli.commands.run_alpasim_local_external import _scene_ids
-from minimal_shot_av.cli.commands.setup_alpasim_local_plugin import (
+from wod2sim.cli.commands.run_alpasim_local_external import _scene_ids
+from wod2sim.cli.commands.setup_alpasim_local_plugin import (
     _apply_local_alpasim_overrides,
+    _apply_alpasim_patch,
     _bootstrap_alpasim_venv,
     _compile_alpasim_protos,
+    _install_torch_for_alpasim,
+    _patch_effectively_present,
+    _remove_conflicting_wod2sim_distributions,
+    _should_copy_override_path,
     ALPASIM_CORE_DEPENDENCIES,
     ALPASIM_EDITABLE_PACKAGES,
     _resolve_alpasim_root as resolve_setup_root,
     _validate_alpasim_checkout as validate_setup_checkout,
 )
-from minimal_shot_av.cli.commands.run_alpasim_scene_batch import _build_parser as build_batch_parser
+from wod2sim.cli.commands.run_alpasim_scene_batch import _build_parser as build_batch_parser
 
 
 class AlpaSimSetupScriptTests(unittest.TestCase):
+    def _load_override_docker_compose_module(self, override_path: Path):
+        fake_modules = {
+            "alpasim_utils": types.ModuleType("alpasim_utils"),
+            "alpasim_utils.paths": types.ModuleType("alpasim_utils.paths"),
+            "fakepkg": types.ModuleType("fakepkg"),
+            "fakepkg.context": types.ModuleType("fakepkg.context"),
+            "fakepkg.services": types.ModuleType("fakepkg.services"),
+            "fakepkg.utils": types.ModuleType("fakepkg.utils"),
+        }
+        fake_modules["alpasim_utils.paths"].find_repo_root = lambda _path: ROOT
+        fake_modules["fakepkg.context"].WizardContext = object
+        fake_modules["fakepkg.services"].ContainerDefinition = object
+        fake_modules["fakepkg.services"].build_container_set = lambda *args, **kwargs: None
+        fake_modules["fakepkg.utils"].LiteralStr = str
+        fake_modules["fakepkg.utils"].write_yaml = lambda *args, **kwargs: None
+
+        spec = importlib.util.spec_from_file_location(
+            "fakepkg.deployment.docker_compose",
+            override_path,
+        )
+        if spec is None or spec.loader is None:
+            raise ImportError(override_path)
+        module = importlib.util.module_from_spec(spec)
+        module.__package__ = "fakepkg.deployment"
+        with patch.dict(sys.modules, fake_modules, clear=False):
+            spec.loader.exec_module(module)
+        return module
+
     def test_run_launcher_prefers_cli_root_over_env(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             cli_root = Path(tmp) / "cli"
@@ -78,7 +121,11 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
         with patch.object(setup_cmd, "_parse_args", return_value=args), patch.object(
             setup_cmd, "_validate_alpasim_checkout"
         ), patch.object(
-            setup_cmd, "_plugin_names", return_value=list(setup_cmd.REQUIRED_MODELS)
+            setup_cmd,
+            "_plugin_registry_snapshot",
+            return_value={"loaded": [{"name": name} for name in setup_cmd.REQUIRED_MODELS], "failures": []},
+        ), patch.object(
+            setup_cmd, "_fail_on_duplicate_public_model_entry_points"
         ), patch.object(
             setup_cmd, "_apply_local_alpasim_overrides"
         ) as apply_overrides, patch.object(
@@ -158,14 +205,14 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
             "",
             "permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock",
         )
-        with patch("minimal_shot_av.cli.commands.run_alpasim_local_external.subprocess.run", return_value=denied):
+        with patch("wod2sim.cli.commands.run_alpasim_local_external.subprocess.run", return_value=denied):
             with self.assertRaises(SystemExit) as ctx:
                 _preflight_docker_access()
         self.assertIn("Docker daemon is not accessible", str(ctx.exception))
 
     def test_preflight_docker_access_accepts_healthy_daemon(self) -> None:
         healthy = subprocess.CompletedProcess(["docker", "info"], 0, "", "")
-        with patch("minimal_shot_av.cli.commands.run_alpasim_local_external.subprocess.run", return_value=healthy):
+        with patch("wod2sim.cli.commands.run_alpasim_local_external.subprocess.run", return_value=healthy):
             _preflight_docker_access()
 
     def test_preflight_alpasim_base_image_rejects_missing_image(self) -> None:
@@ -175,7 +222,7 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
             "",
             "No such image",
         )
-        with patch("minimal_shot_av.cli.commands.run_alpasim_local_external.subprocess.run", return_value=missing):
+        with patch("wod2sim.cli.commands.run_alpasim_local_external.subprocess.run", return_value=missing):
             with self.assertRaises(SystemExit) as ctx:
                 _preflight_alpasim_base_image()
         self.assertIn("build_alpasim_base_image.sh", str(ctx.exception))
@@ -187,48 +234,75 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
             "[]",
             "",
         )
-        with patch("minimal_shot_av.cli.commands.run_alpasim_local_external.subprocess.run", return_value=present):
+        with patch("wod2sim.cli.commands.run_alpasim_local_external.subprocess.run", return_value=present):
             _preflight_alpasim_base_image()
+
+    def test_install_torch_for_alpasim_uses_pip_directly(self) -> None:
+        with patch("wod2sim.cli.commands.setup_alpasim_local_plugin._ensure_venv_pip") as ensure_pip, patch(
+            "wod2sim.cli.commands.setup_alpasim_local_plugin._run"
+        ) as run:
+            _install_torch_for_alpasim(
+                uv_bin="/usr/bin/uv",
+                venv_python=Path("/tmp/alpasim/.venv/bin/python"),
+                cwd=Path("/tmp/alpasim"),
+            )
+
+        ensure_pip.assert_called_once_with(
+            venv_python=Path("/tmp/alpasim/.venv/bin/python"),
+            cwd=Path("/tmp/alpasim"),
+        )
+        run.assert_called_once_with(
+            [
+                "/tmp/alpasim/.venv/bin/python",
+                "-m",
+                "pip",
+                "install",
+                "--index-url",
+                setup_cmd.TORCH_INDEX_URL,
+                setup_cmd.TORCH_PACKAGE,
+            ],
+            cwd=Path("/tmp/alpasim"),
+        )
 
     def test_driver_env_expands_run_dir_and_oracle_actor_proxy(self) -> None:
         env = _driver_env(
             {
-                "MSA_TOKENBC_SELECTION_LOG_PATH": "{run_dir}/driver/selection-log.jsonl",
-                "MSA_TOKENBC_ORACLE_ACTOR_PROXY_PATH": "{oracle_actor_proxy_path}",
+                "WAYSPAN_TOKENBC_SELECTION_LOG_PATH": "{run_dir}/driver/selection-log.jsonl",
+                "WAYSPAN_TOKENBC_ORACLE_ACTOR_PROXY_PATH": "{oracle_actor_proxy_path}",
             },
             run_dir=Path("/tmp/run"),
             oracle_actor_proxy=Path("/tmp/oracle.json"),
         )
 
-        self.assertEqual("/tmp/run/driver/selection-log.jsonl", env["MSA_TOKENBC_SELECTION_LOG_PATH"])
-        self.assertEqual("/tmp/oracle.json", env["MSA_TOKENBC_ORACLE_ACTOR_PROXY_PATH"])
+        self.assertEqual("/tmp/run/driver/selection-log.jsonl", env["WAYSPAN_TOKENBC_SELECTION_LOG_PATH"])
+        self.assertEqual("/tmp/oracle.json", env["WAYSPAN_TOKENBC_ORACLE_ACTOR_PROXY_PATH"])
 
     def test_actor_axis_preset_requires_oracle_actor_proxy(self) -> None:
-        preset = MODEL_PRESETS["token_dagger_iter2_actor_axis_oracle_actor_clamped"]
+        preset = _ALL_MODEL_PRESETS["token_dagger_iter2_actor_axis_oracle_actor_clamped"]
 
         self.assertTrue(preset["requires_oracle_actor_proxy"])
-        self.assertEqual("actor_axis_constrained", preset["driver_env"]["MSA_TOKENBC_SELECTION_MODE"])
-        self.assertEqual("3", preset["driver_env"]["MSA_TOKENBC_HYBRID_TOP_K"])
+        self.assertEqual("actor_axis_constrained", preset["driver_env"]["WAYSPAN_TOKENBC_SELECTION_MODE"])
+        self.assertEqual("3", preset["driver_env"]["WAYSPAN_TOKENBC_HYBRID_TOP_K"])
 
     def test_direct_actor_planner_preset_requires_oracle_actor_proxy(self) -> None:
-        preset = MODEL_PRESETS["direct_actor_planner_oracle"]
+        preset = _ALL_MODEL_PRESETS["direct_actor_planner_oracle"]
 
         self.assertTrue(preset["requires_oracle_actor_proxy"])
         self.assertFalse(preset["force_cuda"])
         self.assertEqual(
             "{oracle_actor_proxy_path}",
-            preset["driver_env"]["MSA_DIRECT_PLANNER_ORACLE_ACTOR_PROXY_PATH"],
+            preset["driver_env"]["WAYSPAN_DIRECT_PLANNER_ORACLE_ACTOR_PROXY_PATH"],
         )
 
     def test_direct_actor_planner_max_clearance_preset_sets_objective(self) -> None:
-        preset = MODEL_PRESETS["direct_actor_planner_max_clearance_oracle"]
+        preset = _ALL_MODEL_PRESETS["direct_actor_planner_max_clearance_oracle"]
 
         self.assertTrue(preset["requires_oracle_actor_proxy"])
         self.assertFalse(preset["force_cuda"])
-        self.assertEqual("max_clearance", preset["driver_env"]["MSA_DIRECT_PLANNER_SELECTION_OBJECTIVE"])
+        self.assertEqual("max_clearance", preset["driver_env"]["WAYSPAN_DIRECT_PLANNER_SELECTION_OBJECTIVE"])
         self.assertEqual(
             "{oracle_actor_proxy_path}",
-            preset["driver_env"]["MSA_DIRECT_PLANNER_ORACLE_ACTOR_PROXY_PATH"],
+            preset["driver_env"]["WAYSPAN_DIRECT_PLANNER_ORACLE_ACTOR_PROXY_PATH"],
         )
 
     def test_public_release_models_match_curated_surface(self) -> None:
@@ -237,12 +311,154 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
             PUBLIC_RELEASE_MODELS,
         )
 
+    def test_model_presets_export_only_public_release_surface(self) -> None:
+        self.assertEqual(PUBLIC_RELEASE_MODELS, tuple(MODEL_PRESETS))
+
+    def test_public_release_models_emit_driver_logs_by_default(self) -> None:
+        self.assertEqual(
+            "{run_dir}/driver/spotlight-log.jsonl",
+            MODEL_PRESETS["spotlight_reflex"]["driver_env"]["WAYSPAN_SPOTLIGHT_LOG_PATH"],
+        )
+        self.assertEqual(
+            "{run_dir}/driver/selection-log.jsonl",
+            MODEL_PRESETS["token_dagger_bc"]["driver_env"]["WAYSPAN_TOKENBC_SELECTION_LOG_PATH"],
+        )
+        self.assertEqual(
+            "{run_dir}/driver/direct-planner-log.jsonl",
+            MODEL_PRESETS["direct_actor_planner"]["driver_env"]["WAYSPAN_DIRECT_PLANNER_LOG_PATH"],
+        )
+
+    def test_planned_run_status_starts_as_planned(self) -> None:
+        args = argparse.Namespace(
+            mode="print",
+            model="spotlight_reflex",
+            scene_preset="fresh_3scene",
+            scene_id=[],
+        )
+
+        status = _planned_run_status(
+            args=args,
+            run_dir=Path("/tmp/run"),
+            driver_config_path=Path("/tmp/run/external-driver-config.yaml"),
+            checkpoint=None,
+            oracle_actor_proxy=None,
+        )
+
+        self.assertEqual("wod2sim_run_status_v1", status["schema"])
+        self.assertEqual("planned", status["state"])
+        self.assertEqual("planned", status["phase"])
+        self.assertEqual("missing", status["aggregate_status"])
+        self.assertEqual("/tmp/run/driver.stdout.log", status["driver_stdout_log"])
+
+    def test_complete_run_status_writes_lifecycle_result(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            run_dir = Path(tmp) / "run"
+            run_dir.mkdir()
+            status_path = run_dir / "run-status.json"
+            args = argparse.Namespace(
+                mode="both",
+                model="spotlight_reflex",
+                scene_preset="fresh_3scene",
+                scene_id=[],
+            )
+            status = _planned_run_status(
+                args=args,
+                run_dir=run_dir,
+                driver_config_path=run_dir / "external-driver-config.yaml",
+                checkpoint=None,
+                oracle_actor_proxy=None,
+            )
+            _write_run_status(status_path, status)
+            aggregate_dir = run_dir / "aggregate"
+            aggregate_dir.mkdir()
+            (aggregate_dir / "metrics_results.txt").write_text("ok\n", encoding="utf-8")
+
+            _complete_run_status(
+                status_path,
+                status,
+                phase="both",
+                state="completed",
+                driver_returncode=-15,
+                wizard_returncode=0,
+                aggregate_status=_aggregate_status(run_dir),
+            )
+            payload = json.loads(status_path.read_text(encoding="utf-8"))
+
+        self.assertEqual("completed", payload["state"])
+        self.assertEqual("both", payload["phase"])
+        self.assertEqual(-15, payload["driver_returncode"])
+        self.assertEqual(0, payload["wizard_returncode"])
+        self.assertEqual("completed", payload["aggregate_status"])
+        self.assertIsNotNone(payload["completed_at"])
+
+    def test_source_tree_launch_wrapper_hides_internal_preset_catalog(self) -> None:
+        script_path = ROOT / "scripts" / "run_alpasim_local_external.py"
+        spec = importlib.util.spec_from_file_location("wod2sim_launch_script", script_path)
+        if spec is None or spec.loader is None:
+            raise ImportError(script_path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        self.assertEqual(PUBLIC_RELEASE_MODELS, tuple(module.MODEL_PRESETS))
+        self.assertFalse(hasattr(module, "_ALL_MODEL_PRESETS"))
+
     def test_launch_parser_only_exposes_public_release_models(self) -> None:
         parser = build_run_parser()
         model_action = next(action for action in parser._actions if action.dest == "model")
 
         self.assertEqual("spotlight_reflex", parser.get_default("model"))
         self.assertEqual(PUBLIC_RELEASE_MODELS, model_action.choices)
+
+    def test_print_mode_skips_live_runtime_and_scene_artifact_preflights(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            alpasim_root = Path(tmp) / "alpasim"
+            run_dir = Path(tmp) / "run"
+            (alpasim_root / "src" / "driver").mkdir(parents=True)
+            (alpasim_root / "src" / "wizard").mkdir(parents=True)
+            (alpasim_root / ".venv" / "bin").mkdir(parents=True)
+            (alpasim_root / "pyproject.toml").write_text("[project]\nname='alpasim'\n", encoding="utf-8")
+            (alpasim_root / ".git").mkdir()
+            (alpasim_root / ".venv" / "bin" / "python").write_text("", encoding="utf-8")
+            (alpasim_root / ".venv" / "bin" / "alpasim_wizard").write_text("", encoding="utf-8")
+            args = argparse.Namespace(
+                mode="print",
+                model="spotlight_reflex",
+                checkpoint=None,
+                oracle_actor_proxy=None,
+                scene_preset="fresh_3scene",
+                scene_id=[],
+                run_dir=run_dir,
+                runs_root=Path(tmp) / "runs",
+                alpasim_root=alpasim_root,
+                port=6789,
+                baseport=6000,
+                timeout=600,
+                topology="1gpu",
+                wizard_dry_run=False,
+                wizard_arg=[],
+                driver_warmup_seconds=10.0,
+                allow_existing_run_dir=False,
+            )
+
+            with patch.object(launch_cmd, "_parse_args", return_value=args), patch.object(
+                launch_cmd, "_preflight_platform_compatibility"
+            ), patch.object(
+                launch_cmd, "_preflight_docker_access", side_effect=AssertionError("docker preflight should be skipped")
+            ), patch.object(
+                launch_cmd, "_preflight_alpasim_base_image", side_effect=AssertionError("image preflight should be skipped")
+            ), patch.object(
+                launch_cmd, "_preflight_nvidia_container_runtime", side_effect=AssertionError("gpu preflight should be skipped")
+            ), patch.object(
+                launch_cmd, "_preflight_scene_artifacts", side_effect=AssertionError("scene artifact preflight should be skipped")
+            ), patch(
+                "sys.stdout", new_callable=StringIO
+            ):
+                launch_cmd.main()
+
+            self.assertTrue((run_dir / "launch-metadata.json").is_file())
+            self.assertTrue((run_dir / "driver-command.sh").is_file())
+            self.assertTrue((run_dir / "wizard-command.sh").is_file())
+            self.assertTrue((run_dir / "run-status.json").is_file())
 
     def test_batch_parser_only_exposes_public_release_models(self) -> None:
         parser = build_batch_parser()
@@ -259,10 +475,66 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
             source_file.parent.mkdir(parents=True)
             source_file.write_text("override-file\n", encoding="utf-8")
 
-            with patch("minimal_shot_av.cli.commands.setup_alpasim_local_plugin.ALPASIM_OVERRIDE_ROOT", source_root):
+            with patch("wod2sim.cli.commands.setup_alpasim_local_plugin.ALPASIM_OVERRIDE_ROOT", source_root):
                 _apply_local_alpasim_overrides(alpasim_root)
 
             self.assertEqual("override-file\n", target_file.read_text(encoding="utf-8"))
+
+    def test_runtime_override_rewrites_single_run_array_job_dir_to_log_dir(self) -> None:
+        override_path = (
+            ROOT
+            / "src"
+            / "wod2sim"
+            / "alpasim_overrides"
+            / "src"
+            / "wizard"
+            / "alpasim_wizard"
+            / "deployment"
+            / "docker_compose.py"
+        )
+        module = self._load_override_docker_compose_module(override_path)
+
+        command = (
+            "uv run python -m alpasim_runtime.simulate "
+            "--log-dir=/mnt/log_dir --array-job-dir=/mnt/array_job_dir"
+        )
+        volumes = [
+            "/tmp/run:/mnt/log_dir",
+            "/tmp/run:/mnt/array_job_dir",
+        ]
+
+        normalized = module._normalize_single_run_runtime_command(command, volumes)
+
+        self.assertIn("--array-job-dir=/mnt/log_dir", normalized)
+        self.assertNotIn("--array-job-dir=/mnt/array_job_dir", normalized)
+
+    def test_packaged_and_tracked_docker_compose_overrides_stay_in_sync(self) -> None:
+        packaged = (
+            ROOT
+            / "src"
+            / "wod2sim"
+            / "alpasim_overrides"
+            / "src"
+            / "wizard"
+            / "alpasim_wizard"
+            / "deployment"
+            / "docker_compose.py"
+        )
+        tracked = (
+            ROOT
+            / "third_party"
+            / "alpasim_overrides"
+            / "src"
+            / "wizard"
+            / "alpasim_wizard"
+            / "deployment"
+            / "docker_compose.py"
+        )
+
+        self.assertEqual(
+            packaged.read_text(encoding="utf-8"),
+            tracked.read_text(encoding="utf-8"),
+        )
 
     def test_setup_script_also_copies_driver_model_override(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -289,7 +561,7 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
             source_file.parent.mkdir(parents=True)
             source_file.write_text("driver-model-override\n", encoding="utf-8")
 
-            with patch("minimal_shot_av.cli.commands.setup_alpasim_local_plugin.ALPASIM_OVERRIDE_ROOT", source_root):
+            with patch("wod2sim.cli.commands.setup_alpasim_local_plugin.ALPASIM_OVERRIDE_ROOT", source_root):
                 _apply_local_alpasim_overrides(alpasim_root)
 
             self.assertEqual("driver-model-override\n", target_file.read_text(encoding="utf-8"))
@@ -318,12 +590,107 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            with patch("minimal_shot_av.cli.commands.setup_alpasim_local_plugin.ALPASIM_OVERRIDE_ROOT", source_root):
+            with patch("wod2sim.cli.commands.setup_alpasim_local_plugin.ALPASIM_OVERRIDE_ROOT", source_root):
                 _apply_local_alpasim_overrides(alpasim_root)
                 _apply_local_alpasim_overrides(alpasim_root)
 
             self.assertEqual("patched\n", target_file.read_text(encoding="utf-8"))
             self.assertFalse((alpasim_root / "route.patch").exists())
+
+    def test_setup_script_skips_python_cache_artifacts_in_override_payload(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            alpasim_root = Path(tmp) / "alpasim"
+            source_root = Path(tmp) / "overrides"
+            source_root.mkdir(parents=True)
+            tracked_file = source_root / "src" / "wizard" / "alpasim_wizard" / "deployment" / "docker_compose.py"
+            pycache_file = (
+                source_root
+                / "src"
+                / "wizard"
+                / "alpasim_wizard"
+                / "deployment"
+                / "__pycache__"
+                / "docker_compose.cpython-312.pyc"
+            )
+            tracked_file.parent.mkdir(parents=True, exist_ok=True)
+            pycache_file.parent.mkdir(parents=True, exist_ok=True)
+            tracked_file.write_text("print('tracked')\n", encoding="utf-8")
+            pycache_file.write_bytes(b"compiled")
+
+            with patch("wod2sim.cli.commands.setup_alpasim_local_plugin.ALPASIM_OVERRIDE_ROOT", source_root):
+                _apply_local_alpasim_overrides(alpasim_root)
+
+            self.assertTrue((alpasim_root / tracked_file.relative_to(source_root)).is_file())
+            self.assertFalse((alpasim_root / pycache_file.relative_to(source_root)).exists())
+
+    def test_should_copy_override_path_rejects_generated_python_cache_files(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "overrides"
+            pycache_file = root / "src" / "__pycache__" / "foo.pyc"
+            pyc_file = root / "src" / "module.pyc"
+            pyo_file = root / "src" / "module.pyo"
+            patch_file = root / "src" / "route.patch"
+            tracked_file = root / "src" / "module.py"
+            for path in (pycache_file, pyc_file, pyo_file, patch_file, tracked_file):
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("x\n", encoding="utf-8")
+
+            self.assertFalse(_should_copy_override_path(pycache_file))
+            self.assertFalse(_should_copy_override_path(pyc_file))
+            self.assertFalse(_should_copy_override_path(pyo_file))
+            self.assertFalse(_should_copy_override_path(patch_file))
+            self.assertTrue(_should_copy_override_path(tracked_file))
+
+    def test_patch_effectively_present_detects_local_checkout_override_state(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            alpasim_root = Path(tmp) / "alpasim"
+            files = {
+                "Dockerfile": 'if [ "${TARGETARCH}" = "arm64" ]; then\nuv pip install --python /repo/.venv/bin/python\n',
+                "pyproject.toml": 'docker_local = [\n  "alpasim_controller",\n  "alpasim-runtime",\n]\n',
+                "src/driver/src/alpasim_driver/main.py": "\n".join(
+                    [
+                        "close_session for unknown session %s; treating as idempotent",
+                        "submit_image_observation for unknown session %s at %s; ignoring late frame",
+                        "submit_egomotion_observation for unknown session %s at %s; ignoring late egomotion",
+                        "submit_route for unknown session %s; ignoring late route update",
+                    ]
+                ),
+                "src/driver/src/alpasim_driver/models/__init__.py": "_LAZY_IMPORTS = {}\ndef __getattr__(name: str) -> Any:\n    pass\n",
+            }
+            for relative, content in files.items():
+                path = alpasim_root / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(content, encoding="utf-8")
+
+            patch_file = ROOT / "src" / "wod2sim" / "alpasim_overrides" / "local_checkout.patch"
+            self.assertTrue(_patch_effectively_present(alpasim_root, patch_file))
+
+    def test_apply_patch_skips_when_checkout_already_satisfies_override(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            alpasim_root = Path(tmp) / "alpasim"
+            files = {
+                "src/driver/src/alpasim_driver/main.py": "\n".join(
+                    [
+                        "current_route: Route | None = None",
+                        "def route_waypoints_for_prediction(self) -> list[Vec3] | None:",
+                        "route_waypoints=job.session.route_waypoints_for_prediction(),",
+                    ]
+                ),
+                "src/driver/src/alpasim_driver/models/base.py": "route_waypoints: list[Any] | None = None\n",
+            }
+            for relative, content in files.items():
+                path = alpasim_root / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(content, encoding="utf-8")
+
+            patch_file = ROOT / "src" / "wod2sim" / "alpasim_overrides" / "route_waypoints.patch"
+            with patch("subprocess.run") as run_subprocess, patch(
+                "wod2sim.cli.commands.setup_alpasim_local_plugin._run"
+            ) as run_apply:
+                _apply_alpasim_patch(alpasim_root, patch_file)
+
+            run_subprocess.assert_not_called()
+            run_apply.assert_not_called()
 
     def test_bootstrap_alpasim_venv_uses_minimal_editable_install_plan(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -347,7 +714,7 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
                     (proto_root / output_name).write_text("# generated\n", encoding="utf-8")
                 return type("Result", (), {"stdout": "", "stderr": "", "returncode": 0})()
 
-            with patch("minimal_shot_av.cli.commands.setup_alpasim_local_plugin._run", side_effect=fake_run):
+            with patch("wod2sim.cli.commands.setup_alpasim_local_plugin._run", side_effect=fake_run):
                 _bootstrap_alpasim_venv(alpasim_root, uv_bin="uv")
 
             self.assertGreaterEqual(len(calls), 2)
@@ -389,7 +756,7 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
                 (proto_root / output_name).write_text("# generated\n", encoding="utf-8")
                 return type("Result", (), {"stdout": "", "stderr": "", "returncode": 0})()
 
-            with patch("minimal_shot_av.cli.commands.setup_alpasim_local_plugin._run", side_effect=fake_run):
+            with patch("wod2sim.cli.commands.setup_alpasim_local_plugin._run", side_effect=fake_run):
                 _compile_alpasim_protos(alpasim_root, venv_python=Path("/tmp/alpasim/.venv/bin/python"))
 
             self.assertEqual(3, len(calls))
@@ -408,6 +775,28 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
             self.assertTrue((proto_root / "common_pb2.py").is_file())
             self.assertTrue((proto_root / "egodriver_pb2.py").is_file())
             self.assertTrue((proto_root / "sensorsim_pb2.py").is_file())
+
+    def test_remove_conflicting_wod2sim_distributions_uninstalls_legacy_slipway(self) -> None:
+        calls: list[tuple[list[str], bool]] = []
+
+        def fake_run(cmd: list[str], *, cwd: Path, capture_output: bool = False):
+            calls.append((cmd, capture_output))
+            if capture_output:
+                present = "name = 'slipway'" in cmd[-1]
+                return type("Result", (), {"stdout": "1\n" if present else "0\n", "stderr": "", "returncode": 0})()
+            return type("Result", (), {"stdout": "", "stderr": "", "returncode": 0})()
+
+        with patch("wod2sim.cli.commands.setup_alpasim_local_plugin._run", side_effect=fake_run):
+            _remove_conflicting_wod2sim_distributions(
+                venv_python=Path("/tmp/alpasim/.venv/bin/python"),
+                cwd=Path("/tmp/alpasim"),
+            )
+
+        uninstall_calls = [cmd for cmd, capture_output in calls if not capture_output and cmd[:4] == ["/tmp/alpasim/.venv/bin/python", "-m", "pip", "uninstall"]]
+        self.assertEqual(
+            [["/tmp/alpasim/.venv/bin/python", "-m", "pip", "uninstall", "-y", "slipway"]],
+            uninstall_calls,
+        )
 
     def test_driver_command_uses_alpasim_venv_python(self) -> None:
         cmd = _driver_command(
@@ -455,7 +844,7 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
                 self.assertEqual("local_arm_external_driver", _wizard_deploy_target())
 
     def test_wizard_deploy_target_allows_env_override(self) -> None:
-        with patch.dict(os.environ, {"MSA_ALPASIM_DEPLOY_TARGET": "custom_profile"}, clear=False):
+        with patch.dict(os.environ, {"WAYSPAN_ALPASIM_DEPLOY_TARGET": "custom_profile"}, clear=False):
             with patch("platform.machine", return_value="x86_64"):
                 self.assertEqual("custom_profile", _wizard_deploy_target())
 
@@ -467,7 +856,7 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
         self.assertIn("amd64-only", str(ctx.exception))
 
     def test_platform_preflight_allows_arm_with_override(self) -> None:
-        with patch.dict(os.environ, {"MSA_ALLOW_UNSUPPORTED_ALPASIM_ARM": "1"}, clear=False):
+        with patch.dict(os.environ, {"WAYSPAN_ALLOW_UNSUPPORTED_ALPASIM_ARM": "1"}, clear=False):
             with patch("platform.machine", return_value="aarch64"):
                 _preflight_platform_compatibility()
 

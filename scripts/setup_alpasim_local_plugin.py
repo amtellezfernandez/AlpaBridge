@@ -8,7 +8,7 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from minimal_shot_av.cli.wrapper import export_command_namespace, run_command_module
+from wod2sim.cli.wrapper import export_command_namespace, run_command_module
 
 _TARGET_MODULE = ""
 _target = export_command_namespace(globals(), "setup_alpasim_local_plugin")

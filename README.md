@@ -3,12 +3,15 @@
 `WOD2Sim` packages the code and paper for adapting WOD-style driving policies to
 AlpaSim's closed-loop external-driver runtime.
 
+It is a standalone policy-adaptation repo. It does not import or depend on any
+larger research tree at runtime.
+
 This repo is code-first. The paper is included under [`paper/`](paper), but the main
 release surface is:
 
-- installable Python package under [`src/minimal_shot_av/`](src/minimal_shot_av)
-- AlpaSim bridge scripts under [`scripts/`](scripts)
-- tracked patched-upstream AlpaSim layer under [`third_party/alpasim_overrides/`](third_party/alpasim_overrides)
+- installable Python package under [`src/wod2sim/`](src/wod2sim)
+- AlpaSim runtime scripts under [`scripts/`](scripts)
+- tracked AlpaSim override layer under [`third_party/alpasim_overrides/`](third_party/alpasim_overrides)
 - contract tests under [`tests/`](tests)
 
 ## What Is In Scope
@@ -16,7 +19,7 @@ release surface is:
 - AlpaSim model adapters:
   `spotlight_reflex`, `token_dagger_bc`, and `direct_actor_planner`
 - policy-facing signal reconstruction from AlpaSim prediction inputs
-- route-waypoint bridge behavior and tracked upstream patch files
+- route-waypoint adapter behavior and tracked AlpaSim override files
 - local setup, readiness, launch, and scene-batch orchestration
 - simulator-side policy code used by the adapter surface
 - the paper and its build assets
@@ -38,6 +41,10 @@ python -m pip install -U pip
 python -m pip install -e ".[dev]"
 ```
 
+On Debian/Ubuntu hosts, if `python3 -m venv .venv` fails because `ensurepip` is
+unavailable, install the distro venv package first, for example
+`sudo apt install python3.12-venv`.
+
 Or with `uv`:
 
 ```bash
@@ -45,7 +52,7 @@ uv venv .venv
 uv pip install --python .venv/bin/python -e ".[dev]"
 ```
 
-Run the lightweight bridge checks:
+Run the lightweight repo checks:
 
 ```bash
 make test
@@ -56,6 +63,10 @@ Smoke-test the public release surface:
 ```bash
 make smoke
 ```
+
+That smoke path now performs a fresh-checkout bootstrap audit: it copies the repo
+into a temporary checkout, installs `.[dev]` into a clean venv, and runs the
+documented non-AlpaSim commands from that isolated environment.
 
 If you also want the same command to diagnose a real AlpaSim checkout:
 
@@ -69,13 +80,38 @@ If that checkout is not fully synced yet and you only want host/runtime validati
 wod2sim-doctor --alpasim-root /path/to/alpasim --skip-scene-artifacts
 ```
 
-If you have a local AlpaSim checkout, the main bridge flow is:
+If you are auditing a fresh machine before the checkout exists, probe the default
+host/runtime path first:
+
+```bash
+wod2sim-doctor --probe-default-environment
+```
+
+That mode reports whether Docker, the local `alpasim-base:0.66.0` image, and the
+NVIDIA container runtime are ready, while making the missing checkout an explicit
+failing status instead of hiding it behind `environment: null`.
+
+If you have a local AlpaSim checkout, the main runtime flow is:
 
 ```bash
 wod2sim-doctor
 wod2sim-setup --alpasim-root /path/to/alpasim
 wod2sim-ready --alpasim-root /path/to/alpasim
 wod2sim-launch --mode print --model spotlight_reflex
+```
+
+If `fresh_3scene` is not fully cached yet, a more reliable first live smoke is:
+
+```bash
+wod2sim-doctor --alpasim-root /path/to/alpasim --scene-preset front_camera_10scene_smoke
+wod2sim-launch --mode both --model spotlight_reflex --scene-preset front_camera_10scene_smoke
+```
+
+If you already have the gated USDZ cache in another local checkout, import it into
+this repo's nested AlpaSim tree without Docker-breaking absolute symlinks:
+
+```bash
+./scripts/import_alpasim_scene_cache.sh --source-root /path/to/other/alpasim
 ```
 
 ## Public Model Surface
@@ -86,7 +122,7 @@ This release intentionally exposes a small public launch surface:
 - `token_dagger_bc`: learned policy adapter; requires `--checkpoint /path/to/token_dagger_bc.pt`
 - `direct_actor_planner`: planner adapter; requires `--oracle-actor-proxy /path/to/oracle.json`
 
-Research-only presets from the original private tree are not advertised in the public CLI for this repo.
+Research-only presets outside this release are not advertised in the public CLI.
 
 Examples:
 
@@ -97,20 +133,44 @@ wod2sim-launch --mode print --model token_dagger_bc --checkpoint /path/to/token_
 wod2sim-launch --mode print --model direct_actor_planner --oracle-actor-proxy /path/to/oracle.json
 ```
 
+After an executed run, summarize the public driver logs with:
+
+```bash
+wod2sim-audit-run --run-dir /path/to/run
+wod2sim-audit-run --run-dir /path/to/run --audit-dir /path/to/audit --json
+```
+
+To package the key run logs, configs, and audit output into one shareable tarball:
+
+```bash
+wod2sim-support-bundle --run-dir /path/to/run
+wod2sim-support-bundle --run-dir /path/to/run --output /tmp/run_support_bundle.tar.gz --json
+```
+
 For a fuller first-time setup path and failure triage notes, see
 [`docs/integration_guide.md`](docs/integration_guide.md).
 
 One important runtime invariant: if ego pose updates continue while camera timestamps stay frozen, the public adapters now fail fast with a `stale camera stream` error instead of silently planning on stale frames.
+Each public model also writes a structured per-frame driver log under `run_dir/driver/`:
+`spotlight-log.jsonl`, `selection-log.jsonl`, or `direct-planner-log.jsonl`.
+Those records include `sensor_freshness` fields with the latest camera timestamp,
+ego pose timestamp, lag, and failure status so upstream camera-pipeline faults are
+auditable after the run.
+Executed runs also write `run-status.json`, which records the launch mode, current
+phase, return codes, aggregate-output status, and key log paths.
+Batch runs now preserve a per-scene `diagnostics` block in `batch-status.json`
+with each scene's `run-status` summary, driver-log presence, and first camera-pipeline
+failure so multi-scene triage does not collapse to `partial` or `missing`.
 
 ## Repo Layout
 
-- [`src/minimal_shot_av/simulator/`](src/minimal_shot_av/simulator) contains the
+- [`src/wod2sim/simulator/`](src/wod2sim/simulator) contains the
   simulator logic and AlpaSim adapters.
-- [`src/minimal_shot_av/cli/commands/`](src/minimal_shot_av/cli/commands) contains the
-  bridge-facing command implementations.
+- [`src/wod2sim/cli/commands/`](src/wod2sim/cli/commands) contains the
+  runtime-facing command implementations.
 - [`scripts/`](scripts) provides top-level entry wrappers for the public workflows.
 - [`third_party/alpasim_overrides/`](third_party/alpasim_overrides) contains the tracked
-  patched-upstream files and patch sets needed by the reproduction path.
+  AlpaSim override files and patch sets needed by the reproduction path.
 - [`paper/`](paper) contains the LaTeX source and compiled PDF for the paper.
 
 ## Paper
@@ -139,6 +199,6 @@ make clean
 
 ## Production Notes
 
-- The GitHub CI runs focused bridge tests, package build, and paper build.
+- The GitHub CI runs focused runtime tests, package build, and paper build.
 - Learned presets still depend on external checkpoints not shipped in this repo.
 - Full AlpaSim execution still requires a separate checkout, local Docker access, and any gated scene assets.

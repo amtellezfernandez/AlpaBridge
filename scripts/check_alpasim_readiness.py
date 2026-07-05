@@ -8,7 +8,7 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from minimal_shot_av.cli.commands import check_alpasim_readiness as _cmd
+from wod2sim.cli.commands import check_alpasim_readiness as _cmd
 
 SCENE_PRESETS = _cmd.SCENE_PRESETS
 _parse_args = _cmd._parse_args

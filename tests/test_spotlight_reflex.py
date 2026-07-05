@@ -14,7 +14,7 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from minimal_shot_av.simulator.environment import (
+from wod2sim.simulator.environment import (
     DEFAULT_EGO_RADIUS_M,
     Actor,
     Obstacle,
@@ -28,20 +28,20 @@ from minimal_shot_av.simulator.environment import (
     obstacle_signed_distance,
     scenario_at_tick,
 )
-from minimal_shot_av.simulator.oracle import OracleConfig, _choose_privileged_action, run_oracle_policy
-from minimal_shot_av.simulator.perception import ScenePerception, perceive_scene
-from minimal_shot_av.simulator.planner import PlannedAction
-from minimal_shot_av.simulator.policy import EgoState, RolloutConfig, advance_ego_state, run_policy, run_spotlight_reflex_policy
-from minimal_shot_av.simulator.policy import _blocking_obstacle_row
-from minimal_shot_av.simulator.trajectory_selector import (
+from wod2sim.simulator.oracle import OracleConfig, _choose_privileged_action, run_oracle_policy
+from wod2sim.simulator.perception import ScenePerception, perceive_scene
+from wod2sim.simulator.planner import PlannedAction
+from wod2sim.simulator.policy import EgoState, RolloutConfig, advance_ego_state, run_policy, run_spotlight_reflex_policy
+from wod2sim.simulator.policy import _blocking_obstacle_row
+from wod2sim.simulator.trajectory_selector import (
     TrajectoryCandidate,
     TrajectoryReference,
     score_candidate,
     speed_scale,
     trajectory_region_score,
 )
-from minimal_shot_av.simulator.safety import apply_safety_filter
-from minimal_shot_av.simulator.spotlight_reflex import (
+from wod2sim.simulator.safety import apply_safety_filter
+from wod2sim.simulator.spotlight_reflex import (
     DEFAULT_SPOTLIGHT_CONFIG,
     SimulatorBackedScoreConfig,
     SpotlightReflexConfig,
@@ -50,7 +50,7 @@ from minimal_shot_av.simulator.spotlight_reflex import (
     generate_maneuver_candidates,
     select_maneuver,
 )
-from minimal_shot_av.simulator.world_model import WorldState, update_world_state
+from wod2sim.simulator.world_model import WorldState, update_world_state
 
 
 SELECTOR_3S_INDEX = DEFAULT_SPOTLIGHT_CONFIG.selector.index_3s

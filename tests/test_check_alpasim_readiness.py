@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from minimal_shot_av.cli.commands import check_alpasim_readiness
+from wod2sim.cli.commands import check_alpasim_readiness
 
 
 class CheckAlpaSimReadinessTests(unittest.TestCase):

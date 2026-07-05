@@ -13,11 +13,11 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from minimal_shot_av.simulator.compositional_scenarios import (
+from wod2sim.simulator.compositional_scenarios import (
     COMPOSITIONAL_SUITES,
     generate_compositional_scenario,
 )
-from minimal_shot_av.simulator.environment import (
+from wod2sim.simulator.environment import (
     actor_at_tick,
     actor_to_obstacle,
     interpolate_lane,
@@ -27,8 +27,8 @@ from minimal_shot_av.simulator.environment import (
     scenario_at_tick,
     scenario_to_dict,
 )
-from minimal_shot_av.simulator.wod_scenarios import WOD_E2E_CLUSTERS, generate_wod_scenario
-from minimal_shot_av.simulator.policy import StepRecord
+from wod2sim.simulator.wod_scenarios import WOD_E2E_CLUSTERS, generate_wod_scenario
+from wod2sim.simulator.policy import StepRecord
 
 
 class WodScenarioGeneratorTests(unittest.TestCase):
