@@ -2,11 +2,15 @@
 
 Place redistribution-approved README media here.
 
-Expected filenames:
+Current tracked assets:
+
+- `evidence-metrics.png`
+- `integration-terminal.svg`
+
+Optional future assets:
 
 - `dataset-frame.jpg`
 - `alpasim-rollout.mp4`
 - `integration-terminal.png`
-- `evidence-metrics.png`
 
 Do not add raw gated WOD/AlpaSim scene media unless publishing rights are clear.

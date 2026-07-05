@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1320" height="760" viewBox="0 0 1320 760" role="img" aria-labelledby="title desc">
+  <title id="title">WOD2Sim integration evidence terminal</title>
+  <desc id="desc">Terminal-style summary of a WOD2Sim AlpaSim closed-loop evidence run.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#101820"/>
+      <stop offset="58%" stop-color="#0f2f35"/>
+      <stop offset="100%" stop-color="#263c2f"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <rect width="1320" height="760" rx="36" fill="url(#bg)"/>
+  <circle cx="1120" cy="108" r="180" fill="#d97928" opacity="0.13"/>
+  <circle cx="230" cy="680" r="250" fill="#50b6a9" opacity="0.12"/>
+  <g filter="url(#shadow)">
+    <rect x="96" y="88" width="1128" height="584" rx="24" fill="#071115" stroke="#31545a" stroke-width="2"/>
+    <rect x="96" y="88" width="1128" height="64" rx="24" fill="#13242a"/>
+    <circle cx="134" cy="120" r="10" fill="#ff665c"/>
+    <circle cx="166" cy="120" r="10" fill="#ffbd44"/>
+    <circle cx="198" cy="120" r="10" fill="#00ca4e"/>
+    <text x="236" y="128" fill="#b7c6c8" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="23">wod2sim closed-loop evidence</text>
+    <text x="132" y="206" fill="#78f0d4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="25">$ wod2sim-reproduce --execute --model spotlight_reflex --json</text>
+    <text x="132" y="260" fill="#dce8e8" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="25">state: completed</text>
+    <text x="132" y="306" fill="#dce8e8" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="25">scene: clipgt-a309e228-26e1-423e-a44c-cb00aa7378cb</text>
+    <text x="132" y="352" fill="#dce8e8" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="25">driver: spotlight_reflex external-driver adapter</text>
+    <text x="132" y="398" fill="#dce8e8" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="25">audit frames: 199</text>
+    <text x="132" y="444" fill="#dce8e8" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="25">sensor failures: 0</text>
+    <text x="132" y="490" fill="#dce8e8" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="25">result counts: ok=199</text>
+    <text x="132" y="536" fill="#78f0d4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="25">valid_claim_evidence: true</text>
+    <text x="132" y="602" fill="#d9a15f" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="21">support bundle sha256: 76f96e8664c6bc21119b1e6c514c2639db23c2341555af6e9178ae1710873aa9</text>
+  </g>
+</svg>

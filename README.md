@@ -19,6 +19,29 @@ It connects three surfaces:
 | [NVIDIA AlpaSim](https://github.com/NVlabs/alpasim) | Closed-loop AV simulation where policy decisions affect future observations. |
 | WOD2Sim | Adapter code, launch CLI, run audit, support bundle, and benchmark summary JSON. |
 
+## What You See
+
+<table>
+  <tr>
+    <td width="50%">
+      <a href="https://waymo.com/intl/jp/open/data/motion/">
+        <img src="https://lh3.googleusercontent.com/fUoUF5eid46CnlfsfbRSIVrU0u7oDnn5zzgxXE6ihD2OVNucq_lzIXUWtXlHYEekIx_r6FsMSV3ta6wICLeoYxRv-S56-9d7SuE=e365-s420" alt="Waymo Open Motion Dataset scenario visualization with multi-agent tracks and map geometry" width="100%">
+      </a>
+      <br>
+      <strong>Waymo Motion input.</strong> Scenario-proto style tracks, prediction targets, interacting agents, and vector map geometry. Image is linked from the official Waymo Motion page, not copied into this repository.
+    </td>
+    <td width="50%">
+      <img src="docs/assets/readme/evidence-metrics.png" alt="AlpaSim metrics plot from a WOD2Sim spotlight_reflex closed-loop run" width="100%">
+      <br>
+      <strong>AlpaSim output.</strong> Runtime metrics from a local <code>spotlight_reflex</code> external-driver closed-loop run: service timing, queue depth, CPU/GPU utilization, and memory.
+    </td>
+  </tr>
+</table>
+
+<p align="center">
+  <img src="docs/assets/readme/integration-terminal.svg" alt="WOD2Sim terminal evidence showing completed run, 199 audited frames, zero sensor failures, and valid claim evidence" width="92%">
+</p>
+
 This repository is not affiliated with Waymo or NVIDIA. It does not redistribute
 Waymo data, AlpaSim, gated scene assets, private checkpoints, or raw rollout
 media.
@@ -131,9 +154,9 @@ framing:
 | Tensor format | `tf.Example` protos for model training pipelines. |
 | Benchmarks | Interaction Prediction, Sim Agents, and Scenario Generation among the WOD challenge tracks. |
 
-The official Waymo page includes dataset imagery such as `Open/Data/Motion Hero`
-and `Open/Hero Dots`. This repo links to the official page instead of copying
-those assets.
+The README uses an official Waymo-hosted Scenario-proto visualization from the
+Motion page as the dataset image. This repository links to that source instead
+of copying Waymo website assets into git.
 
 ## Public Model Surface
 
@@ -167,10 +190,12 @@ wod2sim-launch --mode print --model direct_actor_planner --oracle-actor-proxy /p
 
 ## Media Policy
 
-Public README media should come from redistribution-approved dataset frames,
-AlpaSim rollout clips, integration screenshots, or evidence plots. Local
-candidates under `runs/` and `workspace/` are intentionally ignored because they
-may contain gated or third-party content.
+Public README media should come from official external links,
+redistribution-approved dataset frames, AlpaSim rollout clips, integration
+screenshots, or evidence plots. Local candidates under `runs/` and `workspace/`
+are intentionally ignored because they may contain gated or third-party content.
+The tracked AlpaSim result image in this README is a metrics plot, not raw scene
+media.
 
 See [`docs/readme_media.md`](docs/readme_media.md) before adding images or video.
 
