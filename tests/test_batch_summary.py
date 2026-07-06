@@ -23,6 +23,8 @@ class BatchSummaryTests(unittest.TestCase):
         self.assertTrue(summary["valid"])
         self.assertIn("T", summary["created_at"])
         self.assertTrue(summary["clean_closed_loop_batch"])
+        self.assertIn("strict public audit accepts", summary["claim_boundary"])
+        self.assertNotIn("not a claim-valid stage summary", summary["claim_boundary"])
         self.assertEqual("wod2sim_closed_loop_batch_summary_v1", summary["schema"])
         self.assertEqual(2, summary["aggregate"]["completed_scene_count"])
         self.assertEqual(398, summary["aggregate"]["total_audited_frames"])
@@ -60,6 +62,8 @@ class BatchSummaryTests(unittest.TestCase):
 
         self.assertEqual(1, returncode)
         self.assertFalse(payload["clean_closed_loop_batch"])
+        self.assertIn("not a claim-valid stage summary", payload["claim_boundary"])
+        self.assertIn("1/2 planned scene(s) completed cleanly", payload["claim_boundary"])
         self.assertEqual(1, payload["aggregate"]["failed_scene_count"])
 
     def test_manifest_scene_ids_provide_planned_count_fallback(self) -> None:
@@ -99,6 +103,55 @@ class BatchSummaryTests(unittest.TestCase):
             summary["provenance"]["critical_errors"],
         )
 
+    def test_legacy_smoke_launch_label_is_a_warning_when_scene_ids_match_manifest(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.batch_summary")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            _write_batch(
+                root,
+                scene_ids=(
+                    "clipgt-a309e228-26e1-423e-a44c-cb00aa7378cb",
+                    "clipgt-804afc4a-fd1e-4f58-bd39-a4c486a916e5",
+                ),
+            )
+            _write_run(
+                root,
+                "001_clipgt-a309e228-26e1-423e-a44c-cb00aa7378cb",
+                collision_any=0.0,
+                wrong_lane=0.0,
+                progress=0.7,
+            )
+            _write_run(
+                root,
+                "002_clipgt-804afc4a-fd1e-4f58-bd39-a4c486a916e5",
+                collision_any=0.0,
+                wrong_lane=0.0,
+                progress=0.8,
+            )
+            _write_launch_metadata(
+                root,
+                "001_clipgt-a309e228-26e1-423e-a44c-cb00aa7378cb",
+                scene_preset="fresh_3scene",
+            )
+            _write_launch_metadata(
+                root,
+                "002_clipgt-804afc4a-fd1e-4f58-bd39-a4c486a916e5",
+                scene_preset="fresh_3scene",
+            )
+
+            summary = module.build_summary(batch_dir=root)
+
+        self.assertTrue(summary["clean_closed_loop_batch"])
+        self.assertEqual(0, summary["provenance"]["critical_error_count"])
+        self.assertEqual(2, summary["provenance"]["warning_count"])
+        self.assertIn(
+            (
+                "run_001:clipgt-a309e228-26e1-423e-a44c-cb00aa7378cb:"
+                "legacy_scene_preset_label:fresh_3scene"
+            ),
+            summary["provenance"]["warnings"],
+        )
+
     def test_merge_summaries_combines_clean_shards_into_claim_summary(self) -> None:
         module = importlib.import_module("wod2sim.cli.commands.batch_summary")
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -127,6 +180,7 @@ class BatchSummaryTests(unittest.TestCase):
         self.assertTrue(merged["valid"])
         self.assertEqual("2026-07-06", merged["created_at"])
         self.assertTrue(merged["clean_closed_loop_batch"])
+        self.assertIn("strict public audit accepts", merged["claim_boundary"])
         self.assertEqual("merged_batch_summaries", merged["source"]["summary_kind"])
         self.assertEqual(4, merged["aggregate"]["planned_scene_count"])
         self.assertEqual(4, merged["aggregate"]["completed_scene_count"])
@@ -172,6 +226,7 @@ class BatchSummaryTests(unittest.TestCase):
         self.assertEqual(1, returncode)
         self.assertEqual("2026-07-06", payload["created_at"])
         self.assertFalse(payload["clean_closed_loop_batch"])
+        self.assertIn("not a claim-valid stage summary", payload["claim_boundary"])
         self.assertEqual(
             ["scene_count_mismatch:planned=4,observed=2"],
             payload["merge"]["errors"],

@@ -185,9 +185,11 @@ def build_summary(
         "created_at": created_at or datetime.now().isoformat(timespec="seconds"),
         "valid": bool(runs),
         "clean_closed_loop_batch": clean_closed_loop_batch,
-        "claim_boundary": (
-            "This is local closed-loop AlpaSim evidence generated from user-provided or gated "
-            "scene assets. The summary intentionally excludes raw scene assets and videos."
+        "claim_boundary": _claim_boundary(
+            clean_closed_loop_batch=clean_closed_loop_batch,
+            planned_scene_count=aggregate["planned_scene_count"],
+            completed_scene_count=aggregate["completed_scene_count"],
+            merged=False,
         ),
         "source": {
             "batch_dir_name": root.name,
@@ -282,9 +284,11 @@ def merge_summaries(
         "created_at": created_at or datetime.now().isoformat(timespec="seconds"),
         "valid": valid,
         "clean_closed_loop_batch": clean_closed_loop_batch,
-        "claim_boundary": (
-            "This is a merged public-safe summary built from shard-level WOD2Sim closed-loop "
-            "batch summaries. It intentionally excludes raw scene assets and videos."
+        "claim_boundary": _claim_boundary(
+            clean_closed_loop_batch=clean_closed_loop_batch,
+            planned_scene_count=aggregate["planned_scene_count"],
+            completed_scene_count=aggregate["completed_scene_count"],
+            merged=True,
         ),
         "source": {
             "summary_kind": "merged_batch_summaries",
@@ -403,6 +407,22 @@ def _wizard_arg_keys(value: Any) -> list[str]:
     return sorted(set(keys))
 
 
+def _is_legacy_smoke_launch_label(
+    *,
+    expected_scene_preset: Any,
+    scene_preset: Any,
+    scene_id: str,
+    expected_scene_ids: set[str],
+) -> bool:
+    return (
+        expected_scene_preset == "front_camera_10scene_smoke"
+        and scene_preset == "fresh_3scene"
+        and bool(scene_id)
+        and scene_id.startswith("clipgt-")
+        and scene_id in expected_scene_ids
+    )
+
+
 def _batch_provenance(
     *,
     status: dict[str, Any],
@@ -436,7 +456,15 @@ def _batch_provenance(
         if expected_model and model != expected_model:
             critical_errors.append(f"{prefix}:model_mismatch:{model}")
         if expected_scene_preset and scene_preset != expected_scene_preset:
-            critical_errors.append(f"{prefix}:scene_preset_mismatch:{scene_preset}")
+            if _is_legacy_smoke_launch_label(
+                expected_scene_preset=expected_scene_preset,
+                scene_preset=scene_preset,
+                scene_id=scene_id,
+                expected_scene_ids=expected_scene_ids,
+            ):
+                warnings.append(f"{prefix}:legacy_scene_preset_label:{scene_preset}")
+            else:
+                critical_errors.append(f"{prefix}:scene_preset_mismatch:{scene_preset}")
         if scene_id and launch_scene_ids and scene_id not in launch_scene_ids:
             critical_errors.append(f"{prefix}:scene_id_missing_from_launch_metadata")
         if scene_id and expected_scene_ids and scene_id not in expected_scene_ids:
@@ -538,6 +566,32 @@ def _aggregate_runs(runs: list[dict[str, Any]], *, planned_scene_count: int) -> 
         "run_state_counts": dict(sorted(state_counts.items())),
         "aggregate_status_counts": dict(sorted(aggregate_status_counts.items())),
     }
+
+
+def _claim_boundary(
+    *,
+    clean_closed_loop_batch: bool,
+    planned_scene_count: int,
+    completed_scene_count: int,
+    merged: bool,
+) -> str:
+    source = (
+        "a merged public-safe summary built from shard-level WOD2Sim closed-loop batch summaries"
+        if merged
+        else "local closed-loop AlpaSim evidence generated from user-provided or gated scene assets"
+    )
+    if clean_closed_loop_batch:
+        return (
+            f"This is {source}. It can support a benchmark claim only when the promoted "
+            f"stage expects {planned_scene_count} scene(s) and the strict public audit accepts "
+            "the artifact. The summary intentionally excludes raw scene assets and videos."
+        )
+    return (
+        "This is diagnostic public-safe evidence, not a claim-valid stage summary: "
+        f"{completed_scene_count}/{planned_scene_count} planned scene(s) completed cleanly. "
+        "It records incomplete or failed closed-loop work and intentionally excludes raw scene "
+        "assets and videos."
+    )
 
 
 def _aggregate_metrics(runs: list[dict[str, Any]]) -> dict[str, dict[str, float | int | str]]:

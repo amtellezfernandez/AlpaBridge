@@ -23,9 +23,9 @@
     "raw_scene_assets_included": false,
     "redistribution_note": "Do not publish rollout frames or videos unless the Waymo/AlpaSim asset terms explicitly permit redistribution."
   },
-  "claim_boundary": "This is local closed-loop AlpaSim evidence generated from user-provided or gated scene assets. The summary intentionally excludes raw scene assets and videos.",
+  "claim_boundary": "This is local closed-loop AlpaSim evidence generated from user-provided or gated scene assets. It can support a benchmark claim only when the promoted stage expects 10 scene(s) and the strict public audit accepts the artifact. The summary intentionally excludes raw scene assets and videos.",
   "clean_closed_loop_batch": true,
-  "created_at": "2026-07-05T21:45:56",
+  "created_at": "2026-07-06",
   "failure_taxonomy": {
     "at_fault_collision_scene_count": 2,
     "black_image_scene_count": 0,
@@ -154,6 +154,28 @@
     "open_loop_reference_available": false,
     "status": "closed_loop_only_summary"
   },
+  "provenance": {
+    "critical_error_count": 0,
+    "critical_errors": [],
+    "expected_model": "spotlight_reflex",
+    "expected_scene_count": 10,
+    "expected_scene_preset": "front_camera_10scene_smoke",
+    "launch_metadata_missing_count": 0,
+    "launch_metadata_present_count": 10,
+    "warning_count": 10,
+    "warnings": [
+      "run_001:clipgt-a309e228-26e1-423e-a44c-cb00aa7378cb:legacy_scene_preset_label:fresh_3scene",
+      "run_002:clipgt-804afc4a-fd1e-4f58-bd39-a4c486a916e5:legacy_scene_preset_label:fresh_3scene",
+      "run_003:clipgt-81b0e06d-96e6-4832-99c1-a4084b54ca97:legacy_scene_preset_label:fresh_3scene",
+      "run_004:clipgt-9b3509c2-a5fa-42c0-b0e5-feb617e9bf4e:legacy_scene_preset_label:fresh_3scene",
+      "run_005:clipgt-90d1908c-9fdc-40ea-a5a1-351240aa323e:legacy_scene_preset_label:fresh_3scene",
+      "run_006:clipgt-88d1e61e-d4a6-443a-8b3f-ad0f1de4d0f5:legacy_scene_preset_label:fresh_3scene",
+      "run_007:clipgt-8aaa1135-573f-4f6c-8ff8-7ac6bd6ea5d6:legacy_scene_preset_label:fresh_3scene",
+      "run_008:clipgt-9f8acd00-e8f5-467a-867d-b205f8d4d75d:legacy_scene_preset_label:fresh_3scene",
+      "run_009:clipgt-97a2e621-a27b-4b87-9a58-b6b740fc1b4e:legacy_scene_preset_label:fresh_3scene",
+      "run_010:clipgt-93982b71-92af-4cf6-8447-00d619f50ad3:legacy_scene_preset_label:fresh_3scene"
+    ]
+  },
   "run_config": {
     "max_retries": 1,
     "mode": "both",
@@ -192,6 +214,15 @@
       "first_sensor_failure": null,
       "frame_count": 199,
       "index": 1,
+      "launch_metadata": {
+        "model": "spotlight_reflex",
+        "present": true,
+        "scene_ids": [
+          "clipgt-a309e228-26e1-423e-a44c-cb00aa7378cb"
+        ],
+        "scene_preset": "fresh_3scene",
+        "wizard_arg_keys": []
+      },
       "metrics": {
         "collision_any": 1.0,
         "collision_at_fault": 1.0,
@@ -247,6 +278,15 @@
       "first_sensor_failure": null,
       "frame_count": 199,
       "index": 2,
+      "launch_metadata": {
+        "model": "spotlight_reflex",
+        "present": true,
+        "scene_ids": [
+          "clipgt-804afc4a-fd1e-4f58-bd39-a4c486a916e5"
+        ],
+        "scene_preset": "fresh_3scene",
+        "wizard_arg_keys": []
+      },
       "metrics": {
         "collision_any": 0.0,
         "collision_at_fault": 0.0,
@@ -302,6 +342,15 @@
       "first_sensor_failure": null,
       "frame_count": 199,
       "index": 3,
+      "launch_metadata": {
+        "model": "spotlight_reflex",
+        "present": true,
+        "scene_ids": [
+          "clipgt-81b0e06d-96e6-4832-99c1-a4084b54ca97"
+        ],
+        "scene_preset": "fresh_3scene",
+        "wizard_arg_keys": []
+      },
       "metrics": {
         "collision_any": 1.0,
         "collision_at_fault": 1.0,
@@ -357,6 +406,15 @@
       "first_sensor_failure": null,
       "frame_count": 199,
       "index": 4,
+      "launch_metadata": {
+        "model": "spotlight_reflex",
+        "present": true,
+        "scene_ids": [
+          "clipgt-9b3509c2-a5fa-42c0-b0e5-feb617e9bf4e"
+        ],
+        "scene_preset": "fresh_3scene",
+        "wizard_arg_keys": []
+      },
       "metrics": {
         "collision_any": 1.0,
         "collision_at_fault": 0.0,
@@ -412,6 +470,15 @@
       "first_sensor_failure": null,
       "frame_count": 199,
       "index": 5,
+      "launch_metadata": {
+        "model": "spotlight_reflex",
+        "present": true,
+        "scene_ids": [
+          "clipgt-90d1908c-9fdc-40ea-a5a1-351240aa323e"
+        ],
+        "scene_preset": "fresh_3scene",
+        "wizard_arg_keys": []
+      },
       "metrics": {
         "collision_any": 0.0,
         "collision_at_fault": 0.0,
@@ -467,6 +534,15 @@
       "first_sensor_failure": null,
       "frame_count": 199,
       "index": 6,
+      "launch_metadata": {
+        "model": "spotlight_reflex",
+        "present": true,
+        "scene_ids": [
+          "clipgt-88d1e61e-d4a6-443a-8b3f-ad0f1de4d0f5"
+        ],
+        "scene_preset": "fresh_3scene",
+        "wizard_arg_keys": []
+      },
       "metrics": {
         "collision_any": 0.0,
         "collision_at_fault": 0.0,
@@ -522,6 +598,15 @@
       "first_sensor_failure": null,
       "frame_count": 199,
       "index": 7,
+      "launch_metadata": {
+        "model": "spotlight_reflex",
+        "present": true,
+        "scene_ids": [
+          "clipgt-8aaa1135-573f-4f6c-8ff8-7ac6bd6ea5d6"
+        ],
+        "scene_preset": "fresh_3scene",
+        "wizard_arg_keys": []
+      },
       "metrics": {
         "collision_any": 1.0,
         "collision_at_fault": 0.0,
@@ -577,6 +662,15 @@
       "first_sensor_failure": null,
       "frame_count": 199,
       "index": 8,
+      "launch_metadata": {
+        "model": "spotlight_reflex",
+        "present": true,
+        "scene_ids": [
+          "clipgt-9f8acd00-e8f5-467a-867d-b205f8d4d75d"
+        ],
+        "scene_preset": "fresh_3scene",
+        "wizard_arg_keys": []
+      },
       "metrics": {
         "collision_any": 0.0,
         "collision_at_fault": 0.0,
@@ -632,6 +726,15 @@
       "first_sensor_failure": null,
       "frame_count": 199,
       "index": 9,
+      "launch_metadata": {
+        "model": "spotlight_reflex",
+        "present": true,
+        "scene_ids": [
+          "clipgt-97a2e621-a27b-4b87-9a58-b6b740fc1b4e"
+        ],
+        "scene_preset": "fresh_3scene",
+        "wizard_arg_keys": []
+      },
       "metrics": {
         "collision_any": 1.0,
         "collision_at_fault": 0.0,
@@ -687,6 +790,15 @@
       "first_sensor_failure": null,
       "frame_count": 199,
       "index": 10,
+      "launch_metadata": {
+        "model": "spotlight_reflex",
+        "present": true,
+        "scene_ids": [
+          "clipgt-93982b71-92af-4cf6-8447-00d619f50ad3"
+        ],
+        "scene_preset": "fresh_3scene",
+        "wizard_arg_keys": []
+      },
       "metrics": {
         "collision_any": 0.0,
         "collision_at_fault": 0.0,

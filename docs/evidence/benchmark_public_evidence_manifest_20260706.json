@@ -18,8 +18,8 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_benchmark_regeneration_audit_v1",
-      "sha256": "73ef526ff93ea7e24a8c3c3c5d7ca01f2c1f662efb6341ca48eb30a47e1ea771",
-      "size_bytes": 19937
+      "sha256": "f418df1572074a22471881155c629c4674b0902940cf53f9102379ab99d90c69",
+      "size_bytes": 19981
     },
     {
       "artifact_type": "benchmark_regeneration_control",
@@ -68,8 +68,8 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_closed_loop_batch_summary_v1",
-      "sha256": "9701daa36c6a0133bb2a51cf1370b843d6fc0d799a82d117f80ef3b6d50f8f1d",
-      "size_bytes": 25801
+      "sha256": "efc54ec8c6ec287797d1113c888dfeab83e9d48fdc76748599ac815c84a03fb6",
+      "size_bytes": 29847
     },
     {
       "artifact_type": "closed_loop_summary",
@@ -78,8 +78,8 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_closed_loop_batch_summary_v1",
-      "sha256": "3b571c2d290c32f130080ec7345c4ebdd16fc968c04ebd01ba330b2f445b8068",
-      "size_bytes": 4796
+      "sha256": "b497a3790d7915a7d4db6d3a7458eda503b256cf6daf6a26c0a3afa677feb7e2",
+      "size_bytes": 4857
     },
     {
       "artifact_type": "closed_loop_summary",
@@ -88,8 +88,8 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_closed_loop_batch_summary_v1",
-      "sha256": "db15021f6cf85f1109f7337f5f22a1ce95424de820b3be6aed176920c6c4ae24",
-      "size_bytes": 7174
+      "sha256": "5faa8da62c30a907cce5c49692310eb408824eee74adc355a1cb559ab18a7e15",
+      "size_bytes": 7305
     },
     {
       "artifact_type": "closed_loop_summary",
