@@ -220,6 +220,9 @@ in
 A machine-readable 10/50/100 rerun plan is tracked in
 [`docs/evidence/benchmark_regeneration_plan_20260706.json`](docs/evidence/benchmark_regeneration_plan_20260706.json)
 and can be regenerated with `wod2sim-benchmark-plan`.
+It includes 10-scene shard commands for the 50/100-scene stages so constrained
+hosts can recover in smaller chunks while still preserving the full-stage claim
+boundary.
 The current claim gate is tracked in
 [`docs/evidence/benchmark_regeneration_audit_20260706.json`](docs/evidence/benchmark_regeneration_audit_20260706.json)
 and can be regenerated with `wod2sim-benchmark-audit`.

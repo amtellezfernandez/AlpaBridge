@@ -53,6 +53,8 @@
       "run_dir": "runs/benchmark_spotlight_reflex_10scene",
       "scene_count": 10,
       "scene_preset": "front_camera_10scene_smoke",
+      "shard_note": null,
+      "shards": [],
       "stage": "pilot"
     },
     {
@@ -122,6 +124,254 @@
       "run_dir": "runs/benchmark_spotlight_reflex_50scene",
       "scene_count": 50,
       "scene_preset": "front_camera_50scene_public2602",
+      "shard_note": "Shard commands reduce per-run wall time and recovery cost on constrained hosts. A claim-valid stage still requires a complete public summary for the full preset.",
+      "shards": [
+        {
+          "commands": {
+            "run_batch": {
+              "argv": [
+                "wod2sim-batch",
+                "--mode",
+                "both",
+                "--model",
+                "spotlight_reflex",
+                "--scene-preset",
+                "front_camera_50scene_public2602",
+                "--alpasim-root",
+                "/path/to/alpasim",
+                "--batch-dir",
+                "runs/benchmark_spotlight_reflex_50scene/shards/000_009",
+                "--timeout",
+                "900",
+                "--driver-warmup-seconds",
+                "5",
+                "--max-retries",
+                "1",
+                "--continue-on-error",
+                "--wizard-arg",
+                "scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50",
+                "--scene-offset",
+                "0",
+                "--scene-limit",
+                "10"
+              ],
+              "display": "wod2sim-batch --mode both --model spotlight_reflex --scene-preset front_camera_50scene_public2602 --alpasim-root /path/to/alpasim --batch-dir runs/benchmark_spotlight_reflex_50scene/shards/000_009 --timeout 900 --driver-warmup-seconds 5 --max-retries 1 --continue-on-error --wizard-arg scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50 --scene-offset 0 --scene-limit 10"
+            },
+            "write_batch_summary": {
+              "argv": [
+                "wod2sim-batch-summary",
+                "--batch-dir",
+                "runs/benchmark_spotlight_reflex_50scene/shards/000_009",
+                "--output",
+                "runs/benchmark_spotlight_reflex_50scene/shards/000_009/wod2sim-batch-summary.json",
+                "--strict",
+                "--json"
+              ],
+              "display": "wod2sim-batch-summary --batch-dir runs/benchmark_spotlight_reflex_50scene/shards/000_009 --output runs/benchmark_spotlight_reflex_50scene/shards/000_009/wod2sim-batch-summary.json --strict --json"
+            }
+          },
+          "index": 1,
+          "run_dir": "runs/benchmark_spotlight_reflex_50scene/shards/000_009",
+          "scene_limit": 10,
+          "scene_offset": 0
+        },
+        {
+          "commands": {
+            "run_batch": {
+              "argv": [
+                "wod2sim-batch",
+                "--mode",
+                "both",
+                "--model",
+                "spotlight_reflex",
+                "--scene-preset",
+                "front_camera_50scene_public2602",
+                "--alpasim-root",
+                "/path/to/alpasim",
+                "--batch-dir",
+                "runs/benchmark_spotlight_reflex_50scene/shards/010_019",
+                "--timeout",
+                "900",
+                "--driver-warmup-seconds",
+                "5",
+                "--max-retries",
+                "1",
+                "--continue-on-error",
+                "--wizard-arg",
+                "scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50",
+                "--scene-offset",
+                "10",
+                "--scene-limit",
+                "10"
+              ],
+              "display": "wod2sim-batch --mode both --model spotlight_reflex --scene-preset front_camera_50scene_public2602 --alpasim-root /path/to/alpasim --batch-dir runs/benchmark_spotlight_reflex_50scene/shards/010_019 --timeout 900 --driver-warmup-seconds 5 --max-retries 1 --continue-on-error --wizard-arg scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50 --scene-offset 10 --scene-limit 10"
+            },
+            "write_batch_summary": {
+              "argv": [
+                "wod2sim-batch-summary",
+                "--batch-dir",
+                "runs/benchmark_spotlight_reflex_50scene/shards/010_019",
+                "--output",
+                "runs/benchmark_spotlight_reflex_50scene/shards/010_019/wod2sim-batch-summary.json",
+                "--strict",
+                "--json"
+              ],
+              "display": "wod2sim-batch-summary --batch-dir runs/benchmark_spotlight_reflex_50scene/shards/010_019 --output runs/benchmark_spotlight_reflex_50scene/shards/010_019/wod2sim-batch-summary.json --strict --json"
+            }
+          },
+          "index": 2,
+          "run_dir": "runs/benchmark_spotlight_reflex_50scene/shards/010_019",
+          "scene_limit": 10,
+          "scene_offset": 10
+        },
+        {
+          "commands": {
+            "run_batch": {
+              "argv": [
+                "wod2sim-batch",
+                "--mode",
+                "both",
+                "--model",
+                "spotlight_reflex",
+                "--scene-preset",
+                "front_camera_50scene_public2602",
+                "--alpasim-root",
+                "/path/to/alpasim",
+                "--batch-dir",
+                "runs/benchmark_spotlight_reflex_50scene/shards/020_029",
+                "--timeout",
+                "900",
+                "--driver-warmup-seconds",
+                "5",
+                "--max-retries",
+                "1",
+                "--continue-on-error",
+                "--wizard-arg",
+                "scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50",
+                "--scene-offset",
+                "20",
+                "--scene-limit",
+                "10"
+              ],
+              "display": "wod2sim-batch --mode both --model spotlight_reflex --scene-preset front_camera_50scene_public2602 --alpasim-root /path/to/alpasim --batch-dir runs/benchmark_spotlight_reflex_50scene/shards/020_029 --timeout 900 --driver-warmup-seconds 5 --max-retries 1 --continue-on-error --wizard-arg scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50 --scene-offset 20 --scene-limit 10"
+            },
+            "write_batch_summary": {
+              "argv": [
+                "wod2sim-batch-summary",
+                "--batch-dir",
+                "runs/benchmark_spotlight_reflex_50scene/shards/020_029",
+                "--output",
+                "runs/benchmark_spotlight_reflex_50scene/shards/020_029/wod2sim-batch-summary.json",
+                "--strict",
+                "--json"
+              ],
+              "display": "wod2sim-batch-summary --batch-dir runs/benchmark_spotlight_reflex_50scene/shards/020_029 --output runs/benchmark_spotlight_reflex_50scene/shards/020_029/wod2sim-batch-summary.json --strict --json"
+            }
+          },
+          "index": 3,
+          "run_dir": "runs/benchmark_spotlight_reflex_50scene/shards/020_029",
+          "scene_limit": 10,
+          "scene_offset": 20
+        },
+        {
+          "commands": {
+            "run_batch": {
+              "argv": [
+                "wod2sim-batch",
+                "--mode",
+                "both",
+                "--model",
+                "spotlight_reflex",
+                "--scene-preset",
+                "front_camera_50scene_public2602",
+                "--alpasim-root",
+                "/path/to/alpasim",
+                "--batch-dir",
+                "runs/benchmark_spotlight_reflex_50scene/shards/030_039",
+                "--timeout",
+                "900",
+                "--driver-warmup-seconds",
+                "5",
+                "--max-retries",
+                "1",
+                "--continue-on-error",
+                "--wizard-arg",
+                "scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50",
+                "--scene-offset",
+                "30",
+                "--scene-limit",
+                "10"
+              ],
+              "display": "wod2sim-batch --mode both --model spotlight_reflex --scene-preset front_camera_50scene_public2602 --alpasim-root /path/to/alpasim --batch-dir runs/benchmark_spotlight_reflex_50scene/shards/030_039 --timeout 900 --driver-warmup-seconds 5 --max-retries 1 --continue-on-error --wizard-arg scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50 --scene-offset 30 --scene-limit 10"
+            },
+            "write_batch_summary": {
+              "argv": [
+                "wod2sim-batch-summary",
+                "--batch-dir",
+                "runs/benchmark_spotlight_reflex_50scene/shards/030_039",
+                "--output",
+                "runs/benchmark_spotlight_reflex_50scene/shards/030_039/wod2sim-batch-summary.json",
+                "--strict",
+                "--json"
+              ],
+              "display": "wod2sim-batch-summary --batch-dir runs/benchmark_spotlight_reflex_50scene/shards/030_039 --output runs/benchmark_spotlight_reflex_50scene/shards/030_039/wod2sim-batch-summary.json --strict --json"
+            }
+          },
+          "index": 4,
+          "run_dir": "runs/benchmark_spotlight_reflex_50scene/shards/030_039",
+          "scene_limit": 10,
+          "scene_offset": 30
+        },
+        {
+          "commands": {
+            "run_batch": {
+              "argv": [
+                "wod2sim-batch",
+                "--mode",
+                "both",
+                "--model",
+                "spotlight_reflex",
+                "--scene-preset",
+                "front_camera_50scene_public2602",
+                "--alpasim-root",
+                "/path/to/alpasim",
+                "--batch-dir",
+                "runs/benchmark_spotlight_reflex_50scene/shards/040_049",
+                "--timeout",
+                "900",
+                "--driver-warmup-seconds",
+                "5",
+                "--max-retries",
+                "1",
+                "--continue-on-error",
+                "--wizard-arg",
+                "scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50",
+                "--scene-offset",
+                "40",
+                "--scene-limit",
+                "10"
+              ],
+              "display": "wod2sim-batch --mode both --model spotlight_reflex --scene-preset front_camera_50scene_public2602 --alpasim-root /path/to/alpasim --batch-dir runs/benchmark_spotlight_reflex_50scene/shards/040_049 --timeout 900 --driver-warmup-seconds 5 --max-retries 1 --continue-on-error --wizard-arg scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50 --scene-offset 40 --scene-limit 10"
+            },
+            "write_batch_summary": {
+              "argv": [
+                "wod2sim-batch-summary",
+                "--batch-dir",
+                "runs/benchmark_spotlight_reflex_50scene/shards/040_049",
+                "--output",
+                "runs/benchmark_spotlight_reflex_50scene/shards/040_049/wod2sim-batch-summary.json",
+                "--strict",
+                "--json"
+              ],
+              "display": "wod2sim-batch-summary --batch-dir runs/benchmark_spotlight_reflex_50scene/shards/040_049 --output runs/benchmark_spotlight_reflex_50scene/shards/040_049/wod2sim-batch-summary.json --strict --json"
+            }
+          },
+          "index": 5,
+          "run_dir": "runs/benchmark_spotlight_reflex_50scene/shards/040_049",
+          "scene_limit": 10,
+          "scene_offset": 40
+        }
+      ],
       "stage": "workshop_scale"
     },
     {
@@ -191,6 +441,499 @@
       "run_dir": "runs/benchmark_spotlight_reflex_100scene",
       "scene_count": 100,
       "scene_preset": "front_camera_100scene_public2602",
+      "shard_note": "Shard commands reduce per-run wall time and recovery cost on constrained hosts. A claim-valid stage still requires a complete public summary for the full preset.",
+      "shards": [
+        {
+          "commands": {
+            "run_batch": {
+              "argv": [
+                "wod2sim-batch",
+                "--mode",
+                "both",
+                "--model",
+                "spotlight_reflex",
+                "--scene-preset",
+                "front_camera_100scene_public2602",
+                "--alpasim-root",
+                "/path/to/alpasim",
+                "--batch-dir",
+                "runs/benchmark_spotlight_reflex_100scene/shards/000_009",
+                "--timeout",
+                "900",
+                "--driver-warmup-seconds",
+                "5",
+                "--max-retries",
+                "1",
+                "--continue-on-error",
+                "--wizard-arg",
+                "scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-100",
+                "--scene-offset",
+                "0",
+                "--scene-limit",
+                "10"
+              ],
+              "display": "wod2sim-batch --mode both --model spotlight_reflex --scene-preset front_camera_100scene_public2602 --alpasim-root /path/to/alpasim --batch-dir runs/benchmark_spotlight_reflex_100scene/shards/000_009 --timeout 900 --driver-warmup-seconds 5 --max-retries 1 --continue-on-error --wizard-arg scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-100 --scene-offset 0 --scene-limit 10"
+            },
+            "write_batch_summary": {
+              "argv": [
+                "wod2sim-batch-summary",
+                "--batch-dir",
+                "runs/benchmark_spotlight_reflex_100scene/shards/000_009",
+                "--output",
+                "runs/benchmark_spotlight_reflex_100scene/shards/000_009/wod2sim-batch-summary.json",
+                "--strict",
+                "--json"
+              ],
+              "display": "wod2sim-batch-summary --batch-dir runs/benchmark_spotlight_reflex_100scene/shards/000_009 --output runs/benchmark_spotlight_reflex_100scene/shards/000_009/wod2sim-batch-summary.json --strict --json"
+            }
+          },
+          "index": 1,
+          "run_dir": "runs/benchmark_spotlight_reflex_100scene/shards/000_009",
+          "scene_limit": 10,
+          "scene_offset": 0
+        },
+        {
+          "commands": {
+            "run_batch": {
+              "argv": [
+                "wod2sim-batch",
+                "--mode",
+                "both",
+                "--model",
+                "spotlight_reflex",
+                "--scene-preset",
+                "front_camera_100scene_public2602",
+                "--alpasim-root",
+                "/path/to/alpasim",
+                "--batch-dir",
+                "runs/benchmark_spotlight_reflex_100scene/shards/010_019",
+                "--timeout",
+                "900",
+                "--driver-warmup-seconds",
+                "5",
+                "--max-retries",
+                "1",
+                "--continue-on-error",
+                "--wizard-arg",
+                "scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-100",
+                "--scene-offset",
+                "10",
+                "--scene-limit",
+                "10"
+              ],
+              "display": "wod2sim-batch --mode both --model spotlight_reflex --scene-preset front_camera_100scene_public2602 --alpasim-root /path/to/alpasim --batch-dir runs/benchmark_spotlight_reflex_100scene/shards/010_019 --timeout 900 --driver-warmup-seconds 5 --max-retries 1 --continue-on-error --wizard-arg scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-100 --scene-offset 10 --scene-limit 10"
+            },
+            "write_batch_summary": {
+              "argv": [
+                "wod2sim-batch-summary",
+                "--batch-dir",
+                "runs/benchmark_spotlight_reflex_100scene/shards/010_019",
+                "--output",
+                "runs/benchmark_spotlight_reflex_100scene/shards/010_019/wod2sim-batch-summary.json",
+                "--strict",
+                "--json"
+              ],
+              "display": "wod2sim-batch-summary --batch-dir runs/benchmark_spotlight_reflex_100scene/shards/010_019 --output runs/benchmark_spotlight_reflex_100scene/shards/010_019/wod2sim-batch-summary.json --strict --json"
+            }
+          },
+          "index": 2,
+          "run_dir": "runs/benchmark_spotlight_reflex_100scene/shards/010_019",
+          "scene_limit": 10,
+          "scene_offset": 10
+        },
+        {
+          "commands": {
+            "run_batch": {
+              "argv": [
+                "wod2sim-batch",
+                "--mode",
+                "both",
+                "--model",
+                "spotlight_reflex",
+                "--scene-preset",
+                "front_camera_100scene_public2602",
+                "--alpasim-root",
+                "/path/to/alpasim",
+                "--batch-dir",
+                "runs/benchmark_spotlight_reflex_100scene/shards/020_029",
+                "--timeout",
+                "900",
+                "--driver-warmup-seconds",
+                "5",
+                "--max-retries",
+                "1",
+                "--continue-on-error",
+                "--wizard-arg",
+                "scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-100",
+                "--scene-offset",
+                "20",
+                "--scene-limit",
+                "10"
+              ],
+              "display": "wod2sim-batch --mode both --model spotlight_reflex --scene-preset front_camera_100scene_public2602 --alpasim-root /path/to/alpasim --batch-dir runs/benchmark_spotlight_reflex_100scene/shards/020_029 --timeout 900 --driver-warmup-seconds 5 --max-retries 1 --continue-on-error --wizard-arg scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-100 --scene-offset 20 --scene-limit 10"
+            },
+            "write_batch_summary": {
+              "argv": [
+                "wod2sim-batch-summary",
+                "--batch-dir",
+                "runs/benchmark_spotlight_reflex_100scene/shards/020_029",
+                "--output",
+                "runs/benchmark_spotlight_reflex_100scene/shards/020_029/wod2sim-batch-summary.json",
+                "--strict",
+                "--json"
+              ],
+              "display": "wod2sim-batch-summary --batch-dir runs/benchmark_spotlight_reflex_100scene/shards/020_029 --output runs/benchmark_spotlight_reflex_100scene/shards/020_029/wod2sim-batch-summary.json --strict --json"
+            }
+          },
+          "index": 3,
+          "run_dir": "runs/benchmark_spotlight_reflex_100scene/shards/020_029",
+          "scene_limit": 10,
+          "scene_offset": 20
+        },
+        {
+          "commands": {
+            "run_batch": {
+              "argv": [
+                "wod2sim-batch",
+                "--mode",
+                "both",
+                "--model",
+                "spotlight_reflex",
+                "--scene-preset",
+                "front_camera_100scene_public2602",
+                "--alpasim-root",
+                "/path/to/alpasim",
+                "--batch-dir",
+                "runs/benchmark_spotlight_reflex_100scene/shards/030_039",
+                "--timeout",
+                "900",
+                "--driver-warmup-seconds",
+                "5",
+                "--max-retries",
+                "1",
+                "--continue-on-error",
+                "--wizard-arg",
+                "scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-100",
+                "--scene-offset",
+                "30",
+                "--scene-limit",
+                "10"
+              ],
+              "display": "wod2sim-batch --mode both --model spotlight_reflex --scene-preset front_camera_100scene_public2602 --alpasim-root /path/to/alpasim --batch-dir runs/benchmark_spotlight_reflex_100scene/shards/030_039 --timeout 900 --driver-warmup-seconds 5 --max-retries 1 --continue-on-error --wizard-arg scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-100 --scene-offset 30 --scene-limit 10"
+            },
+            "write_batch_summary": {
+              "argv": [
+                "wod2sim-batch-summary",
+                "--batch-dir",
+                "runs/benchmark_spotlight_reflex_100scene/shards/030_039",
+                "--output",
+                "runs/benchmark_spotlight_reflex_100scene/shards/030_039/wod2sim-batch-summary.json",
+                "--strict",
+                "--json"
+              ],
+              "display": "wod2sim-batch-summary --batch-dir runs/benchmark_spotlight_reflex_100scene/shards/030_039 --output runs/benchmark_spotlight_reflex_100scene/shards/030_039/wod2sim-batch-summary.json --strict --json"
+            }
+          },
+          "index": 4,
+          "run_dir": "runs/benchmark_spotlight_reflex_100scene/shards/030_039",
+          "scene_limit": 10,
+          "scene_offset": 30
+        },
+        {
+          "commands": {
+            "run_batch": {
+              "argv": [
+                "wod2sim-batch",
+                "--mode",
+                "both",
+                "--model",
+                "spotlight_reflex",
+                "--scene-preset",
+                "front_camera_100scene_public2602",
+                "--alpasim-root",
+                "/path/to/alpasim",
+                "--batch-dir",
+                "runs/benchmark_spotlight_reflex_100scene/shards/040_049",
+                "--timeout",
+                "900",
+                "--driver-warmup-seconds",
+                "5",
+                "--max-retries",
+                "1",
+                "--continue-on-error",
+                "--wizard-arg",
+                "scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-100",
+                "--scene-offset",
+                "40",
+                "--scene-limit",
+                "10"
+              ],
+              "display": "wod2sim-batch --mode both --model spotlight_reflex --scene-preset front_camera_100scene_public2602 --alpasim-root /path/to/alpasim --batch-dir runs/benchmark_spotlight_reflex_100scene/shards/040_049 --timeout 900 --driver-warmup-seconds 5 --max-retries 1 --continue-on-error --wizard-arg scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-100 --scene-offset 40 --scene-limit 10"
+            },
+            "write_batch_summary": {
+              "argv": [
+                "wod2sim-batch-summary",
+                "--batch-dir",
+                "runs/benchmark_spotlight_reflex_100scene/shards/040_049",
+                "--output",
+                "runs/benchmark_spotlight_reflex_100scene/shards/040_049/wod2sim-batch-summary.json",
+                "--strict",
+                "--json"
+              ],
+              "display": "wod2sim-batch-summary --batch-dir runs/benchmark_spotlight_reflex_100scene/shards/040_049 --output runs/benchmark_spotlight_reflex_100scene/shards/040_049/wod2sim-batch-summary.json --strict --json"
+            }
+          },
+          "index": 5,
+          "run_dir": "runs/benchmark_spotlight_reflex_100scene/shards/040_049",
+          "scene_limit": 10,
+          "scene_offset": 40
+        },
+        {
+          "commands": {
+            "run_batch": {
+              "argv": [
+                "wod2sim-batch",
+                "--mode",
+                "both",
+                "--model",
+                "spotlight_reflex",
+                "--scene-preset",
+                "front_camera_100scene_public2602",
+                "--alpasim-root",
+                "/path/to/alpasim",
+                "--batch-dir",
+                "runs/benchmark_spotlight_reflex_100scene/shards/050_059",
+                "--timeout",
+                "900",
+                "--driver-warmup-seconds",
+                "5",
+                "--max-retries",
+                "1",
+                "--continue-on-error",
+                "--wizard-arg",
+                "scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-100",
+                "--scene-offset",
+                "50",
+                "--scene-limit",
+                "10"
+              ],
+              "display": "wod2sim-batch --mode both --model spotlight_reflex --scene-preset front_camera_100scene_public2602 --alpasim-root /path/to/alpasim --batch-dir runs/benchmark_spotlight_reflex_100scene/shards/050_059 --timeout 900 --driver-warmup-seconds 5 --max-retries 1 --continue-on-error --wizard-arg scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-100 --scene-offset 50 --scene-limit 10"
+            },
+            "write_batch_summary": {
+              "argv": [
+                "wod2sim-batch-summary",
+                "--batch-dir",
+                "runs/benchmark_spotlight_reflex_100scene/shards/050_059",
+                "--output",
+                "runs/benchmark_spotlight_reflex_100scene/shards/050_059/wod2sim-batch-summary.json",
+                "--strict",
+                "--json"
+              ],
+              "display": "wod2sim-batch-summary --batch-dir runs/benchmark_spotlight_reflex_100scene/shards/050_059 --output runs/benchmark_spotlight_reflex_100scene/shards/050_059/wod2sim-batch-summary.json --strict --json"
+            }
+          },
+          "index": 6,
+          "run_dir": "runs/benchmark_spotlight_reflex_100scene/shards/050_059",
+          "scene_limit": 10,
+          "scene_offset": 50
+        },
+        {
+          "commands": {
+            "run_batch": {
+              "argv": [
+                "wod2sim-batch",
+                "--mode",
+                "both",
+                "--model",
+                "spotlight_reflex",
+                "--scene-preset",
+                "front_camera_100scene_public2602",
+                "--alpasim-root",
+                "/path/to/alpasim",
+                "--batch-dir",
+                "runs/benchmark_spotlight_reflex_100scene/shards/060_069",
+                "--timeout",
+                "900",
+                "--driver-warmup-seconds",
+                "5",
+                "--max-retries",
+                "1",
+                "--continue-on-error",
+                "--wizard-arg",
+                "scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-100",
+                "--scene-offset",
+                "60",
+                "--scene-limit",
+                "10"
+              ],
+              "display": "wod2sim-batch --mode both --model spotlight_reflex --scene-preset front_camera_100scene_public2602 --alpasim-root /path/to/alpasim --batch-dir runs/benchmark_spotlight_reflex_100scene/shards/060_069 --timeout 900 --driver-warmup-seconds 5 --max-retries 1 --continue-on-error --wizard-arg scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-100 --scene-offset 60 --scene-limit 10"
+            },
+            "write_batch_summary": {
+              "argv": [
+                "wod2sim-batch-summary",
+                "--batch-dir",
+                "runs/benchmark_spotlight_reflex_100scene/shards/060_069",
+                "--output",
+                "runs/benchmark_spotlight_reflex_100scene/shards/060_069/wod2sim-batch-summary.json",
+                "--strict",
+                "--json"
+              ],
+              "display": "wod2sim-batch-summary --batch-dir runs/benchmark_spotlight_reflex_100scene/shards/060_069 --output runs/benchmark_spotlight_reflex_100scene/shards/060_069/wod2sim-batch-summary.json --strict --json"
+            }
+          },
+          "index": 7,
+          "run_dir": "runs/benchmark_spotlight_reflex_100scene/shards/060_069",
+          "scene_limit": 10,
+          "scene_offset": 60
+        },
+        {
+          "commands": {
+            "run_batch": {
+              "argv": [
+                "wod2sim-batch",
+                "--mode",
+                "both",
+                "--model",
+                "spotlight_reflex",
+                "--scene-preset",
+                "front_camera_100scene_public2602",
+                "--alpasim-root",
+                "/path/to/alpasim",
+                "--batch-dir",
+                "runs/benchmark_spotlight_reflex_100scene/shards/070_079",
+                "--timeout",
+                "900",
+                "--driver-warmup-seconds",
+                "5",
+                "--max-retries",
+                "1",
+                "--continue-on-error",
+                "--wizard-arg",
+                "scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-100",
+                "--scene-offset",
+                "70",
+                "--scene-limit",
+                "10"
+              ],
+              "display": "wod2sim-batch --mode both --model spotlight_reflex --scene-preset front_camera_100scene_public2602 --alpasim-root /path/to/alpasim --batch-dir runs/benchmark_spotlight_reflex_100scene/shards/070_079 --timeout 900 --driver-warmup-seconds 5 --max-retries 1 --continue-on-error --wizard-arg scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-100 --scene-offset 70 --scene-limit 10"
+            },
+            "write_batch_summary": {
+              "argv": [
+                "wod2sim-batch-summary",
+                "--batch-dir",
+                "runs/benchmark_spotlight_reflex_100scene/shards/070_079",
+                "--output",
+                "runs/benchmark_spotlight_reflex_100scene/shards/070_079/wod2sim-batch-summary.json",
+                "--strict",
+                "--json"
+              ],
+              "display": "wod2sim-batch-summary --batch-dir runs/benchmark_spotlight_reflex_100scene/shards/070_079 --output runs/benchmark_spotlight_reflex_100scene/shards/070_079/wod2sim-batch-summary.json --strict --json"
+            }
+          },
+          "index": 8,
+          "run_dir": "runs/benchmark_spotlight_reflex_100scene/shards/070_079",
+          "scene_limit": 10,
+          "scene_offset": 70
+        },
+        {
+          "commands": {
+            "run_batch": {
+              "argv": [
+                "wod2sim-batch",
+                "--mode",
+                "both",
+                "--model",
+                "spotlight_reflex",
+                "--scene-preset",
+                "front_camera_100scene_public2602",
+                "--alpasim-root",
+                "/path/to/alpasim",
+                "--batch-dir",
+                "runs/benchmark_spotlight_reflex_100scene/shards/080_089",
+                "--timeout",
+                "900",
+                "--driver-warmup-seconds",
+                "5",
+                "--max-retries",
+                "1",
+                "--continue-on-error",
+                "--wizard-arg",
+                "scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-100",
+                "--scene-offset",
+                "80",
+                "--scene-limit",
+                "10"
+              ],
+              "display": "wod2sim-batch --mode both --model spotlight_reflex --scene-preset front_camera_100scene_public2602 --alpasim-root /path/to/alpasim --batch-dir runs/benchmark_spotlight_reflex_100scene/shards/080_089 --timeout 900 --driver-warmup-seconds 5 --max-retries 1 --continue-on-error --wizard-arg scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-100 --scene-offset 80 --scene-limit 10"
+            },
+            "write_batch_summary": {
+              "argv": [
+                "wod2sim-batch-summary",
+                "--batch-dir",
+                "runs/benchmark_spotlight_reflex_100scene/shards/080_089",
+                "--output",
+                "runs/benchmark_spotlight_reflex_100scene/shards/080_089/wod2sim-batch-summary.json",
+                "--strict",
+                "--json"
+              ],
+              "display": "wod2sim-batch-summary --batch-dir runs/benchmark_spotlight_reflex_100scene/shards/080_089 --output runs/benchmark_spotlight_reflex_100scene/shards/080_089/wod2sim-batch-summary.json --strict --json"
+            }
+          },
+          "index": 9,
+          "run_dir": "runs/benchmark_spotlight_reflex_100scene/shards/080_089",
+          "scene_limit": 10,
+          "scene_offset": 80
+        },
+        {
+          "commands": {
+            "run_batch": {
+              "argv": [
+                "wod2sim-batch",
+                "--mode",
+                "both",
+                "--model",
+                "spotlight_reflex",
+                "--scene-preset",
+                "front_camera_100scene_public2602",
+                "--alpasim-root",
+                "/path/to/alpasim",
+                "--batch-dir",
+                "runs/benchmark_spotlight_reflex_100scene/shards/090_099",
+                "--timeout",
+                "900",
+                "--driver-warmup-seconds",
+                "5",
+                "--max-retries",
+                "1",
+                "--continue-on-error",
+                "--wizard-arg",
+                "scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-100",
+                "--scene-offset",
+                "90",
+                "--scene-limit",
+                "10"
+              ],
+              "display": "wod2sim-batch --mode both --model spotlight_reflex --scene-preset front_camera_100scene_public2602 --alpasim-root /path/to/alpasim --batch-dir runs/benchmark_spotlight_reflex_100scene/shards/090_099 --timeout 900 --driver-warmup-seconds 5 --max-retries 1 --continue-on-error --wizard-arg scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-100 --scene-offset 90 --scene-limit 10"
+            },
+            "write_batch_summary": {
+              "argv": [
+                "wod2sim-batch-summary",
+                "--batch-dir",
+                "runs/benchmark_spotlight_reflex_100scene/shards/090_099",
+                "--output",
+                "runs/benchmark_spotlight_reflex_100scene/shards/090_099/wod2sim-batch-summary.json",
+                "--strict",
+                "--json"
+              ],
+              "display": "wod2sim-batch-summary --batch-dir runs/benchmark_spotlight_reflex_100scene/shards/090_099 --output runs/benchmark_spotlight_reflex_100scene/shards/090_099/wod2sim-batch-summary.json --strict --json"
+            }
+          },
+          "index": 10,
+          "run_dir": "runs/benchmark_spotlight_reflex_100scene/shards/090_099",
+          "scene_limit": 10,
+          "scene_offset": 90
+        }
+      ],
       "stage": "stronger_benchmark"
     }
   ],
@@ -208,7 +951,7 @@
     },
     {
       "can_do": "Execute live AlpaSim batches and produce claim-valid batch summaries.",
-      "requirements": "x86_64 Linux, Docker, NVIDIA GPU runtime, AlpaSim images, and cached scene artifacts.",
+      "requirements": "x86_64 Linux, Docker, NVIDIA GPU runtime, AlpaSim images, and cached scene artifacts. Use scale-stage shards on constrained hosts; shards are operational checkpoints, not a complete benchmark claim by themselves.",
       "role": "closed_loop_runner"
     },
     {
