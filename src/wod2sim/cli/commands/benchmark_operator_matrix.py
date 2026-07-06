@@ -75,13 +75,31 @@ def build_operator_matrix(
 
     readiness_flags = _dict_or_empty(readiness.get("readiness"))
     blockers = _list_of_dicts(readiness.get("blocking_requirements"))
+    next_command_groups = _list_of_dicts(readiness.get("next_command_groups"))
     current_runtime = _dict_or_empty(status.get("current_local_runtime_state"))
     evidence_artifacts = _dict_or_empty(status.get("evidence_artifacts"))
     public_policy = _dict_or_empty(status.get("public_artifact_policy"))
+    current_local_state = _current_local_state(
+        readiness_flags=readiness_flags,
+        current_runtime=current_runtime,
+    )
+    roles = _roles(readiness_flags=readiness_flags, blockers=blockers)
+    task_matrix = _task_matrix(
+        readiness_flags=readiness_flags,
+        blockers=blockers,
+        evidence_artifacts=evidence_artifacts,
+    )
 
     return {
         "schema": MATRIX_SCHEMA,
         "created_at": created_at or datetime.now().isoformat(timespec="seconds"),
+        "summary": _matrix_summary(
+            readiness_flags=readiness_flags,
+            blockers=blockers,
+            next_command_groups=next_command_groups,
+            roles=roles,
+            task_matrix=task_matrix,
+        ),
         "source_artifacts": {
             "plan": _display_path(plan_path),
             "status": _display_path(status_path),
@@ -95,16 +113,9 @@ def build_operator_matrix(
             "tracked": public_policy.get("tracked"),
             "untracked": public_policy.get("untracked"),
         },
-        "current_local_state": _current_local_state(
-            readiness_flags=readiness_flags,
-            current_runtime=current_runtime,
-        ),
-        "roles": _roles(readiness_flags=readiness_flags, blockers=blockers),
-        "task_matrix": _task_matrix(
-            readiness_flags=readiness_flags,
-            blockers=blockers,
-            evidence_artifacts=evidence_artifacts,
-        ),
+        "current_local_state": current_local_state,
+        "roles": roles,
+        "task_matrix": task_matrix,
     }
 
 
@@ -303,6 +314,58 @@ def _task_matrix(
     ]
 
 
+def _matrix_summary(
+    *,
+    readiness_flags: dict[str, Any],
+    blockers: list[dict[str, Any]],
+    next_command_groups: list[dict[str, Any]],
+    roles: list[dict[str, Any]],
+    task_matrix: list[dict[str, Any]],
+) -> dict[str, Any]:
+    ready_roles = [
+        str(role.get("role"))
+        for role in roles
+        if role.get("role") and role.get("can_run_now_from_tracked_state") is True
+    ]
+    blocked_roles = [
+        str(role.get("role"))
+        for role in roles
+        if role.get("role") and role.get("can_run_now_from_tracked_state") is not True
+    ]
+    ready_tasks = [
+        str(task.get("task"))
+        for task in task_matrix
+        if task.get("task") and task.get("current_state") == "ready"
+    ]
+    blocked_tasks = [
+        str(task.get("task"))
+        for task in task_matrix
+        if task.get("task") and task.get("current_state") != "ready"
+    ]
+    return {
+        "claim_ready": bool(readiness_flags.get("claim_valid_scale_summaries_present")),
+        "open_repo_review_ready": "open_repo_reviewer" in ready_roles,
+        "ready_roles": ready_roles,
+        "blocked_roles": blocked_roles,
+        "ready_tasks": ready_tasks,
+        "blocked_tasks": blocked_tasks,
+        "remaining_blocker_ids": [
+            str(blocker.get("id")) for blocker in blockers if blocker.get("id")
+        ],
+        "next_command_groups": [
+            str(group.get("name")) for group in next_command_groups if group.get("name")
+        ],
+        "live_rollout_host_requirement": (
+            "x86_64 Linux with Docker, NVIDIA runtime, AlpaSim images, "
+            "valid local USDZ caches, and gated scene access"
+        ),
+        "public_claim_boundary": (
+            "Open-repo reviewers can audit compact public evidence; new 50/100 "
+            "closed-loop claims require completed full-stage summaries."
+        ),
+    }
+
+
 def _blocker_ids(blockers: list[dict[str, Any]], *, blocks: set[str]) -> list[str]:
     return [
         str(blocker.get("id"))
@@ -346,6 +409,11 @@ def _list_of_dicts(value: object) -> list[dict[str, Any]]:
 
 def _print_human_summary(matrix: dict[str, Any]) -> None:
     print(matrix["schema"])
+    summary = _dict_or_empty(matrix.get("summary"))
+    if summary:
+        print(f"claim_ready: {summary.get('claim_ready')}")
+        blockers = ", ".join(str(item) for item in summary.get("remaining_blocker_ids", []))
+        print(f"remaining_blocker_ids: {blockers or 'none'}")
     for role in matrix["roles"]:
         state = "ready" if role["can_run_now_from_tracked_state"] else "blocked"
         print(f"- {role['role']}: {state}")

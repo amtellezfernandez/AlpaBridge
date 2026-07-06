@@ -130,6 +130,44 @@
     "readiness": "docs/evidence/benchmark_regeneration_readiness_20260706.json",
     "status": "docs/evidence/benchmark_regeneration_status_20260706.json"
   },
+  "summary": {
+    "blocked_roles": [
+      "cache_builder",
+      "closed_loop_runner",
+      "claim_promoter"
+    ],
+    "blocked_tasks": [
+      "build_and_validate_26_02_usdz_cache",
+      "run_live_scale_shards",
+      "promote_claim_valid_50_100_summaries"
+    ],
+    "claim_ready": false,
+    "live_rollout_host_requirement": "x86_64 Linux with Docker, NVIDIA runtime, AlpaSim images, valid local USDZ caches, and gated scene access",
+    "next_command_groups": [
+      "refresh_readiness",
+      "build_and_validate_scale_caches",
+      "run_scale_shards_and_promote_summaries",
+      "refresh_status",
+      "verify_claim_gate"
+    ],
+    "open_repo_review_ready": true,
+    "public_claim_boundary": "Open-repo reviewers can audit compact public evidence; new 50/100 closed-loop claims require completed full-stage summaries.",
+    "ready_roles": [
+      "open_repo_reviewer",
+      "arm_dgx_spark_host"
+    ],
+    "ready_tasks": [
+      "review_public_evidence"
+    ],
+    "remaining_blocker_ids": [
+      "hf_token_missing",
+      "alpasim_base_image_missing",
+      "front_camera_50scene_public2602_cache_invalid",
+      "front_camera_50scene_public2602_claim_summary_missing",
+      "front_camera_100scene_public2602_cache_invalid",
+      "front_camera_100scene_public2602_claim_summary_missing"
+    ]
+  },
   "task_matrix": [
     {
       "claim_boundary": "Review only; does not create new benchmark evidence.",

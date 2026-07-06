@@ -24,11 +24,18 @@ def test_operator_matrix_builder_reflects_tracked_readiness_blockers() -> None:
         created_at="2026-07-06",
     )
     roles = {role["role"]: role for role in matrix["roles"]}
+    summary = matrix["summary"]
 
     assert matrix["schema"] == "wod2sim_benchmark_operator_matrix_v1"
     assert matrix["created_at"] == "2026-07-06"
     assert matrix["source_artifacts"]["plan"] == (ROOT / PLAN_RELATIVE).as_posix()
     assert matrix["generator"]["no_download_or_rollout_probes"] is True
+    assert summary["open_repo_review_ready"] is True
+    assert summary["claim_ready"] is False
+    assert "open_repo_reviewer" in summary["ready_roles"]
+    assert "closed_loop_runner" in summary["blocked_roles"]
+    assert "build_and_validate_scale_caches" in summary["next_command_groups"]
+    assert "hf_token_missing" in summary["remaining_blocker_ids"]
     assert roles["open_repo_reviewer"]["can_run_now_from_tracked_state"] is True
     assert roles["open_repo_reviewer"]["requires_private_assets"] is False
     assert roles["cache_builder"]["can_run_now_from_tracked_state"] is False
@@ -36,9 +43,10 @@ def test_operator_matrix_builder_reflects_tracked_readiness_blockers() -> None:
     assert roles["closed_loop_runner"]["requires_x86_64_linux"] is True
     assert "alpasim_base_image_missing" in roles["closed_loop_runner"]["current_blocker_ids"]
     assert roles["claim_promoter"]["can_run_now_from_tracked_state"] is False
-    assert "front_camera_100scene_public2602_claim_summary_missing" in roles["claim_promoter"][
-        "current_blocker_ids"
-    ]
+    assert (
+        "front_camera_100scene_public2602_claim_summary_missing"
+        in roles["claim_promoter"]["current_blocker_ids"]
+    )
     assert "amd64-only" in roles["arm_dgx_spark_host"]["cannot_run"][0]
 
 
@@ -48,20 +56,24 @@ def test_operator_matrix_main_writes_artifact_without_runtime_probes() -> None:
         stdout = Path(tmpdir) / "stdout.json"
         output = Path(tmpdir) / "operator-matrix.json"
 
-        with stdout.open("w", encoding="utf-8") as handle, patch.object(
-            sys,
-            "argv",
-            [
-                "wod2sim-benchmark-operators",
-                "--repo-root",
-                str(ROOT),
-                "--created-at",
-                "2026-07-06",
-                "--output",
-                str(output),
-                "--json",
-            ],
-        ), patch("sys.stdout", handle):
+        with (
+            stdout.open("w", encoding="utf-8") as handle,
+            patch.object(
+                sys,
+                "argv",
+                [
+                    "wod2sim-benchmark-operators",
+                    "--repo-root",
+                    str(ROOT),
+                    "--created-at",
+                    "2026-07-06",
+                    "--output",
+                    str(output),
+                    "--json",
+                ],
+            ),
+            patch("sys.stdout", handle),
+        ):
             returncode = module.main()
 
         emitted = json.loads(stdout.read_text(encoding="utf-8"))
@@ -78,6 +90,7 @@ def test_tracked_operator_matrix_is_public_safe_and_explicit_about_who_can_run()
     rendered = json.dumps(matrix, sort_keys=True)
     roles = {role["role"]: role for role in matrix["roles"]}
     tasks = {task["task"]: task for task in matrix["task_matrix"]}
+    summary = matrix["summary"]
 
     assert matrix["schema"] == "wod2sim_benchmark_operator_matrix_v1"
     assert matrix["source_artifacts"] == {
@@ -87,6 +100,23 @@ def test_tracked_operator_matrix_is_public_safe_and_explicit_about_who_can_run()
     }
     assert matrix["generator"]["command"] == "wod2sim-benchmark-operators"
     assert "/home/" not in rendered
+    assert summary["claim_ready"] is False
+    assert summary["open_repo_review_ready"] is True
+    assert summary["ready_tasks"] == ["review_public_evidence"]
+    assert summary["blocked_tasks"] == [
+        "build_and_validate_26_02_usdz_cache",
+        "run_live_scale_shards",
+        "promote_claim_valid_50_100_summaries",
+    ]
+    assert summary["remaining_blocker_ids"] == [
+        "hf_token_missing",
+        "alpasim_base_image_missing",
+        "front_camera_50scene_public2602_cache_invalid",
+        "front_camera_50scene_public2602_claim_summary_missing",
+        "front_camera_100scene_public2602_cache_invalid",
+        "front_camera_100scene_public2602_claim_summary_missing",
+    ]
+    assert "x86_64 Linux" in summary["live_rollout_host_requirement"]
     assert roles["open_repo_reviewer"]["can_run_now_from_tracked_state"] is True
     assert roles["cache_builder"]["requires_gpu"] is False
     assert roles["cache_builder"]["requires_private_assets"] is True

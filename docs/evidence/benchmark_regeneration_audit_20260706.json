@@ -161,6 +161,7 @@
       "operator_matrix_roles_matches_sources": true,
       "operator_matrix_schema_matches": true,
       "operator_matrix_sources_match_audit": true,
+      "operator_matrix_summary_matches_sources": true,
       "operator_matrix_task_matrix_matches_sources": true
     },
     "notes": [],

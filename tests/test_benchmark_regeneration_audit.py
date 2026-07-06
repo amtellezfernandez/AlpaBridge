@@ -60,6 +60,9 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         )
         self.assertTrue(audit["operator_matrix"]["valid"])
         self.assertEqual(OPERATOR_MATRIX_RELATIVE.as_posix(), audit["operator_matrix"]["artifact"])
+        self.assertTrue(
+            audit["operator_matrix"]["checks"]["operator_matrix_summary_matches_sources"]
+        )
         self.assertTrue(audit["operator_matrix"]["checks"]["operator_matrix_roles_matches_sources"])
         self.assertTrue(audit["public_evidence_manifest"]["valid"])
         self.assertEqual(

@@ -1197,6 +1197,7 @@ def _operator_matrix_consistency(
     checks["operator_matrix_expected_rebuilt"] = bool(expected)
     if expected:
         for key in (
+            "summary",
             "public_artifact_policy",
             "current_local_state",
             "roles",
