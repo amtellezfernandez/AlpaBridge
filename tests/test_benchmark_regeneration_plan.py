@@ -55,6 +55,11 @@ class BenchmarkRegenerationPlanTests(unittest.TestCase):
             "runs/benchmark_spotlight_reflex_50scene/wod2sim-batch-summary.json",
             merge_command,
         )
+        promote_command = scale_stage["commands"]["promote_public_summary"]["argv"]
+        self.assertEqual("wod2sim-promote-batch-summary", promote_command[0])
+        self.assertIn("runs/benchmark_spotlight_reflex_50scene/wod2sim-batch-summary.json", promote_command)
+        self.assertIn("docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json", promote_command)
+        self.assertIn("--overwrite", promote_command)
         self.assertEqual(5, len(scale_stage["shards"]))
         self.assertEqual(0, scale_stage["shards"][0]["scene_offset"])
         self.assertEqual(10, scale_stage["shards"][0]["scene_limit"])
@@ -100,6 +105,7 @@ class BenchmarkRegenerationPlanTests(unittest.TestCase):
             self.assertEqual([], stage["shards"])
             self.assertIsNone(stage["shard_note"])
             self.assertIsNone(stage["commands"]["merge_shard_summaries"])
+            self.assertIsNotNone(stage["commands"]["promote_public_summary"])
 
     def test_tracked_plan_links_current_public_status_and_docs(self) -> None:
         plan = _read_json(ROOT / PLAN_RELATIVE)

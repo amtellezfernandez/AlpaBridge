@@ -255,6 +255,14 @@ def _stage_plan(
             ]
         ),
         "merge_shard_summaries": None,
+        "promote_public_summary": _command(
+            _promote_public_summary_argv(
+                model=model,
+                scene_preset=scene_preset,
+                scene_count=scene_count,
+                run_dir=run_dir,
+            )
+        ),
     }
     if local_usdz_dir is not None:
         commands["build_local_cache"] = _command(
@@ -433,6 +441,30 @@ def _merge_shard_summary_argv(
         ]
     )
     return argv
+
+
+def _promote_public_summary_argv(
+    *,
+    model: str,
+    scene_preset: str,
+    scene_count: int,
+    run_dir: str,
+) -> list[str]:
+    return [
+        "wod2sim-promote-batch-summary",
+        "--summary",
+        _join(run_dir, "wod2sim-batch-summary.json"),
+        "--output",
+        f"docs/evidence/closed_loop_{model}_{scene_count}scene_batch.json",
+        "--expected-scene-count",
+        str(scene_count),
+        "--model",
+        model,
+        "--scene-preset",
+        scene_preset,
+        "--overwrite",
+        "--json",
+    ]
 
 
 def _scene_ids_for(scene_preset: str) -> list[str]:
