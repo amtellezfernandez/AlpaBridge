@@ -26,7 +26,7 @@ EXPECTED_REMAINING_REQUIREMENTS = [
 ]
 EXPECTED_BLOCKING_REQUIREMENTS = [
     "hf_token_missing",
-    "front_camera_50scene_public2602_cache_invalid",
+    "free_disk_below_threshold",
     "front_camera_50scene_public2602_claim_summary_missing",
     "front_camera_100scene_public2602_cache_invalid",
     "front_camera_100scene_public2602_claim_summary_missing",
@@ -140,12 +140,13 @@ def test_public_evidence_manifest_builder_hashes_tracked_artifacts() -> None:
         ]["missing_count"]
         == 5
     )
-    assert (
-        "front_camera_50scene_public2602_cache_invalid"
-        in manifest["claim_gate"]["resume_repair_scope"]["stages"][0]["claim_gap"][
-            "blocking_requirements"
-        ]
-    )
+    assert manifest["claim_gate"]["resume_repair_scope"]["stages"][0]["claim_gap"][
+        "blocking_requirements"
+    ] == [
+        "hf_token_missing",
+        "free_disk_below_threshold",
+        "front_camera_50scene_public2602_claim_summary_missing",
+    ]
     assert {Path(row["path"]) for row in manifest["missing_expected_artifacts"]} == {
         MISSING_50_RELATIVE,
         MISSING_100_RELATIVE,
@@ -254,7 +255,7 @@ def test_tracked_public_evidence_manifest_is_public_safe_and_complete() -> None:
         == EXPECTED_NEXT_COMMAND_RENDERER_GROUPS
     )
     assert len(manifest["claim_gate"]["scale_claim_gaps"]) == 2
-    assert manifest["claim_gate"]["scale_claim_gaps"][0]["local_usdz_cache"]["valid"] is False
+    assert manifest["claim_gate"]["scale_claim_gaps"][0]["local_usdz_cache"]["valid"] is True
     assert manifest["claim_gate"]["scale_claim_gaps"][0]["expected_merge_input_count"] == 5
     assert manifest["claim_gate"]["scale_claim_gaps"][1]["expected_merge_input_count"] == 10
     assert (

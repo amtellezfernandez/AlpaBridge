@@ -1,7 +1,7 @@
 {
   "claim_ready": false,
   "claim_rule": "Every stage in the regeneration plan must have a tracked wod2sim_closed_loop_batch_summary_v1 artifact with clean_closed_loop_batch=true, matching scene counts, zero failed scenes, and zero sensor-pipeline failures.",
-  "created_at": "2026-07-06T11:00:40",
+  "created_at": "2026-07-06T13:15:20",
   "diagnostic_evidence": {
     "artifact": "docs/evidence/closed_loop_spotlight_reflex_50scene_localprobe_1scene.json",
     "checks": {
@@ -72,7 +72,7 @@
   "objective_completion": {
     "blocking_requirements": [
       "hf_token_missing",
-      "front_camera_50scene_public2602_cache_invalid",
+      "free_disk_below_threshold",
       "front_camera_50scene_public2602_claim_summary_missing",
       "front_camera_100scene_public2602_cache_invalid",
       "front_camera_100scene_public2602_claim_summary_missing"
@@ -129,7 +129,7 @@
       {
         "blocking_requirements": [
           "hf_token_missing",
-          "front_camera_50scene_public2602_cache_invalid",
+          "free_disk_below_threshold",
           "front_camera_50scene_public2602_claim_summary_missing"
         ],
         "detail": "Requires a clean full-stage 50-scene public summary.",
@@ -146,6 +146,7 @@
       {
         "blocking_requirements": [
           "hf_token_missing",
+          "free_disk_below_threshold",
           "front_camera_100scene_public2602_cache_invalid",
           "front_camera_100scene_public2602_claim_summary_missing"
         ],
@@ -162,7 +163,6 @@
       },
       {
         "blocking_requirements": [
-          "front_camera_50scene_public2602_cache_invalid",
           "front_camera_50scene_public2602_claim_summary_missing",
           "front_camera_100scene_public2602_cache_invalid",
           "front_camera_100scene_public2602_claim_summary_missing"
@@ -182,7 +182,7 @@
       {
         "blocking_requirements": [
           "hf_token_missing",
-          "front_camera_50scene_public2602_cache_invalid",
+          "free_disk_below_threshold",
           "front_camera_50scene_public2602_claim_summary_missing"
         ],
         "claim_summary_acceptance": {
@@ -214,13 +214,13 @@
         "expected_scene_count": 50,
         "local_usdz_cache": {
           "expected_scene_count": 50,
-          "matching_scene_count": 0,
-          "missing_scene_count": 50,
+          "matching_scene_count": 50,
+          "missing_scene_count": 0,
           "nonmatching_usdz_file_count": 0,
-          "present_scene_count": 0,
+          "present_scene_count": 50,
           "required": true,
-          "usdz_file_count": 0,
-          "valid": false
+          "usdz_file_count": 50,
+          "valid": true
         },
         "merge_input_progress": {
           "claim_valid_count": 0,
@@ -257,6 +257,7 @@
       {
         "blocking_requirements": [
           "hf_token_missing",
+          "free_disk_below_threshold",
           "front_camera_100scene_public2602_cache_invalid",
           "front_camera_100scene_public2602_claim_summary_missing"
         ],
@@ -409,7 +410,7 @@
     "notes": [],
     "readiness_blocker_ids": [
       "hf_token_missing",
-      "front_camera_50scene_public2602_cache_invalid",
+      "free_disk_below_threshold",
       "front_camera_50scene_public2602_claim_summary_missing",
       "front_camera_100scene_public2602_cache_invalid",
       "front_camera_100scene_public2602_claim_summary_missing"
@@ -422,8 +423,8 @@
       "readiness",
       "shards"
     ],
-    "sha256": "1a796814b14563bac7199a9e0f0e0383946cff3417c82b8b64e978287c444e01",
-    "size_bytes": 11307,
+    "sha256": "d19cb103f3ba00d4bee7a37a7684a3a3fefd3f91a77a454fd0ab1444963e44ac",
+    "size_bytes": 11554,
     "valid": true
   },
   "readiness_artifact": "docs/evidence/benchmark_regeneration_readiness_20260706.json",
@@ -596,19 +597,19 @@
           "claim_gap": {
             "blocking_requirements": [
               "hf_token_missing",
-              "front_camera_50scene_public2602_cache_invalid",
+              "free_disk_below_threshold",
               "front_camera_50scene_public2602_claim_summary_missing"
             ],
             "claim_valid": false,
             "local_usdz_cache": {
               "expected_scene_count": 50,
-              "matching_scene_count": 0,
-              "missing_scene_count": 50,
+              "matching_scene_count": 50,
+              "missing_scene_count": 0,
               "nonmatching_usdz_file_count": 0,
-              "present_scene_count": 0,
+              "present_scene_count": 50,
               "required": true,
-              "usdz_file_count": 0,
-              "valid": false
+              "usdz_file_count": 50,
+              "valid": true
             },
             "merge_input_progress": {
               "claim_valid_count": 0,
@@ -766,6 +767,7 @@
           "claim_gap": {
             "blocking_requirements": [
               "hf_token_missing",
+              "free_disk_below_threshold",
               "front_camera_100scene_public2602_cache_invalid",
               "front_camera_100scene_public2602_claim_summary_missing"
             ],

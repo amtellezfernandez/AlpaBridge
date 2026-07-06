@@ -45,6 +45,12 @@ EXPECTED_100_MISSING_SHARDS = [
     _expected_missing_shard(100, shard_index, scene_offset)
     for shard_index, scene_offset in enumerate(range(0, 100, 10), start=1)
 ]
+EXPECTED_50_MISSING_SUMMARY_ERRORS = {
+    str(row["summary_path"]): ["summary_missing"] for row in EXPECTED_50_MISSING_SHARDS
+}
+EXPECTED_100_MISSING_SUMMARY_ERRORS = {
+    str(row["summary_path"]): ["summary_missing"] for row in EXPECTED_100_MISSING_SHARDS
+}
 
 
 def _expected_preflight(scene_count: int) -> dict[str, object]:
@@ -95,22 +101,28 @@ EXPECTED_100_COMPLETION_GATE = _expected_completion_gate(100, 10)
 
 
 def _expected_claim_gap(scene_count: int, expected_merge_input_count: int) -> dict[str, object]:
+    cache_valid = scene_count == 50
+    missing_scene_count = 0 if cache_valid else scene_count
+    matching_scene_count = scene_count if cache_valid else 0
+    blocking_requirements = [
+        "hf_token_missing",
+        "free_disk_below_threshold",
+        f"front_camera_{scene_count}scene_public2602_claim_summary_missing",
+    ]
+    if not cache_valid:
+        blocking_requirements.insert(2, f"front_camera_{scene_count}scene_public2602_cache_invalid")
     return {
-        "blocking_requirements": [
-            "hf_token_missing",
-            f"front_camera_{scene_count}scene_public2602_cache_invalid",
-            f"front_camera_{scene_count}scene_public2602_claim_summary_missing",
-        ],
+        "blocking_requirements": blocking_requirements,
         "claim_valid": False,
         "local_usdz_cache": {
             "expected_scene_count": scene_count,
-            "matching_scene_count": 0,
-            "missing_scene_count": scene_count,
+            "matching_scene_count": matching_scene_count,
+            "missing_scene_count": missing_scene_count,
             "nonmatching_usdz_file_count": 0,
-            "present_scene_count": 0,
+            "present_scene_count": matching_scene_count,
             "required": True,
-            "usdz_file_count": 0,
-            "valid": False,
+            "usdz_file_count": matching_scene_count,
+            "valid": cache_valid,
         },
         "merge_input_progress": {
             "claim_valid_count": 0,
@@ -433,7 +445,7 @@ def test_tracked_operator_matrix_is_public_safe_and_explicit_about_who_can_run()
     }
     assert summary["remaining_blocker_ids"] == [
         "hf_token_missing",
-        "front_camera_50scene_public2602_cache_invalid",
+        "free_disk_below_threshold",
         "front_camera_50scene_public2602_claim_summary_missing",
         "front_camera_100scene_public2602_cache_invalid",
         "front_camera_100scene_public2602_claim_summary_missing",

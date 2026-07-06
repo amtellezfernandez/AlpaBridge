@@ -237,7 +237,7 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         )
         self.assertIn("hf_token_missing", completion["blocking_requirements"])
         self.assertIn(
-            "front_camera_50scene_public2602_cache_invalid",
+            "free_disk_below_threshold",
             completion["blocking_requirements"],
         )
         self.assertIn(
@@ -340,13 +340,13 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         self.assertEqual(
             {
                 "expected_scene_count": 50,
-                "matching_scene_count": 0,
-                "missing_scene_count": 50,
+                "matching_scene_count": 50,
+                "missing_scene_count": 0,
                 "nonmatching_usdz_file_count": 0,
-                "present_scene_count": 0,
+                "present_scene_count": 50,
                 "required": True,
-                "usdz_file_count": 0,
-                "valid": False,
+                "usdz_file_count": 50,
+                "valid": True,
             },
             scale_claim_gaps["front_camera_50scene_public2602"]["local_usdz_cache"],
         )
@@ -417,7 +417,7 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         self.assertTrue(requirements["track_50_scene_scale_progress"]["satisfied"])
         self.assertFalse(requirements["pass_strict_claim_gate"]["satisfied"])
         self.assertIn(
-            "front_camera_50scene_public2602_cache_invalid",
+            "front_camera_50scene_public2602_claim_summary_missing",
             requirements["produce_claim_valid_50_scene_summary"]["blocking_requirements"],
         )
         self.assertIn(
@@ -1024,7 +1024,7 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             _copy_evidence_jsons(evidence)
             manifest_path = evidence / MANIFEST_RELATIVE.name
             manifest = _read_json(manifest_path)
-            manifest["claim_gate"]["scale_claim_gaps"][0]["local_usdz_cache"]["valid"] = True
+            manifest["claim_gate"]["scale_claim_gaps"][0]["local_usdz_cache"]["valid"] = False
             _write_json(manifest_path, manifest)
 
             audit = module.build_audit(repo_root=repo_root, created_at="2026-07-06")

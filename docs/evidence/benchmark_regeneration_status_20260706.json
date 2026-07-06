@@ -4,7 +4,7 @@
     "full_objective_complete": false,
     "reason": "The repository tracks a valid 10-scene public summary plus a plan, readiness snapshot, and audit gate, but fresh regenerated claim-valid scale summaries are not currently present: docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json, docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json."
   },
-  "created_at": "2026-07-06T11:00:39",
+  "created_at": "2026-07-06T13:14:31",
   "current_local_runtime_state": {
     "all_scale_caches_valid": false,
     "all_scale_source_caches_valid": false,
@@ -12,8 +12,8 @@
     "claim_valid_scale_summaries_present": false,
     "closed_loop_runner_supported": true,
     "derived_from": "docs/evidence/benchmark_regeneration_readiness_20260706.json",
-    "disk_free_gib_at_readiness": 269.36,
-    "disk_meets_min_free_disk_gb": true,
+    "disk_free_gib_at_readiness": 197.77,
+    "disk_meets_min_free_disk_gb": false,
     "docker_daemon_ok": true,
     "docker_nvidia_runtime_present": true,
     "host_machine": "x86_64",
@@ -96,7 +96,7 @@
   "objective_completion": {
     "blocking_requirements": [
       "hf_token_missing",
-      "front_camera_50scene_public2602_cache_invalid",
+      "free_disk_below_threshold",
       "front_camera_50scene_public2602_claim_summary_missing",
       "front_camera_100scene_public2602_cache_invalid",
       "front_camera_100scene_public2602_claim_summary_missing"
@@ -207,15 +207,15 @@
       "claim_valid_closed_loop_summary_tracked": false,
       "local_usdz_cache": {
         "expected_scene_count": 50,
-        "matching_scene_count": 0,
-        "missing_scene_count": 50,
+        "matching_scene_count": 50,
+        "missing_scene_count": 0,
         "nonmatching_usdz_file_count": 0,
-        "present_scene_count": 0,
+        "present_scene_count": 50,
         "required": true,
-        "usdz_file_count": 0,
-        "valid": false
+        "usdz_file_count": 50,
+        "valid": true
       },
-      "local_usdz_cache_valid": false,
+      "local_usdz_cache_valid": true,
       "preset_tracked": true,
       "remaining_runtime_requirement": "Rebuild the local 26.02 USDZ cache and rerun on an x86_64 AlpaSim runner with Docker/NVIDIA runtime images installed.",
       "scene_count": 50,

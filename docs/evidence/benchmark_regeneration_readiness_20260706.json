@@ -10,16 +10,12 @@
       ]
     },
     {
-      "blocks": "closed_loop_rollout",
-      "detail": "Local USDZ cache is not valid: 0/50 scenes present.",
-      "id": "front_camera_50scene_public2602_cache_invalid",
+      "blocks": "cache_build_and_rollout",
+      "detail": "197.77 GiB free is below the configured 200 GB threshold.",
+      "id": "free_disk_below_threshold",
       "plan_command_groups": [
-        "stages[workshop_scale].commands.link_local_cache_from_all_usdzs",
-        "stages[workshop_scale].commands.build_local_cache",
-        "stages[workshop_scale].commands.validate_local_cache"
-      ],
-      "scene_preset": "front_camera_50scene_public2602",
-      "stage": "workshop_scale"
+        "commands.check_readiness"
+      ]
     },
     {
       "blocks": "full_benchmark_claim",
@@ -60,15 +56,15 @@
       "stage": "stronger_benchmark"
     }
   ],
-  "created_at": "2026-07-06T10:51:55",
+  "created_at": "2026-07-06T13:12:58",
   "credentials": {
     "hf_token_present": false,
     "hf_token_required_for_cache_build": true
   },
   "disk": {
     "exact_free_bytes_omitted": true,
-    "free_gib": 269.36,
-    "meets_min_free_disk_gb": true,
+    "free_gib": 197.77,
+    "meets_min_free_disk_gb": false,
     "min_free_disk_gb": 200,
     "path": "workspace/alpasim",
     "total_gib": 1006.85
@@ -104,24 +100,6 @@
       "commands": [
         {
           "command": "link_local_cache_from_all_usdzs",
-          "display": "wod2sim-build-local-cache --scene-preset front_camera_50scene_public2602 --alpasim-root workspace/alpasim --source-usdz-dir workspace/alpasim/data/nre-artifacts/all-usdzs --local-usdz-dir workspace/alpasim/data/nre-artifacts/local-2602-usdzs-50 --hf-revision 26.02",
-          "scene_preset": "front_camera_50scene_public2602",
-          "stage": "workshop_scale"
-        },
-        {
-          "command": "build_local_cache",
-          "display": "HF_TOKEN=required wod2sim-build-local-cache --scene-preset front_camera_50scene_public2602 --alpasim-root workspace/alpasim --local-usdz-dir workspace/alpasim/data/nre-artifacts/local-2602-usdzs-50 --hf-repo nvidia/PhysicalAI-Autonomous-Vehicles-NuRec --hf-revision 26.02 --workers 3",
-          "scene_preset": "front_camera_50scene_public2602",
-          "stage": "workshop_scale"
-        },
-        {
-          "command": "validate_local_cache",
-          "display": "wod2sim-build-local-cache --scene-preset front_camera_50scene_public2602 --alpasim-root workspace/alpasim --local-usdz-dir workspace/alpasim/data/nre-artifacts/local-2602-usdzs-50 --hf-revision 26.02 --validate-only",
-          "scene_preset": "front_camera_50scene_public2602",
-          "stage": "workshop_scale"
-        },
-        {
-          "command": "link_local_cache_from_all_usdzs",
           "display": "wod2sim-build-local-cache --scene-preset front_camera_100scene_public2602 --alpasim-root workspace/alpasim --source-usdz-dir workspace/alpasim/data/nre-artifacts/all-usdzs --local-usdz-dir workspace/alpasim/data/nre-artifacts/local-2602-usdzs-100 --hf-revision 26.02",
           "scene_preset": "front_camera_100scene_public2602",
           "stage": "stronger_benchmark"
@@ -142,11 +120,8 @@
       "name": "build_and_validate_scale_caches",
       "order": 2,
       "plan_command_groups": [
-        "stages[workshop_scale].commands.link_local_cache_from_all_usdzs",
         "stages[stronger_benchmark].commands.link_local_cache_from_all_usdzs",
-        "stages[workshop_scale].commands.build_local_cache",
         "stages[stronger_benchmark].commands.build_local_cache",
-        "stages[workshop_scale].commands.validate_local_cache",
         "stages[stronger_benchmark].commands.validate_local_cache"
       ]
     },
@@ -354,10 +329,10 @@
       },
       "local_usdz_cache": {
         "local_usdz_dir": "workspace/alpasim/data/nre-artifacts/local-2602-usdzs-50",
-        "matching_scene_count": 0,
+        "matching_scene_count": 50,
         "nonmatching_usdz_file_count": 0,
         "required": true,
-        "usdz_file_count": 0,
+        "usdz_file_count": 50,
         "validation": {
           "duplicate_uuid_count": 0,
           "duplicate_uuids_sample": [],
@@ -366,22 +341,11 @@
           "invalid_cache_files_sample": [],
           "invalid_revision_scene_count": 0,
           "invalid_revision_scene_ids_sample": [],
-          "missing_scene_count": 50,
-          "missing_scene_ids_sample": [
-            "clipgt-01d503d4-449b-46fc-8d78-9085e70d3554",
-            "clipgt-02e075b9-fd24-426b-971b-7cfcb2074cc9",
-            "clipgt-048b974e-1546-488a-b8f9-d32bff77f5aa",
-            "clipgt-0499fb41-122d-4180-83af-f954a9974d3b",
-            "clipgt-05f35348-9de0-4f68-ac65-f31316dbb59e",
-            "clipgt-07981e6a-22dd-4796-ad2f-1252037ecd28",
-            "clipgt-098e2482-6db2-473b-b08a-2a80be9320f3",
-            "clipgt-0ce02937-f31b-4b4e-8286-3af73ae8861e",
-            "clipgt-0ce6f2a3-a6cf-42c3-9133-111139be1dd1",
-            "clipgt-0fa7060f-1481-4ff3-977e-510285e2515d"
-          ],
-          "present_scene_count": 0,
+          "missing_scene_count": 0,
+          "missing_scene_ids_sample": [],
+          "present_scene_count": 50,
           "schema": "wod2sim_local_usdz_cache_validation_v1",
-          "valid": false
+          "valid": true
         }
       },
       "public_summary": {

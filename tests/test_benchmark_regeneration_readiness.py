@@ -223,7 +223,8 @@ class BenchmarkRegenerationReadinessTests(unittest.TestCase):
         blocker_ids = {requirement["id"] for requirement in report["blocking_requirements"]}
         self.assertIn("hf_token_missing", blocker_ids)
         self.assertNotIn("alpasim_base_image_missing", blocker_ids)
-        self.assertIn("front_camera_50scene_public2602_cache_invalid", blocker_ids)
+        self.assertIn("free_disk_below_threshold", blocker_ids)
+        self.assertNotIn("front_camera_50scene_public2602_cache_invalid", blocker_ids)
         self.assertEqual("refresh_status", report["next_command_groups"][-2]["name"])
         self.assertEqual("verify_claim_gate", report["next_command_groups"][-1]["name"])
         refresh_display = report["next_command_groups"][0]["commands"][0]["display"]
@@ -231,7 +232,7 @@ class BenchmarkRegenerationReadinessTests(unittest.TestCase):
         self.assertNotIn("--skip-runtime-probes", refresh_display)
         build_group = _command_group(report, "build_and_validate_scale_caches")
         self.assertEqual(["cache"], build_group["command_renderer_groups"])
-        self.assertEqual(6, len(build_group["commands"]))
+        self.assertEqual(3, len(build_group["commands"]))
         self.assertTrue(
             all(
                 "wod2sim-build-local-cache" in command["display"]
@@ -261,7 +262,12 @@ class BenchmarkRegenerationReadinessTests(unittest.TestCase):
             shard_group["stage_command_counts"],
         )
         self.assertTrue(stages[10]["public_summary"]["claim_valid"])
-        self.assertFalse(stages[50]["local_usdz_cache"]["validation"]["valid"])
+        self.assertTrue(stages[50]["local_usdz_cache"]["validation"]["valid"])
+        self.assertEqual(50, stages[50]["local_usdz_cache"]["usdz_file_count"])
+        self.assertEqual(50, stages[50]["local_usdz_cache"]["matching_scene_count"])
+        self.assertEqual(0, stages[50]["local_usdz_cache"]["nonmatching_usdz_file_count"])
+        self.assertEqual(50, stages[50]["local_usdz_cache"]["validation"]["present_scene_count"])
+        self.assertEqual(0, stages[50]["local_usdz_cache"]["validation"]["missing_scene_count"])
         self.assertFalse(stages[50]["source_usdz_cache"]["validation"]["valid"])
         self.assertEqual(0, stages[50]["source_usdz_cache"]["usdz_file_count"])
         self.assertEqual(0, stages[50]["source_usdz_cache"]["matching_scene_count"])

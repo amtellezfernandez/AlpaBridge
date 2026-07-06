@@ -34,7 +34,7 @@ EXPECTED_REMAINING_REQUIREMENTS = [
 ]
 EXPECTED_BLOCKING_REQUIREMENTS = [
     "hf_token_missing",
-    "front_camera_50scene_public2602_cache_invalid",
+    "free_disk_below_threshold",
     "front_camera_50scene_public2602_claim_summary_missing",
     "front_camera_100scene_public2602_cache_invalid",
     "front_camera_100scene_public2602_claim_summary_missing",
@@ -131,7 +131,8 @@ def test_large_scale_status_is_workflow_ready_but_not_claim_valid() -> None:
         assert scale_status["summary_artifact"] == stages[preset]["public_summary_target"]
         assert scale_status["summary_artifact"] in audit["missing_claim_valid_summaries"]
         assert scale_status["claim_valid_closed_loop_summary_tracked"] is False
-        assert scale_status["local_usdz_cache"]["valid"] is False
+        expected_local_valid = preset == "front_camera_50scene_public2602"
+        assert scale_status["local_usdz_cache"]["valid"] is expected_local_valid
         assert scale_status["source_usdz_cache"] == {
             "required": True,
             "valid": False,
