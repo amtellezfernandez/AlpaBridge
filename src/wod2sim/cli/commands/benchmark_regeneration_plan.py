@@ -25,6 +25,7 @@ DEFAULT_SCALE_PRESETS = (
     "front_camera_100scene_public2602",
 )
 STATUS_ARTIFACT = "docs/evidence/benchmark_regeneration_status_20260706.json"
+READINESS_ARTIFACT = "docs/evidence/benchmark_regeneration_readiness_20260706.json"
 DEFAULT_SHARD_SIZE = 10
 
 
@@ -160,6 +161,19 @@ def build_plan(
             "x86_64 AlpaSim runner is available."
         ),
         "status_artifact": STATUS_ARTIFACT,
+        "readiness_artifact": READINESS_ARTIFACT,
+        "commands": {
+            "check_readiness": _command(
+                [
+                    "wod2sim-benchmark-readiness",
+                    "--alpasim-root",
+                    alpasim_root,
+                    "--output",
+                    READINESS_ARTIFACT,
+                    "--json",
+                ]
+            )
+        },
         "public_artifact_policy": {
             "tracked": "Compact JSON summaries, commands, tests, and public-safe metrics/hashes.",
             "untracked": (

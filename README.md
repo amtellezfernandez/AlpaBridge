@@ -220,6 +220,10 @@ in
 A machine-readable 10/50/100 rerun plan is tracked in
 [`docs/evidence/benchmark_regeneration_plan_20260706.json`](docs/evidence/benchmark_regeneration_plan_20260706.json)
 and can be regenerated with `wod2sim-benchmark-plan`.
+Before rebuilding caches or launching shards, write a no-download/no-rollout
+host readiness report with `wod2sim-benchmark-readiness`; the current public-safe
+snapshot is tracked at
+[`docs/evidence/benchmark_regeneration_readiness_20260706.json`](docs/evidence/benchmark_regeneration_readiness_20260706.json).
 It includes 10-scene shard commands for the 50/100-scene stages so constrained
 hosts can recover in smaller chunks while still preserving the full-stage claim
 boundary. Validate the local USDZ cache offline with
@@ -301,6 +305,7 @@ wod2sim-launch --mode print --model direct_actor_planner --oracle-actor-proxy /p
 | `wod2sim-audit-run` | Summarize executed run logs and sensor freshness. |
 | `wod2sim-support-bundle` | Package key run logs, configs, and audit output. |
 | `wod2sim-benchmark-plan` | Emit the public-safe 10/50/100 benchmark regeneration plan. |
+| `wod2sim-benchmark-readiness` | Report host/cache/image readiness without downloads or rollouts. |
 | `wod2sim-benchmark-audit` | Gate tracked regeneration artifacts against the 10/50/100 claim. |
 | `wod2sim-promote-batch-summary` | Promote a generated compact batch summary into public evidence. |
 | `wod2sim-benchmark-summary` | Aggregate evidence directories into one benchmark JSON. |

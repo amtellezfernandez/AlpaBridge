@@ -1,4 +1,17 @@
 {
+  "commands": {
+    "check_readiness": {
+      "argv": [
+        "wod2sim-benchmark-readiness",
+        "--alpasim-root",
+        "/path/to/alpasim",
+        "--output",
+        "docs/evidence/benchmark_regeneration_readiness_20260706.json",
+        "--json"
+      ],
+      "display": "wod2sim-benchmark-readiness --alpasim-root /path/to/alpasim --output docs/evidence/benchmark_regeneration_readiness_20260706.json --json"
+    }
+  },
   "created_at": "2026-07-06",
   "model": "spotlight_reflex",
   "objective": "Regenerate WOD2Sim closed-loop benchmark artifacts from scratch, validate the 10-scene pilot, and scale to the 50/100-scene public presets when an x86_64 AlpaSim runner is available.",
@@ -6,6 +19,7 @@
     "tracked": "Compact JSON summaries, commands, tests, and public-safe metrics/hashes.",
     "untracked": "Raw AlpaSim media, support bundles, USDZ assets, Hugging Face caches, Docker layers, and gated scene-derived files."
   },
+  "readiness_artifact": "docs/evidence/benchmark_regeneration_readiness_20260706.json",
   "schema": "wod2sim_benchmark_regeneration_plan_v1",
   "stages": [
     {

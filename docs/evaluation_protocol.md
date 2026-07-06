@@ -128,6 +128,9 @@ The current machine-readable regeneration status is tracked at
 [`docs/evidence/benchmark_regeneration_status_20260706.json`](evidence/benchmark_regeneration_status_20260706.json).
 The matching command-level rerun plan is tracked at
 [`docs/evidence/benchmark_regeneration_plan_20260706.json`](evidence/benchmark_regeneration_plan_20260706.json).
+The no-download/no-rollout host readiness snapshot is tracked at
+[`docs/evidence/benchmark_regeneration_readiness_20260706.json`](evidence/benchmark_regeneration_readiness_20260706.json)
+and can be regenerated with `wod2sim-benchmark-readiness`.
 Its scale stages include 10-scene shard commands for constrained hosts; shard
 summaries are operational checkpoints, not replacements for a complete 50/100
 public summary. Validate the local USDZ cache offline with

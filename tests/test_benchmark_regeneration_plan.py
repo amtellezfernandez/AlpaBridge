@@ -11,6 +11,7 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 PLAN_RELATIVE = Path("docs/evidence/benchmark_regeneration_plan_20260706.json")
 STATUS_RELATIVE = Path("docs/evidence/benchmark_regeneration_status_20260706.json")
+READINESS_RELATIVE = Path("docs/evidence/benchmark_regeneration_readiness_20260706.json")
 
 
 class BenchmarkRegenerationPlanTests(unittest.TestCase):
@@ -22,6 +23,10 @@ class BenchmarkRegenerationPlanTests(unittest.TestCase):
 
         self.assertEqual("wod2sim_benchmark_regeneration_plan_v1", plan["schema"])
         self.assertEqual(STATUS_RELATIVE.as_posix(), plan["status_artifact"])
+        self.assertEqual(READINESS_RELATIVE.as_posix(), plan["readiness_artifact"])
+        readiness_command = plan["commands"]["check_readiness"]["argv"]
+        self.assertEqual("wod2sim-benchmark-readiness", readiness_command[0])
+        self.assertIn(READINESS_RELATIVE.as_posix(), readiness_command)
         self.assertEqual(
             {
                 "front_camera_10scene_smoke",
@@ -122,8 +127,11 @@ class BenchmarkRegenerationPlanTests(unittest.TestCase):
 
         self.assertEqual("wod2sim_benchmark_regeneration_plan_v1", plan["schema"])
         self.assertEqual(STATUS_RELATIVE.as_posix(), plan["status_artifact"])
+        self.assertEqual(READINESS_RELATIVE.as_posix(), plan["readiness_artifact"])
         self.assertIn(PLAN_RELATIVE.as_posix(), readme)
+        self.assertIn(READINESS_RELATIVE.as_posix(), readme)
         self.assertIn(PLAN_RELATIVE.name, evaluation_protocol)
+        self.assertIn(READINESS_RELATIVE.name, evaluation_protocol)
 
     def test_tracked_plan_stage_counts_match_packaged_presets(self) -> None:
         module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_plan")
