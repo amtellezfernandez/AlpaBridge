@@ -130,6 +130,7 @@ The matching command-level rerun plan is tracked at
 [`docs/evidence/benchmark_regeneration_plan_20260706.json`](evidence/benchmark_regeneration_plan_20260706.json).
 Its scale stages include 10-scene shard commands for constrained hosts; shard
 summaries are operational checkpoints, not replacements for a complete 50/100
-public summary.
+public summary. After all shards complete, merge their compact summaries with
+`wod2sim-batch-summary --merge-summary ... --expected-scene-count N`.
 The public claim gate for those artifacts is tracked at
 [`docs/evidence/benchmark_regeneration_audit_20260706.json`](evidence/benchmark_regeneration_audit_20260706.json).

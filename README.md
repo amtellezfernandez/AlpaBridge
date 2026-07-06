@@ -222,7 +222,8 @@ A machine-readable 10/50/100 rerun plan is tracked in
 and can be regenerated with `wod2sim-benchmark-plan`.
 It includes 10-scene shard commands for the 50/100-scene stages so constrained
 hosts can recover in smaller chunks while still preserving the full-stage claim
-boundary.
+boundary. Shard summaries can be merged with `wod2sim-batch-summary` using the
+`--merge-summary` and `--expected-scene-count` options.
 The current claim gate is tracked in
 [`docs/evidence/benchmark_regeneration_audit_20260706.json`](docs/evidence/benchmark_regeneration_audit_20260706.json)
 and can be regenerated with `wod2sim-benchmark-audit`.
@@ -239,6 +240,7 @@ A closed-loop claim should include:
 | `support-bundle.tar.gz` hash | Local artifact integrity without redistributing gated files by default. |
 | `wod2sim-benchmark-summary.json` | Multi-run aggregate with strict evidence validation. |
 | `wod2sim-batch-summary.json` | Multi-scene batch metrics, failure taxonomy, and local artifact hashes without raw media. |
+| `wod2sim-batch-summary --merge-summary ...` | Public-safe merge from completed shard summaries into a full-stage claim summary. |
 
 Dry-run plans are valid review artifacts. They are not closed-loop evidence.
 

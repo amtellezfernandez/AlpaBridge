@@ -59,6 +59,22 @@ def _parse_args() -> argparse.Namespace:
         default=None,
         help="Explicit batch-status.json path. Defaults to --batch-dir/batch-status.json.",
     )
+    parser.add_argument(
+        "--merge-summary",
+        type=Path,
+        action="append",
+        default=[],
+        help=(
+            "Public-safe wod2sim-batch-summary JSON to merge. Repeat for each shard. "
+            "Cannot be combined with --batch-dir or --batch-status."
+        ),
+    )
+    parser.add_argument(
+        "--expected-scene-count",
+        type=int,
+        default=None,
+        help="Expected full-stage scene count when merging shard summaries.",
+    )
     parser.add_argument("--output", type=Path, default=None, help="Optional JSON summary output path.")
     parser.add_argument("--json", action="store_true", help="Print the summary as JSON.")
     parser.add_argument(
@@ -83,12 +99,22 @@ def _parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = _parse_args()
-    summary = build_summary(
-        batch_dir=args.batch_dir,
-        batch_status=args.batch_status,
-        low_progress_threshold=args.low_progress_threshold,
-        high_plan_deviation_threshold=args.high_plan_deviation_threshold,
-    )
+    if args.merge_summary:
+        if args.batch_dir is not None or args.batch_status is not None:
+            raise SystemExit("--merge-summary cannot be combined with --batch-dir or --batch-status.")
+        summary = merge_summaries(
+            summary_paths=args.merge_summary,
+            expected_scene_count=args.expected_scene_count,
+            low_progress_threshold=args.low_progress_threshold,
+            high_plan_deviation_threshold=args.high_plan_deviation_threshold,
+        )
+    else:
+        summary = build_summary(
+            batch_dir=args.batch_dir,
+            batch_status=args.batch_status,
+            low_progress_threshold=args.low_progress_threshold,
+            high_plan_deviation_threshold=args.high_plan_deviation_threshold,
+        )
     if args.output is not None:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -186,6 +212,101 @@ def build_summary(
                 "currently reports closed-loop failures that open-loop evaluation should be "
                 "compared against."
             ),
+        },
+        "runs": runs,
+    }
+
+
+def merge_summaries(
+    *,
+    summary_paths: list[Path],
+    expected_scene_count: int | None = None,
+    low_progress_threshold: float = 0.5,
+    high_plan_deviation_threshold: float = 4.0,
+) -> dict[str, Any]:
+    inputs = [_load_json(path) for path in summary_paths]
+    errors = _merge_errors(inputs=inputs, expected_scene_count=expected_scene_count)
+    runs = [
+        run
+        for summary in inputs
+        for run in _list_value(summary.get("runs"))
+        if isinstance(run, dict)
+    ]
+    runs.sort(key=lambda run: (_int_or_zero(run.get("index")), str(run.get("scene_id") or "")))
+    planned_scene_count = expected_scene_count or sum(
+        _int_or_zero(_dict_value(summary.get("aggregate")).get("planned_scene_count"))
+        for summary in inputs
+    )
+    aggregate = _aggregate_runs(runs, planned_scene_count=planned_scene_count)
+    failure_taxonomy = _failure_taxonomy(
+        runs,
+        low_progress_threshold=low_progress_threshold,
+        high_plan_deviation_threshold=high_plan_deviation_threshold,
+    )
+    valid = bool(inputs) and not errors and all(bool(summary.get("valid")) for summary in inputs)
+    clean_closed_loop_batch = valid and bool(runs) and aggregate["completed_scene_count"] == aggregate[
+        "planned_scene_count"
+    ] and not (
+        aggregate["failed_scene_count"]
+        or aggregate["sensor_failure_scene_count"]
+        or aggregate["missing_aggregate_scene_count"]
+    )
+
+    return {
+        "schema": SUMMARY_SCHEMA,
+        "created_at": datetime.now().isoformat(timespec="seconds"),
+        "valid": valid,
+        "clean_closed_loop_batch": clean_closed_loop_batch,
+        "claim_boundary": (
+            "This is a merged public-safe summary built from shard-level WOD2Sim closed-loop "
+            "batch summaries. It intentionally excludes raw scene assets and videos."
+        ),
+        "source": {
+            "summary_kind": "merged_batch_summaries",
+            "batch_dir_name": None,
+            "batch_status": None,
+            "batch_manifest": None,
+            "input_summaries": [str(path) for path in summary_paths],
+        },
+        "run_config": _merge_run_config(inputs),
+        "artifact_policy": {
+            "raw_scene_assets_included": False,
+            "raw_rollout_videos_included": False,
+            "local_video_hashes_are_recorded": True,
+            "redistribution_note": (
+                "Do not publish rollout frames or videos unless the Waymo/AlpaSim asset terms "
+                "explicitly permit redistribution."
+            ),
+        },
+        "aggregate": aggregate,
+        "metrics": _aggregate_metrics(runs),
+        "failure_taxonomy": failure_taxonomy,
+        "open_loop_closed_loop_mismatch": {
+            "open_loop_reference_available": False,
+            "status": "closed_loop_only_summary",
+            "closed_loop_failure_indicators": {
+                key: failure_taxonomy[key]
+                for key in (
+                    "collision_scene_count",
+                    "offroad_scene_count",
+                    "wrong_lane_scene_count",
+                    "low_progress_scene_count",
+                    "high_plan_deviation_scene_count",
+                )
+            },
+            "advice": (
+                "Add paired open-loop metrics per scene to claim measured mismatch; this merged "
+                "file currently reports closed-loop failures that open-loop evaluation should be "
+                "compared against."
+            ),
+        },
+        "merge": {
+            "input_summary_count": len(inputs),
+            "input_clean_count": sum(
+                1 for summary in inputs if bool(summary.get("clean_closed_loop_batch"))
+            ),
+            "expected_scene_count": planned_scene_count,
+            "errors": errors,
         },
         "runs": runs,
     }
@@ -416,6 +537,65 @@ def _planned_scene_count(*, status: dict[str, Any], manifest: dict[str, Any]) ->
         return explicit
     scene_ids = manifest.get("scene_ids")
     return len(scene_ids) if isinstance(scene_ids, list) else 0
+
+
+def _merge_errors(*, inputs: list[dict[str, Any]], expected_scene_count: int | None) -> list[str]:
+    errors: list[str] = []
+    if not inputs:
+        errors.append("no_input_summaries")
+        return errors
+
+    run_configs = [_dict_value(summary.get("run_config")) for summary in inputs]
+    models = sorted({str(config.get("model") or "") for config in run_configs})
+    presets = sorted({str(config.get("scene_preset") or "") for config in run_configs})
+    if len(models) > 1:
+        errors.append(f"mixed_models:{','.join(models)}")
+    if len(presets) > 1:
+        errors.append(f"mixed_scene_presets:{','.join(presets)}")
+
+    for index, summary in enumerate(inputs, start=1):
+        if summary.get("schema") != SUMMARY_SCHEMA:
+            errors.append(f"summary_{index}_schema_mismatch:{summary.get('schema')}")
+        if not summary.get("valid"):
+            errors.append(f"summary_{index}_invalid")
+        if not summary.get("clean_closed_loop_batch"):
+            errors.append(f"summary_{index}_not_clean")
+
+    scene_ids = [
+        str(run.get("scene_id") or "")
+        for summary in inputs
+        for run in _list_value(summary.get("runs"))
+        if isinstance(run, dict) and str(run.get("scene_id") or "")
+    ]
+    duplicates = sorted(scene_id for scene_id, count in Counter(scene_ids).items() if count > 1)
+    if duplicates:
+        errors.append(f"duplicate_scene_ids:{','.join(duplicates[:8])}")
+
+    observed_scene_count = len(scene_ids)
+    planned_scene_count = expected_scene_count or sum(
+        _int_or_zero(_dict_value(summary.get("aggregate")).get("planned_scene_count"))
+        for summary in inputs
+    )
+    if planned_scene_count != observed_scene_count:
+        errors.append(f"scene_count_mismatch:planned={planned_scene_count},observed={observed_scene_count}")
+    return errors
+
+
+def _merge_run_config(inputs: list[dict[str, Any]]) -> dict[str, Any]:
+    configs = [_dict_value(summary.get("run_config")) for summary in inputs]
+    first = configs[0] if configs else {}
+    return {
+        "mode": first.get("mode"),
+        "model": first.get("model"),
+        "scene_preset": first.get("scene_preset"),
+        "topology": first.get("topology"),
+        "timeout": first.get("timeout"),
+        "max_retries": first.get("max_retries"),
+    }
+
+
+def _dict_value(value: Any) -> dict[str, Any]:
+    return value if isinstance(value, dict) else {}
 
 
 def _list_value(value: Any) -> list[Any]:

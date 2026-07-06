@@ -254,6 +254,7 @@ def _stage_plan(
                 "--json",
             ]
         ),
+        "merge_shard_summaries": None,
     }
     if local_usdz_dir is not None:
         commands["build_local_cache"] = _command(
@@ -291,6 +292,14 @@ def _stage_plan(
         if requires_local_usdz_cache and shard_size > 0
         else []
     )
+    if shards:
+        commands["merge_shard_summaries"] = _command(
+            _merge_shard_summary_argv(
+                shards=shards,
+                scene_count=scene_count,
+                run_dir=run_dir,
+            )
+        )
 
     return {
         "stage": stage,
@@ -401,6 +410,29 @@ def _stage_shards(
             }
         )
     return shards
+
+
+def _merge_shard_summary_argv(
+    *,
+    shards: list[dict[str, Any]],
+    scene_count: int,
+    run_dir: str,
+) -> list[str]:
+    argv = ["wod2sim-batch-summary"]
+    for shard in shards:
+        shard_run_dir = str(shard["run_dir"])
+        argv.extend(["--merge-summary", _join(shard_run_dir, "wod2sim-batch-summary.json")])
+    argv.extend(
+        [
+            "--expected-scene-count",
+            str(scene_count),
+            "--output",
+            _join(run_dir, "wod2sim-batch-summary.json"),
+            "--strict",
+            "--json",
+        ]
+    )
+    return argv
 
 
 def _scene_ids_for(scene_preset: str) -> list[str]:

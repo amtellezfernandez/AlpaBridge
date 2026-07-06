@@ -78,8 +78,88 @@ class BatchSummaryTests(unittest.TestCase):
         self.assertEqual(2, summary["aggregate"]["planned_scene_count"])
         self.assertTrue(summary["clean_closed_loop_batch"])
 
+    def test_merge_summaries_combines_clean_shards_into_claim_summary(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.batch_summary")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            shard_a = root / "shard-a"
+            shard_b = root / "shard-b"
+            _write_batch(shard_a, scene_ids=("scene-a", "scene-b"))
+            _write_run(shard_a, "001_scene-a", collision_any=1.0, wrong_lane=1.0, progress=0.35)
+            _write_run(shard_a, "002_scene-b", collision_any=0.0, wrong_lane=0.0, progress=0.92)
+            _write_batch(shard_b, scene_ids=("scene-c", "scene-d"))
+            _write_run(shard_b, "001_scene-c", collision_any=0.0, wrong_lane=0.0, progress=0.75)
+            _write_run(shard_b, "002_scene-d", collision_any=1.0, wrong_lane=0.0, progress=0.45)
+            summary_a = module.build_summary(batch_dir=shard_a)
+            summary_b = module.build_summary(batch_dir=shard_b)
+            summary_a_path = root / "summary-a.json"
+            summary_b_path = root / "summary-b.json"
+            _write_json(summary_a_path, summary_a)
+            _write_json(summary_b_path, summary_b)
 
-def _write_batch(root: Path, *, completed: bool = True) -> None:
+            merged = module.merge_summaries(
+                summary_paths=[summary_a_path, summary_b_path],
+                expected_scene_count=4,
+            )
+
+        self.assertTrue(merged["valid"])
+        self.assertTrue(merged["clean_closed_loop_batch"])
+        self.assertEqual("merged_batch_summaries", merged["source"]["summary_kind"])
+        self.assertEqual(4, merged["aggregate"]["planned_scene_count"])
+        self.assertEqual(4, merged["aggregate"]["completed_scene_count"])
+        self.assertEqual(796, merged["aggregate"]["total_audited_frames"])
+        self.assertEqual(0.5, merged["metrics"]["collision_any"]["mean"])
+        self.assertEqual(2, merged["failure_taxonomy"]["collision_scene_count"])
+        self.assertEqual(2, merged["failure_taxonomy"]["low_progress_scene_count"])
+        self.assertEqual([], merged["merge"]["errors"])
+
+    def test_merge_main_fails_strict_when_expected_scene_count_is_missing(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.batch_summary")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            shard = root / "shard"
+            output = root / "merged.json"
+            _write_batch(shard, scene_ids=("scene-a", "scene-b"))
+            _write_run(shard, "001_scene-a", collision_any=0.0, wrong_lane=0.0, progress=0.75)
+            _write_run(shard, "002_scene-b", collision_any=0.0, wrong_lane=0.0, progress=0.8)
+            summary_path = root / "summary.json"
+            _write_json(summary_path, module.build_summary(batch_dir=shard))
+
+            with patch.object(
+                sys,
+                "argv",
+                [
+                    "wod2sim-batch-summary",
+                    "--merge-summary",
+                    str(summary_path),
+                    "--expected-scene-count",
+                    "4",
+                    "--output",
+                    str(output),
+                    "--strict",
+                    "--json",
+                ],
+            ):
+                returncode = module.main()
+
+            payload = json.loads(output.read_text(encoding="utf-8"))
+
+        self.assertEqual(1, returncode)
+        self.assertFalse(payload["clean_closed_loop_batch"])
+        self.assertEqual(
+            ["scene_count_mismatch:planned=4,observed=2"],
+            payload["merge"]["errors"],
+        )
+
+
+def _write_batch(
+    root: Path,
+    *,
+    completed: bool = True,
+    scene_ids: tuple[str, str] = ("scene-a", "scene-b"),
+) -> None:
+    root.mkdir(parents=True, exist_ok=True)
+    scene_a, scene_b = scene_ids
     _write_json(
         root / "batch-manifest.json",
         {
@@ -87,7 +167,7 @@ def _write_batch(root: Path, *, completed: bool = True) -> None:
             "mode": "both",
             "model": "spotlight_reflex",
             "scene_preset": "front_camera_10scene_smoke",
-            "scene_ids": ["scene-a", "scene-b"],
+            "scene_ids": [scene_a, scene_b],
             "topology": "1gpu",
             "timeout": 900,
             "max_retries": 1,
@@ -96,8 +176,8 @@ def _write_batch(root: Path, *, completed: bool = True) -> None:
     runs = [
         {
             "index": 1,
-            "scene_id": "scene-a",
-            "run_dir": str(root / "001_scene-a"),
+            "scene_id": scene_a,
+            "run_dir": str(root / f"001_{scene_a}"),
             "status": "completed",
             "result": "completed",
             "attempts": 1,
@@ -112,8 +192,8 @@ def _write_batch(root: Path, *, completed: bool = True) -> None:
         },
         {
             "index": 2,
-            "scene_id": "scene-b",
-            "run_dir": str(root / "002_scene-b"),
+            "scene_id": scene_b,
+            "run_dir": str(root / f"002_{scene_b}"),
             "status": "completed" if completed else "partial",
             "result": "completed" if completed else "failed",
             "attempts": 1,

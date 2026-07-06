@@ -46,6 +46,15 @@ class BenchmarkRegenerationPlanTests(unittest.TestCase):
             "scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50",
             scale_stage["commands"]["run_batch"]["argv"],
         )
+        merge_command = scale_stage["commands"]["merge_shard_summaries"]["argv"]
+        self.assertEqual("wod2sim-batch-summary", merge_command[0])
+        self.assertEqual(5, merge_command.count("--merge-summary"))
+        self.assertIn("--expected-scene-count", merge_command)
+        self.assertEqual("50", merge_command[merge_command.index("--expected-scene-count") + 1])
+        self.assertIn(
+            "runs/benchmark_spotlight_reflex_50scene/wod2sim-batch-summary.json",
+            merge_command,
+        )
         self.assertEqual(5, len(scale_stage["shards"]))
         self.assertEqual(0, scale_stage["shards"][0]["scene_offset"])
         self.assertEqual(10, scale_stage["shards"][0]["scene_limit"])
@@ -90,6 +99,7 @@ class BenchmarkRegenerationPlanTests(unittest.TestCase):
         for stage in plan["stages"]:
             self.assertEqual([], stage["shards"])
             self.assertIsNone(stage["shard_note"])
+            self.assertIsNone(stage["commands"]["merge_shard_summaries"])
 
     def test_tracked_plan_links_current_public_status_and_docs(self) -> None:
         plan = _read_json(ROOT / PLAN_RELATIVE)

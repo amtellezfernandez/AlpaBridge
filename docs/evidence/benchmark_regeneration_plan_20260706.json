@@ -11,6 +11,7 @@
     {
       "commands": {
         "build_local_cache": null,
+        "merge_shard_summaries": null,
         "run_batch": {
           "argv": [
             "wod2sim-batch",
@@ -79,6 +80,28 @@
           "env": {
             "HF_TOKEN": "required"
           }
+        },
+        "merge_shard_summaries": {
+          "argv": [
+            "wod2sim-batch-summary",
+            "--merge-summary",
+            "runs/benchmark_spotlight_reflex_50scene/shards/000_009/wod2sim-batch-summary.json",
+            "--merge-summary",
+            "runs/benchmark_spotlight_reflex_50scene/shards/010_019/wod2sim-batch-summary.json",
+            "--merge-summary",
+            "runs/benchmark_spotlight_reflex_50scene/shards/020_029/wod2sim-batch-summary.json",
+            "--merge-summary",
+            "runs/benchmark_spotlight_reflex_50scene/shards/030_039/wod2sim-batch-summary.json",
+            "--merge-summary",
+            "runs/benchmark_spotlight_reflex_50scene/shards/040_049/wod2sim-batch-summary.json",
+            "--expected-scene-count",
+            "50",
+            "--output",
+            "runs/benchmark_spotlight_reflex_50scene/wod2sim-batch-summary.json",
+            "--strict",
+            "--json"
+          ],
+          "display": "wod2sim-batch-summary --merge-summary runs/benchmark_spotlight_reflex_50scene/shards/000_009/wod2sim-batch-summary.json --merge-summary runs/benchmark_spotlight_reflex_50scene/shards/010_019/wod2sim-batch-summary.json --merge-summary runs/benchmark_spotlight_reflex_50scene/shards/020_029/wod2sim-batch-summary.json --merge-summary runs/benchmark_spotlight_reflex_50scene/shards/030_039/wod2sim-batch-summary.json --merge-summary runs/benchmark_spotlight_reflex_50scene/shards/040_049/wod2sim-batch-summary.json --expected-scene-count 50 --output runs/benchmark_spotlight_reflex_50scene/wod2sim-batch-summary.json --strict --json"
         },
         "run_batch": {
           "argv": [
@@ -396,6 +419,38 @@
           "env": {
             "HF_TOKEN": "required"
           }
+        },
+        "merge_shard_summaries": {
+          "argv": [
+            "wod2sim-batch-summary",
+            "--merge-summary",
+            "runs/benchmark_spotlight_reflex_100scene/shards/000_009/wod2sim-batch-summary.json",
+            "--merge-summary",
+            "runs/benchmark_spotlight_reflex_100scene/shards/010_019/wod2sim-batch-summary.json",
+            "--merge-summary",
+            "runs/benchmark_spotlight_reflex_100scene/shards/020_029/wod2sim-batch-summary.json",
+            "--merge-summary",
+            "runs/benchmark_spotlight_reflex_100scene/shards/030_039/wod2sim-batch-summary.json",
+            "--merge-summary",
+            "runs/benchmark_spotlight_reflex_100scene/shards/040_049/wod2sim-batch-summary.json",
+            "--merge-summary",
+            "runs/benchmark_spotlight_reflex_100scene/shards/050_059/wod2sim-batch-summary.json",
+            "--merge-summary",
+            "runs/benchmark_spotlight_reflex_100scene/shards/060_069/wod2sim-batch-summary.json",
+            "--merge-summary",
+            "runs/benchmark_spotlight_reflex_100scene/shards/070_079/wod2sim-batch-summary.json",
+            "--merge-summary",
+            "runs/benchmark_spotlight_reflex_100scene/shards/080_089/wod2sim-batch-summary.json",
+            "--merge-summary",
+            "runs/benchmark_spotlight_reflex_100scene/shards/090_099/wod2sim-batch-summary.json",
+            "--expected-scene-count",
+            "100",
+            "--output",
+            "runs/benchmark_spotlight_reflex_100scene/wod2sim-batch-summary.json",
+            "--strict",
+            "--json"
+          ],
+          "display": "wod2sim-batch-summary --merge-summary runs/benchmark_spotlight_reflex_100scene/shards/000_009/wod2sim-batch-summary.json --merge-summary runs/benchmark_spotlight_reflex_100scene/shards/010_019/wod2sim-batch-summary.json --merge-summary runs/benchmark_spotlight_reflex_100scene/shards/020_029/wod2sim-batch-summary.json --merge-summary runs/benchmark_spotlight_reflex_100scene/shards/030_039/wod2sim-batch-summary.json --merge-summary runs/benchmark_spotlight_reflex_100scene/shards/040_049/wod2sim-batch-summary.json --merge-summary runs/benchmark_spotlight_reflex_100scene/shards/050_059/wod2sim-batch-summary.json --merge-summary runs/benchmark_spotlight_reflex_100scene/shards/060_069/wod2sim-batch-summary.json --merge-summary runs/benchmark_spotlight_reflex_100scene/shards/070_079/wod2sim-batch-summary.json --merge-summary runs/benchmark_spotlight_reflex_100scene/shards/080_089/wod2sim-batch-summary.json --merge-summary runs/benchmark_spotlight_reflex_100scene/shards/090_099/wod2sim-batch-summary.json --expected-scene-count 100 --output runs/benchmark_spotlight_reflex_100scene/wod2sim-batch-summary.json --strict --json"
         },
         "run_batch": {
           "argv": [
