@@ -3,9 +3,15 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+from collections import Counter
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+from wod2sim.cli.commands.benchmark_regeneration_commands import (
+    COMMANDS_SCHEMA,
+    render_commands,
+)
 
 AUDIT_SCHEMA = "wod2sim_benchmark_regeneration_audit_v1"
 PLAN_SCHEMA = "wod2sim_benchmark_regeneration_plan_v1"
@@ -117,11 +123,17 @@ def build_audit(
         readiness=readiness,
         claim_ready=claim_ready,
     )
+    regeneration_commands = _regeneration_commands_consistency(
+        plan_path=plan_path,
+        status=status,
+        repo_root=repo_root,
+    )
     expected_valid_without_manifest = (
         input_valid
         and status_consistency["valid"]
         and readiness_consistency["valid"]
         and diagnostic_evidence["valid"]
+        and regeneration_commands["valid"]
     )
     public_evidence_manifest = _public_evidence_manifest_consistency(
         plan_path=plan_path,
@@ -157,6 +169,7 @@ def build_audit(
         "objective_completion": objective_completion,
         "regeneration_provenance": regeneration_provenance,
         "diagnostic_evidence": diagnostic_evidence,
+        "regeneration_commands": regeneration_commands,
         "public_evidence_manifest": public_evidence_manifest,
         "status_consistency": status_consistency,
         "readiness_consistency": readiness_consistency,
@@ -870,7 +883,7 @@ def _public_evidence_manifest_consistency(
         return {"valid": False, "artifact": manifest_artifact, "checks": checks, "notes": notes}
 
     manifest_path = _resolve_path(repo_root, Path(manifest_artifact))
-    manifest = _load_manifest(manifest_path, notes=notes)
+    manifest = _load_manifest(manifest_path, notes=notes, label="public evidence manifest")
     checks["public_evidence_manifest_loaded"] = bool(manifest)
     if not checks["public_evidence_manifest_loaded"]:
         return {"valid": False, "artifact": manifest_artifact, "checks": checks, "notes": notes}
@@ -964,6 +977,86 @@ def _public_evidence_manifest_consistency(
         "checks": checks,
         "notes": notes,
         "artifact_count": len(artifacts),
+    }
+
+
+def _regeneration_commands_consistency(
+    *,
+    plan_path: Path,
+    status: dict[str, Any],
+    repo_root: Path,
+) -> dict[str, Any]:
+    checks: dict[str, bool] = {}
+    notes: list[str] = []
+    evidence_artifacts = _dict_or_empty(status.get("evidence_artifacts"))
+    commands_artifact = str(evidence_artifacts.get("regeneration_commands") or "")
+
+    checks["regeneration_commands_referenced"] = bool(commands_artifact)
+    if not checks["regeneration_commands_referenced"]:
+        notes.append("status.evidence_artifacts.regeneration_commands is missing")
+        return {"valid": False, "artifact": commands_artifact, "checks": checks, "notes": notes}
+
+    commands_path = _resolve_path(repo_root, Path(commands_artifact))
+    commands = _load_manifest(commands_path, notes=notes, label="regeneration commands artifact")
+    checks["regeneration_commands_loaded"] = bool(commands)
+    if not checks["regeneration_commands_loaded"]:
+        return {"valid": False, "artifact": commands_artifact, "checks": checks, "notes": notes}
+
+    checks["regeneration_commands_schema_matches"] = commands.get("schema") == COMMANDS_SCHEMA
+    if not checks["regeneration_commands_schema_matches"]:
+        notes.append("regeneration commands schema mismatch")
+
+    checks["regeneration_commands_plan_matches_audit"] = (
+        commands.get("plan_artifact") == _display_path(plan_path)
+    )
+    if not checks["regeneration_commands_plan_matches_audit"]:
+        notes.append("regeneration commands plan_artifact does not match audited plan")
+
+    renderer = _dict_or_empty(commands.get("renderer"))
+    checks["regeneration_commands_renderer_is_non_runtime"] = (
+        renderer.get("command") == "wod2sim-benchmark-commands"
+        and renderer.get("no_runtime_execution") is True
+    )
+    if not checks["regeneration_commands_renderer_is_non_runtime"]:
+        notes.append("regeneration commands renderer metadata is not public-safe")
+
+    filters = _dict_or_empty(commands.get("filters"))
+    checks["regeneration_commands_filters_are_all_stage"] = (
+        filters.get("stages") == []
+        and filters.get("groups") == ["all"]
+        and filters.get("shard_indexes") == []
+    )
+    if not checks["regeneration_commands_filters_are_all_stage"]:
+        notes.append("regeneration commands artifact must render the all-stage plan")
+
+    rows = [row for row in _list_or_empty(commands.get("commands")) if isinstance(row, dict)]
+    expected_rows = render_commands(plan_path=_resolve_path(repo_root, plan_path), groups=["all"])
+    checks["regeneration_commands_row_count_matches"] = (
+        _int_value(commands.get("row_count")) == len(rows) == len(expected_rows)
+    )
+    if not checks["regeneration_commands_row_count_matches"]:
+        notes.append("regeneration commands row_count does not match expected rows")
+
+    expected_group_counts = dict(
+        sorted(Counter(str(row.get("group") or "unknown") for row in expected_rows).items())
+    )
+    checks["regeneration_commands_group_counts_match"] = (
+        _dict_or_empty(commands.get("group_counts")) == expected_group_counts
+    )
+    if not checks["regeneration_commands_group_counts_match"]:
+        notes.append("regeneration commands group_counts do not match expected rows")
+
+    checks["regeneration_commands_rows_match_plan_renderer"] = rows == expected_rows
+    if not checks["regeneration_commands_rows_match_plan_renderer"]:
+        notes.append("regeneration commands rows do not match the audited plan renderer output")
+
+    return {
+        "valid": all(checks.values()) if checks else False,
+        "artifact": commands_artifact,
+        "checks": checks,
+        "notes": notes,
+        "row_count": len(rows),
+        "group_counts": _dict_or_empty(commands.get("group_counts")),
     }
 
 
@@ -1067,14 +1160,14 @@ def _load_json(path: Path, *, errors: list[str], label: str) -> dict[str, Any]:
         return {}
 
 
-def _load_manifest(path: Path, *, notes: list[str]) -> dict[str, Any]:
+def _load_manifest(path: Path, *, notes: list[str], label: str) -> dict[str, Any]:
     if not path.is_file():
-        notes.append(f"public evidence manifest missing: {path}")
+        notes.append(f"{label} missing: {path}")
         return {}
     try:
         return _read_json(path)
     except json.JSONDecodeError as exc:
-        notes.append(f"public evidence manifest is not valid JSON: {path}: {exc}")
+        notes.append(f"{label} is not valid JSON: {path}: {exc}")
         return {}
 
 

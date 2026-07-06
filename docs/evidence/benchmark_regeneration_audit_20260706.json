@@ -187,6 +187,32 @@
     "notes": [],
     "valid": true
   },
+  "regeneration_commands": {
+    "artifact": "docs/evidence/benchmark_regeneration_commands_20260706.json",
+    "checks": {
+      "regeneration_commands_filters_are_all_stage": true,
+      "regeneration_commands_group_counts_match": true,
+      "regeneration_commands_loaded": true,
+      "regeneration_commands_plan_matches_audit": true,
+      "regeneration_commands_referenced": true,
+      "regeneration_commands_renderer_is_non_runtime": true,
+      "regeneration_commands_row_count_matches": true,
+      "regeneration_commands_rows_match_plan_renderer": true,
+      "regeneration_commands_schema_matches": true
+    },
+    "group_counts": {
+      "cache": 4,
+      "merge": 2,
+      "post": 2,
+      "promote": 3,
+      "readiness": 1,
+      "run": 2,
+      "shards": 30
+    },
+    "notes": [],
+    "row_count": 44,
+    "valid": true
+  },
   "regeneration_provenance": {
     "all_stage_sources_match_plan": false,
     "present_stage_source_mismatches": [],

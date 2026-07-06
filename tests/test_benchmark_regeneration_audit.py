@@ -16,6 +16,7 @@ PLAN_RELATIVE = Path("docs/evidence/benchmark_regeneration_plan_20260706.json")
 STATUS_RELATIVE = Path("docs/evidence/benchmark_regeneration_status_20260706.json")
 READINESS_RELATIVE = Path("docs/evidence/benchmark_regeneration_readiness_20260706.json")
 MANIFEST_RELATIVE = Path("docs/evidence/benchmark_public_evidence_manifest_20260706.json")
+COMMANDS_RELATIVE = Path("docs/evidence/benchmark_regeneration_commands_20260706.json")
 PROBE_50_RELATIVE = Path(
     "docs/evidence/closed_loop_spotlight_reflex_50scene_localprobe_1scene.json"
 )
@@ -36,6 +37,13 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         self.assertEqual(READINESS_RELATIVE.as_posix(), audit["readiness_artifact"])
         self.assertTrue(audit["readiness_consistency"]["valid"])
         self.assertTrue(audit["diagnostic_evidence"]["valid"])
+        self.assertTrue(audit["regeneration_commands"]["valid"])
+        self.assertEqual(COMMANDS_RELATIVE.as_posix(), audit["regeneration_commands"]["artifact"])
+        self.assertTrue(
+            audit["regeneration_commands"]["checks"][
+                "regeneration_commands_rows_match_plan_renderer"
+            ]
+        )
         self.assertTrue(audit["public_evidence_manifest"]["valid"])
         self.assertEqual(
             MANIFEST_RELATIVE.as_posix(),
@@ -416,6 +424,35 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             audit["public_evidence_manifest"]["notes"],
         )
 
+    def test_regeneration_commands_drift_invalidates_audit(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            evidence = repo_root / "docs" / "evidence"
+            evidence.mkdir(parents=True)
+            _copy_evidence_jsons(evidence)
+            commands_path = evidence / COMMANDS_RELATIVE.name
+            commands = _read_json(commands_path)
+            commands["row_count"] = int(commands["row_count"]) + 1
+            _write_json(commands_path, commands)
+            _refresh_manifest_hash(evidence / MANIFEST_RELATIVE.name, COMMANDS_RELATIVE)
+
+            audit = module.build_audit(repo_root=repo_root, created_at="2026-07-06")
+
+        self.assertFalse(audit["valid"])
+        self.assertFalse(
+            audit["regeneration_commands"]["checks"]["regeneration_commands_row_count_matches"]
+        )
+        self.assertTrue(
+            audit["public_evidence_manifest"]["checks"][
+                "public_evidence_manifest_hashes_match_tracked_files"
+            ]
+        )
+        self.assertIn(
+            "regeneration commands row_count does not match expected rows",
+            audit["regeneration_commands"]["notes"],
+        )
+
     def test_missing_diagnostic_probe_invalidates_audit_artifact_set(self) -> None:
         module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -535,6 +572,7 @@ def _read_json(path: Path) -> dict[str, object]:
 
 def _copy_status_and_probe(evidence_dir: Path) -> None:
     shutil.copy2(ROOT / STATUS_RELATIVE, evidence_dir / STATUS_RELATIVE.name)
+    shutil.copy2(ROOT / COMMANDS_RELATIVE, evidence_dir / COMMANDS_RELATIVE.name)
     shutil.copy2(ROOT / PROBE_50_RELATIVE, evidence_dir / PROBE_50_RELATIVE.name)
     shutil.copy2(ROOT / ATTEMPT_50_RELATIVE, evidence_dir / ATTEMPT_50_RELATIVE.name)
 
@@ -609,6 +647,18 @@ def _write_public_evidence_manifest(
             for path in missing_claim_valid_summaries
         ],
     }
+    _write_json(manifest_path, manifest)
+
+
+def _refresh_manifest_hash(manifest_path: Path, artifact_relative: Path) -> None:
+    manifest = _read_json(manifest_path)
+    artifact_path = manifest_path.parents[2] / artifact_relative
+    raw = artifact_path.read_bytes()
+    for artifact in manifest["artifacts"]:
+        if artifact["path"] == artifact_relative.as_posix():
+            artifact["size_bytes"] = len(raw)
+            artifact["sha256"] = hashlib.sha256(raw).hexdigest()
+            break
     _write_json(manifest_path, manifest)
 
 
