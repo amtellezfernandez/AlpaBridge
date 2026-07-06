@@ -108,6 +108,7 @@ uv run --extra dev --extra alpasim pytest
 uv run --extra dev --extra alpasim ruff check .
 uv run --extra dev --extra alpasim wod2sim-benchmark-status --json
 uv run --extra dev --extra alpasim wod2sim-benchmark-operators --json
+uv run --extra dev --extra alpasim wod2sim-benchmark-cleanup --json
 uv run --extra dev --extra alpasim wod2sim-benchmark-audit --strict --json
 ```
 
@@ -127,6 +128,14 @@ summary so reviewers can map the remaining claim gaps back to the command
 renderer without executing private cache or rollout work. Its `scale_claim_gaps`
 rows summarize each 50/100 stage's local/source cache validity, missing summary
 state, blockers, and next command groups.
+
+## Cleanup Boundary
+
+If disk pressure returns after local probes or failed scale attempts, start with
+`wod2sim-benchmark-cleanup --json`. It is dry-run by default, refuses to remove
+paths with tracked files, and does not remove source `all-usdzs` assets or
+generated 50/100 local USDZ caches unless `--include-gated-assets` or
+`--include-scale-caches` is passed with `--apply`.
 
 ## Promotion Boundary
 

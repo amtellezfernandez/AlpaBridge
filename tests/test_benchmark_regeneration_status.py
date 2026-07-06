@@ -176,6 +176,7 @@ def test_readme_links_current_regeneration_status() -> None:
     assert "`matching_scene_count` of `0` for both presets" in readme
     assert "cache building, live shard execution, and claim promotion" in compact_readme
     assert "ARM/DGX Spark" in readme
+    assert "| `wod2sim-benchmark-cleanup` |" in readme
     assert "| `wod2sim-benchmark-status` |" in readme
 
 
@@ -196,6 +197,7 @@ def test_public_handoff_doc_tracks_current_claim_gate() -> None:
     assert "execution-boundary and operator-role counts" in handoff
     assert "`scale_status.<preset>.source_usdz_cache`" in handoff
     assert "`scale_status.<preset>.source_usdz_cache`" in evaluation_protocol
+    assert "wod2sim-benchmark-cleanup --json" in handoff
     assert "`execution_boundary_counts`" in evaluation_protocol
     assert "`matching_scene_count` of `0` for both 50/100 presets" in evaluation_protocol
     for missing in audit["missing_claim_valid_summaries"]:

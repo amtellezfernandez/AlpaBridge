@@ -375,6 +375,7 @@ wod2sim-launch --mode print --model direct_actor_planner --oracle-actor-proxy /p
 | `wod2sim-benchmark-commands` | Render copyable cache/shard/merge/promotion commands from the plan. |
 | `wod2sim-benchmark-operators` | Render the public who-can-review/build/run/promote capability matrix. |
 | `wod2sim-benchmark-evidence-manifest` | Hash and classify tracked compact public evidence. |
+| `wod2sim-benchmark-cleanup` | Dry-run or remove ignored local benchmark caches and runtime artifacts. |
 | `wod2sim-benchmark-audit` | Gate tracked regeneration artifacts against the 10/50/100 claim. |
 | `wod2sim-promote-batch-summary` | Promote a generated compact batch summary into public evidence. |
 | `wod2sim-benchmark-summary` | Aggregate evidence directories into one benchmark JSON. |
