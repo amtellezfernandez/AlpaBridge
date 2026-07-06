@@ -99,10 +99,30 @@
     "front_camera_100scene_public2602": {
       "cache_builder_workflow_tracked": true,
       "claim_valid_closed_loop_summary_tracked": false,
+      "local_usdz_cache": {
+        "expected_scene_count": 100,
+        "matching_scene_count": 0,
+        "missing_scene_count": 100,
+        "nonmatching_usdz_file_count": 0,
+        "present_scene_count": 0,
+        "required": true,
+        "usdz_file_count": 0,
+        "valid": false
+      },
       "local_usdz_cache_valid": false,
       "preset_tracked": true,
       "remaining_runtime_requirement": "Rebuild the local 26.02 USDZ cache and rerun on an x86_64 AlpaSim runner with Docker/NVIDIA runtime images installed.",
       "scene_count": 100,
+      "source_usdz_cache": {
+        "expected_scene_count": 100,
+        "matching_scene_count": 0,
+        "missing_scene_count": 100,
+        "nonmatching_usdz_file_count": 10,
+        "present_scene_count": 0,
+        "required": true,
+        "usdz_file_count": 10,
+        "valid": false
+      },
       "stage": "stronger_benchmark",
       "summary_artifact": "docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json",
       "summary_present": false
@@ -110,10 +130,30 @@
     "front_camera_50scene_public2602": {
       "cache_builder_workflow_tracked": true,
       "claim_valid_closed_loop_summary_tracked": false,
+      "local_usdz_cache": {
+        "expected_scene_count": 50,
+        "matching_scene_count": 0,
+        "missing_scene_count": 50,
+        "nonmatching_usdz_file_count": 0,
+        "present_scene_count": 0,
+        "required": true,
+        "usdz_file_count": 0,
+        "valid": false
+      },
       "local_usdz_cache_valid": false,
       "preset_tracked": true,
       "remaining_runtime_requirement": "Rebuild the local 26.02 USDZ cache and rerun on an x86_64 AlpaSim runner with Docker/NVIDIA runtime images installed.",
       "scene_count": 50,
+      "source_usdz_cache": {
+        "expected_scene_count": 50,
+        "matching_scene_count": 0,
+        "missing_scene_count": 50,
+        "nonmatching_usdz_file_count": 10,
+        "present_scene_count": 0,
+        "required": true,
+        "usdz_file_count": 10,
+        "valid": false
+      },
       "stage": "workshop_scale",
       "summary_artifact": "docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json",
       "summary_present": false
