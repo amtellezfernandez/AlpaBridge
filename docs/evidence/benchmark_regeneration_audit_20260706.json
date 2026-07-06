@@ -70,7 +70,44 @@
     "docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json"
   ],
   "objective_completion": {
+    "blocking_requirements": [
+      "hf_token_missing",
+      "docker_daemon_unavailable",
+      "alpasim_base_image_missing",
+      "nvidia_gpu_unavailable",
+      "docker_nvidia_runtime_unavailable",
+      "front_camera_50scene_public2602_cache_invalid",
+      "front_camera_50scene_public2602_claim_summary_missing",
+      "front_camera_100scene_public2602_cache_invalid",
+      "front_camera_100scene_public2602_claim_summary_missing"
+    ],
     "complete": false,
+    "next_command_groups": [
+      "refresh_readiness",
+      "build_and_validate_scale_caches",
+      "run_scale_shards_and_promote_summaries",
+      "refresh_status",
+      "verify_claim_gate"
+    ],
+    "next_command_renderer_groups": {
+      "build_and_validate_scale_caches": [
+        "cache"
+      ],
+      "refresh_readiness": [
+        "readiness"
+      ],
+      "refresh_status": [
+        "post"
+      ],
+      "run_scale_shards_and_promote_summaries": [
+        "shards",
+        "merge",
+        "promote"
+      ],
+      "verify_claim_gate": [
+        "post"
+      ]
+    },
     "objective": "Regenerate WOD2Sim closed-loop benchmark artifacts from scratch, validate 10-scene pilot, scale as feasible to 50/100 scenes, and track public-safe evidence.",
     "remaining_requirements": [
       "produce_claim_valid_50_scene_summary",
@@ -235,8 +272,8 @@
       "readiness",
       "shards"
     ],
-    "sha256": "77ea8da8b85bb236adea431845125a69c1b48715970f5364158c900dba7520a5",
-    "size_bytes": 8962,
+    "sha256": "a193e1278103ec9f2a9b2be2245b01e54312d738b973ad96e2c91be42296bb6e",
+    "size_bytes": 9245,
     "valid": true
   },
   "readiness_artifact": "docs/evidence/benchmark_regeneration_readiness_20260706.json",

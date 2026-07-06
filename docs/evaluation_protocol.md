@@ -195,4 +195,7 @@ does not satisfy the strict 50/100-scene claim gate.
 The audit's `objective_completion` section is the public checklist for which
 parts of the regeneration objective are satisfied and which claim artifacts
 remain missing. Unsatisfied rows include readiness blocker IDs and the command
-groups to run next.
+groups to run next. The same object also carries top-level
+`blocking_requirements`, `next_command_groups`, and
+`next_command_renderer_groups` fields for a compact machine-readable view of
+remaining work.
