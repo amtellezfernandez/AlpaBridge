@@ -1,0 +1,156 @@
+from __future__ import annotations
+
+import importlib
+import json
+import shutil
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+from unittest.mock import patch
+
+ROOT = Path(__file__).resolve().parents[1]
+AUDIT_RELATIVE = Path("docs/evidence/benchmark_regeneration_audit_20260706.json")
+PLAN_RELATIVE = Path("docs/evidence/benchmark_regeneration_plan_20260706.json")
+STATUS_RELATIVE = Path("docs/evidence/benchmark_regeneration_status_20260706.json")
+
+
+class BenchmarkRegenerationAuditTests(unittest.TestCase):
+    def test_build_audit_reports_current_missing_50_and_100_scene_summaries(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
+
+        audit = module.build_audit(repo_root=ROOT, created_at="2026-07-06")
+        stages = {stage["scene_preset"]: stage for stage in audit["stages"]}
+
+        self.assertTrue(audit["valid"])
+        self.assertFalse(audit["claim_ready"])
+        self.assertTrue(stages["front_camera_10scene_smoke"]["claim_valid"])
+        self.assertFalse(stages["front_camera_50scene_public2602"]["claim_valid"])
+        self.assertFalse(stages["front_camera_100scene_public2602"]["claim_valid"])
+        self.assertIn(
+            "docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json",
+            audit["missing_claim_valid_summaries"],
+        )
+        self.assertIn(
+            "docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json",
+            audit["missing_claim_valid_summaries"],
+        )
+
+    def test_strict_main_fails_until_all_planned_summaries_are_claim_valid(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output = Path(tmpdir) / "audit.json"
+
+            with patch.object(
+                sys,
+                "argv",
+                [
+                    "wod2sim-benchmark-audit",
+                    "--repo-root",
+                    str(ROOT),
+                    "--created-at",
+                    "2026-07-06",
+                    "--output",
+                    str(output),
+                    "--strict",
+                    "--json",
+                ],
+            ):
+                returncode = module.main()
+
+            payload = json.loads(output.read_text(encoding="utf-8"))
+
+        self.assertEqual(1, returncode)
+        self.assertFalse(payload["claim_ready"])
+
+    def test_audit_can_pass_when_all_planned_summaries_and_status_flags_are_present(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            evidence = repo_root / "docs" / "evidence"
+            evidence.mkdir(parents=True)
+            shutil.copy2(ROOT / PLAN_RELATIVE, evidence / PLAN_RELATIVE.name)
+            shutil.copy2(ROOT / STATUS_RELATIVE, evidence / STATUS_RELATIVE.name)
+
+            status = _read_json(evidence / STATUS_RELATIVE.name)
+            status["completion_status"]["full_objective_complete"] = True
+            for preset in (
+                "front_camera_50scene_public2602",
+                "front_camera_100scene_public2602",
+            ):
+                status["scale_status"][preset]["claim_valid_closed_loop_summary_tracked"] = True
+            _write_json(evidence / STATUS_RELATIVE.name, status)
+
+            for scene_count in (10, 50, 100):
+                _write_json(
+                    evidence / f"closed_loop_spotlight_reflex_{scene_count}scene_batch.json",
+                    _batch_summary(scene_count),
+                )
+
+            audit = module.build_audit(repo_root=repo_root, created_at="2026-07-06")
+
+        self.assertTrue(audit["valid"])
+        self.assertTrue(audit["claim_ready"])
+        self.assertEqual([], audit["missing_claim_valid_summaries"])
+
+    def test_malformed_summary_is_reported_as_stage_error(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            evidence = repo_root / "docs" / "evidence"
+            evidence.mkdir(parents=True)
+            shutil.copy2(ROOT / PLAN_RELATIVE, evidence / PLAN_RELATIVE.name)
+            shutil.copy2(ROOT / STATUS_RELATIVE, evidence / STATUS_RELATIVE.name)
+            (evidence / "closed_loop_spotlight_reflex_10scene_batch.json").write_text(
+                "{not-json\n",
+                encoding="utf-8",
+            )
+
+            audit = module.build_audit(repo_root=repo_root, created_at="2026-07-06")
+            stages = {stage["scene_preset"]: stage for stage in audit["stages"]}
+
+        self.assertFalse(stages["front_camera_10scene_smoke"]["claim_valid"])
+        self.assertTrue(
+            any(
+                error.startswith("summary_invalid_json:")
+                for error in stages["front_camera_10scene_smoke"]["errors"]
+            )
+        )
+
+    def test_tracked_audit_artifact_is_linked_from_docs(self) -> None:
+        audit = _read_json(ROOT / AUDIT_RELATIVE)
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        evaluation_protocol = (ROOT / "docs/evaluation_protocol.md").read_text(encoding="utf-8")
+
+        self.assertEqual("wod2sim_benchmark_regeneration_audit_v1", audit["schema"])
+        self.assertEqual(PLAN_RELATIVE.as_posix(), audit["plan_artifact"])
+        self.assertEqual(STATUS_RELATIVE.as_posix(), audit["status_artifact"])
+        self.assertFalse(audit["claim_ready"])
+        self.assertIn(AUDIT_RELATIVE.as_posix(), readme)
+        self.assertIn(AUDIT_RELATIVE.name, evaluation_protocol)
+
+
+def _batch_summary(scene_count: int) -> dict[str, object]:
+    return {
+        "schema": "wod2sim_closed_loop_batch_summary_v1",
+        "clean_closed_loop_batch": True,
+        "aggregate": {
+            "planned_scene_count": scene_count,
+            "completed_scene_count": scene_count,
+            "failed_scene_count": 0,
+            "sensor_failure_scene_count": 0,
+            "total_audited_frames": scene_count * 199,
+        },
+    }
+
+
+def _read_json(path: Path) -> dict[str, object]:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _write_json(path: Path, payload: dict[str, object]) -> None:
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+if __name__ == "__main__":
+    unittest.main()

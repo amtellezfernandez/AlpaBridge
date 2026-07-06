@@ -1,0 +1,84 @@
+{
+  "claim_ready": false,
+  "claim_rule": "Every stage in the regeneration plan must have a tracked wod2sim_closed_loop_batch_summary_v1 artifact with clean_closed_loop_batch=true, matching scene counts, zero failed scenes, and zero sensor-pipeline failures.",
+  "created_at": "2026-07-06",
+  "errors": [],
+  "missing_claim_valid_summaries": [
+    "docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json",
+    "docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json"
+  ],
+  "plan_artifact": "docs/evidence/benchmark_regeneration_plan_20260706.json",
+  "schema": "wod2sim_benchmark_regeneration_audit_v1",
+  "stages": [
+    {
+      "claim_valid": true,
+      "errors": [],
+      "expected_scene_count": 10,
+      "observed": {
+        "clean_closed_loop_batch": true,
+        "completed_scene_count": 10,
+        "failed_scene_count": 0,
+        "planned_scene_count": 10,
+        "schema": "wod2sim_closed_loop_batch_summary_v1",
+        "sensor_failure_scene_count": 0,
+        "total_audited_frames": 1990
+      },
+      "scene_preset": "front_camera_10scene_smoke",
+      "stage": "pilot",
+      "summary_artifact": "docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json",
+      "summary_present": true
+    },
+    {
+      "claim_valid": false,
+      "errors": [
+        "summary_missing"
+      ],
+      "expected_scene_count": 50,
+      "observed": {
+        "clean_closed_loop_batch": null,
+        "completed_scene_count": null,
+        "failed_scene_count": null,
+        "planned_scene_count": null,
+        "schema": null,
+        "sensor_failure_scene_count": null,
+        "total_audited_frames": null
+      },
+      "scene_preset": "front_camera_50scene_public2602",
+      "stage": "workshop_scale",
+      "summary_artifact": "docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json",
+      "summary_present": false
+    },
+    {
+      "claim_valid": false,
+      "errors": [
+        "summary_missing"
+      ],
+      "expected_scene_count": 100,
+      "observed": {
+        "clean_closed_loop_batch": null,
+        "completed_scene_count": null,
+        "failed_scene_count": null,
+        "planned_scene_count": null,
+        "schema": null,
+        "sensor_failure_scene_count": null,
+        "total_audited_frames": null
+      },
+      "scene_preset": "front_camera_100scene_public2602",
+      "stage": "stronger_benchmark",
+      "summary_artifact": "docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json",
+      "summary_present": false
+    }
+  ],
+  "status_artifact": "docs/evidence/benchmark_regeneration_status_20260706.json",
+  "status_consistency": {
+    "checks": {
+      "front_camera_100scene_public2602_claim_flag_matches_audit": true,
+      "front_camera_50scene_public2602_claim_flag_matches_audit": true,
+      "full_objective_flag_matches_audit": true,
+      "ten_scene_status_matches_audit": true
+    },
+    "notes": [],
+    "valid": true
+  },
+  "valid": true
+}

@@ -37,6 +37,7 @@ EXPECTED_CONSOLE_SCRIPTS = (
     "wod2sim-support-bundle",
     "wod2sim-reproduce",
     "wod2sim-benchmark-plan",
+    "wod2sim-benchmark-audit",
     "wod2sim-benchmark-summary",
     "wod2sim-batch-summary",
     "wod2sim-evidence",
@@ -54,6 +55,7 @@ EXPECTED_WRAPPERS = {
     "wod2sim-support-bundle": "scripts/support_bundle.py",
     "wod2sim-reproduce": "scripts/reproduce_closed_loop.py",
     "wod2sim-benchmark-plan": "scripts/benchmark_regeneration_plan.py",
+    "wod2sim-benchmark-audit": "scripts/benchmark_regeneration_audit.py",
     "wod2sim-benchmark-summary": "scripts/benchmark_summary.py",
     "wod2sim-batch-summary": "scripts/batch_summary.py",
 }

@@ -220,6 +220,9 @@ in
 A machine-readable 10/50/100 rerun plan is tracked in
 [`docs/evidence/benchmark_regeneration_plan_20260706.json`](docs/evidence/benchmark_regeneration_plan_20260706.json)
 and can be regenerated with `wod2sim-benchmark-plan`.
+The current claim gate is tracked in
+[`docs/evidence/benchmark_regeneration_audit_20260706.json`](docs/evidence/benchmark_regeneration_audit_20260706.json)
+and can be regenerated with `wod2sim-benchmark-audit`.
 
 ## Evidence Contract
 
@@ -285,6 +288,7 @@ wod2sim-launch --mode print --model direct_actor_planner --oracle-actor-proxy /p
 | `wod2sim-audit-run` | Summarize executed run logs and sensor freshness. |
 | `wod2sim-support-bundle` | Package key run logs, configs, and audit output. |
 | `wod2sim-benchmark-plan` | Emit the public-safe 10/50/100 benchmark regeneration plan. |
+| `wod2sim-benchmark-audit` | Gate tracked regeneration artifacts against the 10/50/100 claim. |
 | `wod2sim-benchmark-summary` | Aggregate evidence directories into one benchmark JSON. |
 | `wod2sim-batch-summary` | Summarize `wod2sim-batch` scene runs into public-safe metrics and hashes. |
 
