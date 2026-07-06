@@ -97,6 +97,10 @@ def build_operator_matrix(
         command_artifact=resume_command_artifact,
         command_artifact_path=resume_command_artifact_path,
     )
+    resume_repair_scope = _resume_repair_scope(
+        command_artifact=resume_command_artifact,
+        command_artifact_path=resume_command_artifact_path,
+    )
     roles = _roles(readiness_flags=readiness_flags, blockers=blockers)
     task_matrix = _task_matrix(
         readiness_flags=readiness_flags,
@@ -115,6 +119,7 @@ def build_operator_matrix(
             task_matrix=task_matrix,
             command_execution=command_execution,
             resume_command_execution=resume_command_execution,
+            resume_repair_scope=resume_repair_scope,
         ),
         "source_artifacts": {
             "plan": _display_path(plan_path),
@@ -134,6 +139,7 @@ def build_operator_matrix(
         "current_local_state": current_local_state,
         "command_execution": command_execution,
         "resume_command_execution": resume_command_execution,
+        "resume_repair_scope": resume_repair_scope,
         "roles": roles,
         "task_matrix": task_matrix,
     }
@@ -345,6 +351,7 @@ def _matrix_summary(
     task_matrix: list[dict[str, Any]],
     command_execution: dict[str, Any],
     resume_command_execution: dict[str, Any],
+    resume_repair_scope: dict[str, Any],
 ) -> dict[str, Any]:
     ready_roles = [
         str(role.get("role"))
@@ -408,6 +415,14 @@ def _matrix_summary(
         "resume_private_execution_command_count": resume_command_execution.get(
             "private_execution_command_count"
         ),
+        "resume_affected_stage_count": resume_repair_scope.get("affected_stage_count"),
+        "resume_missing_shard_summary_count": resume_repair_scope.get(
+            "missing_shard_summary_count"
+        ),
+        "resume_repair_included_groups": _list_or_empty(resume_repair_scope.get("included_groups")),
+        "resume_repair_command_group_counts": _dict_or_empty(
+            resume_repair_scope.get("command_group_counts")
+        ),
         "live_rollout_host_requirement": (
             "x86_64 Linux with Docker, NVIDIA runtime, AlpaSim images, "
             "valid local USDZ caches, and gated scene access"
@@ -438,6 +453,58 @@ def _command_execution_summary(
         "private_execution_command_count": _optional_int(
             command_artifact.get("private_execution_command_count")
         ),
+    }
+
+
+def _resume_repair_scope(
+    *,
+    command_artifact: dict[str, Any],
+    command_artifact_path: Path,
+) -> dict[str, Any]:
+    resume_plan = _dict_or_empty(command_artifact.get("resume_plan"))
+    stages = []
+    for stage in _list_of_dicts(resume_plan.get("stages")):
+        stages.append(
+            {
+                "stage": stage.get("stage"),
+                "scene_preset": stage.get("scene_preset"),
+                "scene_count": _optional_int(stage.get("scene_count")),
+                "public_summary_target": stage.get("public_summary_target"),
+                "missing_shard_summary_count": _optional_int(
+                    stage.get("missing_shard_summary_count")
+                ),
+                "missing_shard_indexes": [
+                    index
+                    for index in (
+                        _optional_int(value)
+                        for value in _list_or_empty(stage.get("missing_shard_indexes"))
+                    )
+                    if index is not None
+                ],
+                "missing_shard_summary_paths": [
+                    str(path)
+                    for path in _list_or_empty(stage.get("missing_shard_summary_paths"))
+                    if isinstance(path, str) and path
+                ],
+                "merge_command_included": bool(stage.get("merge_command_included")),
+                "promote_command_included": bool(stage.get("promote_command_included")),
+                "post_review_commands_included": bool(stage.get("post_review_commands_included")),
+            }
+        )
+    return {
+        "artifact": _display_path(command_artifact_path),
+        "claim_boundary": resume_plan.get("claim_boundary"),
+        "affected_stage_count": _optional_int(resume_plan.get("affected_stage_count")),
+        "missing_shard_summary_count": _optional_int(
+            resume_plan.get("missing_shard_summary_count")
+        ),
+        "included_groups": [
+            str(group)
+            for group in _list_or_empty(resume_plan.get("included_groups"))
+            if isinstance(group, str) and group
+        ],
+        "command_group_counts": _dict_or_empty(resume_plan.get("command_group_counts")),
+        "stages": stages,
     }
 
 

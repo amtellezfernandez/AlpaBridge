@@ -160,7 +160,8 @@ claim artifacts from the current evidence state. It also mirrors the rendered
 command artifact's `command_execution` counts so the role matrix shows how many
 public-review, cache, live-rollout, merge, and promotion commands map to each
 operator role. Its `resume_command_execution` section does the same for the
-audit-derived missing-shard resume snapshot.
+audit-derived missing-shard resume snapshot, while `resume_repair_scope`
+summarizes the affected 50/100 stages and missing shard inputs.
 For a one-page public handoff with the current blocker IDs, role boundaries,
 and next command groups, see
 [`docs/benchmark_regeneration_handoff.md`](docs/benchmark_regeneration_handoff.md).

@@ -74,6 +74,84 @@
     "public_review_command_count": 2,
     "row_count": 36
   },
+  "resume_repair_scope": {
+    "affected_stage_count": 2,
+    "artifact": "docs/evidence/benchmark_regeneration_resume_commands_20260706.json",
+    "claim_boundary": "Audit-derived resume rows are operational repair inputs only; the strict claim gate remains false until full 50/100 summaries are merged, promoted, and claim-valid.",
+    "command_group_counts": {
+      "merge": 2,
+      "post": 2,
+      "promote": 2,
+      "shards": 30
+    },
+    "included_groups": [
+      "shards",
+      "merge",
+      "promote",
+      "post"
+    ],
+    "missing_shard_summary_count": 15,
+    "stages": [
+      {
+        "merge_command_included": true,
+        "missing_shard_indexes": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "missing_shard_summary_count": 5,
+        "missing_shard_summary_paths": [
+          "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/000_009/wod2sim-batch-summary.json",
+          "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/010_019/wod2sim-batch-summary.json",
+          "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/020_029/wod2sim-batch-summary.json",
+          "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/030_039/wod2sim-batch-summary.json",
+          "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/040_049/wod2sim-batch-summary.json"
+        ],
+        "post_review_commands_included": true,
+        "promote_command_included": true,
+        "public_summary_target": "docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json",
+        "scene_count": 50,
+        "scene_preset": "front_camera_50scene_public2602",
+        "stage": "workshop_scale"
+      },
+      {
+        "merge_command_included": true,
+        "missing_shard_indexes": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        "missing_shard_summary_count": 10,
+        "missing_shard_summary_paths": [
+          "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/000_009/wod2sim-batch-summary.json",
+          "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/010_019/wod2sim-batch-summary.json",
+          "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/020_029/wod2sim-batch-summary.json",
+          "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/030_039/wod2sim-batch-summary.json",
+          "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/040_049/wod2sim-batch-summary.json",
+          "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/050_059/wod2sim-batch-summary.json",
+          "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/060_069/wod2sim-batch-summary.json",
+          "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/070_079/wod2sim-batch-summary.json",
+          "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/080_089/wod2sim-batch-summary.json",
+          "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/090_099/wod2sim-batch-summary.json"
+        ],
+        "post_review_commands_included": true,
+        "promote_command_included": true,
+        "public_summary_target": "docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json",
+        "scene_count": 100,
+        "scene_preset": "front_camera_100scene_public2602",
+        "stage": "stronger_benchmark"
+      }
+    ]
+  },
   "roles": [
     {
       "can_run": [
@@ -263,6 +341,7 @@
       "front_camera_100scene_public2602_cache_invalid",
       "front_camera_100scene_public2602_claim_summary_missing"
     ],
+    "resume_affected_stage_count": 2,
     "resume_command_execution_boundary_counts": {
       "claim_summary_merge": 2,
       "claim_summary_promotion": 2,
@@ -274,8 +353,21 @@
       "closed_loop_runner": 30,
       "open_repo_reviewer": 2
     },
+    "resume_missing_shard_summary_count": 15,
     "resume_private_execution_command_count": 34,
-    "resume_public_review_command_count": 2
+    "resume_public_review_command_count": 2,
+    "resume_repair_command_group_counts": {
+      "merge": 2,
+      "post": 2,
+      "promote": 2,
+      "shards": 30
+    },
+    "resume_repair_included_groups": [
+      "shards",
+      "merge",
+      "promote",
+      "post"
+    ]
   },
   "task_matrix": [
     {
