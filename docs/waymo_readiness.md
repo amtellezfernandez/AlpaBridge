@@ -171,6 +171,9 @@ A diagnostic one-scene 50-preset probe is tracked at
 It records 1/1 completed scene and 0 sensor-pipeline failures, but it is not a
 claim-valid 50-scene summary and does not satisfy
 `wod2sim-benchmark-audit --strict`.
+The partial 50-scene attempt is tracked at
+[`docs/evidence/closed_loop_spotlight_reflex_50scene_attempt_partial.json`](evidence/closed_loop_spotlight_reflex_50scene_attempt_partial.json);
+it records 2/50 attempted scenes failing before audited frames were produced.
 
 The current public-safe 10/50/100 rerun plan is
 [`docs/evidence/benchmark_regeneration_plan_20260706.json`](evidence/benchmark_regeneration_plan_20260706.json).

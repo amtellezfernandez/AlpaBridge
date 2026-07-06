@@ -17,6 +17,9 @@ DEFAULT_PILOT = Path("docs/evidence/closed_loop_spotlight_reflex_10scene_batch.j
 DEFAULT_SCALE_PROBE_50 = Path(
     "docs/evidence/closed_loop_spotlight_reflex_50scene_localprobe_1scene.json"
 )
+DEFAULT_SCALE_ATTEMPT_50 = Path(
+    "docs/evidence/closed_loop_spotlight_reflex_50scene_attempt_partial.json"
+)
 DEFAULT_PLAN = Path("docs/evidence/benchmark_regeneration_plan_20260706.json")
 DEFAULT_READINESS = Path("docs/evidence/benchmark_regeneration_readiness_20260706.json")
 DEFAULT_AUDIT = Path("docs/evidence/benchmark_regeneration_audit_20260706.json")
@@ -31,6 +34,11 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--pilot-summary", type=Path, default=DEFAULT_PILOT)
     parser.add_argument("--scale-probe-50-summary", type=Path, default=DEFAULT_SCALE_PROBE_50)
+    parser.add_argument(
+        "--scale-attempt-50-summary",
+        type=Path,
+        default=DEFAULT_SCALE_ATTEMPT_50,
+    )
     parser.add_argument("--plan", type=Path, default=DEFAULT_PLAN)
     parser.add_argument("--readiness", type=Path, default=DEFAULT_READINESS)
     parser.add_argument(
@@ -51,6 +59,7 @@ def main() -> int:
     status = build_status(
         pilot_path=args.pilot_summary,
         scale_probe_50_path=args.scale_probe_50_summary,
+        scale_attempt_50_path=args.scale_attempt_50_summary,
         plan_path=args.plan,
         readiness_path=args.readiness,
         audit_path=args.audit,
@@ -71,6 +80,7 @@ def build_status(
     *,
     pilot_path: Path = DEFAULT_PILOT,
     scale_probe_50_path: Path = DEFAULT_SCALE_PROBE_50,
+    scale_attempt_50_path: Path = DEFAULT_SCALE_ATTEMPT_50,
     plan_path: Path = DEFAULT_PLAN,
     readiness_path: Path = DEFAULT_READINESS,
     audit_path: Path = DEFAULT_AUDIT,
@@ -80,18 +90,22 @@ def build_status(
     repo_root = repo_root.resolve()
     pilot = _read_json(_resolve_path(repo_root, pilot_path))
     scale_probe_50 = _read_json_if_exists(_resolve_path(repo_root, scale_probe_50_path))
+    scale_attempt_50 = _read_json_if_exists(_resolve_path(repo_root, scale_attempt_50_path))
     plan = _read_json(_resolve_path(repo_root, plan_path))
     readiness = _read_json(_resolve_path(repo_root, readiness_path))
 
     _require_schema(pilot, BATCH_SCHEMA, "pilot summary")
     if scale_probe_50:
         _require_schema(scale_probe_50, BATCH_SCHEMA, "50-scene local probe summary")
+    if scale_attempt_50:
+        _require_schema(scale_attempt_50, BATCH_SCHEMA, "50-scene partial attempt summary")
     _require_schema(plan, PLAN_SCHEMA, "plan")
     _require_schema(readiness, READINESS_SCHEMA, "readiness")
 
     evidence_artifacts = {
         "ten_scene_pilot": _display_path(pilot_path),
         "fifty_scene_local_probe": _display_path(scale_probe_50_path),
+        "fifty_scene_partial_attempt": _display_path(scale_attempt_50_path),
         "regeneration_plan": _display_path(plan_path),
         "readiness_snapshot": _display_path(readiness_path),
         "claim_audit": _display_path(audit_path),
@@ -116,6 +130,7 @@ def build_status(
             "inputs": {
                 "ten_scene_pilot": _display_path(pilot_path),
                 "fifty_scene_local_probe": _display_path(scale_probe_50_path),
+                "fifty_scene_partial_attempt": _display_path(scale_attempt_50_path),
                 "regeneration_plan": _display_path(plan_path),
                 "readiness_snapshot": _display_path(readiness_path),
             },
@@ -136,6 +151,10 @@ def build_status(
             "fifty_scene_local_probe": _scale_probe_status(
                 summary=scale_probe_50,
                 summary_path=scale_probe_50_path,
+            ),
+            "fifty_scene_partial_attempt": _scale_attempt_status(
+                summary=scale_attempt_50,
+                summary_path=scale_attempt_50_path,
             ),
         },
         "current_local_runtime_state": _runtime_state_from_readiness(
@@ -198,6 +217,7 @@ def _scale_probe_status(*, summary: dict[str, Any], summary_path: Path) -> dict[
         "clean_closed_loop_batch": summary.get("clean_closed_loop_batch"),
         "scene_preset": run_config.get("scene_preset"),
         "planned_scene_count": _optional_int(aggregate.get("planned_scene_count")),
+        "observed_scene_count": _optional_int(aggregate.get("observed_scene_count")),
         "completed_scene_count": _optional_int(aggregate.get("completed_scene_count")),
         "failed_scene_count": _optional_int(aggregate.get("failed_scene_count")),
         "sensor_failure_scene_count": _optional_int(aggregate.get("sensor_failure_scene_count")),
@@ -220,6 +240,36 @@ def _scale_probe_status(*, summary: dict[str, Any], summary_path: Path) -> dict[
         "claim_scope": (
             "Diagnostic one-scene probe from the 50-scene public preset. This is not a "
             "claim-valid 50-scene stage summary and does not satisfy the strict audit gate."
+        ),
+    }
+
+
+def _scale_attempt_status(*, summary: dict[str, Any], summary_path: Path) -> dict[str, Any]:
+    if not summary:
+        return {
+            "artifact": _display_path(summary_path),
+            "present": False,
+            "status": "not_tracked",
+            "claim_scope": "diagnostic_only_not_full_stage_claim",
+        }
+    aggregate = _dict_or_empty(summary.get("aggregate"))
+    run_config = _dict_or_empty(summary.get("run_config"))
+    return {
+        "artifact": _display_path(summary_path),
+        "present": True,
+        "schema": summary.get("schema"),
+        "clean_closed_loop_batch": summary.get("clean_closed_loop_batch"),
+        "scene_preset": run_config.get("scene_preset"),
+        "planned_scene_count": _optional_int(aggregate.get("planned_scene_count")),
+        "observed_scene_count": _optional_int(aggregate.get("observed_scene_count")),
+        "completed_scene_count": _optional_int(aggregate.get("completed_scene_count")),
+        "failed_scene_count": _optional_int(aggregate.get("failed_scene_count")),
+        "sensor_failure_scene_count": _optional_int(aggregate.get("sensor_failure_scene_count")),
+        "total_audited_frames": _optional_int(aggregate.get("total_audited_frames")),
+        "status": "tracked_public_partial_attempt_summary",
+        "claim_scope": (
+            "Diagnostic partial attempt from the 50-scene public preset. This records an "
+            "early failed scale attempt and is not a claim-valid 50-scene stage summary."
         ),
     }
 

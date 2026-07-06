@@ -216,6 +216,9 @@ summarized in
 1/1 completed scene, 199 audited frames, 0 failed scenes, and 0
 sensor-pipeline failures. This is scale-path evidence only; it is not a
 claim-valid 50-scene summary and does not satisfy the strict audit gate.
+The earlier partial 50-scene attempt is also tracked as non-claim evidence in
+[`docs/evidence/closed_loop_spotlight_reflex_50scene_attempt_partial.json`](docs/evidence/closed_loop_spotlight_reflex_50scene_attempt_partial.json):
+2/50 attempted scenes failed before audited frames were produced.
 
 Open-repo readers can review the compact JSON summaries without AlpaSim, Docker,
 or gated scene assets. Re-running or scaling the benchmark requires local access

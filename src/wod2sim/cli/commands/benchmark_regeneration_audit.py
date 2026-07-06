@@ -395,10 +395,131 @@ def _diagnostic_evidence(*, status: dict[str, Any], repo_root: Path) -> dict[str
         if not passed:
             notes.append(f"{key} failed")
 
-    return _diagnostic_report(
+    probe_report = _diagnostic_report(
         valid=all(checks.values()),
         artifact=artifact,
         summary_present=summary_present,
+        checks=checks,
+        notes=notes,
+        summary=summary,
+    )
+    partial_attempt = _partial_attempt_evidence(
+        evidence_artifacts=evidence_artifacts,
+        public_evidence=public_evidence,
+        repo_root=repo_root,
+    )
+    return {
+        **probe_report,
+        "valid": bool(probe_report["valid"]) and bool(partial_attempt["valid"]),
+        "scale_attempts": {
+            "fifty_scene_partial_attempt": partial_attempt,
+        },
+    }
+
+
+def _partial_attempt_evidence(
+    *,
+    evidence_artifacts: dict[str, Any],
+    public_evidence: dict[str, Any],
+    repo_root: Path,
+) -> dict[str, Any]:
+    status_row = _dict_or_empty(public_evidence.get("fifty_scene_partial_attempt"))
+    artifact = str(
+        evidence_artifacts.get("fifty_scene_partial_attempt") or status_row.get("artifact") or ""
+    )
+    checks: dict[str, bool] = {"partial_attempt_declared": bool(artifact or status_row)}
+    notes: list[str] = []
+    summary: dict[str, Any] = {}
+
+    if not checks["partial_attempt_declared"]:
+        return _diagnostic_report(
+            valid=True,
+            artifact=None,
+            summary_present=False,
+            checks=checks,
+            notes=["no partial scale attempt evidence declared in status"],
+            summary=summary,
+        )
+
+    checks["partial_attempt_artifact_declared"] = bool(artifact)
+    if not checks["partial_attempt_artifact_declared"]:
+        notes.append("current_public_evidence.fifty_scene_partial_attempt has no artifact")
+        return _diagnostic_report(
+            valid=False,
+            artifact=None,
+            summary_present=False,
+            checks=checks,
+            notes=notes,
+            summary=summary,
+        )
+
+    summary_path = _resolve_path(repo_root, Path(artifact))
+    summary_present = summary_path.is_file()
+    checks["partial_attempt_summary_present"] = summary_present
+    if not summary_present:
+        notes.append(f"partial scale attempt summary missing: {artifact}")
+        return _diagnostic_report(
+            valid=False,
+            artifact=artifact,
+            summary_present=False,
+            checks=checks,
+            notes=notes,
+            summary=summary,
+        )
+
+    try:
+        summary = _read_json(summary_path)
+    except json.JSONDecodeError as exc:
+        checks["partial_attempt_summary_valid_json"] = False
+        notes.append(f"partial scale attempt summary invalid JSON: {exc}")
+        return _diagnostic_report(
+            valid=False,
+            artifact=artifact,
+            summary_present=True,
+            checks=checks,
+            notes=notes,
+            summary=summary,
+        )
+
+    checks["partial_attempt_summary_valid_json"] = True
+    aggregate = _dict_or_empty(summary.get("aggregate"))
+    run_config = _dict_or_empty(summary.get("run_config"))
+    checks["partial_attempt_status_artifact_matches"] = status_row.get("artifact") == artifact
+    checks["partial_attempt_status_scope_is_non_claim"] = (
+        status_row.get("status") == "tracked_public_partial_attempt_summary"
+        and "not a claim-valid 50-scene" in str(status_row.get("claim_scope") or "")
+    )
+    checks["partial_attempt_schema_matches"] = summary.get("schema") == BATCH_SCHEMA
+    checks["partial_attempt_preset_matches"] = (
+        run_config.get("scene_preset") == "front_camera_50scene_public2602"
+    )
+    checks["partial_attempt_is_failed_two_scene_prefix"] = (
+        summary.get("clean_closed_loop_batch") is False
+        and _int_value(aggregate.get("planned_scene_count")) == 50
+        and _int_value(aggregate.get("observed_scene_count")) == 2
+        and _int_value(aggregate.get("completed_scene_count")) == 0
+        and _int_value(aggregate.get("failed_scene_count")) == 2
+        and _int_value(aggregate.get("sensor_failure_scene_count")) == 0
+    )
+    checks["partial_attempt_status_counts_match_summary"] = (
+        _int_value(status_row.get("planned_scene_count"))
+        == _int_value(aggregate.get("planned_scene_count"))
+        and _int_value(status_row.get("observed_scene_count"))
+        == _int_value(aggregate.get("observed_scene_count"))
+        and _int_value(status_row.get("completed_scene_count"))
+        == _int_value(aggregate.get("completed_scene_count"))
+        and _int_value(status_row.get("failed_scene_count"))
+        == _int_value(aggregate.get("failed_scene_count"))
+        and _int_value(status_row.get("sensor_failure_scene_count"))
+        == _int_value(aggregate.get("sensor_failure_scene_count"))
+    )
+    for key, passed in checks.items():
+        if not passed:
+            notes.append(f"{key} failed")
+    return _diagnostic_report(
+        valid=all(checks.values()),
+        artifact=artifact,
+        summary_present=True,
         checks=checks,
         notes=notes,
         summary=summary,
@@ -428,6 +549,7 @@ def _diagnostic_report(
             "clean_closed_loop_batch": summary.get("clean_closed_loop_batch"),
             "scene_preset": run_config.get("scene_preset"),
             "planned_scene_count": _optional_int(aggregate.get("planned_scene_count")),
+            "observed_scene_count": _optional_int(aggregate.get("observed_scene_count")),
             "completed_scene_count": _optional_int(aggregate.get("completed_scene_count")),
             "failed_scene_count": _optional_int(aggregate.get("failed_scene_count")),
             "sensor_failure_scene_count": _optional_int(

@@ -17,6 +17,9 @@ READINESS_RELATIVE = Path("docs/evidence/benchmark_regeneration_readiness_202607
 PROBE_50_RELATIVE = Path(
     "docs/evidence/closed_loop_spotlight_reflex_50scene_localprobe_1scene.json"
 )
+ATTEMPT_50_RELATIVE = Path(
+    "docs/evidence/closed_loop_spotlight_reflex_50scene_attempt_partial.json"
+)
 
 
 class BenchmarkRegenerationAuditTests(unittest.TestCase):
@@ -36,6 +39,14 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             "diagnostic_only_not_full_stage_claim",
             audit["diagnostic_evidence"]["claim_scope"],
         )
+        partial_attempt = audit["diagnostic_evidence"]["scale_attempts"][
+            "fifty_scene_partial_attempt"
+        ]
+        self.assertTrue(partial_attempt["valid"])
+        self.assertEqual(ATTEMPT_50_RELATIVE.as_posix(), partial_attempt["artifact"])
+        self.assertEqual(50, partial_attempt["observed"]["planned_scene_count"])
+        self.assertEqual(2, partial_attempt["observed"]["observed_scene_count"])
+        self.assertEqual(2, partial_attempt["observed"]["failed_scene_count"])
         self.assertFalse(audit["regeneration_provenance"]["all_stage_sources_match_plan"])
         self.assertEqual([], audit["regeneration_provenance"]["present_stage_source_mismatches"])
         self.assertTrue(stages["front_camera_10scene_smoke"]["claim_valid"])
@@ -445,6 +456,7 @@ def _read_json(path: Path) -> dict[str, object]:
 def _copy_status_and_probe(evidence_dir: Path) -> None:
     shutil.copy2(ROOT / STATUS_RELATIVE, evidence_dir / STATUS_RELATIVE.name)
     shutil.copy2(ROOT / PROBE_50_RELATIVE, evidence_dir / PROBE_50_RELATIVE.name)
+    shutil.copy2(ROOT / ATTEMPT_50_RELATIVE, evidence_dir / ATTEMPT_50_RELATIVE.name)
 
 
 def _write_json(path: Path, payload: dict[str, object]) -> None:
