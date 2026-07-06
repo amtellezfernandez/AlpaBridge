@@ -299,7 +299,10 @@ scale-probe evidence as non-claim evidence so it cannot satisfy the strict
 50/100-scene gate by accident. Its `objective_completion` section lists the
 satisfied requirements, the remaining 50/100-scene claim gaps, the blocking
 readiness IDs, and the next command groups to run via `blocking_requirements`,
-`next_command_groups`, and `next_command_renderer_groups`.
+`next_command_groups`, and `next_command_renderer_groups`. It also includes
+`scale_claim_gaps`, a per-50/100-stage summary of local/source cache validity,
+missing summary state, blockers, and the next command groups required before a
+claim can pass.
 
 ## Evidence Contract
 

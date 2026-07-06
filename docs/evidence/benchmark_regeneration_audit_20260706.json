@@ -194,6 +194,100 @@
       }
     ],
     "satisfied_count": 2,
+    "scale_claim_gaps": [
+      {
+        "blocking_requirements": [
+          "hf_token_missing",
+          "docker_daemon_unavailable",
+          "alpasim_base_image_missing",
+          "nvidia_gpu_unavailable",
+          "docker_nvidia_runtime_unavailable",
+          "front_camera_50scene_public2602_cache_invalid",
+          "front_camera_50scene_public2602_claim_summary_missing"
+        ],
+        "claim_valid": false,
+        "expected_scene_count": 50,
+        "local_usdz_cache": {
+          "expected_scene_count": 50,
+          "matching_scene_count": 0,
+          "missing_scene_count": 50,
+          "nonmatching_usdz_file_count": 0,
+          "present_scene_count": 0,
+          "required": true,
+          "usdz_file_count": 0,
+          "valid": false
+        },
+        "next_command_groups": [
+          "build_and_validate_scale_caches",
+          "run_scale_shards_and_promote_summaries",
+          "refresh_status",
+          "verify_claim_gate"
+        ],
+        "public_summary_claim_valid": false,
+        "public_summary_errors": [
+          "summary_missing"
+        ],
+        "public_summary_present": false,
+        "scene_preset": "front_camera_50scene_public2602",
+        "source_usdz_cache": {
+          "expected_scene_count": 50,
+          "matching_scene_count": 0,
+          "missing_scene_count": 50,
+          "nonmatching_usdz_file_count": 10,
+          "present_scene_count": 0,
+          "required": true,
+          "usdz_file_count": 10,
+          "valid": false
+        },
+        "summary_artifact": "docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json"
+      },
+      {
+        "blocking_requirements": [
+          "hf_token_missing",
+          "docker_daemon_unavailable",
+          "alpasim_base_image_missing",
+          "nvidia_gpu_unavailable",
+          "docker_nvidia_runtime_unavailable",
+          "front_camera_100scene_public2602_cache_invalid",
+          "front_camera_100scene_public2602_claim_summary_missing"
+        ],
+        "claim_valid": false,
+        "expected_scene_count": 100,
+        "local_usdz_cache": {
+          "expected_scene_count": 100,
+          "matching_scene_count": 0,
+          "missing_scene_count": 100,
+          "nonmatching_usdz_file_count": 0,
+          "present_scene_count": 0,
+          "required": true,
+          "usdz_file_count": 0,
+          "valid": false
+        },
+        "next_command_groups": [
+          "build_and_validate_scale_caches",
+          "run_scale_shards_and_promote_summaries",
+          "refresh_status",
+          "verify_claim_gate"
+        ],
+        "public_summary_claim_valid": false,
+        "public_summary_errors": [
+          "summary_missing"
+        ],
+        "public_summary_present": false,
+        "scene_preset": "front_camera_100scene_public2602",
+        "source_usdz_cache": {
+          "expected_scene_count": 100,
+          "matching_scene_count": 0,
+          "missing_scene_count": 100,
+          "nonmatching_usdz_file_count": 10,
+          "present_scene_count": 0,
+          "required": true,
+          "usdz_file_count": 10,
+          "valid": false
+        },
+        "summary_artifact": "docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json"
+      }
+    ],
     "total_count": 5
   },
   "operator_matrix": {
@@ -273,8 +367,8 @@
       "readiness",
       "shards"
     ],
-    "sha256": "b5c7e0090b2129ec9cff732d87506904f56053b153d99efcd4db77446ca63243",
-    "size_bytes": 9335,
+    "sha256": "40e652b516657560cee2ed145411ff7a41da7db069aead032cef80d2eef7e270",
+    "size_bytes": 9480,
     "valid": true
   },
   "readiness_artifact": "docs/evidence/benchmark_regeneration_readiness_20260706.json",

@@ -707,6 +707,11 @@ def _objective_completion(
     next_command_renderer_groups = (
         _next_command_renderer_groups(readiness_context) if not claim_ready else {}
     )
+    scale_claim_gaps = _scale_claim_gaps(
+        stage_reports=stage_reports,
+        readiness=readiness,
+        readiness_context=readiness_context,
+    )
     return {
         "objective": (
             "Regenerate WOD2Sim closed-loop benchmark artifacts from scratch, validate "
@@ -720,6 +725,7 @@ def _objective_completion(
         "blocking_requirements": blocking_requirements,
         "next_command_groups": next_command_groups,
         "next_command_renderer_groups": next_command_renderer_groups,
+        "scale_claim_gaps": scale_claim_gaps,
     }
 
 
@@ -742,6 +748,67 @@ def _objective_requirement(
         row["blocking_requirements"] = blockers
         row["next_command_groups"] = next_command_groups
     return row
+
+
+def _scale_claim_gaps(
+    *,
+    stage_reports: list[dict[str, Any]],
+    readiness: dict[str, Any],
+    readiness_context: dict[str, Any],
+) -> list[dict[str, Any]]:
+    readiness_stages = {
+        str(stage.get("scene_preset")): stage
+        for stage in _list_or_empty(readiness.get("stages"))
+        if isinstance(stage, dict) and stage.get("scene_preset")
+    }
+    rows = []
+    for stage_report in stage_reports:
+        expected_scene_count = _int_value(stage_report.get("expected_scene_count"))
+        if expected_scene_count not in {50, 100}:
+            continue
+        scene_preset = str(stage_report.get("scene_preset") or "")
+        readiness_stage = _dict_or_empty(readiness_stages.get(scene_preset))
+        local_cache = _cache_gap_status(readiness_stage.get("local_usdz_cache"))
+        source_cache = _cache_gap_status(readiness_stage.get("source_usdz_cache"))
+        public_summary = _dict_or_empty(readiness_stage.get("public_summary"))
+        rows.append(
+            {
+                "scene_preset": scene_preset,
+                "expected_scene_count": expected_scene_count,
+                "summary_artifact": stage_report.get("summary_artifact"),
+                "claim_valid": bool(stage_report.get("claim_valid")),
+                "public_summary_present": bool(public_summary.get("present")),
+                "public_summary_claim_valid": bool(public_summary.get("claim_valid")),
+                "public_summary_errors": [
+                    str(error)
+                    for error in _list_or_empty(public_summary.get("errors"))
+                    if isinstance(error, str)
+                ],
+                "local_usdz_cache": local_cache,
+                "source_usdz_cache": source_cache,
+                "blocking_requirements": _requirement_blockers(
+                    readiness_context,
+                    scene_preset=scene_preset,
+                ),
+                "next_command_groups": _scale_command_groups(readiness_context),
+            }
+        )
+    return rows
+
+
+def _cache_gap_status(cache: object) -> dict[str, Any]:
+    cache_map = _dict_or_empty(cache)
+    validation = _dict_or_empty(cache_map.get("validation"))
+    return {
+        "required": bool(cache_map.get("required")),
+        "valid": bool(validation.get("valid")),
+        "expected_scene_count": _optional_int(validation.get("expected_scene_count")),
+        "present_scene_count": _optional_int(validation.get("present_scene_count")),
+        "missing_scene_count": _optional_int(validation.get("missing_scene_count")),
+        "usdz_file_count": _optional_int(cache_map.get("usdz_file_count")),
+        "matching_scene_count": _optional_int(cache_map.get("matching_scene_count")),
+        "nonmatching_usdz_file_count": _optional_int(cache_map.get("nonmatching_usdz_file_count")),
+    }
 
 
 def _readiness_completion_context(readiness: dict[str, Any]) -> dict[str, Any]:
