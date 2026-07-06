@@ -27,6 +27,36 @@ RESUME_COMMANDS_RELATIVE = Path(
 OPERATOR_MATRIX_RELATIVE = Path("docs/evidence/benchmark_operator_matrix_20260706.json")
 EVIDENCE_MANIFEST_RELATIVE = Path("docs/evidence/benchmark_public_evidence_manifest_20260706.json")
 HANDOFF_RELATIVE = Path("docs/benchmark_regeneration_handoff.md")
+EXPECTED_REMAINING_REQUIREMENTS = [
+    "produce_claim_valid_50_scene_summary",
+    "produce_claim_valid_100_scene_summary",
+    "pass_strict_claim_gate",
+]
+EXPECTED_BLOCKING_REQUIREMENTS = [
+    "hf_token_missing",
+    "docker_daemon_unavailable",
+    "alpasim_base_image_missing",
+    "nvidia_gpu_unavailable",
+    "docker_nvidia_runtime_unavailable",
+    "front_camera_50scene_public2602_cache_invalid",
+    "front_camera_50scene_public2602_claim_summary_missing",
+    "front_camera_100scene_public2602_cache_invalid",
+    "front_camera_100scene_public2602_claim_summary_missing",
+]
+EXPECTED_NEXT_COMMAND_GROUPS = [
+    "refresh_readiness",
+    "build_and_validate_scale_caches",
+    "run_scale_shards_and_promote_summaries",
+    "refresh_status",
+    "verify_claim_gate",
+]
+EXPECTED_NEXT_COMMAND_RENDERER_GROUPS = {
+    "build_and_validate_scale_caches": ["cache"],
+    "refresh_readiness": ["readiness"],
+    "refresh_status": ["post"],
+    "run_scale_shards_and_promote_summaries": ["shards", "merge", "promote"],
+    "verify_claim_gate": ["post"],
+}
 
 
 def test_regeneration_status_matches_tracked_ten_scene_evidence() -> None:
@@ -39,6 +69,21 @@ def test_regeneration_status_matches_tracked_ten_scene_evidence() -> None:
     assert public_pilot["schema"] == pilot["schema"]
     assert public_pilot["clean_closed_loop_batch"] is True
     assert public_pilot["clean_closed_loop_batch"] == pilot["clean_closed_loop_batch"]
+    assert status["claim_ready"] is False
+    assert status["objective_completion"]["complete"] is False
+    assert status["objective_completion"]["satisfied_count"] == 2
+    assert status["objective_completion"]["total_count"] == 5
+    assert status["objective_completion"]["remaining_requirements"] == (
+        EXPECTED_REMAINING_REQUIREMENTS
+    )
+    assert status["objective_completion"]["blocking_requirements"] == (
+        EXPECTED_BLOCKING_REQUIREMENTS
+    )
+    assert status["objective_completion"]["next_command_groups"] == EXPECTED_NEXT_COMMAND_GROUPS
+    assert (
+        status["objective_completion"]["next_command_renderer_groups"]
+        == EXPECTED_NEXT_COMMAND_RENDERER_GROUPS
+    )
 
     for key in (
         "planned_scene_count",
@@ -60,6 +105,13 @@ def test_regeneration_status_matches_tracked_ten_scene_evidence() -> None:
         assert public_pilot["failure_taxonomy"][key] == pilot["failure_taxonomy"][key]
 
     assert status["completion_status"]["full_objective_complete"] is False
+    assert [row["requirement"] for row in status["objective_completion"]["requirements"]] == [
+        "validate_10_scene_pilot",
+        "track_50_scene_scale_progress",
+        "produce_claim_valid_50_scene_summary",
+        "produce_claim_valid_100_scene_summary",
+        "pass_strict_claim_gate",
+    ]
 
 
 def test_large_scale_status_is_workflow_ready_but_not_claim_valid() -> None:
@@ -263,6 +315,8 @@ def test_status_generator_rebuilds_tracked_public_state() -> None:
     assert status["evidence_artifacts"] == tracked["evidence_artifacts"]
     assert status["current_public_evidence"] == tracked["current_public_evidence"]
     assert status["scale_status"] == tracked["scale_status"]
+    assert status["claim_ready"] == tracked["claim_ready"]
+    assert status["objective_completion"] == tracked["objective_completion"]
     assert status["completion_status"] == tracked["completion_status"]
     assert status["status_generator"]["command"] == "wod2sim-benchmark-status"
     assert status["status_generator"]["no_download_or_rollout_probes"] is True
@@ -318,6 +372,14 @@ def test_status_generator_does_not_require_existing_audit_artifact_for_completed
         )
 
     assert status["completion_status"]["full_objective_complete"] is True
+    assert status["claim_ready"] is True
+    assert status["objective_completion"]["complete"] is True
+    assert status["objective_completion"]["remaining_requirements"] == []
+    assert status["objective_completion"]["blocking_requirements"] == []
+    assert status["objective_completion"]["next_command_groups"] == []
+    assert status["objective_completion"]["next_command_renderer_groups"] == {}
+    assert status["objective_completion"]["satisfied_count"] == 5
+    assert status["objective_completion"]["total_count"] == 5
     assert status["status_generator"]["referenced_artifacts"] == {
         "regeneration_commands": COMMANDS_RELATIVE.as_posix(),
         "regeneration_resume_commands": RESUME_COMMANDS_RELATIVE.as_posix(),

@@ -63,8 +63,10 @@ presets or gated Hugging Face access.
 The same cache inventory is mirrored in
 [`docs/evidence/benchmark_regeneration_status_20260706.json`](evidence/benchmark_regeneration_status_20260706.json)
 under `scale_status.<preset>.source_usdz_cache` and
-`scale_status.<preset>.local_usdz_cache`; use those fields for open-repo review
-without probing private paths or runtime state.
+`scale_status.<preset>.local_usdz_cache`. The status artifact also exposes
+top-level `claim_ready=false` and compact `objective_completion` fields for
+remaining requirements, blocker IDs, and next command groups; use those fields
+for open-repo review without probing private paths or runtime state.
 
 ## Who Can Do What
 

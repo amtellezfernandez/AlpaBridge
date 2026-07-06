@@ -140,6 +140,9 @@ For scale stages, its `scale_status.<preset>.source_usdz_cache` and
 `scale_status.<preset>.local_usdz_cache` fields expose the public cache
 inventory used by the claim gate. The current snapshot records 0 source USDZ
 files after local cleanup; `matching_scene_count` of `0` for both 50/100 presets; no valid local scale cache; and no claim-valid scale summary.
+It also exposes `claim_ready` and compact `objective_completion` fields so
+reviewers can see remaining requirements, blocker IDs, and next command groups
+before opening the full audit.
 Regenerate it from the tracked compact evidence chain with
 `wod2sim-benchmark-status`; the command does not probe Docker, GPUs, or local
 scene caches.

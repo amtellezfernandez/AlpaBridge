@@ -1,4 +1,5 @@
 {
+  "claim_ready": false,
   "completion_status": {
     "full_objective_complete": false,
     "reason": "The repository tracks a valid 10-scene public summary plus a plan, readiness snapshot, and audit gate, but fresh regenerated claim-valid scale summaries are not currently present: docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json, docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json."
@@ -92,6 +93,83 @@
     "ten_scene_pilot": "docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json"
   },
   "objective": "Regenerate WOD2Sim closed-loop benchmark artifacts from scratch, validate 10-scene pilot evidence, scale to 50/100 scenes when runtime prerequisites are available, and track only public-safe artifacts.",
+  "objective_completion": {
+    "blocking_requirements": [
+      "hf_token_missing",
+      "docker_daemon_unavailable",
+      "alpasim_base_image_missing",
+      "nvidia_gpu_unavailable",
+      "docker_nvidia_runtime_unavailable",
+      "front_camera_50scene_public2602_cache_invalid",
+      "front_camera_50scene_public2602_claim_summary_missing",
+      "front_camera_100scene_public2602_cache_invalid",
+      "front_camera_100scene_public2602_claim_summary_missing"
+    ],
+    "complete": false,
+    "next_command_groups": [
+      "refresh_readiness",
+      "build_and_validate_scale_caches",
+      "run_scale_shards_and_promote_summaries",
+      "refresh_status",
+      "verify_claim_gate"
+    ],
+    "next_command_renderer_groups": {
+      "build_and_validate_scale_caches": [
+        "cache"
+      ],
+      "refresh_readiness": [
+        "readiness"
+      ],
+      "refresh_status": [
+        "post"
+      ],
+      "run_scale_shards_and_promote_summaries": [
+        "shards",
+        "merge",
+        "promote"
+      ],
+      "verify_claim_gate": [
+        "post"
+      ]
+    },
+    "remaining_requirements": [
+      "produce_claim_valid_50_scene_summary",
+      "produce_claim_valid_100_scene_summary",
+      "pass_strict_claim_gate"
+    ],
+    "requirements": [
+      {
+        "evidence": "docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json",
+        "requirement": "validate_10_scene_pilot",
+        "satisfied": true
+      },
+      {
+        "evidence": [
+          "docs/evidence/closed_loop_spotlight_reflex_50scene_localprobe_1scene.json",
+          "docs/evidence/closed_loop_spotlight_reflex_50scene_attempt_partial.json"
+        ],
+        "requirement": "track_50_scene_scale_progress",
+        "satisfied": true
+      },
+      {
+        "evidence": "docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json",
+        "requirement": "produce_claim_valid_50_scene_summary",
+        "satisfied": false
+      },
+      {
+        "evidence": "docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json",
+        "requirement": "produce_claim_valid_100_scene_summary",
+        "satisfied": false
+      },
+      {
+        "evidence": "wod2sim-benchmark-audit --strict --json",
+        "requirement": "pass_strict_claim_gate",
+        "satisfied": false
+      }
+    ],
+    "satisfied_count": 2,
+    "total_count": 5
+  },
   "public_artifact_policy": {
     "tracked": "Compact JSON summaries, documentation, commands, tests, and public-safe hashes/metrics.",
     "untracked": "Raw AlpaSim media, support bundles, USDZ scene assets, Hugging Face caches, Docker layers, and gated scene-derived files."

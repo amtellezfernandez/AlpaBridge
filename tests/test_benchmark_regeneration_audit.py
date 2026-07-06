@@ -56,6 +56,11 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
                 "readiness_next_command_group_renderer_groups_match_state"
             ]
         )
+        self.assertTrue(audit["status_consistency"]["valid"])
+        self.assertTrue(audit["status_consistency"]["checks"]["status_claim_ready_matches_audit"])
+        self.assertTrue(
+            audit["status_consistency"]["checks"]["status_objective_completion_matches_audit"]
+        )
         self.assertTrue(audit["diagnostic_evidence"]["valid"])
         self.assertTrue(audit["regeneration_plan"]["valid"])
         self.assertEqual(PLAN_RELATIVE.as_posix(), audit["regeneration_plan"]["artifact"])
@@ -946,6 +951,31 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         )
         self.assertIn(
             "status.evidence_artifacts does not match the audited evidence chain",
+            audit["status_consistency"]["notes"],
+        )
+
+    def test_status_objective_completion_drift_invalidates_audit(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            evidence = repo_root / "docs" / "evidence"
+            evidence.mkdir(parents=True)
+            shutil.copy2(ROOT / PLAN_RELATIVE, evidence / PLAN_RELATIVE.name)
+            _copy_status_and_probe(evidence)
+            shutil.copy2(ROOT / READINESS_RELATIVE, evidence / READINESS_RELATIVE.name)
+            status_path = evidence / STATUS_RELATIVE.name
+            status = _read_json(status_path)
+            status["objective_completion"]["remaining_requirements"] = []
+            _write_json(status_path, status)
+
+            audit = module.build_audit(repo_root=repo_root, created_at="2026-07-06")
+
+        self.assertFalse(audit["valid"])
+        self.assertFalse(
+            audit["status_consistency"]["checks"]["status_objective_completion_matches_audit"]
+        )
+        self.assertIn(
+            "status.objective_completion does not match audited objective completion",
             audit["status_consistency"]["notes"],
         )
 

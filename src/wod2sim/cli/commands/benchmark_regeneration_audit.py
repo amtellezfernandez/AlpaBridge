@@ -114,15 +114,6 @@ def build_audit(
 
     input_valid = not errors
     claim_ready = input_valid and all(stage["claim_valid"] for stage in stage_reports)
-    status_consistency = _status_consistency(
-        plan_path=plan_path,
-        readiness_artifact=readiness_artifact,
-        readiness=readiness,
-        status=status,
-        stage_reports=stage_reports,
-        claim_ready=claim_ready,
-        repo_root=repo_root,
-    )
     readiness_consistency = _readiness_consistency(
         plan_path=plan_path,
         status_path=status_path,
@@ -136,6 +127,16 @@ def build_audit(
         diagnostic_evidence=diagnostic_evidence,
         readiness=readiness,
         claim_ready=claim_ready,
+    )
+    status_consistency = _status_consistency(
+        plan_path=plan_path,
+        readiness_artifact=readiness_artifact,
+        readiness=readiness,
+        status=status,
+        stage_reports=stage_reports,
+        claim_ready=claim_ready,
+        objective_completion=objective_completion,
+        repo_root=repo_root,
     )
     regeneration_plan = _regeneration_plan_consistency(
         plan_path=plan_path,
@@ -1161,10 +1162,15 @@ def _status_consistency(
     status: dict[str, Any],
     stage_reports: list[dict[str, Any]],
     claim_ready: bool,
+    objective_completion: dict[str, Any],
     repo_root: Path,
 ) -> dict[str, Any]:
     checks: dict[str, bool] = {}
     notes: list[str] = []
+
+    checks["status_claim_ready_matches_audit"] = status.get("claim_ready") is claim_ready
+    if not checks["status_claim_ready_matches_audit"]:
+        notes.append("status.claim_ready does not match audited claim_ready")
 
     completion_status = _dict_or_empty(status.get("completion_status"))
     checks["full_objective_flag_matches_audit"] = (
@@ -1172,6 +1178,25 @@ def _status_consistency(
     )
     if not checks["full_objective_flag_matches_audit"]:
         notes.append("completion_status.full_objective_complete does not match audited claim_ready")
+
+    status_objective_completion = _dict_or_empty(status.get("objective_completion"))
+    checks["status_objective_completion_matches_audit"] = (
+        status_objective_completion.get("complete") is claim_ready
+        and _optional_int(status_objective_completion.get("satisfied_count"))
+        == _optional_int(objective_completion.get("satisfied_count"))
+        and _optional_int(status_objective_completion.get("total_count"))
+        == _optional_int(objective_completion.get("total_count"))
+        and status_objective_completion.get("remaining_requirements")
+        == objective_completion.get("remaining_requirements")
+        and status_objective_completion.get("blocking_requirements")
+        == objective_completion.get("blocking_requirements")
+        and status_objective_completion.get("next_command_groups")
+        == objective_completion.get("next_command_groups")
+        and status_objective_completion.get("next_command_renderer_groups")
+        == objective_completion.get("next_command_renderer_groups")
+    )
+    if not checks["status_objective_completion_matches_audit"]:
+        notes.append("status.objective_completion does not match audited objective completion")
 
     public_evidence = _dict_or_empty(status.get("current_public_evidence"))
     ten_scene_status = _dict_or_empty(public_evidence.get("ten_scene_pilot"))

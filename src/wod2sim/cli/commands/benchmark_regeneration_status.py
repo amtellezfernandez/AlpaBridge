@@ -183,6 +183,23 @@ def build_status(
     ]
     scale_status = _scale_status(plan=plan, readiness=readiness, stage_reports=stage_reports)
     claim_ready = bool(stage_reports) and all(stage["claim_valid"] for stage in stage_reports)
+    current_public_evidence = {
+        "ten_scene_pilot": _pilot_status(pilot=pilot, pilot_path=pilot_path),
+        "fifty_scene_local_probe": _scale_probe_status(
+            summary=scale_probe_50,
+            summary_path=scale_probe_50_path,
+        ),
+        "fifty_scene_partial_attempt": _scale_attempt_status(
+            summary=scale_attempt_50,
+            summary_path=scale_attempt_50_path,
+        ),
+    }
+    objective_completion = _objective_completion_status(
+        stage_reports=stage_reports,
+        readiness=readiness,
+        current_public_evidence=current_public_evidence,
+        claim_ready=claim_ready,
+    )
 
     return {
         "schema": STATUS_SCHEMA,
@@ -219,17 +236,9 @@ def build_status(
                 "caches, Docker layers, and gated scene-derived files."
             ),
         },
-        "current_public_evidence": {
-            "ten_scene_pilot": _pilot_status(pilot=pilot, pilot_path=pilot_path),
-            "fifty_scene_local_probe": _scale_probe_status(
-                summary=scale_probe_50,
-                summary_path=scale_probe_50_path,
-            ),
-            "fifty_scene_partial_attempt": _scale_attempt_status(
-                summary=scale_attempt_50,
-                summary_path=scale_attempt_50_path,
-            ),
-        },
+        "claim_ready": claim_ready,
+        "objective_completion": objective_completion,
+        "current_public_evidence": current_public_evidence,
         "current_local_runtime_state": _runtime_state_from_readiness(
             readiness=readiness,
             readiness_path=readiness_path,
@@ -411,6 +420,122 @@ def _scale_status(
     return rows
 
 
+def _objective_completion_status(
+    *,
+    stage_reports: list[dict[str, Any]],
+    readiness: dict[str, Any],
+    current_public_evidence: dict[str, Any],
+    claim_ready: bool,
+) -> dict[str, Any]:
+    requirements = _objective_requirements(
+        stage_reports=stage_reports,
+        current_public_evidence=current_public_evidence,
+        claim_ready=claim_ready,
+    )
+    remaining_requirements = [
+        str(requirement["requirement"])
+        for requirement in requirements
+        if requirement.get("satisfied") is not True
+    ]
+    return {
+        "complete": claim_ready,
+        "satisfied_count": len(requirements) - len(remaining_requirements),
+        "total_count": len(requirements),
+        "remaining_requirements": remaining_requirements,
+        "blocking_requirements": [] if claim_ready else _readiness_blocker_ids(readiness),
+        "next_command_groups": [] if claim_ready else _readiness_next_group_names(readiness),
+        "next_command_renderer_groups": (
+            {} if claim_ready else _readiness_next_command_renderer_groups(readiness)
+        ),
+        "requirements": requirements,
+    }
+
+
+def _objective_requirements(
+    *,
+    stage_reports: list[dict[str, Any]],
+    current_public_evidence: dict[str, Any],
+    claim_ready: bool,
+) -> list[dict[str, Any]]:
+    ten_scene = _stage_report_by_scene_count(stage_reports, 10)
+    fifty_scene = _stage_report_by_scene_count(stage_reports, 50)
+    hundred_scene = _stage_report_by_scene_count(stage_reports, 100)
+    diagnostic_progress = claim_ready or any(
+        _dict_or_empty(current_public_evidence.get(key)).get("present") is True
+        for key in ("fifty_scene_local_probe", "fifty_scene_partial_attempt")
+    )
+    return [
+        {
+            "requirement": "validate_10_scene_pilot",
+            "satisfied": bool(ten_scene and ten_scene.get("claim_valid")),
+            "evidence": ten_scene.get("summary_artifact") if ten_scene else None,
+        },
+        {
+            "requirement": "track_50_scene_scale_progress",
+            "satisfied": diagnostic_progress,
+            "evidence": [
+                _dict_or_empty(current_public_evidence.get(key)).get("artifact")
+                for key in ("fifty_scene_local_probe", "fifty_scene_partial_attempt")
+                if _dict_or_empty(current_public_evidence.get(key)).get("present") is True
+            ],
+        },
+        {
+            "requirement": "produce_claim_valid_50_scene_summary",
+            "satisfied": bool(fifty_scene and fifty_scene.get("claim_valid")),
+            "evidence": fifty_scene.get("summary_artifact") if fifty_scene else None,
+        },
+        {
+            "requirement": "produce_claim_valid_100_scene_summary",
+            "satisfied": bool(hundred_scene and hundred_scene.get("claim_valid")),
+            "evidence": hundred_scene.get("summary_artifact") if hundred_scene else None,
+        },
+        {
+            "requirement": "pass_strict_claim_gate",
+            "satisfied": claim_ready,
+            "evidence": "wod2sim-benchmark-audit --strict --json",
+        },
+    ]
+
+
+def _stage_report_by_scene_count(
+    stage_reports: list[dict[str, Any]], scene_count: int
+) -> dict[str, Any]:
+    for stage_report in stage_reports:
+        if _optional_int(stage_report.get("expected_scene_count")) == scene_count:
+            return stage_report
+    return {}
+
+
+def _readiness_blocker_ids(readiness: dict[str, Any]) -> list[str]:
+    return [
+        str(blocker.get("id"))
+        for blocker in _list_of_dicts(readiness.get("blocking_requirements"))
+        if blocker.get("id")
+    ]
+
+
+def _readiness_next_group_names(readiness: dict[str, Any]) -> list[str]:
+    return [
+        str(group.get("name"))
+        for group in _list_of_dicts(readiness.get("next_command_groups"))
+        if group.get("name")
+    ]
+
+
+def _readiness_next_command_renderer_groups(readiness: dict[str, Any]) -> dict[str, list[str]]:
+    groups: dict[str, list[str]] = {}
+    for group in _list_of_dicts(readiness.get("next_command_groups")):
+        name = group.get("name")
+        if not isinstance(name, str) or not name:
+            continue
+        groups[name] = [
+            str(value)
+            for value in _list_or_empty(group.get("command_renderer_groups"))
+            if isinstance(value, str) and value
+        ]
+    return groups
+
+
 def _cache_inventory_status(cache: dict[str, Any]) -> dict[str, Any]:
     validation = _dict_or_empty(cache.get("validation"))
     return {
@@ -499,6 +624,10 @@ def _list_of_dicts(value: object) -> list[dict[str, Any]]:
     if not isinstance(value, list):
         return []
     return [item for item in value if isinstance(item, dict)]
+
+
+def _list_or_empty(value: object) -> list[object]:
+    return value if isinstance(value, list) else []
 
 
 def _dict_or_empty(value: object) -> dict[str, Any]:

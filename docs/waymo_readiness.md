@@ -187,7 +187,9 @@ The no-download/no-rollout host readiness snapshot is
 The public benchmark status is
 [`docs/evidence/benchmark_regeneration_status_20260706.json`](evidence/benchmark_regeneration_status_20260706.json)
 and is regenerated with `wod2sim-benchmark-status` after readiness and before
-the strict audit.
+the strict audit. It exposes `claim_ready`, compact `objective_completion`
+fields, and per-scale-stage cache/summary readiness without probing private
+paths or runtime state.
 The compact evidence manifest is
 [`docs/evidence/benchmark_public_evidence_manifest_20260706.json`](evidence/benchmark_public_evidence_manifest_20260706.json)
 and is regenerated with `wod2sim-benchmark-evidence-manifest`; it records hashes
