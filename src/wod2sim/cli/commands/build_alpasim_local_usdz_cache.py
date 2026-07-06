@@ -149,9 +149,12 @@ def validate_local_usdz_cache(
     local_usdz_dir: Path,
     hf_revision: str,
 ) -> dict[str, Any]:
-    existing = _existing_by_scene(local_usdz_dir) if local_usdz_dir.is_dir() else {}
+    existing, invalid_cache_files = (
+        _scan_existing_by_scene(local_usdz_dir) if local_usdz_dir.is_dir() else ({}, [])
+    )
+    expected_scene_ids = set(scene_ids)
     missing_scene_ids = [scene_id for scene_id in scene_ids if scene_id not in existing]
-    extra_scene_ids = sorted(scene_id for scene_id in existing if scene_id not in set(scene_ids))
+    extra_scene_ids = sorted(scene_id for scene_id in existing if scene_id not in expected_scene_ids)
     invalid_revisions = [
         scene_id
         for scene_id in scene_ids
@@ -173,6 +176,7 @@ def validate_local_usdz_cache(
         and not missing_scene_ids
         and not invalid_revisions
         and not duplicate_uuids
+        and not invalid_cache_files
     )
     return {
         "schema": "wod2sim_local_usdz_cache_validation_v1",
@@ -185,6 +189,7 @@ def validate_local_usdz_cache(
         "missing_scene_ids": missing_scene_ids,
         "extra_scene_ids": extra_scene_ids,
         "invalid_revision_scene_ids": invalid_revisions,
+        "invalid_cache_files": invalid_cache_files,
         "duplicate_uuids": duplicate_uuids,
         "scenes": [
             {"scene_id": scene_id, **existing[scene_id]}
@@ -333,16 +338,74 @@ def _fetch_one(
 
 
 def _existing_by_scene(local_usdz_dir: Path) -> dict[str, dict[str, str]]:
+    existing, invalid_cache_files = _scan_existing_by_scene(local_usdz_dir)
+    if invalid_cache_files:
+        raise RuntimeError(_format_cache_scan_errors(invalid_cache_files))
+    return existing
+
+
+def _scan_existing_by_scene(local_usdz_dir: Path) -> tuple[dict[str, dict[str, str]], list[dict[str, str]]]:
     existing: dict[str, dict[str, str]] = {}
-    for path in local_usdz_dir.glob("*.usdz"):
-        metadata = _metadata_for(path)
-        scene_id = str(metadata.get("scene_id"))
+    invalid_cache_files: list[dict[str, str]] = []
+    for path in sorted(local_usdz_dir.glob("*.usdz")):
+        try:
+            metadata = _metadata_for(path)
+        except (KeyError, OSError, RuntimeError, zipfile.BadZipFile, yaml.YAMLError) as exc:
+            invalid_cache_files.append(
+                {
+                    "path": str(path),
+                    "kind": "read_error",
+                    "error": str(exc),
+                }
+            )
+            continue
+
+        scene_id = _metadata_text(metadata, "scene_id")
+        uuid = _metadata_text(metadata, "uuid")
+        version_string = _metadata_text(metadata, "version_string")
+        missing_fields = [
+            field_name
+            for field_name, value in (("scene_id", scene_id), ("uuid", uuid))
+            if not value
+        ]
+        if missing_fields:
+            invalid_cache_files.append(
+                {
+                    "path": str(path),
+                    "kind": "missing_metadata_field",
+                    "error": "missing required metadata field(s): " + ", ".join(missing_fields),
+                }
+            )
+            continue
+        if scene_id in existing:
+            invalid_cache_files.append(
+                {
+                    "path": str(path),
+                    "kind": "duplicate_scene_id",
+                    "error": f"duplicate scene_id {scene_id!r}; first path {existing[scene_id]['path']}",
+                }
+            )
+            continue
         existing[scene_id] = {
             "path": str(path),
-            "uuid": str(metadata.get("uuid")),
-            "version_string": str(metadata.get("version_string")),
+            "uuid": uuid,
+            "version_string": version_string,
         }
-    return existing
+    return existing, invalid_cache_files
+
+
+def _metadata_text(metadata: dict[str, Any], key: str) -> str:
+    value = metadata.get(key)
+    return "" if value is None else str(value).strip()
+
+
+def _format_cache_scan_errors(invalid_cache_files: list[dict[str, str]]) -> str:
+    samples = [
+        f"{item['path']}: {item['error']}"
+        for item in invalid_cache_files[:3]
+    ]
+    suffix = f"; {len(invalid_cache_files) - 3} more" if len(invalid_cache_files) > 3 else ""
+    return f"local USDZ cache contains {len(invalid_cache_files)} invalid file(s): {'; '.join(samples)}{suffix}"
 
 
 def _metadata_version_matches(version_string: str, hf_revision: str) -> bool:

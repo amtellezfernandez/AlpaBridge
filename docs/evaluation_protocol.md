@@ -135,6 +135,9 @@ public summary. Validate the local USDZ cache offline with
 compact summaries with `wod2sim-batch-summary --merge-summary ...
 --expected-scene-count N`, then promote the validated summary with
 `wod2sim-promote-batch-summary`.
+Validation failures are machine-readable: `missing_scene_ids`,
+`invalid_revision_scene_ids`, or `invalid_cache_files` must be resolved before
+claim-valid scale shards are started.
 The public claim gate for those artifacts is tracked at
 [`docs/evidence/benchmark_regeneration_audit_20260706.json`](evidence/benchmark_regeneration_audit_20260706.json).
 For merged scale summaries, the audit also verifies that the recorded shard

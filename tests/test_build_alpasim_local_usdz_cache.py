@@ -130,6 +130,61 @@ class BuildAlpaSimLocalUsdzCacheTests(unittest.TestCase):
         self.assertEqual(["scene-b"], report["missing_scene_ids"])
         self.assertEqual(["scene-a"], report["invalid_revision_scene_ids"])
 
+    def test_validate_local_usdz_cache_reports_corrupt_usdz_without_crashing(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            cache_dir = Path(tmp)
+            _write_usdz(cache_dir / "uuid-a.usdz", scene_id="scene-a", uuid="uuid-a")
+            (cache_dir / "corrupt.usdz").write_text("not a zip archive", encoding="utf-8")
+
+            report = validate_local_usdz_cache(
+                scene_preset="front_camera_50scene_public2602",
+                scene_ids=["scene-a", "scene-b"],
+                local_usdz_dir=cache_dir,
+                hf_revision="26.02",
+            )
+
+        self.assertFalse(report["valid"])
+        self.assertEqual(1, report["present_scene_count"])
+        self.assertEqual(["scene-b"], report["missing_scene_ids"])
+        self.assertEqual(
+            [{"path": str(cache_dir / "corrupt.usdz"), "kind": "read_error", "error": "File is not a zip file"}],
+            report["invalid_cache_files"],
+        )
+
+    def test_validate_local_usdz_cache_reports_missing_required_metadata(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            cache_dir = Path(tmp)
+            with zipfile.ZipFile(cache_dir / "uuid-a.usdz", "w") as archive:
+                archive.writestr("metadata.yaml", yaml.safe_dump({"uuid": "uuid-a"}))
+
+            report = validate_local_usdz_cache(
+                scene_preset="front_camera_50scene_public2602",
+                scene_ids=["scene-a"],
+                local_usdz_dir=cache_dir,
+                hf_revision="26.02",
+            )
+
+        self.assertFalse(report["valid"])
+        self.assertEqual(["scene-a"], report["missing_scene_ids"])
+        self.assertEqual(
+            [
+                {
+                    "path": str(cache_dir / "uuid-a.usdz"),
+                    "kind": "missing_metadata_field",
+                    "error": "missing required metadata field(s): scene_id",
+                }
+            ],
+            report["invalid_cache_files"],
+        )
+
+    def test_existing_by_scene_raises_clear_error_for_invalid_cache_file(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            cache_dir = Path(tmp)
+            (cache_dir / "corrupt.usdz").write_text("not a zip archive", encoding="utf-8")
+
+            with self.assertRaisesRegex(RuntimeError, "local USDZ cache contains 1 invalid file"):
+                _existing_by_scene(cache_dir)
+
     def test_validate_only_main_is_offline_and_does_not_query_huggingface(self) -> None:
         from wod2sim.cli.commands import build_alpasim_local_usdz_cache as module
 
