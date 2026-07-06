@@ -1,6 +1,16 @@
 {
   "commands": [
     {
+      "command": "cleanup_ignored_benchmark_artifacts",
+      "display": "wod2sim-benchmark-cleanup --json",
+      "execution_boundary": "public_metadata_review",
+      "group": "cleanup",
+      "operator_role": "open_repo_reviewer",
+      "requires_private_execution_context": false,
+      "scene_preset": null,
+      "stage": null
+    },
+    {
       "command": "check_readiness",
       "display": "wod2sim-benchmark-readiness --alpasim-root /path/to/alpasim --output docs/evidence/benchmark_regeneration_readiness_20260706.json --stable-public-snapshot --skip-runtime-probes --json",
       "execution_boundary": "public_metadata_review",
@@ -527,7 +537,7 @@
     "claim_summary_promotion": 3,
     "live_closed_loop_rollout": 32,
     "private_cache_preparation": 6,
-    "public_metadata_review": 3
+    "public_metadata_review": 4
   },
   "filters": {
     "groups": [
@@ -538,6 +548,7 @@
   },
   "group_counts": {
     "cache": 6,
+    "cleanup": 1,
     "merge": 2,
     "post": 2,
     "promote": 3,
@@ -549,15 +560,15 @@
     "cache_builder": 6,
     "claim_promoter": 5,
     "closed_loop_runner": 32,
-    "open_repo_reviewer": 3
+    "open_repo_reviewer": 4
   },
   "plan_artifact": "docs/evidence/benchmark_regeneration_plan_20260706.json",
   "private_execution_command_count": 43,
-  "public_review_command_count": 3,
+  "public_review_command_count": 4,
   "renderer": {
     "command": "wod2sim-benchmark-commands",
     "no_runtime_execution": true
   },
-  "row_count": 46,
+  "row_count": 47,
   "schema": "wod2sim_benchmark_regeneration_commands_v1"
 }

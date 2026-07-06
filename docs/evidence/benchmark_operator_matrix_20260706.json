@@ -6,10 +6,11 @@
       "claim_summary_promotion": 3,
       "live_closed_loop_rollout": 32,
       "private_cache_preparation": 6,
-      "public_metadata_review": 3
+      "public_metadata_review": 4
     },
     "group_counts": {
       "cache": 6,
+      "cleanup": 1,
       "merge": 2,
       "post": 2,
       "promote": 3,
@@ -21,11 +22,11 @@
       "cache_builder": 6,
       "claim_promoter": 5,
       "closed_loop_runner": 32,
-      "open_repo_reviewer": 3
+      "open_repo_reviewer": 4
     },
     "private_execution_command_count": 43,
-    "public_review_command_count": 3,
-    "row_count": 46
+    "public_review_command_count": 4,
+    "row_count": 47
   },
   "created_at": "2026-07-06",
   "current_local_state": {
@@ -181,13 +182,13 @@
       "claim_summary_promotion": 3,
       "live_closed_loop_rollout": 32,
       "private_cache_preparation": 6,
-      "public_metadata_review": 3
+      "public_metadata_review": 4
     },
     "command_operator_role_counts": {
       "cache_builder": 6,
       "claim_promoter": 5,
       "closed_loop_runner": 32,
-      "open_repo_reviewer": 3
+      "open_repo_reviewer": 4
     },
     "live_rollout_host_requirement": "x86_64 Linux with Docker, NVIDIA runtime, AlpaSim images, valid local USDZ caches, and gated scene access",
     "next_command_groups": [
@@ -219,7 +220,7 @@
     "open_repo_review_ready": true,
     "private_execution_command_count": 43,
     "public_claim_boundary": "Open-repo reviewers can audit compact public evidence; new 50/100 closed-loop claims require completed full-stage summaries.",
-    "public_review_command_count": 3,
+    "public_review_command_count": 4,
     "ready_roles": [
       "open_repo_reviewer",
       "arm_dgx_spark_host"

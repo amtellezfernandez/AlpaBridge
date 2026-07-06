@@ -369,8 +369,8 @@
       "readiness",
       "shards"
     ],
-    "sha256": "173e8ec2d9c30efe3af76a88058afed442d16efa061388a0cde7fe5582a9e5cd",
-    "size_bytes": 9946,
+    "sha256": "89c88fce2d761a8321d80ceff90fe6c6229d6cf09e8c49ae3f48cb41e2c442b3",
+    "size_bytes": 9996,
     "valid": true
   },
   "readiness_artifact": "docs/evidence/benchmark_regeneration_readiness_20260706.json",
@@ -429,10 +429,11 @@
       "claim_summary_promotion": 3,
       "live_closed_loop_rollout": 32,
       "private_cache_preparation": 6,
-      "public_metadata_review": 3
+      "public_metadata_review": 4
     },
     "group_counts": {
       "cache": 6,
+      "cleanup": 1,
       "merge": 2,
       "post": 2,
       "promote": 3,
@@ -445,10 +446,10 @@
       "cache_builder": 6,
       "claim_promoter": 5,
       "closed_loop_runner": 32,
-      "open_repo_reviewer": 3
+      "open_repo_reviewer": 4
     },
     "private_execution_command_count": 43,
-    "public_review_command_count": 3,
+    "public_review_command_count": 4,
     "readiness_renderer_groups": [
       "cache",
       "merge",
@@ -457,7 +458,7 @@
       "readiness",
       "shards"
     ],
-    "row_count": 46,
+    "row_count": 47,
     "valid": true
   },
   "regeneration_plan": {

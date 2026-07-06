@@ -88,7 +88,7 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
                 "claim_summary_promotion": 3,
                 "live_closed_loop_rollout": 32,
                 "private_cache_preparation": 6,
-                "public_metadata_review": 3,
+                "public_metadata_review": 4,
             },
             audit["regeneration_commands"]["execution_boundary_counts"],
         )

@@ -34,10 +34,10 @@ def test_operator_matrix_builder_reflects_tracked_readiness_blockers() -> None:
     assert matrix["generator"]["no_download_or_rollout_probes"] is True
     assert summary["open_repo_review_ready"] is True
     assert summary["claim_ready"] is False
-    assert summary["command_execution_boundary_counts"]["public_metadata_review"] == 3
+    assert summary["command_execution_boundary_counts"]["public_metadata_review"] == 4
     assert summary["command_operator_role_counts"]["closed_loop_runner"] == 32
     assert summary["private_execution_command_count"] == 43
-    assert summary["public_review_command_count"] == 3
+    assert summary["public_review_command_count"] == 4
     assert "open_repo_reviewer" in summary["ready_roles"]
     assert "closed_loop_runner" in summary["blocked_roles"]
     assert "build_and_validate_scale_caches" in summary["next_command_groups"]
@@ -118,10 +118,11 @@ def test_tracked_operator_matrix_is_public_safe_and_explicit_about_who_can_run()
             "claim_summary_promotion": 3,
             "live_closed_loop_rollout": 32,
             "private_cache_preparation": 6,
-            "public_metadata_review": 3,
+            "public_metadata_review": 4,
         },
         "group_counts": {
             "cache": 6,
+            "cleanup": 1,
             "merge": 2,
             "post": 2,
             "promote": 3,
@@ -133,11 +134,11 @@ def test_tracked_operator_matrix_is_public_safe_and_explicit_about_who_can_run()
             "cache_builder": 6,
             "claim_promoter": 5,
             "closed_loop_runner": 32,
-            "open_repo_reviewer": 3,
+            "open_repo_reviewer": 4,
         },
         "private_execution_command_count": 43,
-        "public_review_command_count": 3,
-        "row_count": 46,
+        "public_review_command_count": 4,
+        "row_count": 47,
     }
     assert summary["ready_tasks"] == ["review_public_evidence"]
     assert summary["blocked_tasks"] == [
