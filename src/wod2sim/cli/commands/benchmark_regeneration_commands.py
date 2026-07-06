@@ -20,6 +20,43 @@ GROUPS = (
     "promote",
     "post",
 )
+COMMAND_BOUNDARIES = {
+    "readiness": {
+        "execution_boundary": "public_metadata_review",
+        "operator_role": "open_repo_reviewer",
+        "requires_private_execution_context": False,
+    },
+    "cache": {
+        "execution_boundary": "private_cache_preparation",
+        "operator_role": "cache_builder",
+        "requires_private_execution_context": True,
+    },
+    "run": {
+        "execution_boundary": "live_closed_loop_rollout",
+        "operator_role": "closed_loop_runner",
+        "requires_private_execution_context": True,
+    },
+    "shards": {
+        "execution_boundary": "live_closed_loop_rollout",
+        "operator_role": "closed_loop_runner",
+        "requires_private_execution_context": True,
+    },
+    "merge": {
+        "execution_boundary": "claim_summary_merge",
+        "operator_role": "claim_promoter",
+        "requires_private_execution_context": True,
+    },
+    "promote": {
+        "execution_boundary": "claim_summary_promotion",
+        "operator_role": "claim_promoter",
+        "requires_private_execution_context": True,
+    },
+    "post": {
+        "execution_boundary": "public_metadata_review",
+        "operator_role": "open_repo_reviewer",
+        "requires_private_execution_context": False,
+    },
+}
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -108,6 +145,10 @@ def build_command_artifact(
         shard_indexes=shard_indexes,
     )
     group_counts = Counter(str(row.get("group") or "unknown") for row in rows)
+    execution_boundary_counts = Counter(
+        str(row.get("execution_boundary") or "unknown") for row in rows
+    )
+    operator_role_counts = Counter(str(row.get("operator_role") or "unknown") for row in rows)
     return {
         "schema": COMMANDS_SCHEMA,
         "created_at": created_at or datetime.now().isoformat(timespec="seconds"),
@@ -123,6 +164,14 @@ def build_command_artifact(
         },
         "row_count": len(rows),
         "group_counts": dict(sorted(group_counts.items())),
+        "execution_boundary_counts": dict(sorted(execution_boundary_counts.items())),
+        "operator_role_counts": dict(sorted(operator_role_counts.items())),
+        "private_execution_command_count": sum(
+            1 for row in rows if bool(row.get("requires_private_execution_context"))
+        ),
+        "public_review_command_count": sum(
+            1 for row in rows if not bool(row.get("requires_private_execution_context"))
+        ),
         "commands": rows,
     }
 
@@ -253,13 +302,13 @@ def _command_rows(
         if not display:
             continue
         rows.append(
-            {
-                "group": group,
-                "stage": stage.get("stage") if stage is not None else None,
-                "scene_preset": stage.get("scene_preset") if stage is not None else scene_preset,
-                "command": command_name,
-                "display": display,
-            }
+            _command_row(
+                group=group,
+                stage=stage.get("stage") if stage is not None else None,
+                scene_preset=stage.get("scene_preset") if stage is not None else scene_preset,
+                command=command_name,
+                display=display,
+            )
         )
     return rows
 
@@ -290,21 +339,44 @@ def _post_command_rows(plan: dict[str, Any]) -> list[dict[str, Any]]:
         plan.get("status_artifact") or "docs/evidence/benchmark_regeneration_status_20260706.json"
     )
     return [
-        {
-            "group": "post",
-            "stage": None,
-            "scene_preset": None,
-            "command": "refresh_status",
-            "display": f"wod2sim-benchmark-status --output {status_artifact} --json",
-        },
-        {
-            "group": "post",
-            "stage": None,
-            "scene_preset": None,
-            "command": "verify_claim_gate",
-            "display": "wod2sim-benchmark-audit --strict --json",
-        },
+        _command_row(
+            group="post",
+            stage=None,
+            scene_preset=None,
+            command="refresh_status",
+            display=f"wod2sim-benchmark-status --output {status_artifact} --json",
+        ),
+        _command_row(
+            group="post",
+            stage=None,
+            scene_preset=None,
+            command="verify_claim_gate",
+            display="wod2sim-benchmark-audit --strict --json",
+        ),
     ]
+
+
+def _command_row(
+    *,
+    group: str,
+    stage: object,
+    scene_preset: object,
+    command: str,
+    display: str,
+) -> dict[str, Any]:
+    boundary = _dict_or_empty(COMMAND_BOUNDARIES.get(group))
+    return {
+        "group": group,
+        "stage": stage,
+        "scene_preset": scene_preset,
+        "command": command,
+        "display": display,
+        "execution_boundary": boundary.get("execution_boundary", "unknown"),
+        "operator_role": boundary.get("operator_role", "unknown"),
+        "requires_private_execution_context": bool(
+            boundary.get("requires_private_execution_context", True)
+        ),
+    }
 
 
 def _read_json(path: Path) -> dict[str, Any]:

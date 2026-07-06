@@ -69,6 +69,29 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
                 "regeneration_commands_cover_readiness_renderer_groups"
             ]
         )
+        self.assertTrue(
+            audit["regeneration_commands"]["checks"][
+                "regeneration_commands_execution_boundary_counts_match"
+            ]
+        )
+        self.assertTrue(
+            audit["regeneration_commands"]["checks"][
+                "regeneration_commands_operator_role_counts_match"
+            ]
+        )
+        self.assertTrue(
+            audit["regeneration_commands"]["checks"]["regeneration_commands_boundary_totals_match"]
+        )
+        self.assertEqual(
+            {
+                "claim_summary_merge": 2,
+                "claim_summary_promotion": 3,
+                "live_closed_loop_rollout": 32,
+                "private_cache_preparation": 6,
+                "public_metadata_review": 3,
+            },
+            audit["regeneration_commands"]["execution_boundary_counts"],
+        )
         self.assertTrue(audit["operator_matrix"]["valid"])
         self.assertEqual(OPERATOR_MATRIX_RELATIVE.as_posix(), audit["operator_matrix"]["artifact"])
         self.assertTrue(
@@ -789,6 +812,32 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         )
         self.assertIn(
             "regeneration commands do not cover readiness command_renderer_groups",
+            audit["regeneration_commands"]["notes"],
+        )
+
+    def test_regeneration_commands_boundary_count_drift_invalidates_audit(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            evidence = repo_root / "docs" / "evidence"
+            evidence.mkdir(parents=True)
+            _copy_evidence_jsons(evidence)
+            commands_path = evidence / COMMANDS_RELATIVE.name
+            commands = _read_json(commands_path)
+            commands["execution_boundary_counts"]["live_closed_loop_rollout"] = 0
+            _write_json(commands_path, commands)
+            _refresh_manifest_hash(evidence / MANIFEST_RELATIVE.name, COMMANDS_RELATIVE)
+
+            audit = module.build_audit(repo_root=repo_root, created_at="2026-07-06")
+
+        self.assertFalse(audit["valid"])
+        self.assertFalse(
+            audit["regeneration_commands"]["checks"][
+                "regeneration_commands_execution_boundary_counts_match"
+            ]
+        )
+        self.assertIn(
+            "regeneration commands execution_boundary_counts do not match expected rows",
             audit["regeneration_commands"]["notes"],
         )
 

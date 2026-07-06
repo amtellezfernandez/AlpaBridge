@@ -1208,6 +1208,43 @@ def _regeneration_commands_consistency(
     if not checks["regeneration_commands_group_counts_match"]:
         notes.append("regeneration commands group_counts do not match expected rows")
 
+    expected_execution_boundary_counts = dict(
+        sorted(
+            Counter(
+                str(row.get("execution_boundary") or "unknown") for row in expected_rows
+            ).items()
+        )
+    )
+    checks["regeneration_commands_execution_boundary_counts_match"] = (
+        _dict_or_empty(commands.get("execution_boundary_counts"))
+        == expected_execution_boundary_counts
+    )
+    if not checks["regeneration_commands_execution_boundary_counts_match"]:
+        notes.append("regeneration commands execution_boundary_counts do not match expected rows")
+
+    expected_operator_role_counts = dict(
+        sorted(Counter(str(row.get("operator_role") or "unknown") for row in expected_rows).items())
+    )
+    checks["regeneration_commands_operator_role_counts_match"] = (
+        _dict_or_empty(commands.get("operator_role_counts")) == expected_operator_role_counts
+    )
+    if not checks["regeneration_commands_operator_role_counts_match"]:
+        notes.append("regeneration commands operator_role_counts do not match expected rows")
+
+    expected_private_execution_count = sum(
+        1 for row in expected_rows if bool(row.get("requires_private_execution_context"))
+    )
+    expected_public_review_count = len(expected_rows) - expected_private_execution_count
+    checks["regeneration_commands_boundary_totals_match"] = (
+        _int_value(commands.get("private_execution_command_count"))
+        == expected_private_execution_count
+        and _int_value(commands.get("public_review_command_count")) == expected_public_review_count
+    )
+    if not checks["regeneration_commands_boundary_totals_match"]:
+        notes.append(
+            "regeneration commands public/private execution totals do not match expected rows"
+        )
+
     readiness_renderer_groups = _readiness_command_renderer_groups(readiness)
     command_group_counts = _dict_or_empty(commands.get("group_counts"))
     checks["regeneration_commands_cover_readiness_renderer_groups"] = all(
@@ -1227,6 +1264,12 @@ def _regeneration_commands_consistency(
         "notes": notes,
         "row_count": len(rows),
         "group_counts": _dict_or_empty(commands.get("group_counts")),
+        "execution_boundary_counts": _dict_or_empty(commands.get("execution_boundary_counts")),
+        "operator_role_counts": _dict_or_empty(commands.get("operator_role_counts")),
+        "private_execution_command_count": _int_value(
+            commands.get("private_execution_command_count")
+        ),
+        "public_review_command_count": _int_value(commands.get("public_review_command_count")),
         "readiness_renderer_groups": readiness_renderer_groups,
     }
 

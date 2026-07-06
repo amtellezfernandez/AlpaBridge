@@ -272,8 +272,8 @@
       "readiness",
       "shards"
     ],
-    "sha256": "a193e1278103ec9f2a9b2be2245b01e54312d738b973ad96e2c91be42296bb6e",
-    "size_bytes": 9245,
+    "sha256": "b2e724f3c129d55969384d10d37c2828a7a8a473d0cb2ae771af25d97012db44",
+    "size_bytes": 9300,
     "valid": true
   },
   "readiness_artifact": "docs/evidence/benchmark_regeneration_readiness_20260706.json",
@@ -313,16 +313,26 @@
   "regeneration_commands": {
     "artifact": "docs/evidence/benchmark_regeneration_commands_20260706.json",
     "checks": {
+      "regeneration_commands_boundary_totals_match": true,
       "regeneration_commands_cover_readiness_renderer_groups": true,
+      "regeneration_commands_execution_boundary_counts_match": true,
       "regeneration_commands_filters_are_all_stage": true,
       "regeneration_commands_group_counts_match": true,
       "regeneration_commands_loaded": true,
+      "regeneration_commands_operator_role_counts_match": true,
       "regeneration_commands_plan_matches_audit": true,
       "regeneration_commands_referenced": true,
       "regeneration_commands_renderer_is_non_runtime": true,
       "regeneration_commands_row_count_matches": true,
       "regeneration_commands_rows_match_plan_renderer": true,
       "regeneration_commands_schema_matches": true
+    },
+    "execution_boundary_counts": {
+      "claim_summary_merge": 2,
+      "claim_summary_promotion": 3,
+      "live_closed_loop_rollout": 32,
+      "private_cache_preparation": 6,
+      "public_metadata_review": 3
     },
     "group_counts": {
       "cache": 6,
@@ -334,6 +344,14 @@
       "shards": 30
     },
     "notes": [],
+    "operator_role_counts": {
+      "cache_builder": 6,
+      "claim_promoter": 5,
+      "closed_loop_runner": 32,
+      "open_repo_reviewer": 3
+    },
+    "private_execution_command_count": 43,
+    "public_review_command_count": 3,
     "readiness_renderer_groups": [
       "cache",
       "merge",

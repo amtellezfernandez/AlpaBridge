@@ -170,8 +170,12 @@ referenced through the full plan to avoid duplicating every shard command. Use
 those shard commands from the tracked plan when executing a scale stage. The
 all-stage rendered command artifact is tracked at
 [`docs/evidence/benchmark_regeneration_commands_20260706.json`](evidence/benchmark_regeneration_commands_20260706.json)
-for review without local runtime access; executing cache rebuilds or rollouts
-still requires the gated assets and an x86_64 NVIDIA/Docker AlpaSim host.
+for review without local runtime access. Its `execution_boundary_counts`,
+`operator_role_counts`, `public_review_command_count`, and
+`private_execution_command_count` fields distinguish public review commands from
+cache-building, live-rollout, merge, and promotion commands; executing cache
+rebuilds or rollouts still requires the gated assets and an x86_64 NVIDIA/Docker
+AlpaSim host.
 Its scale stages include 10-scene shard commands for constrained hosts; shard
 summaries are operational checkpoints, not replacements for a complete 50/100
 public summary. Validate the local USDZ cache offline with

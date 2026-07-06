@@ -25,6 +25,9 @@ def test_command_renderer_outputs_selected_shard_commands() -> None:
 
     assert rows[0]["command"] == "link_local_cache_from_all_usdzs"
     assert rows[0]["group"] == "cache"
+    assert rows[0]["execution_boundary"] == "private_cache_preparation"
+    assert rows[0]["operator_role"] == "cache_builder"
+    assert rows[0]["requires_private_execution_context"] is True
     assert "--source-usdz-dir /path/to/alpasim/data/nre-artifacts/all-usdzs" in rows[0]["display"]
     assert any("HF_TOKEN=required wod2sim-build-local-cache" in display for display in displays)
     assert [row["shard_index"] for row in rows if row["group"] == "shards"] == [2, 2]
@@ -108,6 +111,21 @@ def test_command_renderer_builds_public_command_artifact() -> None:
     assert artifact["row_count"] == len(artifact["commands"])
     assert artifact["group_counts"]["shards"] == 30
     assert artifact["group_counts"]["cache"] == 6
+    assert artifact["execution_boundary_counts"] == {
+        "claim_summary_merge": 2,
+        "claim_summary_promotion": 3,
+        "live_closed_loop_rollout": 32,
+        "private_cache_preparation": 6,
+        "public_metadata_review": 3,
+    }
+    assert artifact["operator_role_counts"] == {
+        "cache_builder": 6,
+        "claim_promoter": 5,
+        "closed_loop_runner": 32,
+        "open_repo_reviewer": 3,
+    }
+    assert artifact["private_execution_command_count"] == 43
+    assert artifact["public_review_command_count"] == 3
     assert artifact["commands"][-1]["command"] == "verify_claim_gate"
 
 
@@ -165,6 +183,16 @@ def test_tracked_command_artifact_is_public_safe_and_complete() -> None:
         "run": 2,
         "shards": 30,
     }
+    assert artifact["execution_boundary_counts"]["private_cache_preparation"] == 6
+    assert artifact["execution_boundary_counts"]["public_metadata_review"] == 3
+    assert artifact["execution_boundary_counts"]["live_closed_loop_rollout"] == 32
+    assert artifact["operator_role_counts"]["open_repo_reviewer"] == 3
+    assert artifact["operator_role_counts"]["closed_loop_runner"] == 32
+    assert artifact["private_execution_command_count"] == 43
+    assert artifact["public_review_command_count"] == 3
+    assert all("execution_boundary" in row for row in artifact["commands"])
+    assert all("operator_role" in row for row in artifact["commands"])
+    assert all("requires_private_execution_context" in row for row in artifact["commands"])
     assert "wod2sim-benchmark-audit --strict --json" in rendered
     assert "/home/" not in rendered
     assert "HF_TOKEN=required" in rendered

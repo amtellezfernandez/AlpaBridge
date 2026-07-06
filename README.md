@@ -264,9 +264,12 @@ stage, group, or shard directly from the tracked plan without duplicating the
 long shard sequence in docs. The rendered all-stage command artifact is tracked
 at
 [`docs/evidence/benchmark_regeneration_commands_20260706.json`](docs/evidence/benchmark_regeneration_commands_20260706.json);
-open-repo reviewers can inspect it without runtime access, while cache rebuilds
-and live rollouts remain limited to operators with gated assets and an x86_64
-NVIDIA/Docker AlpaSim host.
+open-repo reviewers can inspect it without runtime access. Its
+`execution_boundary_counts`, `operator_role_counts`,
+`public_review_command_count`, and `private_execution_command_count` fields
+separate public review commands from cache-building, live-rollout, merge, and
+promotion commands, while cache rebuilds and live rollouts remain limited to
+operators with gated assets and an x86_64 NVIDIA/Docker AlpaSim host.
 After promoting new public summaries, refresh readiness, regenerate status with
 `wod2sim-benchmark-status`, then run `wod2sim-benchmark-audit --strict --json`;
 this avoids any circular dependency between the status and audit artifacts.
