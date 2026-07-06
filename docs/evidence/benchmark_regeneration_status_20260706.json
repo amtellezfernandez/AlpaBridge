@@ -32,6 +32,7 @@
         "offroad_scene_count": 0,
         "wrong_lane_scene_count": 0
       },
+      "observed_scene_count": 1,
       "planned_scene_count": 1,
       "present": true,
       "scene_preset": "front_camera_50scene_public2602",
@@ -39,6 +40,21 @@
       "sensor_failure_scene_count": 0,
       "status": "tracked_public_probe_summary",
       "total_audited_frames": 199
+    },
+    "fifty_scene_partial_attempt": {
+      "artifact": "docs/evidence/closed_loop_spotlight_reflex_50scene_attempt_partial.json",
+      "claim_scope": "Diagnostic partial attempt from the 50-scene public preset. This records an early failed scale attempt and is not a claim-valid 50-scene stage summary.",
+      "clean_closed_loop_batch": false,
+      "completed_scene_count": 0,
+      "failed_scene_count": 2,
+      "observed_scene_count": 2,
+      "planned_scene_count": 50,
+      "present": true,
+      "scene_preset": "front_camera_50scene_public2602",
+      "schema": "wod2sim_closed_loop_batch_summary_v1",
+      "sensor_failure_scene_count": 0,
+      "status": "tracked_public_partial_attempt_summary",
+      "total_audited_frames": 0
     },
     "ten_scene_pilot": {
       "artifact": "docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json",
@@ -63,6 +79,7 @@
   "evidence_artifacts": {
     "claim_audit": "docs/evidence/benchmark_regeneration_audit_20260706.json",
     "fifty_scene_local_probe": "docs/evidence/closed_loop_spotlight_reflex_50scene_localprobe_1scene.json",
+    "fifty_scene_partial_attempt": "docs/evidence/closed_loop_spotlight_reflex_50scene_attempt_partial.json",
     "readiness_snapshot": "docs/evidence/benchmark_regeneration_readiness_20260706.json",
     "regeneration_plan": "docs/evidence/benchmark_regeneration_plan_20260706.json",
     "ten_scene_pilot": "docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json"
@@ -101,6 +118,7 @@
     "command": "wod2sim-benchmark-status",
     "inputs": {
       "fifty_scene_local_probe": "docs/evidence/closed_loop_spotlight_reflex_50scene_localprobe_1scene.json",
+      "fifty_scene_partial_attempt": "docs/evidence/closed_loop_spotlight_reflex_50scene_attempt_partial.json",
       "readiness_snapshot": "docs/evidence/benchmark_regeneration_readiness_20260706.json",
       "regeneration_plan": "docs/evidence/benchmark_regeneration_plan_20260706.json",
       "ten_scene_pilot": "docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json"

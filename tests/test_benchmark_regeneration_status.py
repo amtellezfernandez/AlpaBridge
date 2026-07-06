@@ -14,6 +14,9 @@ PILOT_RELATIVE = Path("docs/evidence/closed_loop_spotlight_reflex_10scene_batch.
 PROBE_50_RELATIVE = Path(
     "docs/evidence/closed_loop_spotlight_reflex_50scene_localprobe_1scene.json"
 )
+ATTEMPT_50_RELATIVE = Path(
+    "docs/evidence/closed_loop_spotlight_reflex_50scene_attempt_partial.json"
+)
 PLAN_RELATIVE = Path("docs/evidence/benchmark_regeneration_plan_20260706.json")
 READINESS_RELATIVE = Path("docs/evidence/benchmark_regeneration_readiness_20260706.json")
 AUDIT_RELATIVE = Path("docs/evidence/benchmark_regeneration_audit_20260706.json")
@@ -90,6 +93,27 @@ def test_status_tracks_50_scene_local_probe_as_diagnostic_only() -> None:
     ] is False
 
 
+def test_status_tracks_partial_50_scene_attempt_as_diagnostic_only() -> None:
+    status = _read_json(ROOT / STATUS_RELATIVE)
+    attempt = _read_json(ROOT / ATTEMPT_50_RELATIVE)
+
+    public_attempt = status["current_public_evidence"]["fifty_scene_partial_attempt"]
+    assert public_attempt["artifact"] == ATTEMPT_50_RELATIVE.as_posix()
+    assert public_attempt["present"] is True
+    assert public_attempt["status"] == "tracked_public_partial_attempt_summary"
+    assert "not a claim-valid 50-scene" in public_attempt["claim_scope"]
+    assert public_attempt["schema"] == attempt["schema"]
+    assert public_attempt["scene_preset"] == "front_camera_50scene_public2602"
+    assert public_attempt["planned_scene_count"] == 50
+    assert public_attempt["observed_scene_count"] == 2
+    assert public_attempt["completed_scene_count"] == 0
+    assert public_attempt["failed_scene_count"] == 2
+    assert public_attempt["sensor_failure_scene_count"] == 0
+    assert status["scale_status"]["front_camera_50scene_public2602"][
+        "claim_valid_closed_loop_summary_tracked"
+    ] is False
+
+
 def test_public_artifact_policy_excludes_heavy_or_gated_runtime_artifacts() -> None:
     status = _read_json(ROOT / STATUS_RELATIVE)
     untracked_policy = status["public_artifact_policy"]["untracked"].lower()
@@ -110,6 +134,7 @@ def test_readme_links_current_regeneration_status() -> None:
 
     assert STATUS_RELATIVE.as_posix() in readme
     assert PROBE_50_RELATIVE.as_posix() in readme
+    assert ATTEMPT_50_RELATIVE.as_posix() in readme
     assert "Open-repo readers can review the compact JSON summaries" in readme
     assert "ARM/DGX Spark" in readme
     assert "| `wod2sim-benchmark-status` |" in readme
@@ -124,6 +149,7 @@ def test_status_links_current_public_evidence_chain() -> None:
     assert status["evidence_artifacts"] == {
         "ten_scene_pilot": PILOT_RELATIVE.as_posix(),
         "fifty_scene_local_probe": PROBE_50_RELATIVE.as_posix(),
+        "fifty_scene_partial_attempt": ATTEMPT_50_RELATIVE.as_posix(),
         "regeneration_plan": PLAN_RELATIVE.as_posix(),
         "readiness_snapshot": READINESS_RELATIVE.as_posix(),
         "claim_audit": AUDIT_RELATIVE.as_posix(),

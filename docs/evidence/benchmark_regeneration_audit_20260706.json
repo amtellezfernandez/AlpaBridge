@@ -21,11 +21,44 @@
       "clean_closed_loop_batch": true,
       "completed_scene_count": 1,
       "failed_scene_count": 0,
+      "observed_scene_count": 1,
       "planned_scene_count": 1,
       "scene_preset": "front_camera_50scene_public2602",
       "schema": "wod2sim_closed_loop_batch_summary_v1",
       "sensor_failure_scene_count": 0,
       "total_audited_frames": 199
+    },
+    "scale_attempts": {
+      "fifty_scene_partial_attempt": {
+        "artifact": "docs/evidence/closed_loop_spotlight_reflex_50scene_attempt_partial.json",
+        "checks": {
+          "partial_attempt_artifact_declared": true,
+          "partial_attempt_declared": true,
+          "partial_attempt_is_failed_two_scene_prefix": true,
+          "partial_attempt_preset_matches": true,
+          "partial_attempt_schema_matches": true,
+          "partial_attempt_status_artifact_matches": true,
+          "partial_attempt_status_counts_match_summary": true,
+          "partial_attempt_status_scope_is_non_claim": true,
+          "partial_attempt_summary_present": true,
+          "partial_attempt_summary_valid_json": true
+        },
+        "claim_scope": "diagnostic_only_not_full_stage_claim",
+        "notes": [],
+        "observed": {
+          "clean_closed_loop_batch": false,
+          "completed_scene_count": 0,
+          "failed_scene_count": 2,
+          "observed_scene_count": 2,
+          "planned_scene_count": 50,
+          "scene_preset": "front_camera_50scene_public2602",
+          "schema": "wod2sim_closed_loop_batch_summary_v1",
+          "sensor_failure_scene_count": 0,
+          "total_audited_frames": 0
+        },
+        "summary_present": true,
+        "valid": true
+      }
     },
     "summary_present": true,
     "valid": true

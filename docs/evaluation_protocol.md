@@ -114,6 +114,7 @@ Current tracked pilot evidence:
 | --- | --- |
 | [`docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json`](evidence/closed_loop_spotlight_reflex_10scene_batch.json) | 10/10 completed scenes, 1,990 audited frames, 0 failed scenes, 0 sensor-pipeline failures. |
 | [`docs/evidence/closed_loop_spotlight_reflex_50scene_localprobe_1scene.json`](evidence/closed_loop_spotlight_reflex_50scene_localprobe_1scene.json) | Diagnostic 50-preset local probe only: 1/1 completed scene, 199 audited frames, 0 sensor-pipeline failures. Not a 50-scene claim summary. |
+| [`docs/evidence/closed_loop_spotlight_reflex_50scene_attempt_partial.json`](evidence/closed_loop_spotlight_reflex_50scene_attempt_partial.json) | Diagnostic partial 50-preset attempt only: 2/50 attempted scenes failed before audited frames were produced. Not a 50-scene claim summary. |
 | Failure taxonomy | 5 collision scenes, 2 at-fault collision scenes, 3 wrong-lane scenes, 0 offroad scenes, 7 low-progress scenes. |
 | Claim boundary | Closed-loop integration evidence for `spotlight_reflex`, not a policy-quality benchmark claim. |
 
@@ -122,7 +123,7 @@ Current scale status:
 | Stage | Public Artifact Status |
 | --- | --- |
 | 10-scene pilot | Tracked as the compact public JSON above. Raw AlpaSim media, support bundles, and gated scene artifacts are intentionally untracked. |
-| 50-scene public 26.02 preset | Preset, cache-builder workflow, and one diagnostic local-probe summary are tracked. A claim-valid 50-scene closed-loop summary still requires rebuilding the local USDZ cache and executing the full stage on an x86_64 AlpaSim runner. |
+| 50-scene public 26.02 preset | Preset, cache-builder workflow, one diagnostic local-probe summary, and one partial-attempt summary are tracked. A claim-valid 50-scene closed-loop summary still requires rebuilding the local USDZ cache and executing the full stage on an x86_64 AlpaSim runner. |
 | 100-scene public 26.02 preset | Preset and cache-builder workflow are tracked. A claim-valid 100-scene closed-loop summary still requires the same cache/runtime prerequisites at larger scale. |
 
 The current machine-readable regeneration status is tracked at
