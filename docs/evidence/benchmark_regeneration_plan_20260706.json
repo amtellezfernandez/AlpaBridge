@@ -1,0 +1,220 @@
+{
+  "created_at": "2026-07-06",
+  "model": "spotlight_reflex",
+  "objective": "Regenerate WOD2Sim closed-loop benchmark artifacts from scratch, validate the 10-scene pilot, and scale to the 50/100-scene public presets when an x86_64 AlpaSim runner is available.",
+  "public_artifact_policy": {
+    "tracked": "Compact JSON summaries, commands, tests, and public-safe metrics/hashes.",
+    "untracked": "Raw AlpaSim media, support bundles, USDZ assets, Hugging Face caches, Docker layers, and gated scene-derived files."
+  },
+  "schema": "wod2sim_benchmark_regeneration_plan_v1",
+  "stages": [
+    {
+      "commands": {
+        "build_local_cache": null,
+        "run_batch": {
+          "argv": [
+            "wod2sim-batch",
+            "--mode",
+            "both",
+            "--model",
+            "spotlight_reflex",
+            "--scene-preset",
+            "front_camera_10scene_smoke",
+            "--alpasim-root",
+            "/path/to/alpasim",
+            "--batch-dir",
+            "runs/benchmark_spotlight_reflex_10scene",
+            "--timeout",
+            "900",
+            "--driver-warmup-seconds",
+            "5",
+            "--max-retries",
+            "1",
+            "--continue-on-error"
+          ],
+          "display": "wod2sim-batch --mode both --model spotlight_reflex --scene-preset front_camera_10scene_smoke --alpasim-root /path/to/alpasim --batch-dir runs/benchmark_spotlight_reflex_10scene --timeout 900 --driver-warmup-seconds 5 --max-retries 1 --continue-on-error"
+        },
+        "write_batch_summary": {
+          "argv": [
+            "wod2sim-batch-summary",
+            "--batch-dir",
+            "runs/benchmark_spotlight_reflex_10scene",
+            "--output",
+            "runs/benchmark_spotlight_reflex_10scene/wod2sim-batch-summary.json",
+            "--strict",
+            "--json"
+          ],
+          "display": "wod2sim-batch-summary --batch-dir runs/benchmark_spotlight_reflex_10scene --output runs/benchmark_spotlight_reflex_10scene/wod2sim-batch-summary.json --strict --json"
+        }
+      },
+      "local_usdz_dir": null,
+      "public_summary_target": "docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json",
+      "requires_local_usdz_cache": false,
+      "run_dir": "runs/benchmark_spotlight_reflex_10scene",
+      "scene_count": 10,
+      "scene_preset": "front_camera_10scene_smoke",
+      "stage": "pilot"
+    },
+    {
+      "commands": {
+        "build_local_cache": {
+          "argv": [
+            "wod2sim-build-local-cache",
+            "--scene-preset",
+            "front_camera_50scene_public2602",
+            "--alpasim-root",
+            "/path/to/alpasim",
+            "--local-usdz-dir",
+            "/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50",
+            "--hf-repo",
+            "nvidia/PhysicalAI-Autonomous-Vehicles-NuRec",
+            "--hf-revision",
+            "26.02",
+            "--workers",
+            "3"
+          ],
+          "display": "HF_TOKEN=required wod2sim-build-local-cache --scene-preset front_camera_50scene_public2602 --alpasim-root /path/to/alpasim --local-usdz-dir /path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50 --hf-repo nvidia/PhysicalAI-Autonomous-Vehicles-NuRec --hf-revision 26.02 --workers 3",
+          "env": {
+            "HF_TOKEN": "required"
+          }
+        },
+        "run_batch": {
+          "argv": [
+            "wod2sim-batch",
+            "--mode",
+            "both",
+            "--model",
+            "spotlight_reflex",
+            "--scene-preset",
+            "front_camera_50scene_public2602",
+            "--alpasim-root",
+            "/path/to/alpasim",
+            "--batch-dir",
+            "runs/benchmark_spotlight_reflex_50scene",
+            "--timeout",
+            "900",
+            "--driver-warmup-seconds",
+            "5",
+            "--max-retries",
+            "1",
+            "--continue-on-error",
+            "--wizard-arg",
+            "scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50"
+          ],
+          "display": "wod2sim-batch --mode both --model spotlight_reflex --scene-preset front_camera_50scene_public2602 --alpasim-root /path/to/alpasim --batch-dir runs/benchmark_spotlight_reflex_50scene --timeout 900 --driver-warmup-seconds 5 --max-retries 1 --continue-on-error --wizard-arg scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50"
+        },
+        "write_batch_summary": {
+          "argv": [
+            "wod2sim-batch-summary",
+            "--batch-dir",
+            "runs/benchmark_spotlight_reflex_50scene",
+            "--output",
+            "runs/benchmark_spotlight_reflex_50scene/wod2sim-batch-summary.json",
+            "--strict",
+            "--json"
+          ],
+          "display": "wod2sim-batch-summary --batch-dir runs/benchmark_spotlight_reflex_50scene --output runs/benchmark_spotlight_reflex_50scene/wod2sim-batch-summary.json --strict --json"
+        }
+      },
+      "local_usdz_dir": "/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50",
+      "public_summary_target": "docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json",
+      "requires_local_usdz_cache": true,
+      "run_dir": "runs/benchmark_spotlight_reflex_50scene",
+      "scene_count": 50,
+      "scene_preset": "front_camera_50scene_public2602",
+      "stage": "workshop_scale"
+    },
+    {
+      "commands": {
+        "build_local_cache": {
+          "argv": [
+            "wod2sim-build-local-cache",
+            "--scene-preset",
+            "front_camera_100scene_public2602",
+            "--alpasim-root",
+            "/path/to/alpasim",
+            "--local-usdz-dir",
+            "/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-100",
+            "--hf-repo",
+            "nvidia/PhysicalAI-Autonomous-Vehicles-NuRec",
+            "--hf-revision",
+            "26.02",
+            "--workers",
+            "3"
+          ],
+          "display": "HF_TOKEN=required wod2sim-build-local-cache --scene-preset front_camera_100scene_public2602 --alpasim-root /path/to/alpasim --local-usdz-dir /path/to/alpasim/data/nre-artifacts/local-2602-usdzs-100 --hf-repo nvidia/PhysicalAI-Autonomous-Vehicles-NuRec --hf-revision 26.02 --workers 3",
+          "env": {
+            "HF_TOKEN": "required"
+          }
+        },
+        "run_batch": {
+          "argv": [
+            "wod2sim-batch",
+            "--mode",
+            "both",
+            "--model",
+            "spotlight_reflex",
+            "--scene-preset",
+            "front_camera_100scene_public2602",
+            "--alpasim-root",
+            "/path/to/alpasim",
+            "--batch-dir",
+            "runs/benchmark_spotlight_reflex_100scene",
+            "--timeout",
+            "900",
+            "--driver-warmup-seconds",
+            "5",
+            "--max-retries",
+            "1",
+            "--continue-on-error",
+            "--wizard-arg",
+            "scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-100"
+          ],
+          "display": "wod2sim-batch --mode both --model spotlight_reflex --scene-preset front_camera_100scene_public2602 --alpasim-root /path/to/alpasim --batch-dir runs/benchmark_spotlight_reflex_100scene --timeout 900 --driver-warmup-seconds 5 --max-retries 1 --continue-on-error --wizard-arg scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-100"
+        },
+        "write_batch_summary": {
+          "argv": [
+            "wod2sim-batch-summary",
+            "--batch-dir",
+            "runs/benchmark_spotlight_reflex_100scene",
+            "--output",
+            "runs/benchmark_spotlight_reflex_100scene/wod2sim-batch-summary.json",
+            "--strict",
+            "--json"
+          ],
+          "display": "wod2sim-batch-summary --batch-dir runs/benchmark_spotlight_reflex_100scene --output runs/benchmark_spotlight_reflex_100scene/wod2sim-batch-summary.json --strict --json"
+        }
+      },
+      "local_usdz_dir": "/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-100",
+      "public_summary_target": "docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json",
+      "requires_local_usdz_cache": true,
+      "run_dir": "runs/benchmark_spotlight_reflex_100scene",
+      "scene_count": 100,
+      "scene_preset": "front_camera_100scene_public2602",
+      "stage": "stronger_benchmark"
+    }
+  ],
+  "status_artifact": "docs/evidence/benchmark_regeneration_status_20260706.json",
+  "who_can_do_what": [
+    {
+      "can_do": "Review docs, run package tests, inspect dry plans and compact summaries.",
+      "requirements": "Python checkout; no AlpaSim, Docker, GPU, or gated assets required.",
+      "role": "reviewer"
+    },
+    {
+      "can_do": "Build metadata-valid local USDZ directories for 26.02 presets.",
+      "requirements": "Hugging Face access, disk capacity, and Python dependencies; GPU optional.",
+      "role": "cache_builder"
+    },
+    {
+      "can_do": "Execute live AlpaSim batches and produce claim-valid batch summaries.",
+      "requirements": "x86_64 Linux, Docker, NVIDIA GPU runtime, AlpaSim images, and cached scene artifacts.",
+      "role": "closed_loop_runner"
+    },
+    {
+      "can_do": "Build caches or run diagnostics.",
+      "requirements": "Live sensorsim rollouts are disabled by default because the required SensorSim image is amd64-only.",
+      "role": "arm_linux_host"
+    }
+  ]
+}

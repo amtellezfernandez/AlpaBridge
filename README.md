@@ -217,6 +217,9 @@ hosts can help with cache preparation but cannot run the amd64-only NRE
 SensorSim image natively. The current regeneration and scale status is tracked
 in
 [`docs/evidence/benchmark_regeneration_status_20260706.json`](docs/evidence/benchmark_regeneration_status_20260706.json).
+A machine-readable 10/50/100 rerun plan is tracked in
+[`docs/evidence/benchmark_regeneration_plan_20260706.json`](docs/evidence/benchmark_regeneration_plan_20260706.json)
+and can be regenerated with `wod2sim-benchmark-plan`.
 
 ## Evidence Contract
 
@@ -281,6 +284,7 @@ wod2sim-launch --mode print --model direct_actor_planner --oracle-actor-proxy /p
 | `wod2sim-reproduce` | Plan or execute the full closed-loop evidence workflow. |
 | `wod2sim-audit-run` | Summarize executed run logs and sensor freshness. |
 | `wod2sim-support-bundle` | Package key run logs, configs, and audit output. |
+| `wod2sim-benchmark-plan` | Emit the public-safe 10/50/100 benchmark regeneration plan. |
 | `wod2sim-benchmark-summary` | Aggregate evidence directories into one benchmark JSON. |
 | `wod2sim-batch-summary` | Summarize `wod2sim-batch` scene runs into public-safe metrics and hashes. |
 

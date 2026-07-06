@@ -165,3 +165,6 @@ The current public evidence artifact is
 It records a completed 10-scene `spotlight_reflex` pilot with 1,990 audited
 frames, 0 failed scenes, and 0 sensor-pipeline failures while keeping raw
 AlpaSim/WOD-derived media out of git.
+
+The current public-safe 10/50/100 rerun plan is
+[`docs/evidence/benchmark_regeneration_plan_20260706.json`](evidence/benchmark_regeneration_plan_20260706.json).
