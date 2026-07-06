@@ -241,8 +241,8 @@ in
 For 50/100-scene scale work, that file exposes
 `scale_status.<preset>.local_usdz_cache` and
 `scale_status.<preset>.source_usdz_cache`: the current public snapshot records
-10 source USDZ files, `matching_scene_count` of `0` for both presets, no valid
-local scale cache, and no claim-valid scale summary. Open-repo review can
+0 source USDZ files after local cleanup; `matching_scene_count` of `0` for both presets; no valid local scale cache; and no claim-valid scale summary.
+Open-repo review can
 inspect those fields, but cache building, live shard execution, and claim
 promotion remain separate role-gated steps.
 Regenerate that status from the tracked public evidence chain with

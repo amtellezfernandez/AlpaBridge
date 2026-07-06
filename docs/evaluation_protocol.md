@@ -138,9 +138,8 @@ The current machine-readable regeneration status is tracked at
 [`docs/evidence/benchmark_regeneration_status_20260706.json`](evidence/benchmark_regeneration_status_20260706.json).
 For scale stages, its `scale_status.<preset>.source_usdz_cache` and
 `scale_status.<preset>.local_usdz_cache` fields expose the public cache
-inventory used by the claim gate. The current snapshot records 10 source USDZ
-files, `matching_scene_count` of `0` for both 50/100 presets, no valid local
-scale cache, and no claim-valid scale summary.
+inventory used by the claim gate. The current snapshot records 0 source USDZ
+files after local cleanup; `matching_scene_count` of `0` for both 50/100 presets; no valid local scale cache; and no claim-valid scale summary.
 Regenerate it from the tracked compact evidence chain with
 `wod2sim-benchmark-status`; the command does not probe Docker, GPUs, or local
 scene caches.

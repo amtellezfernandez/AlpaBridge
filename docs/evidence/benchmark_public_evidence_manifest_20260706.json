@@ -18,8 +18,8 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_benchmark_regeneration_audit_v1",
-      "sha256": "0aec67576f6920c174fbed3f014d6bf4a8f82cbed4aac81edeaa11354e5fbeb2",
-      "size_bytes": 25397
+      "sha256": "ff9ddb7b57b14a39b43be25a1b11287702a4339a421ac59339984f974aba3e7b",
+      "size_bytes": 25393
     },
     {
       "artifact_type": "benchmark_regeneration_control",
@@ -48,8 +48,8 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_benchmark_regeneration_readiness_v1",
-      "sha256": "a95f820441178a1ef6b50dd4a1ce46e407de4d52099934bd8200798d257676f1",
-      "size_bytes": 22584
+      "sha256": "c4fb64cc2eb178955f7717d4a756962ce84c151e4fb9adca1c3018d680840726",
+      "size_bytes": 22580
     },
     {
       "artifact_type": "benchmark_regeneration_control",
@@ -58,8 +58,8 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_benchmark_regeneration_status_v1",
-      "sha256": "7512810961801548c4bcbd30757956267be707cd0689b09dc9bf8b7eb9e96370",
-      "size_bytes": 8432
+      "sha256": "12270cca79be88b15edcfe552152335566296b65b378cf124f549c480ad7e389",
+      "size_bytes": 8428
     },
     {
       "artifact_type": "closed_loop_summary",
@@ -147,10 +147,10 @@
           "expected_scene_count": 50,
           "matching_scene_count": 0,
           "missing_scene_count": 50,
-          "nonmatching_usdz_file_count": 10,
+          "nonmatching_usdz_file_count": 0,
           "present_scene_count": 0,
           "required": true,
-          "usdz_file_count": 10,
+          "usdz_file_count": 0,
           "valid": false
         },
         "summary_artifact": "docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json"
@@ -193,10 +193,10 @@
           "expected_scene_count": 100,
           "matching_scene_count": 0,
           "missing_scene_count": 100,
-          "nonmatching_usdz_file_count": 10,
+          "nonmatching_usdz_file_count": 0,
           "present_scene_count": 0,
           "required": true,
-          "usdz_file_count": 10,
+          "usdz_file_count": 0,
           "valid": false
         },
         "summary_artifact": "docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json"

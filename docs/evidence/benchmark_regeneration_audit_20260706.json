@@ -233,10 +233,10 @@
           "expected_scene_count": 50,
           "matching_scene_count": 0,
           "missing_scene_count": 50,
-          "nonmatching_usdz_file_count": 10,
+          "nonmatching_usdz_file_count": 0,
           "present_scene_count": 0,
           "required": true,
-          "usdz_file_count": 10,
+          "usdz_file_count": 0,
           "valid": false
         },
         "summary_artifact": "docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json"
@@ -279,10 +279,10 @@
           "expected_scene_count": 100,
           "matching_scene_count": 0,
           "missing_scene_count": 100,
-          "nonmatching_usdz_file_count": 10,
+          "nonmatching_usdz_file_count": 0,
           "present_scene_count": 0,
           "required": true,
-          "usdz_file_count": 10,
+          "usdz_file_count": 0,
           "valid": false
         },
         "summary_artifact": "docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json"
@@ -368,8 +368,8 @@
       "readiness",
       "shards"
     ],
-    "sha256": "40e652b516657560cee2ed145411ff7a41da7db069aead032cef80d2eef7e270",
-    "size_bytes": 9480,
+    "sha256": "33de91e41117b0f812bb9c699c58475e194f98c47453f8fc08add3a79c698dda",
+    "size_bytes": 9499,
     "valid": true
   },
   "readiness_artifact": "docs/evidence/benchmark_regeneration_readiness_20260706.json",

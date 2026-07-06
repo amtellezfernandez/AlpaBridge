@@ -91,7 +91,7 @@ def test_large_scale_status_is_workflow_ready_but_not_claim_valid() -> None:
             "matching_scene_count": source_cache["matching_scene_count"],
             "nonmatching_usdz_file_count": source_cache["nonmatching_usdz_file_count"],
         }
-        assert scale_status["source_usdz_cache"]["usdz_file_count"] == 10
+        assert scale_status["source_usdz_cache"]["usdz_file_count"] == 0
         assert scale_status["source_usdz_cache"]["matching_scene_count"] == 0
         assert "x86_64 AlpaSim runner" in scale_status["remaining_runtime_requirement"]
 
