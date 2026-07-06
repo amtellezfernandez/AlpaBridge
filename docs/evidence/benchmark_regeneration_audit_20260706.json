@@ -8,6 +8,24 @@
     "docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json"
   ],
   "plan_artifact": "docs/evidence/benchmark_regeneration_plan_20260706.json",
+  "readiness_artifact": "docs/evidence/benchmark_regeneration_readiness_20260706.json",
+  "readiness_consistency": {
+    "checks": {
+      "front_camera_100scene_public2602_readiness_stage_matches_audit": true,
+      "front_camera_100scene_public2602_readiness_summary_state_matches_audit": true,
+      "front_camera_10scene_smoke_readiness_stage_matches_audit": true,
+      "front_camera_10scene_smoke_readiness_summary_state_matches_audit": true,
+      "front_camera_50scene_public2602_readiness_stage_matches_audit": true,
+      "front_camera_50scene_public2602_readiness_summary_state_matches_audit": true,
+      "readiness_artifact_loaded": true,
+      "readiness_plan_artifact_matches_audit": true,
+      "readiness_scale_summary_flag_matches_audit": true,
+      "readiness_stage_count_matches_plan": true,
+      "readiness_status_artifact_matches_audit": true
+    },
+    "notes": [],
+    "valid": true
+  },
   "schema": "wod2sim_benchmark_regeneration_audit_v1",
   "stages": [
     {

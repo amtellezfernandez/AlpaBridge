@@ -175,3 +175,5 @@ commands for constrained x86_64 hosts, and public-safe merge/promotion commands
 for shard summaries.
 The matching claim-readiness audit is
 [`docs/evidence/benchmark_regeneration_audit_20260706.json`](evidence/benchmark_regeneration_audit_20260706.json).
+It verifies the tracked summary artifacts, merged shard provenance, and the
+readiness snapshot's stage-summary state against the regeneration plan.

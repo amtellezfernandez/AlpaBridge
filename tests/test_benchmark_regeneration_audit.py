@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 AUDIT_RELATIVE = Path("docs/evidence/benchmark_regeneration_audit_20260706.json")
 PLAN_RELATIVE = Path("docs/evidence/benchmark_regeneration_plan_20260706.json")
 STATUS_RELATIVE = Path("docs/evidence/benchmark_regeneration_status_20260706.json")
+READINESS_RELATIVE = Path("docs/evidence/benchmark_regeneration_readiness_20260706.json")
 
 
 class BenchmarkRegenerationAuditTests(unittest.TestCase):
@@ -24,6 +25,8 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
 
         self.assertTrue(audit["valid"])
         self.assertFalse(audit["claim_ready"])
+        self.assertEqual(READINESS_RELATIVE.as_posix(), audit["readiness_artifact"])
+        self.assertTrue(audit["readiness_consistency"]["valid"])
         self.assertTrue(stages["front_camera_10scene_smoke"]["claim_valid"])
         self.assertFalse(stages["front_camera_50scene_public2602"]["claim_valid"])
         self.assertFalse(stages["front_camera_100scene_public2602"]["claim_valid"])
@@ -72,6 +75,7 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             shutil.copy2(ROOT / PLAN_RELATIVE, evidence / PLAN_RELATIVE.name)
             shutil.copy2(ROOT / STATUS_RELATIVE, evidence / STATUS_RELATIVE.name)
 
+            plan = _read_json(evidence / PLAN_RELATIVE.name)
             status = _read_json(evidence / STATUS_RELATIVE.name)
             status["completion_status"]["full_objective_complete"] = True
             for preset in (
@@ -86,6 +90,10 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
                     evidence / f"closed_loop_spotlight_reflex_{scene_count}scene_batch.json",
                     _batch_summary(scene_count),
                 )
+            _write_json(
+                evidence / READINESS_RELATIVE.name,
+                _readiness_report(plan, claim_valid_scene_counts={10, 50, 100}),
+            )
 
             audit = module.build_audit(repo_root=repo_root, created_at="2026-07-06")
             stages = {stage["scene_preset"]: stage for stage in audit["stages"]}
@@ -127,6 +135,10 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
                         input_summaries=_planned_merge_inputs(plan, preset),
                     ),
                 )
+            _write_json(
+                evidence / READINESS_RELATIVE.name,
+                _readiness_report(plan, claim_valid_scene_counts={10, 50, 100}),
+            )
 
             audit = module.build_audit(repo_root=repo_root, created_at="2026-07-06")
             stages = {stage["scene_preset"]: stage for stage in audit["stages"]}
@@ -149,6 +161,7 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             evidence.mkdir(parents=True)
             shutil.copy2(ROOT / PLAN_RELATIVE, evidence / PLAN_RELATIVE.name)
             shutil.copy2(ROOT / STATUS_RELATIVE, evidence / STATUS_RELATIVE.name)
+            shutil.copy2(ROOT / READINESS_RELATIVE, evidence / READINESS_RELATIVE.name)
             _write_json(evidence / "closed_loop_spotlight_reflex_10scene_batch.json", _batch_summary(10))
             _write_json(
                 evidence / "closed_loop_spotlight_reflex_50scene_batch.json",
@@ -177,6 +190,7 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             evidence.mkdir(parents=True)
             shutil.copy2(ROOT / PLAN_RELATIVE, evidence / PLAN_RELATIVE.name)
             shutil.copy2(ROOT / STATUS_RELATIVE, evidence / STATUS_RELATIVE.name)
+            shutil.copy2(ROOT / READINESS_RELATIVE, evidence / READINESS_RELATIVE.name)
             (evidence / "closed_loop_spotlight_reflex_10scene_batch.json").write_text(
                 "{not-json\n",
                 encoding="utf-8",
@@ -201,9 +215,49 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         self.assertEqual("wod2sim_benchmark_regeneration_audit_v1", audit["schema"])
         self.assertEqual(PLAN_RELATIVE.as_posix(), audit["plan_artifact"])
         self.assertEqual(STATUS_RELATIVE.as_posix(), audit["status_artifact"])
+        self.assertEqual(READINESS_RELATIVE.as_posix(), audit["readiness_artifact"])
+        self.assertTrue(audit["readiness_consistency"]["valid"])
         self.assertFalse(audit["claim_ready"])
         self.assertIn(AUDIT_RELATIVE.as_posix(), readme)
         self.assertIn(AUDIT_RELATIVE.name, evaluation_protocol)
+
+    def test_missing_readiness_artifact_invalidates_audit_artifact_set(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            evidence = repo_root / "docs" / "evidence"
+            evidence.mkdir(parents=True)
+            shutil.copy2(ROOT / PLAN_RELATIVE, evidence / PLAN_RELATIVE.name)
+            shutil.copy2(ROOT / STATUS_RELATIVE, evidence / STATUS_RELATIVE.name)
+
+            audit = module.build_audit(repo_root=repo_root, created_at="2026-07-06")
+
+        self.assertFalse(audit["valid"])
+        self.assertFalse(audit["readiness_consistency"]["checks"]["readiness_artifact_loaded"])
+        self.assertTrue(any(error.startswith("readiness missing:") for error in audit["errors"]))
+
+    def test_readiness_summary_state_must_match_audited_summaries(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            evidence = repo_root / "docs" / "evidence"
+            evidence.mkdir(parents=True)
+            shutil.copy2(ROOT / PLAN_RELATIVE, evidence / PLAN_RELATIVE.name)
+            shutil.copy2(ROOT / STATUS_RELATIVE, evidence / STATUS_RELATIVE.name)
+            plan = _read_json(evidence / PLAN_RELATIVE.name)
+            _write_json(evidence / "closed_loop_spotlight_reflex_10scene_batch.json", _batch_summary(10))
+            _write_json(
+                evidence / READINESS_RELATIVE.name,
+                _readiness_report(plan, claim_valid_scene_counts=set()),
+            )
+
+            audit = module.build_audit(repo_root=repo_root, created_at="2026-07-06")
+
+        self.assertFalse(audit["valid"])
+        self.assertIn(
+            "readiness public_summary state does not match audit for front_camera_10scene_smoke",
+            audit["readiness_consistency"]["notes"],
+        )
 
 
 def _batch_summary(
@@ -241,6 +295,47 @@ def _planned_merge_inputs(plan: dict[str, object], scene_preset: str) -> list[st
             if value == "--merge-summary"
         ]
     raise AssertionError(scene_preset)
+
+
+def _readiness_report(
+    plan: dict[str, object],
+    *,
+    claim_valid_scene_counts: set[int],
+) -> dict[str, object]:
+    stages = []
+    for stage in plan["stages"]:
+        scene_count = int(stage["scene_count"])
+        claim_valid = scene_count in claim_valid_scene_counts
+        stages.append(
+            {
+                "stage": stage["stage"],
+                "scene_preset": stage["scene_preset"],
+                "scene_count": scene_count,
+                "requires_local_usdz_cache": bool(stage["requires_local_usdz_cache"]),
+                "local_usdz_cache": {
+                    "required": bool(stage["requires_local_usdz_cache"]),
+                    "validation": {"valid": True},
+                },
+                "public_summary": {
+                    "present": claim_valid,
+                    "claim_valid": claim_valid,
+                },
+            }
+        )
+    scale_claims = [
+        int(stage["scene_count"]) in claim_valid_scene_counts
+        for stage in plan["stages"]
+        if "public2602" in str(stage["scene_preset"])
+    ]
+    return {
+        "schema": "wod2sim_benchmark_regeneration_readiness_v1",
+        "plan_artifact": PLAN_RELATIVE.as_posix(),
+        "status_artifact": STATUS_RELATIVE.as_posix(),
+        "readiness": {
+            "claim_valid_scale_summaries_present": all(scale_claims) if scale_claims else False,
+        },
+        "stages": stages,
+    }
 
 
 def _read_json(path: Path) -> dict[str, object]:

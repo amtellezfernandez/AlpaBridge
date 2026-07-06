@@ -144,4 +144,6 @@ claim-valid scale shards are started.
 The public claim gate for those artifacts is tracked at
 [`docs/evidence/benchmark_regeneration_audit_20260706.json`](evidence/benchmark_regeneration_audit_20260706.json).
 For merged scale summaries, the audit also verifies that the recorded shard
-summary inputs match the regeneration plan.
+summary inputs match the regeneration plan. It also verifies that the tracked
+readiness snapshot references the same plan/status artifacts and agrees with
+the audited public summary state for each stage.

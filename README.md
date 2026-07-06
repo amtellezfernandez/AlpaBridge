@@ -237,7 +237,8 @@ pre-run stop condition for 50/100-scene shards.
 The current claim gate is tracked in
 [`docs/evidence/benchmark_regeneration_audit_20260706.json`](docs/evidence/benchmark_regeneration_audit_20260706.json)
 and can be regenerated with `wod2sim-benchmark-audit`; merged shard summaries
-must list the planned shard summary inputs.
+must list the planned shard summary inputs, and the readiness snapshot must
+match the audited stage summary state.
 
 ## Evidence Contract
 

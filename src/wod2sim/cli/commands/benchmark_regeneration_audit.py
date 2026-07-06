@@ -9,6 +9,7 @@ from typing import Any
 AUDIT_SCHEMA = "wod2sim_benchmark_regeneration_audit_v1"
 PLAN_SCHEMA = "wod2sim_benchmark_regeneration_plan_v1"
 STATUS_SCHEMA = "wod2sim_benchmark_regeneration_status_v1"
+READINESS_SCHEMA = "wod2sim_benchmark_regeneration_readiness_v1"
 BATCH_SCHEMA = "wod2sim_closed_loop_batch_summary_v1"
 DEFAULT_PLAN = Path("docs/evidence/benchmark_regeneration_plan_20260706.json")
 DEFAULT_STATUS = Path("docs/evidence/benchmark_regeneration_status_20260706.json")
@@ -66,11 +67,21 @@ def build_audit(
     errors: list[str] = []
     plan = _load_json(_resolve_path(repo_root, plan_path), errors=errors, label="plan")
     status = _load_json(_resolve_path(repo_root, status_path), errors=errors, label="status")
+    readiness_artifact = str(plan.get("readiness_artifact") or "") if plan else ""
+    readiness = (
+        _load_json(_resolve_path(repo_root, Path(readiness_artifact)), errors=errors, label="readiness")
+        if readiness_artifact
+        else {}
+    )
 
     if plan and plan.get("schema") != PLAN_SCHEMA:
         errors.append(f"plan schema must be {PLAN_SCHEMA}")
     if status and status.get("schema") != STATUS_SCHEMA:
         errors.append(f"status schema must be {STATUS_SCHEMA}")
+    if plan and not readiness_artifact:
+        errors.append("plan readiness_artifact is missing")
+    if readiness and readiness.get("schema") != READINESS_SCHEMA:
+        errors.append(f"readiness schema must be {READINESS_SCHEMA}")
 
     stage_reports = [
         _audit_stage(stage, repo_root=repo_root)
@@ -87,7 +98,13 @@ def build_audit(
         stage_reports=stage_reports,
         claim_ready=claim_ready,
     )
-    valid = input_valid and status_consistency["valid"]
+    readiness_consistency = _readiness_consistency(
+        plan_path=plan_path,
+        status_path=status_path,
+        readiness=readiness,
+        stage_reports=stage_reports,
+    )
+    valid = input_valid and status_consistency["valid"] and readiness_consistency["valid"]
 
     return {
         "schema": AUDIT_SCHEMA,
@@ -101,11 +118,13 @@ def build_audit(
         ),
         "plan_artifact": _display_path(plan_path),
         "status_artifact": _display_path(status_path),
+        "readiness_artifact": readiness_artifact,
         "errors": errors,
         "missing_claim_valid_summaries": [
             stage["summary_artifact"] for stage in stage_reports if not stage["claim_valid"]
         ],
         "status_consistency": status_consistency,
+        "readiness_consistency": readiness_consistency,
         "stages": stage_reports,
     }
 
@@ -247,6 +266,85 @@ def _status_consistency(
         )
         if not checks[key]:
             notes.append(f"scale_status.{preset}.claim_valid_closed_loop_summary_tracked mismatch")
+
+    return {
+        "valid": all(checks.values()) if checks else False,
+        "checks": checks,
+        "notes": notes,
+    }
+
+
+def _readiness_consistency(
+    *,
+    plan_path: Path,
+    status_path: Path,
+    readiness: dict[str, Any],
+    stage_reports: list[dict[str, Any]],
+) -> dict[str, Any]:
+    checks: dict[str, bool] = {}
+    notes: list[str] = []
+
+    checks["readiness_artifact_loaded"] = bool(readiness)
+    if not checks["readiness_artifact_loaded"]:
+        notes.append("readiness artifact is missing or invalid JSON")
+        return {"valid": False, "checks": checks, "notes": notes}
+
+    checks["readiness_plan_artifact_matches_audit"] = (
+        readiness.get("plan_artifact") == _display_path(plan_path)
+    )
+    if not checks["readiness_plan_artifact_matches_audit"]:
+        notes.append("readiness.plan_artifact does not match the audited plan")
+
+    checks["readiness_status_artifact_matches_audit"] = (
+        readiness.get("status_artifact") == _display_path(status_path)
+    )
+    if not checks["readiness_status_artifact_matches_audit"]:
+        notes.append("readiness.status_artifact does not match the audited status")
+
+    readiness_stages = [
+        stage for stage in _list_or_empty(readiness.get("stages")) if isinstance(stage, dict)
+    ]
+    readiness_by_preset = {
+        str(stage.get("scene_preset") or ""): stage for stage in readiness_stages
+    }
+    checks["readiness_stage_count_matches_plan"] = len(readiness_stages) == len(stage_reports)
+    if not checks["readiness_stage_count_matches_plan"]:
+        notes.append("readiness stage count does not match the regeneration plan")
+
+    for stage in stage_reports:
+        preset = str(stage.get("scene_preset") or "")
+        readiness_stage = _dict_or_empty(readiness_by_preset.get(preset))
+        stage_key = f"{preset}_readiness_stage_matches_audit"
+        checks[stage_key] = (
+            bool(readiness_stage)
+            and readiness_stage.get("stage") == stage.get("stage")
+            and _int_value(readiness_stage.get("scene_count")) == stage.get("expected_scene_count")
+        )
+        if not checks[stage_key]:
+            notes.append(f"readiness stage does not match audit for {preset}")
+            continue
+
+        public_summary = _dict_or_empty(readiness_stage.get("public_summary"))
+        summary_key = f"{preset}_readiness_summary_state_matches_audit"
+        checks[summary_key] = (
+            bool(public_summary.get("present")) == bool(stage.get("summary_present"))
+            and bool(public_summary.get("claim_valid")) == bool(stage.get("claim_valid"))
+        )
+        if not checks[summary_key]:
+            notes.append(f"readiness public_summary state does not match audit for {preset}")
+
+    scale_stage_claims = [
+        bool(stage.get("claim_valid"))
+        for stage in stage_reports
+        if "public2602" in str(stage.get("scene_preset") or "")
+    ]
+    readiness_flags = _dict_or_empty(readiness.get("readiness"))
+    checks["readiness_scale_summary_flag_matches_audit"] = (
+        bool(readiness_flags.get("claim_valid_scale_summaries_present"))
+        == (all(scale_stage_claims) if scale_stage_claims else False)
+    )
+    if not checks["readiness_scale_summary_flag_matches_audit"]:
+        notes.append("readiness.claim_valid_scale_summaries_present does not match audit")
 
     return {
         "valid": all(checks.values()) if checks else False,
