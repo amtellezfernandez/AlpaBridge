@@ -661,6 +661,37 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             audit["status_consistency"]["notes"],
         )
 
+    def test_status_cache_inventory_drift_invalidates_audit(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            evidence = repo_root / "docs" / "evidence"
+            evidence.mkdir(parents=True)
+            _copy_evidence_jsons(evidence)
+            status_path = evidence / STATUS_RELATIVE.name
+            status = _read_json(status_path)
+            status["scale_status"]["front_camera_50scene_public2602"]["source_usdz_cache"][
+                "matching_scene_count"
+            ] = 10
+            _write_json(status_path, status)
+            _refresh_manifest_hash(evidence / MANIFEST_RELATIVE.name, STATUS_RELATIVE)
+
+            audit = module.build_audit(repo_root=repo_root, created_at="2026-07-06")
+
+        self.assertFalse(audit["valid"])
+        self.assertFalse(
+            audit["status_consistency"]["checks"][
+                ("front_camera_50scene_public2602_source_usdz_cache_inventory_matches_readiness")
+            ]
+        )
+        self.assertIn(
+            (
+                "scale_status.front_camera_50scene_public2602.source_usdz_cache "
+                "does not match readiness"
+            ),
+            audit["status_consistency"]["notes"],
+        )
+
     def test_regeneration_commands_drift_invalidates_audit(self) -> None:
         module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
         with tempfile.TemporaryDirectory() as tmpdir:
