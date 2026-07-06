@@ -378,6 +378,7 @@ def _scale_status(
         readiness_stage = readiness_by_preset.get(preset, {})
         stage_report = reports_by_preset.get(preset, {})
         local_usdz_cache = _dict_or_empty(readiness_stage.get("local_usdz_cache"))
+        source_usdz_cache = _dict_or_empty(readiness_stage.get("source_usdz_cache"))
         validation = _dict_or_empty(local_usdz_cache.get("validation"))
         claim_valid = bool(stage_report.get("claim_valid"))
         rows[preset] = {
@@ -386,12 +387,28 @@ def _scale_status(
             "preset_tracked": True,
             "cache_builder_workflow_tracked": _has_command(stage, "build_local_cache"),
             "local_usdz_cache_valid": validation.get("valid"),
+            "local_usdz_cache": _cache_inventory_status(local_usdz_cache),
+            "source_usdz_cache": _cache_inventory_status(source_usdz_cache),
             "summary_artifact": stage.get("public_summary_target"),
             "summary_present": bool(stage_report.get("summary_present")),
             "claim_valid_closed_loop_summary_tracked": claim_valid,
             "remaining_runtime_requirement": _scale_runtime_requirement(claim_valid=claim_valid),
         }
     return rows
+
+
+def _cache_inventory_status(cache: dict[str, Any]) -> dict[str, Any]:
+    validation = _dict_or_empty(cache.get("validation"))
+    return {
+        "required": cache.get("required"),
+        "valid": validation.get("valid"),
+        "expected_scene_count": _optional_int(validation.get("expected_scene_count")),
+        "present_scene_count": _optional_int(validation.get("present_scene_count")),
+        "missing_scene_count": _optional_int(validation.get("missing_scene_count")),
+        "usdz_file_count": _optional_int(cache.get("usdz_file_count")),
+        "matching_scene_count": _optional_int(cache.get("matching_scene_count")),
+        "nonmatching_usdz_file_count": _optional_int(cache.get("nonmatching_usdz_file_count")),
+    }
 
 
 def _scale_runtime_requirement(*, claim_valid: bool) -> str:

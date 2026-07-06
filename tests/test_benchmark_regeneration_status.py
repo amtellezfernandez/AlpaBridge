@@ -63,18 +63,36 @@ def test_large_scale_status_is_workflow_ready_but_not_claim_valid() -> None:
     status = _read_json(ROOT / STATUS_RELATIVE)
     plan = _read_json(ROOT / PLAN_RELATIVE)
     audit = _read_json(ROOT / AUDIT_RELATIVE)
+    readiness = _read_json(ROOT / READINESS_RELATIVE)
     stages = {stage["scene_preset"]: stage for stage in plan["stages"]}
+    readiness_stages = {stage["scene_preset"]: stage for stage in readiness["stages"]}
 
     for preset in (
         "front_camera_50scene_public2602",
         "front_camera_100scene_public2602",
     ):
         scale_status = status["scale_status"][preset]
+        readiness_stage = readiness_stages[preset]
+        source_cache = readiness_stage["source_usdz_cache"]
+        source_validation = source_cache["validation"]
         assert scale_status["preset_tracked"] is True
         assert scale_status["cache_builder_workflow_tracked"] is True
         assert scale_status["summary_artifact"] == stages[preset]["public_summary_target"]
         assert scale_status["summary_artifact"] in audit["missing_claim_valid_summaries"]
         assert scale_status["claim_valid_closed_loop_summary_tracked"] is False
+        assert scale_status["local_usdz_cache"]["valid"] is False
+        assert scale_status["source_usdz_cache"] == {
+            "required": True,
+            "valid": False,
+            "expected_scene_count": source_validation["expected_scene_count"],
+            "present_scene_count": source_validation["present_scene_count"],
+            "missing_scene_count": source_validation["missing_scene_count"],
+            "usdz_file_count": source_cache["usdz_file_count"],
+            "matching_scene_count": source_cache["matching_scene_count"],
+            "nonmatching_usdz_file_count": source_cache["nonmatching_usdz_file_count"],
+        }
+        assert scale_status["source_usdz_cache"]["usdz_file_count"] == 10
+        assert scale_status["source_usdz_cache"]["matching_scene_count"] == 0
         assert "x86_64 AlpaSim runner" in scale_status["remaining_runtime_requirement"]
 
 
@@ -328,7 +346,14 @@ def _completed_readiness() -> dict[str, Any]:
         public_summary["present"] = True
         public_summary["claim_valid"] = True
         public_summary["errors"] = []
-        local_usdz_cache = stage["local_usdz_cache"]
-        if local_usdz_cache["required"]:
-            local_usdz_cache["validation"]["valid"] = True
+        for cache_name in ("local_usdz_cache", "source_usdz_cache"):
+            cache = stage[cache_name]
+            if cache["required"]:
+                cache["validation"]["valid"] = True
+                cache["validation"]["present_scene_count"] = cache["validation"][
+                    "expected_scene_count"
+                ]
+                cache["validation"]["missing_scene_count"] = 0
+                cache["matching_scene_count"] = cache["validation"]["present_scene_count"]
+                cache["nonmatching_usdz_file_count"] = 0
     return readiness
