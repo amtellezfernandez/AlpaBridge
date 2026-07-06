@@ -7,9 +7,10 @@
         "/path/to/alpasim",
         "--output",
         "docs/evidence/benchmark_regeneration_readiness_20260706.json",
+        "--stable-public-snapshot",
         "--json"
       ],
-      "display": "wod2sim-benchmark-readiness --alpasim-root /path/to/alpasim --output docs/evidence/benchmark_regeneration_readiness_20260706.json --json"
+      "display": "wod2sim-benchmark-readiness --alpasim-root /path/to/alpasim --output docs/evidence/benchmark_regeneration_readiness_20260706.json --stable-public-snapshot --json"
     }
   },
   "created_at": "2026-07-06",

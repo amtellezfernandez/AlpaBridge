@@ -27,6 +27,7 @@ class BenchmarkRegenerationPlanTests(unittest.TestCase):
         readiness_command = plan["commands"]["check_readiness"]["argv"]
         self.assertEqual("wod2sim-benchmark-readiness", readiness_command[0])
         self.assertIn(READINESS_RELATIVE.as_posix(), readiness_command)
+        self.assertIn("--stable-public-snapshot", readiness_command)
         self.assertEqual(
             {
                 "front_camera_10scene_smoke",

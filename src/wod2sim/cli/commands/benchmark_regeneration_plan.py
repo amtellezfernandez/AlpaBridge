@@ -170,6 +170,7 @@ def build_plan(
                     alpasim_root,
                     "--output",
                     READINESS_ARTIFACT,
+                    "--stable-public-snapshot",
                     "--json",
                 ]
             )

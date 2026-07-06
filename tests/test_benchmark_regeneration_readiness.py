@@ -58,12 +58,26 @@ class BenchmarkRegenerationReadinessTests(unittest.TestCase):
                 command_runner=fake_runner,
                 disk_usage=lambda _path: _DiskUsage(),
             )
+            stable_report = module.build_readiness_report(
+                pilot_preset="fresh_3scene",
+                scale_presets=["fresh_3scene"],
+                alpasim_root=alpasim_root,
+                repo_root=root,
+                created_at="2026-07-06",
+                env={"HF_TOKEN": "token"},
+                command_runner=fake_runner,
+                disk_usage=lambda _path: _DiskUsage(),
+                stable_public_snapshot=True,
+            )
 
         scale_stage = report["stages"][1]
         self.assertEqual("wod2sim_benchmark_regeneration_readiness_v1", report["schema"])
         self.assertTrue(report["no_download_or_rollout_probes"])
         self.assertTrue(report["readiness"]["all_scale_caches_valid"])
         self.assertTrue(report["readiness"]["closed_loop_runner_ready"])
+        self.assertIn("free_bytes", report["disk"])
+        self.assertNotIn("free_bytes", stable_report["disk"])
+        self.assertTrue(stable_report["disk"]["exact_free_bytes_omitted"])
         self.assertFalse(report["readiness"]["claim_valid_scale_summaries_present"])
         self.assertTrue(scale_stage["local_usdz_cache"]["validation"]["valid"])
         self.assertFalse(scale_stage["public_summary"]["present"])
@@ -131,12 +145,16 @@ class BenchmarkRegenerationReadinessTests(unittest.TestCase):
         self.assertNotIn("GPU-", rendered)
         self.assertIn("blocking_requirements", report)
         self.assertIn("next_command_groups", report)
+        self.assertNotIn("free_bytes", report["disk"])
+        self.assertTrue(report["disk"]["exact_free_bytes_omitted"])
         blocker_ids = {requirement["id"] for requirement in report["blocking_requirements"]}
         self.assertIn("hf_token_missing", blocker_ids)
         self.assertIn("alpasim_base_image_missing", blocker_ids)
         self.assertIn("front_camera_50scene_public2602_cache_invalid", blocker_ids)
         self.assertEqual("refresh_status", report["next_command_groups"][-2]["name"])
         self.assertEqual("verify_claim_gate", report["next_command_groups"][-1]["name"])
+        refresh_display = report["next_command_groups"][0]["commands"][0]["display"]
+        self.assertIn("--stable-public-snapshot", refresh_display)
         build_group = _command_group(report, "build_and_validate_scale_caches")
         self.assertEqual(4, len(build_group["commands"]))
         self.assertTrue(

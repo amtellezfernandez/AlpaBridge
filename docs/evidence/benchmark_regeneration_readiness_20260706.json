@@ -72,7 +72,7 @@
     "hf_token_required_for_cache_build": true
   },
   "disk": {
-    "free_bytes": 300078993408,
+    "exact_free_bytes_omitted": true,
     "free_gib": 279.47,
     "meets_min_free_disk_gb": true,
     "min_free_disk_gb": 200,
@@ -93,7 +93,7 @@
       "commands": [
         {
           "command": "check_readiness",
-          "display": "wod2sim-benchmark-readiness --alpasim-root workspace/alpasim --output docs/evidence/benchmark_regeneration_readiness_20260706.json --json"
+          "display": "wod2sim-benchmark-readiness --alpasim-root workspace/alpasim --output docs/evidence/benchmark_regeneration_readiness_20260706.json --stable-public-snapshot --json"
         }
       ],
       "name": "refresh_readiness",

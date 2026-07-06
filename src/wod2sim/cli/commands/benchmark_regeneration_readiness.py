@@ -58,6 +58,11 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--output", type=Path, default=None)
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--min-free-disk-gb", type=int, default=DEFAULT_MIN_FREE_DISK_GB)
+    parser.add_argument(
+        "--stable-public-snapshot",
+        action="store_true",
+        help="Omit exact volatile fields such as disk.free_bytes from tracked public snapshots.",
+    )
     return parser
 
 
@@ -73,6 +78,7 @@ def main() -> int:
         repo_root=args.repo_root,
         created_at=args.created_at,
         min_free_disk_gb=args.min_free_disk_gb,
+        stable_public_snapshot=args.stable_public_snapshot,
     )
     if args.output is not None:
         args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -95,6 +101,7 @@ def build_readiness_report(
     repo_root: Path = Path.cwd(),
     created_at: str | None = None,
     min_free_disk_gb: int = DEFAULT_MIN_FREE_DISK_GB,
+    stable_public_snapshot: bool = False,
     env: dict[str, str] | None = None,
     command_runner: Callable[[list[str]], dict[str, Any]] | None = None,
     disk_usage: Callable[[Path], Any] = shutil.disk_usage,
@@ -120,6 +127,7 @@ def build_readiness_report(
         path=_disk_probe_path(repo_root=repo_root, alpasim_root=resolved_alpasim_root),
         repo_root=repo_root,
         min_free_disk_gb=min_free_disk_gb,
+        stable_public_snapshot=stable_public_snapshot,
         disk_usage=disk_usage,
     )
     stages = [
@@ -287,18 +295,23 @@ def _disk_report(
     path: Path,
     repo_root: Path,
     min_free_disk_gb: int,
+    stable_public_snapshot: bool,
     disk_usage: Callable[[Path], Any],
 ) -> dict[str, Any]:
     usage = disk_usage(path)
     free_gib = _bytes_to_gib(int(usage.free))
-    return {
+    report = {
         "path": _display_path(path, repo_root=repo_root),
-        "free_bytes": int(usage.free),
         "free_gib": round(free_gib, 2),
         "total_gib": round(_bytes_to_gib(int(usage.total)), 2),
         "min_free_disk_gb": min_free_disk_gb,
         "meets_min_free_disk_gb": free_gib >= float(min_free_disk_gb),
     }
+    if stable_public_snapshot:
+        report["exact_free_bytes_omitted"] = True
+    else:
+        report["free_bytes"] = int(usage.free)
+    return report
 
 
 def _stage_readiness(

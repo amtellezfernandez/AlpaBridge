@@ -227,6 +227,9 @@ Before rebuilding caches or launching shards, write a no-download/no-rollout
 host readiness report with `wod2sim-benchmark-readiness`; the current public-safe
 snapshot is tracked at
 [`docs/evidence/benchmark_regeneration_readiness_20260706.json`](docs/evidence/benchmark_regeneration_readiness_20260706.json).
+The public plan uses `--stable-public-snapshot` for that command so exact
+volatile disk byte counts do not churn the tracked JSON; rounded GiB and the
+minimum-disk pass/fail result remain recorded.
 After promoting new public summaries, refresh readiness, regenerate status with
 `wod2sim-benchmark-status`, then run `wod2sim-benchmark-audit --strict --json`;
 this avoids any circular dependency between the status and audit artifacts.

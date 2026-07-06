@@ -134,6 +134,9 @@ The matching command-level rerun plan is tracked at
 The no-download/no-rollout host readiness snapshot is tracked at
 [`docs/evidence/benchmark_regeneration_readiness_20260706.json`](evidence/benchmark_regeneration_readiness_20260706.json)
 and can be regenerated with `wod2sim-benchmark-readiness`.
+Tracked public readiness snapshots should use `--stable-public-snapshot`, which
+omits exact volatile disk byte counts while preserving rounded free GiB and the
+minimum-disk gate.
 After promoting new public summaries, regenerate readiness first, then status
 with `wod2sim-benchmark-status`, then the strict audit. The status command
 derives claim flags from the current summary artifacts and only references the
