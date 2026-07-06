@@ -180,7 +180,8 @@ groups include copyable `display` commands; long shard groups point back to the
 full plan.
 The plan includes readiness reporting, local-cache validation, 10-scene shard
 commands for constrained x86_64 hosts, and public-safe merge/promotion commands
-for shard summaries.
+for shard summaries. Use `wod2sim-benchmark-commands` to render the exact
+cache, shard, merge, promotion, status, and audit commands from that plan.
 The matching claim-readiness audit is
 [`docs/evidence/benchmark_regeneration_audit_20260706.json`](evidence/benchmark_regeneration_audit_20260706.json).
 It verifies the tracked summary artifacts, merged shard provenance, and the

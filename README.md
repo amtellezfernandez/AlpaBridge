@@ -230,6 +230,9 @@ snapshot is tracked at
 The public plan uses `--stable-public-snapshot` for that command so exact
 volatile disk byte counts do not churn the tracked JSON; rounded GiB and the
 minimum-disk pass/fail result remain recorded.
+Use `wod2sim-benchmark-commands` to render copyable command lines for a selected
+stage, group, or shard directly from the tracked plan without duplicating the
+long shard sequence in docs.
 After promoting new public summaries, refresh readiness, regenerate status with
 `wod2sim-benchmark-status`, then run `wod2sim-benchmark-audit --strict --json`;
 this avoids any circular dependency between the status and audit artifacts.
@@ -321,6 +324,7 @@ wod2sim-launch --mode print --model direct_actor_planner --oracle-actor-proxy /p
 | `wod2sim-benchmark-plan` | Emit the public-safe 10/50/100 benchmark regeneration plan. |
 | `wod2sim-benchmark-readiness` | Report host/cache/image readiness without downloads or rollouts. |
 | `wod2sim-benchmark-status` | Regenerate public benchmark status from compact evidence artifacts. |
+| `wod2sim-benchmark-commands` | Render copyable cache/shard/merge/promotion commands from the plan. |
 | `wod2sim-benchmark-audit` | Gate tracked regeneration artifacts against the 10/50/100 claim. |
 | `wod2sim-promote-batch-summary` | Promote a generated compact batch summary into public evidence. |
 | `wod2sim-benchmark-summary` | Aggregate evidence directories into one benchmark JSON. |

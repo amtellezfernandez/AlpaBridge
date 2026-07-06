@@ -145,7 +145,9 @@ without a refresh cycle.
 Use its `blocking_requirements` and `next_command_groups` fields to identify the
 remaining cache/runtime blockers and the matching plan command groups. Short
 setup groups include copyable `display` commands; long shard groups remain
-referenced through the full plan to avoid duplicating every shard command.
+referenced through the full plan to avoid duplicating every shard command. Use
+`wod2sim-benchmark-commands --group shards --stage <stage-or-preset>` to render
+those shard commands from the tracked plan when executing a scale stage.
 Its scale stages include 10-scene shard commands for constrained hosts; shard
 summaries are operational checkpoints, not replacements for a complete 50/100
 public summary. Validate the local USDZ cache offline with

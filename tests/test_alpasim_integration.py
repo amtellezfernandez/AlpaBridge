@@ -100,6 +100,10 @@ class AlpaSimIntegrationTests(unittest.TestCase):
             "wod2sim.cli.commands.benchmark_regeneration_status:main",
         )
         self.assertEqual(
+            pyproject["project.scripts"]["wod2sim-benchmark-commands"],
+            "wod2sim.cli.commands.benchmark_regeneration_commands:main",
+        )
+        self.assertEqual(
             pyproject["project.scripts"]["wod2sim-promote-batch-summary"],
             "wod2sim.cli.commands.promote_batch_summary:main",
         )
