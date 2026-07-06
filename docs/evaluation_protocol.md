@@ -134,3 +134,5 @@ public summary. After all shards complete, merge their compact summaries with
 `wod2sim-batch-summary --merge-summary ... --expected-scene-count N`.
 The public claim gate for those artifacts is tracked at
 [`docs/evidence/benchmark_regeneration_audit_20260706.json`](evidence/benchmark_regeneration_audit_20260706.json).
+For merged scale summaries, the audit also verifies that the recorded shard
+summary inputs match the regeneration plan.

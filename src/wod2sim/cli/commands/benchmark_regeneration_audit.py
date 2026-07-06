@@ -141,6 +141,8 @@ def _audit_stage(stage: dict[str, Any], *, repo_root: Path) -> dict[str, Any]:
             stage_errors.append("failed_scene_count_nonzero")
         if _int_value(aggregate.get("sensor_failure_scene_count")) != 0:
             stage_errors.append("sensor_failure_scene_count_nonzero")
+    merge_provenance = _merge_provenance(summary=summary, stage=stage)
+    stage_errors.extend(merge_provenance["errors"])
 
     return {
         "stage": stage.get("stage"),
@@ -161,7 +163,44 @@ def _audit_stage(stage: dict[str, Any], *, repo_root: Path) -> dict[str, Any]:
             ),
             "total_audited_frames": _optional_int(aggregate.get("total_audited_frames")),
         },
+        "merge_provenance": merge_provenance,
     }
+
+
+def _merge_provenance(*, summary: dict[str, Any], stage: dict[str, Any]) -> dict[str, Any]:
+    commands = _dict_or_empty(stage.get("commands"))
+    merge_command = _dict_or_empty(commands.get("merge_shard_summaries"))
+    expected_inputs = _merge_summary_inputs_from_command(merge_command)
+    source = _dict_or_empty(summary.get("source"))
+    actual_inputs = [
+        str(item)
+        for item in _list_or_empty(source.get("input_summaries"))
+        if isinstance(item, str)
+    ]
+    is_merged = source.get("summary_kind") == "merged_batch_summaries"
+    errors: list[str] = []
+    if is_merged and expected_inputs and actual_inputs != expected_inputs:
+        errors.append("merge_input_summaries_mismatch")
+
+    return {
+        "required_for_stage": bool(expected_inputs),
+        "summary_is_merged": is_merged,
+        "expected_input_summaries": expected_inputs,
+        "actual_input_summaries": actual_inputs,
+        "input_summaries_match_plan": actual_inputs == expected_inputs if is_merged else None,
+        "errors": errors,
+    }
+
+
+def _merge_summary_inputs_from_command(command: dict[str, Any]) -> list[str]:
+    argv = _list_or_empty(command.get("argv"))
+    inputs: list[str] = []
+    for index, value in enumerate(argv):
+        if value == "--merge-summary" and index + 1 < len(argv):
+            next_value = argv[index + 1]
+            if isinstance(next_value, str):
+                inputs.append(next_value)
+    return inputs
 
 
 def _status_consistency(

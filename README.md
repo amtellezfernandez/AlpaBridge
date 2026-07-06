@@ -226,7 +226,8 @@ boundary. Shard summaries can be merged with `wod2sim-batch-summary` using the
 `--merge-summary` and `--expected-scene-count` options.
 The current claim gate is tracked in
 [`docs/evidence/benchmark_regeneration_audit_20260706.json`](docs/evidence/benchmark_regeneration_audit_20260706.json)
-and can be regenerated with `wod2sim-benchmark-audit`.
+and can be regenerated with `wod2sim-benchmark-audit`; merged shard summaries
+must list the planned shard summary inputs.
 
 ## Evidence Contract
 

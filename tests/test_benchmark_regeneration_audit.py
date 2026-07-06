@@ -88,10 +88,86 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
                 )
 
             audit = module.build_audit(repo_root=repo_root, created_at="2026-07-06")
+            stages = {stage["scene_preset"]: stage for stage in audit["stages"]}
 
         self.assertTrue(audit["valid"])
         self.assertTrue(audit["claim_ready"])
         self.assertEqual([], audit["missing_claim_valid_summaries"])
+        self.assertFalse(
+            stages["front_camera_50scene_public2602"]["merge_provenance"]["summary_is_merged"]
+        )
+
+    def test_audit_accepts_merged_scale_summary_when_inputs_match_plan(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            evidence = repo_root / "docs" / "evidence"
+            evidence.mkdir(parents=True)
+            shutil.copy2(ROOT / PLAN_RELATIVE, evidence / PLAN_RELATIVE.name)
+            shutil.copy2(ROOT / STATUS_RELATIVE, evidence / STATUS_RELATIVE.name)
+
+            plan = _read_json(evidence / PLAN_RELATIVE.name)
+            status = _read_json(evidence / STATUS_RELATIVE.name)
+            status["completion_status"]["full_objective_complete"] = True
+            for preset in (
+                "front_camera_50scene_public2602",
+                "front_camera_100scene_public2602",
+            ):
+                status["scale_status"][preset]["claim_valid_closed_loop_summary_tracked"] = True
+            _write_json(evidence / STATUS_RELATIVE.name, status)
+            _write_json(evidence / "closed_loop_spotlight_reflex_10scene_batch.json", _batch_summary(10))
+            for preset, scene_count in (
+                ("front_camera_50scene_public2602", 50),
+                ("front_camera_100scene_public2602", 100),
+            ):
+                _write_json(
+                    evidence / f"closed_loop_spotlight_reflex_{scene_count}scene_batch.json",
+                    _batch_summary(
+                        scene_count,
+                        input_summaries=_planned_merge_inputs(plan, preset),
+                    ),
+                )
+
+            audit = module.build_audit(repo_root=repo_root, created_at="2026-07-06")
+            stages = {stage["scene_preset"]: stage for stage in audit["stages"]}
+
+        self.assertTrue(audit["claim_ready"])
+        self.assertTrue(
+            stages["front_camera_50scene_public2602"]["merge_provenance"]["summary_is_merged"]
+        )
+        self.assertTrue(
+            stages["front_camera_50scene_public2602"]["merge_provenance"][
+                "input_summaries_match_plan"
+            ]
+        )
+
+    def test_mismatched_merged_scale_summary_inputs_fail_the_stage(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            evidence = repo_root / "docs" / "evidence"
+            evidence.mkdir(parents=True)
+            shutil.copy2(ROOT / PLAN_RELATIVE, evidence / PLAN_RELATIVE.name)
+            shutil.copy2(ROOT / STATUS_RELATIVE, evidence / STATUS_RELATIVE.name)
+            _write_json(evidence / "closed_loop_spotlight_reflex_10scene_batch.json", _batch_summary(10))
+            _write_json(
+                evidence / "closed_loop_spotlight_reflex_50scene_batch.json",
+                _batch_summary(50, input_summaries=["wrong-shard.json"]),
+            )
+
+            audit = module.build_audit(repo_root=repo_root, created_at="2026-07-06")
+            stages = {stage["scene_preset"]: stage for stage in audit["stages"]}
+
+        self.assertFalse(stages["front_camera_50scene_public2602"]["claim_valid"])
+        self.assertIn(
+            "merge_input_summaries_mismatch",
+            stages["front_camera_50scene_public2602"]["errors"],
+        )
+        self.assertFalse(
+            stages["front_camera_50scene_public2602"]["merge_provenance"][
+                "input_summaries_match_plan"
+            ]
+        )
 
     def test_malformed_summary_is_reported_as_stage_error(self) -> None:
         module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
@@ -130,8 +206,12 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         self.assertIn(AUDIT_RELATIVE.name, evaluation_protocol)
 
 
-def _batch_summary(scene_count: int) -> dict[str, object]:
-    return {
+def _batch_summary(
+    scene_count: int,
+    *,
+    input_summaries: list[str] | None = None,
+) -> dict[str, object]:
+    summary: dict[str, object] = {
         "schema": "wod2sim_closed_loop_batch_summary_v1",
         "clean_closed_loop_batch": True,
         "aggregate": {
@@ -142,6 +222,25 @@ def _batch_summary(scene_count: int) -> dict[str, object]:
             "total_audited_frames": scene_count * 199,
         },
     }
+    if input_summaries is not None:
+        summary["source"] = {
+            "summary_kind": "merged_batch_summaries",
+            "input_summaries": input_summaries,
+        }
+    return summary
+
+
+def _planned_merge_inputs(plan: dict[str, object], scene_preset: str) -> list[str]:
+    for stage in plan["stages"]:
+        if stage["scene_preset"] != scene_preset:
+            continue
+        command = stage["commands"]["merge_shard_summaries"]["argv"]
+        return [
+            command[index + 1]
+            for index, value in enumerate(command)
+            if value == "--merge-summary"
+        ]
+    raise AssertionError(scene_preset)
 
 
 def _read_json(path: Path) -> dict[str, object]:
