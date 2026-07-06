@@ -1463,6 +1463,20 @@ def _public_handoff_doc_consistency(
     if not checks["public_handoff_doc_states_public_safety_boundary"]:
         notes.append("public handoff doc does not state the public artifact safety boundary")
 
+    cleanup_terms = (
+        "wod2sim-benchmark-cleanup --json",
+        "dry-run by default",
+        "tracked files",
+        "--include-gated-assets",
+        "--include-scale-caches",
+        "--apply",
+    )
+    checks["public_handoff_doc_states_cleanup_boundary"] = all(
+        term in text for term in cleanup_terms
+    )
+    if not checks["public_handoff_doc_states_cleanup_boundary"]:
+        notes.append("public handoff doc does not state the cleanup safety boundary")
+
     return {
         "valid": all(checks.values()) if checks else False,
         "artifact": artifact,
