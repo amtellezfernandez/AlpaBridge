@@ -121,6 +121,11 @@ remaining requirements limited to:
 | `produce_claim_valid_100_scene_summary` | Not satisfied until the 100-scene full-stage summary is present and clean. |
 | `pass_strict_claim_gate` | Not satisfied until all planned summaries are claim-valid. |
 
+The audit's `objective_completion` object also exposes the current
+`blocking_requirements`, `next_command_groups`, and `next_command_renderer_groups`
+summary so reviewers can map the remaining claim gaps back to the command
+renderer without executing private cache or rollout work.
+
 ## Promotion Boundary
 
 Shard summaries and diagnostic probes are operational evidence, not full-stage

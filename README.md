@@ -292,7 +292,8 @@ match the audited stage summary state. The audit also validates diagnostic
 scale-probe evidence as non-claim evidence so it cannot satisfy the strict
 50/100-scene gate by accident. Its `objective_completion` section lists the
 satisfied requirements, the remaining 50/100-scene claim gaps, the blocking
-readiness IDs, and the next command groups to run.
+readiness IDs, and the next command groups to run via `blocking_requirements`,
+`next_command_groups`, and `next_command_renderer_groups`.
 
 ## Evidence Contract
 

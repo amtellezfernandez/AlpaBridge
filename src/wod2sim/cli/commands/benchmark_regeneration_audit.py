@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 from collections import Counter
+from collections.abc import Iterable
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -693,6 +694,19 @@ def _objective_completion(
             ],
         ),
     ]
+    remaining_requirements = [
+        requirement["requirement"] for requirement in requirements if not requirement["satisfied"]
+    ]
+    blocking_requirements = _unique_strings(
+        blocker
+        for requirement in requirements
+        if not requirement["satisfied"]
+        for blocker in _list_or_empty(requirement.get("blocking_requirements"))
+    )
+    next_command_groups = _next_command_group_names(readiness_context) if not claim_ready else []
+    next_command_renderer_groups = (
+        _next_command_renderer_groups(readiness_context) if not claim_ready else {}
+    )
     return {
         "objective": (
             "Regenerate WOD2Sim closed-loop benchmark artifacts from scratch, validate "
@@ -702,11 +716,10 @@ def _objective_completion(
         "requirements": requirements,
         "satisfied_count": sum(1 for requirement in requirements if requirement["satisfied"]),
         "total_count": len(requirements),
-        "remaining_requirements": [
-            requirement["requirement"]
-            for requirement in requirements
-            if not requirement["satisfied"]
-        ],
+        "remaining_requirements": remaining_requirements,
+        "blocking_requirements": blocking_requirements,
+        "next_command_groups": next_command_groups,
+        "next_command_renderer_groups": next_command_renderer_groups,
     }
 
 
@@ -797,6 +810,32 @@ def _next_command_group_names(readiness_context: dict[str, Any]) -> list[str]:
         for group in _list_or_empty(readiness_context.get("command_groups"))
         if isinstance(group, dict) and group.get("name")
     ]
+
+
+def _next_command_renderer_groups(readiness_context: dict[str, Any]) -> dict[str, list[str]]:
+    renderer_groups: dict[str, list[str]] = {}
+    for group in _list_or_empty(readiness_context.get("command_groups")):
+        group_map = _dict_or_empty(group)
+        name = group_map.get("name")
+        if not isinstance(name, str) or not name:
+            continue
+        renderer_groups[name] = [
+            str(renderer_group)
+            for renderer_group in _list_or_empty(group_map.get("command_renderer_groups"))
+            if isinstance(renderer_group, str) and renderer_group
+        ]
+    return renderer_groups
+
+
+def _unique_strings(values: Iterable[object]) -> list[str]:
+    seen = set()
+    unique = []
+    for value in values:
+        if not isinstance(value, str) or not value or value in seen:
+            continue
+        seen.add(value)
+        unique.append(value)
+    return unique
 
 
 def _diagnostic_scale_evidence(diagnostic_evidence: dict[str, Any]) -> list[str]:

@@ -134,6 +134,39 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             "produce_claim_valid_100_scene_summary",
             completion["remaining_requirements"],
         )
+        self.assertIn("hf_token_missing", completion["blocking_requirements"])
+        self.assertIn(
+            "front_camera_50scene_public2602_cache_invalid",
+            completion["blocking_requirements"],
+        )
+        self.assertIn(
+            "front_camera_100scene_public2602_claim_summary_missing",
+            completion["blocking_requirements"],
+        )
+        self.assertEqual(
+            [
+                "refresh_readiness",
+                "build_and_validate_scale_caches",
+                "run_scale_shards_and_promote_summaries",
+                "refresh_status",
+                "verify_claim_gate",
+            ],
+            completion["next_command_groups"],
+        )
+        self.assertEqual(
+            {
+                "build_and_validate_scale_caches": ["cache"],
+                "refresh_readiness": ["readiness"],
+                "refresh_status": ["post"],
+                "run_scale_shards_and_promote_summaries": [
+                    "shards",
+                    "merge",
+                    "promote",
+                ],
+                "verify_claim_gate": ["post"],
+            },
+            completion["next_command_renderer_groups"],
+        )
         requirements = {item["requirement"]: item for item in completion["requirements"]}
         self.assertTrue(requirements["validate_10_scene_pilot"]["satisfied"])
         self.assertTrue(requirements["track_50_scene_scale_progress"]["satisfied"])
@@ -224,6 +257,9 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         self.assertTrue(audit["claim_ready"])
         self.assertTrue(audit["objective_completion"]["complete"])
         self.assertEqual([], audit["objective_completion"]["remaining_requirements"])
+        self.assertEqual([], audit["objective_completion"]["blocking_requirements"])
+        self.assertEqual([], audit["objective_completion"]["next_command_groups"])
+        self.assertEqual({}, audit["objective_completion"]["next_command_renderer_groups"])
         self.assertFalse(audit["regeneration_provenance"]["all_stage_sources_match_plan"])
         self.assertEqual([], audit["missing_claim_valid_summaries"])
         self.assertTrue(
