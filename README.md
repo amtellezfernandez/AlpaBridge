@@ -75,21 +75,17 @@ into auditable AlpaSim closed-loop evidence.
 
 | Capability | Waymax | WOD2Sim |
 | --- | --- | --- |
-| Accelerator-backed simulation | JAX/XLA on GPU/TPU | Launches AlpaSim jobs, but does not implement the simulator core |
-| Real driving data | Waymo Open Motion Dataset scenarios | WOD-style inputs for adapters and benchmark runs |
-| Closed-loop interaction | Built-in multi-agent simulation and reactive sim agents | External-driver runs plus auditable evidence generation |
-| Metrics | Route progress, off-road, collision, kinematic infeasibility, ADE | Compact benchmark summaries, audits, manifests, and operator matrices |
-| Training loop support | In-graph training and policy evaluation | Command rendering, evidence packaging, and claim gating |
+| Multi-agent closed-loop simulation | Yes | No |
+| Accelerator-backed execution | JAX/XLA on GPU/TPU | CLI-driven evidence generation around AlpaSim runs |
+| Real driving data | Waymo Open Motion Dataset scenarios | WOD-style adapters and benchmark inputs |
+| Expert data playback | Logged trajectories and expert actors | Compact benchmark summaries and reproduction artifacts |
+| Sim agents | Reactive rule-based and learned agents | Operator workflows, audits, and claim gating |
+| Routes / goals | Route-conditioned planning inputs | Benchmark scopes, scene presets, and handoff guidance |
+| Metrics | Route progress, off-road, collision, kinematic infeasibility, ADE | Claim-ready summaries, audits, manifests, and operator matrix |
 | Sensor simulation | Out of scope | Out of scope |
+| Training loop support | In-graph training and evaluation | Command rendering and evidence packaging |
 
-```mermaid
-flowchart LR
-  A[Waymo Motion data] --> B[Waymax]
-  A --> C[WOD2Sim adapter + evidence chain]
-  C --> D[AlpaSim closed-loop rollout]
-  D --> E[Compact JSON evidence]
-  E --> F[Audit / manifest / operator matrix]
-```
+Waymax is the simulator. WOD2Sim is the evidence layer.
 
 ## Research Scope
 
