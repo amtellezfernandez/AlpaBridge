@@ -210,6 +210,14 @@ A local one-scene `spotlight_reflex` run is summarized in
 bundle are not tracked because they may contain AlpaSim or gated-scene-derived
 content.
 
+Open-repo readers can review the compact JSON summaries without AlpaSim, Docker,
+or gated scene assets. Re-running or scaling the benchmark requires local access
+to the gated assets plus an x86_64 NVIDIA/Docker AlpaSim host; ARM/DGX Spark
+hosts can help with cache preparation but cannot run the amd64-only NRE
+SensorSim image natively. The current regeneration and scale status is tracked
+in
+[`docs/evidence/benchmark_regeneration_status_20260706.json`](docs/evidence/benchmark_regeneration_status_20260706.json).
+
 ## Evidence Contract
 
 A closed-loop claim should include:
