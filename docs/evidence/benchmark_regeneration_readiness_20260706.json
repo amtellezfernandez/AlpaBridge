@@ -1,13 +1,79 @@
 {
   "alpasim_root": "workspace/alpasim",
+  "blocking_requirements": [
+    {
+      "blocks": "scale_cache_build",
+      "detail": "HF_TOKEN is required before running scale-stage build_local_cache commands.",
+      "id": "hf_token_missing",
+      "plan_command_groups": [
+        "stages[].commands.build_local_cache"
+      ]
+    },
+    {
+      "blocks": "closed_loop_rollout",
+      "detail": "Error response from daemon: No such image: alpasim-base:0.66.0",
+      "id": "alpasim_base_image_missing",
+      "plan_command_groups": [
+        "stages[].commands.run_batch"
+      ]
+    },
+    {
+      "blocks": "closed_loop_rollout",
+      "detail": "Local USDZ cache is not valid: 0/50 scenes present.",
+      "id": "front_camera_50scene_public2602_cache_invalid",
+      "plan_command_groups": [
+        "stages[workshop_scale].commands.build_local_cache",
+        "stages[workshop_scale].commands.validate_local_cache"
+      ],
+      "scene_preset": "front_camera_50scene_public2602",
+      "stage": "workshop_scale"
+    },
+    {
+      "blocks": "full_benchmark_claim",
+      "detail": "Claim-valid public summary is not present: docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json.",
+      "id": "front_camera_50scene_public2602_claim_summary_missing",
+      "plan_command_groups": [
+        "stages[workshop_scale].commands.run_batch",
+        "stages[workshop_scale].commands.write_batch_summary",
+        "stages[workshop_scale].commands.merge_shard_summaries",
+        "stages[workshop_scale].commands.promote_public_summary"
+      ],
+      "scene_preset": "front_camera_50scene_public2602",
+      "stage": "workshop_scale"
+    },
+    {
+      "blocks": "closed_loop_rollout",
+      "detail": "Local USDZ cache is not valid: 0/100 scenes present.",
+      "id": "front_camera_100scene_public2602_cache_invalid",
+      "plan_command_groups": [
+        "stages[stronger_benchmark].commands.build_local_cache",
+        "stages[stronger_benchmark].commands.validate_local_cache"
+      ],
+      "scene_preset": "front_camera_100scene_public2602",
+      "stage": "stronger_benchmark"
+    },
+    {
+      "blocks": "full_benchmark_claim",
+      "detail": "Claim-valid public summary is not present: docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json.",
+      "id": "front_camera_100scene_public2602_claim_summary_missing",
+      "plan_command_groups": [
+        "stages[stronger_benchmark].commands.run_batch",
+        "stages[stronger_benchmark].commands.write_batch_summary",
+        "stages[stronger_benchmark].commands.merge_shard_summaries",
+        "stages[stronger_benchmark].commands.promote_public_summary"
+      ],
+      "scene_preset": "front_camera_100scene_public2602",
+      "stage": "stronger_benchmark"
+    }
+  ],
   "created_at": "2026-07-06",
   "credentials": {
     "hf_token_present": false,
     "hf_token_required_for_cache_build": true
   },
   "disk": {
-    "free_bytes": 300085383168,
-    "free_gib": 279.48,
+    "free_bytes": 300082483200,
+    "free_gib": 279.47,
     "meets_min_free_disk_gb": true,
     "min_free_disk_gb": 200,
     "path": "workspace/alpasim",
@@ -22,6 +88,39 @@
     "system": "Linux",
     "unsupported_arm_rollout_override_enabled": false
   },
+  "next_command_groups": [
+    {
+      "name": "refresh_readiness",
+      "order": 1,
+      "plan_command_group": "commands.check_readiness"
+    },
+    {
+      "name": "build_and_validate_scale_caches",
+      "order": 2,
+      "plan_command_groups": [
+        "stages[workshop_scale].commands.build_local_cache",
+        "stages[stronger_benchmark].commands.build_local_cache",
+        "stages[workshop_scale].commands.validate_local_cache",
+        "stages[stronger_benchmark].commands.validate_local_cache"
+      ]
+    },
+    {
+      "name": "run_scale_shards_and_promote_summaries",
+      "order": 3,
+      "plan_command_groups": [
+        "stages[].shards[].commands.run_batch",
+        "stages[].shards[].commands.write_batch_summary",
+        "stages[].commands.merge_shard_summaries",
+        "stages[].commands.promote_public_summary"
+      ]
+    },
+    {
+      "command": "wod2sim-benchmark-audit --strict --json",
+      "expected_before_scale_completion": "exit_1_until_50_100_summaries_are_claim_valid",
+      "name": "verify_claim_gate",
+      "order": 4
+    }
+  ],
   "no_download_or_rollout_probes": true,
   "plan_artifact": "docs/evidence/benchmark_regeneration_plan_20260706.json",
   "readiness": {

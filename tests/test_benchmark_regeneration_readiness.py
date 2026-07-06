@@ -67,6 +67,12 @@ class BenchmarkRegenerationReadinessTests(unittest.TestCase):
         self.assertFalse(report["readiness"]["claim_valid_scale_summaries_present"])
         self.assertTrue(scale_stage["local_usdz_cache"]["validation"]["valid"])
         self.assertFalse(scale_stage["public_summary"]["present"])
+        self.assertIn(
+            "fresh_3scene_claim_summary_missing",
+            {requirement["id"] for requirement in report["blocking_requirements"]},
+        )
+        self.assertEqual("refresh_readiness", report["next_command_groups"][0]["name"])
+        self.assertEqual("verify_claim_gate", report["next_command_groups"][-1]["name"])
         self.assertFalse(any(command[:2] == ["docker", "run"] for command in seen_commands))
 
     def test_build_report_marks_arm_host_and_missing_cache_not_ready(self) -> None:
@@ -103,6 +109,10 @@ class BenchmarkRegenerationReadinessTests(unittest.TestCase):
         self.assertFalse(report["readiness"]["closed_loop_runner_ready"])
         self.assertFalse(scale_stage["local_usdz_cache"]["validation"]["valid"])
         self.assertEqual(3, scale_stage["local_usdz_cache"]["validation"]["missing_scene_count"])
+        blocker_ids = {requirement["id"] for requirement in report["blocking_requirements"]}
+        self.assertIn("hf_token_missing", blocker_ids)
+        self.assertIn("unsupported_closed_loop_host", blocker_ids)
+        self.assertIn("fresh_3scene_cache_invalid", blocker_ids)
 
     def test_tracked_readiness_snapshot_is_public_safe_and_records_remaining_scale_gap(self) -> None:
         report = json.loads((ROOT / READINESS_RELATIVE).read_text(encoding="utf-8"))
@@ -113,6 +123,13 @@ class BenchmarkRegenerationReadinessTests(unittest.TestCase):
         self.assertTrue(report["no_download_or_rollout_probes"])
         self.assertNotIn("/home/", rendered)
         self.assertNotIn("GPU-", rendered)
+        self.assertIn("blocking_requirements", report)
+        self.assertIn("next_command_groups", report)
+        blocker_ids = {requirement["id"] for requirement in report["blocking_requirements"]}
+        self.assertIn("hf_token_missing", blocker_ids)
+        self.assertIn("alpasim_base_image_missing", blocker_ids)
+        self.assertIn("front_camera_50scene_public2602_cache_invalid", blocker_ids)
+        self.assertEqual("verify_claim_gate", report["next_command_groups"][-1]["name"])
         self.assertTrue(stages[10]["public_summary"]["claim_valid"])
         self.assertFalse(stages[50]["local_usdz_cache"]["validation"]["valid"])
         self.assertFalse(stages[50]["public_summary"]["present"])

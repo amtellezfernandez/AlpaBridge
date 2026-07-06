@@ -149,6 +149,13 @@ def build_readiness_report(
             resolved_alpasim_root.is_dir(),
         )
     )
+    blocking_requirements = _blocking_requirements(
+        env=env_map,
+        host=host,
+        probes=probes,
+        disk=disk,
+        stages=stages,
+    )
 
     return {
         "schema": READINESS_SCHEMA,
@@ -173,6 +180,8 @@ def build_readiness_report(
                 stage["public_summary"]["claim_valid"] for stage in scale_stages
             ),
         },
+        "blocking_requirements": blocking_requirements,
+        "next_command_groups": _next_command_groups(stages=stages),
         "stages": stages,
     }
 
@@ -313,6 +322,193 @@ def _stage_readiness(
         "run_dir": stage["run_dir"],
         "public_summary_target": stage["public_summary_target"],
     }
+
+
+def _blocking_requirements(
+    *,
+    env: dict[str, str],
+    host: dict[str, Any],
+    probes: dict[str, Any],
+    disk: dict[str, Any],
+    stages: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    requirements: list[dict[str, Any]] = []
+    if not env.get("HF_TOKEN", "").strip():
+        requirements.append(
+            {
+                "id": "hf_token_missing",
+                "blocks": "scale_cache_build",
+                "detail": "HF_TOKEN is required before running scale-stage build_local_cache commands.",
+                "plan_command_groups": ["stages[].commands.build_local_cache"],
+            }
+        )
+    if not disk["meets_min_free_disk_gb"]:
+        requirements.append(
+            {
+                "id": "free_disk_below_threshold",
+                "blocks": "cache_build_and_rollout",
+                "detail": (
+                    f"{disk['free_gib']} GiB free is below the configured "
+                    f"{disk['min_free_disk_gb']} GB threshold."
+                ),
+                "plan_command_groups": ["commands.check_readiness"],
+            }
+        )
+    if not host["closed_loop_runner_supported"]:
+        requirements.append(
+            {
+                "id": "unsupported_closed_loop_host",
+                "blocks": "closed_loop_rollout",
+                "detail": "Live rollouts require a supported x86_64 Linux AlpaSim runner.",
+                "plan_command_groups": ["stages[].commands.run_batch"],
+            }
+        )
+    _append_probe_requirement(
+        requirements,
+        probe=probes["docker_daemon"],
+        requirement_id="docker_daemon_unavailable",
+        blocks="closed_loop_rollout",
+        plan_command_groups=["commands.check_readiness", "stages[].commands.run_batch"],
+    )
+    _append_probe_requirement(
+        requirements,
+        probe=probes["alpasim_base_image"],
+        requirement_id="alpasim_base_image_missing",
+        blocks="closed_loop_rollout",
+        plan_command_groups=["stages[].commands.run_batch"],
+    )
+    _append_probe_requirement(
+        requirements,
+        probe=probes["nvidia_smi"],
+        requirement_id="nvidia_gpu_unavailable",
+        blocks="closed_loop_rollout",
+        plan_command_groups=["stages[].commands.run_batch"],
+    )
+    if probes["docker_nvidia_runtime"].get("declares_nvidia_runtime") is not True:
+        requirements.append(
+            {
+                "id": "docker_nvidia_runtime_unavailable",
+                "blocks": "closed_loop_rollout",
+                "detail": "Docker does not currently report an NVIDIA runtime.",
+                "plan_command_groups": ["commands.check_readiness", "stages[].commands.run_batch"],
+            }
+        )
+
+    for stage in stages:
+        if not stage["requires_local_usdz_cache"]:
+            continue
+        cache_validation = stage["local_usdz_cache"]["validation"]
+        if not cache_validation["valid"]:
+            requirements.append(
+                {
+                    "id": f"{stage['scene_preset']}_cache_invalid",
+                    "stage": stage["stage"],
+                    "scene_preset": stage["scene_preset"],
+                    "blocks": "closed_loop_rollout",
+                    "detail": (
+                        f"Local USDZ cache is not valid: "
+                        f"{cache_validation.get('present_scene_count', 0)}/"
+                        f"{cache_validation.get('expected_scene_count', stage['scene_count'])} scenes present."
+                    ),
+                    "plan_command_groups": [
+                        f"stages[{stage['stage']}].commands.build_local_cache",
+                        f"stages[{stage['stage']}].commands.validate_local_cache",
+                    ],
+                }
+            )
+        if not stage["public_summary"]["claim_valid"]:
+            requirements.append(
+                {
+                    "id": f"{stage['scene_preset']}_claim_summary_missing",
+                    "stage": stage["stage"],
+                    "scene_preset": stage["scene_preset"],
+                    "blocks": "full_benchmark_claim",
+                    "detail": f"Claim-valid public summary is not present: {stage['public_summary_target']}.",
+                    "plan_command_groups": [
+                        f"stages[{stage['stage']}].commands.run_batch",
+                        f"stages[{stage['stage']}].commands.write_batch_summary",
+                        f"stages[{stage['stage']}].commands.merge_shard_summaries",
+                        f"stages[{stage['stage']}].commands.promote_public_summary",
+                    ],
+                }
+            )
+    return requirements
+
+
+def _append_probe_requirement(
+    requirements: list[dict[str, Any]],
+    *,
+    probe: dict[str, Any],
+    requirement_id: str,
+    blocks: str,
+    plan_command_groups: list[str],
+) -> None:
+    if probe.get("ok") is True:
+        return
+    stderr = str(probe.get("stderr", "") or "").strip()
+    status = str(probe.get("status", "") or "failed")
+    detail = stderr or f"Probe status: {status}"
+    requirements.append(
+        {
+            "id": requirement_id,
+            "blocks": blocks,
+            "detail": detail,
+            "plan_command_groups": plan_command_groups,
+        }
+    )
+
+
+def _next_command_groups(
+    *,
+    stages: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    groups: list[dict[str, Any]] = [
+        {
+            "order": 1,
+            "name": "refresh_readiness",
+            "plan_command_group": "commands.check_readiness",
+        }
+    ]
+    scale_stages = [stage for stage in stages if stage["requires_local_usdz_cache"]]
+    if any(not stage["local_usdz_cache"]["validation"]["valid"] for stage in scale_stages):
+        groups.append(
+            {
+                "order": len(groups) + 1,
+                "name": "build_and_validate_scale_caches",
+                "plan_command_groups": [
+                    f"stages[{stage['stage']}].commands.build_local_cache"
+                    for stage in scale_stages
+                    if not stage["local_usdz_cache"]["validation"]["valid"]
+                ]
+                + [
+                    f"stages[{stage['stage']}].commands.validate_local_cache"
+                    for stage in scale_stages
+                    if not stage["local_usdz_cache"]["validation"]["valid"]
+                ],
+            }
+        )
+    if any(not stage["public_summary"]["claim_valid"] for stage in scale_stages):
+        groups.append(
+            {
+                "order": len(groups) + 1,
+                "name": "run_scale_shards_and_promote_summaries",
+                "plan_command_groups": [
+                    "stages[].shards[].commands.run_batch",
+                    "stages[].shards[].commands.write_batch_summary",
+                    "stages[].commands.merge_shard_summaries",
+                    "stages[].commands.promote_public_summary",
+                ],
+            }
+        )
+    groups.append(
+        {
+            "order": len(groups) + 1,
+            "name": "verify_claim_gate",
+            "command": "wod2sim-benchmark-audit --strict --json",
+            "expected_before_scale_completion": "exit_1_until_50_100_summaries_are_claim_valid",
+        }
+    )
+    return groups
 
 
 def _local_cache_status(
