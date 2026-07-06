@@ -163,4 +163,6 @@ The public claim gate for those artifacts is tracked at
 For merged scale summaries, the audit also verifies that the recorded shard
 summary inputs match the regeneration plan. It also verifies that the tracked
 readiness snapshot references the same plan/status artifacts and agrees with
-the audited public summary state for each stage.
+the audited public summary state for each stage. Each stage also reports
+`summary_provenance`, including the summary creation time and whether the
+recorded batch directory or merge inputs match the current regeneration plan.
