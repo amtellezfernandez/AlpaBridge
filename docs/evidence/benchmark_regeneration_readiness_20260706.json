@@ -101,7 +101,7 @@
   },
   "disk": {
     "exact_free_bytes_omitted": true,
-    "free_gib": 279.45,
+    "free_gib": 279.44,
     "meets_min_free_disk_gb": true,
     "min_free_disk_gb": 200,
     "path": "workspace/alpasim",
@@ -304,6 +304,26 @@
   "schema": "wod2sim_benchmark_regeneration_readiness_v1",
   "stages": [
     {
+      "cache_requirements": {
+        "local_usdz_dir": null,
+        "required": false,
+        "scene_count": 10,
+        "scene_ids_sample": [
+          "clipgt-a309e228-26e1-423e-a44c-cb00aa7378cb",
+          "clipgt-804afc4a-fd1e-4f58-bd39-a4c486a916e5",
+          "clipgt-81b0e06d-96e6-4832-99c1-a4084b54ca97",
+          "clipgt-9b3509c2-a5fa-42c0-b0e5-feb617e9bf4e",
+          "clipgt-90d1908c-9fdc-40ea-a5a1-351240aa323e",
+          "clipgt-88d1e61e-d4a6-443a-8b3f-ad0f1de4d0f5",
+          "clipgt-8aaa1135-573f-4f6c-8ff8-7ac6bd6ea5d6",
+          "clipgt-9f8acd00-e8f5-467a-867d-b205f8d4d75d",
+          "clipgt-97a2e621-a27b-4b87-9a58-b6b740fc1b4e",
+          "clipgt-93982b71-92af-4cf6-8447-00d619f50ad3"
+        ],
+        "scene_ids_sha256": "19e3b7929f2c4514091673f4ba1b0d457ee6fa9ac1cfd9dbe727b4ecff4d9d6b",
+        "scene_preset_file": "src/wod2sim/simulator/alpasim_scene_presets/front_camera_10scene_smoke.yaml",
+        "source_usdz_dir": null
+      },
       "local_usdz_cache": {
         "local_usdz_dir": null,
         "required": false,
@@ -342,6 +362,26 @@
       "stage": "pilot"
     },
     {
+      "cache_requirements": {
+        "local_usdz_dir": "workspace/alpasim/data/nre-artifacts/local-2602-usdzs-50",
+        "required": true,
+        "scene_count": 50,
+        "scene_ids_sample": [
+          "clipgt-01d503d4-449b-46fc-8d78-9085e70d3554",
+          "clipgt-02e075b9-fd24-426b-971b-7cfcb2074cc9",
+          "clipgt-048b974e-1546-488a-b8f9-d32bff77f5aa",
+          "clipgt-0499fb41-122d-4180-83af-f954a9974d3b",
+          "clipgt-05f35348-9de0-4f68-ac65-f31316dbb59e",
+          "clipgt-07981e6a-22dd-4796-ad2f-1252037ecd28",
+          "clipgt-098e2482-6db2-473b-b08a-2a80be9320f3",
+          "clipgt-0ce02937-f31b-4b4e-8286-3af73ae8861e",
+          "clipgt-0ce6f2a3-a6cf-42c3-9133-111139be1dd1",
+          "clipgt-0fa7060f-1481-4ff3-977e-510285e2515d"
+        ],
+        "scene_ids_sha256": "a8d76cba47a3c5fcecc370de791b60387a952d7a7cc8084c0f3115372328b367",
+        "scene_preset_file": "src/wod2sim/simulator/alpasim_scene_presets/front_camera_50scene_public2602.yaml",
+        "source_usdz_dir": "workspace/alpasim/data/nre-artifacts/all-usdzs"
+      },
       "local_usdz_cache": {
         "local_usdz_dir": "workspace/alpasim/data/nre-artifacts/local-2602-usdzs-50",
         "required": true,
@@ -418,6 +458,26 @@
       "stage": "workshop_scale"
     },
     {
+      "cache_requirements": {
+        "local_usdz_dir": "workspace/alpasim/data/nre-artifacts/local-2602-usdzs-100",
+        "required": true,
+        "scene_count": 100,
+        "scene_ids_sample": [
+          "clipgt-01d503d4-449b-46fc-8d78-9085e70d3554",
+          "clipgt-02e075b9-fd24-426b-971b-7cfcb2074cc9",
+          "clipgt-048b974e-1546-488a-b8f9-d32bff77f5aa",
+          "clipgt-0499fb41-122d-4180-83af-f954a9974d3b",
+          "clipgt-05f35348-9de0-4f68-ac65-f31316dbb59e",
+          "clipgt-07981e6a-22dd-4796-ad2f-1252037ecd28",
+          "clipgt-098e2482-6db2-473b-b08a-2a80be9320f3",
+          "clipgt-0ce02937-f31b-4b4e-8286-3af73ae8861e",
+          "clipgt-0ce6f2a3-a6cf-42c3-9133-111139be1dd1",
+          "clipgt-0fa7060f-1481-4ff3-977e-510285e2515d"
+        ],
+        "scene_ids_sha256": "250df8ec623fa346524e786b7991ad4ce358afb7930ab3f50964290a9325ca41",
+        "scene_preset_file": "src/wod2sim/simulator/alpasim_scene_presets/front_camera_100scene_public2602.yaml",
+        "source_usdz_dir": "workspace/alpasim/data/nre-artifacts/all-usdzs"
+      },
       "local_usdz_cache": {
         "local_usdz_dir": "workspace/alpasim/data/nre-artifacts/local-2602-usdzs-100",
         "required": true,
