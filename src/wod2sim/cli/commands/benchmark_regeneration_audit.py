@@ -27,6 +27,7 @@ PUBLIC_EVIDENCE_MANIFEST_SCHEMA = "wod2sim_benchmark_public_evidence_manifest_v1
 DEFAULT_AUDIT = Path("docs/evidence/benchmark_regeneration_audit_20260706.json")
 DEFAULT_PLAN = Path("docs/evidence/benchmark_regeneration_plan_20260706.json")
 DEFAULT_STATUS = Path("docs/evidence/benchmark_regeneration_status_20260706.json")
+DEFAULT_HANDOFF = Path("docs/benchmark_regeneration_handoff.md")
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -149,6 +150,15 @@ def build_audit(
         status=status,
         repo_root=repo_root,
     )
+    public_handoff_doc = _public_handoff_doc_consistency(
+        claim_ready=claim_ready,
+        plan_path=plan_path,
+        status_path=status_path,
+        status=status,
+        readiness=readiness,
+        stage_reports=stage_reports,
+        repo_root=repo_root,
+    )
     expected_valid_without_manifest = (
         input_valid
         and status_consistency["valid"]
@@ -157,6 +167,7 @@ def build_audit(
         and regeneration_plan["valid"]
         and regeneration_commands["valid"]
         and operator_matrix["valid"]
+        and public_handoff_doc["valid"]
     )
     public_evidence_manifest = _public_evidence_manifest_consistency(
         plan_path=plan_path,
@@ -192,6 +203,7 @@ def build_audit(
         "regeneration_plan": regeneration_plan,
         "regeneration_commands": regeneration_commands,
         "operator_matrix": operator_matrix,
+        "public_handoff_doc": public_handoff_doc,
         "public_evidence_manifest": public_evidence_manifest,
         "status_consistency": status_consistency,
         "readiness_consistency": readiness_consistency,
@@ -1158,6 +1170,115 @@ def _readiness_command_renderer_groups(readiness: dict[str, Any]) -> list[str]:
             if isinstance(renderer_group, str) and renderer_group:
                 groups.add(renderer_group)
     return sorted(groups)
+
+
+def _public_handoff_doc_consistency(
+    *,
+    claim_ready: bool,
+    plan_path: Path,
+    status_path: Path,
+    status: dict[str, Any],
+    readiness: dict[str, Any],
+    stage_reports: list[dict[str, Any]],
+    repo_root: Path,
+) -> dict[str, Any]:
+    checks: dict[str, bool] = {}
+    notes: list[str] = []
+    handoff_path = _resolve_path(repo_root, DEFAULT_HANDOFF)
+    artifact = _display_path(DEFAULT_HANDOFF)
+    text = ""
+
+    checks["public_handoff_doc_present"] = handoff_path.is_file()
+    if checks["public_handoff_doc_present"]:
+        text = handoff_path.read_text(encoding="utf-8")
+    else:
+        notes.append(f"public handoff doc missing: {artifact}")
+
+    evidence_artifacts = _dict_or_empty(status.get("evidence_artifacts"))
+    required_links = [
+        _display_path(plan_path),
+        _display_path(status_path),
+        evidence_artifacts.get("readiness_snapshot"),
+        evidence_artifacts.get("regeneration_commands"),
+        evidence_artifacts.get("operator_matrix"),
+        evidence_artifacts.get("claim_audit") or _display_path(DEFAULT_AUDIT),
+    ]
+    required_link_strings = [str(link) for link in required_links if isinstance(link, str) and link]
+    checks["public_handoff_doc_links_core_artifacts"] = all(
+        link in text for link in required_link_strings
+    )
+    if not checks["public_handoff_doc_links_core_artifacts"]:
+        notes.append("public handoff doc does not link every core benchmark artifact")
+
+    missing_summaries = [
+        str(stage.get("summary_artifact") or "")
+        for stage in stage_reports
+        if not bool(stage.get("claim_valid"))
+    ]
+    checks["public_handoff_doc_lists_missing_claim_summaries"] = all(
+        summary in text for summary in missing_summaries
+    )
+    if not checks["public_handoff_doc_lists_missing_claim_summaries"]:
+        notes.append("public handoff doc does not list current missing claim summaries")
+
+    blocker_ids = [
+        str(row.get("id") or "")
+        for row in _list_or_empty(readiness.get("blocking_requirements"))
+        if isinstance(row, dict) and row.get("id")
+    ]
+    checks["public_handoff_doc_lists_readiness_blockers"] = all(
+        blocker_id in text for blocker_id in blocker_ids
+    )
+    if not checks["public_handoff_doc_lists_readiness_blockers"]:
+        notes.append("public handoff doc does not list current readiness blockers")
+
+    next_groups = [
+        row for row in _list_or_empty(readiness.get("next_command_groups")) if isinstance(row, dict)
+    ]
+    next_group_names = [str(row.get("name") or "") for row in next_groups if row.get("name")]
+    checks["public_handoff_doc_lists_next_command_groups"] = all(
+        group_name in text for group_name in next_group_names
+    )
+    if not checks["public_handoff_doc_lists_next_command_groups"]:
+        notes.append("public handoff doc does not list current next command groups")
+
+    renderer_groups = _readiness_command_renderer_groups(readiness)
+    checks["public_handoff_doc_lists_command_renderer_groups"] = all(
+        f"`{group}`" in text for group in renderer_groups
+    )
+    if not checks["public_handoff_doc_lists_command_renderer_groups"]:
+        notes.append("public handoff doc does not list command renderer groups")
+
+    checks["public_handoff_doc_states_current_strict_gate"] = (
+        "wod2sim-benchmark-audit --strict --json" in text
+        and "valid=true" in text
+        and f"claim_ready={str(claim_ready).lower()}" in text
+    )
+    if not checks["public_handoff_doc_states_current_strict_gate"]:
+        notes.append("public handoff doc does not state the current strict gate result")
+
+    safety_terms = (
+        "Do not commit raw USDZ assets",
+        "Docker layers",
+        "Hugging Face caches",
+        "rollout videos",
+        "support bundles",
+    )
+    checks["public_handoff_doc_states_public_safety_boundary"] = all(
+        term in text for term in safety_terms
+    )
+    if not checks["public_handoff_doc_states_public_safety_boundary"]:
+        notes.append("public handoff doc does not state the public artifact safety boundary")
+
+    return {
+        "valid": all(checks.values()) if checks else False,
+        "artifact": artifact,
+        "checks": checks,
+        "notes": notes,
+        "missing_claim_valid_summaries": missing_summaries,
+        "readiness_blocker_ids": blocker_ids,
+        "readiness_command_renderer_groups": renderer_groups,
+    }
 
 
 def _operator_matrix_consistency(

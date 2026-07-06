@@ -142,10 +142,10 @@ def _audit_valid_without_public_evidence_manifest(audit: dict[str, Any]) -> bool
         "regeneration_plan",
         "regeneration_commands",
         "operator_matrix",
+        "public_handoff_doc",
     )
     return not audit.get("errors") and all(
-        _dict_or_empty(audit.get(section)).get("valid") is True
-        for section in required_sections
+        _dict_or_empty(audit.get(section)).get("valid") is True for section in required_sections
     )
 
 

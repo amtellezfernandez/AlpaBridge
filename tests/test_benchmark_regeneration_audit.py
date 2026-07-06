@@ -18,6 +18,7 @@ READINESS_RELATIVE = Path("docs/evidence/benchmark_regeneration_readiness_202607
 MANIFEST_RELATIVE = Path("docs/evidence/benchmark_public_evidence_manifest_20260706.json")
 COMMANDS_RELATIVE = Path("docs/evidence/benchmark_regeneration_commands_20260706.json")
 OPERATOR_MATRIX_RELATIVE = Path("docs/evidence/benchmark_operator_matrix_20260706.json")
+HANDOFF_RELATIVE = Path("docs/benchmark_regeneration_handoff.md")
 PROBE_50_RELATIVE = Path(
     "docs/evidence/closed_loop_spotlight_reflex_50scene_localprobe_1scene.json"
 )
@@ -74,6 +75,8 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             audit["operator_matrix"]["checks"]["operator_matrix_summary_matches_sources"]
         )
         self.assertTrue(audit["operator_matrix"]["checks"]["operator_matrix_roles_matches_sources"])
+        self.assertTrue(audit["public_handoff_doc"]["valid"])
+        self.assertEqual(HANDOFF_RELATIVE.as_posix(), audit["public_handoff_doc"]["artifact"])
         self.assertTrue(audit["public_evidence_manifest"]["valid"])
         self.assertEqual(
             MANIFEST_RELATIVE.as_posix(),
@@ -204,6 +207,14 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
                 evidence,
                 claim_ready=True,
                 missing_claim_valid_summaries=[],
+            )
+            _write_test_handoff_doc(
+                repo_root,
+                claim_ready=True,
+                missing_claim_valid_summaries=[],
+                blocker_ids=[],
+                next_group_names=["refresh_readiness", "refresh_status", "verify_claim_gate"],
+                renderer_groups=["post", "readiness"],
             )
 
             audit = module.build_audit(repo_root=repo_root, created_at="2026-07-06")
@@ -421,6 +432,31 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         self.assertIn(
             "readiness.next_command_groups names do not match readiness state",
             audit["readiness_consistency"]["notes"],
+        )
+
+    def test_public_handoff_doc_drift_invalidates_audit(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            evidence = repo_root / "docs" / "evidence"
+            evidence.mkdir(parents=True)
+            _copy_evidence_jsons(evidence)
+            handoff_path = repo_root / HANDOFF_RELATIVE
+            handoff = handoff_path.read_text(encoding="utf-8")
+            handoff_path.write_text(
+                handoff.replace("hf_token_missing", "hf_token_removed"),
+                encoding="utf-8",
+            )
+
+            audit = module.build_audit(repo_root=repo_root, created_at="2026-07-06")
+
+        self.assertFalse(audit["valid"])
+        self.assertFalse(
+            audit["public_handoff_doc"]["checks"]["public_handoff_doc_lists_readiness_blockers"]
+        )
+        self.assertIn(
+            "public handoff doc does not list current readiness blockers",
+            audit["public_handoff_doc"]["notes"],
         )
 
     def test_status_evidence_artifacts_must_match_audited_chain(self) -> None:
@@ -782,6 +818,43 @@ def _copy_status_and_probe(evidence_dir: Path) -> None:
 def _copy_evidence_jsons(evidence_dir: Path) -> None:
     for path in sorted((ROOT / "docs" / "evidence").glob("*.json")):
         shutil.copy2(path, evidence_dir / path.name)
+    handoff_target = evidence_dir.parents[1] / HANDOFF_RELATIVE
+    handoff_target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(ROOT / HANDOFF_RELATIVE, handoff_target)
+
+
+def _write_test_handoff_doc(
+    repo_root: Path,
+    *,
+    claim_ready: bool,
+    missing_claim_valid_summaries: list[str],
+    blocker_ids: list[str],
+    next_group_names: list[str],
+    renderer_groups: list[str],
+) -> None:
+    handoff_path = repo_root / HANDOFF_RELATIVE
+    handoff_path.parent.mkdir(parents=True, exist_ok=True)
+    required_links = [
+        PLAN_RELATIVE.as_posix(),
+        STATUS_RELATIVE.as_posix(),
+        READINESS_RELATIVE.as_posix(),
+        COMMANDS_RELATIVE.as_posix(),
+        OPERATOR_MATRIX_RELATIVE.as_posix(),
+        AUDIT_RELATIVE.as_posix(),
+    ]
+    lines = [
+        "# Test Benchmark Regeneration Handoff",
+        *required_links,
+        *missing_claim_valid_summaries,
+        *blocker_ids,
+        *next_group_names,
+        *(f"`{group}`" for group in renderer_groups),
+        "wod2sim-benchmark-audit --strict --json",
+        "valid=true",
+        f"claim_ready={str(claim_ready).lower()}",
+        "Do not commit raw USDZ assets, Docker layers, Hugging Face caches, rollout videos, or support bundles.",
+    ]
+    handoff_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def _write_public_evidence_manifest(

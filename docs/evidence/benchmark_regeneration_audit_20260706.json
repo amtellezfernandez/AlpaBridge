@@ -189,6 +189,41 @@
     "notes": [],
     "valid": true
   },
+  "public_handoff_doc": {
+    "artifact": "docs/benchmark_regeneration_handoff.md",
+    "checks": {
+      "public_handoff_doc_links_core_artifacts": true,
+      "public_handoff_doc_lists_command_renderer_groups": true,
+      "public_handoff_doc_lists_missing_claim_summaries": true,
+      "public_handoff_doc_lists_next_command_groups": true,
+      "public_handoff_doc_lists_readiness_blockers": true,
+      "public_handoff_doc_present": true,
+      "public_handoff_doc_states_current_strict_gate": true,
+      "public_handoff_doc_states_public_safety_boundary": true
+    },
+    "missing_claim_valid_summaries": [
+      "docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json",
+      "docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json"
+    ],
+    "notes": [],
+    "readiness_blocker_ids": [
+      "hf_token_missing",
+      "alpasim_base_image_missing",
+      "front_camera_50scene_public2602_cache_invalid",
+      "front_camera_50scene_public2602_claim_summary_missing",
+      "front_camera_100scene_public2602_cache_invalid",
+      "front_camera_100scene_public2602_claim_summary_missing"
+    ],
+    "readiness_command_renderer_groups": [
+      "cache",
+      "merge",
+      "post",
+      "promote",
+      "readiness",
+      "shards"
+    ],
+    "valid": true
+  },
   "readiness_artifact": "docs/evidence/benchmark_regeneration_readiness_20260706.json",
   "readiness_consistency": {
     "checks": {

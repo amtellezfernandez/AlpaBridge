@@ -11,6 +11,7 @@ The authoritative machine-readable inputs are:
 | Artifact | Purpose |
 | --- | --- |
 | [`docs/evidence/benchmark_regeneration_plan_20260706.json`](evidence/benchmark_regeneration_plan_20260706.json) | Planned 10/50/100 stages, shard boundaries, merge commands, and promotion targets. |
+| [`docs/evidence/benchmark_regeneration_status_20260706.json`](evidence/benchmark_regeneration_status_20260706.json) | Current public benchmark status, tracked evidence links, and objective-completion state. |
 | [`docs/evidence/benchmark_regeneration_readiness_20260706.json`](evidence/benchmark_regeneration_readiness_20260706.json) | No-download/no-rollout readiness snapshot and blocking requirement IDs. |
 | [`docs/evidence/benchmark_operator_matrix_20260706.json`](evidence/benchmark_operator_matrix_20260706.json) | Generated who-can-review/build/run/promote matrix and current ready/blocked summary. |
 | [`docs/evidence/benchmark_regeneration_commands_20260706.json`](evidence/benchmark_regeneration_commands_20260706.json) | Rendered cache, shard, merge, promotion, status, and audit commands from the plan. |
@@ -121,5 +122,4 @@ wod2sim-benchmark-audit --strict --json
 wod2sim-benchmark-evidence-manifest --json
 ```
 
-Do not commit raw USDZ assets, Docker layers, Hugging Face caches, rollout
-videos, support bundles, or gated scene-derived files.
+Do not commit raw USDZ assets, Docker layers, Hugging Face caches, rollout videos, support bundles, or gated scene-derived files.
