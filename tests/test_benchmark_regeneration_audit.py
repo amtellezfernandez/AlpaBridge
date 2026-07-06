@@ -259,6 +259,30 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             audit["readiness_consistency"]["notes"],
         )
 
+    def test_status_evidence_artifacts_must_match_audited_chain(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            evidence = repo_root / "docs" / "evidence"
+            evidence.mkdir(parents=True)
+            shutil.copy2(ROOT / PLAN_RELATIVE, evidence / PLAN_RELATIVE.name)
+            shutil.copy2(ROOT / STATUS_RELATIVE, evidence / STATUS_RELATIVE.name)
+            shutil.copy2(ROOT / READINESS_RELATIVE, evidence / READINESS_RELATIVE.name)
+            status = _read_json(evidence / STATUS_RELATIVE.name)
+            status["evidence_artifacts"]["readiness_snapshot"] = "wrong-readiness.json"
+            _write_json(evidence / STATUS_RELATIVE.name, status)
+
+            audit = module.build_audit(repo_root=repo_root, created_at="2026-07-06")
+
+        self.assertFalse(audit["valid"])
+        self.assertFalse(
+            audit["status_consistency"]["checks"]["status_evidence_artifacts_match_audit_inputs"]
+        )
+        self.assertIn(
+            "status.evidence_artifacts does not match the audited evidence chain",
+            audit["status_consistency"]["notes"],
+        )
+
 
 def _batch_summary(
     scene_count: int,

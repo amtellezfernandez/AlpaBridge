@@ -11,6 +11,7 @@ PLAN_SCHEMA = "wod2sim_benchmark_regeneration_plan_v1"
 STATUS_SCHEMA = "wod2sim_benchmark_regeneration_status_v1"
 READINESS_SCHEMA = "wod2sim_benchmark_regeneration_readiness_v1"
 BATCH_SCHEMA = "wod2sim_closed_loop_batch_summary_v1"
+DEFAULT_AUDIT = Path("docs/evidence/benchmark_regeneration_audit_20260706.json")
 DEFAULT_PLAN = Path("docs/evidence/benchmark_regeneration_plan_20260706.json")
 DEFAULT_STATUS = Path("docs/evidence/benchmark_regeneration_status_20260706.json")
 
@@ -94,6 +95,8 @@ def build_audit(
     input_valid = not errors
     claim_ready = input_valid and all(stage["claim_valid"] for stage in stage_reports)
     status_consistency = _status_consistency(
+        plan_path=plan_path,
+        readiness_artifact=readiness_artifact,
         status=status,
         stage_reports=stage_reports,
         claim_ready=claim_ready,
@@ -224,6 +227,8 @@ def _merge_summary_inputs_from_command(command: dict[str, Any]) -> list[str]:
 
 def _status_consistency(
     *,
+    plan_path: Path,
+    readiness_artifact: str,
     status: dict[str, Any],
     stage_reports: list[dict[str, Any]],
     claim_ready: bool,
@@ -252,6 +257,17 @@ def _status_consistency(
     else:
         checks["ten_scene_status_matches_audit"] = False
         notes.append("plan does not include a 10-scene stage")
+
+    evidence_artifacts = _dict_or_empty(status.get("evidence_artifacts"))
+    checks["status_evidence_artifacts_match_audit_inputs"] = (
+        evidence_artifacts.get("ten_scene_pilot")
+        == (ten_scene_stage["summary_artifact"] if ten_scene_stage is not None else None)
+        and evidence_artifacts.get("regeneration_plan") == _display_path(plan_path)
+        and evidence_artifacts.get("readiness_snapshot") == readiness_artifact
+        and evidence_artifacts.get("claim_audit") == _display_path(DEFAULT_AUDIT)
+    )
+    if not checks["status_evidence_artifacts_match_audit_inputs"]:
+        notes.append("status.evidence_artifacts does not match the audited evidence chain")
 
     scale_status = _dict_or_empty(status.get("scale_status"))
     for stage in stage_reports:
