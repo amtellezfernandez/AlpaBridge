@@ -51,6 +51,29 @@
     "tracked": "Compact JSON summaries, documentation, commands, tests, and public-safe hashes/metrics.",
     "untracked": "Raw AlpaSim media, support bundles, USDZ scene assets, Hugging Face caches, Docker layers, and gated scene-derived files."
   },
+  "resume_command_execution": {
+    "artifact": "docs/evidence/benchmark_regeneration_resume_commands_20260706.json",
+    "execution_boundary_counts": {
+      "claim_summary_merge": 2,
+      "claim_summary_promotion": 2,
+      "live_closed_loop_rollout": 30,
+      "public_metadata_review": 2
+    },
+    "group_counts": {
+      "merge": 2,
+      "post": 2,
+      "promote": 2,
+      "shards": 30
+    },
+    "operator_role_counts": {
+      "claim_promoter": 4,
+      "closed_loop_runner": 30,
+      "open_repo_reviewer": 2
+    },
+    "private_execution_command_count": 34,
+    "public_review_command_count": 2,
+    "row_count": 36
+  },
   "roles": [
     {
       "can_run": [
@@ -163,6 +186,7 @@
     "plan": "docs/evidence/benchmark_regeneration_plan_20260706.json",
     "readiness": "docs/evidence/benchmark_regeneration_readiness_20260706.json",
     "regeneration_commands": "docs/evidence/benchmark_regeneration_commands_20260706.json",
+    "regeneration_resume_commands": "docs/evidence/benchmark_regeneration_resume_commands_20260706.json",
     "status": "docs/evidence/benchmark_regeneration_status_20260706.json"
   },
   "summary": {
@@ -238,7 +262,20 @@
       "front_camera_50scene_public2602_claim_summary_missing",
       "front_camera_100scene_public2602_cache_invalid",
       "front_camera_100scene_public2602_claim_summary_missing"
-    ]
+    ],
+    "resume_command_execution_boundary_counts": {
+      "claim_summary_merge": 2,
+      "claim_summary_promotion": 2,
+      "live_closed_loop_rollout": 30,
+      "public_metadata_review": 2
+    },
+    "resume_command_operator_role_counts": {
+      "claim_promoter": 4,
+      "closed_loop_runner": 30,
+      "open_repo_reviewer": 2
+    },
+    "resume_private_execution_command_count": 34,
+    "resume_public_review_command_count": 2
   },
   "task_matrix": [
     {

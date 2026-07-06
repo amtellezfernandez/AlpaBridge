@@ -376,6 +376,7 @@
       "operator_matrix_loaded": true,
       "operator_matrix_public_artifact_policy_matches_sources": true,
       "operator_matrix_referenced": true,
+      "operator_matrix_resume_command_execution_matches_sources": true,
       "operator_matrix_roles_matches_sources": true,
       "operator_matrix_schema_matches": true,
       "operator_matrix_sources_match_audit": true,
@@ -446,8 +447,8 @@
       "readiness",
       "shards"
     ],
-    "sha256": "6aa03e68fd120c2e35e24b7d31baff6b1683e5aeb920c91552cf159b6218a210",
-    "size_bytes": 10473,
+    "sha256": "f8e5365c6a2c3154075113f7c405735a21b1164ab98acb88f5f58b55eea35bf4",
+    "size_bytes": 10508,
     "valid": true
   },
   "readiness_artifact": "docs/evidence/benchmark_regeneration_readiness_20260706.json",

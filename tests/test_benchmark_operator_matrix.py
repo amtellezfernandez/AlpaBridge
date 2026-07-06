@@ -34,6 +34,10 @@ def test_operator_matrix_builder_reflects_tracked_readiness_blockers() -> None:
     assert matrix["created_at"] == "2026-07-06"
     assert matrix["source_artifacts"]["plan"] == (ROOT / PLAN_RELATIVE).as_posix()
     assert matrix["source_artifacts"]["regeneration_commands"] == COMMANDS_RELATIVE.as_posix()
+    assert (
+        matrix["source_artifacts"]["regeneration_resume_commands"]
+        == RESUME_COMMANDS_RELATIVE.as_posix()
+    )
     assert matrix["generator"]["no_download_or_rollout_probes"] is True
     assert summary["open_repo_review_ready"] is True
     assert summary["claim_ready"] is False
@@ -41,6 +45,14 @@ def test_operator_matrix_builder_reflects_tracked_readiness_blockers() -> None:
     assert summary["command_operator_role_counts"]["closed_loop_runner"] == 32
     assert summary["private_execution_command_count"] == 43
     assert summary["public_review_command_count"] == 4
+    assert summary["resume_private_execution_command_count"] == 34
+    assert summary["resume_public_review_command_count"] == 2
+    assert summary["resume_command_execution_boundary_counts"] == {
+        "claim_summary_merge": 2,
+        "claim_summary_promotion": 2,
+        "live_closed_loop_rollout": 30,
+        "public_metadata_review": 2,
+    }
     assert "open_repo_reviewer" in summary["ready_roles"]
     assert "closed_loop_runner" in summary["blocked_roles"]
     assert "build_and_validate_scale_caches" in summary["next_command_groups"]
@@ -106,6 +118,7 @@ def test_tracked_operator_matrix_is_public_safe_and_explicit_about_who_can_run()
     assert matrix["schema"] == "wod2sim_benchmark_operator_matrix_v1"
     assert matrix["source_artifacts"] == {
         "regeneration_commands": COMMANDS_RELATIVE.as_posix(),
+        "regeneration_resume_commands": RESUME_COMMANDS_RELATIVE.as_posix(),
         "plan": PLAN_RELATIVE.as_posix(),
         "readiness": READINESS_RELATIVE.as_posix(),
         "status": STATUS_RELATIVE.as_posix(),
@@ -142,6 +155,29 @@ def test_tracked_operator_matrix_is_public_safe_and_explicit_about_who_can_run()
         "private_execution_command_count": 43,
         "public_review_command_count": 4,
         "row_count": 47,
+    }
+    assert matrix["resume_command_execution"] == {
+        "artifact": RESUME_COMMANDS_RELATIVE.as_posix(),
+        "execution_boundary_counts": {
+            "claim_summary_merge": 2,
+            "claim_summary_promotion": 2,
+            "live_closed_loop_rollout": 30,
+            "public_metadata_review": 2,
+        },
+        "group_counts": {
+            "merge": 2,
+            "post": 2,
+            "promote": 2,
+            "shards": 30,
+        },
+        "operator_role_counts": {
+            "claim_promoter": 4,
+            "closed_loop_runner": 30,
+            "open_repo_reviewer": 2,
+        },
+        "private_execution_command_count": 34,
+        "public_review_command_count": 2,
+        "row_count": 36,
     }
     assert summary["ready_tasks"] == ["review_public_evidence"]
     assert summary["blocked_tasks"] == [

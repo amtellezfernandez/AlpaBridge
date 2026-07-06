@@ -159,7 +159,8 @@ and records which roles can review, build caches, run live shards, or promote
 claim artifacts from the current evidence state. It also mirrors the rendered
 command artifact's `command_execution` counts so the role matrix shows how many
 public-review, cache, live-rollout, merge, and promotion commands map to each
-operator role.
+operator role. Its `resume_command_execution` section does the same for the
+audit-derived missing-shard resume snapshot.
 For a one-page public handoff with the current blocker IDs, role boundaries,
 and next command groups, see
 [`docs/benchmark_regeneration_handoff.md`](docs/benchmark_regeneration_handoff.md).

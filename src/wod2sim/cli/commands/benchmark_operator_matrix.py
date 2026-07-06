@@ -79,7 +79,11 @@ def build_operator_matrix(
     current_runtime = _dict_or_empty(status.get("current_local_runtime_state"))
     evidence_artifacts = _dict_or_empty(status.get("evidence_artifacts"))
     command_artifact_path = Path(str(evidence_artifacts.get("regeneration_commands") or ""))
+    resume_command_artifact_path = Path(
+        str(evidence_artifacts.get("regeneration_resume_commands") or "")
+    )
     command_artifact = _read_json(_resolve_path(repo_root, command_artifact_path))
+    resume_command_artifact = _read_json(_resolve_path(repo_root, resume_command_artifact_path))
     public_policy = _dict_or_empty(status.get("public_artifact_policy"))
     current_local_state = _current_local_state(
         readiness_flags=readiness_flags,
@@ -88,6 +92,10 @@ def build_operator_matrix(
     command_execution = _command_execution_summary(
         command_artifact=command_artifact,
         command_artifact_path=command_artifact_path,
+    )
+    resume_command_execution = _command_execution_summary(
+        command_artifact=resume_command_artifact,
+        command_artifact_path=resume_command_artifact_path,
     )
     roles = _roles(readiness_flags=readiness_flags, blockers=blockers)
     task_matrix = _task_matrix(
@@ -106,12 +114,14 @@ def build_operator_matrix(
             roles=roles,
             task_matrix=task_matrix,
             command_execution=command_execution,
+            resume_command_execution=resume_command_execution,
         ),
         "source_artifacts": {
             "plan": _display_path(plan_path),
             "status": _display_path(status_path),
             "readiness": _display_path(readiness_path),
             "regeneration_commands": _display_path(command_artifact_path),
+            "regeneration_resume_commands": _display_path(resume_command_artifact_path),
         },
         "generator": {
             "command": "wod2sim-benchmark-operators",
@@ -123,6 +133,7 @@ def build_operator_matrix(
         },
         "current_local_state": current_local_state,
         "command_execution": command_execution,
+        "resume_command_execution": resume_command_execution,
         "roles": roles,
         "task_matrix": task_matrix,
     }
@@ -333,6 +344,7 @@ def _matrix_summary(
     roles: list[dict[str, Any]],
     task_matrix: list[dict[str, Any]],
     command_execution: dict[str, Any],
+    resume_command_execution: dict[str, Any],
 ) -> dict[str, Any]:
     ready_roles = [
         str(role.get("role"))
@@ -384,6 +396,18 @@ def _matrix_summary(
         ),
         "public_review_command_count": command_execution.get("public_review_command_count"),
         "private_execution_command_count": command_execution.get("private_execution_command_count"),
+        "resume_command_execution_boundary_counts": _dict_or_empty(
+            resume_command_execution.get("execution_boundary_counts")
+        ),
+        "resume_command_operator_role_counts": _dict_or_empty(
+            resume_command_execution.get("operator_role_counts")
+        ),
+        "resume_public_review_command_count": resume_command_execution.get(
+            "public_review_command_count"
+        ),
+        "resume_private_execution_command_count": resume_command_execution.get(
+            "private_execution_command_count"
+        ),
         "live_rollout_host_requirement": (
             "x86_64 Linux with Docker, NVIDIA runtime, AlpaSim images, "
             "valid local USDZ caches, and gated scene access"

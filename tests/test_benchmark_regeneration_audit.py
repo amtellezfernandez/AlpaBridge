@@ -129,6 +129,11 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         self.assertTrue(
             audit["operator_matrix"]["checks"]["operator_matrix_command_execution_matches_sources"]
         )
+        self.assertTrue(
+            audit["operator_matrix"]["checks"][
+                "operator_matrix_resume_command_execution_matches_sources"
+            ]
+        )
         self.assertTrue(audit["operator_matrix"]["checks"]["operator_matrix_roles_matches_sources"])
         self.assertTrue(audit["public_handoff_doc"]["valid"])
         self.assertEqual(HANDOFF_RELATIVE.as_posix(), audit["public_handoff_doc"]["artifact"])
