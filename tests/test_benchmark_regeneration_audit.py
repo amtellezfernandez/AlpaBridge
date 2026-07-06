@@ -37,12 +37,20 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         self.assertFalse(audit["claim_ready"])
         self.assertEqual(READINESS_RELATIVE.as_posix(), audit["readiness_artifact"])
         self.assertTrue(audit["readiness_consistency"]["valid"])
+        self.assertTrue(
+            audit["readiness_consistency"]["checks"][
+                "readiness_blocking_requirement_ids_match_state"
+            ]
+        )
+        self.assertTrue(
+            audit["readiness_consistency"]["checks"][
+                "readiness_next_command_group_names_match_state"
+            ]
+        )
         self.assertTrue(audit["diagnostic_evidence"]["valid"])
         self.assertTrue(audit["regeneration_plan"]["valid"])
         self.assertEqual(PLAN_RELATIVE.as_posix(), audit["regeneration_plan"]["artifact"])
-        self.assertTrue(
-            audit["regeneration_plan"]["checks"]["regeneration_plan_matches_generator"]
-        )
+        self.assertTrue(audit["regeneration_plan"]["checks"]["regeneration_plan_matches_generator"])
         self.assertTrue(audit["regeneration_commands"]["valid"])
         self.assertEqual(COMMANDS_RELATIVE.as_posix(), audit["regeneration_commands"]["artifact"])
         self.assertTrue(
@@ -52,9 +60,7 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         )
         self.assertTrue(audit["operator_matrix"]["valid"])
         self.assertEqual(OPERATOR_MATRIX_RELATIVE.as_posix(), audit["operator_matrix"]["artifact"])
-        self.assertTrue(
-            audit["operator_matrix"]["checks"]["operator_matrix_roles_matches_sources"]
-        )
+        self.assertTrue(audit["operator_matrix"]["checks"]["operator_matrix_roles_matches_sources"])
         self.assertTrue(audit["public_evidence_manifest"]["valid"])
         self.assertEqual(
             MANIFEST_RELATIVE.as_posix(),
@@ -86,15 +92,11 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         )
         self.assertEqual(
             "benchmark_spotlight_reflex_10scene_fresh",
-            stages["front_camera_10scene_smoke"]["summary_provenance"][
-                "expected_batch_dir_name"
-            ],
+            stages["front_camera_10scene_smoke"]["summary_provenance"]["expected_batch_dir_name"],
         )
         self.assertEqual(
             "benchmark_spotlight_reflex_10scene_fresh",
-            stages["front_camera_10scene_smoke"]["summary_provenance"][
-                "observed_batch_dir_name"
-            ],
+            stages["front_camera_10scene_smoke"]["summary_provenance"]["observed_batch_dir_name"],
         )
         self.assertFalse(stages["front_camera_50scene_public2602"]["claim_valid"])
         self.assertFalse(stages["front_camera_100scene_public2602"]["claim_valid"])
@@ -116,9 +118,7 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             "produce_claim_valid_100_scene_summary",
             completion["remaining_requirements"],
         )
-        requirements = {
-            item["requirement"]: item for item in completion["requirements"]
-        }
+        requirements = {item["requirement"]: item for item in completion["requirements"]}
         self.assertTrue(requirements["validate_10_scene_pilot"]["satisfied"])
         self.assertTrue(requirements["track_50_scene_scale_progress"]["satisfied"])
         self.assertFalse(requirements["pass_strict_claim_gate"]["satisfied"])
@@ -227,7 +227,9 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             ):
                 status["scale_status"][preset]["claim_valid_closed_loop_summary_tracked"] = True
             _write_json(evidence / STATUS_RELATIVE.name, status)
-            _write_json(evidence / "closed_loop_spotlight_reflex_10scene_batch.json", _batch_summary(10))
+            _write_json(
+                evidence / "closed_loop_spotlight_reflex_10scene_batch.json", _batch_summary(10)
+            )
             for preset, scene_count in (
                 ("front_camera_50scene_public2602", 50),
                 ("front_camera_100scene_public2602", 100),
@@ -258,9 +260,7 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             ]
         )
         self.assertTrue(
-            stages["front_camera_50scene_public2602"]["summary_provenance"][
-                "source_matches_plan"
-            ]
+            stages["front_camera_50scene_public2602"]["summary_provenance"]["source_matches_plan"]
         )
 
     def test_mismatched_merged_scale_summary_inputs_fail_the_stage(self) -> None:
@@ -272,7 +272,9 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             shutil.copy2(ROOT / PLAN_RELATIVE, evidence / PLAN_RELATIVE.name)
             _copy_status_and_probe(evidence)
             shutil.copy2(ROOT / READINESS_RELATIVE, evidence / READINESS_RELATIVE.name)
-            _write_json(evidence / "closed_loop_spotlight_reflex_10scene_batch.json", _batch_summary(10))
+            _write_json(
+                evidence / "closed_loop_spotlight_reflex_10scene_batch.json", _batch_summary(10)
+            )
             _write_json(
                 evidence / "closed_loop_spotlight_reflex_50scene_batch.json",
                 _batch_summary(50, input_summaries=["wrong-shard.json"]),
@@ -292,9 +294,7 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             ]
         )
         self.assertFalse(
-            stages["front_camera_50scene_public2602"]["summary_provenance"][
-                "source_matches_plan"
-            ]
+            stages["front_camera_50scene_public2602"]["summary_provenance"]["source_matches_plan"]
         )
 
     def test_malformed_summary_is_reported_as_stage_error(self) -> None:
@@ -363,7 +363,9 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             shutil.copy2(ROOT / PLAN_RELATIVE, evidence / PLAN_RELATIVE.name)
             _copy_status_and_probe(evidence)
             plan = _read_json(evidence / PLAN_RELATIVE.name)
-            _write_json(evidence / "closed_loop_spotlight_reflex_10scene_batch.json", _batch_summary(10))
+            _write_json(
+                evidence / "closed_loop_spotlight_reflex_10scene_batch.json", _batch_summary(10)
+            )
             _write_json(
                 evidence / READINESS_RELATIVE.name,
                 _readiness_report(plan, claim_valid_scene_counts=set()),
@@ -374,6 +376,37 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         self.assertFalse(audit["valid"])
         self.assertIn(
             "readiness public_summary state does not match audit for front_camera_10scene_smoke",
+            audit["readiness_consistency"]["notes"],
+        )
+
+    def test_readiness_next_command_group_drift_invalidates_audit(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            evidence = repo_root / "docs" / "evidence"
+            evidence.mkdir(parents=True)
+            _copy_evidence_jsons(evidence)
+            readiness_path = evidence / READINESS_RELATIVE.name
+            readiness = _read_json(readiness_path)
+            readiness["next_command_groups"][1]["name"] = "stale_cache_group"
+            _write_json(readiness_path, readiness)
+            _refresh_manifest_hash(evidence / MANIFEST_RELATIVE.name, READINESS_RELATIVE)
+
+            audit = module.build_audit(repo_root=repo_root, created_at="2026-07-06")
+
+        self.assertFalse(audit["valid"])
+        self.assertFalse(
+            audit["readiness_consistency"]["checks"][
+                "readiness_next_command_group_names_match_state"
+            ]
+        )
+        self.assertTrue(
+            audit["public_evidence_manifest"]["checks"][
+                "public_evidence_manifest_hashes_match_tracked_files"
+            ]
+        )
+        self.assertIn(
+            "readiness.next_command_groups names do not match readiness state",
             audit["readiness_consistency"]["notes"],
         )
 
@@ -410,7 +443,10 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             _copy_evidence_jsons(evidence)
             manifest = _read_json(evidence / MANIFEST_RELATIVE.name)
             for artifact in manifest["artifacts"]:
-                if artifact["path"] == "docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json":
+                if (
+                    artifact["path"]
+                    == "docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json"
+                ):
                     artifact["sha256"] = "0" * 64
                     break
             _write_json(evidence / MANIFEST_RELATIVE.name, manifest)
@@ -529,7 +565,9 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             audit = module.build_audit(repo_root=repo_root, created_at="2026-07-06")
 
         self.assertFalse(audit["valid"])
-        self.assertFalse(audit["operator_matrix"]["checks"]["operator_matrix_roles_matches_sources"])
+        self.assertFalse(
+            audit["operator_matrix"]["checks"]["operator_matrix_roles_matches_sources"]
+        )
         self.assertTrue(
             audit["public_evidence_manifest"]["checks"][
                 "public_evidence_manifest_hashes_match_tracked_files"
@@ -554,9 +592,7 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
 
         self.assertFalse(audit["valid"])
         self.assertFalse(audit["diagnostic_evidence"]["valid"])
-        self.assertFalse(
-            audit["diagnostic_evidence"]["checks"]["diagnostic_probe_summary_present"]
-        )
+        self.assertFalse(audit["diagnostic_evidence"]["checks"]["diagnostic_probe_summary_present"])
         self.assertIn(
             f"diagnostic probe summary missing: {PROBE_50_RELATIVE.as_posix()}",
             audit["diagnostic_evidence"]["notes"],
@@ -605,9 +641,7 @@ def _planned_merge_inputs(plan: dict[str, object], scene_preset: str) -> list[st
             continue
         command = stage["commands"]["merge_shard_summaries"]["argv"]
         return [
-            command[index + 1]
-            for index, value in enumerate(command)
-            if value == "--merge-summary"
+            command[index + 1] for index, value in enumerate(command) if value == "--merge-summary"
         ]
     raise AssertionError(scene_preset)
 
@@ -637,15 +671,33 @@ def _readiness_report(
                 },
             }
         )
+    scale_stages = [stage for stage in stages if bool(stage["requires_local_usdz_cache"])]
     scale_claims = [
         int(stage["scene_count"]) in claim_valid_scene_counts
         for stage in plan["stages"]
         if "public2602" in str(stage["scene_preset"])
     ]
+    blocking_requirement_ids = [
+        f"{stage['scene_preset']}_claim_summary_missing"
+        for stage in scale_stages
+        if stage["public_summary"]["claim_valid"] is not True
+    ]
+    next_group_names = ["refresh_readiness"]
+    if any(stage["local_usdz_cache"]["validation"]["valid"] is not True for stage in scale_stages):
+        next_group_names.append("build_and_validate_scale_caches")
+    if any(stage["public_summary"]["claim_valid"] is not True for stage in scale_stages):
+        next_group_names.append("run_scale_shards_and_promote_summaries")
+    next_group_names.extend(["refresh_status", "verify_claim_gate"])
     return {
         "schema": "wod2sim_benchmark_regeneration_readiness_v1",
         "plan_artifact": PLAN_RELATIVE.as_posix(),
         "status_artifact": STATUS_RELATIVE.as_posix(),
+        "blocking_requirements": [
+            {"id": requirement_id} for requirement_id in blocking_requirement_ids
+        ],
+        "next_command_groups": [
+            {"name": name, "order": order} for order, name in enumerate(next_group_names, start=1)
+        ],
         "readiness": {
             "claim_valid_scale_summaries_present": all(scale_claims) if scale_claims else False,
         },
