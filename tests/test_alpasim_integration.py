@@ -83,6 +83,10 @@ class AlpaSimIntegrationTests(unittest.TestCase):
             pyproject["project.scripts"]["wod2sim-support-bundle"],
             "wod2sim.cli.commands.support_bundle:main",
         )
+        self.assertEqual(
+            pyproject["project.scripts"]["wod2sim-benchmark-plan"],
+            "wod2sim.cli.commands.benchmark_regeneration_plan:main",
+        )
 
     def test_alpasim_driver_config_exists(self) -> None:
         config_path = Path("src/wod2sim/simulator/alpasim_configs/driver/spotlight_reflex.yaml")
