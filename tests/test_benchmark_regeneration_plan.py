@@ -42,6 +42,10 @@ class BenchmarkRegenerationPlanTests(unittest.TestCase):
             {"HF_TOKEN": "required"},
             scale_stage["commands"]["build_local_cache"]["env"],
         )
+        validate_cache_command = scale_stage["commands"]["validate_local_cache"]["argv"]
+        self.assertEqual("wod2sim-build-local-cache", validate_cache_command[0])
+        self.assertIn("--validate-only", validate_cache_command)
+        self.assertIn("/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50", validate_cache_command)
         self.assertIn(
             "scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50",
             scale_stage["commands"]["run_batch"]["argv"],
@@ -105,6 +109,10 @@ class BenchmarkRegenerationPlanTests(unittest.TestCase):
             self.assertEqual([], stage["shards"])
             self.assertIsNone(stage["shard_note"])
             self.assertIsNone(stage["commands"]["merge_shard_summaries"])
+            if stage["requires_local_usdz_cache"]:
+                self.assertIsNotNone(stage["commands"]["validate_local_cache"])
+            else:
+                self.assertIsNone(stage["commands"]["validate_local_cache"])
             self.assertIsNotNone(stage["commands"]["promote_public_summary"])
 
     def test_tracked_plan_links_current_public_status_and_docs(self) -> None:

@@ -53,6 +53,7 @@
           ],
           "display": "wod2sim-batch --mode both --model spotlight_reflex --scene-preset front_camera_10scene_smoke --alpasim-root /path/to/alpasim --batch-dir runs/benchmark_spotlight_reflex_10scene --timeout 900 --driver-warmup-seconds 5 --max-retries 1 --continue-on-error"
         },
+        "validate_local_cache": null,
         "write_batch_summary": {
           "argv": [
             "wod2sim-batch-summary",
@@ -163,6 +164,21 @@
             "scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50"
           ],
           "display": "wod2sim-batch --mode both --model spotlight_reflex --scene-preset front_camera_50scene_public2602 --alpasim-root /path/to/alpasim --batch-dir runs/benchmark_spotlight_reflex_50scene --timeout 900 --driver-warmup-seconds 5 --max-retries 1 --continue-on-error --wizard-arg scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50"
+        },
+        "validate_local_cache": {
+          "argv": [
+            "wod2sim-build-local-cache",
+            "--scene-preset",
+            "front_camera_50scene_public2602",
+            "--alpasim-root",
+            "/path/to/alpasim",
+            "--local-usdz-dir",
+            "/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50",
+            "--hf-revision",
+            "26.02",
+            "--validate-only"
+          ],
+          "display": "wod2sim-build-local-cache --scene-preset front_camera_50scene_public2602 --alpasim-root /path/to/alpasim --local-usdz-dir /path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50 --hf-revision 26.02 --validate-only"
         },
         "write_batch_summary": {
           "argv": [
@@ -530,6 +546,21 @@
             "scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-100"
           ],
           "display": "wod2sim-batch --mode both --model spotlight_reflex --scene-preset front_camera_100scene_public2602 --alpasim-root /path/to/alpasim --batch-dir runs/benchmark_spotlight_reflex_100scene --timeout 900 --driver-warmup-seconds 5 --max-retries 1 --continue-on-error --wizard-arg scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-100"
+        },
+        "validate_local_cache": {
+          "argv": [
+            "wod2sim-build-local-cache",
+            "--scene-preset",
+            "front_camera_100scene_public2602",
+            "--alpasim-root",
+            "/path/to/alpasim",
+            "--local-usdz-dir",
+            "/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-100",
+            "--hf-revision",
+            "26.02",
+            "--validate-only"
+          ],
+          "display": "wod2sim-build-local-cache --scene-preset front_camera_100scene_public2602 --alpasim-root /path/to/alpasim --local-usdz-dir /path/to/alpasim/data/nre-artifacts/local-2602-usdzs-100 --hf-revision 26.02 --validate-only"
         },
         "write_batch_summary": {
           "argv": [

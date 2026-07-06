@@ -13,6 +13,7 @@ from wod2sim.cli.commands.build_alpasim_local_usdz_cache import (
     _existing_by_scene,
     _link_or_copy,
     _selected_catalog_rows,
+    validate_local_usdz_cache,
 )
 
 
@@ -87,8 +88,53 @@ class BuildAlpaSimLocalUsdzCacheTests(unittest.TestCase):
             self.assertEqual("copy", status)
             self.assertEqual("stub", target.read_text(encoding="utf-8"))
 
+    def test_validate_local_usdz_cache_accepts_complete_metadata_cache(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            cache_dir = Path(tmp)
+            _write_usdz(cache_dir / "uuid-a.usdz", scene_id="scene-a", uuid="uuid-a")
+            _write_usdz(cache_dir / "uuid-b.usdz", scene_id="scene-b", uuid="uuid-b")
 
-def _write_usdz(path: Path, *, scene_id: str, uuid: str) -> None:
+            report = validate_local_usdz_cache(
+                scene_preset="front_camera_50scene_public2602",
+                scene_ids=["scene-a", "scene-b"],
+                local_usdz_dir=cache_dir,
+                hf_revision="26.02",
+            )
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(2, report["present_scene_count"])
+        self.assertEqual([], report["missing_scene_ids"])
+        self.assertEqual([], report["invalid_revision_scene_ids"])
+
+    def test_validate_local_usdz_cache_reports_missing_and_revision_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            cache_dir = Path(tmp)
+            _write_usdz(
+                cache_dir / "uuid-a.usdz",
+                scene_id="scene-a",
+                uuid="uuid-a",
+                version_string="25.01",
+            )
+
+            report = validate_local_usdz_cache(
+                scene_preset="front_camera_50scene_public2602",
+                scene_ids=["scene-a", "scene-b"],
+                local_usdz_dir=cache_dir,
+                hf_revision="26.02",
+            )
+
+        self.assertFalse(report["valid"])
+        self.assertEqual(["scene-b"], report["missing_scene_ids"])
+        self.assertEqual(["scene-a"], report["invalid_revision_scene_ids"])
+
+
+def _write_usdz(
+    path: Path,
+    *,
+    scene_id: str,
+    uuid: str,
+    version_string: str = "26.2-test",
+) -> None:
     with zipfile.ZipFile(path, "w") as archive:
         archive.writestr(
             "metadata.yaml",
@@ -96,7 +142,7 @@ def _write_usdz(path: Path, *, scene_id: str, uuid: str) -> None:
                 {
                     "scene_id": scene_id,
                     "uuid": uuid,
-                    "version_string": "26.2-test",
+                    "version_string": version_string,
                 }
             ),
         )

@@ -4,6 +4,7 @@ import argparse
 import csv
 import json
 import os
+import re
 import shutil
 import zipfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -41,6 +42,11 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--hf-revision", default=DEFAULT_HF_REVISION)
     parser.add_argument("--workers", type=int, default=3)
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument(
+        "--validate-only",
+        action="store_true",
+        help="Validate an existing local USDZ directory without querying Hugging Face or downloading.",
+    )
     return parser
 
 
@@ -63,6 +69,16 @@ def main() -> int:
         if args.download_dir is not None
         else alpasim_root / "data" / "nre-artifacts" / ".hf-downloads" / args.hf_revision
     )
+
+    if args.validate_only:
+        report = validate_local_usdz_cache(
+            scene_preset=args.scene_preset,
+            scene_ids=scene_ids,
+            local_usdz_dir=local_usdz_dir,
+            hf_revision=args.hf_revision,
+        )
+        print(json.dumps(report, indent=2, sort_keys=True))
+        return 0 if report["valid"] else 1
 
     rows = _selected_catalog_rows(
         catalog_paths=_scene_catalog_paths(args.scene_preset, alpasim_root),
@@ -124,6 +140,58 @@ def main() -> int:
     if manifest["errors"]:
         raise SystemExit(1)
     return 0
+
+
+def validate_local_usdz_cache(
+    *,
+    scene_preset: str,
+    scene_ids: list[str],
+    local_usdz_dir: Path,
+    hf_revision: str,
+) -> dict[str, Any]:
+    existing = _existing_by_scene(local_usdz_dir) if local_usdz_dir.is_dir() else {}
+    missing_scene_ids = [scene_id for scene_id in scene_ids if scene_id not in existing]
+    extra_scene_ids = sorted(scene_id for scene_id in existing if scene_id not in set(scene_ids))
+    invalid_revisions = [
+        scene_id
+        for scene_id in scene_ids
+        if scene_id in existing
+        and str(existing[scene_id].get("version_string", "")).strip()
+        and not _metadata_version_matches(str(existing[scene_id]["version_string"]), hf_revision)
+    ]
+    duplicate_uuids = _duplicate_values(
+        [
+            str(existing[scene_id].get("uuid", ""))
+            for scene_id in scene_ids
+            if scene_id in existing
+        ]
+    )
+    present_scene_count = len([scene_id for scene_id in scene_ids if scene_id in existing])
+    valid = (
+        local_usdz_dir.is_dir()
+        and present_scene_count == len(scene_ids)
+        and not missing_scene_ids
+        and not invalid_revisions
+        and not duplicate_uuids
+    )
+    return {
+        "schema": "wod2sim_local_usdz_cache_validation_v1",
+        "valid": valid,
+        "scene_preset": scene_preset,
+        "hf_revision": hf_revision,
+        "local_usdz_dir": str(local_usdz_dir),
+        "expected_scene_count": len(scene_ids),
+        "present_scene_count": present_scene_count,
+        "missing_scene_ids": missing_scene_ids,
+        "extra_scene_ids": extra_scene_ids,
+        "invalid_revision_scene_ids": invalid_revisions,
+        "duplicate_uuids": duplicate_uuids,
+        "scenes": [
+            {"scene_id": scene_id, **existing[scene_id]}
+            for scene_id in scene_ids
+            if scene_id in existing
+        ],
+    }
 
 
 def _hf_available_paths(*, repo_id: str, revision: str, token: str | None) -> set[str]:
@@ -275,6 +343,28 @@ def _existing_by_scene(local_usdz_dir: Path) -> dict[str, dict[str, str]]:
             "version_string": str(metadata.get("version_string")),
         }
     return existing
+
+
+def _metadata_version_matches(version_string: str, hf_revision: str) -> bool:
+    expected = _version_numbers(hf_revision)
+    actual = _version_numbers(version_string)
+    return not expected or actual[: len(expected)] == expected
+
+
+def _version_numbers(value: str) -> list[int]:
+    return [int(part) for part in re.findall(r"\d+", value)]
+
+
+def _duplicate_values(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    duplicates: set[str] = set()
+    for value in values:
+        if not value:
+            continue
+        if value in seen:
+            duplicates.add(value)
+        seen.add(value)
+    return sorted(duplicates)
 
 
 def _metadata_for(path: Path) -> dict[str, Any]:

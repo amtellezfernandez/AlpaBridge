@@ -231,6 +231,7 @@ def _stage_plan(
 
     commands: dict[str, Any] = {
         "build_local_cache": None,
+        "validate_local_cache": None,
         "run_batch": _command(
             _batch_argv(
                 model=model,
@@ -282,6 +283,20 @@ def _stage_plan(
                 str(max(1, workers)),
             ],
             env={"HF_TOKEN": "required"},
+        )
+        commands["validate_local_cache"] = _command(
+            [
+                "wod2sim-build-local-cache",
+                "--scene-preset",
+                scene_preset,
+                "--alpasim-root",
+                alpasim_root,
+                "--local-usdz-dir",
+                local_usdz_dir,
+                "--hf-revision",
+                hf_revision,
+                "--validate-only",
+            ]
         )
 
     shards = (
