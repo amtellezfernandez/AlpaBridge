@@ -11,6 +11,9 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 STATUS_RELATIVE = Path("docs/evidence/benchmark_regeneration_status_20260706.json")
 PILOT_RELATIVE = Path("docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json")
+PROBE_50_RELATIVE = Path(
+    "docs/evidence/closed_loop_spotlight_reflex_50scene_localprobe_1scene.json"
+)
 PLAN_RELATIVE = Path("docs/evidence/benchmark_regeneration_plan_20260706.json")
 READINESS_RELATIVE = Path("docs/evidence/benchmark_regeneration_readiness_20260706.json")
 AUDIT_RELATIVE = Path("docs/evidence/benchmark_regeneration_audit_20260706.json")
@@ -68,6 +71,25 @@ def test_large_scale_status_is_workflow_ready_but_not_claim_valid() -> None:
         assert "x86_64 AlpaSim runner" in scale_status["remaining_runtime_requirement"]
 
 
+def test_status_tracks_50_scene_local_probe_as_diagnostic_only() -> None:
+    status = _read_json(ROOT / STATUS_RELATIVE)
+    probe = _read_json(ROOT / PROBE_50_RELATIVE)
+
+    public_probe = status["current_public_evidence"]["fifty_scene_local_probe"]
+    assert public_probe["artifact"] == PROBE_50_RELATIVE.as_posix()
+    assert public_probe["present"] is True
+    assert public_probe["status"] == "tracked_public_probe_summary"
+    assert public_probe["claim_scope"].startswith("Diagnostic one-scene probe")
+    assert public_probe["schema"] == probe["schema"]
+    assert public_probe["scene_preset"] == "front_camera_50scene_public2602"
+    assert public_probe["planned_scene_count"] == 1
+    assert public_probe["completed_scene_count"] == 1
+    assert public_probe["sensor_failure_scene_count"] == 0
+    assert status["scale_status"]["front_camera_50scene_public2602"][
+        "claim_valid_closed_loop_summary_tracked"
+    ] is False
+
+
 def test_public_artifact_policy_excludes_heavy_or_gated_runtime_artifacts() -> None:
     status = _read_json(ROOT / STATUS_RELATIVE)
     untracked_policy = status["public_artifact_policy"]["untracked"].lower()
@@ -87,6 +109,7 @@ def test_readme_links_current_regeneration_status() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
     assert STATUS_RELATIVE.as_posix() in readme
+    assert PROBE_50_RELATIVE.as_posix() in readme
     assert "Open-repo readers can review the compact JSON summaries" in readme
     assert "ARM/DGX Spark" in readme
     assert "| `wod2sim-benchmark-status` |" in readme
@@ -100,6 +123,7 @@ def test_status_links_current_public_evidence_chain() -> None:
 
     assert status["evidence_artifacts"] == {
         "ten_scene_pilot": PILOT_RELATIVE.as_posix(),
+        "fifty_scene_local_probe": PROBE_50_RELATIVE.as_posix(),
         "regeneration_plan": PLAN_RELATIVE.as_posix(),
         "readiness_snapshot": READINESS_RELATIVE.as_posix(),
         "claim_audit": AUDIT_RELATIVE.as_posix(),

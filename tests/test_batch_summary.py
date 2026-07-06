@@ -21,6 +21,7 @@ class BatchSummaryTests(unittest.TestCase):
             summary = module.build_summary(batch_dir=root)
 
         self.assertTrue(summary["valid"])
+        self.assertIn("T", summary["created_at"])
         self.assertTrue(summary["clean_closed_loop_batch"])
         self.assertEqual("wod2sim_closed_loop_batch_summary_v1", summary["schema"])
         self.assertEqual(2, summary["aggregate"]["completed_scene_count"])
@@ -100,9 +101,11 @@ class BatchSummaryTests(unittest.TestCase):
             merged = module.merge_summaries(
                 summary_paths=[summary_a_path, summary_b_path],
                 expected_scene_count=4,
+                created_at="2026-07-06",
             )
 
         self.assertTrue(merged["valid"])
+        self.assertEqual("2026-07-06", merged["created_at"])
         self.assertTrue(merged["clean_closed_loop_batch"])
         self.assertEqual("merged_batch_summaries", merged["source"]["summary_kind"])
         self.assertEqual(4, merged["aggregate"]["planned_scene_count"])
@@ -136,6 +139,8 @@ class BatchSummaryTests(unittest.TestCase):
                     "4",
                     "--output",
                     str(output),
+                    "--created-at",
+                    "2026-07-06",
                     "--strict",
                     "--json",
                 ],
@@ -145,6 +150,7 @@ class BatchSummaryTests(unittest.TestCase):
             payload = json.loads(output.read_text(encoding="utf-8"))
 
         self.assertEqual(1, returncode)
+        self.assertEqual("2026-07-06", payload["created_at"])
         self.assertFalse(payload["clean_closed_loop_batch"])
         self.assertEqual(
             ["scene_count_mismatch:planned=4,observed=2"],

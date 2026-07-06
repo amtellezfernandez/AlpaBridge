@@ -78,6 +78,11 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--output", type=Path, default=None, help="Optional JSON summary output path.")
     parser.add_argument("--json", action="store_true", help="Print the summary as JSON.")
     parser.add_argument(
+        "--created-at",
+        default=None,
+        help="Override the summary timestamp, useful for reproducible tracked evidence snapshots.",
+    )
+    parser.add_argument(
         "--strict",
         action="store_true",
         help="Exit nonzero unless every planned scene completed with a clean sensor pipeline.",
@@ -107,6 +112,7 @@ def main() -> int:
             expected_scene_count=args.expected_scene_count,
             low_progress_threshold=args.low_progress_threshold,
             high_plan_deviation_threshold=args.high_plan_deviation_threshold,
+            created_at=args.created_at,
         )
     else:
         summary = build_summary(
@@ -114,6 +120,7 @@ def main() -> int:
             batch_status=args.batch_status,
             low_progress_threshold=args.low_progress_threshold,
             high_plan_deviation_threshold=args.high_plan_deviation_threshold,
+            created_at=args.created_at,
         )
     if args.output is not None:
         args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -133,6 +140,7 @@ def build_summary(
     batch_status: Path | None = None,
     low_progress_threshold: float = 0.5,
     high_plan_deviation_threshold: float = 4.0,
+    created_at: str | None = None,
 ) -> dict[str, Any]:
     status_path = _resolve_status_path(batch_dir=batch_dir, batch_status=batch_status)
     root = status_path.parent
@@ -162,7 +170,7 @@ def build_summary(
 
     return {
         "schema": SUMMARY_SCHEMA,
-        "created_at": datetime.now().isoformat(timespec="seconds"),
+        "created_at": created_at or datetime.now().isoformat(timespec="seconds"),
         "valid": bool(runs),
         "clean_closed_loop_batch": clean_closed_loop_batch,
         "claim_boundary": (
@@ -223,6 +231,7 @@ def merge_summaries(
     expected_scene_count: int | None = None,
     low_progress_threshold: float = 0.5,
     high_plan_deviation_threshold: float = 4.0,
+    created_at: str | None = None,
 ) -> dict[str, Any]:
     inputs = [_load_json(path) for path in summary_paths]
     errors = _merge_errors(inputs=inputs, expected_scene_count=expected_scene_count)
@@ -254,7 +263,7 @@ def merge_summaries(
 
     return {
         "schema": SUMMARY_SCHEMA,
-        "created_at": datetime.now().isoformat(timespec="seconds"),
+        "created_at": created_at or datetime.now().isoformat(timespec="seconds"),
         "valid": valid,
         "clean_closed_loop_batch": clean_closed_loop_batch,
         "claim_boundary": (

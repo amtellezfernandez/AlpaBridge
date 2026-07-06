@@ -18,6 +18,28 @@
     "nvidia_smi_ok": true
   },
   "current_public_evidence": {
+    "fifty_scene_local_probe": {
+      "artifact": "docs/evidence/closed_loop_spotlight_reflex_50scene_localprobe_1scene.json",
+      "claim_scope": "Diagnostic one-scene probe from the 50-scene public preset. This is not a claim-valid 50-scene stage summary and does not satisfy the strict audit gate.",
+      "clean_closed_loop_batch": true,
+      "completed_scene_count": 1,
+      "failed_scene_count": 0,
+      "failure_taxonomy": {
+        "at_fault_collision_scene_count": 0,
+        "collision_scene_count": 1,
+        "high_plan_deviation_scene_count": 0,
+        "low_progress_scene_count": 1,
+        "offroad_scene_count": 0,
+        "wrong_lane_scene_count": 0
+      },
+      "planned_scene_count": 1,
+      "present": true,
+      "scene_preset": "front_camera_50scene_public2602",
+      "schema": "wod2sim_closed_loop_batch_summary_v1",
+      "sensor_failure_scene_count": 0,
+      "status": "tracked_public_probe_summary",
+      "total_audited_frames": 199
+    },
     "ten_scene_pilot": {
       "artifact": "docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json",
       "clean_closed_loop_batch": true,
@@ -40,6 +62,7 @@
   },
   "evidence_artifacts": {
     "claim_audit": "docs/evidence/benchmark_regeneration_audit_20260706.json",
+    "fifty_scene_local_probe": "docs/evidence/closed_loop_spotlight_reflex_50scene_localprobe_1scene.json",
     "readiness_snapshot": "docs/evidence/benchmark_regeneration_readiness_20260706.json",
     "regeneration_plan": "docs/evidence/benchmark_regeneration_plan_20260706.json",
     "ten_scene_pilot": "docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json"
@@ -77,6 +100,7 @@
   "status_generator": {
     "command": "wod2sim-benchmark-status",
     "inputs": {
+      "fifty_scene_local_probe": "docs/evidence/closed_loop_spotlight_reflex_50scene_localprobe_1scene.json",
       "readiness_snapshot": "docs/evidence/benchmark_regeneration_readiness_20260706.json",
       "regeneration_plan": "docs/evidence/benchmark_regeneration_plan_20260706.json",
       "ten_scene_pilot": "docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json"
