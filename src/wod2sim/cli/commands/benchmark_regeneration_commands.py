@@ -10,6 +10,8 @@ from typing import Any
 PLAN_SCHEMA = "wod2sim_benchmark_regeneration_plan_v1"
 COMMANDS_SCHEMA = "wod2sim_benchmark_regeneration_commands_v1"
 DEFAULT_PLAN = Path("docs/evidence/benchmark_regeneration_plan_20260706.json")
+DEFAULT_AUDIT = Path("docs/evidence/benchmark_regeneration_audit_20260706.json")
+AUDIT_SCHEMA = "wod2sim_benchmark_regeneration_audit_v1"
 GROUPS = (
     "all",
     "cleanup",
@@ -73,6 +75,7 @@ def _build_parser() -> argparse.ArgumentParser:
         )
     )
     parser.add_argument("--plan", type=Path, default=DEFAULT_PLAN)
+    parser.add_argument("--audit", type=Path, default=DEFAULT_AUDIT)
     parser.add_argument(
         "--stage",
         action="append",
@@ -93,6 +96,14 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         help="1-based shard index to render when --group shards is selected.",
     )
+    parser.add_argument(
+        "--resume-missing-shards-from-audit",
+        action="store_true",
+        help=(
+            "Use the audit's planned shard-summary statuses to render only missing or "
+            "invalid scale-stage shard commands, plus merge/promote/post commands by default."
+        ),
+    )
     parser.add_argument("--created-at", default=None)
     parser.add_argument(
         "--output",
@@ -111,16 +122,20 @@ def main() -> int:
     args = _build_parser().parse_args()
     rows = render_commands(
         plan_path=args.plan,
+        audit_path=args.audit,
         stages=args.stage,
         groups=args.group,
         shard_indexes=args.shard_index,
+        resume_missing_shards_from_audit=args.resume_missing_shards_from_audit,
     )
     if args.output is not None:
         artifact = build_command_artifact(
             plan_path=args.plan,
+            audit_path=args.audit,
             stages=args.stage,
             groups=args.group,
             shard_indexes=args.shard_index,
+            resume_missing_shards_from_audit=args.resume_missing_shards_from_audit,
             created_at=args.created_at,
         )
         args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -139,22 +154,34 @@ def main() -> int:
 def build_command_artifact(
     *,
     plan_path: Path = DEFAULT_PLAN,
+    audit_path: Path = DEFAULT_AUDIT,
     stages: list[str] | tuple[str, ...] | None = None,
     groups: list[str] | tuple[str, ...] | None = None,
     shard_indexes: list[int] | tuple[int, ...] | None = None,
+    resume_missing_shards_from_audit: bool = False,
     created_at: str | None = None,
 ) -> dict[str, Any]:
     rows = render_commands(
         plan_path=plan_path,
+        audit_path=audit_path,
         stages=stages,
         groups=groups,
         shard_indexes=shard_indexes,
+        resume_missing_shards_from_audit=resume_missing_shards_from_audit,
     )
     group_counts = Counter(str(row.get("group") or "unknown") for row in rows)
     execution_boundary_counts = Counter(
         str(row.get("execution_boundary") or "unknown") for row in rows
     )
     operator_role_counts = Counter(str(row.get("operator_role") or "unknown") for row in rows)
+    filters = {
+        "stages": list(stages or []),
+        "groups": list(groups or ["all"]),
+        "shard_indexes": list(shard_indexes or []),
+    }
+    if resume_missing_shards_from_audit:
+        filters["resume_missing_shards_from_audit"] = True
+        filters["audit_artifact"] = _display_path(audit_path)
     return {
         "schema": COMMANDS_SCHEMA,
         "created_at": created_at or datetime.now().isoformat(timespec="seconds"),
@@ -163,11 +190,7 @@ def build_command_artifact(
             "command": "wod2sim-benchmark-commands",
             "no_runtime_execution": True,
         },
-        "filters": {
-            "stages": list(stages or []),
-            "groups": list(groups or ["all"]),
-            "shard_indexes": list(shard_indexes or []),
-        },
+        "filters": filters,
         "row_count": len(rows),
         "group_counts": dict(sorted(group_counts.items())),
         "execution_boundary_counts": dict(sorted(execution_boundary_counts.items())),
@@ -185,15 +208,30 @@ def build_command_artifact(
 def render_commands(
     *,
     plan_path: Path = DEFAULT_PLAN,
+    audit_path: Path = DEFAULT_AUDIT,
     stages: list[str] | tuple[str, ...] | None = None,
     groups: list[str] | tuple[str, ...] | None = None,
     shard_indexes: list[int] | tuple[int, ...] | None = None,
+    resume_missing_shards_from_audit: bool = False,
 ) -> list[dict[str, Any]]:
     plan = _read_json(plan_path)
     if plan.get("schema") != PLAN_SCHEMA:
         raise ValueError(f"plan schema must be {PLAN_SCHEMA}, got {plan.get('schema')!r}")
     all_mode = groups is None or "all" in groups
     selected_groups = tuple(groups or ("all",))
+    if resume_missing_shards_from_audit:
+        audit = _read_json(audit_path)
+        if audit.get("schema") != AUDIT_SCHEMA:
+            raise ValueError(f"audit schema must be {AUDIT_SCHEMA}, got {audit.get('schema')!r}")
+        resume_groups = ("shards", "merge", "promote", "post") if all_mode else selected_groups
+        return _resume_missing_shard_command_rows(
+            plan=plan,
+            audit=audit,
+            audit_path=audit_path,
+            selected_stages=set(stages or []),
+            selected_groups=resume_groups,
+            selected_shard_indexes=set(shard_indexes or []),
+        )
     if all_mode:
         selected_groups = ("cleanup", "readiness", "cache", "merge", "promote", "post")
     selected_stages = set(stages or [])
@@ -301,6 +339,159 @@ def _matching_stages(
         if str(stage.get("stage") or "") in selected_stages
         or str(stage.get("scene_preset") or "") in selected_stages
     ]
+
+
+def _resume_missing_shard_command_rows(
+    *,
+    plan: dict[str, Any],
+    audit: dict[str, Any],
+    audit_path: Path,
+    selected_stages: set[str],
+    selected_groups: tuple[str, ...],
+    selected_shard_indexes: set[int],
+) -> list[dict[str, Any]]:
+    missing_statuses_by_preset = _missing_shard_summary_statuses_by_preset(audit)
+    rows: list[dict[str, Any]] = []
+    affected_stage_count = 0
+
+    for stage in _matching_stages(plan, selected_stages=selected_stages):
+        scene_preset = str(stage.get("scene_preset") or "")
+        missing_statuses = missing_statuses_by_preset.get(scene_preset, {})
+        if not missing_statuses:
+            continue
+        shard_outputs = _shard_summary_outputs_by_index(stage)
+        missing_shard_indexes = {
+            index for index, output in shard_outputs.items() if output in missing_statuses
+        }
+        if selected_shard_indexes:
+            missing_shard_indexes &= selected_shard_indexes
+        if not missing_shard_indexes:
+            continue
+        affected_stage_count += 1
+        commands = _dict_or_empty(stage.get("commands"))
+
+        if "cache" in selected_groups:
+            rows.extend(
+                _annotate_resume_rows(
+                    _command_rows(
+                        stage=stage,
+                        group="cache",
+                        commands={
+                            "link_local_cache_from_all_usdzs": commands.get(
+                                "link_local_cache_from_all_usdzs"
+                            ),
+                            "build_local_cache": commands.get("build_local_cache"),
+                            "validate_local_cache": commands.get("validate_local_cache"),
+                        },
+                    ),
+                    audit_path=audit_path,
+                )
+            )
+        if "shards" in selected_groups:
+            shard_rows = _shard_command_rows(
+                stage=stage,
+                selected_shard_indexes=missing_shard_indexes,
+            )
+            for row in shard_rows:
+                shard_index = _int_or_none(row.get("shard_index"))
+                summary_path = shard_outputs.get(shard_index) if shard_index is not None else None
+                status = _dict_or_empty(missing_statuses.get(summary_path or ""))
+                row["resume_from_audit"] = _display_path(audit_path)
+                row["resume_summary_path"] = summary_path
+                row["resume_summary_errors"] = [
+                    str(error)
+                    for error in _list_or_empty(status.get("errors"))
+                    if isinstance(error, str)
+                ]
+            rows.extend(shard_rows)
+        if "merge" in selected_groups:
+            rows.extend(
+                _annotate_resume_rows(
+                    _command_rows(
+                        stage=stage,
+                        group="merge",
+                        commands={"merge_shard_summaries": commands.get("merge_shard_summaries")},
+                    ),
+                    audit_path=audit_path,
+                )
+            )
+        if "promote" in selected_groups:
+            rows.extend(
+                _annotate_resume_rows(
+                    _command_rows(
+                        stage=stage,
+                        group="promote",
+                        commands={"promote_public_summary": commands.get("promote_public_summary")},
+                    ),
+                    audit_path=audit_path,
+                )
+            )
+
+    if affected_stage_count and "post" in selected_groups:
+        rows.extend(_annotate_resume_rows(_post_command_rows(plan), audit_path=audit_path))
+    return rows
+
+
+def _missing_shard_summary_statuses_by_preset(
+    audit: dict[str, Any],
+) -> dict[str, dict[str, dict[str, Any]]]:
+    by_preset: dict[str, dict[str, dict[str, Any]]] = {}
+    for stage in _list_of_dicts(audit.get("stages")):
+        scene_preset = str(stage.get("scene_preset") or "")
+        statuses = _list_of_dicts(
+            _dict_or_empty(stage.get("merge_provenance")).get("expected_input_summary_statuses")
+        )
+        if not scene_preset or not statuses:
+            continue
+        missing = {
+            str(status.get("path") or ""): status
+            for status in statuses
+            if status.get("claim_valid") is not True and status.get("path")
+        }
+        if missing:
+            by_preset[scene_preset] = missing
+    return by_preset
+
+
+def _shard_summary_outputs_by_index(stage: dict[str, Any]) -> dict[int, str]:
+    outputs: dict[int, str] = {}
+    for shard in _list_of_dicts(stage.get("shards")):
+        shard_index = _int_or_none(shard.get("index"))
+        if shard_index is None:
+            continue
+        output = _shard_summary_output(shard)
+        if output:
+            outputs[shard_index] = output
+    return outputs
+
+
+def _shard_summary_output(shard: dict[str, Any]) -> str | None:
+    write_command = _dict_or_empty(_dict_or_empty(shard.get("commands")).get("write_batch_summary"))
+    output = _argv_value(write_command, "--output")
+    if output:
+        return output
+    run_dir = shard.get("run_dir")
+    if isinstance(run_dir, str) and run_dir:
+        return (Path(run_dir) / "wod2sim-batch-summary.json").as_posix()
+    return None
+
+
+def _argv_value(command: dict[str, Any], option: str) -> str | None:
+    argv = _list_or_empty(command.get("argv"))
+    for index, value in enumerate(argv):
+        if value == option and index + 1 < len(argv) and isinstance(argv[index + 1], str):
+            return str(argv[index + 1])
+    return None
+
+
+def _annotate_resume_rows(
+    rows: list[dict[str, Any]],
+    *,
+    audit_path: Path,
+) -> list[dict[str, Any]]:
+    for row in rows:
+        row["resume_from_audit"] = _display_path(audit_path)
+    return rows
 
 
 def _command_rows(
@@ -415,6 +606,10 @@ def _list_of_dicts(value: object) -> list[dict[str, Any]]:
     if not isinstance(value, list):
         return []
     return [item for item in value if isinstance(item, dict)]
+
+
+def _list_or_empty(value: object) -> list[object]:
+    return value if isinstance(value, list) else []
 
 
 def _int_or_none(value: object) -> int | None:

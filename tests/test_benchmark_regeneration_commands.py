@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 PLAN_RELATIVE = Path("docs/evidence/benchmark_regeneration_plan_20260706.json")
+AUDIT_RELATIVE = Path("docs/evidence/benchmark_regeneration_audit_20260706.json")
 COMMANDS_RELATIVE = Path("docs/evidence/benchmark_regeneration_commands_20260706.json")
 
 
@@ -66,6 +67,62 @@ def test_command_renderer_all_prefers_shards_for_scale_stages() -> None:
     assert rows[-1]["command"] == "verify_claim_gate"
 
 
+def test_command_renderer_resumes_missing_shards_from_audit() -> None:
+    module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_commands")
+
+    rows = module.render_commands(
+        plan_path=ROOT / PLAN_RELATIVE,
+        audit_path=ROOT / AUDIT_RELATIVE,
+        resume_missing_shards_from_audit=True,
+    )
+    shard_rows = [row for row in rows if row["group"] == "shards"]
+
+    assert [row["group"] for row in rows[-2:]] == ["post", "post"]
+    assert len(shard_rows) == 30
+    assert {row["scene_preset"] for row in shard_rows} == {
+        "front_camera_50scene_public2602",
+        "front_camera_100scene_public2602",
+    }
+    assert {
+        row["shard_index"]
+        for row in shard_rows
+        if row["scene_preset"] == "front_camera_50scene_public2602"
+    } == {1, 2, 3, 4, 5}
+    assert {
+        row["shard_index"]
+        for row in shard_rows
+        if row["scene_preset"] == "front_camera_100scene_public2602"
+    } == {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+    assert all(row["resume_from_audit"] == (ROOT / AUDIT_RELATIVE).as_posix() for row in rows)
+    assert all(row["resume_summary_errors"] == ["summary_missing"] for row in shard_rows)
+    assert all(
+        str(row["resume_summary_path"]).endswith("wod2sim-batch-summary.json") for row in shard_rows
+    )
+    assert {row["command"] for row in rows if row["group"] == "merge"} == {"merge_shard_summaries"}
+    assert {row["command"] for row in rows if row["group"] == "promote"} == {
+        "promote_public_summary"
+    }
+
+
+def test_command_renderer_resume_mode_honors_stage_group_and_shard_filters() -> None:
+    module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_commands")
+
+    rows = module.render_commands(
+        plan_path=ROOT / PLAN_RELATIVE,
+        audit_path=ROOT / AUDIT_RELATIVE,
+        stages=["front_camera_50scene_public2602"],
+        groups=["shards"],
+        shard_indexes=[2],
+        resume_missing_shards_from_audit=True,
+    )
+
+    assert len(rows) == 2
+    assert {row["command"] for row in rows} == {"run_batch", "write_batch_summary"}
+    assert all(row["scene_preset"] == "front_camera_50scene_public2602" for row in rows)
+    assert all(row["shard_index"] == 2 for row in rows)
+    assert all("shards/010_019" in row["display"] for row in rows)
+
+
 def test_command_renderer_main_writes_json_rows() -> None:
     module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_commands")
     with TemporaryDirectory() as tmpdir:
@@ -101,6 +158,43 @@ def test_command_renderer_main_writes_json_rows() -> None:
     assert all(row["shard_index"] == 1 for row in payload)
 
 
+def test_command_renderer_main_writes_resume_rows() -> None:
+    module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_commands")
+    with TemporaryDirectory() as tmpdir:
+        output = Path(tmpdir) / "resume.json"
+
+        with (
+            output.open("w", encoding="utf-8") as handle,
+            patch.object(
+                sys,
+                "argv",
+                [
+                    "wod2sim-benchmark-commands",
+                    "--plan",
+                    str(ROOT / PLAN_RELATIVE),
+                    "--audit",
+                    str(ROOT / AUDIT_RELATIVE),
+                    "--resume-missing-shards-from-audit",
+                    "--stage",
+                    "front_camera_50scene_public2602",
+                    "--group",
+                    "shards",
+                    "--shard-index",
+                    "1",
+                    "--json",
+                ],
+            ),
+            patch("sys.stdout", handle),
+        ):
+            returncode = module.main()
+
+        payload = json.loads(output.read_text(encoding="utf-8"))
+
+    assert returncode == 0
+    assert len(payload) == 2
+    assert all(row["resume_summary_errors"] == ["summary_missing"] for row in payload)
+
+
 def test_command_renderer_builds_public_command_artifact() -> None:
     module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_commands")
 
@@ -134,6 +228,26 @@ def test_command_renderer_builds_public_command_artifact() -> None:
     assert artifact["private_execution_command_count"] == 43
     assert artifact["public_review_command_count"] == 4
     assert artifact["commands"][-1]["command"] == "verify_claim_gate"
+
+
+def test_command_renderer_builds_resume_artifact() -> None:
+    module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_commands")
+
+    artifact = module.build_command_artifact(
+        plan_path=ROOT / PLAN_RELATIVE,
+        audit_path=ROOT / AUDIT_RELATIVE,
+        groups=["shards"],
+        resume_missing_shards_from_audit=True,
+        created_at="2026-07-06",
+    )
+
+    assert artifact["filters"]["resume_missing_shards_from_audit"] is True
+    assert artifact["filters"]["audit_artifact"] == (ROOT / AUDIT_RELATIVE).as_posix()
+    assert artifact["group_counts"] == {"shards": 30}
+    assert artifact["execution_boundary_counts"] == {"live_closed_loop_rollout": 30}
+    assert artifact["operator_role_counts"] == {"closed_loop_runner": 30}
+    assert artifact["private_execution_command_count"] == 30
+    assert artifact["public_review_command_count"] == 0
 
 
 def test_command_renderer_output_writes_artifact_without_changing_stdout_rows() -> None:

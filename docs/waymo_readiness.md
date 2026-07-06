@@ -210,5 +210,7 @@ The matching claim-readiness audit is
 It verifies the tracked summary artifacts, merged shard provenance, and the
 readiness snapshot's stage-summary state against the regeneration plan. Its
 scale gap rows also report local planned-shard summary progress for resumable
-50/100 execution. After new 50/100 summaries are promoted, refresh readiness,
+50/100 execution, and `wod2sim-benchmark-commands --resume-missing-shards-from-audit`
+renders only shard commands whose planned summaries are missing or invalid in
+that audit. After new 50/100 summaries are promoted, refresh readiness,
 regenerate status, then run `wod2sim-benchmark-audit --strict --json`.
