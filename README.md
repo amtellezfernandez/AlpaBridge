@@ -266,7 +266,8 @@ and can be regenerated with `wod2sim-benchmark-audit`; merged shard summaries
 must list the planned shard summary inputs, and the readiness snapshot must
 match the audited stage summary state. The audit also validates diagnostic
 scale-probe evidence as non-claim evidence so it cannot satisfy the strict
-50/100-scene gate by accident.
+50/100-scene gate by accident. Its `objective_completion` section lists the
+satisfied requirements and the remaining 50/100-scene claim gaps.
 
 ## Evidence Contract
 
