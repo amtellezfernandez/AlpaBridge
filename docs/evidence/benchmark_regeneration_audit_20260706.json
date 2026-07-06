@@ -395,6 +395,8 @@
       "front_camera_50scene_public2602_claim_flag_matches_audit": true,
       "full_objective_flag_matches_audit": true,
       "status_evidence_artifacts_match_audit_inputs": true,
+      "status_expected_rebuilt": true,
+      "status_matches_generator": true,
       "ten_scene_status_matches_audit": true
     },
     "notes": [],

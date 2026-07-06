@@ -113,6 +113,7 @@ def build_audit(
         status=status,
         stage_reports=stage_reports,
         claim_ready=claim_ready,
+        repo_root=repo_root,
     )
     readiness_consistency = _readiness_consistency(
         plan_path=plan_path,
@@ -825,6 +826,7 @@ def _status_consistency(
     status: dict[str, Any],
     stage_reports: list[dict[str, Any]],
     claim_ready: bool,
+    repo_root: Path,
 ) -> dict[str, Any]:
     checks: dict[str, bool] = {}
     notes: list[str] = []
@@ -861,6 +863,18 @@ def _status_consistency(
     )
     if not checks["status_evidence_artifacts_match_audit_inputs"]:
         notes.append("status.evidence_artifacts does not match the audited evidence chain")
+
+    expected_status = _expected_status(
+        plan_path=plan_path,
+        readiness_artifact=readiness_artifact,
+        status=status,
+        repo_root=repo_root,
+        notes=notes,
+    )
+    checks["status_expected_rebuilt"] = bool(expected_status)
+    checks["status_matches_generator"] = bool(expected_status) and status == expected_status
+    if not checks["status_matches_generator"]:
+        notes.append("status artifact does not match wod2sim-benchmark-status output")
 
     scale_status = _dict_or_empty(status.get("scale_status"))
     for stage in stage_reports:
@@ -1336,6 +1350,31 @@ def _expected_operator_matrix(
         )
     except (FileNotFoundError, ValueError, json.JSONDecodeError, OSError) as exc:
         notes.append(f"operator matrix rebuild failed: {exc}")
+        return {}
+
+
+def _expected_status(
+    *,
+    plan_path: Path,
+    readiness_artifact: str,
+    status: dict[str, Any],
+    repo_root: Path,
+    notes: list[str],
+) -> dict[str, Any]:
+    if not readiness_artifact:
+        notes.append("status cannot be rebuilt without readiness_artifact")
+        return {}
+    try:
+        from wod2sim.cli.commands.benchmark_regeneration_status import build_status
+
+        return build_status(
+            plan_path=plan_path,
+            readiness_path=Path(readiness_artifact),
+            repo_root=repo_root,
+            created_at=str(status.get("created_at") or "audit_expected"),
+        )
+    except (FileNotFoundError, ValueError, json.JSONDecodeError, OSError) as exc:
+        notes.append(f"status rebuild failed: {exc}")
         return {}
 
 

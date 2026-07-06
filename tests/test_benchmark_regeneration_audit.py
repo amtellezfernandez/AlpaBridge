@@ -176,15 +176,6 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             _copy_status_and_probe(evidence)
 
             plan = _read_json(evidence / PLAN_RELATIVE.name)
-            status = _read_json(evidence / STATUS_RELATIVE.name)
-            status["completion_status"]["full_objective_complete"] = True
-            for preset in (
-                "front_camera_50scene_public2602",
-                "front_camera_100scene_public2602",
-            ):
-                status["scale_status"][preset]["claim_valid_closed_loop_summary_tracked"] = True
-            _write_json(evidence / STATUS_RELATIVE.name, status)
-
             for scene_count in (10, 50, 100):
                 _write_json(
                     evidence / f"closed_loop_spotlight_reflex_{scene_count}scene_batch.json",
@@ -194,6 +185,7 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
                 evidence / READINESS_RELATIVE.name,
                 _readiness_report(plan, claim_valid_scene_counts={10, 50, 100}),
             )
+            _write_status(evidence)
             _write_operator_matrix(evidence)
             _write_public_evidence_manifest(
                 evidence,
@@ -465,6 +457,33 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             audit["regeneration_plan"]["notes"],
         )
 
+    def test_status_drift_invalidates_audit(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            evidence = repo_root / "docs" / "evidence"
+            evidence.mkdir(parents=True)
+            _copy_evidence_jsons(evidence)
+            status_path = evidence / STATUS_RELATIVE.name
+            status = _read_json(status_path)
+            status["completion_status"]["reason"] = "stale status fixture"
+            _write_json(status_path, status)
+            _refresh_manifest_hash(evidence / MANIFEST_RELATIVE.name, STATUS_RELATIVE)
+
+            audit = module.build_audit(repo_root=repo_root, created_at="2026-07-06")
+
+        self.assertFalse(audit["valid"])
+        self.assertFalse(audit["status_consistency"]["checks"]["status_matches_generator"])
+        self.assertTrue(
+            audit["public_evidence_manifest"]["checks"][
+                "public_evidence_manifest_hashes_match_tracked_files"
+            ]
+        )
+        self.assertIn(
+            "status artifact does not match wod2sim-benchmark-status output",
+            audit["status_consistency"]["notes"],
+        )
+
     def test_regeneration_commands_drift_invalidates_audit(self) -> None:
         module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -730,6 +749,13 @@ def _write_operator_matrix(evidence_dir: Path) -> None:
         created_at="2026-07-06",
     )
     _write_json(evidence_dir / OPERATOR_MATRIX_RELATIVE.name, matrix)
+
+
+def _write_status(evidence_dir: Path) -> None:
+    module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_status")
+    repo_root = evidence_dir.parents[1]
+    status = module.build_status(repo_root=repo_root, created_at="2026-07-06")
+    _write_json(evidence_dir / STATUS_RELATIVE.name, status)
 
 
 def _refresh_manifest_hash(manifest_path: Path, artifact_relative: Path) -> None:
