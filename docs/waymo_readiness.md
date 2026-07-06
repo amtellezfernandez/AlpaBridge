@@ -170,6 +170,10 @@ The current public-safe 10/50/100 rerun plan is
 [`docs/evidence/benchmark_regeneration_plan_20260706.json`](evidence/benchmark_regeneration_plan_20260706.json).
 The no-download/no-rollout host readiness snapshot is
 [`docs/evidence/benchmark_regeneration_readiness_20260706.json`](evidence/benchmark_regeneration_readiness_20260706.json).
+The public benchmark status is
+[`docs/evidence/benchmark_regeneration_status_20260706.json`](evidence/benchmark_regeneration_status_20260706.json)
+and is regenerated with `wod2sim-benchmark-status` after readiness and before
+the strict audit.
 It includes `blocking_requirements` and `next_command_groups` so operators can
 map missing cache/runtime prerequisites back to plan command groups. Short setup
 groups include copyable `display` commands; long shard groups point back to the
@@ -180,4 +184,6 @@ for shard summaries.
 The matching claim-readiness audit is
 [`docs/evidence/benchmark_regeneration_audit_20260706.json`](evidence/benchmark_regeneration_audit_20260706.json).
 It verifies the tracked summary artifacts, merged shard provenance, and the
-readiness snapshot's stage-summary state against the regeneration plan.
+readiness snapshot's stage-summary state against the regeneration plan. After
+new 50/100 summaries are promoted, refresh readiness, regenerate status, then
+run `wod2sim-benchmark-audit --strict --json`.

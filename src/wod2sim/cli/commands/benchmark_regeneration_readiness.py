@@ -550,6 +550,17 @@ def _next_command_groups(
     groups.append(
         {
             "order": len(groups) + 1,
+            "name": "refresh_status",
+            "command": (
+                "wod2sim-benchmark-status "
+                "--output docs/evidence/benchmark_regeneration_status_20260706.json --json"
+            ),
+            "expected_before_scale_completion": "records_missing_50_100_summaries_until_scale_completion",
+        }
+    )
+    groups.append(
+        {
+            "order": len(groups) + 1,
             "name": "verify_claim_gate",
             "command": "wod2sim-benchmark-audit --strict --json",
             "expected_before_scale_completion": "exit_1_until_50_100_summaries_are_claim_valid",

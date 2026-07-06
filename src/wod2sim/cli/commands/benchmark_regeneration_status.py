@@ -6,11 +6,12 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from wod2sim.cli.commands.benchmark_regeneration_audit import audit_stage_claim
+
 STATUS_SCHEMA = "wod2sim_benchmark_regeneration_status_v1"
 BATCH_SCHEMA = "wod2sim_closed_loop_batch_summary_v1"
 PLAN_SCHEMA = "wod2sim_benchmark_regeneration_plan_v1"
 READINESS_SCHEMA = "wod2sim_benchmark_regeneration_readiness_v1"
-AUDIT_SCHEMA = "wod2sim_benchmark_regeneration_audit_v1"
 DEFAULT_STATUS = Path("docs/evidence/benchmark_regeneration_status_20260706.json")
 DEFAULT_PILOT = Path("docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json")
 DEFAULT_PLAN = Path("docs/evidence/benchmark_regeneration_plan_20260706.json")
@@ -28,7 +29,12 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--pilot-summary", type=Path, default=DEFAULT_PILOT)
     parser.add_argument("--plan", type=Path, default=DEFAULT_PLAN)
     parser.add_argument("--readiness", type=Path, default=DEFAULT_READINESS)
-    parser.add_argument("--audit", type=Path, default=DEFAULT_AUDIT)
+    parser.add_argument(
+        "--audit",
+        type=Path,
+        default=DEFAULT_AUDIT,
+        help="Audit artifact path to reference in the status evidence chain. The file is not read.",
+    )
     parser.add_argument("--repo-root", type=Path, default=Path.cwd())
     parser.add_argument("--created-at", default=None)
     parser.add_argument("--output", type=Path, default=None)
@@ -69,12 +75,10 @@ def build_status(
     pilot = _read_json(_resolve_path(repo_root, pilot_path))
     plan = _read_json(_resolve_path(repo_root, plan_path))
     readiness = _read_json(_resolve_path(repo_root, readiness_path))
-    audit = _read_json(_resolve_path(repo_root, audit_path))
 
     _require_schema(pilot, BATCH_SCHEMA, "pilot summary")
     _require_schema(plan, PLAN_SCHEMA, "plan")
     _require_schema(readiness, READINESS_SCHEMA, "readiness")
-    _require_schema(audit, AUDIT_SCHEMA, "audit")
 
     evidence_artifacts = {
         "ten_scene_pilot": _display_path(pilot_path),
@@ -82,8 +86,11 @@ def build_status(
         "readiness_snapshot": _display_path(readiness_path),
         "claim_audit": _display_path(audit_path),
     }
-    scale_status = _scale_status(plan=plan, readiness=readiness, audit=audit)
-    claim_ready = bool(audit.get("claim_ready"))
+    stage_reports = [
+        audit_stage_claim(stage, repo_root=repo_root) for stage in _list_of_dicts(plan.get("stages"))
+    ]
+    scale_status = _scale_status(plan=plan, readiness=readiness, stage_reports=stage_reports)
+    claim_ready = bool(stage_reports) and all(stage["claim_valid"] for stage in stage_reports)
 
     return {
         "schema": STATUS_SCHEMA,
@@ -96,7 +103,14 @@ def build_status(
         "evidence_artifacts": evidence_artifacts,
         "status_generator": {
             "command": "wod2sim-benchmark-status",
-            "inputs": evidence_artifacts,
+            "inputs": {
+                "ten_scene_pilot": _display_path(pilot_path),
+                "regeneration_plan": _display_path(plan_path),
+                "readiness_snapshot": _display_path(readiness_path),
+            },
+            "referenced_artifacts": {
+                "claim_audit": _display_path(audit_path),
+            },
             "no_download_or_rollout_probes": True,
         },
         "public_artifact_policy": {
@@ -182,20 +196,20 @@ def _scale_status(
     *,
     plan: dict[str, Any],
     readiness: dict[str, Any],
-    audit: dict[str, Any],
+    stage_reports: list[dict[str, Any]],
 ) -> dict[str, dict[str, Any]]:
     readiness_by_preset = _by_preset(_list_of_dicts(readiness.get("stages")))
-    audit_by_preset = _by_preset(_list_of_dicts(audit.get("stages")))
+    reports_by_preset = _by_preset(stage_reports)
     rows: dict[str, dict[str, Any]] = {}
     for stage in _list_of_dicts(plan.get("stages")):
         if not stage.get("requires_local_usdz_cache"):
             continue
         preset = str(stage.get("scene_preset") or "")
         readiness_stage = readiness_by_preset.get(preset, {})
-        audit_stage = audit_by_preset.get(preset, {})
+        stage_report = reports_by_preset.get(preset, {})
         local_usdz_cache = _dict_or_empty(readiness_stage.get("local_usdz_cache"))
         validation = _dict_or_empty(local_usdz_cache.get("validation"))
-        claim_valid = bool(audit_stage.get("claim_valid"))
+        claim_valid = bool(stage_report.get("claim_valid"))
         rows[preset] = {
             "stage": stage.get("stage"),
             "scene_count": _optional_int(stage.get("scene_count")),
@@ -203,7 +217,7 @@ def _scale_status(
             "cache_builder_workflow_tracked": _has_command(stage, "build_local_cache"),
             "local_usdz_cache_valid": validation.get("valid"),
             "summary_artifact": stage.get("public_summary_target"),
-            "summary_present": bool(audit_stage.get("summary_present")),
+            "summary_present": bool(stage_report.get("summary_present")),
             "claim_valid_closed_loop_summary_tracked": claim_valid,
             "remaining_runtime_requirement": _scale_runtime_requirement(claim_valid=claim_valid),
         }

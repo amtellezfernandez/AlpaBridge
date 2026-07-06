@@ -72,7 +72,7 @@
     "hf_token_required_for_cache_build": true
   },
   "disk": {
-    "free_bytes": 300081491968,
+    "free_bytes": 300078993408,
     "free_gib": 279.47,
     "meets_min_free_disk_gb": true,
     "min_free_disk_gb": 200,
@@ -161,10 +161,16 @@
       ]
     },
     {
+      "command": "wod2sim-benchmark-status --output docs/evidence/benchmark_regeneration_status_20260706.json --json",
+      "expected_before_scale_completion": "records_missing_50_100_summaries_until_scale_completion",
+      "name": "refresh_status",
+      "order": 4
+    },
+    {
       "command": "wod2sim-benchmark-audit --strict --json",
       "expected_before_scale_completion": "exit_1_until_50_100_summaries_are_claim_valid",
       "name": "verify_claim_gate",
-      "order": 4
+      "order": 5
     }
   ],
   "no_download_or_rollout_probes": true,

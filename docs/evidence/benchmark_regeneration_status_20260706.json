@@ -77,11 +77,13 @@
   "status_generator": {
     "command": "wod2sim-benchmark-status",
     "inputs": {
-      "claim_audit": "docs/evidence/benchmark_regeneration_audit_20260706.json",
       "readiness_snapshot": "docs/evidence/benchmark_regeneration_readiness_20260706.json",
       "regeneration_plan": "docs/evidence/benchmark_regeneration_plan_20260706.json",
       "ten_scene_pilot": "docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json"
     },
-    "no_download_or_rollout_probes": true
+    "no_download_or_rollout_probes": true,
+    "referenced_artifacts": {
+      "claim_audit": "docs/evidence/benchmark_regeneration_audit_20260706.json"
+    }
   }
 }

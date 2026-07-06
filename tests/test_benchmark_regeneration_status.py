@@ -89,6 +89,7 @@ def test_readme_links_current_regeneration_status() -> None:
     assert STATUS_RELATIVE.as_posix() in readme
     assert "Open-repo readers can review the compact JSON summaries" in readme
     assert "ARM/DGX Spark" in readme
+    assert "| `wod2sim-benchmark-status` |" in readme
 
 
 def test_status_links_current_public_evidence_chain() -> None:
@@ -159,5 +160,77 @@ def test_status_main_writes_json_without_runtime_probes() -> None:
     assert "docker_containers" not in payload["current_local_runtime_state"]
 
 
+def test_status_generator_does_not_require_existing_audit_artifact_for_completed_claims() -> None:
+    module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_status")
+    with TemporaryDirectory() as tmpdir:
+        repo_root = Path(tmpdir)
+        evidence = repo_root / "docs" / "evidence"
+        evidence.mkdir(parents=True)
+        _write_json(evidence / PLAN_RELATIVE.name, _read_json(ROOT / PLAN_RELATIVE))
+        _write_json(evidence / READINESS_RELATIVE.name, _completed_readiness())
+        for scene_count in (10, 50, 100):
+            _write_json(
+                evidence / f"closed_loop_spotlight_reflex_{scene_count}scene_batch.json",
+                _batch_summary(scene_count),
+            )
+
+        status = module.build_status(
+            repo_root=repo_root,
+            audit_path=AUDIT_RELATIVE,
+            created_at="2026-07-06",
+        )
+
+    assert status["completion_status"]["full_objective_complete"] is True
+    assert status["status_generator"]["referenced_artifacts"] == {
+        "claim_audit": AUDIT_RELATIVE.as_posix()
+    }
+    assert "claim_audit" not in status["status_generator"]["inputs"]
+    assert all(
+        row["claim_valid_closed_loop_summary_tracked"]
+        for row in status["scale_status"].values()
+    )
+
+
 def _read_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _write_json(path: Path, payload: dict[str, Any]) -> None:
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _batch_summary(scene_count: int) -> dict[str, Any]:
+    return {
+        "schema": "wod2sim_closed_loop_batch_summary_v1",
+        "clean_closed_loop_batch": True,
+        "aggregate": {
+            "planned_scene_count": scene_count,
+            "completed_scene_count": scene_count,
+            "failed_scene_count": 0,
+            "sensor_failure_scene_count": 0,
+            "total_audited_frames": scene_count * 199,
+        },
+        "failure_taxonomy": {
+            "collision_scene_count": 0,
+            "at_fault_collision_scene_count": 0,
+            "wrong_lane_scene_count": 0,
+            "offroad_scene_count": 0,
+            "low_progress_scene_count": 0,
+            "high_plan_deviation_scene_count": 0,
+        },
+    }
+
+
+def _completed_readiness() -> dict[str, Any]:
+    readiness = _read_json(ROOT / READINESS_RELATIVE)
+    readiness["readiness"]["all_scale_caches_valid"] = True
+    readiness["readiness"]["claim_valid_scale_summaries_present"] = True
+    for stage in readiness["stages"]:
+        public_summary = stage["public_summary"]
+        public_summary["present"] = True
+        public_summary["claim_valid"] = True
+        public_summary["errors"] = []
+        local_usdz_cache = stage["local_usdz_cache"]
+        if local_usdz_cache["required"]:
+            local_usdz_cache["validation"]["valid"] = True
+    return readiness

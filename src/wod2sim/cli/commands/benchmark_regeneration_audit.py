@@ -132,6 +132,10 @@ def build_audit(
     }
 
 
+def audit_stage_claim(stage: dict[str, Any], *, repo_root: Path) -> dict[str, Any]:
+    return _audit_stage(stage, repo_root=repo_root)
+
+
 def _audit_stage(stage: dict[str, Any], *, repo_root: Path) -> dict[str, Any]:
     stage_errors: list[str] = []
     expected_scene_count = _int_value(stage.get("scene_count"))

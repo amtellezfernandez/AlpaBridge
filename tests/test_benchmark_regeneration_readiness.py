@@ -76,6 +76,8 @@ class BenchmarkRegenerationReadinessTests(unittest.TestCase):
             "wod2sim-benchmark-readiness",
             report["next_command_groups"][0]["commands"][0]["display"],
         )
+        self.assertEqual("refresh_status", report["next_command_groups"][-2]["name"])
+        self.assertIn("wod2sim-benchmark-status", report["next_command_groups"][-2]["command"])
         self.assertEqual("verify_claim_gate", report["next_command_groups"][-1]["name"])
         self.assertFalse(any(command[:2] == ["docker", "run"] for command in seen_commands))
 
@@ -133,6 +135,7 @@ class BenchmarkRegenerationReadinessTests(unittest.TestCase):
         self.assertIn("hf_token_missing", blocker_ids)
         self.assertIn("alpasim_base_image_missing", blocker_ids)
         self.assertIn("front_camera_50scene_public2602_cache_invalid", blocker_ids)
+        self.assertEqual("refresh_status", report["next_command_groups"][-2]["name"])
         self.assertEqual("verify_claim_gate", report["next_command_groups"][-1]["name"])
         build_group = _command_group(report, "build_and_validate_scale_caches")
         self.assertEqual(4, len(build_group["commands"]))

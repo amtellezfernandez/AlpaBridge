@@ -134,6 +134,11 @@ The matching command-level rerun plan is tracked at
 The no-download/no-rollout host readiness snapshot is tracked at
 [`docs/evidence/benchmark_regeneration_readiness_20260706.json`](evidence/benchmark_regeneration_readiness_20260706.json)
 and can be regenerated with `wod2sim-benchmark-readiness`.
+After promoting new public summaries, regenerate readiness first, then status
+with `wod2sim-benchmark-status`, then the strict audit. The status command
+derives claim flags from the current summary artifacts and only references the
+audit path, so the audit can validate a freshly regenerated status artifact
+without a refresh cycle.
 Use its `blocking_requirements` and `next_command_groups` fields to identify the
 remaining cache/runtime blockers and the matching plan command groups. Short
 setup groups include copyable `display` commands; long shard groups remain

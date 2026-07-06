@@ -227,6 +227,9 @@ Before rebuilding caches or launching shards, write a no-download/no-rollout
 host readiness report with `wod2sim-benchmark-readiness`; the current public-safe
 snapshot is tracked at
 [`docs/evidence/benchmark_regeneration_readiness_20260706.json`](docs/evidence/benchmark_regeneration_readiness_20260706.json).
+After promoting new public summaries, refresh readiness, regenerate status with
+`wod2sim-benchmark-status`, then run `wod2sim-benchmark-audit --strict --json`;
+this avoids any circular dependency between the status and audit artifacts.
 Its `blocking_requirements` and `next_command_groups` fields summarize the
 remaining cache/runtime blockers and point back to the corresponding plan
 command groups. Short setup groups also include copyable `display` commands;
@@ -314,6 +317,7 @@ wod2sim-launch --mode print --model direct_actor_planner --oracle-actor-proxy /p
 | `wod2sim-support-bundle` | Package key run logs, configs, and audit output. |
 | `wod2sim-benchmark-plan` | Emit the public-safe 10/50/100 benchmark regeneration plan. |
 | `wod2sim-benchmark-readiness` | Report host/cache/image readiness without downloads or rollouts. |
+| `wod2sim-benchmark-status` | Regenerate public benchmark status from compact evidence artifacts. |
 | `wod2sim-benchmark-audit` | Gate tracked regeneration artifacts against the 10/50/100 claim. |
 | `wod2sim-promote-batch-summary` | Promote a generated compact batch summary into public evidence. |
 | `wod2sim-benchmark-summary` | Aggregate evidence directories into one benchmark JSON. |
