@@ -199,6 +199,7 @@
       "current_blocker_ids": [],
       "current_state": "ready",
       "evidence_artifacts": [
+        "docs/benchmark_regeneration_handoff.md",
         "docs/evidence/benchmark_operator_matrix_20260706.json",
         "docs/evidence/benchmark_public_evidence_manifest_20260706.json",
         "docs/evidence/benchmark_regeneration_audit_20260706.json",

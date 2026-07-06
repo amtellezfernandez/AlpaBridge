@@ -196,6 +196,7 @@ def test_status_links_current_public_evidence_chain() -> None:
         "regeneration_commands": COMMANDS_RELATIVE.as_posix(),
         "operator_matrix": OPERATOR_MATRIX_RELATIVE.as_posix(),
         "public_evidence_manifest": EVIDENCE_MANIFEST_RELATIVE.as_posix(),
+        "public_handoff_doc": HANDOFF_RELATIVE.as_posix(),
         "claim_audit": AUDIT_RELATIVE.as_posix(),
     }
     assert plan["status_artifact"] == STATUS_RELATIVE.as_posix()
@@ -279,6 +280,7 @@ def test_status_generator_does_not_require_existing_audit_artifact_for_completed
         "regeneration_commands": COMMANDS_RELATIVE.as_posix(),
         "operator_matrix": OPERATOR_MATRIX_RELATIVE.as_posix(),
         "public_evidence_manifest": EVIDENCE_MANIFEST_RELATIVE.as_posix(),
+        "public_handoff_doc": HANDOFF_RELATIVE.as_posix(),
         "claim_audit": AUDIT_RELATIVE.as_posix(),
     }
     assert "claim_audit" not in status["status_generator"]["inputs"]

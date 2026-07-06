@@ -26,6 +26,7 @@ DEFAULT_AUDIT = Path("docs/evidence/benchmark_regeneration_audit_20260706.json")
 DEFAULT_COMMANDS = Path("docs/evidence/benchmark_regeneration_commands_20260706.json")
 DEFAULT_OPERATOR_MATRIX = Path("docs/evidence/benchmark_operator_matrix_20260706.json")
 DEFAULT_EVIDENCE_MANIFEST = Path("docs/evidence/benchmark_public_evidence_manifest_20260706.json")
+DEFAULT_HANDOFF = Path("docs/benchmark_regeneration_handoff.md")
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -77,6 +78,15 @@ def _build_parser() -> argparse.ArgumentParser:
             "chain. The file is not read."
         ),
     )
+    parser.add_argument(
+        "--handoff-doc",
+        type=Path,
+        default=DEFAULT_HANDOFF,
+        help=(
+            "Public handoff documentation path to reference in the status evidence chain. "
+            "The file is not read."
+        ),
+    )
     parser.add_argument("--repo-root", type=Path, default=Path.cwd())
     parser.add_argument("--created-at", default=None)
     parser.add_argument("--output", type=Path, default=None)
@@ -96,12 +106,15 @@ def main() -> int:
         commands_path=args.commands_artifact,
         operator_matrix_path=args.operator_matrix,
         evidence_manifest_path=args.evidence_manifest,
+        handoff_doc_path=args.handoff_doc,
         repo_root=args.repo_root,
         created_at=args.created_at,
     )
     if args.output is not None:
         args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_text(json.dumps(status, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        args.output.write_text(
+            json.dumps(status, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
     if args.json:
         print(json.dumps(status, indent=2, sort_keys=True))
     else:
@@ -120,6 +133,7 @@ def build_status(
     commands_path: Path = DEFAULT_COMMANDS,
     operator_matrix_path: Path = DEFAULT_OPERATOR_MATRIX,
     evidence_manifest_path: Path = DEFAULT_EVIDENCE_MANIFEST,
+    handoff_doc_path: Path = DEFAULT_HANDOFF,
     repo_root: Path = Path.cwd(),
     created_at: str | None = None,
 ) -> dict[str, Any]:
@@ -147,10 +161,12 @@ def build_status(
         "regeneration_commands": _display_path(commands_path),
         "operator_matrix": _display_path(operator_matrix_path),
         "public_evidence_manifest": _display_path(evidence_manifest_path),
+        "public_handoff_doc": _display_path(handoff_doc_path),
         "claim_audit": _display_path(audit_path),
     }
     stage_reports = [
-        audit_stage_claim(stage, repo_root=repo_root) for stage in _list_of_dicts(plan.get("stages"))
+        audit_stage_claim(stage, repo_root=repo_root)
+        for stage in _list_of_dicts(plan.get("stages"))
     ]
     scale_status = _scale_status(plan=plan, readiness=readiness, stage_reports=stage_reports)
     claim_ready = bool(stage_reports) and all(stage["claim_valid"] for stage in stage_reports)
@@ -177,6 +193,7 @@ def build_status(
                 "regeneration_commands": _display_path(commands_path),
                 "operator_matrix": _display_path(operator_matrix_path),
                 "public_evidence_manifest": _display_path(evidence_manifest_path),
+                "public_handoff_doc": _display_path(handoff_doc_path),
                 "claim_audit": _display_path(audit_path),
             },
             "no_download_or_rollout_probes": True,

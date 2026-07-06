@@ -874,6 +874,7 @@ def _status_consistency(
         == (ten_scene_stage["summary_artifact"] if ten_scene_stage is not None else None)
         and evidence_artifacts.get("regeneration_plan") == _display_path(plan_path)
         and evidence_artifacts.get("readiness_snapshot") == readiness_artifact
+        and evidence_artifacts.get("public_handoff_doc") == _display_path(DEFAULT_HANDOFF)
         and evidence_artifacts.get("claim_audit") == _display_path(DEFAULT_AUDIT)
     )
     if not checks["status_evidence_artifacts_match_audit_inputs"]:
