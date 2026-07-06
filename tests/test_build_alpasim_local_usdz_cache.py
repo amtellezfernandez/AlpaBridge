@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import csv
+import io
+import json
+import sys
 import tempfile
 import unittest
 import zipfile
@@ -126,6 +129,44 @@ class BuildAlpaSimLocalUsdzCacheTests(unittest.TestCase):
         self.assertFalse(report["valid"])
         self.assertEqual(["scene-b"], report["missing_scene_ids"])
         self.assertEqual(["scene-a"], report["invalid_revision_scene_ids"])
+
+    def test_validate_only_main_is_offline_and_does_not_query_huggingface(self) -> None:
+        from wod2sim.cli.commands import build_alpasim_local_usdz_cache as module
+
+        with tempfile.TemporaryDirectory() as tmp:
+            cache_dir = Path(tmp)
+            _write_usdz(cache_dir / "uuid-a.usdz", scene_id="scene-a", uuid="uuid-a")
+
+            with patch.object(module, "_resolve_alpasim_root", return_value=Path("/tmp/alpasim")), patch.object(
+                module, "_scene_ids", return_value=["scene-a"]
+            ), patch.object(
+                module,
+                "_hf_available_paths",
+                side_effect=AssertionError("validate-only must not query Hugging Face"),
+            ), patch.object(
+                sys,
+                "argv",
+                [
+                    "wod2sim-build-local-cache",
+                    "--scene-preset",
+                    "front_camera_50scene_public2602",
+                    "--local-usdz-dir",
+                    str(cache_dir),
+                    "--hf-revision",
+                    "26.02",
+                    "--validate-only",
+                ],
+            ), patch(
+                "sys.stdout",
+                new_callable=io.StringIO,
+            ) as stdout:
+                returncode = module.main()
+
+            payload = json.loads(stdout.getvalue())
+
+        self.assertEqual(0, returncode)
+        self.assertTrue(payload["valid"])
+        self.assertEqual("wod2sim_local_usdz_cache_validation_v1", payload["schema"])
 
 
 def _write_usdz(

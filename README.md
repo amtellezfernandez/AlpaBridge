@@ -222,7 +222,7 @@ A machine-readable 10/50/100 rerun plan is tracked in
 and can be regenerated with `wod2sim-benchmark-plan`.
 It includes 10-scene shard commands for the 50/100-scene stages so constrained
 hosts can recover in smaller chunks while still preserving the full-stage claim
-boundary. Validate the local USDZ cache with
+boundary. Validate the local USDZ cache offline with
 `wod2sim-build-local-cache --validate-only` before launching shards. Shard summaries can be merged with
 `wod2sim-batch-summary` using the `--merge-summary` and
 `--expected-scene-count` options, then promoted with
