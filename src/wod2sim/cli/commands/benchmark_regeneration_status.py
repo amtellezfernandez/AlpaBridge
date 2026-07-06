@@ -23,6 +23,7 @@ DEFAULT_SCALE_ATTEMPT_50 = Path(
 DEFAULT_PLAN = Path("docs/evidence/benchmark_regeneration_plan_20260706.json")
 DEFAULT_READINESS = Path("docs/evidence/benchmark_regeneration_readiness_20260706.json")
 DEFAULT_AUDIT = Path("docs/evidence/benchmark_regeneration_audit_20260706.json")
+DEFAULT_COMMANDS = Path("docs/evidence/benchmark_regeneration_commands_20260706.json")
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -47,6 +48,15 @@ def _build_parser() -> argparse.ArgumentParser:
         default=DEFAULT_AUDIT,
         help="Audit artifact path to reference in the status evidence chain. The file is not read.",
     )
+    parser.add_argument(
+        "--commands-artifact",
+        type=Path,
+        default=DEFAULT_COMMANDS,
+        help=(
+            "Rendered command artifact path to reference in the status evidence chain. "
+            "The file is not read."
+        ),
+    )
     parser.add_argument("--repo-root", type=Path, default=Path.cwd())
     parser.add_argument("--created-at", default=None)
     parser.add_argument("--output", type=Path, default=None)
@@ -63,6 +73,7 @@ def main() -> int:
         plan_path=args.plan,
         readiness_path=args.readiness,
         audit_path=args.audit,
+        commands_path=args.commands_artifact,
         repo_root=args.repo_root,
         created_at=args.created_at,
     )
@@ -84,6 +95,7 @@ def build_status(
     plan_path: Path = DEFAULT_PLAN,
     readiness_path: Path = DEFAULT_READINESS,
     audit_path: Path = DEFAULT_AUDIT,
+    commands_path: Path = DEFAULT_COMMANDS,
     repo_root: Path = Path.cwd(),
     created_at: str | None = None,
 ) -> dict[str, Any]:
@@ -108,6 +120,7 @@ def build_status(
         "fifty_scene_partial_attempt": _display_path(scale_attempt_50_path),
         "regeneration_plan": _display_path(plan_path),
         "readiness_snapshot": _display_path(readiness_path),
+        "regeneration_commands": _display_path(commands_path),
         "claim_audit": _display_path(audit_path),
     }
     stage_reports = [
@@ -135,6 +148,7 @@ def build_status(
                 "readiness_snapshot": _display_path(readiness_path),
             },
             "referenced_artifacts": {
+                "regeneration_commands": _display_path(commands_path),
                 "claim_audit": _display_path(audit_path),
             },
             "no_download_or_rollout_probes": True,

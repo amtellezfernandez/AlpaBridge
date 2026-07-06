@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 PLAN_RELATIVE = Path("docs/evidence/benchmark_regeneration_plan_20260706.json")
+COMMANDS_RELATIVE = Path("docs/evidence/benchmark_regeneration_commands_20260706.json")
 
 
 def test_command_renderer_outputs_selected_shard_commands() -> None:
@@ -84,3 +85,77 @@ def test_command_renderer_main_writes_json_rows() -> None:
     assert len(payload) == 2
     assert {row["command"] for row in payload} == {"run_batch", "write_batch_summary"}
     assert all(row["shard_index"] == 1 for row in payload)
+
+
+def test_command_renderer_builds_public_command_artifact() -> None:
+    module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_commands")
+
+    artifact = module.build_command_artifact(
+        plan_path=ROOT / PLAN_RELATIVE,
+        groups=["all"],
+        created_at="2026-07-06",
+    )
+
+    assert artifact["schema"] == "wod2sim_benchmark_regeneration_commands_v1"
+    assert artifact["created_at"] == "2026-07-06"
+    assert artifact["plan_artifact"] == (ROOT / PLAN_RELATIVE).as_posix()
+    assert artifact["renderer"]["no_runtime_execution"] is True
+    assert artifact["row_count"] == len(artifact["commands"])
+    assert artifact["group_counts"]["shards"] == 30
+    assert artifact["group_counts"]["cache"] == 4
+    assert artifact["commands"][-1]["command"] == "verify_claim_gate"
+
+
+def test_command_renderer_output_writes_artifact_without_changing_stdout_rows() -> None:
+    module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_commands")
+    with TemporaryDirectory() as tmpdir:
+        stdout = Path(tmpdir) / "stdout.json"
+        output = Path(tmpdir) / "artifact.json"
+
+        with stdout.open("w", encoding="utf-8") as handle, patch.object(
+            sys,
+            "argv",
+            [
+                "wod2sim-benchmark-commands",
+                "--plan",
+                str(ROOT / PLAN_RELATIVE),
+                "--group",
+                "all",
+                "--created-at",
+                "2026-07-06",
+                "--output",
+                str(output),
+                "--json",
+            ],
+        ), patch("sys.stdout", handle):
+            returncode = module.main()
+
+        rows = json.loads(stdout.read_text(encoding="utf-8"))
+        artifact = json.loads(output.read_text(encoding="utf-8"))
+
+    assert returncode == 0
+    assert isinstance(rows, list)
+    assert artifact["created_at"] == "2026-07-06"
+    assert artifact["commands"] == rows
+
+
+def test_tracked_command_artifact_is_public_safe_and_complete() -> None:
+    artifact = json.loads((ROOT / COMMANDS_RELATIVE).read_text(encoding="utf-8"))
+    rendered = json.dumps(artifact, sort_keys=True)
+
+    assert artifact["schema"] == "wod2sim_benchmark_regeneration_commands_v1"
+    assert artifact["plan_artifact"] == PLAN_RELATIVE.as_posix()
+    assert artifact["renderer"]["no_runtime_execution"] is True
+    assert artifact["row_count"] == 44
+    assert artifact["group_counts"] == {
+        "cache": 4,
+        "merge": 2,
+        "post": 2,
+        "promote": 3,
+        "readiness": 1,
+        "run": 2,
+        "shards": 30,
+    }
+    assert "wod2sim-benchmark-audit --strict --json" in rendered
+    assert "/home/" not in rendered
+    assert "HF_TOKEN=required" in rendered

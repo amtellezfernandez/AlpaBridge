@@ -242,7 +242,12 @@ volatile disk byte counts do not churn the tracked JSON; rounded GiB and the
 minimum-disk pass/fail result remain recorded.
 Use `wod2sim-benchmark-commands` to render copyable command lines for a selected
 stage, group, or shard directly from the tracked plan without duplicating the
-long shard sequence in docs.
+long shard sequence in docs. The rendered all-stage command artifact is tracked
+at
+[`docs/evidence/benchmark_regeneration_commands_20260706.json`](docs/evidence/benchmark_regeneration_commands_20260706.json);
+open-repo reviewers can inspect it without runtime access, while cache rebuilds
+and live rollouts remain limited to operators with gated assets and an x86_64
+NVIDIA/Docker AlpaSim host.
 After promoting new public summaries, refresh readiness, regenerate status with
 `wod2sim-benchmark-status`, then run `wod2sim-benchmark-audit --strict --json`;
 this avoids any circular dependency between the status and audit artifacts.

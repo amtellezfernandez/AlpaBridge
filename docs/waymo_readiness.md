@@ -190,7 +190,11 @@ full plan.
 The plan includes readiness reporting, local-cache validation, 10-scene shard
 commands for constrained x86_64 hosts, and public-safe merge/promotion commands
 for shard summaries. Use `wod2sim-benchmark-commands` to render the exact
-cache, shard, merge, promotion, status, and audit commands from that plan.
+cache, shard, merge, promotion, status, and audit commands from that plan. The
+tracked all-stage rendering is
+[`docs/evidence/benchmark_regeneration_commands_20260706.json`](evidence/benchmark_regeneration_commands_20260706.json);
+it is reviewable in open repos, while cache rebuilds and rollouts are only for
+operators with gated assets and an x86_64 NVIDIA/Docker AlpaSim host.
 The matching claim-readiness audit is
 [`docs/evidence/benchmark_regeneration_audit_20260706.json`](evidence/benchmark_regeneration_audit_20260706.json).
 It verifies the tracked summary artifacts, merged shard provenance, and the

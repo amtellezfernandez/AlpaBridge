@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import argparse
 import json
+from collections import Counter
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 PLAN_SCHEMA = "wod2sim_benchmark_regeneration_plan_v1"
+COMMANDS_SCHEMA = "wod2sim_benchmark_regeneration_commands_v1"
 DEFAULT_PLAN = Path("docs/evidence/benchmark_regeneration_plan_20260706.json")
 GROUPS = (
     "all",
@@ -47,6 +50,16 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         help="1-based shard index to render when --group shards is selected.",
     )
+    parser.add_argument("--created-at", default=None)
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=None,
+        help=(
+            "Write a machine-readable command artifact. Stdout behavior is unchanged: "
+            "--json still prints the selected command rows."
+        ),
+    )
     parser.add_argument("--json", action="store_true", help="Print command rows as JSON.")
     return parser
 
@@ -59,12 +72,59 @@ def main() -> int:
         groups=args.group,
         shard_indexes=args.shard_index,
     )
+    if args.output is not None:
+        artifact = build_command_artifact(
+            plan_path=args.plan,
+            stages=args.stage,
+            groups=args.group,
+            shard_indexes=args.shard_index,
+            created_at=args.created_at,
+        )
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(
+            json.dumps(artifact, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
     if args.json:
         print(json.dumps(rows, indent=2, sort_keys=True))
     else:
         for row in rows:
             print(row["display"])
     return 0
+
+
+def build_command_artifact(
+    *,
+    plan_path: Path = DEFAULT_PLAN,
+    stages: list[str] | tuple[str, ...] | None = None,
+    groups: list[str] | tuple[str, ...] | None = None,
+    shard_indexes: list[int] | tuple[int, ...] | None = None,
+    created_at: str | None = None,
+) -> dict[str, Any]:
+    rows = render_commands(
+        plan_path=plan_path,
+        stages=stages,
+        groups=groups,
+        shard_indexes=shard_indexes,
+    )
+    group_counts = Counter(str(row.get("group") or "unknown") for row in rows)
+    return {
+        "schema": COMMANDS_SCHEMA,
+        "created_at": created_at or datetime.now().isoformat(timespec="seconds"),
+        "plan_artifact": _display_path(plan_path),
+        "renderer": {
+            "command": "wod2sim-benchmark-commands",
+            "no_runtime_execution": True,
+        },
+        "filters": {
+            "stages": list(stages or []),
+            "groups": list(groups or ["all"]),
+            "shard_indexes": list(shard_indexes or []),
+        },
+        "row_count": len(rows),
+        "group_counts": dict(sorted(group_counts.items())),
+        "commands": rows,
+    }
 
 
 def render_commands(
@@ -243,6 +303,10 @@ def _read_json(path: Path) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise ValueError(f"expected object JSON at {path}")
     return payload
+
+
+def _display_path(path: Path) -> str:
+    return str(path) if path.is_absolute() else path.as_posix()
 
 
 def _dict_or_empty(value: object) -> dict[str, Any]:
