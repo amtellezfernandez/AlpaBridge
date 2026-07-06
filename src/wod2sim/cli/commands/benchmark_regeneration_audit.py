@@ -1931,6 +1931,7 @@ def _operator_matrix_consistency(
             "current_local_state",
             "command_execution",
             "resume_command_execution",
+            "resume_repair_scope",
             "roles",
             "task_matrix",
         ):
