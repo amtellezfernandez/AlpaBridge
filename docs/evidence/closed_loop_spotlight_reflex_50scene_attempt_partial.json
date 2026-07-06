@@ -55,6 +55,20 @@
     "open_loop_reference_available": false,
     "status": "closed_loop_only_summary"
   },
+  "provenance": {
+    "critical_error_count": 2,
+    "critical_errors": [
+      "run_001:clipgt-01d503d4-449b-46fc-8d78-9085e70d3554:scene_preset_mismatch:fresh_3scene",
+      "run_002:clipgt-023b7fcc-671c-40e3-9bd2-c66b0b073fbc:scene_preset_mismatch:fresh_3scene"
+    ],
+    "expected_model": "spotlight_reflex",
+    "expected_scene_count": 50,
+    "expected_scene_preset": "front_camera_50scene_public2602",
+    "launch_metadata_missing_count": 0,
+    "launch_metadata_present_count": 2,
+    "warning_count": 0,
+    "warnings": []
+  },
   "run_config": {
     "max_retries": 1,
     "mode": "both",
@@ -76,6 +90,15 @@
       "first_sensor_failure": null,
       "frame_count": 0,
       "index": 1,
+      "launch_metadata": {
+        "model": "spotlight_reflex",
+        "present": true,
+        "scene_ids": [
+          "clipgt-01d503d4-449b-46fc-8d78-9085e70d3554"
+        ],
+        "scene_preset": "fresh_3scene",
+        "wizard_arg_keys": []
+      },
       "metrics": {},
       "result": "failed",
       "returncode": 1,
@@ -98,6 +121,15 @@
       "first_sensor_failure": null,
       "frame_count": 0,
       "index": 2,
+      "launch_metadata": {
+        "model": "spotlight_reflex",
+        "present": true,
+        "scene_ids": [
+          "clipgt-023b7fcc-671c-40e3-9bd2-c66b0b073fbc"
+        ],
+        "scene_preset": "fresh_3scene",
+        "wizard_arg_keys": []
+      },
       "metrics": {},
       "result": "failed",
       "returncode": 1,

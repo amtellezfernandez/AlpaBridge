@@ -78,8 +78,8 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_closed_loop_batch_summary_v1",
-      "sha256": "a61075bf9e2e7c2630d8e9f363cb99a1bc8f6f8aef37efda0a8bdb18f16b6341",
-      "size_bytes": 3742
+      "sha256": "3b571c2d290c32f130080ec7345c4ebdd16fc968c04ebd01ba330b2f445b8068",
+      "size_bytes": 4796
     },
     {
       "artifact_type": "closed_loop_summary",
@@ -88,8 +88,8 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_closed_loop_batch_summary_v1",
-      "sha256": "f83c986a55f3c71091fed8e64945044225d38fe2e48c3307a686d9fc43bdf1f6",
-      "size_bytes": 6513
+      "sha256": "db15021f6cf85f1109f7337f5f22a1ce95424de820b3be6aed176920c6c4ae24",
+      "size_bytes": 7174
     },
     {
       "artifact_type": "closed_loop_summary",

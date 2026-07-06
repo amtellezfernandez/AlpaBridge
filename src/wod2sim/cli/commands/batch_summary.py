@@ -52,7 +52,9 @@ def _parse_args() -> argparse.Namespace:
             "The summary records metrics, failures, and hashes without embedding gated media."
         )
     )
-    parser.add_argument("--batch-dir", type=Path, default=None, help="Directory created by wod2sim-batch.")
+    parser.add_argument(
+        "--batch-dir", type=Path, default=None, help="Directory created by wod2sim-batch."
+    )
     parser.add_argument(
         "--batch-status",
         type=Path,
@@ -75,7 +77,9 @@ def _parse_args() -> argparse.Namespace:
         default=None,
         help="Expected full-stage scene count when merging shard summaries.",
     )
-    parser.add_argument("--output", type=Path, default=None, help="Optional JSON summary output path.")
+    parser.add_argument(
+        "--output", type=Path, default=None, help="Optional JSON summary output path."
+    )
     parser.add_argument("--json", action="store_true", help="Print the summary as JSON.")
     parser.add_argument(
         "--created-at",
@@ -106,7 +110,9 @@ def main() -> int:
     args = _parse_args()
     if args.merge_summary:
         if args.batch_dir is not None or args.batch_status is not None:
-            raise SystemExit("--merge-summary cannot be combined with --batch-dir or --batch-status.")
+            raise SystemExit(
+                "--merge-summary cannot be combined with --batch-dir or --batch-status."
+            )
         summary = merge_summaries(
             summary_paths=args.merge_summary,
             expected_scene_count=args.expected_scene_count,
@@ -124,7 +130,9 @@ def main() -> int:
         )
     if args.output is not None:
         args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        args.output.write_text(
+            json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
     if args.json:
         print(json.dumps(summary, indent=2, sort_keys=True))
     else:
@@ -151,6 +159,7 @@ def build_summary(
         for row in _list_value(status.get("runs"))
         if isinstance(row, dict)
     ]
+    provenance = _batch_provenance(status=status, manifest=manifest, runs=runs)
     aggregate = _aggregate_runs(
         runs,
         planned_scene_count=_planned_scene_count(status=status, manifest=manifest),
@@ -160,12 +169,15 @@ def build_summary(
         low_progress_threshold=low_progress_threshold,
         high_plan_deviation_threshold=high_plan_deviation_threshold,
     )
-    clean_closed_loop_batch = bool(runs) and aggregate["completed_scene_count"] == aggregate[
-        "planned_scene_count"
-    ] and not (
-        aggregate["failed_scene_count"]
-        or aggregate["sensor_failure_scene_count"]
-        or aggregate["missing_aggregate_scene_count"]
+    clean_closed_loop_batch = (
+        bool(runs)
+        and aggregate["completed_scene_count"] == aggregate["planned_scene_count"]
+        and not (
+            aggregate["failed_scene_count"]
+            or aggregate["sensor_failure_scene_count"]
+            or aggregate["missing_aggregate_scene_count"]
+            or provenance["critical_error_count"]
+        )
     )
 
     return {
@@ -200,6 +212,7 @@ def build_summary(
             ),
         },
         "aggregate": aggregate,
+        "provenance": provenance,
         "metrics": _aggregate_metrics(runs),
         "failure_taxonomy": failure_taxonomy,
         "open_loop_closed_loop_mismatch": {
@@ -253,12 +266,15 @@ def merge_summaries(
         high_plan_deviation_threshold=high_plan_deviation_threshold,
     )
     valid = bool(inputs) and not errors and all(bool(summary.get("valid")) for summary in inputs)
-    clean_closed_loop_batch = valid and bool(runs) and aggregate["completed_scene_count"] == aggregate[
-        "planned_scene_count"
-    ] and not (
-        aggregate["failed_scene_count"]
-        or aggregate["sensor_failure_scene_count"]
-        or aggregate["missing_aggregate_scene_count"]
+    clean_closed_loop_batch = (
+        valid
+        and bool(runs)
+        and aggregate["completed_scene_count"] == aggregate["planned_scene_count"]
+        and not (
+            aggregate["failed_scene_count"]
+            or aggregate["sensor_failure_scene_count"]
+            or aggregate["missing_aggregate_scene_count"]
+        )
     )
 
     return {
@@ -336,6 +352,7 @@ def _summarize_run(*, root: Path, row: dict[str, Any]) -> dict[str, Any]:
     diagnostics = row.get("diagnostics") if isinstance(row.get("diagnostics"), dict) else {}
     metrics = _load_metrics(run_dir)
     artifacts = _artifact_hashes(root=root, run_dir=run_dir)
+    launch_metadata = _launch_metadata(run_dir)
     return {
         "index": _int_or_zero(row.get("index")),
         "scene_id": str(row.get("scene_id") or ""),
@@ -350,8 +367,96 @@ def _summarize_run(*, root: Path, row: dict[str, Any]) -> dict[str, Any]:
         "sensor_pipeline_ok": _optional_bool(diagnostics.get("sensor_pipeline_ok")),
         "sensor_failure_count": _int_or_zero(diagnostics.get("sensor_failure_count")),
         "first_sensor_failure": diagnostics.get("first_sensor_failure"),
+        "launch_metadata": launch_metadata,
         "metrics": metrics,
         "artifacts": artifacts,
+    }
+
+
+def _launch_metadata(run_dir: Path) -> dict[str, Any]:
+    path = run_dir / "launch-metadata.json"
+    payload = _load_json(path, required=False)
+    if not payload:
+        return {
+            "present": False,
+            "model": None,
+            "scene_preset": None,
+            "scene_ids": [],
+            "wizard_arg_keys": [],
+        }
+    return {
+        "present": True,
+        "model": payload.get("model"),
+        "scene_preset": payload.get("scene_preset"),
+        "scene_ids": [str(scene_id) for scene_id in _list_value(payload.get("scene_ids"))],
+        "wizard_arg_keys": _wizard_arg_keys(payload.get("wizard_args")),
+    }
+
+
+def _wizard_arg_keys(value: Any) -> list[str]:
+    keys: list[str] = []
+    for item in _list_value(value):
+        raw = str(item)
+        key = raw.split("=", 1)[0].strip()
+        if key:
+            keys.append(key)
+    return sorted(set(keys))
+
+
+def _batch_provenance(
+    *,
+    status: dict[str, Any],
+    manifest: dict[str, Any],
+    runs: list[dict[str, Any]],
+) -> dict[str, Any]:
+    expected_model = status.get("model") or manifest.get("model")
+    expected_scene_preset = manifest.get("scene_preset")
+    expected_scene_ids = {
+        str(scene_id) for scene_id in _list_value(manifest.get("scene_ids")) if str(scene_id)
+    }
+    expected_wizard_arg_keys = _wizard_arg_keys(manifest.get("wizard_args"))
+    critical_errors: list[str] = []
+    warnings: list[str] = []
+    present_count = 0
+
+    for run in runs:
+        launch = _dict_value(run.get("launch_metadata"))
+        index = _int_or_zero(run.get("index"))
+        scene_id = str(run.get("scene_id") or "")
+        prefix = f"run_{index:03d}:{scene_id}" if index else f"run:{scene_id}"
+        if not launch.get("present"):
+            warnings.append(f"{prefix}:launch_metadata_missing")
+            continue
+        present_count += 1
+        model = launch.get("model")
+        scene_preset = launch.get("scene_preset")
+        launch_scene_ids = {str(value) for value in _list_value(launch.get("scene_ids"))}
+        launch_wizard_arg_keys = set(_list_value(launch.get("wizard_arg_keys")))
+
+        if expected_model and model != expected_model:
+            critical_errors.append(f"{prefix}:model_mismatch:{model}")
+        if expected_scene_preset and scene_preset != expected_scene_preset:
+            critical_errors.append(f"{prefix}:scene_preset_mismatch:{scene_preset}")
+        if scene_id and launch_scene_ids and scene_id not in launch_scene_ids:
+            critical_errors.append(f"{prefix}:scene_id_missing_from_launch_metadata")
+        if scene_id and expected_scene_ids and scene_id not in expected_scene_ids:
+            critical_errors.append(f"{prefix}:scene_id_not_in_batch_manifest")
+        missing_wizard_arg_keys = sorted(set(expected_wizard_arg_keys) - launch_wizard_arg_keys)
+        if missing_wizard_arg_keys:
+            critical_errors.append(
+                f"{prefix}:wizard_args_missing:{','.join(missing_wizard_arg_keys)}"
+            )
+
+    return {
+        "expected_model": expected_model,
+        "expected_scene_preset": expected_scene_preset,
+        "expected_scene_count": len(expected_scene_ids),
+        "launch_metadata_present_count": present_count,
+        "launch_metadata_missing_count": len(runs) - present_count,
+        "critical_error_count": len(critical_errors),
+        "critical_errors": critical_errors,
+        "warning_count": len(warnings),
+        "warnings": warnings,
     }
 
 
@@ -382,14 +487,13 @@ def _parse_metrics_text(path: Path) -> dict[str, float | None]:
 def _artifact_hashes(*, root: Path, run_dir: Path) -> dict[str, Any]:
     metrics_txt = run_dir / "aggregate" / "metrics_results.txt"
     metrics_png = run_dir / "aggregate" / "metrics_results.png"
-    videos = sorted((run_dir / "rollouts").glob("**/*.mp4")) if (run_dir / "rollouts").exists() else []
+    videos = (
+        sorted((run_dir / "rollouts").glob("**/*.mp4")) if (run_dir / "rollouts").exists() else []
+    )
     return {
         "metrics_results_txt": _file_record(metrics_txt, root=root, gated_media=False),
         "metrics_results_png": _file_record(metrics_png, root=root, gated_media=False),
-        "rollout_videos": [
-            _file_record(path, root=root, gated_media=True)
-            for path in videos[:3]
-        ],
+        "rollout_videos": [_file_record(path, root=root, gated_media=True) for path in videos[:3]],
         "rollout_video_count": len(videos),
     }
 
@@ -586,7 +690,9 @@ def _merge_errors(*, inputs: list[dict[str, Any]], expected_scene_count: int | N
         for summary in inputs
     )
     if planned_scene_count != observed_scene_count:
-        errors.append(f"scene_count_mismatch:planned={planned_scene_count},observed={observed_scene_count}")
+        errors.append(
+            f"scene_count_mismatch:planned={planned_scene_count},observed={observed_scene_count}"
+        )
     return errors
 
 
@@ -659,7 +765,9 @@ def _print_human_summary(summary: dict[str, Any]) -> None:
     print(f"  clean closed-loop batch: {summary['clean_closed_loop_batch']}")
     print(f"  model: {summary['run_config']['model']}")
     print(f"  scene preset: {summary['run_config']['scene_preset']}")
-    print(f"  scenes: {aggregate['completed_scene_count']}/{aggregate['planned_scene_count']} completed")
+    print(
+        f"  scenes: {aggregate['completed_scene_count']}/{aggregate['planned_scene_count']} completed"
+    )
     print(f"  audited frames: {aggregate['total_audited_frames']}")
     print(f"  sensor-failure scenes: {aggregate['sensor_failure_scene_count']}")
     print(f"  failure taxonomy: {summary['failure_taxonomy']}")
