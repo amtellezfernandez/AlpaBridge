@@ -22,9 +22,8 @@ READINESS_RELATIVE = Path("docs/evidence/benchmark_regeneration_readiness_202607
 AUDIT_RELATIVE = Path("docs/evidence/benchmark_regeneration_audit_20260706.json")
 COMMANDS_RELATIVE = Path("docs/evidence/benchmark_regeneration_commands_20260706.json")
 OPERATOR_MATRIX_RELATIVE = Path("docs/evidence/benchmark_operator_matrix_20260706.json")
-EVIDENCE_MANIFEST_RELATIVE = Path(
-    "docs/evidence/benchmark_public_evidence_manifest_20260706.json"
-)
+EVIDENCE_MANIFEST_RELATIVE = Path("docs/evidence/benchmark_public_evidence_manifest_20260706.json")
+HANDOFF_RELATIVE = Path("docs/benchmark_regeneration_handoff.md")
 
 
 def test_regeneration_status_matches_tracked_ten_scene_evidence() -> None:
@@ -93,9 +92,12 @@ def test_status_tracks_50_scene_local_probe_as_diagnostic_only() -> None:
     assert public_probe["planned_scene_count"] == 1
     assert public_probe["completed_scene_count"] == 1
     assert public_probe["sensor_failure_scene_count"] == 0
-    assert status["scale_status"]["front_camera_50scene_public2602"][
-        "claim_valid_closed_loop_summary_tracked"
-    ] is False
+    assert (
+        status["scale_status"]["front_camera_50scene_public2602"][
+            "claim_valid_closed_loop_summary_tracked"
+        ]
+        is False
+    )
 
 
 def test_status_tracks_partial_50_scene_attempt_as_diagnostic_only() -> None:
@@ -114,9 +116,12 @@ def test_status_tracks_partial_50_scene_attempt_as_diagnostic_only() -> None:
     assert public_attempt["completed_scene_count"] == 0
     assert public_attempt["failed_scene_count"] == 2
     assert public_attempt["sensor_failure_scene_count"] == 0
-    assert status["scale_status"]["front_camera_50scene_public2602"][
-        "claim_valid_closed_loop_summary_tracked"
-    ] is False
+    assert (
+        status["scale_status"]["front_camera_50scene_public2602"][
+            "claim_valid_closed_loop_summary_tracked"
+        ]
+        is False
+    )
 
 
 def test_public_artifact_policy_excludes_heavy_or_gated_runtime_artifacts() -> None:
@@ -138,6 +143,7 @@ def test_readme_links_current_regeneration_status() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
     assert STATUS_RELATIVE.as_posix() in readme
+    assert HANDOFF_RELATIVE.as_posix() in readme
     assert PROBE_50_RELATIVE.as_posix() in readme
     assert ATTEMPT_50_RELATIVE.as_posix() in readme
     assert COMMANDS_RELATIVE.as_posix() in readme
@@ -146,6 +152,30 @@ def test_readme_links_current_regeneration_status() -> None:
     assert "Open-repo readers can review the compact JSON summaries" in readme
     assert "ARM/DGX Spark" in readme
     assert "| `wod2sim-benchmark-status` |" in readme
+
+
+def test_public_handoff_doc_tracks_current_claim_gate() -> None:
+    handoff = (ROOT / HANDOFF_RELATIVE).read_text(encoding="utf-8")
+    evaluation_protocol = (ROOT / "docs/evaluation_protocol.md").read_text(encoding="utf-8")
+    audit = _read_json(ROOT / AUDIT_RELATIVE)
+    readiness = _read_json(ROOT / READINESS_RELATIVE)
+    operator_matrix = _read_json(ROOT / OPERATOR_MATRIX_RELATIVE)
+
+    assert HANDOFF_RELATIVE.as_posix() in evaluation_protocol
+    assert AUDIT_RELATIVE.as_posix() in handoff
+    assert READINESS_RELATIVE.as_posix() in handoff
+    assert OPERATOR_MATRIX_RELATIVE.as_posix() in handoff
+    assert COMMANDS_RELATIVE.as_posix() in handoff
+    for missing in audit["missing_claim_valid_summaries"]:
+        assert missing in handoff
+    for blocker in readiness["blocking_requirements"]:
+        assert blocker["id"] in handoff
+    for group in operator_matrix["summary"]["next_command_groups"]:
+        assert group in handoff
+    assert "wod2sim-benchmark-commands --group shards" in handoff
+    assert "valid=true" in handoff
+    assert "claim_ready=false" in handoff
+    assert "Do not commit raw USDZ assets" in handoff
 
 
 def test_status_links_current_public_evidence_chain() -> None:
@@ -246,12 +276,11 @@ def test_status_generator_does_not_require_existing_audit_artifact_for_completed
         "regeneration_commands": COMMANDS_RELATIVE.as_posix(),
         "operator_matrix": OPERATOR_MATRIX_RELATIVE.as_posix(),
         "public_evidence_manifest": EVIDENCE_MANIFEST_RELATIVE.as_posix(),
-        "claim_audit": AUDIT_RELATIVE.as_posix()
+        "claim_audit": AUDIT_RELATIVE.as_posix(),
     }
     assert "claim_audit" not in status["status_generator"]["inputs"]
     assert all(
-        row["claim_valid_closed_loop_summary_tracked"]
-        for row in status["scale_status"].values()
+        row["claim_valid_closed_loop_summary_tracked"] for row in status["scale_status"].values()
     )
 
 

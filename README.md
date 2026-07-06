@@ -157,6 +157,9 @@ The generated operator matrix is tracked at
 [`docs/evidence/benchmark_operator_matrix_20260706.json`](docs/evidence/benchmark_operator_matrix_20260706.json)
 and records which roles can review, build caches, run live shards, or promote
 claim artifacts from the current evidence state.
+For a one-page public handoff with the current blocker IDs, role boundaries,
+and next command groups, see
+[`docs/benchmark_regeneration_handoff.md`](docs/benchmark_regeneration_handoff.md).
 
 Set `WAYSPAN_ALLOW_UNSUPPORTED_ALPASIM_ARM=1` only when intentionally testing an
 unsupported ARM rollout path.

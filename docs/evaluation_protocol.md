@@ -142,6 +142,10 @@ Regenerate it with `wod2sim-benchmark-evidence-manifest` to verify hashes,
 schemas, claim scopes, and the expected missing 50/100 claim-summary artifacts.
 The matching command-level rerun plan is tracked at
 [`docs/evidence/benchmark_regeneration_plan_20260706.json`](evidence/benchmark_regeneration_plan_20260706.json).
+The one-page public operator handoff is
+[`docs/benchmark_regeneration_handoff.md`](benchmark_regeneration_handoff.md);
+it summarizes current blocker IDs, who can review/build/run/promote, and which
+plan command groups remain before a 50/100-scene claim can pass.
 The no-download/no-rollout host readiness snapshot is tracked at
 [`docs/evidence/benchmark_regeneration_readiness_20260706.json`](evidence/benchmark_regeneration_readiness_20260706.json)
 and can be regenerated with `wod2sim-benchmark-readiness`.
