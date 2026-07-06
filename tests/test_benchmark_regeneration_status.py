@@ -7,6 +7,9 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 STATUS_RELATIVE = Path("docs/evidence/benchmark_regeneration_status_20260706.json")
 PILOT_RELATIVE = Path("docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json")
+PLAN_RELATIVE = Path("docs/evidence/benchmark_regeneration_plan_20260706.json")
+READINESS_RELATIVE = Path("docs/evidence/benchmark_regeneration_readiness_20260706.json")
+AUDIT_RELATIVE = Path("docs/evidence/benchmark_regeneration_audit_20260706.json")
 
 
 def test_regeneration_status_matches_tracked_ten_scene_evidence() -> None:
@@ -44,6 +47,9 @@ def test_regeneration_status_matches_tracked_ten_scene_evidence() -> None:
 
 def test_large_scale_status_is_workflow_ready_but_not_claim_valid() -> None:
     status = _read_json(ROOT / STATUS_RELATIVE)
+    plan = _read_json(ROOT / PLAN_RELATIVE)
+    audit = _read_json(ROOT / AUDIT_RELATIVE)
+    stages = {stage["scene_preset"]: stage for stage in plan["stages"]}
 
     for preset in (
         "front_camera_50scene_public2602",
@@ -52,6 +58,8 @@ def test_large_scale_status_is_workflow_ready_but_not_claim_valid() -> None:
         scale_status = status["scale_status"][preset]
         assert scale_status["preset_tracked"] is True
         assert scale_status["cache_builder_workflow_tracked"] is True
+        assert scale_status["summary_artifact"] == stages[preset]["public_summary_target"]
+        assert scale_status["summary_artifact"] in audit["missing_claim_valid_summaries"]
         assert scale_status["claim_valid_closed_loop_summary_tracked"] is False
         assert "x86_64 AlpaSim runner" in scale_status["remaining_runtime_requirement"]
 
@@ -77,6 +85,29 @@ def test_readme_links_current_regeneration_status() -> None:
     assert STATUS_RELATIVE.as_posix() in readme
     assert "Open-repo readers can review the compact JSON summaries" in readme
     assert "ARM/DGX Spark" in readme
+
+
+def test_status_links_current_public_evidence_chain() -> None:
+    status = _read_json(ROOT / STATUS_RELATIVE)
+    plan = _read_json(ROOT / PLAN_RELATIVE)
+    readiness = _read_json(ROOT / READINESS_RELATIVE)
+    audit = _read_json(ROOT / AUDIT_RELATIVE)
+
+    assert status["evidence_artifacts"] == {
+        "ten_scene_pilot": PILOT_RELATIVE.as_posix(),
+        "regeneration_plan": PLAN_RELATIVE.as_posix(),
+        "readiness_snapshot": READINESS_RELATIVE.as_posix(),
+        "claim_audit": AUDIT_RELATIVE.as_posix(),
+    }
+    assert plan["status_artifact"] == STATUS_RELATIVE.as_posix()
+    assert plan["readiness_artifact"] == READINESS_RELATIVE.as_posix()
+    assert readiness["plan_artifact"] == PLAN_RELATIVE.as_posix()
+    assert readiness["status_artifact"] == STATUS_RELATIVE.as_posix()
+    assert audit["plan_artifact"] == PLAN_RELATIVE.as_posix()
+    assert audit["status_artifact"] == STATUS_RELATIVE.as_posix()
+    assert audit["readiness_artifact"] == READINESS_RELATIVE.as_posix()
+    assert audit["valid"] is True
+    assert audit["claim_ready"] is False
 
 
 def _read_json(path: Path) -> dict[str, Any]:
