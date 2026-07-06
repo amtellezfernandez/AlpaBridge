@@ -390,7 +390,7 @@
   "plan_artifact": "docs/evidence/benchmark_regeneration_plan_20260706.json",
   "public_evidence_manifest": {
     "artifact": "docs/evidence/benchmark_public_evidence_manifest_20260706.json",
-    "artifact_count": 10,
+    "artifact_count": 11,
     "checks": {
       "public_evidence_manifest_artifact_count_matches": true,
       "public_evidence_manifest_artifact_paths_unique": true,
@@ -446,8 +446,8 @@
       "readiness",
       "shards"
     ],
-    "sha256": "f14547fec12aae4045830549dc7c8fda272fe57a8789816b17277ff5791e5dbc",
-    "size_bytes": 10248,
+    "sha256": "6aa03e68fd120c2e35e24b7d31baff6b1683e5aeb920c91552cf159b6218a210",
+    "size_bytes": 10473,
     "valid": true
   },
   "readiness_artifact": "docs/evidence/benchmark_regeneration_readiness_20260706.json",

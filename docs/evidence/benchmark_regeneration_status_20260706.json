@@ -88,6 +88,7 @@
     "readiness_snapshot": "docs/evidence/benchmark_regeneration_readiness_20260706.json",
     "regeneration_commands": "docs/evidence/benchmark_regeneration_commands_20260706.json",
     "regeneration_plan": "docs/evidence/benchmark_regeneration_plan_20260706.json",
+    "regeneration_resume_commands": "docs/evidence/benchmark_regeneration_resume_commands_20260706.json",
     "ten_scene_pilot": "docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json"
   },
   "objective": "Regenerate WOD2Sim closed-loop benchmark artifacts from scratch, validate 10-scene pilot evidence, scale to 50/100 scenes when runtime prerequisites are available, and track only public-safe artifacts.",
@@ -175,7 +176,8 @@
       "operator_matrix": "docs/evidence/benchmark_operator_matrix_20260706.json",
       "public_evidence_manifest": "docs/evidence/benchmark_public_evidence_manifest_20260706.json",
       "public_handoff_doc": "docs/benchmark_regeneration_handoff.md",
-      "regeneration_commands": "docs/evidence/benchmark_regeneration_commands_20260706.json"
+      "regeneration_commands": "docs/evidence/benchmark_regeneration_commands_20260706.json",
+      "regeneration_resume_commands": "docs/evidence/benchmark_regeneration_resume_commands_20260706.json"
     }
   }
 }

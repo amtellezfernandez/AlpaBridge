@@ -14,6 +14,9 @@ STATUS_RELATIVE = Path("docs/evidence/benchmark_regeneration_status_20260706.jso
 AUDIT_RELATIVE = Path("docs/evidence/benchmark_regeneration_audit_20260706.json")
 MANIFEST_RELATIVE = Path("docs/evidence/benchmark_public_evidence_manifest_20260706.json")
 PILOT_RELATIVE = Path("docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json")
+RESUME_COMMANDS_RELATIVE = Path(
+    "docs/evidence/benchmark_regeneration_resume_commands_20260706.json"
+)
 MISSING_50_RELATIVE = Path("docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json")
 MISSING_100_RELATIVE = Path("docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json")
 
@@ -40,6 +43,7 @@ def test_public_evidence_manifest_builder_hashes_tracked_artifacts() -> None:
     assert pilot["schema"] == "wod2sim_closed_loop_batch_summary_v1"
     assert pilot["claim_scope"] == "claim_valid_10_scene_pilot_summary"
     assert artifacts[STATUS_RELATIVE]["claim_scope"] == "manifest_source_artifact"
+    assert artifacts[RESUME_COMMANDS_RELATIVE]["claim_scope"] == ("tracked_evidence_chain_artifact")
     assert pilot["sha256"] == hashlib.sha256((ROOT / PILOT_RELATIVE).read_bytes()).hexdigest()
     assert [row["scene_preset"] for row in manifest["claim_gate"]["scale_claim_gaps"]] == [
         "front_camera_50scene_public2602",
@@ -149,6 +153,7 @@ def test_tracked_public_evidence_manifest_is_public_safe_and_complete() -> None:
     assert "REDACTED_SECRET_SENTINEL" not in rendered
     assert MANIFEST_RELATIVE not in artifacts
     assert PILOT_RELATIVE in artifacts
+    assert RESUME_COMMANDS_RELATIVE in artifacts
     assert artifacts[PILOT_RELATIVE]["public_safe"] is True
     assert artifacts[PILOT_RELATIVE]["size_bytes"] == (ROOT / PILOT_RELATIVE).stat().st_size
     assert manifest["claim_gate"]["missing_claim_valid_summaries"] == [

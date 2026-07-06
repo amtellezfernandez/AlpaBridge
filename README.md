@@ -267,7 +267,9 @@ stage, group, or shard directly from the tracked plan without duplicating the
 long shard sequence in docs. The rendered all-stage command artifact is tracked
 at
 [`docs/evidence/benchmark_regeneration_commands_20260706.json`](docs/evidence/benchmark_regeneration_commands_20260706.json);
-open-repo reviewers can inspect it without runtime access. Its
+the audit-derived missing-shard resume snapshot is tracked at
+[`docs/evidence/benchmark_regeneration_resume_commands_20260706.json`](docs/evidence/benchmark_regeneration_resume_commands_20260706.json).
+Open-repo reviewers can inspect both without runtime access. The all-stage artifact's
 `execution_boundary_counts`, `operator_role_counts`,
 `public_review_command_count`, and `private_execution_command_count` fields
 separate public review commands from cache-building, live-rollout, merge, and

@@ -17,6 +17,9 @@ STATUS_RELATIVE = Path("docs/evidence/benchmark_regeneration_status_20260706.jso
 READINESS_RELATIVE = Path("docs/evidence/benchmark_regeneration_readiness_20260706.json")
 MANIFEST_RELATIVE = Path("docs/evidence/benchmark_public_evidence_manifest_20260706.json")
 COMMANDS_RELATIVE = Path("docs/evidence/benchmark_regeneration_commands_20260706.json")
+RESUME_COMMANDS_RELATIVE = Path(
+    "docs/evidence/benchmark_regeneration_resume_commands_20260706.json"
+)
 OPERATOR_MATRIX_RELATIVE = Path("docs/evidence/benchmark_operator_matrix_20260706.json")
 HANDOFF_RELATIVE = Path("docs/benchmark_regeneration_handoff.md")
 PROBE_50_RELATIVE = Path(
@@ -1391,6 +1394,7 @@ def _scene_ids_sha256(scene_ids: list[str]) -> str:
 def _copy_status_and_probe(evidence_dir: Path) -> None:
     shutil.copy2(ROOT / STATUS_RELATIVE, evidence_dir / STATUS_RELATIVE.name)
     shutil.copy2(ROOT / COMMANDS_RELATIVE, evidence_dir / COMMANDS_RELATIVE.name)
+    shutil.copy2(ROOT / RESUME_COMMANDS_RELATIVE, evidence_dir / RESUME_COMMANDS_RELATIVE.name)
     shutil.copy2(ROOT / OPERATOR_MATRIX_RELATIVE, evidence_dir / OPERATOR_MATRIX_RELATIVE.name)
     shutil.copy2(ROOT / PROBE_50_RELATIVE, evidence_dir / PROBE_50_RELATIVE.name)
     shutil.copy2(ROOT / ATTEMPT_50_RELATIVE, evidence_dir / ATTEMPT_50_RELATIVE.name)
@@ -1420,6 +1424,7 @@ def _write_test_handoff_doc(
         STATUS_RELATIVE.as_posix(),
         READINESS_RELATIVE.as_posix(),
         COMMANDS_RELATIVE.as_posix(),
+        RESUME_COMMANDS_RELATIVE.as_posix(),
         OPERATOR_MATRIX_RELATIVE.as_posix(),
         AUDIT_RELATIVE.as_posix(),
     ]

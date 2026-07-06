@@ -11,6 +11,9 @@ ROOT = Path(__file__).resolve().parents[1]
 PLAN_RELATIVE = Path("docs/evidence/benchmark_regeneration_plan_20260706.json")
 AUDIT_RELATIVE = Path("docs/evidence/benchmark_regeneration_audit_20260706.json")
 COMMANDS_RELATIVE = Path("docs/evidence/benchmark_regeneration_commands_20260706.json")
+RESUME_COMMANDS_RELATIVE = Path(
+    "docs/evidence/benchmark_regeneration_resume_commands_20260706.json"
+)
 
 
 def test_command_renderer_outputs_selected_shard_commands() -> None:
@@ -319,3 +322,49 @@ def test_tracked_command_artifact_is_public_safe_and_complete() -> None:
     assert "wod2sim-benchmark-audit --strict --json" in rendered
     assert "/home/" not in rendered
     assert "HF_TOKEN=required" in rendered
+
+
+def test_tracked_resume_command_artifact_targets_missing_scale_shards() -> None:
+    artifact = json.loads((ROOT / RESUME_COMMANDS_RELATIVE).read_text(encoding="utf-8"))
+    rendered = json.dumps(artifact, sort_keys=True)
+    rows = artifact["commands"]
+    shard_rows = [row for row in rows if row["group"] == "shards"]
+
+    assert artifact["schema"] == "wod2sim_benchmark_regeneration_commands_v1"
+    assert artifact["plan_artifact"] == PLAN_RELATIVE.as_posix()
+    assert artifact["renderer"]["no_runtime_execution"] is True
+    assert artifact["filters"] == {
+        "audit_artifact": AUDIT_RELATIVE.as_posix(),
+        "groups": ["all"],
+        "resume_missing_shards_from_audit": True,
+        "shard_indexes": [],
+        "stages": [],
+    }
+    assert artifact["row_count"] == 36
+    assert artifact["group_counts"] == {
+        "merge": 2,
+        "post": 2,
+        "promote": 2,
+        "shards": 30,
+    }
+    assert artifact["execution_boundary_counts"] == {
+        "claim_summary_merge": 2,
+        "claim_summary_promotion": 2,
+        "live_closed_loop_rollout": 30,
+        "public_metadata_review": 2,
+    }
+    assert artifact["operator_role_counts"] == {
+        "claim_promoter": 4,
+        "closed_loop_runner": 30,
+        "open_repo_reviewer": 2,
+    }
+    assert artifact["private_execution_command_count"] == 34
+    assert artifact["public_review_command_count"] == 2
+    assert len(shard_rows) == 30
+    assert all(row["resume_summary_errors"] == ["summary_missing"] for row in shard_rows)
+    assert {row["scene_preset"] for row in shard_rows} == {
+        "front_camera_50scene_public2602",
+        "front_camera_100scene_public2602",
+    }
+    assert "/home/" not in rendered
+    assert "HF_TOKEN=required" not in rendered

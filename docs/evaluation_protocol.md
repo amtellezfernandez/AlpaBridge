@@ -172,7 +172,10 @@ referenced through the full plan to avoid duplicating every shard command. Use
 those shard commands from the tracked plan when executing a scale stage. The
 all-stage rendered command artifact is tracked at
 [`docs/evidence/benchmark_regeneration_commands_20260706.json`](evidence/benchmark_regeneration_commands_20260706.json)
-for review without local runtime access. Its `execution_boundary_counts`,
+for review without local runtime access. The audit-derived missing-shard resume
+snapshot is tracked at
+[`docs/evidence/benchmark_regeneration_resume_commands_20260706.json`](evidence/benchmark_regeneration_resume_commands_20260706.json).
+Its `execution_boundary_counts`,
 `operator_role_counts`, `public_review_command_count`, and
 `private_execution_command_count` fields distinguish public review commands from
 cache-building, live-rollout, merge, and promotion commands; executing cache

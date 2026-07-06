@@ -259,6 +259,7 @@
         "docs/evidence/benchmark_regeneration_commands_20260706.json",
         "docs/evidence/benchmark_regeneration_plan_20260706.json",
         "docs/evidence/benchmark_regeneration_readiness_20260706.json",
+        "docs/evidence/benchmark_regeneration_resume_commands_20260706.json",
         "docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json",
         "docs/evidence/closed_loop_spotlight_reflex_50scene_attempt_partial.json",
         "docs/evidence/closed_loop_spotlight_reflex_50scene_localprobe_1scene.json"

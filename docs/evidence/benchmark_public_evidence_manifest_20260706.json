@@ -1,5 +1,5 @@
 {
-  "artifact_count": 10,
+  "artifact_count": 11,
   "artifacts": [
     {
       "artifact_type": "operator_capability_matrix",
@@ -8,8 +8,8 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_benchmark_operator_matrix_v1",
-      "sha256": "8fdaa76c05d3c2f96c4bcbfd3a7d90eb1de04839009fcff04bf23dca3a6c33ac",
-      "size_bytes": 11375
+      "sha256": "ea0217127be749bf5d7cb068dee8fb1e91993f98b31da693c19d10b9bd17acca",
+      "size_bytes": 11453
     },
     {
       "artifact_type": "benchmark_regeneration_control",
@@ -18,7 +18,7 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_benchmark_regeneration_audit_v1",
-      "sha256": "8a2d9f545c913956d9d6a01c2a211cdc20fb2fa8a302d4d5c4a58cabe7607514",
+      "sha256": "3a1985b1f7ee0ef9982a814d570744da46ebb13cfe545f541beb14b11cf743f0",
       "size_bytes": 41339
     },
     {
@@ -53,13 +53,23 @@
     },
     {
       "artifact_type": "benchmark_regeneration_control",
+      "claim_scope": "tracked_evidence_chain_artifact",
+      "path": "docs/evidence/benchmark_regeneration_resume_commands_20260706.json",
+      "present": true,
+      "public_safe": true,
+      "schema": "wod2sim_benchmark_regeneration_commands_v1",
+      "sha256": "bfd2fb80db0258d6368e5bb38ad5f38f83fa0c335d699de5356cdbd9b1cf2d84",
+      "size_bytes": 38181
+    },
+    {
+      "artifact_type": "benchmark_regeneration_control",
       "claim_scope": "manifest_source_artifact",
       "path": "docs/evidence/benchmark_regeneration_status_20260706.json",
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_benchmark_regeneration_status_v1",
-      "sha256": "12270cca79be88b15edcfe552152335566296b65b378cf124f549c480ad7e389",
-      "size_bytes": 8428
+      "sha256": "501992b8d4c62b29a40df804d46227d3cc0e34861262c7e0d3d3af7ac5fa2ca7",
+      "size_bytes": 8642
     },
     {
       "artifact_type": "closed_loop_summary",

@@ -29,6 +29,7 @@ DEFAULT_AUDIT = Path("docs/evidence/benchmark_regeneration_audit_20260706.json")
 DEFAULT_PLAN = Path("docs/evidence/benchmark_regeneration_plan_20260706.json")
 DEFAULT_STATUS = Path("docs/evidence/benchmark_regeneration_status_20260706.json")
 DEFAULT_HANDOFF = Path("docs/benchmark_regeneration_handoff.md")
+DEFAULT_RESUME_COMMANDS = Path("docs/evidence/benchmark_regeneration_resume_commands_20260706.json")
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -1181,6 +1182,8 @@ def _status_consistency(
         == (ten_scene_stage["summary_artifact"] if ten_scene_stage is not None else None)
         and evidence_artifacts.get("regeneration_plan") == _display_path(plan_path)
         and evidence_artifacts.get("readiness_snapshot") == readiness_artifact
+        and evidence_artifacts.get("regeneration_resume_commands")
+        == _display_path(DEFAULT_RESUME_COMMANDS)
         and evidence_artifacts.get("public_handoff_doc") == _display_path(DEFAULT_HANDOFF)
         and evidence_artifacts.get("claim_audit") == _display_path(DEFAULT_AUDIT)
     )
@@ -1588,6 +1591,7 @@ def _public_handoff_doc_consistency(
         _display_path(status_path),
         evidence_artifacts.get("readiness_snapshot"),
         evidence_artifacts.get("regeneration_commands"),
+        evidence_artifacts.get("regeneration_resume_commands"),
         evidence_artifacts.get("operator_matrix"),
         evidence_artifacts.get("claim_audit") or _display_path(DEFAULT_AUDIT),
     ]

@@ -21,6 +21,9 @@ PLAN_RELATIVE = Path("docs/evidence/benchmark_regeneration_plan_20260706.json")
 READINESS_RELATIVE = Path("docs/evidence/benchmark_regeneration_readiness_20260706.json")
 AUDIT_RELATIVE = Path("docs/evidence/benchmark_regeneration_audit_20260706.json")
 COMMANDS_RELATIVE = Path("docs/evidence/benchmark_regeneration_commands_20260706.json")
+RESUME_COMMANDS_RELATIVE = Path(
+    "docs/evidence/benchmark_regeneration_resume_commands_20260706.json"
+)
 OPERATOR_MATRIX_RELATIVE = Path("docs/evidence/benchmark_operator_matrix_20260706.json")
 EVIDENCE_MANIFEST_RELATIVE = Path("docs/evidence/benchmark_public_evidence_manifest_20260706.json")
 HANDOFF_RELATIVE = Path("docs/benchmark_regeneration_handoff.md")
@@ -166,6 +169,7 @@ def test_readme_links_current_regeneration_status() -> None:
     assert PROBE_50_RELATIVE.as_posix() in readme
     assert ATTEMPT_50_RELATIVE.as_posix() in readme
     assert COMMANDS_RELATIVE.as_posix() in readme
+    assert RESUME_COMMANDS_RELATIVE.as_posix() in readme
     assert OPERATOR_MATRIX_RELATIVE.as_posix() in readme
     assert EVIDENCE_MANIFEST_RELATIVE.as_posix() in readme
     assert "Open-repo readers can review the compact JSON summaries" in readme
@@ -193,6 +197,7 @@ def test_public_handoff_doc_tracks_current_claim_gate() -> None:
     assert READINESS_RELATIVE.as_posix() in handoff
     assert OPERATOR_MATRIX_RELATIVE.as_posix() in handoff
     assert COMMANDS_RELATIVE.as_posix() in handoff
+    assert RESUME_COMMANDS_RELATIVE.as_posix() in handoff
     assert "command execution counts by role" in handoff
     assert "execution-boundary and operator-role counts" in handoff
     assert "`scale_status.<preset>.source_usdz_cache`" in handoff
@@ -230,6 +235,7 @@ def test_status_links_current_public_evidence_chain() -> None:
         "regeneration_plan": PLAN_RELATIVE.as_posix(),
         "readiness_snapshot": READINESS_RELATIVE.as_posix(),
         "regeneration_commands": COMMANDS_RELATIVE.as_posix(),
+        "regeneration_resume_commands": RESUME_COMMANDS_RELATIVE.as_posix(),
         "operator_matrix": OPERATOR_MATRIX_RELATIVE.as_posix(),
         "public_evidence_manifest": EVIDENCE_MANIFEST_RELATIVE.as_posix(),
         "public_handoff_doc": HANDOFF_RELATIVE.as_posix(),
@@ -314,6 +320,7 @@ def test_status_generator_does_not_require_existing_audit_artifact_for_completed
     assert status["completion_status"]["full_objective_complete"] is True
     assert status["status_generator"]["referenced_artifacts"] == {
         "regeneration_commands": COMMANDS_RELATIVE.as_posix(),
+        "regeneration_resume_commands": RESUME_COMMANDS_RELATIVE.as_posix(),
         "operator_matrix": OPERATOR_MATRIX_RELATIVE.as_posix(),
         "public_evidence_manifest": EVIDENCE_MANIFEST_RELATIVE.as_posix(),
         "public_handoff_doc": HANDOFF_RELATIVE.as_posix(),

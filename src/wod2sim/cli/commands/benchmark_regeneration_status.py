@@ -24,6 +24,7 @@ DEFAULT_PLAN = Path("docs/evidence/benchmark_regeneration_plan_20260706.json")
 DEFAULT_READINESS = Path("docs/evidence/benchmark_regeneration_readiness_20260706.json")
 DEFAULT_AUDIT = Path("docs/evidence/benchmark_regeneration_audit_20260706.json")
 DEFAULT_COMMANDS = Path("docs/evidence/benchmark_regeneration_commands_20260706.json")
+DEFAULT_RESUME_COMMANDS = Path("docs/evidence/benchmark_regeneration_resume_commands_20260706.json")
 DEFAULT_OPERATOR_MATRIX = Path("docs/evidence/benchmark_operator_matrix_20260706.json")
 DEFAULT_EVIDENCE_MANIFEST = Path("docs/evidence/benchmark_public_evidence_manifest_20260706.json")
 DEFAULT_HANDOFF = Path("docs/benchmark_regeneration_handoff.md")
@@ -58,6 +59,15 @@ def _build_parser() -> argparse.ArgumentParser:
         help=(
             "Rendered command artifact path to reference in the status evidence chain. "
             "The file is not read."
+        ),
+    )
+    parser.add_argument(
+        "--resume-commands-artifact",
+        type=Path,
+        default=DEFAULT_RESUME_COMMANDS,
+        help=(
+            "Audit-derived missing-shard resume command artifact path to reference in the "
+            "status evidence chain. The file is not read."
         ),
     )
     parser.add_argument(
@@ -104,6 +114,7 @@ def main() -> int:
         readiness_path=args.readiness,
         audit_path=args.audit,
         commands_path=args.commands_artifact,
+        resume_commands_path=args.resume_commands_artifact,
         operator_matrix_path=args.operator_matrix,
         evidence_manifest_path=args.evidence_manifest,
         handoff_doc_path=args.handoff_doc,
@@ -131,6 +142,7 @@ def build_status(
     readiness_path: Path = DEFAULT_READINESS,
     audit_path: Path = DEFAULT_AUDIT,
     commands_path: Path = DEFAULT_COMMANDS,
+    resume_commands_path: Path = DEFAULT_RESUME_COMMANDS,
     operator_matrix_path: Path = DEFAULT_OPERATOR_MATRIX,
     evidence_manifest_path: Path = DEFAULT_EVIDENCE_MANIFEST,
     handoff_doc_path: Path = DEFAULT_HANDOFF,
@@ -159,6 +171,7 @@ def build_status(
         "regeneration_plan": _display_path(plan_path),
         "readiness_snapshot": _display_path(readiness_path),
         "regeneration_commands": _display_path(commands_path),
+        "regeneration_resume_commands": _display_path(resume_commands_path),
         "operator_matrix": _display_path(operator_matrix_path),
         "public_evidence_manifest": _display_path(evidence_manifest_path),
         "public_handoff_doc": _display_path(handoff_doc_path),
@@ -191,6 +204,7 @@ def build_status(
             },
             "referenced_artifacts": {
                 "regeneration_commands": _display_path(commands_path),
+                "regeneration_resume_commands": _display_path(resume_commands_path),
                 "operator_matrix": _display_path(operator_matrix_path),
                 "public_evidence_manifest": _display_path(evidence_manifest_path),
                 "public_handoff_doc": _display_path(handoff_doc_path),

@@ -203,6 +203,8 @@ for shard summaries. Use `wod2sim-benchmark-commands` to render the exact
 cache, shard, merge, promotion, status, and audit commands from that plan. The
 tracked all-stage rendering is
 [`docs/evidence/benchmark_regeneration_commands_20260706.json`](evidence/benchmark_regeneration_commands_20260706.json);
+the audit-derived missing-shard resume snapshot is
+[`docs/evidence/benchmark_regeneration_resume_commands_20260706.json`](evidence/benchmark_regeneration_resume_commands_20260706.json);
 it is reviewable in open repos, while cache rebuilds and rollouts are only for
 operators with gated assets and an x86_64 NVIDIA/Docker AlpaSim host.
 The matching claim-readiness audit is

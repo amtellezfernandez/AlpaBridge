@@ -15,6 +15,7 @@ The authoritative machine-readable inputs are:
 | [`docs/evidence/benchmark_regeneration_readiness_20260706.json`](evidence/benchmark_regeneration_readiness_20260706.json) | No-download/no-rollout readiness snapshot and blocking requirement IDs. |
 | [`docs/evidence/benchmark_operator_matrix_20260706.json`](evidence/benchmark_operator_matrix_20260706.json) | Generated who-can-review/build/run/promote matrix, current ready/blocked summary, and command execution counts by role. |
 | [`docs/evidence/benchmark_regeneration_commands_20260706.json`](evidence/benchmark_regeneration_commands_20260706.json) | Rendered cache, shard, merge, promotion, status, and audit commands from the plan, including execution-boundary and operator-role counts. |
+| [`docs/evidence/benchmark_regeneration_resume_commands_20260706.json`](evidence/benchmark_regeneration_resume_commands_20260706.json) | Audit-derived resume snapshot for missing or invalid planned 50/100 shard summaries. |
 | [`docs/evidence/benchmark_regeneration_audit_20260706.json`](evidence/benchmark_regeneration_audit_20260706.json) | Strict claim gate for the tracked public evidence chain. |
 
 ## Current State

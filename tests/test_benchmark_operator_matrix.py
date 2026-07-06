@@ -13,6 +13,9 @@ STATUS_RELATIVE = Path("docs/evidence/benchmark_regeneration_status_20260706.jso
 READINESS_RELATIVE = Path("docs/evidence/benchmark_regeneration_readiness_20260706.json")
 OPERATOR_MATRIX_RELATIVE = Path("docs/evidence/benchmark_operator_matrix_20260706.json")
 COMMANDS_RELATIVE = Path("docs/evidence/benchmark_regeneration_commands_20260706.json")
+RESUME_COMMANDS_RELATIVE = Path(
+    "docs/evidence/benchmark_regeneration_resume_commands_20260706.json"
+)
 
 
 def test_operator_matrix_builder_reflects_tracked_readiness_blockers() -> None:
@@ -164,6 +167,9 @@ def test_tracked_operator_matrix_is_public_safe_and_explicit_about_who_can_run()
         "front_camera_100scene_public2602_cache_invalid",
         "front_camera_100scene_public2602_claim_summary_missing",
     ]
+    assert (
+        RESUME_COMMANDS_RELATIVE.as_posix() in tasks["review_public_evidence"]["evidence_artifacts"]
+    )
     assert "x86_64 Linux" in summary["live_rollout_host_requirement"]
     assert roles["open_repo_reviewer"]["can_run_now_from_tracked_state"] is True
     assert roles["cache_builder"]["requires_gpu"] is False
