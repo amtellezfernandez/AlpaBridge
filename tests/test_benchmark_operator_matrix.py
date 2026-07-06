@@ -35,6 +35,7 @@ def test_operator_matrix_builder_reflects_tracked_readiness_blockers() -> None:
     assert "open_repo_reviewer" in summary["ready_roles"]
     assert "closed_loop_runner" in summary["blocked_roles"]
     assert "build_and_validate_scale_caches" in summary["next_command_groups"]
+    assert summary["next_command_renderer_groups"]["build_and_validate_scale_caches"] == ["cache"]
     assert "hf_token_missing" in summary["remaining_blocker_ids"]
     assert roles["open_repo_reviewer"]["can_run_now_from_tracked_state"] is True
     assert roles["open_repo_reviewer"]["requires_private_assets"] is False
@@ -108,6 +109,13 @@ def test_tracked_operator_matrix_is_public_safe_and_explicit_about_who_can_run()
         "run_live_scale_shards",
         "promote_claim_valid_50_100_summaries",
     ]
+    assert summary["next_command_renderer_groups"] == {
+        "build_and_validate_scale_caches": ["cache"],
+        "refresh_readiness": ["readiness"],
+        "refresh_status": ["post"],
+        "run_scale_shards_and_promote_summaries": ["shards", "merge", "promote"],
+        "verify_claim_gate": ["post"],
+    }
     assert summary["remaining_blocker_ids"] == [
         "hf_token_missing",
         "alpasim_base_image_missing",

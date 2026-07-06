@@ -70,15 +70,17 @@ wod2sim-benchmark-commands --group shards --stage front_camera_50scene_public260
 wod2sim-benchmark-commands --group shards --stage front_camera_100scene_public2602 --json
 ```
 
-The current readiness handoff expects these groups, in order:
+The current readiness handoff expects these groups, in order. The renderer group
+column tells operators which `wod2sim-benchmark-commands --group ...` filters to
+request from the tracked plan.
 
-| Order | Command Group | Purpose |
-| --- | --- | --- |
-| 1 | `refresh_readiness` | Recompute no-download/no-rollout readiness before touching caches or rollouts. |
-| 2 | `build_and_validate_scale_caches` | Build and validate 50/100 local USDZ caches after credentials and disk are ready. |
-| 3 | `run_scale_shards_and_promote_summaries` | Run all planned 50/100 shards, merge shard summaries, and promote compact public summaries. |
-| 4 | `refresh_status` | Regenerate public benchmark status from tracked compact evidence. |
-| 5 | `verify_claim_gate` | Run the strict audit; it must pass before claiming the full 10/50/100 benchmark. |
+| Order | Readiness Group | Renderer Groups | Purpose |
+| --- | --- | --- | --- |
+| 1 | `refresh_readiness` | `readiness` | Recompute no-download/no-rollout readiness before touching caches or rollouts. |
+| 2 | `build_and_validate_scale_caches` | `cache` | Build and validate 50/100 local USDZ caches after credentials and disk are ready. |
+| 3 | `run_scale_shards_and_promote_summaries` | `shards`, `merge`, `promote` | Run all planned 50/100 shards, merge shard summaries, and promote compact public summaries. |
+| 4 | `refresh_status` | `post` | Regenerate public benchmark status from tracked compact evidence. |
+| 5 | `verify_claim_gate` | `post` | Run the strict audit; it must pass before claiming the full 10/50/100 benchmark. |
 
 ## Public Review Commands
 

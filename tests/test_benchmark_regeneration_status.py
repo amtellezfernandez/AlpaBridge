@@ -172,6 +172,9 @@ def test_public_handoff_doc_tracks_current_claim_gate() -> None:
         assert blocker["id"] in handoff
     for group in operator_matrix["summary"]["next_command_groups"]:
         assert group in handoff
+    for renderer_groups in operator_matrix["summary"]["next_command_renderer_groups"].values():
+        for renderer_group in renderer_groups:
+            assert f"`{renderer_group}`" in handoff
     assert "wod2sim-benchmark-commands --group shards" in handoff
     assert "valid=true" in handoff
     assert "claim_ready=false" in handoff

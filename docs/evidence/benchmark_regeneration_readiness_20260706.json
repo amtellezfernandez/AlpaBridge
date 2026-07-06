@@ -90,6 +90,9 @@
   },
   "next_command_groups": [
     {
+      "command_renderer_groups": [
+        "readiness"
+      ],
       "commands": [
         {
           "command": "check_readiness",
@@ -101,6 +104,9 @@
       "plan_command_group": "commands.check_readiness"
     },
     {
+      "command_renderer_groups": [
+        "cache"
+      ],
       "commands": [
         {
           "command": "build_local_cache",
@@ -137,6 +143,11 @@
       ]
     },
     {
+      "command_renderer_groups": [
+        "shards",
+        "merge",
+        "promote"
+      ],
       "name": "run_scale_shards_and_promote_summaries",
       "order": 3,
       "plan_command_groups": [
@@ -162,12 +173,18 @@
     },
     {
       "command": "wod2sim-benchmark-status --output docs/evidence/benchmark_regeneration_status_20260706.json --json",
+      "command_renderer_groups": [
+        "post"
+      ],
       "expected_before_scale_completion": "records_missing_50_100_summaries_until_scale_completion",
       "name": "refresh_status",
       "order": 4
     },
     {
       "command": "wod2sim-benchmark-audit --strict --json",
+      "command_renderer_groups": [
+        "post"
+      ],
       "expected_before_scale_completion": "exit_1_until_50_100_summaries_are_claim_valid",
       "name": "verify_claim_gate",
       "order": 5

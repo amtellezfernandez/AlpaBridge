@@ -355,6 +355,15 @@ def _matrix_summary(
         "next_command_groups": [
             str(group.get("name")) for group in next_command_groups if group.get("name")
         ],
+        "next_command_renderer_groups": {
+            str(group.get("name")): [
+                str(renderer_group)
+                for renderer_group in _list_or_empty(group.get("command_renderer_groups"))
+                if isinstance(renderer_group, str)
+            ]
+            for group in next_command_groups
+            if group.get("name")
+        },
         "live_rollout_host_requirement": (
             "x86_64 Linux with Docker, NVIDIA runtime, AlpaSim images, "
             "valid local USDZ caches, and gated scene access"
@@ -405,6 +414,10 @@ def _list_of_dicts(value: object) -> list[dict[str, Any]]:
     if not isinstance(value, list):
         return []
     return [item for item in value if isinstance(item, dict)]
+
+
+def _list_or_empty(value: object) -> list[object]:
+    return value if isinstance(value, list) else []
 
 
 def _print_human_summary(matrix: dict[str, Any]) -> None:

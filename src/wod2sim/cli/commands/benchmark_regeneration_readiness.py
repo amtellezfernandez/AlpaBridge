@@ -82,7 +82,9 @@ def main() -> int:
     )
     if args.output is not None:
         args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        args.output.write_text(
+            json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
     if args.json:
         print(json.dumps(report, indent=2, sort_keys=True))
     else:
@@ -217,9 +219,13 @@ def _host_report(*, env: dict[str, str]) -> dict[str, Any]:
     closed_loop_supported = system == "Linux" and is_x86_64
     notes: list[str] = []
     if is_arm and not override_enabled:
-        notes.append("ARM hosts can build caches or run diagnostics, but live rollouts are blocked by default.")
+        notes.append(
+            "ARM hosts can build caches or run diagnostics, but live rollouts are blocked by default."
+        )
     if override_enabled:
-        notes.append("Unsupported ARM rollout override is enabled; this does not make the host claim-supported.")
+        notes.append(
+            "Unsupported ARM rollout override is enabled; this does not make the host claim-supported."
+        )
     return {
         "system": system,
         "machine": machine,
@@ -486,6 +492,7 @@ def _next_command_groups(
         {
             "order": 1,
             "name": "refresh_readiness",
+            "command_renderer_groups": ["readiness"],
             "plan_command_group": "commands.check_readiness",
             "commands": _resolved_command_rows(
                 stage=None,
@@ -523,6 +530,7 @@ def _next_command_groups(
             {
                 "order": len(groups) + 1,
                 "name": "build_and_validate_scale_caches",
+                "command_renderer_groups": ["cache"],
                 "plan_command_groups": [
                     f"stages[{stage['stage']}].commands.build_local_cache"
                     for stage in scale_stages
@@ -544,6 +552,7 @@ def _next_command_groups(
             {
                 "order": len(groups) + 1,
                 "name": "run_scale_shards_and_promote_summaries",
+                "command_renderer_groups": ["shards", "merge", "promote"],
                 "plan_command_groups": [
                     "stages[].shards[].commands.run_batch",
                     "stages[].shards[].commands.write_batch_summary",
@@ -564,6 +573,7 @@ def _next_command_groups(
         {
             "order": len(groups) + 1,
             "name": "refresh_status",
+            "command_renderer_groups": ["post"],
             "command": (
                 "wod2sim-benchmark-status "
                 "--output docs/evidence/benchmark_regeneration_status_20260706.json --json"
@@ -575,6 +585,7 @@ def _next_command_groups(
         {
             "order": len(groups) + 1,
             "name": "verify_claim_gate",
+            "command_renderer_groups": ["post"],
             "command": "wod2sim-benchmark-audit --strict --json",
             "expected_before_scale_completion": "exit_1_until_50_100_summaries_are_claim_valid",
         }
@@ -604,7 +615,9 @@ def _resolved_command_rows(
     command: dict[str, Any],
     repo_root: Path,
 ) -> list[dict[str, Any]]:
-    display = _sanitize_display_command(str(command.get("display") or "").strip(), repo_root=repo_root)
+    display = _sanitize_display_command(
+        str(command.get("display") or "").strip(), repo_root=repo_root
+    )
     if not display:
         return []
     row: dict[str, Any] = {
@@ -638,14 +651,17 @@ def _local_cache_status(
     local_usdz_dir = Path(str(stage["local_usdz_dir"]))
     validation = validate_local_usdz_cache(
         scene_preset=str(stage["scene_preset"]),
-        scene_ids=[str(scene_id) for scene_id in stage.get("scene_ids", [])] or _stage_scene_ids(stage),
+        scene_ids=[str(scene_id) for scene_id in stage.get("scene_ids", [])]
+        or _stage_scene_ids(stage),
         local_usdz_dir=local_usdz_dir,
         hf_revision=hf_revision,
     )
     return {
         "required": True,
         "local_usdz_dir": _display_path(local_usdz_dir, repo_root=repo_root),
-        "usdz_file_count": len(list(local_usdz_dir.glob("*.usdz"))) if local_usdz_dir.is_dir() else 0,
+        "usdz_file_count": len(list(local_usdz_dir.glob("*.usdz")))
+        if local_usdz_dir.is_dir()
+        else 0,
         "validation": _compact_cache_validation(validation),
     }
 
@@ -730,7 +746,9 @@ def _public_summary_status(
             "planned_scene_count": _optional_int(aggregate.get("planned_scene_count")),
             "completed_scene_count": _optional_int(aggregate.get("completed_scene_count")),
             "failed_scene_count": _optional_int(aggregate.get("failed_scene_count")),
-            "sensor_failure_scene_count": _optional_int(aggregate.get("sensor_failure_scene_count")),
+            "sensor_failure_scene_count": _optional_int(
+                aggregate.get("sensor_failure_scene_count")
+            ),
         },
     }
 

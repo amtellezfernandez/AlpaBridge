@@ -202,6 +202,7 @@
       "readiness_blocking_requirement_ids_match_state": true,
       "readiness_next_command_group_names_match_state": true,
       "readiness_next_command_group_orders_are_contiguous": true,
+      "readiness_next_command_group_renderer_groups_match_state": true,
       "readiness_plan_artifact_matches_audit": true,
       "readiness_scale_summary_flag_matches_audit": true,
       "readiness_stage_count_matches_plan": true,

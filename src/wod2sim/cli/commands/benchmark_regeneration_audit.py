@@ -1318,6 +1318,23 @@ def _readiness_consistency(
     if not checks["readiness_next_command_group_names_match_state"]:
         notes.append("readiness.next_command_groups names do not match readiness state")
 
+    renderer_groups = {
+        str(row.get("name") or ""): [
+            str(group)
+            for group in _list_or_empty(row.get("command_renderer_groups"))
+            if isinstance(group, str)
+        ]
+        for row in next_groups
+    }
+    expected_renderer_groups = _expected_readiness_command_renderer_groups(
+        readiness_stages=readiness_stages
+    )
+    checks["readiness_next_command_group_renderer_groups_match_state"] = (
+        renderer_groups == expected_renderer_groups
+    )
+    if not checks["readiness_next_command_group_renderer_groups_match_state"]:
+        notes.append("readiness.next_command_groups command_renderer_groups do not match state")
+
     group_orders = [_int_value(row.get("order")) for row in next_groups]
     checks["readiness_next_command_group_orders_are_contiguous"] = group_orders == list(
         range(1, len(next_groups) + 1)
@@ -1408,6 +1425,33 @@ def _expected_readiness_next_group_names(*, readiness_stages: list[dict[str, Any
         names.append("run_scale_shards_and_promote_summaries")
     names.extend(["refresh_status", "verify_claim_gate"])
     return names
+
+
+def _expected_readiness_command_renderer_groups(
+    *, readiness_stages: list[dict[str, Any]]
+) -> dict[str, list[str]]:
+    renderer_groups: dict[str, list[str]] = {"refresh_readiness": ["readiness"]}
+    scale_stages = [
+        stage for stage in readiness_stages if bool(stage.get("requires_local_usdz_cache"))
+    ]
+    if any(
+        _dict_or_empty(_dict_or_empty(stage.get("local_usdz_cache")).get("validation")).get("valid")
+        is not True
+        for stage in scale_stages
+    ):
+        renderer_groups["build_and_validate_scale_caches"] = ["cache"]
+    if any(
+        _dict_or_empty(stage.get("public_summary")).get("claim_valid") is not True
+        for stage in scale_stages
+    ):
+        renderer_groups["run_scale_shards_and_promote_summaries"] = [
+            "shards",
+            "merge",
+            "promote",
+        ]
+    renderer_groups["refresh_status"] = ["post"]
+    renderer_groups["verify_claim_gate"] = ["post"]
+    return renderer_groups
 
 
 def _load_json(path: Path, *, errors: list[str], label: str) -> dict[str, Any]:

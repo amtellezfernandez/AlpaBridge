@@ -150,6 +150,25 @@
       "refresh_status",
       "verify_claim_gate"
     ],
+    "next_command_renderer_groups": {
+      "build_and_validate_scale_caches": [
+        "cache"
+      ],
+      "refresh_readiness": [
+        "readiness"
+      ],
+      "refresh_status": [
+        "post"
+      ],
+      "run_scale_shards_and_promote_summaries": [
+        "shards",
+        "merge",
+        "promote"
+      ],
+      "verify_claim_gate": [
+        "post"
+      ]
+    },
     "open_repo_review_ready": true,
     "public_claim_boundary": "Open-repo reviewers can audit compact public evidence; new 50/100 closed-loop claims require completed full-stage summaries.",
     "ready_roles": [

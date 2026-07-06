@@ -46,7 +46,9 @@ class BenchmarkRegenerationReadinessTests(unittest.TestCase):
             cache_dir = alpasim_root / "data" / "nre-artifacts" / "local-2602-usdzs-3"
             cache_dir.mkdir(parents=True)
             for index, scene_id in enumerate(_scene_ids("fresh_3scene", []), start=1):
-                _write_usdz(cache_dir / f"uuid-{index}.usdz", scene_id=scene_id, uuid=f"uuid-{index}")
+                _write_usdz(
+                    cache_dir / f"uuid-{index}.usdz", scene_id=scene_id, uuid=f"uuid-{index}"
+                )
 
             report = module.build_readiness_report(
                 pilot_preset="fresh_3scene",
@@ -86,13 +88,16 @@ class BenchmarkRegenerationReadinessTests(unittest.TestCase):
             {requirement["id"] for requirement in report["blocking_requirements"]},
         )
         self.assertEqual("refresh_readiness", report["next_command_groups"][0]["name"])
+        self.assertEqual(["readiness"], report["next_command_groups"][0]["command_renderer_groups"])
         self.assertIn(
             "wod2sim-benchmark-readiness",
             report["next_command_groups"][0]["commands"][0]["display"],
         )
         self.assertEqual("refresh_status", report["next_command_groups"][-2]["name"])
+        self.assertEqual(["post"], report["next_command_groups"][-2]["command_renderer_groups"])
         self.assertIn("wod2sim-benchmark-status", report["next_command_groups"][-2]["command"])
         self.assertEqual("verify_claim_gate", report["next_command_groups"][-1]["name"])
+        self.assertEqual(["post"], report["next_command_groups"][-1]["command_renderer_groups"])
         self.assertFalse(any(command[:2] == ["docker", "run"] for command in seen_commands))
 
     def test_build_report_marks_arm_host_and_missing_cache_not_ready(self) -> None:
@@ -108,8 +113,10 @@ class BenchmarkRegenerationReadinessTests(unittest.TestCase):
                 "stderr": "missing",
             }
 
-        with tempfile.TemporaryDirectory() as tmp, patch("platform.system", return_value="Linux"), patch(
-            "platform.machine", return_value="aarch64"
+        with (
+            tempfile.TemporaryDirectory() as tmp,
+            patch("platform.system", return_value="Linux"),
+            patch("platform.machine", return_value="aarch64"),
         ):
             report = module.build_readiness_report(
                 pilot_preset="fresh_3scene",
@@ -134,7 +141,9 @@ class BenchmarkRegenerationReadinessTests(unittest.TestCase):
         self.assertIn("unsupported_closed_loop_host", blocker_ids)
         self.assertIn("fresh_3scene_cache_invalid", blocker_ids)
 
-    def test_tracked_readiness_snapshot_is_public_safe_and_records_remaining_scale_gap(self) -> None:
+    def test_tracked_readiness_snapshot_is_public_safe_and_records_remaining_scale_gap(
+        self,
+    ) -> None:
         report = json.loads((ROOT / READINESS_RELATIVE).read_text(encoding="utf-8"))
         rendered = json.dumps(report, sort_keys=True)
         stages = {stage["scene_count"]: stage for stage in report["stages"]}
@@ -156,6 +165,7 @@ class BenchmarkRegenerationReadinessTests(unittest.TestCase):
         refresh_display = report["next_command_groups"][0]["commands"][0]["display"]
         self.assertIn("--stable-public-snapshot", refresh_display)
         build_group = _command_group(report, "build_and_validate_scale_caches")
+        self.assertEqual(["cache"], build_group["command_renderer_groups"])
         self.assertEqual(4, len(build_group["commands"]))
         self.assertTrue(
             all(
@@ -164,6 +174,7 @@ class BenchmarkRegenerationReadinessTests(unittest.TestCase):
             )
         )
         shard_group = _command_group(report, "run_scale_shards_and_promote_summaries")
+        self.assertEqual(["shards", "merge", "promote"], shard_group["command_renderer_groups"])
         self.assertEqual(
             [
                 {

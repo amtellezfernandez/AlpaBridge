@@ -47,6 +47,11 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
                 "readiness_next_command_group_names_match_state"
             ]
         )
+        self.assertTrue(
+            audit["readiness_consistency"]["checks"][
+                "readiness_next_command_group_renderer_groups_match_state"
+            ]
+        )
         self.assertTrue(audit["diagnostic_evidence"]["valid"])
         self.assertTrue(audit["regeneration_plan"]["valid"])
         self.assertEqual(PLAN_RELATIVE.as_posix(), audit["regeneration_plan"]["artifact"])
@@ -686,11 +691,20 @@ def _readiness_report(
         if stage["public_summary"]["claim_valid"] is not True
     ]
     next_group_names = ["refresh_readiness"]
+    renderer_groups = {"refresh_readiness": ["readiness"]}
     if any(stage["local_usdz_cache"]["validation"]["valid"] is not True for stage in scale_stages):
         next_group_names.append("build_and_validate_scale_caches")
+        renderer_groups["build_and_validate_scale_caches"] = ["cache"]
     if any(stage["public_summary"]["claim_valid"] is not True for stage in scale_stages):
         next_group_names.append("run_scale_shards_and_promote_summaries")
+        renderer_groups["run_scale_shards_and_promote_summaries"] = [
+            "shards",
+            "merge",
+            "promote",
+        ]
     next_group_names.extend(["refresh_status", "verify_claim_gate"])
+    renderer_groups["refresh_status"] = ["post"]
+    renderer_groups["verify_claim_gate"] = ["post"]
     return {
         "schema": "wod2sim_benchmark_regeneration_readiness_v1",
         "plan_artifact": PLAN_RELATIVE.as_posix(),
@@ -699,7 +713,12 @@ def _readiness_report(
             {"id": requirement_id} for requirement_id in blocking_requirement_ids
         ],
         "next_command_groups": [
-            {"name": name, "order": order} for order, name in enumerate(next_group_names, start=1)
+            {
+                "command_renderer_groups": renderer_groups[name],
+                "name": name,
+                "order": order,
+            }
+            for order, name in enumerate(next_group_names, start=1)
         ],
         "readiness": {
             "claim_valid_scale_summaries_present": all(scale_claims) if scale_claims else False,
