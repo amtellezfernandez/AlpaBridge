@@ -4,15 +4,15 @@
     "full_objective_complete": false,
     "reason": "The repository tracks a valid 10-scene public summary plus a plan, readiness snapshot, and audit gate, but fresh regenerated claim-valid scale summaries are not currently present: docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json, docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json."
   },
-  "created_at": "2026-07-06",
+  "created_at": "2026-07-06T10:53:28",
   "current_local_runtime_state": {
     "all_scale_caches_valid": false,
     "all_scale_source_caches_valid": false,
-    "alpasim_base_image_present": false,
+    "alpasim_base_image_present": true,
     "claim_valid_scale_summaries_present": false,
     "closed_loop_runner_supported": true,
     "derived_from": "docs/evidence/benchmark_regeneration_readiness_20260706.json",
-    "disk_free_gib_at_readiness": 280.68,
+    "disk_free_gib_at_readiness": 269.36,
     "disk_meets_min_free_disk_gb": true,
     "docker_daemon_ok": true,
     "docker_nvidia_runtime_present": true,
@@ -96,7 +96,6 @@
   "objective_completion": {
     "blocking_requirements": [
       "hf_token_missing",
-      "alpasim_base_image_missing",
       "front_camera_50scene_public2602_cache_invalid",
       "front_camera_50scene_public2602_claim_summary_missing",
       "front_camera_100scene_public2602_cache_invalid",

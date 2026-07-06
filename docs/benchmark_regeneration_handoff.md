@@ -45,11 +45,15 @@ Current blocker IDs from readiness:
 | Blocker ID | Blocks |
 | --- | --- |
 | `hf_token_missing` | Downloading the local 26.02 USDZ cache from gated Hugging Face assets. Operators with a complete local `all-usdzs` directory can use the offline link command instead. |
-| `alpasim_base_image_missing` | Live AlpaSim SensorSim rollouts. Docker, the NVIDIA runtime, and one NVIDIA GPU were visible during the current live-probed readiness refresh, but the required `alpasim-base:0.66.0` image is not installed. |
 | `front_camera_50scene_public2602_cache_invalid` | 50-scene shard execution. |
 | `front_camera_50scene_public2602_claim_summary_missing` | 50-scene claim promotion and strict audit readiness. |
 | `front_camera_100scene_public2602_cache_invalid` | 100-scene shard execution. |
 | `front_camera_100scene_public2602_claim_summary_missing` | 100-scene claim promotion and strict audit readiness. |
+
+Runtime image status: the current live-probed readiness refresh sees Docker,
+the NVIDIA runtime, one NVIDIA GPU, and the local `alpasim-base:0.66.0` image.
+The closed-loop runner remains blocked only because the required scale-stage
+USDZ caches and claim summaries are missing.
 
 The offline cache-link path is tracked but not currently ready on this
 workspace: after local cleanup, the public readiness snapshot sees 0 USDZ files

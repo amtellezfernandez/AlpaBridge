@@ -1,7 +1,7 @@
 {
   "claim_ready": false,
   "claim_rule": "Every stage in the regeneration plan must have a tracked wod2sim_closed_loop_batch_summary_v1 artifact with clean_closed_loop_batch=true, matching scene counts, zero failed scenes, and zero sensor-pipeline failures.",
-  "created_at": "2026-07-06",
+  "created_at": "2026-07-06T10:53:29",
   "diagnostic_evidence": {
     "artifact": "docs/evidence/closed_loop_spotlight_reflex_50scene_localprobe_1scene.json",
     "checks": {
@@ -72,7 +72,6 @@
   "objective_completion": {
     "blocking_requirements": [
       "hf_token_missing",
-      "alpasim_base_image_missing",
       "front_camera_50scene_public2602_cache_invalid",
       "front_camera_50scene_public2602_claim_summary_missing",
       "front_camera_100scene_public2602_cache_invalid",
@@ -130,7 +129,6 @@
       {
         "blocking_requirements": [
           "hf_token_missing",
-          "alpasim_base_image_missing",
           "front_camera_50scene_public2602_cache_invalid",
           "front_camera_50scene_public2602_claim_summary_missing"
         ],
@@ -148,7 +146,6 @@
       {
         "blocking_requirements": [
           "hf_token_missing",
-          "alpasim_base_image_missing",
           "front_camera_100scene_public2602_cache_invalid",
           "front_camera_100scene_public2602_claim_summary_missing"
         ],
@@ -165,7 +162,6 @@
       },
       {
         "blocking_requirements": [
-          "alpasim_base_image_missing",
           "front_camera_50scene_public2602_cache_invalid",
           "front_camera_50scene_public2602_claim_summary_missing",
           "front_camera_100scene_public2602_cache_invalid",
@@ -186,7 +182,6 @@
       {
         "blocking_requirements": [
           "hf_token_missing",
-          "alpasim_base_image_missing",
           "front_camera_50scene_public2602_cache_invalid",
           "front_camera_50scene_public2602_claim_summary_missing"
         ],
@@ -262,7 +257,6 @@
       {
         "blocking_requirements": [
           "hf_token_missing",
-          "alpasim_base_image_missing",
           "front_camera_100scene_public2602_cache_invalid",
           "front_camera_100scene_public2602_claim_summary_missing"
         ],
@@ -415,7 +409,6 @@
     "notes": [],
     "readiness_blocker_ids": [
       "hf_token_missing",
-      "alpasim_base_image_missing",
       "front_camera_50scene_public2602_cache_invalid",
       "front_camera_50scene_public2602_claim_summary_missing",
       "front_camera_100scene_public2602_cache_invalid",
@@ -429,8 +422,8 @@
       "readiness",
       "shards"
     ],
-    "sha256": "b873cc511c6dba36ea9127eef0db7c79ee8198fc2bd2f5d97e2c390fba227ee2",
-    "size_bytes": 10967,
+    "sha256": "c29eec10d8bbf23bbb0f878b751fd1067418cda7771a8caa8c490cf6d62d4d92",
+    "size_bytes": 11005,
     "valid": true
   },
   "readiness_artifact": "docs/evidence/benchmark_regeneration_readiness_20260706.json",
@@ -603,7 +596,6 @@
           "claim_gap": {
             "blocking_requirements": [
               "hf_token_missing",
-              "alpasim_base_image_missing",
               "front_camera_50scene_public2602_cache_invalid",
               "front_camera_50scene_public2602_claim_summary_missing"
             ],
@@ -774,7 +766,6 @@
           "claim_gap": {
             "blocking_requirements": [
               "hf_token_missing",
-              "alpasim_base_image_missing",
               "front_camera_100scene_public2602_cache_invalid",
               "front_camera_100scene_public2602_claim_summary_missing"
             ],

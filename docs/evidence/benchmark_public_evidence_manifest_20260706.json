@@ -8,8 +8,8 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_benchmark_operator_matrix_v1",
-      "sha256": "364ee715f3472742c8df305106c4025156ae7db86d66e889be9ec2a73067df1e",
-      "size_bytes": 29813
+      "sha256": "f4bd7da1107ba1d1b7eb2d83c7b926f040f67d3ba03f3fd25be454c853ffe366",
+      "size_bytes": 29625
     },
     {
       "artifact_type": "benchmark_regeneration_control",
@@ -18,8 +18,8 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_benchmark_regeneration_audit_v1",
-      "sha256": "4e880fc2c3ffcf6db60ec0bc6fc190b18c70512e6fbe44046ae50406b180c180",
-      "size_bytes": 63114
+      "sha256": "982f32568c01342c3e5bca65d2d1cd0bf40243f2392b40ca3c862e8968990e1a",
+      "size_bytes": 62948
     },
     {
       "artifact_type": "benchmark_regeneration_control",
@@ -28,8 +28,8 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_benchmark_regeneration_commands_v1",
-      "sha256": "c7ae6ec25ac120804a6a8f3e01f98a3e85e7ff1f98b7fb8e9881723f193b772d",
-      "size_bytes": 35129
+      "sha256": "566375dc089f08f840ec4ffea5d120dccfbef8a8d0ce9082152483a49c4f6e96",
+      "size_bytes": 35138
     },
     {
       "artifact_type": "benchmark_regeneration_control",
@@ -48,8 +48,8 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_benchmark_regeneration_readiness_v1",
-      "sha256": "e7c2ce9d8cf4a7f63e8d24dc2dface1675e76f523d7436ccb4b2271b44e9f115",
-      "size_bytes": 21767
+      "sha256": "3b20445a857723f265de73e7609190b483c99b8113ac55b9dbe774e6e147ac3e",
+      "size_bytes": 21527
     },
     {
       "artifact_type": "benchmark_regeneration_control",
@@ -58,8 +58,8 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_benchmark_regeneration_commands_v1",
-      "sha256": "cddbccdc133e6ff9833fdcf8b799639a6b67b646ffde90103f244fe5cf12e084",
-      "size_bytes": 57924
+      "sha256": "6c6f317dedda7493942d5e2d62f8165448d2087716c48e6f54341a39fc83549f",
+      "size_bytes": 57849
     },
     {
       "artifact_type": "benchmark_regeneration_control",
@@ -68,8 +68,8 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_benchmark_regeneration_status_v1",
-      "sha256": "516ef71efbd2579404ab866158bc44bbecbd63cc51d84727dc312f700bb6baec",
-      "size_bytes": 10905
+      "sha256": "479e438a9e826fc52e57fcb7648fb9c4e85db0e0fd01372ba48c9f685826c80f",
+      "size_bytes": 10877
     },
     {
       "artifact_type": "closed_loop_summary",
@@ -115,7 +115,6 @@
   "claim_gate": {
     "blocking_requirements": [
       "hf_token_missing",
-      "alpasim_base_image_missing",
       "front_camera_50scene_public2602_cache_invalid",
       "front_camera_50scene_public2602_claim_summary_missing",
       "front_camera_100scene_public2602_cache_invalid",
@@ -183,7 +182,6 @@
           "claim_gap": {
             "blocking_requirements": [
               "hf_token_missing",
-              "alpasim_base_image_missing",
               "front_camera_50scene_public2602_cache_invalid",
               "front_camera_50scene_public2602_claim_summary_missing"
             ],
@@ -354,7 +352,6 @@
           "claim_gap": {
             "blocking_requirements": [
               "hf_token_missing",
-              "alpasim_base_image_missing",
               "front_camera_100scene_public2602_cache_invalid",
               "front_camera_100scene_public2602_claim_summary_missing"
             ],
@@ -613,7 +610,6 @@
       {
         "blocking_requirements": [
           "hf_token_missing",
-          "alpasim_base_image_missing",
           "front_camera_50scene_public2602_cache_invalid",
           "front_camera_50scene_public2602_claim_summary_missing"
         ],
@@ -689,7 +685,6 @@
       {
         "blocking_requirements": [
           "hf_token_missing",
-          "alpasim_base_image_missing",
           "front_camera_100scene_public2602_cache_invalid",
           "front_camera_100scene_public2602_claim_summary_missing"
         ],
@@ -777,7 +772,7 @@
     "total_requirement_count": 5,
     "valid": true
   },
-  "created_at": "2026-07-06",
+  "created_at": "2026-07-06T10:53:29",
   "generator": {
     "command": "wod2sim-benchmark-evidence-manifest",
     "excludes_self_hash": true,

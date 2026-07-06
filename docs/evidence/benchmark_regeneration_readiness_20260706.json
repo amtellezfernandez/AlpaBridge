@@ -11,14 +11,6 @@
     },
     {
       "blocks": "closed_loop_rollout",
-      "detail": "Error response from daemon: No such image: alpasim-base:0.66.0",
-      "id": "alpasim_base_image_missing",
-      "plan_command_groups": [
-        "stages[].commands.run_batch"
-      ]
-    },
-    {
-      "blocks": "closed_loop_rollout",
       "detail": "Local USDZ cache is not valid: 0/50 scenes present.",
       "id": "front_camera_50scene_public2602_cache_invalid",
       "plan_command_groups": [
@@ -68,14 +60,14 @@
       "stage": "stronger_benchmark"
     }
   ],
-  "created_at": "2026-07-06",
+  "created_at": "2026-07-06T10:51:55",
   "credentials": {
     "hf_token_present": false,
     "hf_token_required_for_cache_build": true
   },
   "disk": {
     "exact_free_bytes_omitted": true,
-    "free_gib": 280.68,
+    "free_gib": 269.36,
     "meets_min_free_disk_gb": true,
     "min_free_disk_gb": 200,
     "path": "workspace/alpasim",
@@ -227,11 +219,11 @@
         "{{.Id}}"
       ],
       "image_tag": "alpasim-base:0.66.0",
-      "ok": false,
-      "returncode": 1,
-      "status": "failed",
-      "stderr": "Error response from daemon: No such image: alpasim-base:0.66.0",
-      "stdout": ""
+      "ok": true,
+      "returncode": 0,
+      "status": "ok",
+      "stderr": "",
+      "stdout": "sha256:69a69ef81152e89b02acd5c1cd9788157204e741ac7c251322e7c4cccfc59620"
     },
     "docker_daemon": {
       "argv": [
