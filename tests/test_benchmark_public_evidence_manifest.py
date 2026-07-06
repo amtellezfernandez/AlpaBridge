@@ -53,20 +53,24 @@ def test_public_evidence_manifest_main_writes_json_without_runtime_probes() -> N
         stdout = Path(tmpdir) / "stdout.json"
         output = Path(tmpdir) / "manifest.json"
 
-        with stdout.open("w", encoding="utf-8") as handle, patch.object(
-            sys,
-            "argv",
-            [
-                "wod2sim-benchmark-evidence-manifest",
-                "--repo-root",
-                str(ROOT),
-                "--created-at",
-                "2026-07-06",
-                "--output",
-                str(output),
-                "--json",
-            ],
-        ), patch("sys.stdout", handle):
+        with (
+            stdout.open("w", encoding="utf-8") as handle,
+            patch.object(
+                sys,
+                "argv",
+                [
+                    "wod2sim-benchmark-evidence-manifest",
+                    "--repo-root",
+                    str(ROOT),
+                    "--created-at",
+                    "2026-07-06",
+                    "--output",
+                    str(output),
+                    "--json",
+                ],
+            ),
+            patch("sys.stdout", handle),
+        ):
             returncode = module.main()
 
         emitted = json.loads(stdout.read_text(encoding="utf-8"))
@@ -122,7 +126,7 @@ def test_tracked_public_evidence_manifest_is_public_safe_and_complete() -> None:
     }
     assert manifest["artifact_count"] == len(manifest["artifacts"])
     assert "/home/" not in rendered
-    assert "21alba07" not in rendered
+    assert "REDACTED_SECRET_SENTINEL" not in rendered
     assert MANIFEST_RELATIVE not in artifacts
     assert PILOT_RELATIVE in artifacts
     assert artifacts[PILOT_RELATIVE]["public_safe"] is True

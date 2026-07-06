@@ -159,6 +159,7 @@ def test_public_artifact_policy_excludes_heavy_or_gated_runtime_artifacts() -> N
 
 def test_readme_links_current_regeneration_status() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    compact_readme = " ".join(readme.split())
 
     assert STATUS_RELATIVE.as_posix() in readme
     assert HANDOFF_RELATIVE.as_posix() in readme
@@ -168,6 +169,9 @@ def test_readme_links_current_regeneration_status() -> None:
     assert OPERATOR_MATRIX_RELATIVE.as_posix() in readme
     assert EVIDENCE_MANIFEST_RELATIVE.as_posix() in readme
     assert "Open-repo readers can review the compact JSON summaries" in readme
+    assert "`scale_status.<preset>.source_usdz_cache`" in readme
+    assert "`matching_scene_count` of `0` for both presets" in readme
+    assert "cache building, live shard execution, and claim promotion" in compact_readme
     assert "ARM/DGX Spark" in readme
     assert "| `wod2sim-benchmark-status` |" in readme
 
@@ -180,10 +184,14 @@ def test_public_handoff_doc_tracks_current_claim_gate() -> None:
     operator_matrix = _read_json(ROOT / OPERATOR_MATRIX_RELATIVE)
 
     assert HANDOFF_RELATIVE.as_posix() in evaluation_protocol
+    assert STATUS_RELATIVE.as_posix() in handoff
     assert AUDIT_RELATIVE.as_posix() in handoff
     assert READINESS_RELATIVE.as_posix() in handoff
     assert OPERATOR_MATRIX_RELATIVE.as_posix() in handoff
     assert COMMANDS_RELATIVE.as_posix() in handoff
+    assert "`scale_status.<preset>.source_usdz_cache`" in handoff
+    assert "`scale_status.<preset>.source_usdz_cache`" in evaluation_protocol
+    assert "`matching_scene_count` of `0` for both 50/100 presets" in evaluation_protocol
     for missing in audit["missing_claim_valid_summaries"]:
         assert missing in handoff
     for blocker in readiness["blocking_requirements"]:
