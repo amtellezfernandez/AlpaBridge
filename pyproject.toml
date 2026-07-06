@@ -63,6 +63,7 @@ wod2sim-benchmark-audit = "wod2sim.cli.commands.benchmark_regeneration_audit:mai
 wod2sim-benchmark-status = "wod2sim.cli.commands.benchmark_regeneration_status:main"
 wod2sim-benchmark-commands = "wod2sim.cli.commands.benchmark_regeneration_commands:main"
 wod2sim-benchmark-operators = "wod2sim.cli.commands.benchmark_operator_matrix:main"
+wod2sim-benchmark-evidence-manifest = "wod2sim.cli.commands.benchmark_public_evidence_manifest:main"
 wod2sim-promote-batch-summary = "wod2sim.cli.commands.promote_batch_summary:main"
 wod2sim-benchmark-summary = "wod2sim.cli.commands.benchmark_summary:main"
 wod2sim-batch-summary = "wod2sim.cli.commands.batch_summary:main"

@@ -188,10 +188,15 @@ The public benchmark status is
 [`docs/evidence/benchmark_regeneration_status_20260706.json`](evidence/benchmark_regeneration_status_20260706.json)
 and is regenerated with `wod2sim-benchmark-status` after readiness and before
 the strict audit.
-It includes `blocking_requirements` and `next_command_groups` so operators can
-map missing cache/runtime prerequisites back to plan command groups. Short setup
-groups include copyable `display` commands; long shard groups point back to the
-full plan.
+The compact evidence manifest is
+[`docs/evidence/benchmark_public_evidence_manifest_20260706.json`](evidence/benchmark_public_evidence_manifest_20260706.json)
+and is regenerated with `wod2sim-benchmark-evidence-manifest`; it records hashes
+and claim scopes for tracked public JSON while keeping the 50/100 missing
+summary artifacts explicit.
+The readiness/status flow includes `blocking_requirements` and
+`next_command_groups` so operators can map missing cache/runtime prerequisites
+back to plan command groups. Short setup groups include copyable `display`
+commands; long shard groups point back to the full plan.
 The plan includes readiness reporting, local-cache validation, 10-scene shard
 commands for constrained x86_64 hosts, and public-safe merge/promotion commands
 for shard summaries. Use `wod2sim-benchmark-commands` to render the exact

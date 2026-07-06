@@ -235,6 +235,10 @@ in
 Regenerate that status from the tracked public evidence chain with
 `wod2sim-benchmark-status`; it only reads compact JSON artifacts and does not
 probe Docker, GPUs, or local scene caches.
+The hash/size/schema manifest for tracked compact evidence is
+[`docs/evidence/benchmark_public_evidence_manifest_20260706.json`](docs/evidence/benchmark_public_evidence_manifest_20260706.json)
+and can be regenerated with `wod2sim-benchmark-evidence-manifest`; it excludes
+its own hash and records the missing 50/100 expected claim summaries.
 A machine-readable 10/50/100 rerun plan is tracked in
 [`docs/evidence/benchmark_regeneration_plan_20260706.json`](docs/evidence/benchmark_regeneration_plan_20260706.json)
 and can be regenerated with `wod2sim-benchmark-plan`.
@@ -350,6 +354,7 @@ wod2sim-launch --mode print --model direct_actor_planner --oracle-actor-proxy /p
 | `wod2sim-benchmark-status` | Regenerate public benchmark status from compact evidence artifacts. |
 | `wod2sim-benchmark-commands` | Render copyable cache/shard/merge/promotion commands from the plan. |
 | `wod2sim-benchmark-operators` | Render the public who-can-review/build/run/promote capability matrix. |
+| `wod2sim-benchmark-evidence-manifest` | Hash and classify tracked compact public evidence. |
 | `wod2sim-benchmark-audit` | Gate tracked regeneration artifacts against the 10/50/100 claim. |
 | `wod2sim-promote-batch-summary` | Promote a generated compact batch summary into public evidence. |
 | `wod2sim-benchmark-summary` | Aggregate evidence directories into one benchmark JSON. |

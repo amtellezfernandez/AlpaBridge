@@ -1,0 +1,145 @@
+{
+  "artifact_count": 10,
+  "artifacts": [
+    {
+      "artifact_type": "operator_capability_matrix",
+      "claim_scope": "tracked_evidence_chain_artifact",
+      "path": "docs/evidence/benchmark_operator_matrix_20260706.json",
+      "present": true,
+      "public_safe": true,
+      "schema": "wod2sim_benchmark_operator_matrix_v1",
+      "sha256": "5f5d34f4e16455bb075e92769fc0fa234dd20f65f14247e3f737434c3703105a",
+      "size_bytes": 7733
+    },
+    {
+      "artifact_type": "benchmark_regeneration_control",
+      "claim_scope": "manifest_source_artifact",
+      "path": "docs/evidence/benchmark_regeneration_audit_20260706.json",
+      "present": true,
+      "public_safe": true,
+      "schema": "wod2sim_benchmark_regeneration_audit_v1",
+      "sha256": "f3d99dae52f38042051a648826ee1ce2b6f77285efd496fa12eaf9fb047a54c2",
+      "size_bytes": 13599
+    },
+    {
+      "artifact_type": "benchmark_regeneration_control",
+      "claim_scope": "tracked_evidence_chain_artifact",
+      "path": "docs/evidence/benchmark_regeneration_commands_20260706.json",
+      "present": true,
+      "public_safe": true,
+      "schema": "wod2sim_benchmark_regeneration_commands_v1",
+      "sha256": "c10859ce807c8ea20172d0b63628c042106b9ada9bc8d1e6c545bbde138b4736",
+      "size_bytes": 26507
+    },
+    {
+      "artifact_type": "benchmark_regeneration_control",
+      "claim_scope": "manifest_source_artifact",
+      "path": "docs/evidence/benchmark_regeneration_plan_20260706.json",
+      "present": true,
+      "public_safe": true,
+      "schema": "wod2sim_benchmark_regeneration_plan_v1",
+      "sha256": "a682ac8488078b5d950a9726b0f683fc7e49b28aa0a98fc63712f9c1b5f67a84",
+      "size_bytes": 55234
+    },
+    {
+      "artifact_type": "benchmark_regeneration_control",
+      "claim_scope": "tracked_evidence_chain_artifact",
+      "path": "docs/evidence/benchmark_regeneration_readiness_20260706.json",
+      "present": true,
+      "public_safe": true,
+      "schema": "wod2sim_benchmark_regeneration_readiness_v1",
+      "sha256": "233c5772233f63f3ed5f9f218f0b68a7ceee31cab0ed3d25829ec62dff30f083",
+      "size_bytes": 13741
+    },
+    {
+      "artifact_type": "benchmark_regeneration_control",
+      "claim_scope": "manifest_source_artifact",
+      "path": "docs/evidence/benchmark_regeneration_status_20260706.json",
+      "present": true,
+      "public_safe": true,
+      "schema": "wod2sim_benchmark_regeneration_status_v1",
+      "sha256": "deb89acb2ee76f4fcfaea21f7bcf33609005627881ed62e9a1b9f23c5346427a",
+      "size_bytes": 7008
+    },
+    {
+      "artifact_type": "closed_loop_summary",
+      "claim_scope": "claim_valid_10_scene_pilot_summary",
+      "path": "docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json",
+      "present": true,
+      "public_safe": true,
+      "schema": "wod2sim_closed_loop_batch_summary_v1",
+      "sha256": "9701daa36c6a0133bb2a51cf1370b843d6fc0d799a82d117f80ef3b6d50f8f1d",
+      "size_bytes": 25801
+    },
+    {
+      "artifact_type": "closed_loop_summary",
+      "claim_scope": "diagnostic_summary_not_full_stage_claim",
+      "path": "docs/evidence/closed_loop_spotlight_reflex_50scene_attempt_partial.json",
+      "present": true,
+      "public_safe": true,
+      "schema": "wod2sim_closed_loop_batch_summary_v1",
+      "sha256": "a61075bf9e2e7c2630d8e9f363cb99a1bc8f6f8aef37efda0a8bdb18f16b6341",
+      "size_bytes": 3742
+    },
+    {
+      "artifact_type": "closed_loop_summary",
+      "claim_scope": "diagnostic_summary_not_full_stage_claim",
+      "path": "docs/evidence/closed_loop_spotlight_reflex_50scene_localprobe_1scene.json",
+      "present": true,
+      "public_safe": true,
+      "schema": "wod2sim_closed_loop_batch_summary_v1",
+      "sha256": "f83c986a55f3c71091fed8e64945044225d38fe2e48c3307a686d9fc43bdf1f6",
+      "size_bytes": 6513
+    },
+    {
+      "artifact_type": "closed_loop_summary",
+      "claim_scope": "supporting_public_evidence",
+      "path": "docs/evidence/closed_loop_spotlight_reflex_one_scene.json",
+      "present": true,
+      "public_safe": true,
+      "schema": "wod2sim_recorded_closed_loop_evidence_summary_v1",
+      "sha256": "07be0e6fd563e0b8ddbe53b36d54da5a93c8a3332b711d37c4580ca3cc8490a7",
+      "size_bytes": 3374
+    }
+  ],
+  "claim_gate": {
+    "claim_ready": false,
+    "missing_claim_valid_summaries": [
+      "docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json",
+      "docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json"
+    ],
+    "strict_command": "wod2sim-benchmark-audit --strict --json",
+    "valid": true
+  },
+  "created_at": "2026-07-06",
+  "generator": {
+    "command": "wod2sim-benchmark-evidence-manifest",
+    "excludes_self_hash": true,
+    "no_download_or_rollout_probes": true
+  },
+  "manifest_artifact": "docs/evidence/benchmark_public_evidence_manifest_20260706.json",
+  "missing_expected_artifacts": [
+    {
+      "claim_scope": "missing_claim_valid_scale_summary",
+      "path": "docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json",
+      "present": false,
+      "required_for_full_claim": true
+    },
+    {
+      "claim_scope": "missing_claim_valid_scale_summary",
+      "path": "docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json",
+      "present": false,
+      "required_for_full_claim": true
+    }
+  ],
+  "public_artifact_policy": {
+    "tracked": "Compact JSON summaries, documentation, commands, tests, and public-safe hashes/metrics.",
+    "untracked": "Raw AlpaSim media, support bundles, USDZ scene assets, Hugging Face caches, Docker layers, and gated scene-derived files."
+  },
+  "schema": "wod2sim_benchmark_public_evidence_manifest_v1",
+  "source_artifacts": {
+    "audit": "docs/evidence/benchmark_regeneration_audit_20260706.json",
+    "plan": "docs/evidence/benchmark_regeneration_plan_20260706.json",
+    "status": "docs/evidence/benchmark_regeneration_status_20260706.json"
+  }
+}
