@@ -107,8 +107,14 @@ def build_audit(
         readiness=readiness,
         stage_reports=stage_reports,
     )
+    diagnostic_evidence = _diagnostic_evidence(status=status, repo_root=repo_root)
     regeneration_provenance = _regeneration_provenance(stage_reports)
-    valid = input_valid and status_consistency["valid"] and readiness_consistency["valid"]
+    valid = (
+        input_valid
+        and status_consistency["valid"]
+        and readiness_consistency["valid"]
+        and diagnostic_evidence["valid"]
+    )
 
     return {
         "schema": AUDIT_SCHEMA,
@@ -128,6 +134,7 @@ def build_audit(
             stage["summary_artifact"] for stage in stage_reports if not stage["claim_valid"]
         ],
         "regeneration_provenance": regeneration_provenance,
+        "diagnostic_evidence": diagnostic_evidence,
         "status_consistency": status_consistency,
         "readiness_consistency": readiness_consistency,
         "stages": stage_reports,
@@ -290,6 +297,144 @@ def _regeneration_provenance(stage_reports: list[dict[str, Any]]) -> dict[str, A
         and not source_mismatch_or_missing_stages,
         "source_mismatch_or_missing_stages": source_mismatch_or_missing_stages,
         "present_stage_source_mismatches": present_stage_source_mismatches,
+    }
+
+
+def _diagnostic_evidence(*, status: dict[str, Any], repo_root: Path) -> dict[str, Any]:
+    evidence_artifacts = _dict_or_empty(status.get("evidence_artifacts"))
+    public_evidence = _dict_or_empty(status.get("current_public_evidence"))
+    status_row = _dict_or_empty(public_evidence.get("fifty_scene_local_probe"))
+    artifact = str(
+        evidence_artifacts.get("fifty_scene_local_probe") or status_row.get("artifact") or ""
+    )
+    checks: dict[str, bool] = {}
+    notes: list[str] = []
+    summary: dict[str, Any] = {}
+    summary_present = False
+
+    if not artifact and not status_row:
+        return {
+            "valid": True,
+            "artifact": None,
+            "summary_present": False,
+            "checks": {"diagnostic_probe_not_declared": True},
+            "notes": ["no diagnostic probe evidence declared in status"],
+            "observed": {},
+        }
+
+    checks["diagnostic_probe_artifact_declared"] = bool(artifact)
+    if not checks["diagnostic_probe_artifact_declared"]:
+        notes.append("current_public_evidence.fifty_scene_local_probe has no artifact")
+        return _diagnostic_report(
+            valid=False,
+            artifact=None,
+            summary_present=False,
+            checks=checks,
+            notes=notes,
+            summary=summary,
+        )
+
+    summary_path = _resolve_path(repo_root, Path(artifact))
+    summary_present = summary_path.is_file()
+    checks["diagnostic_probe_summary_present"] = summary_present
+    if not summary_present:
+        notes.append(f"diagnostic probe summary missing: {artifact}")
+        return _diagnostic_report(
+            valid=False,
+            artifact=artifact,
+            summary_present=False,
+            checks=checks,
+            notes=notes,
+            summary=summary,
+        )
+
+    try:
+        summary = _read_json(summary_path)
+    except json.JSONDecodeError as exc:
+        checks["diagnostic_probe_summary_valid_json"] = False
+        notes.append(f"diagnostic probe summary invalid JSON: {exc}")
+        return _diagnostic_report(
+            valid=False,
+            artifact=artifact,
+            summary_present=True,
+            checks=checks,
+            notes=notes,
+            summary=summary,
+        )
+
+    checks["diagnostic_probe_summary_valid_json"] = True
+    aggregate = _dict_or_empty(summary.get("aggregate"))
+    run_config = _dict_or_empty(summary.get("run_config"))
+    checks["diagnostic_probe_status_artifact_matches"] = status_row.get("artifact") == artifact
+    checks["diagnostic_probe_status_scope_is_non_claim"] = (
+        status_row.get("status") == "tracked_public_probe_summary"
+        and "not a claim-valid 50-scene" in str(status_row.get("claim_scope") or "")
+    )
+    checks["diagnostic_probe_schema_matches"] = summary.get("schema") == BATCH_SCHEMA
+    checks["diagnostic_probe_preset_matches"] = (
+        run_config.get("scene_preset") == "front_camera_50scene_public2602"
+    )
+    checks["diagnostic_probe_clean_one_scene"] = (
+        summary.get("clean_closed_loop_batch") is True
+        and _int_value(aggregate.get("planned_scene_count")) == 1
+        and _int_value(aggregate.get("completed_scene_count")) == 1
+        and _int_value(aggregate.get("failed_scene_count")) == 0
+        and _int_value(aggregate.get("sensor_failure_scene_count")) == 0
+    )
+    checks["diagnostic_probe_status_counts_match_summary"] = (
+        _int_value(status_row.get("planned_scene_count"))
+        == _int_value(aggregate.get("planned_scene_count"))
+        and _int_value(status_row.get("completed_scene_count"))
+        == _int_value(aggregate.get("completed_scene_count"))
+        and _int_value(status_row.get("failed_scene_count"))
+        == _int_value(aggregate.get("failed_scene_count"))
+        and _int_value(status_row.get("sensor_failure_scene_count"))
+        == _int_value(aggregate.get("sensor_failure_scene_count"))
+    )
+    for key, passed in checks.items():
+        if not passed:
+            notes.append(f"{key} failed")
+
+    return _diagnostic_report(
+        valid=all(checks.values()),
+        artifact=artifact,
+        summary_present=summary_present,
+        checks=checks,
+        notes=notes,
+        summary=summary,
+    )
+
+
+def _diagnostic_report(
+    *,
+    valid: bool,
+    artifact: str | None,
+    summary_present: bool,
+    checks: dict[str, bool],
+    notes: list[str],
+    summary: dict[str, Any],
+) -> dict[str, Any]:
+    aggregate = _dict_or_empty(summary.get("aggregate"))
+    run_config = _dict_or_empty(summary.get("run_config"))
+    return {
+        "valid": valid,
+        "artifact": artifact,
+        "summary_present": summary_present,
+        "claim_scope": "diagnostic_only_not_full_stage_claim",
+        "checks": checks,
+        "notes": notes,
+        "observed": {
+            "schema": summary.get("schema"),
+            "clean_closed_loop_batch": summary.get("clean_closed_loop_batch"),
+            "scene_preset": run_config.get("scene_preset"),
+            "planned_scene_count": _optional_int(aggregate.get("planned_scene_count")),
+            "completed_scene_count": _optional_int(aggregate.get("completed_scene_count")),
+            "failed_scene_count": _optional_int(aggregate.get("failed_scene_count")),
+            "sensor_failure_scene_count": _optional_int(
+                aggregate.get("sensor_failure_scene_count")
+            ),
+            "total_audited_frames": _optional_int(aggregate.get("total_audited_frames")),
+        },
     }
 
 

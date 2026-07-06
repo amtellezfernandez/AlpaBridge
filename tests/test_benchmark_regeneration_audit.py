@@ -14,6 +14,9 @@ AUDIT_RELATIVE = Path("docs/evidence/benchmark_regeneration_audit_20260706.json"
 PLAN_RELATIVE = Path("docs/evidence/benchmark_regeneration_plan_20260706.json")
 STATUS_RELATIVE = Path("docs/evidence/benchmark_regeneration_status_20260706.json")
 READINESS_RELATIVE = Path("docs/evidence/benchmark_regeneration_readiness_20260706.json")
+PROBE_50_RELATIVE = Path(
+    "docs/evidence/closed_loop_spotlight_reflex_50scene_localprobe_1scene.json"
+)
 
 
 class BenchmarkRegenerationAuditTests(unittest.TestCase):
@@ -27,6 +30,12 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         self.assertFalse(audit["claim_ready"])
         self.assertEqual(READINESS_RELATIVE.as_posix(), audit["readiness_artifact"])
         self.assertTrue(audit["readiness_consistency"]["valid"])
+        self.assertTrue(audit["diagnostic_evidence"]["valid"])
+        self.assertEqual(PROBE_50_RELATIVE.as_posix(), audit["diagnostic_evidence"]["artifact"])
+        self.assertEqual(
+            "diagnostic_only_not_full_stage_claim",
+            audit["diagnostic_evidence"]["claim_scope"],
+        )
         self.assertFalse(audit["regeneration_provenance"]["all_stage_sources_match_plan"])
         self.assertEqual([], audit["regeneration_provenance"]["present_stage_source_mismatches"])
         self.assertTrue(stages["front_camera_10scene_smoke"]["claim_valid"])
@@ -90,7 +99,7 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             evidence = repo_root / "docs" / "evidence"
             evidence.mkdir(parents=True)
             shutil.copy2(ROOT / PLAN_RELATIVE, evidence / PLAN_RELATIVE.name)
-            shutil.copy2(ROOT / STATUS_RELATIVE, evidence / STATUS_RELATIVE.name)
+            _copy_status_and_probe(evidence)
 
             plan = _read_json(evidence / PLAN_RELATIVE.name)
             status = _read_json(evidence / STATUS_RELATIVE.name)
@@ -133,7 +142,7 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             evidence = repo_root / "docs" / "evidence"
             evidence.mkdir(parents=True)
             shutil.copy2(ROOT / PLAN_RELATIVE, evidence / PLAN_RELATIVE.name)
-            shutil.copy2(ROOT / STATUS_RELATIVE, evidence / STATUS_RELATIVE.name)
+            _copy_status_and_probe(evidence)
 
             plan = _read_json(evidence / PLAN_RELATIVE.name)
             status = _read_json(evidence / STATUS_RELATIVE.name)
@@ -187,7 +196,7 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             evidence = repo_root / "docs" / "evidence"
             evidence.mkdir(parents=True)
             shutil.copy2(ROOT / PLAN_RELATIVE, evidence / PLAN_RELATIVE.name)
-            shutil.copy2(ROOT / STATUS_RELATIVE, evidence / STATUS_RELATIVE.name)
+            _copy_status_and_probe(evidence)
             shutil.copy2(ROOT / READINESS_RELATIVE, evidence / READINESS_RELATIVE.name)
             _write_json(evidence / "closed_loop_spotlight_reflex_10scene_batch.json", _batch_summary(10))
             _write_json(
@@ -221,7 +230,7 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             evidence = repo_root / "docs" / "evidence"
             evidence.mkdir(parents=True)
             shutil.copy2(ROOT / PLAN_RELATIVE, evidence / PLAN_RELATIVE.name)
-            shutil.copy2(ROOT / STATUS_RELATIVE, evidence / STATUS_RELATIVE.name)
+            _copy_status_and_probe(evidence)
             shutil.copy2(ROOT / READINESS_RELATIVE, evidence / READINESS_RELATIVE.name)
             (evidence / "closed_loop_spotlight_reflex_10scene_batch.json").write_text(
                 "{not-json\n",
@@ -249,6 +258,7 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         self.assertEqual(STATUS_RELATIVE.as_posix(), audit["status_artifact"])
         self.assertEqual(READINESS_RELATIVE.as_posix(), audit["readiness_artifact"])
         self.assertTrue(audit["readiness_consistency"]["valid"])
+        self.assertTrue(audit["diagnostic_evidence"]["valid"])
         self.assertFalse(audit["claim_ready"])
         self.assertIn(AUDIT_RELATIVE.as_posix(), readme)
         self.assertIn(AUDIT_RELATIVE.name, evaluation_protocol)
@@ -260,7 +270,7 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             evidence = repo_root / "docs" / "evidence"
             evidence.mkdir(parents=True)
             shutil.copy2(ROOT / PLAN_RELATIVE, evidence / PLAN_RELATIVE.name)
-            shutil.copy2(ROOT / STATUS_RELATIVE, evidence / STATUS_RELATIVE.name)
+            _copy_status_and_probe(evidence)
 
             audit = module.build_audit(repo_root=repo_root, created_at="2026-07-06")
 
@@ -275,7 +285,7 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             evidence = repo_root / "docs" / "evidence"
             evidence.mkdir(parents=True)
             shutil.copy2(ROOT / PLAN_RELATIVE, evidence / PLAN_RELATIVE.name)
-            shutil.copy2(ROOT / STATUS_RELATIVE, evidence / STATUS_RELATIVE.name)
+            _copy_status_and_probe(evidence)
             plan = _read_json(evidence / PLAN_RELATIVE.name)
             _write_json(evidence / "closed_loop_spotlight_reflex_10scene_batch.json", _batch_summary(10))
             _write_json(
@@ -298,7 +308,7 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             evidence = repo_root / "docs" / "evidence"
             evidence.mkdir(parents=True)
             shutil.copy2(ROOT / PLAN_RELATIVE, evidence / PLAN_RELATIVE.name)
-            shutil.copy2(ROOT / STATUS_RELATIVE, evidence / STATUS_RELATIVE.name)
+            _copy_status_and_probe(evidence)
             shutil.copy2(ROOT / READINESS_RELATIVE, evidence / READINESS_RELATIVE.name)
             status = _read_json(evidence / STATUS_RELATIVE.name)
             status["evidence_artifacts"]["readiness_snapshot"] = "wrong-readiness.json"
@@ -313,6 +323,28 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         self.assertIn(
             "status.evidence_artifacts does not match the audited evidence chain",
             audit["status_consistency"]["notes"],
+        )
+
+    def test_missing_diagnostic_probe_invalidates_audit_artifact_set(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            evidence = repo_root / "docs" / "evidence"
+            evidence.mkdir(parents=True)
+            shutil.copy2(ROOT / PLAN_RELATIVE, evidence / PLAN_RELATIVE.name)
+            shutil.copy2(ROOT / STATUS_RELATIVE, evidence / STATUS_RELATIVE.name)
+            shutil.copy2(ROOT / READINESS_RELATIVE, evidence / READINESS_RELATIVE.name)
+
+            audit = module.build_audit(repo_root=repo_root, created_at="2026-07-06")
+
+        self.assertFalse(audit["valid"])
+        self.assertFalse(audit["diagnostic_evidence"]["valid"])
+        self.assertFalse(
+            audit["diagnostic_evidence"]["checks"]["diagnostic_probe_summary_present"]
+        )
+        self.assertIn(
+            f"diagnostic probe summary missing: {PROBE_50_RELATIVE.as_posix()}",
+            audit["diagnostic_evidence"]["notes"],
         )
 
 
@@ -408,6 +440,11 @@ def _readiness_report(
 
 def _read_json(path: Path) -> dict[str, object]:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _copy_status_and_probe(evidence_dir: Path) -> None:
+    shutil.copy2(ROOT / STATUS_RELATIVE, evidence_dir / STATUS_RELATIVE.name)
+    shutil.copy2(ROOT / PROBE_50_RELATIVE, evidence_dir / PROBE_50_RELATIVE.name)
 
 
 def _write_json(path: Path, payload: dict[str, object]) -> None:

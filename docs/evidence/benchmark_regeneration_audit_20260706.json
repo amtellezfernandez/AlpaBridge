@@ -2,6 +2,34 @@
   "claim_ready": false,
   "claim_rule": "Every stage in the regeneration plan must have a tracked wod2sim_closed_loop_batch_summary_v1 artifact with clean_closed_loop_batch=true, matching scene counts, zero failed scenes, and zero sensor-pipeline failures.",
   "created_at": "2026-07-06",
+  "diagnostic_evidence": {
+    "artifact": "docs/evidence/closed_loop_spotlight_reflex_50scene_localprobe_1scene.json",
+    "checks": {
+      "diagnostic_probe_artifact_declared": true,
+      "diagnostic_probe_clean_one_scene": true,
+      "diagnostic_probe_preset_matches": true,
+      "diagnostic_probe_schema_matches": true,
+      "diagnostic_probe_status_artifact_matches": true,
+      "diagnostic_probe_status_counts_match_summary": true,
+      "diagnostic_probe_status_scope_is_non_claim": true,
+      "diagnostic_probe_summary_present": true,
+      "diagnostic_probe_summary_valid_json": true
+    },
+    "claim_scope": "diagnostic_only_not_full_stage_claim",
+    "notes": [],
+    "observed": {
+      "clean_closed_loop_batch": true,
+      "completed_scene_count": 1,
+      "failed_scene_count": 0,
+      "planned_scene_count": 1,
+      "scene_preset": "front_camera_50scene_public2602",
+      "schema": "wod2sim_closed_loop_batch_summary_v1",
+      "sensor_failure_scene_count": 0,
+      "total_audited_frames": 199
+    },
+    "summary_present": true,
+    "valid": true
+  },
   "errors": [],
   "missing_claim_valid_summaries": [
     "docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json",

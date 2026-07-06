@@ -167,3 +167,5 @@ readiness snapshot references the same plan/status artifacts and agrees with
 the audited public summary state for each stage. Each stage also reports
 `summary_provenance`, including the summary creation time and whether the
 recorded batch directory or merge inputs match the current regeneration plan.
+Diagnostic scale-probe evidence is audited separately as non-claim evidence; it
+does not satisfy the strict 50/100-scene claim gate.
