@@ -357,6 +357,14 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         self.assertEqual(READINESS_RELATIVE.as_posix(), audit["readiness_artifact"])
         self.assertTrue(audit["readiness_consistency"]["valid"])
         self.assertTrue(audit["diagnostic_evidence"]["valid"])
+        self.assertTrue(audit["public_handoff_doc"]["valid"])
+        self.assertEqual(HANDOFF_RELATIVE.as_posix(), audit["public_handoff_doc"]["artifact"])
+        handoff_raw = (ROOT / HANDOFF_RELATIVE).read_bytes()
+        self.assertEqual(len(handoff_raw), audit["public_handoff_doc"]["size_bytes"])
+        self.assertEqual(
+            hashlib.sha256(handoff_raw).hexdigest(),
+            audit["public_handoff_doc"]["sha256"],
+        )
         self.assertIn("objective_completion", audit)
         self.assertFalse(audit["objective_completion"]["complete"])
         self.assertFalse(audit["claim_ready"])

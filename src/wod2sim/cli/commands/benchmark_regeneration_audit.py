@@ -1187,10 +1187,15 @@ def _public_handoff_doc_consistency(
     handoff_path = _resolve_path(repo_root, DEFAULT_HANDOFF)
     artifact = _display_path(DEFAULT_HANDOFF)
     text = ""
+    size_bytes: int | None = None
+    sha256: str | None = None
 
     checks["public_handoff_doc_present"] = handoff_path.is_file()
     if checks["public_handoff_doc_present"]:
-        text = handoff_path.read_text(encoding="utf-8")
+        raw = handoff_path.read_bytes()
+        size_bytes = len(raw)
+        sha256 = hashlib.sha256(raw).hexdigest()
+        text = raw.decode("utf-8")
     else:
         notes.append(f"public handoff doc missing: {artifact}")
 
@@ -1273,6 +1278,8 @@ def _public_handoff_doc_consistency(
     return {
         "valid": all(checks.values()) if checks else False,
         "artifact": artifact,
+        "size_bytes": size_bytes,
+        "sha256": sha256,
         "checks": checks,
         "notes": notes,
         "missing_claim_valid_summaries": missing_summaries,
