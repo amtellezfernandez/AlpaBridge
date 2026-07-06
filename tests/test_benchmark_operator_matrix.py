@@ -68,6 +68,32 @@ EXPECTED_50_PREFLIGHT = _expected_preflight(50)
 EXPECTED_100_PREFLIGHT = _expected_preflight(100)
 
 
+def _expected_completion_gate(
+    scene_count: int, expected_merge_input_count: int
+) -> dict[str, object]:
+    return {
+        "expected_completed_scene_count": scene_count,
+        "expected_failed_scene_count": 0,
+        "expected_merge_input_summary_count": expected_merge_input_count,
+        "expected_scene_count": scene_count,
+        "expected_sensor_failure_scene_count": 0,
+        "merge_output_summary": (
+            f"runs/benchmark_spotlight_reflex_{scene_count}scene_public2602_fresh/"
+            "wod2sim-batch-summary.json"
+        ),
+        "public_summary_target": (
+            f"docs/evidence/closed_loop_spotlight_reflex_{scene_count}scene_batch.json"
+        ),
+        "required_clean_closed_loop_batch": True,
+        "required_schema": "wod2sim_closed_loop_batch_summary_v1",
+        "strict_audit_command": "wod2sim-benchmark-audit --strict --json",
+    }
+
+
+EXPECTED_50_COMPLETION_GATE = _expected_completion_gate(50, 5)
+EXPECTED_100_COMPLETION_GATE = _expected_completion_gate(100, 10)
+
+
 def test_operator_matrix_builder_reflects_tracked_readiness_blockers() -> None:
     module = importlib.import_module("wod2sim.cli.commands.benchmark_operator_matrix")
 
@@ -135,6 +161,12 @@ def test_operator_matrix_builder_reflects_tracked_readiness_blockers() -> None:
     )
     assert matrix["resume_repair_scope"]["stages"][0]["preflight"] == EXPECTED_50_PREFLIGHT
     assert matrix["resume_repair_scope"]["stages"][1]["preflight"] == EXPECTED_100_PREFLIGHT
+    assert matrix["resume_repair_scope"]["stages"][0]["completion_gate"] == (
+        EXPECTED_50_COMPLETION_GATE
+    )
+    assert matrix["resume_repair_scope"]["stages"][1]["completion_gate"] == (
+        EXPECTED_100_COMPLETION_GATE
+    )
     assert "open_repo_reviewer" in summary["ready_roles"]
     assert "closed_loop_runner" in summary["blocked_roles"]
     assert "build_and_validate_scale_caches" in summary["next_command_groups"]
@@ -279,6 +311,7 @@ def test_tracked_operator_matrix_is_public_safe_and_explicit_about_who_can_run()
         "missing_shard_summary_count": 15,
         "stages": [
             {
+                "completion_gate": EXPECTED_50_COMPLETION_GATE,
                 "merge_command_included": True,
                 "missing_shard_indexes": [1, 2, 3, 4, 5],
                 "missing_shard_summary_count": 5,
@@ -299,6 +332,7 @@ def test_tracked_operator_matrix_is_public_safe_and_explicit_about_who_can_run()
                 "stage": "workshop_scale",
             },
             {
+                "completion_gate": EXPECTED_100_COMPLETION_GATE,
                 "merge_command_included": True,
                 "missing_shard_indexes": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
                 "missing_shard_summary_count": 10,

@@ -449,8 +449,8 @@
       "readiness",
       "shards"
     ],
-    "sha256": "4e596739f5dd68930394f20217f0c1cf23357141cdd27841c6d486ba107eee35",
-    "size_bytes": 11058,
+    "sha256": "bdb7fe3ae325bc44d6bd42698dfed2460a8d272a377f6c2fec6eb652754fbbe8",
+    "size_bytes": 11126,
     "valid": true
   },
   "readiness_artifact": "docs/evidence/benchmark_regeneration_readiness_20260706.json",
@@ -620,6 +620,18 @@
       "selected_stage_filters": [],
       "stages": [
         {
+          "completion_gate": {
+            "expected_completed_scene_count": 50,
+            "expected_failed_scene_count": 0,
+            "expected_merge_input_summary_count": 5,
+            "expected_scene_count": 50,
+            "expected_sensor_failure_scene_count": 0,
+            "merge_output_summary": "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/wod2sim-batch-summary.json",
+            "public_summary_target": "docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json",
+            "required_clean_closed_loop_batch": true,
+            "required_schema": "wod2sim_closed_loop_batch_summary_v1",
+            "strict_audit_command": "wod2sim-benchmark-audit --strict --json"
+          },
           "merge_command_included": true,
           "missing_shard_indexes": [
             1,
@@ -731,6 +743,18 @@
           "stage": "workshop_scale"
         },
         {
+          "completion_gate": {
+            "expected_completed_scene_count": 100,
+            "expected_failed_scene_count": 0,
+            "expected_merge_input_summary_count": 10,
+            "expected_scene_count": 100,
+            "expected_sensor_failure_scene_count": 0,
+            "merge_output_summary": "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/wod2sim-batch-summary.json",
+            "public_summary_target": "docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json",
+            "required_clean_closed_loop_batch": true,
+            "required_schema": "wod2sim_closed_loop_batch_summary_v1",
+            "strict_audit_command": "wod2sim-benchmark-audit --strict --json"
+          },
           "merge_command_included": true,
           "missing_shard_indexes": [
             1,

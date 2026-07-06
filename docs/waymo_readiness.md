@@ -193,7 +193,7 @@ The compact evidence manifest is
 and is regenerated with `wod2sim-benchmark-evidence-manifest`; it records hashes
 and claim scopes for tracked public JSON while keeping the 50/100 missing
 summary artifacts and audited resume repair scope, including per-shard scene
-windows and cache preflight validation, explicit.
+windows, cache preflight validation, and completion-gate counts, explicit.
 The readiness/status flow includes `blocking_requirements` and
 `next_command_groups` so operators can map missing cache/runtime prerequisites
 back to plan command groups. Short setup groups include copyable `display`

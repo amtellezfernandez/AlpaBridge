@@ -494,6 +494,9 @@ def _resume_repair_scope(
                 "promote_command_included": bool(stage.get("promote_command_included")),
                 "post_review_commands_included": bool(stage.get("post_review_commands_included")),
                 "preflight": _resume_stage_preflight_scope(_dict_or_empty(stage.get("preflight"))),
+                "completion_gate": _resume_stage_completion_gate_scope(
+                    _dict_or_empty(stage.get("completion_gate"))
+                ),
             }
         )
     return {
@@ -540,6 +543,31 @@ def _resume_stage_preflight_scope(preflight: dict[str, Any]) -> dict[str, Any]:
         "cache_must_validate_before_shards": bool(
             preflight.get("cache_must_validate_before_shards")
         ),
+    }
+
+
+def _resume_stage_completion_gate_scope(completion_gate: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "merge_output_summary": completion_gate.get("merge_output_summary"),
+        "public_summary_target": completion_gate.get("public_summary_target"),
+        "expected_scene_count": _optional_int(completion_gate.get("expected_scene_count")),
+        "expected_completed_scene_count": _optional_int(
+            completion_gate.get("expected_completed_scene_count")
+        ),
+        "expected_failed_scene_count": _optional_int(
+            completion_gate.get("expected_failed_scene_count")
+        ),
+        "expected_sensor_failure_scene_count": _optional_int(
+            completion_gate.get("expected_sensor_failure_scene_count")
+        ),
+        "expected_merge_input_summary_count": _optional_int(
+            completion_gate.get("expected_merge_input_summary_count")
+        ),
+        "required_schema": completion_gate.get("required_schema"),
+        "required_clean_closed_loop_batch": bool(
+            completion_gate.get("required_clean_closed_loop_batch")
+        ),
+        "strict_audit_command": completion_gate.get("strict_audit_command"),
     }
 
 

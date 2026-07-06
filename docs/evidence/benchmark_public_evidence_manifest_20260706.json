@@ -8,8 +8,8 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_benchmark_operator_matrix_v1",
-      "sha256": "16dbd784498d7ae6e1315c506a0e2ccf44dcf3f659063da97277dffc582e9748",
-      "size_bytes": 25506
+      "sha256": "e7b733733faf8ddd15f00f3ddc8314d90a1e7ccb7a5c31170f68c13cb4b11789",
+      "size_bytes": 26893
     },
     {
       "artifact_type": "benchmark_regeneration_control",
@@ -18,8 +18,8 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_benchmark_regeneration_audit_v1",
-      "sha256": "c9afc0322d9c29d1538b8408a7aa79aa5f149e8aea0361abbc7870b72df29678",
-      "size_bytes": 58873
+      "sha256": "cebf2bde53f282285735472890d5725da98ca5d6916b94aeb09ed598fb8a07a5",
+      "size_bytes": 60308
     },
     {
       "artifact_type": "benchmark_regeneration_control",
@@ -58,8 +58,8 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_benchmark_regeneration_commands_v1",
-      "sha256": "f68a9349a49c4bbe0f219f6c897ffbe2546188451f4bceb1d0d340237bfaeef8",
-      "size_bytes": 53273
+      "sha256": "9d0b035b6644acd273247aa1079ee5a2c97e660eb2a76839a38ada7d14b3cd7e",
+      "size_bytes": 54660
     },
     {
       "artifact_type": "benchmark_regeneration_control",
@@ -139,6 +139,18 @@
       "selected_stage_filters": [],
       "stages": [
         {
+          "completion_gate": {
+            "expected_completed_scene_count": 50,
+            "expected_failed_scene_count": 0,
+            "expected_merge_input_summary_count": 5,
+            "expected_scene_count": 50,
+            "expected_sensor_failure_scene_count": 0,
+            "merge_output_summary": "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/wod2sim-batch-summary.json",
+            "public_summary_target": "docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json",
+            "required_clean_closed_loop_batch": true,
+            "required_schema": "wod2sim_closed_loop_batch_summary_v1",
+            "strict_audit_command": "wod2sim-benchmark-audit --strict --json"
+          },
           "merge_command_included": true,
           "missing_shard_indexes": [
             1,
@@ -250,6 +262,18 @@
           "stage": "workshop_scale"
         },
         {
+          "completion_gate": {
+            "expected_completed_scene_count": 100,
+            "expected_failed_scene_count": 0,
+            "expected_merge_input_summary_count": 10,
+            "expected_scene_count": 100,
+            "expected_sensor_failure_scene_count": 0,
+            "merge_output_summary": "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/wod2sim-batch-summary.json",
+            "public_summary_target": "docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json",
+            "required_clean_closed_loop_batch": true,
+            "required_schema": "wod2sim_closed_loop_batch_summary_v1",
+            "strict_audit_command": "wod2sim-benchmark-audit --strict --json"
+          },
           "merge_command_included": true,
           "missing_shard_indexes": [
             1,

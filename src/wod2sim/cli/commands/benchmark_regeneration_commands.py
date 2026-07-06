@@ -429,6 +429,7 @@ def build_resume_plan_summary(
                 "promote_command_included": "promote" in selected_groups,
                 "post_review_commands_included": "post" in selected_groups,
                 "preflight": _resume_stage_preflight(stage),
+                "completion_gate": _resume_stage_completion_gate(stage),
             }
         )
 
@@ -471,6 +472,24 @@ def _resume_stage_preflight(stage: dict[str, Any]) -> dict[str, Any]:
         "validate_local_cache_command": _command_display(commands.get("validate_local_cache")),
         "cache_command_group": "cache",
         "cache_must_validate_before_shards": bool(stage.get("requires_local_usdz_cache")),
+    }
+
+
+def _resume_stage_completion_gate(stage: dict[str, Any]) -> dict[str, Any]:
+    commands = _dict_or_empty(stage.get("commands"))
+    merge_command = _dict_or_empty(commands.get("merge_shard_summaries"))
+    expected_scene_count = _int_or_none(stage.get("scene_count"))
+    return {
+        "merge_output_summary": _argv_value(merge_command, "--output"),
+        "public_summary_target": stage.get("public_summary_target"),
+        "expected_scene_count": expected_scene_count,
+        "expected_completed_scene_count": expected_scene_count,
+        "expected_failed_scene_count": 0,
+        "expected_sensor_failure_scene_count": 0,
+        "expected_merge_input_summary_count": len(_shard_summary_outputs_by_index(stage)),
+        "required_schema": "wod2sim_closed_loop_batch_summary_v1",
+        "required_clean_closed_loop_batch": True,
+        "strict_audit_command": "wod2sim-benchmark-audit --strict --json",
     }
 
 

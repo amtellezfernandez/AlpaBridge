@@ -135,7 +135,8 @@ state, blockers, and next command groups.
 The tracked resume-command artifact adds `resume_plan`, a compact list of the
 affected 50/100 stages, missing shard summary paths, per-shard scene windows,
 validate-only cache preflight commands, and merge/promote/post repair steps
-selected by the current audit.
+selected by the current audit, plus the completion-gate counts each promoted
+summary must satisfy.
 
 ## Cleanup Boundary
 
