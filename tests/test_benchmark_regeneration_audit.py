@@ -75,6 +75,22 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             "docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json",
             audit["missing_claim_valid_summaries"],
         )
+        completion = audit["objective_completion"]
+        self.assertFalse(completion["complete"])
+        self.assertIn(
+            "produce_claim_valid_50_scene_summary",
+            completion["remaining_requirements"],
+        )
+        self.assertIn(
+            "produce_claim_valid_100_scene_summary",
+            completion["remaining_requirements"],
+        )
+        requirements = {
+            item["requirement"]: item for item in completion["requirements"]
+        }
+        self.assertTrue(requirements["validate_10_scene_pilot"]["satisfied"])
+        self.assertTrue(requirements["track_50_scene_scale_progress"]["satisfied"])
+        self.assertFalse(requirements["pass_strict_claim_gate"]["satisfied"])
 
     def test_strict_main_fails_until_all_planned_summaries_are_claim_valid(self) -> None:
         module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
@@ -137,6 +153,8 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
 
         self.assertTrue(audit["valid"])
         self.assertTrue(audit["claim_ready"])
+        self.assertTrue(audit["objective_completion"]["complete"])
+        self.assertEqual([], audit["objective_completion"]["remaining_requirements"])
         self.assertFalse(audit["regeneration_provenance"]["all_stage_sources_match_plan"])
         self.assertEqual([], audit["missing_claim_valid_summaries"])
         self.assertTrue(
@@ -270,6 +288,8 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         self.assertEqual(READINESS_RELATIVE.as_posix(), audit["readiness_artifact"])
         self.assertTrue(audit["readiness_consistency"]["valid"])
         self.assertTrue(audit["diagnostic_evidence"]["valid"])
+        self.assertIn("objective_completion", audit)
+        self.assertFalse(audit["objective_completion"]["complete"])
         self.assertFalse(audit["claim_ready"])
         self.assertIn(AUDIT_RELATIVE.as_posix(), readme)
         self.assertIn(AUDIT_RELATIVE.name, evaluation_protocol)

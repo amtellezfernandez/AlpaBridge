@@ -68,6 +68,52 @@
     "docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json",
     "docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json"
   ],
+  "objective_completion": {
+    "complete": false,
+    "objective": "Regenerate WOD2Sim closed-loop benchmark artifacts from scratch, validate 10-scene pilot, scale as feasible to 50/100 scenes, and track public-safe evidence.",
+    "remaining_requirements": [
+      "produce_claim_valid_50_scene_summary",
+      "produce_claim_valid_100_scene_summary",
+      "pass_strict_claim_gate"
+    ],
+    "requirements": [
+      {
+        "detail": "Tracked 10-scene batch summary is claim-valid.",
+        "evidence": "docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json",
+        "requirement": "validate_10_scene_pilot",
+        "satisfied": true
+      },
+      {
+        "detail": "Diagnostic 50-preset probe and partial-attempt summaries are audited as non-claim evidence.",
+        "evidence": [
+          "docs/evidence/closed_loop_spotlight_reflex_50scene_localprobe_1scene.json",
+          "docs/evidence/closed_loop_spotlight_reflex_50scene_attempt_partial.json"
+        ],
+        "requirement": "track_50_scene_scale_progress",
+        "satisfied": true
+      },
+      {
+        "detail": "Requires a clean full-stage 50-scene public summary.",
+        "evidence": "docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json",
+        "requirement": "produce_claim_valid_50_scene_summary",
+        "satisfied": false
+      },
+      {
+        "detail": "Requires a clean full-stage 100-scene public summary.",
+        "evidence": "docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json",
+        "requirement": "produce_claim_valid_100_scene_summary",
+        "satisfied": false
+      },
+      {
+        "detail": "Strict audit passes only when every planned stage is claim-valid.",
+        "evidence": "wod2sim-benchmark-audit --strict --json",
+        "requirement": "pass_strict_claim_gate",
+        "satisfied": false
+      }
+    ],
+    "satisfied_count": 2,
+    "total_count": 5
+  },
   "plan_artifact": "docs/evidence/benchmark_regeneration_plan_20260706.json",
   "readiness_artifact": "docs/evidence/benchmark_regeneration_readiness_20260706.json",
   "readiness_consistency": {

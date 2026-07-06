@@ -170,3 +170,6 @@ the audited public summary state for each stage. Each stage also reports
 recorded batch directory or merge inputs match the current regeneration plan.
 Diagnostic scale-probe evidence is audited separately as non-claim evidence; it
 does not satisfy the strict 50/100-scene claim gate.
+The audit's `objective_completion` section is the public checklist for which
+parts of the regeneration objective are satisfied and which claim artifacts
+remain missing.

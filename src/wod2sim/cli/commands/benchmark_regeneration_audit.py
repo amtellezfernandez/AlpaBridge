@@ -109,6 +109,11 @@ def build_audit(
     )
     diagnostic_evidence = _diagnostic_evidence(status=status, repo_root=repo_root)
     regeneration_provenance = _regeneration_provenance(stage_reports)
+    objective_completion = _objective_completion(
+        stage_reports=stage_reports,
+        diagnostic_evidence=diagnostic_evidence,
+        claim_ready=claim_ready,
+    )
     valid = (
         input_valid
         and status_consistency["valid"]
@@ -133,6 +138,7 @@ def build_audit(
         "missing_claim_valid_summaries": [
             stage["summary_artifact"] for stage in stage_reports if not stage["claim_valid"]
         ],
+        "objective_completion": objective_completion,
         "regeneration_provenance": regeneration_provenance,
         "diagnostic_evidence": diagnostic_evidence,
         "status_consistency": status_consistency,
@@ -558,6 +564,92 @@ def _diagnostic_report(
             "total_audited_frames": _optional_int(aggregate.get("total_audited_frames")),
         },
     }
+
+
+def _objective_completion(
+    *,
+    stage_reports: list[dict[str, Any]],
+    diagnostic_evidence: dict[str, Any],
+    claim_ready: bool,
+) -> dict[str, Any]:
+    by_count = {
+        _int_value(stage.get("expected_scene_count")): stage for stage in stage_reports
+    }
+    requirements = [
+        _objective_requirement(
+            requirement="validate_10_scene_pilot",
+            satisfied=bool(_dict_or_empty(by_count.get(10)).get("claim_valid")),
+            evidence=_dict_or_empty(by_count.get(10)).get("summary_artifact"),
+            detail="Tracked 10-scene batch summary is claim-valid.",
+        ),
+        _objective_requirement(
+            requirement="track_50_scene_scale_progress",
+            satisfied=bool(diagnostic_evidence.get("valid")),
+            evidence=_diagnostic_scale_evidence(diagnostic_evidence),
+            detail="Diagnostic 50-preset probe and partial-attempt summaries are audited as non-claim evidence.",
+        ),
+        _objective_requirement(
+            requirement="produce_claim_valid_50_scene_summary",
+            satisfied=bool(_dict_or_empty(by_count.get(50)).get("claim_valid")),
+            evidence=_dict_or_empty(by_count.get(50)).get("summary_artifact"),
+            detail="Requires a clean full-stage 50-scene public summary.",
+        ),
+        _objective_requirement(
+            requirement="produce_claim_valid_100_scene_summary",
+            satisfied=bool(_dict_or_empty(by_count.get(100)).get("claim_valid")),
+            evidence=_dict_or_empty(by_count.get(100)).get("summary_artifact"),
+            detail="Requires a clean full-stage 100-scene public summary.",
+        ),
+        _objective_requirement(
+            requirement="pass_strict_claim_gate",
+            satisfied=claim_ready,
+            evidence="wod2sim-benchmark-audit --strict --json",
+            detail="Strict audit passes only when every planned stage is claim-valid.",
+        ),
+    ]
+    return {
+        "objective": (
+            "Regenerate WOD2Sim closed-loop benchmark artifacts from scratch, validate "
+            "10-scene pilot, scale as feasible to 50/100 scenes, and track public-safe evidence."
+        ),
+        "complete": claim_ready,
+        "requirements": requirements,
+        "satisfied_count": sum(1 for requirement in requirements if requirement["satisfied"]),
+        "total_count": len(requirements),
+        "remaining_requirements": [
+            requirement["requirement"]
+            for requirement in requirements
+            if not requirement["satisfied"]
+        ],
+    }
+
+
+def _objective_requirement(
+    *,
+    requirement: str,
+    satisfied: bool,
+    evidence: object,
+    detail: str,
+) -> dict[str, Any]:
+    return {
+        "requirement": requirement,
+        "satisfied": satisfied,
+        "evidence": evidence,
+        "detail": detail,
+    }
+
+
+def _diagnostic_scale_evidence(diagnostic_evidence: dict[str, Any]) -> list[str]:
+    evidence = []
+    artifact = diagnostic_evidence.get("artifact")
+    if isinstance(artifact, str) and artifact:
+        evidence.append(artifact)
+    attempts = _dict_or_empty(diagnostic_evidence.get("scale_attempts"))
+    for attempt in attempts.values():
+        attempt_artifact = _dict_or_empty(attempt).get("artifact")
+        if isinstance(attempt_artifact, str) and attempt_artifact:
+            evidence.append(attempt_artifact)
+    return evidence
 
 
 def _observed_summary_kind(*, source: dict[str, Any]) -> str | None:
