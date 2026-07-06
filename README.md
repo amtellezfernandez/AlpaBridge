@@ -253,7 +253,8 @@ probe Docker, GPUs, or local scene caches.
 The hash/size/schema manifest for tracked compact evidence is
 [`docs/evidence/benchmark_public_evidence_manifest_20260706.json`](docs/evidence/benchmark_public_evidence_manifest_20260706.json)
 and can be regenerated with `wod2sim-benchmark-evidence-manifest`; it excludes
-its own hash and records the missing 50/100 expected claim summaries.
+its own hash, records the missing 50/100 expected claim summaries, and mirrors
+the audited missing-shard resume repair scope.
 A machine-readable 10/50/100 rerun plan is tracked in
 [`docs/evidence/benchmark_regeneration_plan_20260706.json`](docs/evidence/benchmark_regeneration_plan_20260706.json)
 and can be regenerated with `wod2sim-benchmark-plan`.

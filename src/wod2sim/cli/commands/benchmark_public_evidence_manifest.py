@@ -131,6 +131,9 @@ def build_public_evidence_manifest(
                 for gap in _list_or_empty(objective_completion.get("scale_claim_gaps"))
                 if isinstance(gap, dict)
             ],
+            "resume_repair_scope": _dict_or_empty(
+                _dict_or_empty(audit.get("regeneration_resume_commands")).get("resume_plan")
+            ),
             "strict_command": "wod2sim-benchmark-audit --strict --json",
         },
         "public_artifact_policy": _dict_or_empty(status.get("public_artifact_policy")),

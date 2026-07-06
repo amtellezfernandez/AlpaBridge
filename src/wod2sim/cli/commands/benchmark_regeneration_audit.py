@@ -188,6 +188,7 @@ def build_audit(
         status=status,
         stage_reports=stage_reports,
         objective_completion=objective_completion,
+        regeneration_resume_commands=regeneration_resume_commands,
         claim_ready=claim_ready,
         expected_audit_valid_without_manifest=expected_valid_without_manifest,
         repo_root=repo_root,
@@ -1265,6 +1266,7 @@ def _public_evidence_manifest_consistency(
     status: dict[str, Any],
     stage_reports: list[dict[str, Any]],
     objective_completion: dict[str, Any],
+    regeneration_resume_commands: dict[str, Any],
     claim_ready: bool,
     expected_audit_valid_without_manifest: bool,
     repo_root: Path,
@@ -1324,6 +1326,12 @@ def _public_evidence_manifest_consistency(
     ) == objective_completion.get("scale_claim_gaps")
     if not checks["public_evidence_manifest_scale_claim_gaps_match_audit"]:
         notes.append("public evidence manifest scale_claim_gaps do not match current audit")
+
+    checks["public_evidence_manifest_resume_repair_scope_matches_audit"] = claim_gate.get(
+        "resume_repair_scope"
+    ) == _dict_or_empty(regeneration_resume_commands.get("resume_plan"))
+    if not checks["public_evidence_manifest_resume_repair_scope_matches_audit"]:
+        notes.append("public evidence manifest resume_repair_scope does not match current audit")
 
     artifacts = [
         artifact
@@ -1762,6 +1770,7 @@ def _public_handoff_doc_consistency(
         evidence_artifacts.get("regeneration_resume_commands"),
         evidence_artifacts.get("operator_matrix"),
         evidence_artifacts.get("claim_audit") or _display_path(DEFAULT_AUDIT),
+        evidence_artifacts.get("public_evidence_manifest"),
     ]
     required_link_strings = [str(link) for link in required_links if isinstance(link, str) and link]
     checks["public_handoff_doc_links_core_artifacts"] = all(

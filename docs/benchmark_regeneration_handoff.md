@@ -17,6 +17,7 @@ The authoritative machine-readable inputs are:
 | [`docs/evidence/benchmark_regeneration_commands_20260706.json`](evidence/benchmark_regeneration_commands_20260706.json) | Rendered cache, shard, merge, promotion, status, and audit commands from the plan, including execution-boundary and operator-role counts. |
 | [`docs/evidence/benchmark_regeneration_resume_commands_20260706.json`](evidence/benchmark_regeneration_resume_commands_20260706.json) | Audit-derived resume snapshot for missing or invalid planned 50/100 shard summaries. |
 | [`docs/evidence/benchmark_regeneration_audit_20260706.json`](evidence/benchmark_regeneration_audit_20260706.json) | Strict claim gate for the tracked public evidence chain. |
+| [`docs/evidence/benchmark_public_evidence_manifest_20260706.json`](evidence/benchmark_public_evidence_manifest_20260706.json) | Hash/size/schema manifest for compact public evidence, missing expected 50/100 claim summaries, and the audited resume repair scope. |
 
 ## Current State
 

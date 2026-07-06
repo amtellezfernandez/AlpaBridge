@@ -402,6 +402,7 @@
       "public_evidence_manifest_loaded": true,
       "public_evidence_manifest_missing_expected_matches_audit": true,
       "public_evidence_manifest_referenced": true,
+      "public_evidence_manifest_resume_repair_scope_matches_audit": true,
       "public_evidence_manifest_scale_claim_gaps_match_audit": true,
       "public_evidence_manifest_schema_matches": true,
       "public_evidence_manifest_self_path_matches_status": true,
@@ -448,8 +449,8 @@
       "readiness",
       "shards"
     ],
-    "sha256": "390b70762102a6d33f7846ec4ad627937696fae51f906f143862c84ac9f01c67",
-    "size_bytes": 10728,
+    "sha256": "34cad6b2a844864ad18d576951df557e0a2d2b4784acf0cfe9eb4a1771b748c3",
+    "size_bytes": 10993,
     "valid": true
   },
   "readiness_artifact": "docs/evidence/benchmark_regeneration_readiness_20260706.json",

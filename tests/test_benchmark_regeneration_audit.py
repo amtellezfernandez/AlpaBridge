@@ -172,6 +172,11 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
                 "public_evidence_manifest_scale_claim_gaps_match_audit"
             ]
         )
+        self.assertTrue(
+            audit["public_evidence_manifest"]["checks"][
+                "public_evidence_manifest_resume_repair_scope_matches_audit"
+            ]
+        )
         self.assertEqual(PROBE_50_RELATIVE.as_posix(), audit["diagnostic_evidence"]["artifact"])
         self.assertEqual(
             "diagnostic_only_not_full_stage_claim",
@@ -994,6 +999,31 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             audit["public_evidence_manifest"]["notes"],
         )
 
+    def test_public_evidence_manifest_resume_repair_scope_drift_invalidates_audit(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            evidence = repo_root / "docs" / "evidence"
+            evidence.mkdir(parents=True)
+            _copy_evidence_jsons(evidence)
+            manifest_path = evidence / MANIFEST_RELATIVE.name
+            manifest = _read_json(manifest_path)
+            manifest["claim_gate"]["resume_repair_scope"]["missing_shard_summary_count"] = 14
+            _write_json(manifest_path, manifest)
+
+            audit = module.build_audit(repo_root=repo_root, created_at="2026-07-06")
+
+        self.assertFalse(audit["valid"])
+        self.assertFalse(
+            audit["public_evidence_manifest"]["checks"][
+                "public_evidence_manifest_resume_repair_scope_matches_audit"
+            ]
+        )
+        self.assertIn(
+            "public evidence manifest resume_repair_scope does not match current audit",
+            audit["public_evidence_manifest"]["notes"],
+        )
+
     def test_regeneration_plan_drift_invalidates_audit(self) -> None:
         module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -1537,6 +1567,7 @@ def _write_test_handoff_doc(
         RESUME_COMMANDS_RELATIVE.as_posix(),
         OPERATOR_MATRIX_RELATIVE.as_posix(),
         AUDIT_RELATIVE.as_posix(),
+        MANIFEST_RELATIVE.as_posix(),
     ]
     lines = [
         "# Test Benchmark Regeneration Handoff",
@@ -1571,6 +1602,7 @@ def _write_public_evidence_manifest(
     bootstrap_audit = audit_module.build_audit(repo_root=repo_root, created_at="2026-07-06")
     _write_json(evidence_dir / AUDIT_RELATIVE.name, bootstrap_audit)
     scale_claim_gaps = bootstrap_audit["objective_completion"]["scale_claim_gaps"]
+    resume_repair_scope = bootstrap_audit["regeneration_resume_commands"]["resume_plan"]
 
     manifest_path = evidence_dir / MANIFEST_RELATIVE.name
     artifacts = []
@@ -1618,6 +1650,7 @@ def _write_public_evidence_manifest(
             "claim_ready": claim_ready,
             "missing_claim_valid_summaries": missing_claim_valid_summaries,
             "scale_claim_gaps": scale_claim_gaps,
+            "resume_repair_scope": resume_repair_scope,
             "strict_command": "wod2sim-benchmark-audit --strict --json",
         },
         "artifact_count": len(artifacts),

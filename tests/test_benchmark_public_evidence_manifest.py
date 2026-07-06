@@ -65,6 +65,14 @@ def test_public_evidence_manifest_builder_hashes_tracked_artifacts() -> None:
         "missing_count": 5,
         "present_count": 0,
     }
+    assert manifest["claim_gate"]["resume_repair_scope"]["affected_stage_count"] == 2
+    assert manifest["claim_gate"]["resume_repair_scope"]["missing_shard_summary_count"] == 15
+    assert manifest["claim_gate"]["resume_repair_scope"]["command_group_counts"] == {
+        "merge": 2,
+        "post": 2,
+        "promote": 2,
+        "shards": 30,
+    }
     assert {Path(row["path"]) for row in manifest["missing_expected_artifacts"]} == {
         MISSING_50_RELATIVE,
         MISSING_100_RELATIVE,
@@ -174,6 +182,28 @@ def test_tracked_public_evidence_manifest_is_public_safe_and_complete() -> None:
         manifest["claim_gate"]["scale_claim_gaps"][0]["source_usdz_cache"]["matching_scene_count"]
         == 0
     )
+    assert manifest["claim_gate"]["resume_repair_scope"]["included_groups"] == [
+        "shards",
+        "merge",
+        "promote",
+        "post",
+    ]
+    assert (
+        manifest["claim_gate"]["resume_repair_scope"]["stages"][0]["missing_shard_summary_count"]
+        == 5
+    )
+    assert manifest["claim_gate"]["resume_repair_scope"]["stages"][1]["missing_shard_indexes"] == [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+    ]
     assert {Path(row["path"]) for row in manifest["missing_expected_artifacts"]} == {
         MISSING_50_RELATIVE,
         MISSING_100_RELATIVE,
