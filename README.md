@@ -217,6 +217,9 @@ hosts can help with cache preparation but cannot run the amd64-only NRE
 SensorSim image natively. The current regeneration and scale status is tracked
 in
 [`docs/evidence/benchmark_regeneration_status_20260706.json`](docs/evidence/benchmark_regeneration_status_20260706.json).
+Regenerate that status from the tracked public evidence chain with
+`wod2sim-benchmark-status`; it only reads compact JSON artifacts and does not
+probe Docker, GPUs, or local scene caches.
 A machine-readable 10/50/100 rerun plan is tracked in
 [`docs/evidence/benchmark_regeneration_plan_20260706.json`](docs/evidence/benchmark_regeneration_plan_20260706.json)
 and can be regenerated with `wod2sim-benchmark-plan`.
