@@ -133,8 +133,8 @@ renderer without executing private cache or rollout work. Its `scale_claim_gaps`
 rows summarize each 50/100 stage's local/source cache validity, missing summary
 state, blockers, and next command groups.
 The tracked resume-command artifact adds `resume_plan`, a compact list of the
-affected 50/100 stages, missing shard summary paths, and merge/promote/post
-repair steps selected by the current audit.
+affected 50/100 stages, missing shard summary paths, per-shard scene windows,
+and merge/promote/post repair steps selected by the current audit.
 
 ## Cleanup Boundary
 

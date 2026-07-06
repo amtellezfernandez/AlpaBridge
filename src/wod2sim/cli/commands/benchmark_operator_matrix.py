@@ -486,6 +486,10 @@ def _resume_repair_scope(
                     for path in _list_or_empty(stage.get("missing_shard_summary_paths"))
                     if isinstance(path, str) and path
                 ],
+                "missing_shards": [
+                    _resume_missing_shard_scope(shard)
+                    for shard in _list_of_dicts(stage.get("missing_shards"))
+                ],
                 "merge_command_included": bool(stage.get("merge_command_included")),
                 "promote_command_included": bool(stage.get("promote_command_included")),
                 "post_review_commands_included": bool(stage.get("post_review_commands_included")),
@@ -505,6 +509,23 @@ def _resume_repair_scope(
         ],
         "command_group_counts": _dict_or_empty(resume_plan.get("command_group_counts")),
         "stages": stages,
+    }
+
+
+def _resume_missing_shard_scope(shard: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "shard_index": _optional_int(shard.get("shard_index")),
+        "scene_offset": _optional_int(shard.get("scene_offset")),
+        "scene_limit": _optional_int(shard.get("scene_limit")),
+        "run_dir": shard.get("run_dir"),
+        "summary_path": shard.get("summary_path"),
+        "summary_errors": [
+            str(error)
+            for error in _list_or_empty(shard.get("summary_errors"))
+            if isinstance(error, str)
+        ],
+        "run_command_included": bool(shard.get("run_command_included")),
+        "write_summary_command_included": bool(shard.get("write_summary_command_included")),
     }
 
 

@@ -449,8 +449,8 @@
       "readiness",
       "shards"
     ],
-    "sha256": "34cad6b2a844864ad18d576951df557e0a2d2b4784acf0cfe9eb4a1771b748c3",
-    "size_bytes": 10993,
+    "sha256": "97fc68739d152a5aa384b491119a8d6b59a13bbcaa6f66b7c5eba2a41dce3d81",
+    "size_bytes": 11018,
     "valid": true
   },
   "readiness_artifact": "docs/evidence/benchmark_regeneration_readiness_20260706.json",
@@ -636,6 +636,68 @@
             "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/030_039/wod2sim-batch-summary.json",
             "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/040_049/wod2sim-batch-summary.json"
           ],
+          "missing_shards": [
+            {
+              "run_command_included": true,
+              "run_dir": "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/000_009",
+              "scene_limit": 10,
+              "scene_offset": 0,
+              "shard_index": 1,
+              "summary_errors": [
+                "summary_missing"
+              ],
+              "summary_path": "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/000_009/wod2sim-batch-summary.json",
+              "write_summary_command_included": true
+            },
+            {
+              "run_command_included": true,
+              "run_dir": "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/010_019",
+              "scene_limit": 10,
+              "scene_offset": 10,
+              "shard_index": 2,
+              "summary_errors": [
+                "summary_missing"
+              ],
+              "summary_path": "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/010_019/wod2sim-batch-summary.json",
+              "write_summary_command_included": true
+            },
+            {
+              "run_command_included": true,
+              "run_dir": "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/020_029",
+              "scene_limit": 10,
+              "scene_offset": 20,
+              "shard_index": 3,
+              "summary_errors": [
+                "summary_missing"
+              ],
+              "summary_path": "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/020_029/wod2sim-batch-summary.json",
+              "write_summary_command_included": true
+            },
+            {
+              "run_command_included": true,
+              "run_dir": "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/030_039",
+              "scene_limit": 10,
+              "scene_offset": 30,
+              "shard_index": 4,
+              "summary_errors": [
+                "summary_missing"
+              ],
+              "summary_path": "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/030_039/wod2sim-batch-summary.json",
+              "write_summary_command_included": true
+            },
+            {
+              "run_command_included": true,
+              "run_dir": "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/040_049",
+              "scene_limit": 10,
+              "scene_offset": 40,
+              "shard_index": 5,
+              "summary_errors": [
+                "summary_missing"
+              ],
+              "summary_path": "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/040_049/wod2sim-batch-summary.json",
+              "write_summary_command_included": true
+            }
+          ],
           "missing_summary_errors_by_path": {
             "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/000_009/wod2sim-batch-summary.json": [
               "summary_missing"
@@ -686,6 +748,128 @@
             "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/070_079/wod2sim-batch-summary.json",
             "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/080_089/wod2sim-batch-summary.json",
             "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/090_099/wod2sim-batch-summary.json"
+          ],
+          "missing_shards": [
+            {
+              "run_command_included": true,
+              "run_dir": "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/000_009",
+              "scene_limit": 10,
+              "scene_offset": 0,
+              "shard_index": 1,
+              "summary_errors": [
+                "summary_missing"
+              ],
+              "summary_path": "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/000_009/wod2sim-batch-summary.json",
+              "write_summary_command_included": true
+            },
+            {
+              "run_command_included": true,
+              "run_dir": "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/010_019",
+              "scene_limit": 10,
+              "scene_offset": 10,
+              "shard_index": 2,
+              "summary_errors": [
+                "summary_missing"
+              ],
+              "summary_path": "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/010_019/wod2sim-batch-summary.json",
+              "write_summary_command_included": true
+            },
+            {
+              "run_command_included": true,
+              "run_dir": "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/020_029",
+              "scene_limit": 10,
+              "scene_offset": 20,
+              "shard_index": 3,
+              "summary_errors": [
+                "summary_missing"
+              ],
+              "summary_path": "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/020_029/wod2sim-batch-summary.json",
+              "write_summary_command_included": true
+            },
+            {
+              "run_command_included": true,
+              "run_dir": "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/030_039",
+              "scene_limit": 10,
+              "scene_offset": 30,
+              "shard_index": 4,
+              "summary_errors": [
+                "summary_missing"
+              ],
+              "summary_path": "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/030_039/wod2sim-batch-summary.json",
+              "write_summary_command_included": true
+            },
+            {
+              "run_command_included": true,
+              "run_dir": "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/040_049",
+              "scene_limit": 10,
+              "scene_offset": 40,
+              "shard_index": 5,
+              "summary_errors": [
+                "summary_missing"
+              ],
+              "summary_path": "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/040_049/wod2sim-batch-summary.json",
+              "write_summary_command_included": true
+            },
+            {
+              "run_command_included": true,
+              "run_dir": "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/050_059",
+              "scene_limit": 10,
+              "scene_offset": 50,
+              "shard_index": 6,
+              "summary_errors": [
+                "summary_missing"
+              ],
+              "summary_path": "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/050_059/wod2sim-batch-summary.json",
+              "write_summary_command_included": true
+            },
+            {
+              "run_command_included": true,
+              "run_dir": "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/060_069",
+              "scene_limit": 10,
+              "scene_offset": 60,
+              "shard_index": 7,
+              "summary_errors": [
+                "summary_missing"
+              ],
+              "summary_path": "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/060_069/wod2sim-batch-summary.json",
+              "write_summary_command_included": true
+            },
+            {
+              "run_command_included": true,
+              "run_dir": "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/070_079",
+              "scene_limit": 10,
+              "scene_offset": 70,
+              "shard_index": 8,
+              "summary_errors": [
+                "summary_missing"
+              ],
+              "summary_path": "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/070_079/wod2sim-batch-summary.json",
+              "write_summary_command_included": true
+            },
+            {
+              "run_command_included": true,
+              "run_dir": "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/080_089",
+              "scene_limit": 10,
+              "scene_offset": 80,
+              "shard_index": 9,
+              "summary_errors": [
+                "summary_missing"
+              ],
+              "summary_path": "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/080_089/wod2sim-batch-summary.json",
+              "write_summary_command_included": true
+            },
+            {
+              "run_command_included": true,
+              "run_dir": "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/090_099",
+              "scene_limit": 10,
+              "scene_offset": 90,
+              "shard_index": 10,
+              "summary_errors": [
+                "summary_missing"
+              ],
+              "summary_path": "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/090_099/wod2sim-batch-summary.json",
+              "write_summary_command_included": true
+            }
           ],
           "missing_summary_errors_by_path": {
             "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/000_009/wod2sim-batch-summary.json": [

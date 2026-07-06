@@ -192,7 +192,8 @@ The compact evidence manifest is
 [`docs/evidence/benchmark_public_evidence_manifest_20260706.json`](evidence/benchmark_public_evidence_manifest_20260706.json)
 and is regenerated with `wod2sim-benchmark-evidence-manifest`; it records hashes
 and claim scopes for tracked public JSON while keeping the 50/100 missing
-summary artifacts and audited resume repair scope explicit.
+summary artifacts and audited resume repair scope, including per-shard scene
+windows, explicit.
 The readiness/status flow includes `blocking_requirements` and
 `next_command_groups` so operators can map missing cache/runtime prerequisites
 back to plan command groups. Short setup groups include copyable `display`

@@ -73,6 +73,16 @@ def test_public_evidence_manifest_builder_hashes_tracked_artifacts() -> None:
         "promote": 2,
         "shards": 30,
     }
+    assert manifest["claim_gate"]["resume_repair_scope"]["stages"][0]["missing_shards"][0] == {
+        "run_command_included": True,
+        "run_dir": "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/000_009",
+        "scene_limit": 10,
+        "scene_offset": 0,
+        "shard_index": 1,
+        "summary_errors": ["summary_missing"],
+        "summary_path": "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/000_009/wod2sim-batch-summary.json",
+        "write_summary_command_included": True,
+    }
     assert {Path(row["path"]) for row in manifest["missing_expected_artifacts"]} == {
         MISSING_50_RELATIVE,
         MISSING_100_RELATIVE,
@@ -204,6 +214,12 @@ def test_tracked_public_evidence_manifest_is_public_safe_and_complete() -> None:
         9,
         10,
     ]
+    assert (
+        manifest["claim_gate"]["resume_repair_scope"]["stages"][1]["missing_shards"][-1][
+            "scene_offset"
+        ]
+        == 90
+    )
     assert {Path(row["path"]) for row in manifest["missing_expected_artifacts"]} == {
         MISSING_50_RELATIVE,
         MISSING_100_RELATIVE,

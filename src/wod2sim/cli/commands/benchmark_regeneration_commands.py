@@ -386,6 +386,7 @@ def build_resume_plan_summary(
         if not missing_shard_indexes:
             continue
         missing_paths = [shard_outputs[index] for index in missing_shard_indexes]
+        shards_by_index = _shards_by_index(stage)
         errors_by_path = {
             path: [
                 str(error)
@@ -396,6 +397,23 @@ def build_resume_plan_summary(
             ]
             for path in missing_paths
         }
+        missing_shards = [
+            {
+                "shard_index": index,
+                "scene_offset": _int_or_none(
+                    _dict_or_empty(shards_by_index.get(index)).get("scene_offset")
+                ),
+                "scene_limit": _int_or_none(
+                    _dict_or_empty(shards_by_index.get(index)).get("scene_limit")
+                ),
+                "run_dir": _dict_or_empty(shards_by_index.get(index)).get("run_dir"),
+                "summary_path": shard_outputs[index],
+                "summary_errors": errors_by_path.get(shard_outputs[index], []),
+                "run_command_included": "shards" in selected_groups,
+                "write_summary_command_included": "shards" in selected_groups,
+            }
+            for index in missing_shard_indexes
+        ]
         stage_rows.append(
             {
                 "stage": stage.get("stage"),
@@ -405,6 +423,7 @@ def build_resume_plan_summary(
                 "missing_shard_indexes": missing_shard_indexes,
                 "missing_shard_summary_count": len(missing_paths),
                 "missing_shard_summary_paths": missing_paths,
+                "missing_shards": missing_shards,
                 "missing_summary_errors_by_path": errors_by_path,
                 "merge_command_included": "merge" in selected_groups,
                 "promote_command_included": "promote" in selected_groups,
@@ -580,6 +599,15 @@ def _shard_summary_outputs_by_index(stage: dict[str, Any]) -> dict[int, str]:
         if output:
             outputs[shard_index] = output
     return outputs
+
+
+def _shards_by_index(stage: dict[str, Any]) -> dict[int, dict[str, Any]]:
+    shards: dict[int, dict[str, Any]] = {}
+    for shard in _list_of_dicts(stage.get("shards")):
+        shard_index = _int_or_none(shard.get("index"))
+        if shard_index is not None:
+            shards[shard_index] = shard
+    return shards
 
 
 def _shard_summary_output(shard: dict[str, Any]) -> str | None:

@@ -16,6 +16,35 @@ RESUME_COMMANDS_RELATIVE = Path(
 )
 
 
+def _expected_missing_shard(
+    scene_count: int, shard_index: int, scene_offset: int
+) -> dict[str, object]:
+    shard_name = f"{scene_offset:03d}_{scene_offset + 9:03d}"
+    base = (
+        f"runs/benchmark_spotlight_reflex_{scene_count}scene_public2602_fresh/shards/{shard_name}"
+    )
+    return {
+        "run_command_included": True,
+        "run_dir": base,
+        "scene_limit": 10,
+        "scene_offset": scene_offset,
+        "shard_index": shard_index,
+        "summary_errors": ["summary_missing"],
+        "summary_path": f"{base}/wod2sim-batch-summary.json",
+        "write_summary_command_included": True,
+    }
+
+
+EXPECTED_50_MISSING_SHARDS = [
+    _expected_missing_shard(50, shard_index, scene_offset)
+    for shard_index, scene_offset in enumerate(range(0, 50, 10), start=1)
+]
+EXPECTED_100_MISSING_SHARDS = [
+    _expected_missing_shard(100, shard_index, scene_offset)
+    for shard_index, scene_offset in enumerate(range(0, 100, 10), start=1)
+]
+
+
 def test_command_renderer_outputs_selected_shard_commands() -> None:
     module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_commands")
 
@@ -268,6 +297,13 @@ def test_command_renderer_builds_resume_artifact() -> None:
         9,
         10,
     ]
+    assert (
+        artifact["resume_plan"]["stages"][0]["missing_shards"][0] == (EXPECTED_50_MISSING_SHARDS[0])
+    )
+    assert (
+        artifact["resume_plan"]["stages"][1]["missing_shards"][-1]
+        == (EXPECTED_100_MISSING_SHARDS[-1])
+    )
 
 
 def test_command_renderer_output_writes_artifact_without_changing_stdout_rows() -> None:
@@ -407,6 +443,7 @@ def test_tracked_resume_command_artifact_targets_missing_scale_shards() -> None:
                     "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/030_039/wod2sim-batch-summary.json",
                     "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/040_049/wod2sim-batch-summary.json",
                 ],
+                "missing_shards": EXPECTED_50_MISSING_SHARDS,
                 "missing_summary_errors_by_path": {
                     "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/000_009/wod2sim-batch-summary.json": [
                         "summary_missing"
@@ -447,6 +484,7 @@ def test_tracked_resume_command_artifact_targets_missing_scale_shards() -> None:
                     "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/080_089/wod2sim-batch-summary.json",
                     "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/090_099/wod2sim-batch-summary.json",
                 ],
+                "missing_shards": EXPECTED_100_MISSING_SHARDS,
                 "missing_summary_errors_by_path": {
                     "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/000_009/wod2sim-batch-summary.json": [
                         "summary_missing"

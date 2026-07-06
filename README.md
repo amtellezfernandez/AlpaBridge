@@ -278,9 +278,10 @@ Open-repo reviewers can inspect both without runtime access. The all-stage artif
 separate public review commands from cache-building, live-rollout, merge, and
 promotion commands. The resume artifact also includes `resume_plan`, which lists
 the affected 50/100 stages, missing shard summary paths, and included
-merge/promote/post repair steps without promoting those rows to a benchmark
-claim. Cache rebuilds and live rollouts remain limited to operators with gated
-assets and an x86_64 NVIDIA/Docker AlpaSim host.
+merge/promote/post repair steps, including per-shard scene offsets and limits,
+without promoting those rows to a benchmark claim. Cache rebuilds and live
+rollouts remain limited to operators with gated assets and an x86_64
+NVIDIA/Docker AlpaSim host.
 After promoting new public summaries, refresh readiness, regenerate status with
 `wod2sim-benchmark-status`, then run `wod2sim-benchmark-audit --strict --json`;
 this avoids any circular dependency between the status and audit artifacts.

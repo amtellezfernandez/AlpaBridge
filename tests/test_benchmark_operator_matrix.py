@@ -18,6 +18,35 @@ RESUME_COMMANDS_RELATIVE = Path(
 )
 
 
+def _expected_missing_shard(
+    scene_count: int, shard_index: int, scene_offset: int
+) -> dict[str, object]:
+    shard_name = f"{scene_offset:03d}_{scene_offset + 9:03d}"
+    base = (
+        f"runs/benchmark_spotlight_reflex_{scene_count}scene_public2602_fresh/shards/{shard_name}"
+    )
+    return {
+        "run_command_included": True,
+        "run_dir": base,
+        "scene_limit": 10,
+        "scene_offset": scene_offset,
+        "shard_index": shard_index,
+        "summary_errors": ["summary_missing"],
+        "summary_path": f"{base}/wod2sim-batch-summary.json",
+        "write_summary_command_included": True,
+    }
+
+
+EXPECTED_50_MISSING_SHARDS = [
+    _expected_missing_shard(50, shard_index, scene_offset)
+    for shard_index, scene_offset in enumerate(range(0, 50, 10), start=1)
+]
+EXPECTED_100_MISSING_SHARDS = [
+    _expected_missing_shard(100, shard_index, scene_offset)
+    for shard_index, scene_offset in enumerate(range(0, 100, 10), start=1)
+]
+
+
 def test_operator_matrix_builder_reflects_tracked_readiness_blockers() -> None:
     module = importlib.import_module("wod2sim.cli.commands.benchmark_operator_matrix")
 
@@ -75,6 +104,14 @@ def test_operator_matrix_builder_reflects_tracked_readiness_blockers() -> None:
         5,
     ]
     assert matrix["resume_repair_scope"]["stages"][1]["missing_shard_summary_count"] == 10
+    assert (
+        matrix["resume_repair_scope"]["stages"][0]["missing_shards"][0]
+        == (EXPECTED_50_MISSING_SHARDS[0])
+    )
+    assert (
+        matrix["resume_repair_scope"]["stages"][1]["missing_shards"][-1]
+        == (EXPECTED_100_MISSING_SHARDS[-1])
+    )
     assert "open_repo_reviewer" in summary["ready_roles"]
     assert "closed_loop_runner" in summary["blocked_roles"]
     assert "build_and_validate_scale_caches" in summary["next_command_groups"]
@@ -229,6 +266,7 @@ def test_tracked_operator_matrix_is_public_safe_and_explicit_about_who_can_run()
                     "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/030_039/wod2sim-batch-summary.json",
                     "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/040_049/wod2sim-batch-summary.json",
                 ],
+                "missing_shards": EXPECTED_50_MISSING_SHARDS,
                 "post_review_commands_included": True,
                 "promote_command_included": True,
                 "public_summary_target": "docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json",
@@ -252,6 +290,7 @@ def test_tracked_operator_matrix_is_public_safe_and_explicit_about_who_can_run()
                     "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/080_089/wod2sim-batch-summary.json",
                     "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/090_099/wod2sim-batch-summary.json",
                 ],
+                "missing_shards": EXPECTED_100_MISSING_SHARDS,
                 "post_review_commands_included": True,
                 "promote_command_included": True,
                 "public_summary_target": "docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json",
