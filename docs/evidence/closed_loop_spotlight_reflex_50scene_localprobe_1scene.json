@@ -1,0 +1,229 @@
+{
+  "aggregate": {
+    "aggregate_status_counts": {
+      "completed": 1
+    },
+    "completed_scene_count": 1,
+    "failed_scene_count": 0,
+    "missing_aggregate_scene_count": 0,
+    "observed_scene_count": 1,
+    "planned_scene_count": 1,
+    "result_counts": {
+      "completed": 1
+    },
+    "run_state_counts": {
+      "completed": 1
+    },
+    "sensor_failure_scene_count": 0,
+    "total_audited_frames": 199
+  },
+  "artifact_policy": {
+    "local_video_hashes_are_recorded": true,
+    "raw_rollout_videos_included": false,
+    "raw_scene_assets_included": false,
+    "redistribution_note": "Do not publish rollout frames or videos unless the Waymo/AlpaSim asset terms explicitly permit redistribution."
+  },
+  "claim_boundary": "This is local closed-loop AlpaSim evidence generated from user-provided or gated scene assets. The summary intentionally excludes raw scene assets and videos.",
+  "clean_closed_loop_batch": true,
+  "created_at": "2026-07-06",
+  "failure_taxonomy": {
+    "at_fault_collision_scene_count": 0,
+    "black_image_scene_count": 0,
+    "collision_scene_count": 1,
+    "high_plan_deviation_scene_count": 0,
+    "low_progress_scene_count": 1,
+    "offroad_scene_count": 0,
+    "runtime_failed_scene_count": 0,
+    "safety_monitor_scene_count": 0,
+    "sensor_pipeline_failure_scene_count": 0,
+    "thresholds": {
+      "high_plan_deviation_gt_m": 4.0,
+      "low_progress_lt": 0.5
+    },
+    "wrong_lane_scene_count": 0
+  },
+  "metrics": {
+    "collision_any": {
+      "count": 1,
+      "interpretation": "scene_rate",
+      "max": 1.0,
+      "mean": 1.0,
+      "min": 1.0
+    },
+    "collision_at_fault": {
+      "count": 1,
+      "interpretation": "scene_rate",
+      "max": 0.0,
+      "mean": 0.0,
+      "min": 0.0
+    },
+    "dist_to_gt_location": {
+      "count": 1,
+      "max": 5.89,
+      "mean": 5.89,
+      "min": 5.89
+    },
+    "dist_to_gt_trajectory": {
+      "count": 1,
+      "max": 0.1,
+      "mean": 0.1,
+      "min": 0.1
+    },
+    "dist_traveled_m": {
+      "count": 1,
+      "max": 14.5,
+      "mean": 14.5,
+      "min": 14.5
+    },
+    "duration_frac_20s": {
+      "count": 1,
+      "max": 0.33,
+      "mean": 0.33,
+      "min": 0.33
+    },
+    "img_is_black": {
+      "count": 1,
+      "interpretation": "scene_rate",
+      "max": 0.0,
+      "mean": 0.0,
+      "min": 0.0
+    },
+    "offroad": {
+      "count": 1,
+      "interpretation": "scene_rate",
+      "max": 0.0,
+      "mean": 0.0,
+      "min": 0.0
+    },
+    "offroad_or_collision": {
+      "count": 1,
+      "interpretation": "scene_rate",
+      "max": 1.0,
+      "mean": 1.0,
+      "min": 1.0
+    },
+    "offroad_or_collision_at_fault": {
+      "count": 1,
+      "interpretation": "scene_rate",
+      "max": 0.0,
+      "mean": 0.0,
+      "min": 0.0
+    },
+    "plan_deviation": {
+      "count": 1,
+      "max": 0.04,
+      "mean": 0.04,
+      "min": 0.04
+    },
+    "progress": {
+      "count": 1,
+      "max": 0.2,
+      "mean": 0.2,
+      "min": 0.2
+    },
+    "progress_rel": {
+      "count": 1,
+      "max": 0.71,
+      "mean": 0.71,
+      "min": 0.71
+    },
+    "safety_monitor_triggered": {
+      "count": 1,
+      "interpretation": "scene_rate",
+      "max": 0.0,
+      "mean": 0.0,
+      "min": 0.0
+    },
+    "wrong_lane": {
+      "count": 1,
+      "interpretation": "scene_rate",
+      "max": 0.0,
+      "mean": 0.0,
+      "min": 0.0
+    }
+  },
+  "open_loop_closed_loop_mismatch": {
+    "advice": "Add paired open-loop metrics per scene to claim measured mismatch; this file currently reports closed-loop failures that open-loop evaluation should be compared against.",
+    "closed_loop_failure_indicators": {
+      "collision_scene_count": 1,
+      "high_plan_deviation_scene_count": 0,
+      "low_progress_scene_count": 1,
+      "offroad_scene_count": 0,
+      "wrong_lane_scene_count": 0
+    },
+    "open_loop_reference_available": false,
+    "status": "closed_loop_only_summary"
+  },
+  "run_config": {
+    "max_retries": 0,
+    "mode": "both",
+    "model": "spotlight_reflex",
+    "scene_preset": "front_camera_50scene_public2602",
+    "timeout": 900,
+    "topology": "1gpu"
+  },
+  "runs": [
+    {
+      "aggregate_status": "completed",
+      "artifacts": {
+        "metrics_results_png": {
+          "bytes": 96318,
+          "gated_scene_media": false,
+          "path": "001_clipgt-01d503d4-449b-46fc-8d78-9085e70d3554/aggregate/metrics_results.png",
+          "sha256": "8a72f644e7ef94eec717faea05d0fade1ccaf1551f47016daafddbf6c192bfa2"
+        },
+        "metrics_results_txt": {
+          "bytes": 4991,
+          "gated_scene_media": false,
+          "path": "001_clipgt-01d503d4-449b-46fc-8d78-9085e70d3554/aggregate/metrics_results.txt",
+          "sha256": "eb4049923031310b685b5adf18764046041102419554548cdb06f508406b02c4"
+        },
+        "rollout_video_count": 1,
+        "rollout_videos": [
+          {
+            "bytes": 1021831,
+            "gated_scene_media": true,
+            "path": "001_clipgt-01d503d4-449b-46fc-8d78-9085e70d3554/rollouts/clipgt-01d503d4-449b-46fc-8d78-9085e70d3554/bfd57708-78ac-11f1-ba6b-1df83bdf0391/clipgt-01d503d4-449b-46fc-8d78-9085e70d3554_bfd57708-78ac-11f1-ba6b-1df83bdf0391_camera_front_wide_120fov_default.mp4",
+            "sha256": "8ac79f83bf3501a27d89253a2746400bc626b6c16ed2f7e6ad758f734febf7a7"
+          }
+        ]
+      },
+      "attempts": 1,
+      "first_sensor_failure": null,
+      "frame_count": 199,
+      "index": 1,
+      "metrics": {
+        "collision_any": 1.0,
+        "collision_at_fault": 0.0,
+        "dist_to_gt_location": 5.89,
+        "dist_to_gt_trajectory": 0.1,
+        "dist_traveled_m": 14.5,
+        "duration_frac_20s": 0.33,
+        "img_is_black": 0.0,
+        "offroad": 0.0,
+        "offroad_or_collision": 1.0,
+        "offroad_or_collision_at_fault": 0.0,
+        "plan_deviation": 0.04,
+        "progress": 0.2,
+        "progress_rel": 0.71,
+        "safety_monitor_triggered": 0.0,
+        "wrong_lane": 0.0
+      },
+      "result": "completed",
+      "returncode": 0,
+      "run_dir": "001_clipgt-01d503d4-449b-46fc-8d78-9085e70d3554",
+      "scene_id": "clipgt-01d503d4-449b-46fc-8d78-9085e70d3554",
+      "sensor_failure_count": 0,
+      "sensor_pipeline_ok": true,
+      "state": "completed",
+      "status": "completed"
+    }
+  ],
+  "schema": "wod2sim_closed_loop_batch_summary_v1",
+  "source": {
+    "batch_dir_name": "benchmark_spotlight_reflex_50scene_public2602_localprobe",
+    "batch_manifest": "batch-manifest.json",
+    "batch_status": "batch-status.json"
+  },
+  "valid": true
+}

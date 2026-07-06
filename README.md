@@ -210,6 +210,13 @@ A local one-scene `spotlight_reflex` run is summarized in
 bundle are not tracked because they may contain AlpaSim or gated-scene-derived
 content.
 
+A diagnostic one-scene probe from the 50-scene public 26.02 preset is
+summarized in
+[`docs/evidence/closed_loop_spotlight_reflex_50scene_localprobe_1scene.json`](docs/evidence/closed_loop_spotlight_reflex_50scene_localprobe_1scene.json):
+1/1 completed scene, 199 audited frames, 0 failed scenes, and 0
+sensor-pipeline failures. This is scale-path evidence only; it is not a
+claim-valid 50-scene summary and does not satisfy the strict audit gate.
+
 Open-repo readers can review the compact JSON summaries without AlpaSim, Docker,
 or gated scene assets. Re-running or scaling the benchmark requires local access
 to the gated assets plus an x86_64 NVIDIA/Docker AlpaSim host; ARM/DGX Spark
