@@ -1,8 +1,14 @@
 {
   "schema": "wod2sim_benchmark_regeneration_status_v1",
   "created_at": "2026-07-06",
-  "source_commit_at_audit": "1442176",
+  "source_commit_at_audit": "d492a43",
   "objective": "Regenerate WOD2Sim closed-loop benchmark artifacts from scratch, validate 10-scene pilot, scale as feasible to 50/100 scenes, add needed public evidence/docs, and commit/push the results.",
+  "evidence_artifacts": {
+    "ten_scene_pilot": "docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json",
+    "regeneration_plan": "docs/evidence/benchmark_regeneration_plan_20260706.json",
+    "readiness_snapshot": "docs/evidence/benchmark_regeneration_readiness_20260706.json",
+    "claim_audit": "docs/evidence/benchmark_regeneration_audit_20260706.json"
+  },
   "public_artifact_policy": {
     "tracked": "Compact JSON summaries, documentation, commands, tests, and public-safe hashes/metrics.",
     "untracked": "Raw AlpaSim media, support bundles, USDZ scene assets, Hugging Face caches, Docker layers, and gated scene-derived files."
@@ -41,18 +47,20 @@
     "front_camera_50scene_public2602": {
       "preset_tracked": true,
       "cache_builder_workflow_tracked": true,
+      "summary_artifact": "docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json",
       "claim_valid_closed_loop_summary_tracked": false,
       "remaining_runtime_requirement": "Rebuild the local 26.02 USDZ cache and rerun on an x86_64 AlpaSim runner with Docker/NVIDIA runtime images installed."
     },
     "front_camera_100scene_public2602": {
       "preset_tracked": true,
       "cache_builder_workflow_tracked": true,
+      "summary_artifact": "docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json",
       "claim_valid_closed_loop_summary_tracked": false,
       "remaining_runtime_requirement": "Rebuild the local 26.02 USDZ cache and rerun on an x86_64 AlpaSim runner with Docker/NVIDIA runtime images installed."
     }
   },
   "completion_status": {
     "full_objective_complete": false,
-    "reason": "The repository tracks a valid 10-scene public summary and 50/100-scene cache workflow, but fresh regenerated 50/100 closed-loop summaries are not currently present and the heavy local runtime assets were intentionally cleaned."
+    "reason": "The repository tracks a valid 10-scene public summary plus a plan, readiness snapshot, and audit gate for 50/100-scene scale-up, but fresh regenerated 50/100 closed-loop summaries are not currently present and the heavy local runtime assets were intentionally cleaned."
   }
 }
