@@ -83,7 +83,9 @@ def build_audit(
     status = _load_json(_resolve_path(repo_root, status_path), errors=errors, label="status")
     readiness_artifact = str(plan.get("readiness_artifact") or "") if plan else ""
     readiness = (
-        _load_json(_resolve_path(repo_root, Path(readiness_artifact)), errors=errors, label="readiness")
+        _load_json(
+            _resolve_path(repo_root, Path(readiness_artifact)), errors=errors, label="readiness"
+        )
         if readiness_artifact
         else {}
     )
@@ -164,10 +166,7 @@ def build_audit(
         expected_audit_valid_without_manifest=expected_valid_without_manifest,
         repo_root=repo_root,
     )
-    valid = (
-        expected_valid_without_manifest
-        and public_evidence_manifest["valid"]
-    )
+    valid = expected_valid_without_manifest and public_evidence_manifest["valid"]
 
     return {
         "schema": AUDIT_SCHEMA,
@@ -274,9 +273,7 @@ def _merge_provenance(*, summary: dict[str, Any], stage: dict[str, Any]) -> dict
     expected_inputs = _merge_summary_inputs_from_command(merge_command)
     source = _dict_or_empty(summary.get("source"))
     actual_inputs = [
-        str(item)
-        for item in _list_or_empty(source.get("input_summaries"))
-        if isinstance(item, str)
+        str(item) for item in _list_or_empty(source.get("input_summaries")) if isinstance(item, str)
     ]
     is_merged = source.get("summary_kind") == "merged_batch_summaries"
     errors: list[str] = []
@@ -302,7 +299,9 @@ def _summary_provenance(
 ) -> dict[str, Any]:
     source = _dict_or_empty(summary.get("source"))
     expected_inputs = _list_or_empty(merge_provenance.get("expected_input_summaries"))
-    expected_summary_kind = "merged_batch_summaries" if expected_inputs else "batch_directory_summary"
+    expected_summary_kind = (
+        "merged_batch_summaries" if expected_inputs else "batch_directory_summary"
+    )
     observed_summary_kind = _observed_summary_kind(source=source)
     expected_batch_dir_name = _path_name(stage.get("run_dir"))
     observed_batch_dir_name = (
@@ -424,9 +423,10 @@ def _diagnostic_evidence(*, status: dict[str, Any], repo_root: Path) -> dict[str
     aggregate = _dict_or_empty(summary.get("aggregate"))
     run_config = _dict_or_empty(summary.get("run_config"))
     checks["diagnostic_probe_status_artifact_matches"] = status_row.get("artifact") == artifact
-    checks["diagnostic_probe_status_scope_is_non_claim"] = (
-        status_row.get("status") == "tracked_public_probe_summary"
-        and "not a claim-valid 50-scene" in str(status_row.get("claim_scope") or "")
+    checks["diagnostic_probe_status_scope_is_non_claim"] = status_row.get(
+        "status"
+    ) == "tracked_public_probe_summary" and "not a claim-valid 50-scene" in str(
+        status_row.get("claim_scope") or ""
     )
     checks["diagnostic_probe_schema_matches"] = summary.get("schema") == BATCH_SCHEMA
     checks["diagnostic_probe_preset_matches"] = (
@@ -543,9 +543,10 @@ def _partial_attempt_evidence(
     aggregate = _dict_or_empty(summary.get("aggregate"))
     run_config = _dict_or_empty(summary.get("run_config"))
     checks["partial_attempt_status_artifact_matches"] = status_row.get("artifact") == artifact
-    checks["partial_attempt_status_scope_is_non_claim"] = (
-        status_row.get("status") == "tracked_public_partial_attempt_summary"
-        and "not a claim-valid 50-scene" in str(status_row.get("claim_scope") or "")
+    checks["partial_attempt_status_scope_is_non_claim"] = status_row.get(
+        "status"
+    ) == "tracked_public_partial_attempt_summary" and "not a claim-valid 50-scene" in str(
+        status_row.get("claim_scope") or ""
     )
     checks["partial_attempt_schema_matches"] = summary.get("schema") == BATCH_SCHEMA
     checks["partial_attempt_preset_matches"] = (
@@ -625,9 +626,7 @@ def _objective_completion(
     readiness: dict[str, Any],
     claim_ready: bool,
 ) -> dict[str, Any]:
-    by_count = {
-        _int_value(stage.get("expected_scene_count")): stage for stage in stage_reports
-    }
+    by_count = {_int_value(stage.get("expected_scene_count")): stage for stage in stage_reports}
     readiness_context = _readiness_completion_context(readiness)
     fifty_preset = "front_camera_50scene_public2602"
     hundred_preset = "front_camera_100scene_public2602"
@@ -743,7 +742,10 @@ def _requirement_blockers(
         blocker_id = blocker_map.get("id")
         if not isinstance(blocker_id, str):
             continue
-        if blocker_map.get("scene_preset") == scene_preset or blocker_map.get("scene_preset") is None:
+        if (
+            blocker_map.get("scene_preset") == scene_preset
+            or blocker_map.get("scene_preset") is None
+        ):
             blockers.append(blocker_id)
     return blockers
 
@@ -842,11 +844,11 @@ def _status_consistency(
     ten_scene_status = _dict_or_empty(public_evidence.get("ten_scene_pilot"))
     ten_scene_stage = _stage_by_scene_count(stage_reports, 10)
     if ten_scene_stage is not None:
-        checks["ten_scene_status_matches_audit"] = (
-            ten_scene_status.get("artifact") == ten_scene_stage["summary_artifact"]
-            and bool(ten_scene_status.get("clean_closed_loop_batch"))
-            == bool(ten_scene_stage["claim_valid"])
-        )
+        checks["ten_scene_status_matches_audit"] = ten_scene_status.get(
+            "artifact"
+        ) == ten_scene_stage["summary_artifact"] and bool(
+            ten_scene_status.get("clean_closed_loop_batch")
+        ) == bool(ten_scene_stage["claim_valid"])
         if not checks["ten_scene_status_matches_audit"]:
             notes.append("current_public_evidence.ten_scene_pilot does not match the audit")
     else:
@@ -883,9 +885,8 @@ def _status_consistency(
             continue
         status_row = _dict_or_empty(scale_status.get(preset))
         key = f"{preset}_claim_flag_matches_audit"
-        checks[key] = (
-            bool(status_row.get("claim_valid_closed_loop_summary_tracked"))
-            == bool(stage["claim_valid"])
+        checks[key] = bool(status_row.get("claim_valid_closed_loop_summary_tracked")) == bool(
+            stage["claim_valid"]
         )
         if not checks[key]:
             notes.append(f"scale_status.{preset}.claim_valid_closed_loop_summary_tracked mismatch")
@@ -958,22 +959,26 @@ def _public_evidence_manifest_consistency(
         notes.append("public evidence manifest claim_gate does not match current audit")
 
     artifacts = [
-        artifact for artifact in _list_or_empty(manifest.get("artifacts")) if isinstance(artifact, dict)
+        artifact
+        for artifact in _list_or_empty(manifest.get("artifacts"))
+        if isinstance(artifact, dict)
     ]
-    checks["public_evidence_manifest_artifact_count_matches"] = (
-        _int_value(manifest.get("artifact_count")) == len(artifacts)
-    )
+    checks["public_evidence_manifest_artifact_count_matches"] = _int_value(
+        manifest.get("artifact_count")
+    ) == len(artifacts)
     if not checks["public_evidence_manifest_artifact_count_matches"]:
         notes.append("public evidence manifest artifact_count does not match artifacts length")
 
     artifact_paths = [str(artifact.get("path") or "") for artifact in artifacts]
-    checks["public_evidence_manifest_artifact_paths_unique"] = (
-        len(artifact_paths) == len(set(artifact_paths)) and all(artifact_paths)
-    )
+    checks["public_evidence_manifest_artifact_paths_unique"] = len(artifact_paths) == len(
+        set(artifact_paths)
+    ) and all(artifact_paths)
     if not checks["public_evidence_manifest_artifact_paths_unique"]:
         notes.append("public evidence manifest artifact paths are missing or duplicated")
 
-    checks["public_evidence_manifest_excludes_self_hash"] = manifest_artifact not in set(artifact_paths)
+    checks["public_evidence_manifest_excludes_self_hash"] = manifest_artifact not in set(
+        artifact_paths
+    )
     if not checks["public_evidence_manifest_excludes_self_hash"]:
         notes.append("public evidence manifest must not include its own hash entry")
 
@@ -1079,9 +1084,9 @@ def _regeneration_commands_consistency(
     if not checks["regeneration_commands_schema_matches"]:
         notes.append("regeneration commands schema mismatch")
 
-    checks["regeneration_commands_plan_matches_audit"] = (
-        commands.get("plan_artifact") == _display_path(plan_path)
-    )
+    checks["regeneration_commands_plan_matches_audit"] = commands.get(
+        "plan_artifact"
+    ) == _display_path(plan_path)
     if not checks["regeneration_commands_plan_matches_audit"]:
         notes.append("regeneration commands plan_artifact does not match audited plan")
 
@@ -1233,15 +1238,15 @@ def _readiness_consistency(
         notes.append("readiness artifact is missing or invalid JSON")
         return {"valid": False, "checks": checks, "notes": notes}
 
-    checks["readiness_plan_artifact_matches_audit"] = (
-        readiness.get("plan_artifact") == _display_path(plan_path)
-    )
+    checks["readiness_plan_artifact_matches_audit"] = readiness.get(
+        "plan_artifact"
+    ) == _display_path(plan_path)
     if not checks["readiness_plan_artifact_matches_audit"]:
         notes.append("readiness.plan_artifact does not match the audited plan")
 
-    checks["readiness_status_artifact_matches_audit"] = (
-        readiness.get("status_artifact") == _display_path(status_path)
-    )
+    checks["readiness_status_artifact_matches_audit"] = readiness.get(
+        "status_artifact"
+    ) == _display_path(status_path)
     if not checks["readiness_status_artifact_matches_audit"]:
         notes.append("readiness.status_artifact does not match the audited status")
 
@@ -1270,10 +1275,9 @@ def _readiness_consistency(
 
         public_summary = _dict_or_empty(readiness_stage.get("public_summary"))
         summary_key = f"{preset}_readiness_summary_state_matches_audit"
-        checks[summary_key] = (
-            bool(public_summary.get("present")) == bool(stage.get("summary_present"))
-            and bool(public_summary.get("claim_valid")) == bool(stage.get("claim_valid"))
-        )
+        checks[summary_key] = bool(public_summary.get("present")) == bool(
+            stage.get("summary_present")
+        ) and bool(public_summary.get("claim_valid")) == bool(stage.get("claim_valid"))
         if not checks[summary_key]:
             notes.append(f"readiness public_summary state does not match audit for {preset}")
 
@@ -1283,12 +1287,42 @@ def _readiness_consistency(
         if "public2602" in str(stage.get("scene_preset") or "")
     ]
     readiness_flags = _dict_or_empty(readiness.get("readiness"))
-    checks["readiness_scale_summary_flag_matches_audit"] = (
-        bool(readiness_flags.get("claim_valid_scale_summaries_present"))
-        == (all(scale_stage_claims) if scale_stage_claims else False)
-    )
+    checks["readiness_scale_summary_flag_matches_audit"] = bool(
+        readiness_flags.get("claim_valid_scale_summaries_present")
+    ) == (all(scale_stage_claims) if scale_stage_claims else False)
     if not checks["readiness_scale_summary_flag_matches_audit"]:
         notes.append("readiness.claim_valid_scale_summaries_present does not match audit")
+
+    blocker_ids = [
+        str(row.get("id") or "")
+        for row in _list_or_empty(readiness.get("blocking_requirements"))
+        if isinstance(row, dict)
+    ]
+    expected_blocker_ids = _expected_readiness_blocker_ids(
+        readiness=readiness,
+        readiness_stages=readiness_stages,
+    )
+    checks["readiness_blocking_requirement_ids_match_state"] = sorted(blocker_ids) == sorted(
+        expected_blocker_ids
+    )
+    if not checks["readiness_blocking_requirement_ids_match_state"]:
+        notes.append("readiness.blocking_requirements ids do not match readiness state")
+
+    next_groups = [
+        row for row in _list_or_empty(readiness.get("next_command_groups")) if isinstance(row, dict)
+    ]
+    group_names = [str(row.get("name") or "") for row in next_groups]
+    expected_group_names = _expected_readiness_next_group_names(readiness_stages=readiness_stages)
+    checks["readiness_next_command_group_names_match_state"] = group_names == expected_group_names
+    if not checks["readiness_next_command_group_names_match_state"]:
+        notes.append("readiness.next_command_groups names do not match readiness state")
+
+    group_orders = [_int_value(row.get("order")) for row in next_groups]
+    checks["readiness_next_command_group_orders_are_contiguous"] = group_orders == list(
+        range(1, len(next_groups) + 1)
+    )
+    if not checks["readiness_next_command_group_orders_are_contiguous"]:
+        notes.append("readiness.next_command_groups order values are not contiguous")
 
     return {
         "valid": all(checks.values()) if checks else False,
@@ -1305,6 +1339,74 @@ def _stage_by_scene_count(
         if stage.get("expected_scene_count") == scene_count:
             return stage
     return None
+
+
+def _expected_readiness_blocker_ids(
+    *,
+    readiness: dict[str, Any],
+    readiness_stages: list[dict[str, Any]],
+) -> list[str]:
+    ids: list[str] = []
+    credentials = _dict_or_empty(readiness.get("credentials"))
+    if credentials.get("hf_token_required_for_cache_build") is True and not bool(
+        credentials.get("hf_token_present")
+    ):
+        ids.append("hf_token_missing")
+
+    disk = _dict_or_empty(readiness.get("disk"))
+    if disk.get("meets_min_free_disk_gb") is False:
+        ids.append("free_disk_below_threshold")
+
+    host = _dict_or_empty(readiness.get("host"))
+    if host.get("closed_loop_runner_supported") is False:
+        ids.append("unsupported_closed_loop_host")
+
+    runtime_probes = _dict_or_empty(readiness.get("runtime_probes"))
+    probe_ids = {
+        "docker_daemon": "docker_daemon_unavailable",
+        "alpasim_base_image": "alpasim_base_image_missing",
+        "nvidia_smi": "nvidia_gpu_unavailable",
+    }
+    for probe_name, requirement_id in probe_ids.items():
+        probe = _dict_or_empty(runtime_probes.get(probe_name))
+        if probe and probe.get("ok") is not True:
+            ids.append(requirement_id)
+    docker_nvidia_runtime = _dict_or_empty(runtime_probes.get("docker_nvidia_runtime"))
+    if docker_nvidia_runtime and docker_nvidia_runtime.get("declares_nvidia_runtime") is not True:
+        ids.append("docker_nvidia_runtime_unavailable")
+
+    for stage in readiness_stages:
+        if not bool(stage.get("requires_local_usdz_cache")):
+            continue
+        preset = str(stage.get("scene_preset") or "")
+        local_cache = _dict_or_empty(stage.get("local_usdz_cache"))
+        validation = _dict_or_empty(local_cache.get("validation"))
+        if validation.get("valid") is not True:
+            ids.append(f"{preset}_cache_invalid")
+        public_summary = _dict_or_empty(stage.get("public_summary"))
+        if public_summary.get("claim_valid") is not True:
+            ids.append(f"{preset}_claim_summary_missing")
+    return ids
+
+
+def _expected_readiness_next_group_names(*, readiness_stages: list[dict[str, Any]]) -> list[str]:
+    names = ["refresh_readiness"]
+    scale_stages = [
+        stage for stage in readiness_stages if bool(stage.get("requires_local_usdz_cache"))
+    ]
+    if any(
+        _dict_or_empty(_dict_or_empty(stage.get("local_usdz_cache")).get("validation")).get("valid")
+        is not True
+        for stage in scale_stages
+    ):
+        names.append("build_and_validate_scale_caches")
+    if any(
+        _dict_or_empty(stage.get("public_summary")).get("claim_valid") is not True
+        for stage in scale_stages
+    ):
+        names.append("run_scale_shards_and_promote_summaries")
+    names.extend(["refresh_status", "verify_claim_gate"])
+    return names
 
 
 def _load_json(path: Path, *, errors: list[str], label: str) -> dict[str, Any]:
