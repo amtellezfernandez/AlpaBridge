@@ -198,7 +198,16 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             },
             completion["next_command_renderer_groups"],
         )
+        plan = _read_json(ROOT / PLAN_RELATIVE)
         scale_claim_gaps = {row["scene_preset"]: row for row in completion["scale_claim_gaps"]}
+        expected_50_merge_inputs = _planned_merge_inputs(
+            plan,
+            "front_camera_50scene_public2602",
+        )
+        expected_100_merge_inputs = _planned_merge_inputs(
+            plan,
+            "front_camera_100scene_public2602",
+        )
         self.assertEqual(
             {
                 "front_camera_50scene_public2602",
@@ -208,6 +217,28 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         )
         self.assertEqual(
             50, scale_claim_gaps["front_camera_50scene_public2602"]["expected_scene_count"]
+        )
+        self.assertEqual(
+            5,
+            scale_claim_gaps["front_camera_50scene_public2602"]["expected_merge_input_count"],
+        )
+        self.assertEqual(
+            expected_50_merge_inputs,
+            scale_claim_gaps["front_camera_50scene_public2602"]["expected_merge_input_summaries"],
+        )
+        self.assertEqual(
+            {
+                "schema": "wod2sim_closed_loop_batch_summary_v1",
+                "clean_closed_loop_batch": True,
+                "planned_scene_count": 50,
+                "completed_scene_count": 50,
+                "failed_scene_count": 0,
+                "sensor_failure_scene_count": 0,
+                "source_kind": "merged_batch_summaries",
+                "merge_input_summary_count": 5,
+                "merge_input_summaries": expected_50_merge_inputs,
+            },
+            scale_claim_gaps["front_camera_50scene_public2602"]["claim_summary_acceptance"],
         )
         self.assertFalse(scale_claim_gaps["front_camera_50scene_public2602"]["claim_valid"])
         self.assertFalse(
@@ -254,6 +285,26 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         self.assertEqual(
             100,
             scale_claim_gaps["front_camera_100scene_public2602"]["expected_scene_count"],
+        )
+        self.assertEqual(
+            10,
+            scale_claim_gaps["front_camera_100scene_public2602"]["expected_merge_input_count"],
+        )
+        self.assertEqual(
+            expected_100_merge_inputs,
+            scale_claim_gaps["front_camera_100scene_public2602"]["expected_merge_input_summaries"],
+        )
+        self.assertEqual(
+            "merged_batch_summaries",
+            scale_claim_gaps["front_camera_100scene_public2602"]["claim_summary_acceptance"][
+                "source_kind"
+            ],
+        )
+        self.assertEqual(
+            10,
+            scale_claim_gaps["front_camera_100scene_public2602"]["claim_summary_acceptance"][
+                "merge_input_summary_count"
+            ],
         )
         self.assertEqual(
             100,
@@ -356,6 +407,17 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         self.assertEqual({}, audit["objective_completion"]["next_command_renderer_groups"])
         self.assertTrue(
             all(row["claim_valid"] for row in audit["objective_completion"]["scale_claim_gaps"])
+        )
+        scale_claim_gaps = {
+            row["scene_preset"]: row for row in audit["objective_completion"]["scale_claim_gaps"]
+        }
+        self.assertEqual(
+            5,
+            scale_claim_gaps["front_camera_50scene_public2602"]["expected_merge_input_count"],
+        )
+        self.assertEqual(
+            10,
+            scale_claim_gaps["front_camera_100scene_public2602"]["expected_merge_input_count"],
         )
         self.assertTrue(
             all(
