@@ -142,6 +142,8 @@
       "current_blocker_ids": [],
       "current_state": "ready",
       "evidence_artifacts": [
+        "docs/evidence/benchmark_operator_matrix_20260706.json",
+        "docs/evidence/benchmark_public_evidence_manifest_20260706.json",
         "docs/evidence/benchmark_regeneration_audit_20260706.json",
         "docs/evidence/benchmark_regeneration_commands_20260706.json",
         "docs/evidence/benchmark_regeneration_plan_20260706.json",

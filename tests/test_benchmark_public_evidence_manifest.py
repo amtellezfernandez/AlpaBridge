@@ -78,6 +78,37 @@ def test_public_evidence_manifest_main_writes_json_without_runtime_probes() -> N
     assert artifact["claim_gate"]["claim_ready"] is False
 
 
+def test_public_evidence_manifest_recovers_from_stale_manifest_audit_state() -> None:
+    module = importlib.import_module("wod2sim.cli.commands.benchmark_public_evidence_manifest")
+    audit = json.loads((ROOT / AUDIT_RELATIVE).read_text(encoding="utf-8"))
+    audit["valid"] = False
+    audit["public_evidence_manifest"]["valid"] = False
+    audit["public_evidence_manifest"]["checks"][
+        "public_evidence_manifest_hashes_match_tracked_files"
+    ] = False
+
+    with TemporaryDirectory() as tmpdir:
+        repo_root = Path(tmpdir)
+        evidence = repo_root / "docs" / "evidence"
+        evidence.mkdir(parents=True)
+        for path in (PLAN_RELATIVE, STATUS_RELATIVE):
+            (evidence / path.name).write_text((ROOT / path).read_text(encoding="utf-8"))
+        audit_path = evidence / AUDIT_RELATIVE.name
+        audit_path.write_text(json.dumps(audit, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+        manifest = module.build_public_evidence_manifest(
+            plan_path=PLAN_RELATIVE,
+            status_path=STATUS_RELATIVE,
+            audit_path=AUDIT_RELATIVE,
+            output_path=MANIFEST_RELATIVE,
+            repo_root=repo_root,
+            created_at="2026-07-06",
+        )
+
+    assert manifest["claim_gate"]["valid"] is True
+    assert manifest["claim_gate"]["claim_ready"] is False
+
+
 def test_tracked_public_evidence_manifest_is_public_safe_and_complete() -> None:
     manifest = json.loads((ROOT / MANIFEST_RELATIVE).read_text(encoding="utf-8"))
     rendered = json.dumps(manifest, sort_keys=True)
