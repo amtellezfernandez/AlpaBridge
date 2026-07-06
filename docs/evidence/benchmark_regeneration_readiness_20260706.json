@@ -11,35 +11,9 @@
     },
     {
       "blocks": "closed_loop_rollout",
-      "detail": "runtime probe skipped by --skip-runtime-probes",
-      "id": "docker_daemon_unavailable",
-      "plan_command_groups": [
-        "commands.check_readiness",
-        "stages[].commands.run_batch"
-      ]
-    },
-    {
-      "blocks": "closed_loop_rollout",
-      "detail": "runtime probe skipped by --skip-runtime-probes",
+      "detail": "Error response from daemon: No such image: alpasim-base:0.66.0",
       "id": "alpasim_base_image_missing",
       "plan_command_groups": [
-        "stages[].commands.run_batch"
-      ]
-    },
-    {
-      "blocks": "closed_loop_rollout",
-      "detail": "runtime probe skipped by --skip-runtime-probes",
-      "id": "nvidia_gpu_unavailable",
-      "plan_command_groups": [
-        "stages[].commands.run_batch"
-      ]
-    },
-    {
-      "blocks": "closed_loop_rollout",
-      "detail": "Docker does not currently report an NVIDIA runtime.",
-      "id": "docker_nvidia_runtime_unavailable",
-      "plan_command_groups": [
-        "commands.check_readiness",
         "stages[].commands.run_batch"
       ]
     },
@@ -101,7 +75,7 @@
   },
   "disk": {
     "exact_free_bytes_omitted": true,
-    "free_gib": 280.69,
+    "free_gib": 280.68,
     "meets_min_free_disk_gb": true,
     "min_free_disk_gb": 200,
     "path": "workspace/alpasim",
@@ -124,7 +98,7 @@
       "commands": [
         {
           "command": "check_readiness",
-          "display": "wod2sim-benchmark-readiness --alpasim-root workspace/alpasim --output docs/evidence/benchmark_regeneration_readiness_20260706.json --stable-public-snapshot --skip-runtime-probes --json"
+          "display": "wod2sim-benchmark-readiness --alpasim-root workspace/alpasim --output docs/evidence/benchmark_regeneration_readiness_20260706.json --stable-public-snapshot --json"
         }
       ],
       "name": "refresh_readiness",
@@ -254,9 +228,9 @@
       ],
       "image_tag": "alpasim-base:0.66.0",
       "ok": false,
-      "returncode": null,
-      "status": "skipped",
-      "stderr": "runtime probe skipped by --skip-runtime-probes",
+      "returncode": 1,
+      "status": "failed",
+      "stderr": "Error response from daemon: No such image: alpasim-base:0.66.0",
       "stdout": ""
     },
     "docker_daemon": {
@@ -266,11 +240,11 @@
         "--format",
         "{{.ServerVersion}}"
       ],
-      "ok": false,
-      "returncode": null,
-      "status": "skipped",
-      "stderr": "runtime probe skipped by --skip-runtime-probes",
-      "stdout": ""
+      "ok": true,
+      "returncode": 0,
+      "status": "ok",
+      "stderr": "",
+      "stdout": "29.1.3"
     },
     "docker_nvidia_runtime": {
       "argv": [
@@ -279,12 +253,16 @@
         "--format",
         "{{range $name, $_ := .Runtimes}}{{println $name}}{{end}}"
       ],
-      "declares_nvidia_runtime": null,
-      "ok": false,
-      "returncode": null,
-      "runtime_names": null,
-      "status": "skipped",
-      "stderr": "runtime probe skipped by --skip-runtime-probes",
+      "declares_nvidia_runtime": true,
+      "ok": true,
+      "returncode": 0,
+      "runtime_names": [
+        "io.containerd.runc.v2",
+        "nvidia",
+        "runc"
+      ],
+      "status": "ok",
+      "stderr": "",
       "stdout": ""
     },
     "nvidia_smi": {
@@ -292,15 +270,15 @@
         "nvidia-smi",
         "-L"
       ],
-      "gpu_count": 0,
-      "ok": false,
-      "returncode": null,
-      "status": "skipped",
-      "stderr": "runtime probe skipped by --skip-runtime-probes",
-      "stdout": ""
+      "gpu_count": 1,
+      "ok": true,
+      "returncode": 0,
+      "status": "ok",
+      "stderr": "",
+      "stdout": "GPU 0: NVIDIA GeForce RTX 5080 Laptop GPU (UUID: redacted)"
     }
   },
-  "runtime_probes_skipped": true,
+  "runtime_probes_skipped": false,
   "schema": "wod2sim_benchmark_regeneration_readiness_v1",
   "stages": [
     {

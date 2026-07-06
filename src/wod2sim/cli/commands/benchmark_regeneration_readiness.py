@@ -213,6 +213,7 @@ def build_readiness_report(
             plan=plan,
             stages=stages,
             repo_root=repo_root,
+            skip_runtime_probes=skip_runtime_probes,
         ),
         "stages": stages,
     }
@@ -516,8 +517,11 @@ def _next_command_groups(
     plan: dict[str, Any],
     stages: list[dict[str, Any]],
     repo_root: Path,
+    skip_runtime_probes: bool,
 ) -> list[dict[str, Any]]:
     check_readiness = _dict_or_empty(_dict_or_empty(plan.get("commands")).get("check_readiness"))
+    if not skip_runtime_probes:
+        check_readiness = _command_without_argv_flag(check_readiness, "--skip-runtime-probes")
     groups: list[dict[str, Any]] = [
         {
             "order": 1,
@@ -630,6 +634,14 @@ def _next_command_groups(
         }
     )
     return groups
+
+
+def _command_without_argv_flag(command: dict[str, Any], flag: str) -> dict[str, Any]:
+    argv = [item for item in _list_or_empty(command.get("argv")) if item != flag]
+    updated = dict(command)
+    updated["argv"] = argv
+    updated["display"] = " ".join(str(item) for item in argv)
+    return updated
 
 
 def _stage_command_count(

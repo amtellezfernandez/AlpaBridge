@@ -72,10 +72,7 @@
   "objective_completion": {
     "blocking_requirements": [
       "hf_token_missing",
-      "docker_daemon_unavailable",
       "alpasim_base_image_missing",
-      "nvidia_gpu_unavailable",
-      "docker_nvidia_runtime_unavailable",
       "front_camera_50scene_public2602_cache_invalid",
       "front_camera_50scene_public2602_claim_summary_missing",
       "front_camera_100scene_public2602_cache_invalid",
@@ -133,10 +130,7 @@
       {
         "blocking_requirements": [
           "hf_token_missing",
-          "docker_daemon_unavailable",
           "alpasim_base_image_missing",
-          "nvidia_gpu_unavailable",
-          "docker_nvidia_runtime_unavailable",
           "front_camera_50scene_public2602_cache_invalid",
           "front_camera_50scene_public2602_claim_summary_missing"
         ],
@@ -154,10 +148,7 @@
       {
         "blocking_requirements": [
           "hf_token_missing",
-          "docker_daemon_unavailable",
           "alpasim_base_image_missing",
-          "nvidia_gpu_unavailable",
-          "docker_nvidia_runtime_unavailable",
           "front_camera_100scene_public2602_cache_invalid",
           "front_camera_100scene_public2602_claim_summary_missing"
         ],
@@ -174,10 +165,7 @@
       },
       {
         "blocking_requirements": [
-          "docker_daemon_unavailable",
           "alpasim_base_image_missing",
-          "nvidia_gpu_unavailable",
-          "docker_nvidia_runtime_unavailable",
           "front_camera_50scene_public2602_cache_invalid",
           "front_camera_50scene_public2602_claim_summary_missing",
           "front_camera_100scene_public2602_cache_invalid",
@@ -198,10 +186,7 @@
       {
         "blocking_requirements": [
           "hf_token_missing",
-          "docker_daemon_unavailable",
           "alpasim_base_image_missing",
-          "nvidia_gpu_unavailable",
-          "docker_nvidia_runtime_unavailable",
           "front_camera_50scene_public2602_cache_invalid",
           "front_camera_50scene_public2602_claim_summary_missing"
         ],
@@ -277,10 +262,7 @@
       {
         "blocking_requirements": [
           "hf_token_missing",
-          "docker_daemon_unavailable",
           "alpasim_base_image_missing",
-          "nvidia_gpu_unavailable",
-          "docker_nvidia_runtime_unavailable",
           "front_camera_100scene_public2602_cache_invalid",
           "front_camera_100scene_public2602_claim_summary_missing"
         ],
@@ -433,10 +415,7 @@
     "notes": [],
     "readiness_blocker_ids": [
       "hf_token_missing",
-      "docker_daemon_unavailable",
       "alpasim_base_image_missing",
-      "nvidia_gpu_unavailable",
-      "docker_nvidia_runtime_unavailable",
       "front_camera_50scene_public2602_cache_invalid",
       "front_camera_50scene_public2602_claim_summary_missing",
       "front_camera_100scene_public2602_cache_invalid",
@@ -450,8 +429,8 @@
       "readiness",
       "shards"
     ],
-    "sha256": "66de4bc5908f150ec9192607b91a4a3b8239caa77a532e4e074690d0a1c05e88",
-    "size_bytes": 11485,
+    "sha256": "b873cc511c6dba36ea9127eef0db7c79ee8198fc2bd2f5d97e2c390fba227ee2",
+    "size_bytes": 10967,
     "valid": true
   },
   "readiness_artifact": "docs/evidence/benchmark_regeneration_readiness_20260706.json",
@@ -624,10 +603,7 @@
           "claim_gap": {
             "blocking_requirements": [
               "hf_token_missing",
-              "docker_daemon_unavailable",
               "alpasim_base_image_missing",
-              "nvidia_gpu_unavailable",
-              "docker_nvidia_runtime_unavailable",
               "front_camera_50scene_public2602_cache_invalid",
               "front_camera_50scene_public2602_claim_summary_missing"
             ],
@@ -798,10 +774,7 @@
           "claim_gap": {
             "blocking_requirements": [
               "hf_token_missing",
-              "docker_daemon_unavailable",
               "alpasim_base_image_missing",
-              "nvidia_gpu_unavailable",
-              "docker_nvidia_runtime_unavailable",
               "front_camera_100scene_public2602_cache_invalid",
               "front_camera_100scene_public2602_claim_summary_missing"
             ],

@@ -37,10 +37,10 @@
     "claim_valid_scale_summaries_present": false,
     "closed_loop_runner_ready": false,
     "closed_loop_runner_supported": true,
-    "docker_daemon_ok": false,
-    "docker_nvidia_runtime_present": null,
+    "docker_daemon_ok": true,
+    "docker_nvidia_runtime_present": true,
     "host_machine": "x86_64",
-    "nvidia_smi_ok": false,
+    "nvidia_smi_ok": true,
     "source_cache_link_ready": false
   },
   "generator": {
@@ -96,10 +96,7 @@
         "claim_gap": {
           "blocking_requirements": [
             "hf_token_missing",
-            "docker_daemon_unavailable",
             "alpasim_base_image_missing",
-            "nvidia_gpu_unavailable",
-            "docker_nvidia_runtime_unavailable",
             "front_camera_50scene_public2602_cache_invalid",
             "front_camera_50scene_public2602_claim_summary_missing"
           ],
@@ -253,10 +250,7 @@
         "claim_gap": {
           "blocking_requirements": [
             "hf_token_missing",
-            "docker_daemon_unavailable",
             "alpasim_base_image_missing",
-            "nvidia_gpu_unavailable",
-            "docker_nvidia_runtime_unavailable",
             "front_camera_100scene_public2602_cache_invalid",
             "front_camera_100scene_public2602_claim_summary_missing"
           ],
@@ -531,10 +525,7 @@
       ],
       "claim_scope": "Can produce the raw inputs for claim-valid scale summaries when prerequisites are ready.",
       "current_blocker_ids": [
-        "docker_daemon_unavailable",
         "alpasim_base_image_missing",
-        "nvidia_gpu_unavailable",
-        "docker_nvidia_runtime_unavailable",
         "front_camera_50scene_public2602_cache_invalid",
         "front_camera_100scene_public2602_cache_invalid"
       ],
@@ -658,10 +649,7 @@
     ],
     "remaining_blocker_ids": [
       "hf_token_missing",
-      "docker_daemon_unavailable",
       "alpasim_base_image_missing",
-      "nvidia_gpu_unavailable",
-      "docker_nvidia_runtime_unavailable",
       "front_camera_50scene_public2602_cache_invalid",
       "front_camera_50scene_public2602_claim_summary_missing",
       "front_camera_100scene_public2602_cache_invalid",
@@ -743,10 +731,7 @@
         "merge"
       ],
       "current_blocker_ids": [
-        "docker_daemon_unavailable",
         "alpasim_base_image_missing",
-        "nvidia_gpu_unavailable",
-        "docker_nvidia_runtime_unavailable",
         "front_camera_50scene_public2602_cache_invalid",
         "front_camera_100scene_public2602_cache_invalid"
       ],

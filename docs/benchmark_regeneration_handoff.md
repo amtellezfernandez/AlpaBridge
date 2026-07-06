@@ -45,10 +45,7 @@ Current blocker IDs from readiness:
 | Blocker ID | Blocks |
 | --- | --- |
 | `hf_token_missing` | Downloading the local 26.02 USDZ cache from gated Hugging Face assets. Operators with a complete local `all-usdzs` directory can use the offline link command instead. |
-| `docker_daemon_unavailable` | Live AlpaSim SensorSim rollouts. The tracked public snapshot skips runtime probes, so this remains conservative until refreshed on a live runner. |
-| `alpasim_base_image_missing` | Live AlpaSim SensorSim rollouts. The tracked public snapshot skips image inspection, so this remains conservative until refreshed on a live runner. |
-| `nvidia_gpu_unavailable` | Live AlpaSim SensorSim rollouts. The tracked public snapshot skips `nvidia-smi`, so this remains conservative until refreshed on a live runner. |
-| `docker_nvidia_runtime_unavailable` | Live AlpaSim SensorSim rollouts. The tracked public snapshot skips Docker runtime inspection, so this remains conservative until refreshed on a live runner. |
+| `alpasim_base_image_missing` | Live AlpaSim SensorSim rollouts. Docker, the NVIDIA runtime, and one NVIDIA GPU were visible during the current live-probed readiness refresh, but the required `alpasim-base:0.66.0` image is not installed. |
 | `front_camera_50scene_public2602_cache_invalid` | 50-scene shard execution. |
 | `front_camera_50scene_public2602_claim_summary_missing` | 50-scene claim promotion and strict audit readiness. |
 | `front_camera_100scene_public2602_cache_invalid` | 100-scene shard execution. |
@@ -162,7 +159,7 @@ is run.
 After promotion, refresh the public chain in this order:
 
 ```bash
-wod2sim-benchmark-readiness --stable-public-snapshot --skip-runtime-probes --json
+wod2sim-benchmark-readiness --stable-public-snapshot --json
 wod2sim-benchmark-status --json
 wod2sim-benchmark-audit --strict --json
 wod2sim-benchmark-evidence-manifest --json

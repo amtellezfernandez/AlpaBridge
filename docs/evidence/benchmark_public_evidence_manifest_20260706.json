@@ -8,8 +8,8 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_benchmark_operator_matrix_v1",
-      "sha256": "80b11e25c44120acbd123a8c2e4af4421c4d52b3f0b5fd829d19226502019a09",
-      "size_bytes": 30413
+      "sha256": "364ee715f3472742c8df305106c4025156ae7db86d66e889be9ec2a73067df1e",
+      "size_bytes": 29813
     },
     {
       "artifact_type": "benchmark_regeneration_control",
@@ -18,8 +18,8 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_benchmark_regeneration_audit_v1",
-      "sha256": "b0f0e055d2005cb75496829a9b410cd2a1a9da3c1258f57ce37c82aaee36d29d",
-      "size_bytes": 64212
+      "sha256": "4e880fc2c3ffcf6db60ec0bc6fc190b18c70512e6fbe44046ae50406b180c180",
+      "size_bytes": 63114
     },
     {
       "artifact_type": "benchmark_regeneration_control",
@@ -48,8 +48,8 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_benchmark_regeneration_readiness_v1",
-      "sha256": "c4fb64cc2eb178955f7717d4a756962ce84c151e4fb9adca1c3018d680840726",
-      "size_bytes": 22580
+      "sha256": "e7c2ce9d8cf4a7f63e8d24dc2dface1675e76f523d7436ccb4b2271b44e9f115",
+      "size_bytes": 21767
     },
     {
       "artifact_type": "benchmark_regeneration_control",
@@ -58,8 +58,8 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_benchmark_regeneration_commands_v1",
-      "sha256": "2f22fd6aa0e061b5248889e1e291deb6f2982f387f5707f227aa24a0b2842224",
-      "size_bytes": 58180
+      "sha256": "cddbccdc133e6ff9833fdcf8b799639a6b67b646ffde90103f244fe5cf12e084",
+      "size_bytes": 57924
     },
     {
       "artifact_type": "benchmark_regeneration_control",
@@ -68,8 +68,8 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_benchmark_regeneration_status_v1",
-      "sha256": "f8fa9bcc7845419a3d9dc770569e06401e67a1398c129048d4a30b92604713aa",
-      "size_bytes": 11017
+      "sha256": "516ef71efbd2579404ab866158bc44bbecbd63cc51d84727dc312f700bb6baec",
+      "size_bytes": 10905
     },
     {
       "artifact_type": "closed_loop_summary",
@@ -115,10 +115,7 @@
   "claim_gate": {
     "blocking_requirements": [
       "hf_token_missing",
-      "docker_daemon_unavailable",
       "alpasim_base_image_missing",
-      "nvidia_gpu_unavailable",
-      "docker_nvidia_runtime_unavailable",
       "front_camera_50scene_public2602_cache_invalid",
       "front_camera_50scene_public2602_claim_summary_missing",
       "front_camera_100scene_public2602_cache_invalid",
@@ -186,10 +183,7 @@
           "claim_gap": {
             "blocking_requirements": [
               "hf_token_missing",
-              "docker_daemon_unavailable",
               "alpasim_base_image_missing",
-              "nvidia_gpu_unavailable",
-              "docker_nvidia_runtime_unavailable",
               "front_camera_50scene_public2602_cache_invalid",
               "front_camera_50scene_public2602_claim_summary_missing"
             ],
@@ -360,10 +354,7 @@
           "claim_gap": {
             "blocking_requirements": [
               "hf_token_missing",
-              "docker_daemon_unavailable",
               "alpasim_base_image_missing",
-              "nvidia_gpu_unavailable",
-              "docker_nvidia_runtime_unavailable",
               "front_camera_100scene_public2602_cache_invalid",
               "front_camera_100scene_public2602_claim_summary_missing"
             ],
@@ -622,10 +613,7 @@
       {
         "blocking_requirements": [
           "hf_token_missing",
-          "docker_daemon_unavailable",
           "alpasim_base_image_missing",
-          "nvidia_gpu_unavailable",
-          "docker_nvidia_runtime_unavailable",
           "front_camera_50scene_public2602_cache_invalid",
           "front_camera_50scene_public2602_claim_summary_missing"
         ],
@@ -701,10 +689,7 @@
       {
         "blocking_requirements": [
           "hf_token_missing",
-          "docker_daemon_unavailable",
           "alpasim_base_image_missing",
-          "nvidia_gpu_unavailable",
-          "docker_nvidia_runtime_unavailable",
           "front_camera_100scene_public2602_cache_invalid",
           "front_camera_100scene_public2602_claim_summary_missing"
         ],

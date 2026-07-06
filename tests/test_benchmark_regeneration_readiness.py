@@ -210,7 +210,7 @@ class BenchmarkRegenerationReadinessTests(unittest.TestCase):
 
         self.assertEqual("wod2sim_benchmark_regeneration_readiness_v1", report["schema"])
         self.assertTrue(report["no_download_or_rollout_probes"])
-        self.assertTrue(report["runtime_probes_skipped"])
+        self.assertFalse(report["runtime_probes_skipped"])
         self.assertNotIn("/home/", rendered)
         self.assertNotIn("GPU-", rendered)
         self.assertIn("blocking_requirements", report)
@@ -227,7 +227,7 @@ class BenchmarkRegenerationReadinessTests(unittest.TestCase):
         self.assertEqual("verify_claim_gate", report["next_command_groups"][-1]["name"])
         refresh_display = report["next_command_groups"][0]["commands"][0]["display"]
         self.assertIn("--stable-public-snapshot", refresh_display)
-        self.assertIn("--skip-runtime-probes", refresh_display)
+        self.assertNotIn("--skip-runtime-probes", refresh_display)
         build_group = _command_group(report, "build_and_validate_scale_caches")
         self.assertEqual(["cache"], build_group["command_renderer_groups"])
         self.assertEqual(6, len(build_group["commands"]))
