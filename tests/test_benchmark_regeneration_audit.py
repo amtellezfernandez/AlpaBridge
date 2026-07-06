@@ -228,6 +228,17 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         )
         self.assertEqual(
             {
+                "claim_valid_count": 0,
+                "complete": False,
+                "expected_count": 5,
+                "invalid_present_count": 0,
+                "missing_count": 5,
+                "present_count": 0,
+            },
+            scale_claim_gaps["front_camera_50scene_public2602"]["merge_input_progress"],
+        )
+        self.assertEqual(
+            {
                 "schema": "wod2sim_closed_loop_batch_summary_v1",
                 "clean_closed_loop_batch": True,
                 "planned_scene_count": 50,
@@ -240,6 +251,14 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             },
             scale_claim_gaps["front_camera_50scene_public2602"]["claim_summary_acceptance"],
         )
+        merge_statuses_50 = stages["front_camera_50scene_public2602"]["merge_provenance"][
+            "expected_input_summary_statuses"
+        ]
+        self.assertEqual(5, len(merge_statuses_50))
+        self.assertEqual(expected_50_merge_inputs[0], merge_statuses_50[0]["path"])
+        self.assertFalse(merge_statuses_50[0]["present"])
+        self.assertFalse(merge_statuses_50[0]["claim_valid"])
+        self.assertEqual(["summary_missing"], merge_statuses_50[0]["errors"])
         self.assertFalse(scale_claim_gaps["front_camera_50scene_public2602"]["claim_valid"])
         self.assertFalse(
             scale_claim_gaps["front_camera_50scene_public2602"]["public_summary_present"]
@@ -293,6 +312,17 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         self.assertEqual(
             expected_100_merge_inputs,
             scale_claim_gaps["front_camera_100scene_public2602"]["expected_merge_input_summaries"],
+        )
+        self.assertEqual(
+            {
+                "claim_valid_count": 0,
+                "complete": False,
+                "expected_count": 10,
+                "invalid_present_count": 0,
+                "missing_count": 10,
+                "present_count": 0,
+            },
+            scale_claim_gaps["front_camera_100scene_public2602"]["merge_input_progress"],
         )
         self.assertEqual(
             "merged_batch_summaries",
@@ -459,11 +489,16 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
                 ("front_camera_50scene_public2602", 50),
                 ("front_camera_100scene_public2602", 100),
             ):
+                planned_inputs = _planned_merge_inputs(plan, preset)
+                for input_summary in planned_inputs:
+                    input_path = repo_root / input_summary
+                    input_path.parent.mkdir(parents=True, exist_ok=True)
+                    _write_json(input_path, _batch_summary(10))
                 _write_json(
                     evidence / f"closed_loop_spotlight_reflex_{scene_count}scene_batch.json",
                     _batch_summary(
                         scene_count,
-                        input_summaries=_planned_merge_inputs(plan, preset),
+                        input_summaries=planned_inputs,
                     ),
                 )
             _write_json(
@@ -483,6 +518,27 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             stages["front_camera_50scene_public2602"]["merge_provenance"][
                 "input_summaries_match_plan"
             ]
+        )
+        self.assertEqual(
+            {
+                "claim_valid_count": 5,
+                "complete": True,
+                "expected_count": 5,
+                "invalid_present_count": 0,
+                "missing_count": 0,
+                "present_count": 5,
+            },
+            stages["front_camera_50scene_public2602"]["merge_provenance"][
+                "expected_input_summary_progress"
+            ],
+        )
+        self.assertTrue(
+            all(
+                row["claim_valid"]
+                for row in stages["front_camera_50scene_public2602"]["merge_provenance"][
+                    "expected_input_summary_statuses"
+                ]
+            )
         )
         self.assertTrue(
             stages["front_camera_50scene_public2602"]["summary_provenance"]["source_matches_plan"]

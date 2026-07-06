@@ -18,8 +18,8 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_benchmark_regeneration_audit_v1",
-      "sha256": "008495069da9ab0c6cff70005949211b80208075666a2d0dcdba9e9883e6c4c0",
-      "size_bytes": 29969
+      "sha256": "0e830cebdc0f0cb4a839e9dd588bdbabd5028df33b3c41740c223a8561a0c21b",
+      "size_bytes": 41284
     },
     {
       "artifact_type": "benchmark_regeneration_control",
@@ -156,6 +156,14 @@
           "usdz_file_count": 0,
           "valid": false
         },
+        "merge_input_progress": {
+          "claim_valid_count": 0,
+          "complete": false,
+          "expected_count": 5,
+          "invalid_present_count": 0,
+          "missing_count": 5,
+          "present_count": 0
+        },
         "next_command_groups": [
           "build_and_validate_scale_caches",
           "run_scale_shards_and_promote_summaries",
@@ -236,6 +244,14 @@
           "required": true,
           "usdz_file_count": 0,
           "valid": false
+        },
+        "merge_input_progress": {
+          "claim_valid_count": 0,
+          "complete": false,
+          "expected_count": 10,
+          "invalid_present_count": 0,
+          "missing_count": 10,
+          "present_count": 0
         },
         "next_command_groups": [
           "build_and_validate_scale_caches",

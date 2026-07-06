@@ -242,6 +242,14 @@
           "usdz_file_count": 0,
           "valid": false
         },
+        "merge_input_progress": {
+          "claim_valid_count": 0,
+          "complete": false,
+          "expected_count": 5,
+          "invalid_present_count": 0,
+          "missing_count": 5,
+          "present_count": 0
+        },
         "next_command_groups": [
           "build_and_validate_scale_caches",
           "run_scale_shards_and_promote_summaries",
@@ -322,6 +330,14 @@
           "required": true,
           "usdz_file_count": 0,
           "valid": false
+        },
+        "merge_input_progress": {
+          "claim_valid_count": 0,
+          "complete": false,
+          "expected_count": 10,
+          "invalid_present_count": 0,
+          "missing_count": 10,
+          "present_count": 0
         },
         "next_command_groups": [
           "build_and_validate_scale_caches",
@@ -429,8 +445,8 @@
       "readiness",
       "shards"
     ],
-    "sha256": "89c88fce2d761a8321d80ceff90fe6c6229d6cf09e8c49ae3f48cb41e2c442b3",
-    "size_bytes": 9996,
+    "sha256": "bc2ad0392ca692dfa24bc56067af87289dc8fc001fa152e52264be37c3699b25",
+    "size_bytes": 10164,
     "valid": true
   },
   "readiness_artifact": "docs/evidence/benchmark_regeneration_readiness_20260706.json",
@@ -551,6 +567,15 @@
         "actual_input_summaries": [],
         "errors": [],
         "expected_input_summaries": [],
+        "expected_input_summary_progress": {
+          "claim_valid_count": 0,
+          "complete": false,
+          "expected_count": 0,
+          "invalid_present_count": 0,
+          "missing_count": 0,
+          "present_count": 0
+        },
+        "expected_input_summary_statuses": [],
         "input_summaries_match_plan": null,
         "required_for_stage": false,
         "summary_is_merged": false
@@ -594,6 +619,106 @@
           "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/020_029/wod2sim-batch-summary.json",
           "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/030_039/wod2sim-batch-summary.json",
           "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/040_049/wod2sim-batch-summary.json"
+        ],
+        "expected_input_summary_progress": {
+          "claim_valid_count": 0,
+          "complete": false,
+          "expected_count": 5,
+          "invalid_present_count": 0,
+          "missing_count": 5,
+          "present_count": 0
+        },
+        "expected_input_summary_statuses": [
+          {
+            "claim_valid": false,
+            "errors": [
+              "summary_missing"
+            ],
+            "expected_scene_count": 10,
+            "observed": {
+              "clean_closed_loop_batch": null,
+              "completed_scene_count": null,
+              "failed_scene_count": null,
+              "planned_scene_count": null,
+              "schema": null,
+              "sensor_failure_scene_count": null,
+              "total_audited_frames": null
+            },
+            "path": "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/000_009/wod2sim-batch-summary.json",
+            "present": false
+          },
+          {
+            "claim_valid": false,
+            "errors": [
+              "summary_missing"
+            ],
+            "expected_scene_count": 10,
+            "observed": {
+              "clean_closed_loop_batch": null,
+              "completed_scene_count": null,
+              "failed_scene_count": null,
+              "planned_scene_count": null,
+              "schema": null,
+              "sensor_failure_scene_count": null,
+              "total_audited_frames": null
+            },
+            "path": "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/010_019/wod2sim-batch-summary.json",
+            "present": false
+          },
+          {
+            "claim_valid": false,
+            "errors": [
+              "summary_missing"
+            ],
+            "expected_scene_count": 10,
+            "observed": {
+              "clean_closed_loop_batch": null,
+              "completed_scene_count": null,
+              "failed_scene_count": null,
+              "planned_scene_count": null,
+              "schema": null,
+              "sensor_failure_scene_count": null,
+              "total_audited_frames": null
+            },
+            "path": "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/020_029/wod2sim-batch-summary.json",
+            "present": false
+          },
+          {
+            "claim_valid": false,
+            "errors": [
+              "summary_missing"
+            ],
+            "expected_scene_count": 10,
+            "observed": {
+              "clean_closed_loop_batch": null,
+              "completed_scene_count": null,
+              "failed_scene_count": null,
+              "planned_scene_count": null,
+              "schema": null,
+              "sensor_failure_scene_count": null,
+              "total_audited_frames": null
+            },
+            "path": "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/030_039/wod2sim-batch-summary.json",
+            "present": false
+          },
+          {
+            "claim_valid": false,
+            "errors": [
+              "summary_missing"
+            ],
+            "expected_scene_count": 10,
+            "observed": {
+              "clean_closed_loop_batch": null,
+              "completed_scene_count": null,
+              "failed_scene_count": null,
+              "planned_scene_count": null,
+              "schema": null,
+              "sensor_failure_scene_count": null,
+              "total_audited_frames": null
+            },
+            "path": "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/040_049/wod2sim-batch-summary.json",
+            "present": false
+          }
         ],
         "input_summaries_match_plan": null,
         "required_for_stage": true,
@@ -645,6 +770,196 @@
           "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/070_079/wod2sim-batch-summary.json",
           "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/080_089/wod2sim-batch-summary.json",
           "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/090_099/wod2sim-batch-summary.json"
+        ],
+        "expected_input_summary_progress": {
+          "claim_valid_count": 0,
+          "complete": false,
+          "expected_count": 10,
+          "invalid_present_count": 0,
+          "missing_count": 10,
+          "present_count": 0
+        },
+        "expected_input_summary_statuses": [
+          {
+            "claim_valid": false,
+            "errors": [
+              "summary_missing"
+            ],
+            "expected_scene_count": 10,
+            "observed": {
+              "clean_closed_loop_batch": null,
+              "completed_scene_count": null,
+              "failed_scene_count": null,
+              "planned_scene_count": null,
+              "schema": null,
+              "sensor_failure_scene_count": null,
+              "total_audited_frames": null
+            },
+            "path": "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/000_009/wod2sim-batch-summary.json",
+            "present": false
+          },
+          {
+            "claim_valid": false,
+            "errors": [
+              "summary_missing"
+            ],
+            "expected_scene_count": 10,
+            "observed": {
+              "clean_closed_loop_batch": null,
+              "completed_scene_count": null,
+              "failed_scene_count": null,
+              "planned_scene_count": null,
+              "schema": null,
+              "sensor_failure_scene_count": null,
+              "total_audited_frames": null
+            },
+            "path": "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/010_019/wod2sim-batch-summary.json",
+            "present": false
+          },
+          {
+            "claim_valid": false,
+            "errors": [
+              "summary_missing"
+            ],
+            "expected_scene_count": 10,
+            "observed": {
+              "clean_closed_loop_batch": null,
+              "completed_scene_count": null,
+              "failed_scene_count": null,
+              "planned_scene_count": null,
+              "schema": null,
+              "sensor_failure_scene_count": null,
+              "total_audited_frames": null
+            },
+            "path": "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/020_029/wod2sim-batch-summary.json",
+            "present": false
+          },
+          {
+            "claim_valid": false,
+            "errors": [
+              "summary_missing"
+            ],
+            "expected_scene_count": 10,
+            "observed": {
+              "clean_closed_loop_batch": null,
+              "completed_scene_count": null,
+              "failed_scene_count": null,
+              "planned_scene_count": null,
+              "schema": null,
+              "sensor_failure_scene_count": null,
+              "total_audited_frames": null
+            },
+            "path": "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/030_039/wod2sim-batch-summary.json",
+            "present": false
+          },
+          {
+            "claim_valid": false,
+            "errors": [
+              "summary_missing"
+            ],
+            "expected_scene_count": 10,
+            "observed": {
+              "clean_closed_loop_batch": null,
+              "completed_scene_count": null,
+              "failed_scene_count": null,
+              "planned_scene_count": null,
+              "schema": null,
+              "sensor_failure_scene_count": null,
+              "total_audited_frames": null
+            },
+            "path": "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/040_049/wod2sim-batch-summary.json",
+            "present": false
+          },
+          {
+            "claim_valid": false,
+            "errors": [
+              "summary_missing"
+            ],
+            "expected_scene_count": 10,
+            "observed": {
+              "clean_closed_loop_batch": null,
+              "completed_scene_count": null,
+              "failed_scene_count": null,
+              "planned_scene_count": null,
+              "schema": null,
+              "sensor_failure_scene_count": null,
+              "total_audited_frames": null
+            },
+            "path": "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/050_059/wod2sim-batch-summary.json",
+            "present": false
+          },
+          {
+            "claim_valid": false,
+            "errors": [
+              "summary_missing"
+            ],
+            "expected_scene_count": 10,
+            "observed": {
+              "clean_closed_loop_batch": null,
+              "completed_scene_count": null,
+              "failed_scene_count": null,
+              "planned_scene_count": null,
+              "schema": null,
+              "sensor_failure_scene_count": null,
+              "total_audited_frames": null
+            },
+            "path": "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/060_069/wod2sim-batch-summary.json",
+            "present": false
+          },
+          {
+            "claim_valid": false,
+            "errors": [
+              "summary_missing"
+            ],
+            "expected_scene_count": 10,
+            "observed": {
+              "clean_closed_loop_batch": null,
+              "completed_scene_count": null,
+              "failed_scene_count": null,
+              "planned_scene_count": null,
+              "schema": null,
+              "sensor_failure_scene_count": null,
+              "total_audited_frames": null
+            },
+            "path": "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/070_079/wod2sim-batch-summary.json",
+            "present": false
+          },
+          {
+            "claim_valid": false,
+            "errors": [
+              "summary_missing"
+            ],
+            "expected_scene_count": 10,
+            "observed": {
+              "clean_closed_loop_batch": null,
+              "completed_scene_count": null,
+              "failed_scene_count": null,
+              "planned_scene_count": null,
+              "schema": null,
+              "sensor_failure_scene_count": null,
+              "total_audited_frames": null
+            },
+            "path": "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/080_089/wod2sim-batch-summary.json",
+            "present": false
+          },
+          {
+            "claim_valid": false,
+            "errors": [
+              "summary_missing"
+            ],
+            "expected_scene_count": 10,
+            "observed": {
+              "clean_closed_loop_batch": null,
+              "completed_scene_count": null,
+              "failed_scene_count": null,
+              "planned_scene_count": null,
+              "schema": null,
+              "sensor_failure_scene_count": null,
+              "total_audited_frames": null
+            },
+            "path": "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/090_099/wod2sim-batch-summary.json",
+            "present": false
+          }
         ],
         "input_summaries_match_plan": null,
         "required_for_stage": true,

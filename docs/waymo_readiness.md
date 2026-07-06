@@ -208,6 +208,7 @@ operators with gated assets and an x86_64 NVIDIA/Docker AlpaSim host.
 The matching claim-readiness audit is
 [`docs/evidence/benchmark_regeneration_audit_20260706.json`](evidence/benchmark_regeneration_audit_20260706.json).
 It verifies the tracked summary artifacts, merged shard provenance, and the
-readiness snapshot's stage-summary state against the regeneration plan. After
-new 50/100 summaries are promoted, refresh readiness, regenerate status, then
-run `wod2sim-benchmark-audit --strict --json`.
+readiness snapshot's stage-summary state against the regeneration plan. Its
+scale gap rows also report local planned-shard summary progress for resumable
+50/100 execution. After new 50/100 summaries are promoted, refresh readiness,
+regenerate status, then run `wod2sim-benchmark-audit --strict --json`.

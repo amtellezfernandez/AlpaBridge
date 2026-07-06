@@ -53,6 +53,14 @@ def test_public_evidence_manifest_builder_hashes_tracked_artifacts() -> None:
         manifest["claim_gate"]["scale_claim_gaps"][0]["claim_summary_acceptance"]["source_kind"]
         == "merged_batch_summaries"
     )
+    assert manifest["claim_gate"]["scale_claim_gaps"][0]["merge_input_progress"] == {
+        "claim_valid_count": 0,
+        "complete": False,
+        "expected_count": 5,
+        "invalid_present_count": 0,
+        "missing_count": 5,
+        "present_count": 0,
+    }
     assert {Path(row["path"]) for row in manifest["missing_expected_artifacts"]} == {
         MISSING_50_RELATIVE,
         MISSING_100_RELATIVE,
@@ -151,6 +159,12 @@ def test_tracked_public_evidence_manifest_is_public_safe_and_complete() -> None:
     assert manifest["claim_gate"]["scale_claim_gaps"][0]["local_usdz_cache"]["valid"] is False
     assert manifest["claim_gate"]["scale_claim_gaps"][0]["expected_merge_input_count"] == 5
     assert manifest["claim_gate"]["scale_claim_gaps"][1]["expected_merge_input_count"] == 10
+    assert (
+        manifest["claim_gate"]["scale_claim_gaps"][0]["merge_input_progress"]["present_count"] == 0
+    )
+    assert (
+        manifest["claim_gate"]["scale_claim_gaps"][1]["merge_input_progress"]["missing_count"] == 10
+    )
     assert (
         manifest["claim_gate"]["scale_claim_gaps"][0]["source_usdz_cache"]["matching_scene_count"]
         == 0

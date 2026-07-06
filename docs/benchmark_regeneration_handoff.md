@@ -144,6 +144,9 @@ Shard summaries and diagnostic probes are operational evidence, not full-stage
 claims. A 50/100 public claim requires a compact merged summary with the planned
 shard inputs, the expected scene count, zero failed scenes, zero sensor-pipeline
 failures, and successful promotion through `wod2sim-promote-batch-summary`.
+`objective_completion.scale_claim_gaps[].merge_input_progress` reports how many
+planned shard summary inputs are locally present and claim-valid when the audit
+is run.
 
 After promotion, refresh the public chain in this order:
 

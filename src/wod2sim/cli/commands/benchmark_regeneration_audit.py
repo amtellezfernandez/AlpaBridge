@@ -249,7 +249,7 @@ def _audit_stage(stage: dict[str, Any], *, repo_root: Path) -> dict[str, Any]:
             stage_errors.append("failed_scene_count_nonzero")
         if _int_value(aggregate.get("sensor_failure_scene_count")) != 0:
             stage_errors.append("sensor_failure_scene_count_nonzero")
-    merge_provenance = _merge_provenance(summary=summary, stage=stage)
+    merge_provenance = _merge_provenance(summary=summary, stage=stage, repo_root=repo_root)
     stage_errors.extend(merge_provenance["errors"])
     summary_provenance = _summary_provenance(
         summary=summary,
@@ -283,10 +283,20 @@ def _audit_stage(stage: dict[str, Any], *, repo_root: Path) -> dict[str, Any]:
     }
 
 
-def _merge_provenance(*, summary: dict[str, Any], stage: dict[str, Any]) -> dict[str, Any]:
+def _merge_provenance(
+    *,
+    summary: dict[str, Any],
+    stage: dict[str, Any],
+    repo_root: Path,
+) -> dict[str, Any]:
     commands = _dict_or_empty(stage.get("commands"))
     merge_command = _dict_or_empty(commands.get("merge_shard_summaries"))
     expected_inputs = _merge_summary_inputs_from_command(merge_command)
+    expected_input_statuses = _merge_input_summary_statuses(
+        stage=stage,
+        expected_inputs=expected_inputs,
+        repo_root=repo_root,
+    )
     source = _dict_or_empty(summary.get("source"))
     actual_inputs = [
         str(item) for item in _list_or_empty(source.get("input_summaries")) if isinstance(item, str)
@@ -300,9 +310,158 @@ def _merge_provenance(*, summary: dict[str, Any], stage: dict[str, Any]) -> dict
         "required_for_stage": bool(expected_inputs),
         "summary_is_merged": is_merged,
         "expected_input_summaries": expected_inputs,
+        "expected_input_summary_progress": _merge_input_summary_progress(expected_input_statuses),
+        "expected_input_summary_statuses": expected_input_statuses,
         "actual_input_summaries": actual_inputs,
         "input_summaries_match_plan": actual_inputs == expected_inputs if is_merged else None,
         "errors": errors,
+    }
+
+
+def _merge_input_summary_statuses(
+    *,
+    stage: dict[str, Any],
+    expected_inputs: list[str],
+    repo_root: Path,
+) -> list[dict[str, Any]]:
+    expected_counts = _expected_merge_input_scene_counts(stage)
+    statuses: list[dict[str, Any]] = []
+    for expected_input in expected_inputs:
+        expected_scene_count = expected_counts.get(expected_input)
+        path = _resolve_path(repo_root, Path(expected_input))
+        if not path.is_file():
+            statuses.append(
+                _merge_input_summary_status(
+                    path=expected_input,
+                    expected_scene_count=expected_scene_count,
+                    present=False,
+                    errors=["summary_missing"],
+                    summary={},
+                )
+            )
+            continue
+        try:
+            summary = _read_json(path)
+        except json.JSONDecodeError as exc:
+            statuses.append(
+                _merge_input_summary_status(
+                    path=expected_input,
+                    expected_scene_count=expected_scene_count,
+                    present=True,
+                    errors=[f"summary_invalid_json:{exc}"],
+                    summary={},
+                )
+            )
+            continue
+        statuses.append(
+            _merge_input_summary_status(
+                path=expected_input,
+                expected_scene_count=expected_scene_count,
+                present=True,
+                errors=_merge_input_summary_errors(
+                    summary=summary,
+                    expected_scene_count=expected_scene_count,
+                ),
+                summary=summary,
+            )
+        )
+    return statuses
+
+
+def _expected_merge_input_scene_counts(stage: dict[str, Any]) -> dict[str, int | None]:
+    counts: dict[str, int | None] = {}
+    for shard in _list_or_empty(stage.get("shards")):
+        shard_map = _dict_or_empty(shard)
+        output = _shard_summary_output(shard_map)
+        if not output:
+            continue
+        counts[output] = _optional_int(shard_map.get("scene_limit"))
+    return counts
+
+
+def _shard_summary_output(shard: dict[str, Any]) -> str | None:
+    commands = _dict_or_empty(shard.get("commands"))
+    write_command = _dict_or_empty(commands.get("write_batch_summary"))
+    output = _argv_value(write_command, "--output")
+    if output:
+        return output
+    run_dir = shard.get("run_dir")
+    if isinstance(run_dir, str) and run_dir:
+        return (Path(run_dir) / "wod2sim-batch-summary.json").as_posix()
+    return None
+
+
+def _argv_value(command: dict[str, Any], option: str) -> str | None:
+    argv = _list_or_empty(command.get("argv"))
+    for index, value in enumerate(argv):
+        if value == option and index + 1 < len(argv) and isinstance(argv[index + 1], str):
+            return str(argv[index + 1])
+    return None
+
+
+def _merge_input_summary_errors(
+    *,
+    summary: dict[str, Any],
+    expected_scene_count: int | None,
+) -> list[str]:
+    aggregate = _dict_or_empty(summary.get("aggregate"))
+    errors: list[str] = []
+    if summary.get("schema") != BATCH_SCHEMA:
+        errors.append(f"summary_schema_mismatch:{summary.get('schema')}")
+    if summary.get("clean_closed_loop_batch") is not True:
+        errors.append("clean_closed_loop_batch_not_true")
+    if expected_scene_count is not None:
+        if _int_value(aggregate.get("planned_scene_count")) != expected_scene_count:
+            errors.append("planned_scene_count_mismatch")
+        if _int_value(aggregate.get("completed_scene_count")) != expected_scene_count:
+            errors.append("completed_scene_count_mismatch")
+    if _int_value(aggregate.get("failed_scene_count")) != 0:
+        errors.append("failed_scene_count_nonzero")
+    if _int_value(aggregate.get("sensor_failure_scene_count")) != 0:
+        errors.append("sensor_failure_scene_count_nonzero")
+    return errors
+
+
+def _merge_input_summary_status(
+    *,
+    path: str,
+    expected_scene_count: int | None,
+    present: bool,
+    errors: list[str],
+    summary: dict[str, Any],
+) -> dict[str, Any]:
+    aggregate = _dict_or_empty(summary.get("aggregate"))
+    return {
+        "path": path,
+        "expected_scene_count": expected_scene_count,
+        "present": present,
+        "claim_valid": present and not errors,
+        "errors": errors,
+        "observed": {
+            "schema": summary.get("schema"),
+            "clean_closed_loop_batch": summary.get("clean_closed_loop_batch"),
+            "planned_scene_count": _optional_int(aggregate.get("planned_scene_count")),
+            "completed_scene_count": _optional_int(aggregate.get("completed_scene_count")),
+            "failed_scene_count": _optional_int(aggregate.get("failed_scene_count")),
+            "sensor_failure_scene_count": _optional_int(
+                aggregate.get("sensor_failure_scene_count")
+            ),
+            "total_audited_frames": _optional_int(aggregate.get("total_audited_frames")),
+        },
+    }
+
+
+def _merge_input_summary_progress(statuses: list[dict[str, Any]]) -> dict[str, Any]:
+    expected_count = len(statuses)
+    present_count = sum(1 for status in statuses if status.get("present") is True)
+    claim_valid_count = sum(1 for status in statuses if status.get("claim_valid") is True)
+    return {
+        "expected_count": expected_count,
+        "present_count": present_count,
+        "missing_count": expected_count - present_count,
+        "claim_valid_count": claim_valid_count,
+        "invalid_present_count": present_count - claim_valid_count,
+        "complete": bool(expected_count) and claim_valid_count == expected_count,
     }
 
 
@@ -778,6 +937,9 @@ def _scale_claim_gaps(
             for item in _list_or_empty(merge_provenance.get("expected_input_summaries"))
             if isinstance(item, str)
         ]
+        merge_input_progress = _dict_or_empty(
+            merge_provenance.get("expected_input_summary_progress")
+        )
         rows.append(
             {
                 "scene_preset": scene_preset,
@@ -789,6 +951,7 @@ def _scale_claim_gaps(
                 ),
                 "expected_merge_input_count": len(expected_merge_inputs),
                 "expected_merge_input_summaries": expected_merge_inputs,
+                "merge_input_progress": merge_input_progress,
                 "claim_valid": bool(stage_report.get("claim_valid")),
                 "public_summary_present": bool(public_summary.get("present")),
                 "public_summary_claim_valid": bool(public_summary.get("claim_valid")),

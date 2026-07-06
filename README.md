@@ -301,8 +301,8 @@ satisfied requirements, the remaining 50/100-scene claim gaps, the blocking
 readiness IDs, and the next command groups to run via `blocking_requirements`,
 `next_command_groups`, and `next_command_renderer_groups`. It also includes
 `scale_claim_gaps`, a per-50/100-stage summary of local/source cache validity,
-missing summary state, blockers, and the next command groups required before a
-claim can pass.
+missing summary state, local planned-shard summary progress, blockers, and the
+next command groups required before a claim can pass.
 
 ## Evidence Contract
 
