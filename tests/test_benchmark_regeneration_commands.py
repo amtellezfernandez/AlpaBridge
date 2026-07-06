@@ -96,7 +96,6 @@ def _expected_claim_gap(scene_count: int, expected_merge_input_count: int) -> di
     return {
         "blocking_requirements": [
             "hf_token_missing",
-            "alpasim_base_image_missing",
             f"front_camera_{scene_count}scene_public2602_cache_invalid",
             f"front_camera_{scene_count}scene_public2602_claim_summary_missing",
         ],

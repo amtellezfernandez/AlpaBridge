@@ -531,7 +531,7 @@
       "stage": null
     }
   ],
-  "created_at": "2026-07-06",
+  "created_at": "2026-07-06T10:52:46",
   "execution_boundary_counts": {
     "claim_summary_merge": 2,
     "claim_summary_promotion": 3,

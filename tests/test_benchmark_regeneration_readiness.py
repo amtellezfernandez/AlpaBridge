@@ -217,11 +217,12 @@ class BenchmarkRegenerationReadinessTests(unittest.TestCase):
         self.assertIn("next_command_groups", report)
         self.assertNotIn("free_bytes", report["disk"])
         self.assertTrue(report["disk"]["exact_free_bytes_omitted"])
+        self.assertTrue(report["runtime_probes"]["alpasim_base_image"]["ok"])
         self.assertFalse(report["readiness"]["source_cache_link_ready"])
         self.assertFalse(report["readiness"]["all_scale_source_caches_valid"])
         blocker_ids = {requirement["id"] for requirement in report["blocking_requirements"]}
         self.assertIn("hf_token_missing", blocker_ids)
-        self.assertIn("alpasim_base_image_missing", blocker_ids)
+        self.assertNotIn("alpasim_base_image_missing", blocker_ids)
         self.assertIn("front_camera_50scene_public2602_cache_invalid", blocker_ids)
         self.assertEqual("refresh_status", report["next_command_groups"][-2]["name"])
         self.assertEqual("verify_claim_gate", report["next_command_groups"][-1]["name"])

@@ -577,7 +577,7 @@
       "stage": null
     }
   ],
-  "created_at": "2026-07-06",
+  "created_at": "2026-07-06T10:52:46",
   "execution_boundary_counts": {
     "claim_summary_merge": 2,
     "claim_summary_promotion": 2,
@@ -635,7 +635,6 @@
         "claim_gap": {
           "blocking_requirements": [
             "hf_token_missing",
-            "alpasim_base_image_missing",
             "front_camera_50scene_public2602_cache_invalid",
             "front_camera_50scene_public2602_claim_summary_missing"
           ],
@@ -806,7 +805,6 @@
         "claim_gap": {
           "blocking_requirements": [
             "hf_token_missing",
-            "alpasim_base_image_missing",
             "front_camera_100scene_public2602_cache_invalid",
             "front_camera_100scene_public2602_claim_summary_missing"
           ],

@@ -98,7 +98,6 @@ def _expected_claim_gap(scene_count: int, expected_merge_input_count: int) -> di
     return {
         "blocking_requirements": [
             "hf_token_missing",
-            "alpasim_base_image_missing",
             f"front_camera_{scene_count}scene_public2602_cache_invalid",
             f"front_camera_{scene_count}scene_public2602_claim_summary_missing",
         ],
@@ -232,7 +231,10 @@ def test_operator_matrix_builder_reflects_tracked_readiness_blockers() -> None:
     assert roles["cache_builder"]["can_run_now_from_tracked_state"] is False
     assert "hf_token_missing" in roles["cache_builder"]["current_blocker_ids"]
     assert roles["closed_loop_runner"]["requires_x86_64_linux"] is True
-    assert "alpasim_base_image_missing" in roles["closed_loop_runner"]["current_blocker_ids"]
+    assert (
+        "front_camera_100scene_public2602_cache_invalid"
+        in roles["closed_loop_runner"]["current_blocker_ids"]
+    )
     assert roles["claim_promoter"]["can_run_now_from_tracked_state"] is False
     assert (
         "front_camera_100scene_public2602_claim_summary_missing"
@@ -431,7 +433,6 @@ def test_tracked_operator_matrix_is_public_safe_and_explicit_about_who_can_run()
     }
     assert summary["remaining_blocker_ids"] == [
         "hf_token_missing",
-        "alpasim_base_image_missing",
         "front_camera_50scene_public2602_cache_invalid",
         "front_camera_50scene_public2602_claim_summary_missing",
         "front_camera_100scene_public2602_cache_invalid",
