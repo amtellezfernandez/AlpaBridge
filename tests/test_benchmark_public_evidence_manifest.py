@@ -83,6 +83,9 @@ def test_public_evidence_manifest_builder_hashes_tracked_artifacts() -> None:
         "summary_path": "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/000_009/wod2sim-batch-summary.json",
         "write_summary_command_included": True,
     }
+    assert manifest["claim_gate"]["resume_repair_scope"]["stages"][0]["preflight"][
+        "validate_local_cache_command"
+    ].endswith("--hf-revision 26.02 --validate-only")
     assert {Path(row["path"]) for row in manifest["missing_expected_artifacts"]} == {
         MISSING_50_RELATIVE,
         MISSING_100_RELATIVE,
@@ -219,6 +222,12 @@ def test_tracked_public_evidence_manifest_is_public_safe_and_complete() -> None:
             "scene_offset"
         ]
         == 90
+    )
+    assert (
+        manifest["claim_gate"]["resume_repair_scope"]["stages"][1]["preflight"][
+            "cache_must_validate_before_shards"
+        ]
+        is True
     )
     assert {Path(row["path"]) for row in manifest["missing_expected_artifacts"]} == {
         MISSING_50_RELATIVE,

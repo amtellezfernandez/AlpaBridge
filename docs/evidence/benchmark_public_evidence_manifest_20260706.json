@@ -8,8 +8,8 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_benchmark_operator_matrix_v1",
-      "sha256": "98cd7acb4ce66ca9d466d2e3d17522434ca0cae67c86bbf31b37e7fb6e958adb",
-      "size_bytes": 24309
+      "sha256": "16dbd784498d7ae6e1315c506a0e2ccf44dcf3f659063da97277dffc582e9748",
+      "size_bytes": 25506
     },
     {
       "artifact_type": "benchmark_regeneration_control",
@@ -18,8 +18,8 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_benchmark_regeneration_audit_v1",
-      "sha256": "a0a215e371b9a69512e3ebb06746a77fd78e15fe25012c15898e9989b9734295",
-      "size_bytes": 57644
+      "sha256": "c9afc0322d9c29d1538b8408a7aa79aa5f149e8aea0361abbc7870b72df29678",
+      "size_bytes": 58873
     },
     {
       "artifact_type": "benchmark_regeneration_control",
@@ -58,8 +58,8 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_benchmark_regeneration_commands_v1",
-      "sha256": "17689c1ffbe6177f2f889b0af8228fb2d25ab36e4d148a04ace73f9e63ec2005",
-      "size_bytes": 52076
+      "sha256": "f68a9349a49c4bbe0f219f6c897ffbe2546188451f4bceb1d0d340237bfaeef8",
+      "size_bytes": 53273
     },
     {
       "artifact_type": "benchmark_regeneration_control",
@@ -235,6 +235,14 @@
             ]
           },
           "post_review_commands_included": true,
+          "preflight": {
+            "cache_command_group": "cache",
+            "cache_must_validate_before_shards": true,
+            "local_usdz_dir": "/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50",
+            "requires_local_usdz_cache": true,
+            "source_usdz_dir": "/path/to/alpasim/data/nre-artifacts/all-usdzs",
+            "validate_local_cache_command": "wod2sim-build-local-cache --scene-preset front_camera_50scene_public2602 --alpasim-root /path/to/alpasim --local-usdz-dir /path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50 --hf-revision 26.02 --validate-only"
+          },
           "promote_command_included": true,
           "public_summary_target": "docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json",
           "scene_count": 50,
@@ -423,6 +431,14 @@
             ]
           },
           "post_review_commands_included": true,
+          "preflight": {
+            "cache_command_group": "cache",
+            "cache_must_validate_before_shards": true,
+            "local_usdz_dir": "/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-100",
+            "requires_local_usdz_cache": true,
+            "source_usdz_dir": "/path/to/alpasim/data/nre-artifacts/all-usdzs",
+            "validate_local_cache_command": "wod2sim-build-local-cache --scene-preset front_camera_100scene_public2602 --alpasim-root /path/to/alpasim --local-usdz-dir /path/to/alpasim/data/nre-artifacts/local-2602-usdzs-100 --hf-revision 26.02 --validate-only"
+          },
           "promote_command_included": true,
           "public_summary_target": "docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json",
           "scene_count": 100,

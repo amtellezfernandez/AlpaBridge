@@ -47,6 +47,27 @@ EXPECTED_100_MISSING_SHARDS = [
 ]
 
 
+def _expected_preflight(scene_count: int) -> dict[str, object]:
+    return {
+        "cache_command_group": "cache",
+        "cache_must_validate_before_shards": True,
+        "local_usdz_dir": f"/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-{scene_count}",
+        "requires_local_usdz_cache": True,
+        "source_usdz_dir": "/path/to/alpasim/data/nre-artifacts/all-usdzs",
+        "validate_local_cache_command": (
+            "wod2sim-build-local-cache "
+            f"--scene-preset front_camera_{scene_count}scene_public2602 "
+            "--alpasim-root /path/to/alpasim "
+            f"--local-usdz-dir /path/to/alpasim/data/nre-artifacts/local-2602-usdzs-{scene_count} "
+            "--hf-revision 26.02 --validate-only"
+        ),
+    }
+
+
+EXPECTED_50_PREFLIGHT = _expected_preflight(50)
+EXPECTED_100_PREFLIGHT = _expected_preflight(100)
+
+
 def test_operator_matrix_builder_reflects_tracked_readiness_blockers() -> None:
     module = importlib.import_module("wod2sim.cli.commands.benchmark_operator_matrix")
 
@@ -112,6 +133,8 @@ def test_operator_matrix_builder_reflects_tracked_readiness_blockers() -> None:
         matrix["resume_repair_scope"]["stages"][1]["missing_shards"][-1]
         == (EXPECTED_100_MISSING_SHARDS[-1])
     )
+    assert matrix["resume_repair_scope"]["stages"][0]["preflight"] == EXPECTED_50_PREFLIGHT
+    assert matrix["resume_repair_scope"]["stages"][1]["preflight"] == EXPECTED_100_PREFLIGHT
     assert "open_repo_reviewer" in summary["ready_roles"]
     assert "closed_loop_runner" in summary["blocked_roles"]
     assert "build_and_validate_scale_caches" in summary["next_command_groups"]
@@ -268,6 +291,7 @@ def test_tracked_operator_matrix_is_public_safe_and_explicit_about_who_can_run()
                 ],
                 "missing_shards": EXPECTED_50_MISSING_SHARDS,
                 "post_review_commands_included": True,
+                "preflight": EXPECTED_50_PREFLIGHT,
                 "promote_command_included": True,
                 "public_summary_target": "docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json",
                 "scene_count": 50,
@@ -292,6 +316,7 @@ def test_tracked_operator_matrix_is_public_safe_and_explicit_about_who_can_run()
                 ],
                 "missing_shards": EXPECTED_100_MISSING_SHARDS,
                 "post_review_commands_included": True,
+                "preflight": EXPECTED_100_PREFLIGHT,
                 "promote_command_included": True,
                 "public_summary_target": "docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json",
                 "scene_count": 100,

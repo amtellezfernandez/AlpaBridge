@@ -428,6 +428,7 @@ def build_resume_plan_summary(
                 "merge_command_included": "merge" in selected_groups,
                 "promote_command_included": "promote" in selected_groups,
                 "post_review_commands_included": "post" in selected_groups,
+                "preflight": _resume_stage_preflight(stage),
             }
         )
 
@@ -459,6 +460,23 @@ def _resume_selected_groups(groups: list[str] | tuple[str, ...] | None) -> tuple
     if groups is None or "all" in selected_groups:
         return ("shards", "merge", "promote", "post")
     return selected_groups
+
+
+def _resume_stage_preflight(stage: dict[str, Any]) -> dict[str, Any]:
+    commands = _dict_or_empty(stage.get("commands"))
+    return {
+        "requires_local_usdz_cache": bool(stage.get("requires_local_usdz_cache")),
+        "local_usdz_dir": stage.get("local_usdz_dir"),
+        "source_usdz_dir": stage.get("source_usdz_dir"),
+        "validate_local_cache_command": _command_display(commands.get("validate_local_cache")),
+        "cache_command_group": "cache",
+        "cache_must_validate_before_shards": bool(stage.get("requires_local_usdz_cache")),
+    }
+
+
+def _command_display(command: object) -> str | None:
+    display = _dict_or_empty(command).get("display")
+    return str(display) if isinstance(display, str) and display else None
 
 
 def _matching_stages(

@@ -493,6 +493,7 @@ def _resume_repair_scope(
                 "merge_command_included": bool(stage.get("merge_command_included")),
                 "promote_command_included": bool(stage.get("promote_command_included")),
                 "post_review_commands_included": bool(stage.get("post_review_commands_included")),
+                "preflight": _resume_stage_preflight_scope(_dict_or_empty(stage.get("preflight"))),
             }
         )
     return {
@@ -526,6 +527,19 @@ def _resume_missing_shard_scope(shard: dict[str, Any]) -> dict[str, Any]:
         ],
         "run_command_included": bool(shard.get("run_command_included")),
         "write_summary_command_included": bool(shard.get("write_summary_command_included")),
+    }
+
+
+def _resume_stage_preflight_scope(preflight: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "requires_local_usdz_cache": bool(preflight.get("requires_local_usdz_cache")),
+        "local_usdz_dir": preflight.get("local_usdz_dir"),
+        "source_usdz_dir": preflight.get("source_usdz_dir"),
+        "validate_local_cache_command": preflight.get("validate_local_cache_command"),
+        "cache_command_group": preflight.get("cache_command_group"),
+        "cache_must_validate_before_shards": bool(
+            preflight.get("cache_must_validate_before_shards")
+        ),
     }
 
 
