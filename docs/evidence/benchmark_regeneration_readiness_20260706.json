@@ -236,9 +236,11 @@
   "plan_artifact": "docs/evidence/benchmark_regeneration_plan_20260706.json",
   "readiness": {
     "all_scale_caches_valid": false,
+    "all_scale_source_caches_valid": false,
     "cache_build_ready": false,
     "claim_valid_scale_summaries_present": false,
-    "closed_loop_runner_ready": false
+    "closed_loop_runner_ready": false,
+    "source_cache_link_ready": false
   },
   "runtime_probes": {
     "alpasim_base_image": {
@@ -329,6 +331,14 @@
       "run_dir": "runs/benchmark_spotlight_reflex_10scene_fresh",
       "scene_count": 10,
       "scene_preset": "front_camera_10scene_smoke",
+      "source_usdz_cache": {
+        "required": false,
+        "source_usdz_dir": null,
+        "validation": {
+          "status": "not_required",
+          "valid": true
+        }
+      },
       "stage": "pilot"
     },
     {
@@ -375,6 +385,36 @@
       "run_dir": "runs/benchmark_spotlight_reflex_50scene_public2602_fresh",
       "scene_count": 50,
       "scene_preset": "front_camera_50scene_public2602",
+      "source_usdz_cache": {
+        "required": true,
+        "source_usdz_dir": "workspace/alpasim/data/nre-artifacts/all-usdzs",
+        "usdz_file_count": 10,
+        "validation": {
+          "duplicate_uuid_count": 0,
+          "duplicate_uuids_sample": [],
+          "expected_scene_count": 50,
+          "invalid_cache_file_count": 0,
+          "invalid_cache_files_sample": [],
+          "invalid_revision_scene_count": 0,
+          "invalid_revision_scene_ids_sample": [],
+          "missing_scene_count": 50,
+          "missing_scene_ids_sample": [
+            "clipgt-01d503d4-449b-46fc-8d78-9085e70d3554",
+            "clipgt-02e075b9-fd24-426b-971b-7cfcb2074cc9",
+            "clipgt-048b974e-1546-488a-b8f9-d32bff77f5aa",
+            "clipgt-0499fb41-122d-4180-83af-f954a9974d3b",
+            "clipgt-05f35348-9de0-4f68-ac65-f31316dbb59e",
+            "clipgt-07981e6a-22dd-4796-ad2f-1252037ecd28",
+            "clipgt-098e2482-6db2-473b-b08a-2a80be9320f3",
+            "clipgt-0ce02937-f31b-4b4e-8286-3af73ae8861e",
+            "clipgt-0ce6f2a3-a6cf-42c3-9133-111139be1dd1",
+            "clipgt-0fa7060f-1481-4ff3-977e-510285e2515d"
+          ],
+          "present_scene_count": 0,
+          "schema": "wod2sim_local_usdz_cache_validation_v1",
+          "valid": false
+        }
+      },
       "stage": "workshop_scale"
     },
     {
@@ -421,6 +461,36 @@
       "run_dir": "runs/benchmark_spotlight_reflex_100scene_public2602_fresh",
       "scene_count": 100,
       "scene_preset": "front_camera_100scene_public2602",
+      "source_usdz_cache": {
+        "required": true,
+        "source_usdz_dir": "workspace/alpasim/data/nre-artifacts/all-usdzs",
+        "usdz_file_count": 10,
+        "validation": {
+          "duplicate_uuid_count": 0,
+          "duplicate_uuids_sample": [],
+          "expected_scene_count": 100,
+          "invalid_cache_file_count": 0,
+          "invalid_cache_files_sample": [],
+          "invalid_revision_scene_count": 0,
+          "invalid_revision_scene_ids_sample": [],
+          "missing_scene_count": 100,
+          "missing_scene_ids_sample": [
+            "clipgt-01d503d4-449b-46fc-8d78-9085e70d3554",
+            "clipgt-02e075b9-fd24-426b-971b-7cfcb2074cc9",
+            "clipgt-048b974e-1546-488a-b8f9-d32bff77f5aa",
+            "clipgt-0499fb41-122d-4180-83af-f954a9974d3b",
+            "clipgt-05f35348-9de0-4f68-ac65-f31316dbb59e",
+            "clipgt-07981e6a-22dd-4796-ad2f-1252037ecd28",
+            "clipgt-098e2482-6db2-473b-b08a-2a80be9320f3",
+            "clipgt-0ce02937-f31b-4b4e-8286-3af73ae8861e",
+            "clipgt-0ce6f2a3-a6cf-42c3-9133-111139be1dd1",
+            "clipgt-0fa7060f-1481-4ff3-977e-510285e2515d"
+          ],
+          "present_scene_count": 0,
+          "schema": "wod2sim_local_usdz_cache_validation_v1",
+          "valid": false
+        }
+      },
       "stage": "stronger_benchmark"
     }
   ],

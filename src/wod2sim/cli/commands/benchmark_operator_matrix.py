@@ -134,6 +134,8 @@ def _current_local_state(
         "cache_build_ready": bool(readiness_flags.get("cache_build_ready")),
         "closed_loop_runner_ready": bool(readiness_flags.get("closed_loop_runner_ready")),
         "all_scale_caches_valid": bool(readiness_flags.get("all_scale_caches_valid")),
+        "all_scale_source_caches_valid": bool(readiness_flags.get("all_scale_source_caches_valid")),
+        "source_cache_link_ready": bool(readiness_flags.get("source_cache_link_ready")),
         "claim_valid_scale_summaries_present": bool(
             readiness_flags.get("claim_valid_scale_summaries_present")
         ),

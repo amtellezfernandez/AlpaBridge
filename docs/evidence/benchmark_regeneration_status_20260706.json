@@ -6,6 +6,7 @@
   "created_at": "2026-07-06",
   "current_local_runtime_state": {
     "all_scale_caches_valid": false,
+    "all_scale_source_caches_valid": false,
     "alpasim_base_image_present": false,
     "claim_valid_scale_summaries_present": false,
     "closed_loop_runner_supported": true,
@@ -15,7 +16,8 @@
     "docker_daemon_ok": false,
     "docker_nvidia_runtime_present": null,
     "host_machine": "x86_64",
-    "nvidia_smi_ok": false
+    "nvidia_smi_ok": false,
+    "source_cache_link_ready": false
   },
   "current_public_evidence": {
     "fifty_scene_local_probe": {

@@ -150,6 +150,10 @@ def build_readiness_report(
     all_scale_caches_valid = all(
         stage["local_usdz_cache"]["validation"]["valid"] for stage in scale_stages
     )
+    all_scale_source_caches_valid = all(
+        stage["source_usdz_cache"]["validation"]["valid"] for stage in scale_stages
+    )
+    source_cache_link_ready = bool(scale_stages) and all_scale_source_caches_valid
     docker_nvidia_runtime = probes["docker_nvidia_runtime"]["declares_nvidia_runtime"]
     closed_loop_runner_ready = all(
         (
@@ -164,7 +168,7 @@ def build_readiness_report(
     )
     cache_build_ready = all(
         (
-            bool(env_map.get("HF_TOKEN", "").strip()),
+            bool(env_map.get("HF_TOKEN", "").strip()) or source_cache_link_ready,
             disk["meets_min_free_disk_gb"],
             resolved_alpasim_root.is_dir(),
         )
@@ -197,6 +201,8 @@ def build_readiness_report(
             "cache_build_ready": cache_build_ready,
             "closed_loop_runner_ready": closed_loop_runner_ready,
             "all_scale_caches_valid": all_scale_caches_valid,
+            "all_scale_source_caches_valid": all_scale_source_caches_valid,
+            "source_cache_link_ready": source_cache_link_ready,
             "claim_valid_scale_summaries_present": all(
                 stage["public_summary"]["claim_valid"] for stage in scale_stages
             ),
@@ -346,12 +352,14 @@ def _stage_readiness(
         repo_root=repo_root,
         expected_scene_count=scene_count,
     )
+    source_cache = _source_cache_status(stage=stage, hf_revision=hf_revision, repo_root=repo_root)
     return {
         "stage": stage["stage"],
         "scene_preset": scene_preset,
         "scene_count": scene_count,
         "requires_local_usdz_cache": requires_cache,
         "local_usdz_cache": local_cache,
+        "source_usdz_cache": source_cache,
         "public_summary": public_summary,
         "run_dir": stage["run_dir"],
         "public_summary_target": stage["public_summary_target"],
@@ -367,7 +375,11 @@ def _blocking_requirements(
     stages: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     requirements: list[dict[str, Any]] = []
-    if not env.get("HF_TOKEN", "").strip():
+    scale_stages = [stage for stage in stages if stage["requires_local_usdz_cache"]]
+    source_cache_link_ready = bool(scale_stages) and all(
+        stage["source_usdz_cache"]["validation"]["valid"] for stage in scale_stages
+    )
+    if not env.get("HF_TOKEN", "").strip() and not source_cache_link_ready:
         requirements.append(
             {
                 "id": "hf_token_missing",
@@ -686,6 +698,36 @@ def _local_cache_status(
         "local_usdz_dir": _display_path(local_usdz_dir, repo_root=repo_root),
         "usdz_file_count": len(list(local_usdz_dir.glob("*.usdz")))
         if local_usdz_dir.is_dir()
+        else 0,
+        "validation": _compact_cache_validation(validation),
+    }
+
+
+def _source_cache_status(
+    *,
+    stage: dict[str, Any],
+    hf_revision: str,
+    repo_root: Path,
+) -> dict[str, Any]:
+    if not stage["requires_local_usdz_cache"]:
+        return {
+            "required": False,
+            "source_usdz_dir": None,
+            "validation": {"valid": True, "status": "not_required"},
+        }
+    source_usdz_dir = Path(str(stage.get("source_usdz_dir") or ""))
+    validation = validate_local_usdz_cache(
+        scene_preset=str(stage["scene_preset"]),
+        scene_ids=[str(scene_id) for scene_id in stage.get("scene_ids", [])]
+        or _stage_scene_ids(stage),
+        local_usdz_dir=source_usdz_dir,
+        hf_revision=hf_revision,
+    )
+    return {
+        "required": True,
+        "source_usdz_dir": _display_path(source_usdz_dir, repo_root=repo_root),
+        "usdz_file_count": len(list(source_usdz_dir.glob("*.usdz")))
+        if source_usdz_dir.is_dir()
         else 0,
         "validation": _compact_cache_validation(validation),
     }

@@ -162,6 +162,42 @@ class BenchmarkRegenerationReadinessTests(unittest.TestCase):
         self.assertEqual("skipped", report["runtime_probes"]["alpasim_base_image"]["status"])
         self.assertFalse(report["readiness"]["closed_loop_runner_ready"])
 
+    def test_complete_source_cache_makes_cache_link_ready_without_hf_token(self) -> None:
+        from wod2sim.cli.commands import benchmark_regeneration_readiness as module
+        from wod2sim.cli.commands.run_alpasim_local_external import _scene_ids
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            alpasim_root = root / "alpasim"
+            source_dir = alpasim_root / "data" / "nre-artifacts" / "all-usdzs"
+            source_dir.mkdir(parents=True)
+            for index, scene_id in enumerate(_scene_ids("fresh_3scene", []), start=1):
+                _write_usdz(
+                    source_dir / f"uuid-{index}.usdz", scene_id=scene_id, uuid=f"uuid-{index}"
+                )
+
+            report = module.build_readiness_report(
+                pilot_preset="fresh_3scene",
+                scale_presets=["fresh_3scene"],
+                alpasim_root=alpasim_root,
+                repo_root=root,
+                created_at="2026-07-06",
+                env={},
+                command_runner=lambda argv: (_ for _ in ()).throw(AssertionError(argv)),
+                disk_usage=lambda _path: _DiskUsage(),
+                skip_runtime_probes=True,
+            )
+
+        scale_stage = report["stages"][1]
+        blocker_ids = {requirement["id"] for requirement in report["blocking_requirements"]}
+        self.assertTrue(report["readiness"]["source_cache_link_ready"])
+        self.assertTrue(report["readiness"]["all_scale_source_caches_valid"])
+        self.assertTrue(report["readiness"]["cache_build_ready"])
+        self.assertTrue(scale_stage["source_usdz_cache"]["validation"]["valid"])
+        self.assertFalse(scale_stage["local_usdz_cache"]["validation"]["valid"])
+        self.assertNotIn("hf_token_missing", blocker_ids)
+        self.assertIn("fresh_3scene_cache_invalid", blocker_ids)
+
     def test_tracked_readiness_snapshot_is_public_safe_and_records_remaining_scale_gap(
         self,
     ) -> None:
@@ -178,6 +214,8 @@ class BenchmarkRegenerationReadinessTests(unittest.TestCase):
         self.assertIn("next_command_groups", report)
         self.assertNotIn("free_bytes", report["disk"])
         self.assertTrue(report["disk"]["exact_free_bytes_omitted"])
+        self.assertFalse(report["readiness"]["source_cache_link_ready"])
+        self.assertFalse(report["readiness"]["all_scale_source_caches_valid"])
         blocker_ids = {requirement["id"] for requirement in report["blocking_requirements"]}
         self.assertIn("hf_token_missing", blocker_ids)
         self.assertIn("alpasim_base_image_missing", blocker_ids)
@@ -220,8 +258,14 @@ class BenchmarkRegenerationReadinessTests(unittest.TestCase):
         )
         self.assertTrue(stages[10]["public_summary"]["claim_valid"])
         self.assertFalse(stages[50]["local_usdz_cache"]["validation"]["valid"])
+        self.assertFalse(stages[50]["source_usdz_cache"]["validation"]["valid"])
+        self.assertEqual(0, stages[50]["source_usdz_cache"]["validation"]["present_scene_count"])
+        self.assertEqual(50, stages[50]["source_usdz_cache"]["validation"]["missing_scene_count"])
         self.assertFalse(stages[50]["public_summary"]["present"])
         self.assertFalse(stages[100]["local_usdz_cache"]["validation"]["valid"])
+        self.assertFalse(stages[100]["source_usdz_cache"]["validation"]["valid"])
+        self.assertEqual(0, stages[100]["source_usdz_cache"]["validation"]["present_scene_count"])
+        self.assertEqual(100, stages[100]["source_usdz_cache"]["validation"]["missing_scene_count"])
         self.assertFalse(stages[100]["public_summary"]["present"])
 
 
