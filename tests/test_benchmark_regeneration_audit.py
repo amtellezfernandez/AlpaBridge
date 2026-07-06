@@ -468,6 +468,32 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             audit["readiness_consistency"]["notes"],
         )
 
+    def test_readiness_cache_requirement_drift_invalidates_audit(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            evidence = repo_root / "docs" / "evidence"
+            evidence.mkdir(parents=True)
+            _copy_evidence_jsons(evidence)
+            readiness_path = evidence / READINESS_RELATIVE.name
+            readiness = _read_json(readiness_path)
+            readiness["stages"][1]["cache_requirements"]["scene_ids_sha256"] = "bad"
+            _write_json(readiness_path, readiness)
+            _refresh_manifest_hash(evidence / MANIFEST_RELATIVE.name, READINESS_RELATIVE)
+
+            audit = module.build_audit(repo_root=repo_root, created_at="2026-07-06")
+
+        self.assertFalse(audit["valid"])
+        self.assertFalse(
+            audit["readiness_consistency"]["checks"][
+                "front_camera_50scene_public2602_readiness_cache_requirements_match_preset"
+            ]
+        )
+        self.assertIn(
+            "readiness cache_requirements do not match preset for front_camera_50scene_public2602",
+            audit["readiness_consistency"]["notes"],
+        )
+
     def test_public_handoff_doc_drift_invalidates_audit(self) -> None:
         module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -769,22 +795,38 @@ def _readiness_report(
     *,
     claim_valid_scene_counts: set[int],
 ) -> dict[str, object]:
+    from wod2sim.cli.commands.run_alpasim_local_external import _scene_ids
+
     stages = []
     for stage in plan["stages"]:
         scene_count = int(stage["scene_count"])
         claim_valid = scene_count in claim_valid_scene_counts
+        scene_ids = _scene_ids(str(stage["scene_preset"]), [])
+        requires_cache = bool(stage["requires_local_usdz_cache"])
         stages.append(
             {
                 "stage": stage["stage"],
                 "scene_preset": stage["scene_preset"],
                 "scene_count": scene_count,
-                "requires_local_usdz_cache": bool(stage["requires_local_usdz_cache"]),
+                "requires_local_usdz_cache": requires_cache,
+                "cache_requirements": {
+                    "required": requires_cache,
+                    "scene_preset_file": (
+                        f"src/wod2sim/simulator/alpasim_scene_presets/{stage['scene_preset']}.yaml"
+                    ),
+                    "scene_count": len(scene_ids),
+                    "scene_ids_sha256": _scene_ids_sha256(scene_ids),
+                    "scene_ids_sample": scene_ids[:10],
+                    "local_usdz_dir": stage["local_usdz_dir"] if requires_cache else None,
+                    "source_usdz_dir": stage["source_usdz_dir"] if requires_cache else None,
+                },
                 "local_usdz_cache": {
-                    "required": bool(stage["requires_local_usdz_cache"]),
+                    "required": requires_cache,
+                    "local_usdz_dir": stage["local_usdz_dir"] if requires_cache else None,
                     "validation": {"valid": True},
                 },
                 "source_usdz_cache": {
-                    "required": bool(stage["requires_local_usdz_cache"]),
+                    "required": requires_cache,
                     "source_usdz_dir": stage.get("source_usdz_dir"),
                     "validation": {
                         "schema": "wod2sim_local_usdz_cache_validation_v1",
@@ -852,6 +894,10 @@ def _readiness_report(
 
 def _read_json(path: Path) -> dict[str, object]:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _scene_ids_sha256(scene_ids: list[str]) -> str:
+    return hashlib.sha256(("\n".join(scene_ids) + "\n").encode("utf-8")).hexdigest()
 
 
 def _copy_status_and_probe(evidence_dir: Path) -> None:

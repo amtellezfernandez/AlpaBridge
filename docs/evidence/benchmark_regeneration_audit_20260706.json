@@ -241,11 +241,14 @@
   "readiness_artifact": "docs/evidence/benchmark_regeneration_readiness_20260706.json",
   "readiness_consistency": {
     "checks": {
+      "front_camera_100scene_public2602_readiness_cache_requirements_match_preset": true,
       "front_camera_100scene_public2602_readiness_source_cache_state_present": true,
       "front_camera_100scene_public2602_readiness_stage_matches_audit": true,
       "front_camera_100scene_public2602_readiness_summary_state_matches_audit": true,
+      "front_camera_10scene_smoke_readiness_cache_requirements_match_preset": true,
       "front_camera_10scene_smoke_readiness_stage_matches_audit": true,
       "front_camera_10scene_smoke_readiness_summary_state_matches_audit": true,
+      "front_camera_50scene_public2602_readiness_cache_requirements_match_preset": true,
       "front_camera_50scene_public2602_readiness_source_cache_state_present": true,
       "front_camera_50scene_public2602_readiness_stage_matches_audit": true,
       "front_camera_50scene_public2602_readiness_summary_state_matches_audit": true,

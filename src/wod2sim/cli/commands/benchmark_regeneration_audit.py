@@ -1433,6 +1433,16 @@ def _readiness_consistency(
         if not checks[summary_key]:
             notes.append(f"readiness public_summary state does not match audit for {preset}")
 
+        cache_requirements = _dict_or_empty(readiness_stage.get("cache_requirements"))
+        cache_requirements_key = f"{preset}_readiness_cache_requirements_match_preset"
+        checks[cache_requirements_key] = _cache_requirements_match_stage(
+            cache_requirements=cache_requirements,
+            readiness_stage=readiness_stage,
+            preset=preset,
+        )
+        if not checks[cache_requirements_key]:
+            notes.append(f"readiness cache_requirements do not match preset for {preset}")
+
     scale_stage_claims = [
         bool(stage.get("claim_valid"))
         for stage in stage_reports
@@ -1615,6 +1625,54 @@ def _expected_readiness_blocker_ids(
         if public_summary.get("claim_valid") is not True:
             ids.append(f"{preset}_claim_summary_missing")
     return ids
+
+
+def _cache_requirements_match_stage(
+    *,
+    cache_requirements: dict[str, Any],
+    readiness_stage: dict[str, Any],
+    preset: str,
+) -> bool:
+    scene_ids = _scene_ids_for_preset(preset)
+    requires_cache = bool(readiness_stage.get("requires_local_usdz_cache"))
+    expected_local_dir = _dict_or_empty(readiness_stage.get("local_usdz_cache")).get(
+        "local_usdz_dir"
+    )
+    expected_source_dir = _dict_or_empty(readiness_stage.get("source_usdz_cache")).get(
+        "source_usdz_dir"
+    )
+    return (
+        bool(cache_requirements)
+        and cache_requirements.get("required") is requires_cache
+        and cache_requirements.get("scene_preset_file") == _scene_preset_file(preset)
+        and _int_value(cache_requirements.get("scene_count")) == len(scene_ids)
+        and cache_requirements.get("scene_ids_sha256") == _scene_ids_sha256(scene_ids)
+        and cache_requirements.get("scene_ids_sample") == scene_ids[:10]
+        and (
+            (cache_requirements.get("local_usdz_dir") == expected_local_dir)
+            if requires_cache
+            else cache_requirements.get("local_usdz_dir") is None
+        )
+        and (
+            (cache_requirements.get("source_usdz_dir") == expected_source_dir)
+            if requires_cache
+            else cache_requirements.get("source_usdz_dir") is None
+        )
+    )
+
+
+def _scene_ids_for_preset(preset: str) -> list[str]:
+    from wod2sim.cli.commands.run_alpasim_local_external import _scene_ids
+
+    return _scene_ids(preset, [])
+
+
+def _scene_preset_file(preset: str) -> str:
+    return f"src/wod2sim/simulator/alpasim_scene_presets/{preset}.yaml"
+
+
+def _scene_ids_sha256(scene_ids: list[str]) -> str:
+    return hashlib.sha256(("\n".join(scene_ids) + "\n").encode("utf-8")).hexdigest()
 
 
 def _expected_readiness_next_group_names(*, readiness_stages: list[dict[str, Any]]) -> list[str]:

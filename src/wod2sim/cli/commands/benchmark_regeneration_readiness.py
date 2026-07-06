@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import platform
@@ -358,6 +359,7 @@ def _stage_readiness(
         "scene_preset": scene_preset,
         "scene_count": scene_count,
         "requires_local_usdz_cache": requires_cache,
+        "cache_requirements": _cache_requirements(stage=stage, repo_root=repo_root),
         "local_usdz_cache": local_cache,
         "source_usdz_cache": source_cache,
         "public_summary": public_summary,
@@ -737,6 +739,40 @@ def _stage_scene_ids(stage: dict[str, Any]) -> list[str]:
     from wod2sim.cli.commands.run_alpasim_local_external import _scene_ids
 
     return _scene_ids(str(stage["scene_preset"]), [])
+
+
+def _cache_requirements(*, stage: dict[str, Any], repo_root: Path) -> dict[str, Any]:
+    from wod2sim.cli.commands.run_alpasim_local_external import SCENE_PRESETS
+
+    scene_ids = _stage_scene_ids(stage)
+    scene_preset = str(stage["scene_preset"])
+    requires_cache = bool(stage["requires_local_usdz_cache"])
+    requirements: dict[str, Any] = {
+        "required": requires_cache,
+        "scene_preset_file": _display_path(SCENE_PRESETS[scene_preset], repo_root=repo_root),
+        "scene_count": len(scene_ids),
+        "scene_ids_sha256": _scene_ids_sha256(scene_ids),
+        "scene_ids_sample": scene_ids[:10],
+    }
+    if requires_cache:
+        requirements.update(
+            {
+                "local_usdz_dir": _display_path(
+                    Path(str(stage["local_usdz_dir"])), repo_root=repo_root
+                ),
+                "source_usdz_dir": _display_path(
+                    Path(str(stage.get("source_usdz_dir") or "")),
+                    repo_root=repo_root,
+                ),
+            }
+        )
+    else:
+        requirements.update({"local_usdz_dir": None, "source_usdz_dir": None})
+    return requirements
+
+
+def _scene_ids_sha256(scene_ids: list[str]) -> str:
+    return hashlib.sha256(("\n".join(scene_ids) + "\n").encode("utf-8")).hexdigest()
 
 
 def _compact_cache_validation(validation: dict[str, Any]) -> dict[str, Any]:
