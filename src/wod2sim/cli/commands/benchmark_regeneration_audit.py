@@ -15,6 +15,7 @@ from wod2sim.cli.commands.benchmark_operator_matrix import (
 )
 from wod2sim.cli.commands.benchmark_regeneration_commands import (
     COMMANDS_SCHEMA,
+    build_resume_plan_summary,
     render_commands,
     render_resume_commands_from_audit,
 )
@@ -1683,6 +1684,19 @@ def _regeneration_resume_commands_consistency(
             "regeneration resume commands rows do not match current audit-derived renderer"
         )
 
+    expected_resume_plan = build_resume_plan_summary(
+        plan=plan,
+        audit=audit_projection,
+        audit_path=DEFAULT_AUDIT,
+        rows=expected_rows,
+    )
+    resume_plan = _dict_or_empty(commands.get("resume_plan"))
+    checks["regeneration_resume_commands_resume_plan_matches_audit"] = (
+        resume_plan == expected_resume_plan
+    )
+    if not checks["regeneration_resume_commands_resume_plan_matches_audit"]:
+        notes.append("regeneration resume commands resume_plan does not match current audit")
+
     return {
         "valid": all(checks.values()) if checks else False,
         "artifact": commands_artifact,
@@ -1697,6 +1711,7 @@ def _regeneration_resume_commands_consistency(
             commands.get("private_execution_command_count")
         ),
         "public_review_command_count": _int_value(commands.get("public_review_command_count")),
+        "resume_plan": resume_plan,
     }
 
 

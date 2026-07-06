@@ -251,6 +251,23 @@ def test_command_renderer_builds_resume_artifact() -> None:
     assert artifact["operator_role_counts"] == {"closed_loop_runner": 30}
     assert artifact["private_execution_command_count"] == 30
     assert artifact["public_review_command_count"] == 0
+    assert artifact["resume_plan"]["included_groups"] == ["shards"]
+    assert artifact["resume_plan"]["affected_stage_count"] == 2
+    assert artifact["resume_plan"]["missing_shard_summary_count"] == 15
+    assert artifact["resume_plan"]["command_group_counts"] == {"shards": 30}
+    assert artifact["resume_plan"]["stages"][0]["missing_shard_indexes"] == [1, 2, 3, 4, 5]
+    assert artifact["resume_plan"]["stages"][1]["missing_shard_indexes"] == [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+    ]
 
 
 def test_command_renderer_output_writes_artifact_without_changing_stdout_rows() -> None:
@@ -360,6 +377,117 @@ def test_tracked_resume_command_artifact_targets_missing_scale_shards() -> None:
     }
     assert artifact["private_execution_command_count"] == 34
     assert artifact["public_review_command_count"] == 2
+    assert artifact["resume_plan"] == {
+        "affected_stage_count": 2,
+        "audit_artifact": AUDIT_RELATIVE.as_posix(),
+        "claim_boundary": (
+            "Audit-derived resume rows are operational repair inputs only; the strict "
+            "claim gate remains false until full 50/100 summaries are merged, promoted, "
+            "and claim-valid."
+        ),
+        "command_group_counts": {
+            "merge": 2,
+            "post": 2,
+            "promote": 2,
+            "shards": 30,
+        },
+        "included_groups": ["shards", "merge", "promote", "post"],
+        "missing_shard_summary_count": 15,
+        "selected_shard_indexes": [],
+        "selected_stage_filters": [],
+        "stages": [
+            {
+                "merge_command_included": True,
+                "missing_shard_indexes": [1, 2, 3, 4, 5],
+                "missing_shard_summary_count": 5,
+                "missing_shard_summary_paths": [
+                    "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/000_009/wod2sim-batch-summary.json",
+                    "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/010_019/wod2sim-batch-summary.json",
+                    "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/020_029/wod2sim-batch-summary.json",
+                    "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/030_039/wod2sim-batch-summary.json",
+                    "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/040_049/wod2sim-batch-summary.json",
+                ],
+                "missing_summary_errors_by_path": {
+                    "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/000_009/wod2sim-batch-summary.json": [
+                        "summary_missing"
+                    ],
+                    "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/010_019/wod2sim-batch-summary.json": [
+                        "summary_missing"
+                    ],
+                    "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/020_029/wod2sim-batch-summary.json": [
+                        "summary_missing"
+                    ],
+                    "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/030_039/wod2sim-batch-summary.json": [
+                        "summary_missing"
+                    ],
+                    "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/040_049/wod2sim-batch-summary.json": [
+                        "summary_missing"
+                    ],
+                },
+                "post_review_commands_included": True,
+                "promote_command_included": True,
+                "public_summary_target": "docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json",
+                "scene_count": 50,
+                "scene_preset": "front_camera_50scene_public2602",
+                "stage": "workshop_scale",
+            },
+            {
+                "merge_command_included": True,
+                "missing_shard_indexes": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                "missing_shard_summary_count": 10,
+                "missing_shard_summary_paths": [
+                    "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/000_009/wod2sim-batch-summary.json",
+                    "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/010_019/wod2sim-batch-summary.json",
+                    "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/020_029/wod2sim-batch-summary.json",
+                    "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/030_039/wod2sim-batch-summary.json",
+                    "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/040_049/wod2sim-batch-summary.json",
+                    "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/050_059/wod2sim-batch-summary.json",
+                    "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/060_069/wod2sim-batch-summary.json",
+                    "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/070_079/wod2sim-batch-summary.json",
+                    "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/080_089/wod2sim-batch-summary.json",
+                    "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/090_099/wod2sim-batch-summary.json",
+                ],
+                "missing_summary_errors_by_path": {
+                    "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/000_009/wod2sim-batch-summary.json": [
+                        "summary_missing"
+                    ],
+                    "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/010_019/wod2sim-batch-summary.json": [
+                        "summary_missing"
+                    ],
+                    "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/020_029/wod2sim-batch-summary.json": [
+                        "summary_missing"
+                    ],
+                    "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/030_039/wod2sim-batch-summary.json": [
+                        "summary_missing"
+                    ],
+                    "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/040_049/wod2sim-batch-summary.json": [
+                        "summary_missing"
+                    ],
+                    "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/050_059/wod2sim-batch-summary.json": [
+                        "summary_missing"
+                    ],
+                    "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/060_069/wod2sim-batch-summary.json": [
+                        "summary_missing"
+                    ],
+                    "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/070_079/wod2sim-batch-summary.json": [
+                        "summary_missing"
+                    ],
+                    "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/080_089/wod2sim-batch-summary.json": [
+                        "summary_missing"
+                    ],
+                    "runs/benchmark_spotlight_reflex_100scene_public2602_fresh/shards/090_099/wod2sim-batch-summary.json": [
+                        "summary_missing"
+                    ],
+                },
+                "post_review_commands_included": True,
+                "promote_command_included": True,
+                "public_summary_target": "docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json",
+                "scene_count": 100,
+                "scene_preset": "front_camera_100scene_public2602",
+                "stage": "stronger_benchmark",
+            },
+        ],
+    }
     assert len(shard_rows) == 30
     assert all(row["resume_summary_errors"] == ["summary_missing"] for row in shard_rows)
     assert {row["scene_preset"] for row in shard_rows} == {

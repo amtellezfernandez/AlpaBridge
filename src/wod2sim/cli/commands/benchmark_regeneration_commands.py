@@ -182,7 +182,7 @@ def build_command_artifact(
     if resume_missing_shards_from_audit:
         filters["resume_missing_shards_from_audit"] = True
         filters["audit_artifact"] = _display_path(audit_path)
-    return {
+    artifact = {
         "schema": COMMANDS_SCHEMA,
         "created_at": created_at or datetime.now().isoformat(timespec="seconds"),
         "plan_artifact": _display_path(plan_path),
@@ -203,6 +203,17 @@ def build_command_artifact(
         ),
         "commands": rows,
     }
+    if resume_missing_shards_from_audit:
+        artifact["resume_plan"] = build_resume_plan_summary(
+            plan=_read_json(plan_path),
+            audit=_read_json(audit_path),
+            audit_path=audit_path,
+            stages=stages,
+            groups=groups,
+            shard_indexes=shard_indexes,
+            rows=rows,
+        )
+    return artifact
 
 
 def render_commands(
@@ -333,17 +344,102 @@ def render_resume_commands_from_audit(
 ) -> list[dict[str, Any]]:
     if audit.get("schema") != AUDIT_SCHEMA:
         raise ValueError(f"audit schema must be {AUDIT_SCHEMA}, got {audit.get('schema')!r}")
-    selected_groups = tuple(groups or ("all",))
-    if groups is None or "all" in selected_groups:
-        selected_groups = ("shards", "merge", "promote", "post")
     return _resume_missing_shard_command_rows(
         plan=plan,
         audit=audit,
         audit_path=audit_path,
         selected_stages=set(stages or []),
-        selected_groups=selected_groups,
+        selected_groups=_resume_selected_groups(groups),
         selected_shard_indexes=set(shard_indexes or []),
     )
+
+
+def build_resume_plan_summary(
+    *,
+    plan: dict[str, Any],
+    audit: dict[str, Any],
+    audit_path: Path = DEFAULT_AUDIT,
+    stages: list[str] | tuple[str, ...] | None = None,
+    groups: list[str] | tuple[str, ...] | None = None,
+    shard_indexes: list[int] | tuple[int, ...] | None = None,
+    rows: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    selected_stages = set(stages or [])
+    selected_groups = _resume_selected_groups(groups)
+    selected_shard_indexes = set(shard_indexes or [])
+    missing_statuses_by_preset = _missing_shard_summary_statuses_by_preset(audit)
+    stage_rows: list[dict[str, Any]] = []
+
+    for stage in _matching_stages(plan, selected_stages=selected_stages):
+        scene_preset = str(stage.get("scene_preset") or "")
+        missing_statuses = missing_statuses_by_preset.get(scene_preset, {})
+        if not missing_statuses:
+            continue
+        shard_outputs = _shard_summary_outputs_by_index(stage)
+        missing_shard_indexes = sorted(
+            index for index, output in shard_outputs.items() if output in missing_statuses
+        )
+        if selected_shard_indexes:
+            missing_shard_indexes = [
+                index for index in missing_shard_indexes if index in selected_shard_indexes
+            ]
+        if not missing_shard_indexes:
+            continue
+        missing_paths = [shard_outputs[index] for index in missing_shard_indexes]
+        errors_by_path = {
+            path: [
+                str(error)
+                for error in _list_or_empty(
+                    _dict_or_empty(missing_statuses.get(path)).get("errors")
+                )
+                if isinstance(error, str)
+            ]
+            for path in missing_paths
+        }
+        stage_rows.append(
+            {
+                "stage": stage.get("stage"),
+                "scene_preset": scene_preset,
+                "scene_count": _int_or_none(stage.get("scene_count")),
+                "public_summary_target": stage.get("public_summary_target"),
+                "missing_shard_indexes": missing_shard_indexes,
+                "missing_shard_summary_count": len(missing_paths),
+                "missing_shard_summary_paths": missing_paths,
+                "missing_summary_errors_by_path": errors_by_path,
+                "merge_command_included": "merge" in selected_groups,
+                "promote_command_included": "promote" in selected_groups,
+                "post_review_commands_included": "post" in selected_groups,
+            }
+        )
+
+    row_list = rows or []
+    command_group_counts = dict(
+        sorted(Counter(str(row.get("group") or "unknown") for row in row_list).items())
+    )
+    return {
+        "audit_artifact": _display_path(audit_path),
+        "claim_boundary": (
+            "Audit-derived resume rows are operational repair inputs only; the strict "
+            "claim gate remains false until full 50/100 summaries are merged, promoted, "
+            "and claim-valid."
+        ),
+        "selected_stage_filters": list(stages or []),
+        "selected_shard_indexes": list(shard_indexes or []),
+        "included_groups": list(selected_groups),
+        "affected_stage_count": len(stage_rows),
+        "missing_shard_summary_count": sum(
+            int(stage["missing_shard_summary_count"]) for stage in stage_rows
+        ),
+        "command_group_counts": command_group_counts,
+        "stages": stage_rows,
+    }
+
+
+def _resume_selected_groups(groups: list[str] | tuple[str, ...] | None) -> tuple[str, ...]:
+    selected_groups = tuple(groups or ("all",))
+    if groups is None or "all" in selected_groups:
+        return ("shards", "merge", "promote", "post")
+    return selected_groups
 
 
 def _matching_stages(
