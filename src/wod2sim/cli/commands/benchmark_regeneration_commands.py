@@ -368,6 +368,7 @@ def build_resume_plan_summary(
     selected_groups = _resume_selected_groups(groups)
     selected_shard_indexes = set(shard_indexes or [])
     missing_statuses_by_preset = _missing_shard_summary_statuses_by_preset(audit)
+    scale_claim_gaps_by_preset = _scale_claim_gaps_by_preset(audit)
     stage_rows: list[dict[str, Any]] = []
 
     for stage in _matching_stages(plan, selected_stages=selected_stages):
@@ -430,6 +431,9 @@ def build_resume_plan_summary(
                 "post_review_commands_included": "post" in selected_groups,
                 "preflight": _resume_stage_preflight(stage),
                 "completion_gate": _resume_stage_completion_gate(stage),
+                "claim_gap": _resume_stage_claim_gap(
+                    _dict_or_empty(scale_claim_gaps_by_preset.get(scene_preset))
+                ),
             }
         )
 
@@ -491,6 +495,50 @@ def _resume_stage_completion_gate(stage: dict[str, Any]) -> dict[str, Any]:
         "required_clean_closed_loop_batch": True,
         "strict_audit_command": "wod2sim-benchmark-audit --strict --json",
     }
+
+
+def _resume_stage_claim_gap(claim_gap: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "claim_valid": bool(claim_gap.get("claim_valid")),
+        "public_summary_present": bool(claim_gap.get("public_summary_present")),
+        "public_summary_claim_valid": bool(claim_gap.get("public_summary_claim_valid")),
+        "public_summary_errors": _strings(claim_gap.get("public_summary_errors")),
+        "merge_input_progress": _resume_merge_input_progress(
+            _dict_or_empty(claim_gap.get("merge_input_progress"))
+        ),
+        "local_usdz_cache": _resume_cache_gap(_dict_or_empty(claim_gap.get("local_usdz_cache"))),
+        "source_usdz_cache": _resume_cache_gap(_dict_or_empty(claim_gap.get("source_usdz_cache"))),
+        "blocking_requirements": _strings(claim_gap.get("blocking_requirements")),
+        "next_command_groups": _strings(claim_gap.get("next_command_groups")),
+    }
+
+
+def _resume_merge_input_progress(progress: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "expected_count": _int_or_none(progress.get("expected_count")),
+        "present_count": _int_or_none(progress.get("present_count")),
+        "missing_count": _int_or_none(progress.get("missing_count")),
+        "claim_valid_count": _int_or_none(progress.get("claim_valid_count")),
+        "invalid_present_count": _int_or_none(progress.get("invalid_present_count")),
+        "complete": bool(progress.get("complete")),
+    }
+
+
+def _resume_cache_gap(cache: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "required": bool(cache.get("required")),
+        "valid": bool(cache.get("valid")),
+        "expected_scene_count": _int_or_none(cache.get("expected_scene_count")),
+        "present_scene_count": _int_or_none(cache.get("present_scene_count")),
+        "missing_scene_count": _int_or_none(cache.get("missing_scene_count")),
+        "usdz_file_count": _int_or_none(cache.get("usdz_file_count")),
+        "matching_scene_count": _int_or_none(cache.get("matching_scene_count")),
+        "nonmatching_usdz_file_count": _int_or_none(cache.get("nonmatching_usdz_file_count")),
+    }
+
+
+def _strings(value: object) -> list[str]:
+    return [item for item in _list_or_empty(value) if isinstance(item, str)]
 
 
 def _command_display(command: object) -> str | None:
@@ -624,6 +672,15 @@ def _missing_shard_summary_statuses_by_preset(
         if missing:
             by_preset[scene_preset] = missing
     return by_preset
+
+
+def _scale_claim_gaps_by_preset(audit: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    objective_completion = _dict_or_empty(audit.get("objective_completion"))
+    return {
+        str(gap.get("scene_preset")): gap
+        for gap in _list_of_dicts(objective_completion.get("scale_claim_gaps"))
+        if gap.get("scene_preset")
+    }
 
 
 def _shard_summary_outputs_by_index(stage: dict[str, Any]) -> dict[int, str]:

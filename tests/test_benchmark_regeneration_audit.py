@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import importlib
 import json
+import os
 import shutil
 import sys
 import tempfile
@@ -479,6 +480,11 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
                 _readiness_report(plan, claim_valid_scene_counts={10, 50, 100}),
             )
             _write_status(evidence)
+            _write_json(
+                evidence / AUDIT_RELATIVE.name,
+                module.build_audit(repo_root=repo_root, created_at="2026-07-06"),
+            )
+            _write_resume_commands(evidence, repo_root=repo_root)
             _write_operator_matrix(evidence)
             _write_public_evidence_manifest(
                 evidence,
@@ -1748,6 +1754,22 @@ def _write_operator_matrix(evidence_dir: Path) -> None:
         created_at="2026-07-06",
     )
     _write_json(evidence_dir / OPERATOR_MATRIX_RELATIVE.name, matrix)
+
+
+def _write_resume_commands(evidence_dir: Path, *, repo_root: Path) -> None:
+    module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_commands")
+    previous_cwd = Path.cwd()
+    try:
+        os.chdir(repo_root)
+        artifact = module.build_command_artifact(
+            plan_path=PLAN_RELATIVE,
+            audit_path=AUDIT_RELATIVE,
+            resume_missing_shards_from_audit=True,
+            created_at="2026-07-06",
+        )
+    finally:
+        os.chdir(previous_cwd)
+    _write_json(evidence_dir / RESUME_COMMANDS_RELATIVE.name, artifact)
 
 
 def _write_status(evidence_dir: Path) -> None:

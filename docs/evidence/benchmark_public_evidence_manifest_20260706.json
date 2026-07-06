@@ -8,8 +8,8 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_benchmark_operator_matrix_v1",
-      "sha256": "e7b733733faf8ddd15f00f3ddc8314d90a1e7ccb7a5c31170f68c13cb4b11789",
-      "size_bytes": 26893
+      "sha256": "80b11e25c44120acbd123a8c2e4af4421c4d52b3f0b5fd829d19226502019a09",
+      "size_bytes": 30413
     },
     {
       "artifact_type": "benchmark_regeneration_control",
@@ -18,8 +18,8 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_benchmark_regeneration_audit_v1",
-      "sha256": "af83668f1caa930819ac21802f5ecf19ba4099294f3a2c6e0424ba202dc4f378",
-      "size_bytes": 60488
+      "sha256": "b0f0e055d2005cb75496829a9b410cd2a1a9da3c1258f57ce37c82aaee36d29d",
+      "size_bytes": 64212
     },
     {
       "artifact_type": "benchmark_regeneration_control",
@@ -58,8 +58,8 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_benchmark_regeneration_commands_v1",
-      "sha256": "9d0b035b6644acd273247aa1079ee5a2c97e660eb2a76839a38ada7d14b3cd7e",
-      "size_bytes": 54660
+      "sha256": "2f22fd6aa0e061b5248889e1e291deb6f2982f387f5707f227aa24a0b2842224",
+      "size_bytes": 58180
     },
     {
       "artifact_type": "benchmark_regeneration_control",
@@ -183,6 +183,57 @@
       "selected_stage_filters": [],
       "stages": [
         {
+          "claim_gap": {
+            "blocking_requirements": [
+              "hf_token_missing",
+              "docker_daemon_unavailable",
+              "alpasim_base_image_missing",
+              "nvidia_gpu_unavailable",
+              "docker_nvidia_runtime_unavailable",
+              "front_camera_50scene_public2602_cache_invalid",
+              "front_camera_50scene_public2602_claim_summary_missing"
+            ],
+            "claim_valid": false,
+            "local_usdz_cache": {
+              "expected_scene_count": 50,
+              "matching_scene_count": 0,
+              "missing_scene_count": 50,
+              "nonmatching_usdz_file_count": 0,
+              "present_scene_count": 0,
+              "required": true,
+              "usdz_file_count": 0,
+              "valid": false
+            },
+            "merge_input_progress": {
+              "claim_valid_count": 0,
+              "complete": false,
+              "expected_count": 5,
+              "invalid_present_count": 0,
+              "missing_count": 5,
+              "present_count": 0
+            },
+            "next_command_groups": [
+              "build_and_validate_scale_caches",
+              "run_scale_shards_and_promote_summaries",
+              "refresh_status",
+              "verify_claim_gate"
+            ],
+            "public_summary_claim_valid": false,
+            "public_summary_errors": [
+              "summary_missing"
+            ],
+            "public_summary_present": false,
+            "source_usdz_cache": {
+              "expected_scene_count": 50,
+              "matching_scene_count": 0,
+              "missing_scene_count": 50,
+              "nonmatching_usdz_file_count": 0,
+              "present_scene_count": 0,
+              "required": true,
+              "usdz_file_count": 0,
+              "valid": false
+            }
+          },
           "completion_gate": {
             "expected_completed_scene_count": 50,
             "expected_failed_scene_count": 0,
@@ -306,6 +357,57 @@
           "stage": "workshop_scale"
         },
         {
+          "claim_gap": {
+            "blocking_requirements": [
+              "hf_token_missing",
+              "docker_daemon_unavailable",
+              "alpasim_base_image_missing",
+              "nvidia_gpu_unavailable",
+              "docker_nvidia_runtime_unavailable",
+              "front_camera_100scene_public2602_cache_invalid",
+              "front_camera_100scene_public2602_claim_summary_missing"
+            ],
+            "claim_valid": false,
+            "local_usdz_cache": {
+              "expected_scene_count": 100,
+              "matching_scene_count": 0,
+              "missing_scene_count": 100,
+              "nonmatching_usdz_file_count": 0,
+              "present_scene_count": 0,
+              "required": true,
+              "usdz_file_count": 0,
+              "valid": false
+            },
+            "merge_input_progress": {
+              "claim_valid_count": 0,
+              "complete": false,
+              "expected_count": 10,
+              "invalid_present_count": 0,
+              "missing_count": 10,
+              "present_count": 0
+            },
+            "next_command_groups": [
+              "build_and_validate_scale_caches",
+              "run_scale_shards_and_promote_summaries",
+              "refresh_status",
+              "verify_claim_gate"
+            ],
+            "public_summary_claim_valid": false,
+            "public_summary_errors": [
+              "summary_missing"
+            ],
+            "public_summary_present": false,
+            "source_usdz_cache": {
+              "expected_scene_count": 100,
+              "matching_scene_count": 0,
+              "missing_scene_count": 100,
+              "nonmatching_usdz_file_count": 0,
+              "present_scene_count": 0,
+              "required": true,
+              "usdz_file_count": 0,
+              "valid": false
+            }
+          },
           "completion_gate": {
             "expected_completed_scene_count": 100,
             "expected_failed_scene_count": 0,

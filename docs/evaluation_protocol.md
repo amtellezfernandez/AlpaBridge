@@ -178,6 +178,8 @@ all-stage rendered command artifact is tracked at
 for review without local runtime access. The audit-derived missing-shard resume
 snapshot is tracked at
 [`docs/evidence/benchmark_regeneration_resume_commands_20260706.json`](evidence/benchmark_regeneration_resume_commands_20260706.json).
+Each stage in that snapshot also carries a compact `claim_gap` block with
+merge-input progress, cache inventory, blockers, and next command groups.
 Its `execution_boundary_counts`,
 `operator_role_counts`, `public_review_command_count`, and
 `private_execution_command_count` fields distinguish public review commands from

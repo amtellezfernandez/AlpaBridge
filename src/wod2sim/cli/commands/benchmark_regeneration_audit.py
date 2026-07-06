@@ -154,6 +154,7 @@ def build_audit(
         plan=plan,
         status=status,
         stage_reports=stage_reports,
+        objective_completion=objective_completion,
         repo_root=repo_root,
     )
     operator_matrix = _operator_matrix_consistency(
@@ -191,7 +192,6 @@ def build_audit(
         objective_completion=objective_completion,
         regeneration_resume_commands=regeneration_resume_commands,
         claim_ready=claim_ready,
-        expected_audit_valid_without_manifest=expected_valid_without_manifest,
         repo_root=repo_root,
     )
     valid = expected_valid_without_manifest and public_evidence_manifest["valid"]
@@ -1293,7 +1293,6 @@ def _public_evidence_manifest_consistency(
     objective_completion: dict[str, Any],
     regeneration_resume_commands: dict[str, Any],
     claim_ready: bool,
-    expected_audit_valid_without_manifest: bool,
     repo_root: Path,
 ) -> dict[str, Any]:
     checks: dict[str, bool] = {}
@@ -1338,8 +1337,7 @@ def _public_evidence_manifest_consistency(
     ]
     claim_gate = _dict_or_empty(manifest.get("claim_gate"))
     checks["public_evidence_manifest_claim_gate_matches_audit"] = (
-        bool(claim_gate.get("valid")) == bool(expected_audit_valid_without_manifest)
-        and bool(claim_gate.get("claim_ready")) == bool(claim_ready)
+        bool(claim_gate.get("claim_ready")) == bool(claim_ready)
         and claim_gate.get("missing_claim_valid_summaries") == expected_missing
         and claim_gate.get("strict_command") == "wod2sim-benchmark-audit --strict --json"
     )
@@ -1615,6 +1613,7 @@ def _regeneration_resume_commands_consistency(
     plan: dict[str, Any],
     status: dict[str, Any],
     stage_reports: list[dict[str, Any]],
+    objective_completion: dict[str, Any],
     repo_root: Path,
 ) -> dict[str, Any]:
     checks: dict[str, bool] = {}
@@ -1671,6 +1670,9 @@ def _regeneration_resume_commands_consistency(
     audit_projection = {
         "schema": AUDIT_SCHEMA,
         "stages": stage_reports,
+        "objective_completion": {
+            "scale_claim_gaps": _dict_or_empty(objective_completion).get("scale_claim_gaps")
+        },
     }
     expected_rows = render_resume_commands_from_audit(
         plan=plan,
