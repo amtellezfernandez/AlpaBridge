@@ -131,6 +131,8 @@ The matching command-level rerun plan is tracked at
 The no-download/no-rollout host readiness snapshot is tracked at
 [`docs/evidence/benchmark_regeneration_readiness_20260706.json`](evidence/benchmark_regeneration_readiness_20260706.json)
 and can be regenerated with `wod2sim-benchmark-readiness`.
+Use its `blocking_requirements` and `next_command_groups` fields to identify the
+remaining cache/runtime blockers and the matching plan command groups.
 Its scale stages include 10-scene shard commands for constrained hosts; shard
 summaries are operational checkpoints, not replacements for a complete 50/100
 public summary. Validate the local USDZ cache offline with

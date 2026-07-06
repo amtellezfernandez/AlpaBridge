@@ -224,6 +224,9 @@ Before rebuilding caches or launching shards, write a no-download/no-rollout
 host readiness report with `wod2sim-benchmark-readiness`; the current public-safe
 snapshot is tracked at
 [`docs/evidence/benchmark_regeneration_readiness_20260706.json`](docs/evidence/benchmark_regeneration_readiness_20260706.json).
+Its `blocking_requirements` and `next_command_groups` fields summarize the
+remaining cache/runtime blockers and point back to the corresponding plan
+command groups.
 It includes 10-scene shard commands for the 50/100-scene stages so constrained
 hosts can recover in smaller chunks while still preserving the full-stage claim
 boundary. Validate the local USDZ cache offline with
