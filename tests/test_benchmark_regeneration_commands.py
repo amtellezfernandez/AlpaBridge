@@ -46,7 +46,13 @@ def test_command_renderer_all_prefers_shards_for_scale_stages() -> None:
 
     rows = module.render_commands(plan_path=ROOT / PLAN_RELATIVE, groups=["all"])
 
-    assert rows[0]["command"] == "check_readiness"
+    assert rows[0]["command"] == "cleanup_ignored_benchmark_artifacts"
+    assert rows[0]["group"] == "cleanup"
+    assert rows[0]["display"] == "wod2sim-benchmark-cleanup --json"
+    assert rows[0]["execution_boundary"] == "public_metadata_review"
+    assert rows[0]["operator_role"] == "open_repo_reviewer"
+    assert rows[0]["requires_private_execution_context"] is False
+    assert rows[1]["command"] == "check_readiness"
     assert any(
         row["group"] == "run" and row["scene_preset"] == "front_camera_10scene_smoke"
         for row in rows
@@ -111,21 +117,22 @@ def test_command_renderer_builds_public_command_artifact() -> None:
     assert artifact["row_count"] == len(artifact["commands"])
     assert artifact["group_counts"]["shards"] == 30
     assert artifact["group_counts"]["cache"] == 6
+    assert artifact["group_counts"]["cleanup"] == 1
     assert artifact["execution_boundary_counts"] == {
         "claim_summary_merge": 2,
         "claim_summary_promotion": 3,
         "live_closed_loop_rollout": 32,
         "private_cache_preparation": 6,
-        "public_metadata_review": 3,
+        "public_metadata_review": 4,
     }
     assert artifact["operator_role_counts"] == {
         "cache_builder": 6,
         "claim_promoter": 5,
         "closed_loop_runner": 32,
-        "open_repo_reviewer": 3,
+        "open_repo_reviewer": 4,
     }
     assert artifact["private_execution_command_count"] == 43
-    assert artifact["public_review_command_count"] == 3
+    assert artifact["public_review_command_count"] == 4
     assert artifact["commands"][-1]["command"] == "verify_claim_gate"
 
 
@@ -173,9 +180,10 @@ def test_tracked_command_artifact_is_public_safe_and_complete() -> None:
     assert artifact["schema"] == "wod2sim_benchmark_regeneration_commands_v1"
     assert artifact["plan_artifact"] == PLAN_RELATIVE.as_posix()
     assert artifact["renderer"]["no_runtime_execution"] is True
-    assert artifact["row_count"] == 46
+    assert artifact["row_count"] == 47
     assert artifact["group_counts"] == {
         "cache": 6,
+        "cleanup": 1,
         "merge": 2,
         "post": 2,
         "promote": 3,
@@ -184,12 +192,13 @@ def test_tracked_command_artifact_is_public_safe_and_complete() -> None:
         "shards": 30,
     }
     assert artifact["execution_boundary_counts"]["private_cache_preparation"] == 6
-    assert artifact["execution_boundary_counts"]["public_metadata_review"] == 3
+    assert artifact["execution_boundary_counts"]["public_metadata_review"] == 4
     assert artifact["execution_boundary_counts"]["live_closed_loop_rollout"] == 32
-    assert artifact["operator_role_counts"]["open_repo_reviewer"] == 3
+    assert artifact["operator_role_counts"]["open_repo_reviewer"] == 4
     assert artifact["operator_role_counts"]["closed_loop_runner"] == 32
     assert artifact["private_execution_command_count"] == 43
-    assert artifact["public_review_command_count"] == 3
+    assert artifact["public_review_command_count"] == 4
+    assert artifact["commands"][0]["display"] == "wod2sim-benchmark-cleanup --json"
     assert all("execution_boundary" in row for row in artifact["commands"])
     assert all("operator_role" in row for row in artifact["commands"])
     assert all("requires_private_execution_context" in row for row in artifact["commands"])
