@@ -25,6 +25,7 @@ DEFAULT_SCALE_PRESETS = (
     "front_camera_100scene_public2602",
 )
 STATUS_ARTIFACT = "docs/evidence/benchmark_regeneration_status_20260706.json"
+DEFAULT_SHARD_SIZE = 10
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -51,6 +52,12 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--driver-warmup-seconds", type=float, default=5.0)
     parser.add_argument("--max-retries", type=int, default=1)
     parser.add_argument("--workers", type=int, default=3)
+    parser.add_argument(
+        "--shard-size",
+        type=int,
+        default=DEFAULT_SHARD_SIZE,
+        help="Scene count per scale-stage shard command. Use 0 to omit shard commands.",
+    )
     parser.add_argument("--created-at", default=None)
     parser.add_argument("--output", type=Path, default=None)
     parser.add_argument("--json", action="store_true")
@@ -71,6 +78,7 @@ def main() -> int:
         driver_warmup_seconds=args.driver_warmup_seconds,
         max_retries=args.max_retries,
         workers=args.workers,
+        shard_size=args.shard_size,
         created_at=args.created_at,
     )
     if args.output is not None:
@@ -96,6 +104,7 @@ def build_plan(
     driver_warmup_seconds: float = 5.0,
     max_retries: int = 1,
     workers: int = 3,
+    shard_size: int = DEFAULT_SHARD_SIZE,
     created_at: str | None = None,
 ) -> dict[str, Any]:
     if model not in PUBLIC_RELEASE_MODELS:
@@ -119,6 +128,7 @@ def build_plan(
             driver_warmup_seconds=driver_warmup_seconds,
             max_retries=max_retries,
             workers=workers,
+            shard_size=shard_size,
         )
     ]
     stages.extend(
@@ -135,6 +145,7 @@ def build_plan(
             driver_warmup_seconds=driver_warmup_seconds,
             max_retries=max_retries,
             workers=workers,
+            shard_size=shard_size,
         )
         for preset in selected_scale_presets
     )
@@ -172,7 +183,8 @@ def build_plan(
                 "can_do": "Execute live AlpaSim batches and produce claim-valid batch summaries.",
                 "requirements": (
                     "x86_64 Linux, Docker, NVIDIA GPU runtime, AlpaSim images, and cached "
-                    "scene artifacts."
+                    "scene artifacts. Use scale-stage shards on constrained hosts; shards are "
+                    "operational checkpoints, not a complete benchmark claim by themselves."
                 ),
             },
             {
@@ -202,6 +214,7 @@ def _stage_plan(
     driver_warmup_seconds: float,
     max_retries: int,
     workers: int,
+    shard_size: int,
 ) -> dict[str, Any]:
     scene_count = len(_scene_ids_for(scene_preset))
     run_dir = _join(runs_root, f"benchmark_{model}_{scene_count}scene")
@@ -262,6 +275,23 @@ def _stage_plan(
             env={"HF_TOKEN": "required"},
         )
 
+    shards = (
+        _stage_shards(
+            model=model,
+            scene_preset=scene_preset,
+            scene_count=scene_count,
+            alpasim_root=alpasim_root,
+            run_dir=run_dir,
+            timeout=timeout,
+            driver_warmup_seconds=driver_warmup_seconds,
+            max_retries=max_retries,
+            local_usdz_dir=local_usdz_dir,
+            shard_size=shard_size,
+        )
+        if requires_local_usdz_cache and shard_size > 0
+        else []
+    )
+
     return {
         "stage": stage,
         "scene_preset": scene_preset,
@@ -273,6 +303,13 @@ def _stage_plan(
             f"docs/evidence/closed_loop_{model}_{scene_count}scene_batch.json"
         ),
         "commands": commands,
+        "shards": shards,
+        "shard_note": (
+            "Shard commands reduce per-run wall time and recovery cost on constrained hosts. "
+            "A claim-valid stage still requires a complete public summary for the full preset."
+            if shards
+            else None
+        ),
     }
 
 
@@ -310,6 +347,60 @@ def _batch_argv(
     if local_usdz_dir is not None:
         argv.extend(["--wizard-arg", f"scenes.local_usdz_dir={local_usdz_dir}"])
     return argv
+
+
+def _stage_shards(
+    *,
+    model: str,
+    scene_preset: str,
+    scene_count: int,
+    alpasim_root: str,
+    run_dir: str,
+    timeout: int,
+    driver_warmup_seconds: float,
+    max_retries: int,
+    local_usdz_dir: str | None,
+    shard_size: int,
+) -> list[dict[str, Any]]:
+    shards: list[dict[str, Any]] = []
+    size = max(1, int(shard_size))
+    for offset in range(0, scene_count, size):
+        limit = min(size, scene_count - offset)
+        shard_dir = _join(run_dir, "shards", f"{offset:03d}_{offset + limit - 1:03d}")
+        run_argv = _batch_argv(
+            model=model,
+            scene_preset=scene_preset,
+            alpasim_root=alpasim_root,
+            run_dir=shard_dir,
+            timeout=timeout,
+            driver_warmup_seconds=driver_warmup_seconds,
+            max_retries=max_retries,
+            local_usdz_dir=local_usdz_dir,
+        )
+        run_argv.extend(["--scene-offset", str(offset), "--scene-limit", str(limit)])
+        shards.append(
+            {
+                "index": len(shards) + 1,
+                "scene_offset": offset,
+                "scene_limit": limit,
+                "run_dir": shard_dir,
+                "commands": {
+                    "run_batch": _command(run_argv),
+                    "write_batch_summary": _command(
+                        [
+                            "wod2sim-batch-summary",
+                            "--batch-dir",
+                            shard_dir,
+                            "--output",
+                            _join(shard_dir, "wod2sim-batch-summary.json"),
+                            "--strict",
+                            "--json",
+                        ]
+                    ),
+                },
+            }
+        )
+    return shards
 
 
 def _scene_ids_for(scene_preset: str) -> list[str]:

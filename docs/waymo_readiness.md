@@ -168,5 +168,6 @@ AlpaSim/WOD-derived media out of git.
 
 The current public-safe 10/50/100 rerun plan is
 [`docs/evidence/benchmark_regeneration_plan_20260706.json`](evidence/benchmark_regeneration_plan_20260706.json).
+The plan includes 10-scene shard commands for constrained x86_64 hosts.
 The matching claim-readiness audit is
 [`docs/evidence/benchmark_regeneration_audit_20260706.json`](evidence/benchmark_regeneration_audit_20260706.json).

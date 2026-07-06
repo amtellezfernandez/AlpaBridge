@@ -128,5 +128,8 @@ The current machine-readable regeneration status is tracked at
 [`docs/evidence/benchmark_regeneration_status_20260706.json`](evidence/benchmark_regeneration_status_20260706.json).
 The matching command-level rerun plan is tracked at
 [`docs/evidence/benchmark_regeneration_plan_20260706.json`](evidence/benchmark_regeneration_plan_20260706.json).
+Its scale stages include 10-scene shard commands for constrained hosts; shard
+summaries are operational checkpoints, not replacements for a complete 50/100
+public summary.
 The public claim gate for those artifacts is tracked at
 [`docs/evidence/benchmark_regeneration_audit_20260706.json`](evidence/benchmark_regeneration_audit_20260706.json).

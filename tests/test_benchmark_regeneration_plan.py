@@ -46,6 +46,16 @@ class BenchmarkRegenerationPlanTests(unittest.TestCase):
             "scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50",
             scale_stage["commands"]["run_batch"]["argv"],
         )
+        self.assertEqual(5, len(scale_stage["shards"]))
+        self.assertEqual(0, scale_stage["shards"][0]["scene_offset"])
+        self.assertEqual(10, scale_stage["shards"][0]["scene_limit"])
+        self.assertIn("--scene-offset", scale_stage["shards"][0]["commands"]["run_batch"]["argv"])
+        self.assertIn("--scene-limit", scale_stage["shards"][0]["commands"]["run_batch"]["argv"])
+        self.assertEqual(
+            "runs/benchmark_spotlight_reflex_50scene/shards/040_049",
+            scale_stage["shards"][-1]["run_dir"],
+        )
+        self.assertEqual(10, len(stages["front_camera_100scene_public2602"]["shards"]))
 
     def test_main_writes_plan_json(self) -> None:
         module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_plan")
@@ -71,6 +81,15 @@ class BenchmarkRegenerationPlanTests(unittest.TestCase):
         self.assertEqual(0, returncode)
         self.assertEqual("2026-07-06", payload["created_at"])
         self.assertEqual(3, len(payload["stages"]))
+
+    def test_shards_can_be_omitted_for_compact_plan_output(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_plan")
+
+        plan = module.build_plan(created_at="2026-07-06", shard_size=0)
+
+        for stage in plan["stages"]:
+            self.assertEqual([], stage["shards"])
+            self.assertIsNone(stage["shard_note"])
 
     def test_tracked_plan_links_current_public_status_and_docs(self) -> None:
         plan = _read_json(ROOT / PLAN_RELATIVE)
