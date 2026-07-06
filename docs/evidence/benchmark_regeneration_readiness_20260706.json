@@ -270,7 +270,7 @@
       },
       "public_summary_target": "docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json",
       "requires_local_usdz_cache": false,
-      "run_dir": "runs/benchmark_spotlight_reflex_10scene",
+      "run_dir": "runs/benchmark_spotlight_reflex_10scene_fresh",
       "scene_count": 10,
       "scene_preset": "front_camera_10scene_smoke",
       "stage": "pilot"
@@ -316,7 +316,7 @@
       },
       "public_summary_target": "docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json",
       "requires_local_usdz_cache": true,
-      "run_dir": "runs/benchmark_spotlight_reflex_50scene",
+      "run_dir": "runs/benchmark_spotlight_reflex_50scene_public2602_fresh",
       "scene_count": 50,
       "scene_preset": "front_camera_50scene_public2602",
       "stage": "workshop_scale"
@@ -362,7 +362,7 @@
       },
       "public_summary_target": "docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json",
       "requires_local_usdz_cache": true,
-      "run_dir": "runs/benchmark_spotlight_reflex_100scene",
+      "run_dir": "runs/benchmark_spotlight_reflex_100scene_public2602_fresh",
       "scene_count": 100,
       "scene_preset": "front_camera_100scene_public2602",
       "stage": "stronger_benchmark"

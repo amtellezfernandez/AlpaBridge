@@ -58,8 +58,8 @@ wod2sim-reproduce \
   --alpasim-root /path/to/alpasim \
   --model spotlight_reflex \
   --scene-preset front_camera_10scene_smoke \
-  --run-dir runs/benchmark_spotlight_reflex_10scene \
-  --evidence-dir runs/benchmark_spotlight_reflex_10scene/evidence \
+  --run-dir runs/benchmark_spotlight_reflex_10scene_fresh \
+  --evidence-dir runs/benchmark_spotlight_reflex_10scene_fresh/evidence \
   --timeout 900 \
   --json
 ```
@@ -73,8 +73,8 @@ wod2sim-reproduce \
   --model token_dagger_bc \
   --checkpoint /path/to/token_dagger_bc.pt \
   --scene-preset front_camera_10scene_smoke \
-  --run-dir runs/benchmark_token_dagger_bc_10scene \
-  --evidence-dir runs/benchmark_token_dagger_bc_10scene/evidence \
+  --run-dir runs/benchmark_token_dagger_bc_10scene_fresh \
+  --evidence-dir runs/benchmark_token_dagger_bc_10scene_fresh/evidence \
   --timeout 900 \
   --json
 ```
@@ -87,21 +87,21 @@ wod2sim-batch \
   --model spotlight_reflex \
   --scene-preset front_camera_10scene_smoke \
   --alpasim-root /path/to/alpasim \
-  --batch-dir runs/benchmark_spotlight_reflex_10scene \
+  --batch-dir runs/benchmark_spotlight_reflex_10scene_fresh \
   --timeout 900 \
   --driver-warmup-seconds 5 \
   --max-retries 1 \
   --continue-on-error
 
 wod2sim-batch-summary \
-  --batch-dir runs/benchmark_spotlight_reflex_10scene \
-  --output runs/benchmark_spotlight_reflex_10scene/wod2sim-batch-summary.json \
+  --batch-dir runs/benchmark_spotlight_reflex_10scene_fresh \
+  --output runs/benchmark_spotlight_reflex_10scene_fresh/wod2sim-batch-summary.json \
   --strict \
   --json
 
 wod2sim-benchmark-summary \
-  --evidence-dir runs/benchmark_spotlight_reflex_10scene/evidence \
-  --evidence-dir runs/benchmark_token_dagger_bc_10scene/evidence \
+  --evidence-dir runs/benchmark_spotlight_reflex_10scene_fresh/evidence \
+  --evidence-dir runs/benchmark_token_dagger_bc_10scene_fresh/evidence \
   --output runs/wod2sim-benchmark-summary.json \
   --strict \
   --json

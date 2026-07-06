@@ -124,8 +124,8 @@ wod2sim-reproduce \
   --alpasim-root /path/to/alpasim \
   --model spotlight_reflex \
   --scene-preset front_camera_10scene_smoke \
-  --run-dir runs/benchmark_spotlight_reflex_10scene \
-  --evidence-dir runs/benchmark_spotlight_reflex_10scene/evidence \
+  --run-dir runs/benchmark_spotlight_reflex_10scene_fresh \
+  --evidence-dir runs/benchmark_spotlight_reflex_10scene_fresh/evidence \
   --json
 ```
 
@@ -137,7 +137,7 @@ wod2sim-batch \
   --model spotlight_reflex \
   --scene-preset front_camera_10scene_smoke \
   --alpasim-root /path/to/alpasim \
-  --batch-dir runs/benchmark_spotlight_reflex_10scene \
+  --batch-dir runs/benchmark_spotlight_reflex_10scene_fresh \
   --timeout 900 \
   --driver-warmup-seconds 5 \
   --max-retries 1 \
@@ -172,7 +172,7 @@ wod2sim-batch \
   --model spotlight_reflex \
   --scene-preset front_camera_50scene_public2602 \
   --alpasim-root /path/to/alpasim \
-  --batch-dir runs/benchmark_spotlight_reflex_50scene \
+  --batch-dir runs/benchmark_spotlight_reflex_50scene_public2602_fresh \
   --timeout 900 \
   --driver-warmup-seconds 5 \
   --max-retries 1 \
@@ -184,13 +184,13 @@ Then publish compact summaries instead of raw gated artifacts:
 
 ```bash
 wod2sim-batch-summary \
-  --batch-dir runs/benchmark_spotlight_reflex_10scene \
-  --output runs/benchmark_spotlight_reflex_10scene/wod2sim-batch-summary.json \
+  --batch-dir runs/benchmark_spotlight_reflex_10scene_fresh \
+  --output runs/benchmark_spotlight_reflex_10scene_fresh/wod2sim-batch-summary.json \
   --strict \
   --json
 
 wod2sim-benchmark-summary \
-  --evidence-dir runs/benchmark_spotlight_reflex_10scene/evidence \
+  --evidence-dir runs/benchmark_spotlight_reflex_10scene_fresh/evidence \
   --output runs/wod2sim-benchmark-summary.json \
   --strict \
   --json

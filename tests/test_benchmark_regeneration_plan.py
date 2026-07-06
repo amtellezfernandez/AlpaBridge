@@ -24,6 +24,7 @@ class BenchmarkRegenerationPlanTests(unittest.TestCase):
         self.assertEqual("wod2sim_benchmark_regeneration_plan_v1", plan["schema"])
         self.assertEqual(STATUS_RELATIVE.as_posix(), plan["status_artifact"])
         self.assertEqual(READINESS_RELATIVE.as_posix(), plan["readiness_artifact"])
+        self.assertEqual("fresh", plan["run_tag"])
         readiness_command = plan["commands"]["check_readiness"]["argv"]
         self.assertEqual("wod2sim-benchmark-readiness", readiness_command[0])
         self.assertIn(READINESS_RELATIVE.as_posix(), readiness_command)
@@ -41,6 +42,10 @@ class BenchmarkRegenerationPlanTests(unittest.TestCase):
         self.assertEqual(100, stages["front_camera_100scene_public2602"]["scene_count"])
         self.assertFalse(stages["front_camera_10scene_smoke"]["requires_local_usdz_cache"])
         self.assertIsNone(stages["front_camera_10scene_smoke"]["commands"]["build_local_cache"])
+        self.assertEqual(
+            "runs/benchmark_spotlight_reflex_10scene_fresh",
+            stages["front_camera_10scene_smoke"]["run_dir"],
+        )
 
         scale_stage = stages["front_camera_50scene_public2602"]
         self.assertTrue(scale_stage["requires_local_usdz_cache"])
@@ -62,12 +67,15 @@ class BenchmarkRegenerationPlanTests(unittest.TestCase):
         self.assertIn("--expected-scene-count", merge_command)
         self.assertEqual("50", merge_command[merge_command.index("--expected-scene-count") + 1])
         self.assertIn(
-            "runs/benchmark_spotlight_reflex_50scene/wod2sim-batch-summary.json",
+            "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/wod2sim-batch-summary.json",
             merge_command,
         )
         promote_command = scale_stage["commands"]["promote_public_summary"]["argv"]
         self.assertEqual("wod2sim-promote-batch-summary", promote_command[0])
-        self.assertIn("runs/benchmark_spotlight_reflex_50scene/wod2sim-batch-summary.json", promote_command)
+        self.assertIn(
+            "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/wod2sim-batch-summary.json",
+            promote_command,
+        )
         self.assertIn("docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json", promote_command)
         self.assertIn("--overwrite", promote_command)
         self.assertEqual(5, len(scale_stage["shards"]))
@@ -76,7 +84,7 @@ class BenchmarkRegenerationPlanTests(unittest.TestCase):
         self.assertIn("--scene-offset", scale_stage["shards"][0]["commands"]["run_batch"]["argv"])
         self.assertIn("--scene-limit", scale_stage["shards"][0]["commands"]["run_batch"]["argv"])
         self.assertEqual(
-            "runs/benchmark_spotlight_reflex_50scene/shards/040_049",
+            "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/shards/040_049",
             scale_stage["shards"][-1]["run_dir"],
         )
         self.assertEqual(10, len(stages["front_camera_100scene_public2602"]["shards"]))

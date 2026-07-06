@@ -27,6 +27,7 @@ DEFAULT_SCALE_PRESETS = (
 STATUS_ARTIFACT = "docs/evidence/benchmark_regeneration_status_20260706.json"
 READINESS_ARTIFACT = "docs/evidence/benchmark_regeneration_readiness_20260706.json"
 DEFAULT_SHARD_SIZE = 10
+DEFAULT_RUN_TAG = "fresh"
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -54,6 +55,14 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-retries", type=int, default=1)
     parser.add_argument("--workers", type=int, default=3)
     parser.add_argument(
+        "--run-tag",
+        default=DEFAULT_RUN_TAG,
+        help=(
+            "Public-safe suffix for benchmark run directories. Defaults to 'fresh' "
+            "so regenerated artifacts have explicit source provenance."
+        ),
+    )
+    parser.add_argument(
         "--shard-size",
         type=int,
         default=DEFAULT_SHARD_SIZE,
@@ -79,6 +88,7 @@ def main() -> int:
         driver_warmup_seconds=args.driver_warmup_seconds,
         max_retries=args.max_retries,
         workers=args.workers,
+        run_tag=args.run_tag,
         shard_size=args.shard_size,
         created_at=args.created_at,
     )
@@ -105,6 +115,7 @@ def build_plan(
     driver_warmup_seconds: float = 5.0,
     max_retries: int = 1,
     workers: int = 3,
+    run_tag: str = DEFAULT_RUN_TAG,
     shard_size: int = DEFAULT_SHARD_SIZE,
     created_at: str | None = None,
 ) -> dict[str, Any]:
@@ -129,6 +140,7 @@ def build_plan(
             driver_warmup_seconds=driver_warmup_seconds,
             max_retries=max_retries,
             workers=workers,
+            run_tag=run_tag,
             shard_size=shard_size,
         )
     ]
@@ -146,6 +158,7 @@ def build_plan(
             driver_warmup_seconds=driver_warmup_seconds,
             max_retries=max_retries,
             workers=workers,
+            run_tag=run_tag,
             shard_size=shard_size,
         )
         for preset in selected_scale_presets
@@ -155,6 +168,7 @@ def build_plan(
         "schema": PLAN_SCHEMA,
         "created_at": created_at or datetime.now().isoformat(timespec="seconds"),
         "model": model,
+        "run_tag": _safe_path_token(run_tag),
         "objective": (
             "Regenerate WOD2Sim closed-loop benchmark artifacts from scratch, validate "
             "the 10-scene pilot, and scale to the 50/100-scene public presets when an "
@@ -229,10 +243,19 @@ def _stage_plan(
     driver_warmup_seconds: float,
     max_retries: int,
     workers: int,
+    run_tag: str,
     shard_size: int,
 ) -> dict[str, Any]:
     scene_count = len(_scene_ids_for(scene_preset))
-    run_dir = _join(runs_root, f"benchmark_{model}_{scene_count}scene")
+    run_dir = _join(
+        runs_root,
+        _benchmark_run_dir_name(
+            model=model,
+            scene_preset=scene_preset,
+            scene_count=scene_count,
+            run_tag=run_tag,
+        ),
+    )
     local_usdz_dir = (
         _join(
             alpasim_root,
@@ -524,6 +547,44 @@ def _scale_stage_name(scene_preset: str) -> str:
     if "100scene" in scene_preset:
         return "stronger_benchmark"
     return "scale"
+
+
+def _benchmark_run_dir_name(
+    *,
+    model: str,
+    scene_preset: str,
+    scene_count: int,
+    run_tag: str,
+) -> str:
+    parts = ["benchmark", _safe_path_token(model), f"{scene_count}scene"]
+    preset_label = _scene_preset_run_label(
+        scene_preset=scene_preset,
+        scene_count=scene_count,
+        run_tag=run_tag,
+    )
+    if preset_label:
+        parts.append(preset_label)
+    safe_run_tag = _safe_path_token(run_tag)
+    if safe_run_tag:
+        parts.append(safe_run_tag)
+    return "_".join(parts)
+
+
+def _scene_preset_run_label(*, scene_preset: str, scene_count: int, run_tag: str) -> str:
+    prefix = f"front_camera_{scene_count}scene_"
+    if not scene_preset.startswith(prefix):
+        return ""
+    qualifier = _safe_path_token(scene_preset.removeprefix(prefix))
+    if qualifier in {"", "smoke", _safe_path_token(run_tag)}:
+        return ""
+    return qualifier
+
+
+def _safe_path_token(value: object) -> str:
+    token = "".join(
+        character.lower() if character.isalnum() else "_" for character in str(value).strip()
+    )
+    return "_".join(part for part in token.split("_") if part)
 
 
 def _revision_label(hf_revision: str) -> str:

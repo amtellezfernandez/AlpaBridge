@@ -28,16 +28,13 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         self.assertEqual(READINESS_RELATIVE.as_posix(), audit["readiness_artifact"])
         self.assertTrue(audit["readiness_consistency"]["valid"])
         self.assertFalse(audit["regeneration_provenance"]["all_stage_sources_match_plan"])
-        self.assertEqual(
-            ["front_camera_10scene_smoke"],
-            audit["regeneration_provenance"]["present_stage_source_mismatches"],
-        )
+        self.assertEqual([], audit["regeneration_provenance"]["present_stage_source_mismatches"])
         self.assertTrue(stages["front_camera_10scene_smoke"]["claim_valid"])
-        self.assertFalse(
+        self.assertTrue(
             stages["front_camera_10scene_smoke"]["summary_provenance"]["source_matches_plan"]
         )
         self.assertEqual(
-            "benchmark_spotlight_reflex_10scene",
+            "benchmark_spotlight_reflex_10scene_fresh",
             stages["front_camera_10scene_smoke"]["summary_provenance"][
                 "expected_batch_dir_name"
             ],
@@ -336,7 +333,7 @@ def _batch_summary(
         },
         "created_at": "2026-07-06",
         "source": {
-            "batch_dir_name": f"benchmark_spotlight_reflex_{scene_count}scene",
+            "batch_dir_name": _batch_dir_name(scene_count),
             "batch_status": "batch-status.json",
             "batch_manifest": "batch-manifest.json",
         },
@@ -347,6 +344,12 @@ def _batch_summary(
             "input_summaries": input_summaries,
         }
     return summary
+
+
+def _batch_dir_name(scene_count: int) -> str:
+    if scene_count in {50, 100}:
+        return f"benchmark_spotlight_reflex_{scene_count}scene_public2602_fresh"
+    return f"benchmark_spotlight_reflex_{scene_count}scene_fresh"
 
 
 def _planned_merge_inputs(plan: dict[str, object], scene_preset: str) -> list[str]:
