@@ -1439,11 +1439,58 @@ def _readiness_consistency(
         if "public2602" in str(stage.get("scene_preset") or "")
     ]
     readiness_flags = _dict_or_empty(readiness.get("readiness"))
+    scale_readiness_stages = [
+        stage for stage in readiness_stages if bool(stage.get("requires_local_usdz_cache"))
+    ]
+    local_cache_validity = [
+        _dict_or_empty(_dict_or_empty(stage.get("local_usdz_cache")).get("validation")).get("valid")
+        is True
+        for stage in scale_readiness_stages
+    ]
+    source_cache_validity = [
+        _dict_or_empty(_dict_or_empty(stage.get("source_usdz_cache")).get("validation")).get(
+            "valid"
+        )
+        is True
+        for stage in scale_readiness_stages
+    ]
     checks["readiness_scale_summary_flag_matches_audit"] = bool(
         readiness_flags.get("claim_valid_scale_summaries_present")
     ) == (all(scale_stage_claims) if scale_stage_claims else False)
     if not checks["readiness_scale_summary_flag_matches_audit"]:
         notes.append("readiness.claim_valid_scale_summaries_present does not match audit")
+    checks["readiness_local_cache_flag_matches_stage_state"] = bool(
+        readiness_flags.get("all_scale_caches_valid")
+    ) == (all(local_cache_validity) if local_cache_validity else False)
+    if not checks["readiness_local_cache_flag_matches_stage_state"]:
+        notes.append("readiness.all_scale_caches_valid does not match stage cache state")
+    checks["readiness_source_cache_flag_matches_stage_state"] = bool(
+        readiness_flags.get("all_scale_source_caches_valid")
+    ) == (all(source_cache_validity) if source_cache_validity else False)
+    if not checks["readiness_source_cache_flag_matches_stage_state"]:
+        notes.append("readiness.all_scale_source_caches_valid does not match source cache state")
+    checks["readiness_source_cache_link_flag_matches_stage_state"] = bool(
+        readiness_flags.get("source_cache_link_ready")
+    ) == (all(source_cache_validity) if source_cache_validity else False)
+    if not checks["readiness_source_cache_link_flag_matches_stage_state"]:
+        notes.append("readiness.source_cache_link_ready does not match source cache state")
+
+    for stage in scale_readiness_stages:
+        preset = str(stage.get("scene_preset") or "")
+        source_cache = _dict_or_empty(stage.get("source_usdz_cache"))
+        source_validation = _dict_or_empty(source_cache.get("validation"))
+        source_key = f"{preset}_readiness_source_cache_state_present"
+        checks[source_key] = (
+            source_cache.get("required") is True
+            and source_cache.get("source_usdz_dir") is not None
+            and source_validation.get("schema") == "wod2sim_local_usdz_cache_validation_v1"
+            and _int_value(source_validation.get("expected_scene_count"))
+            == _int_value(stage.get("scene_count"))
+            and _int_value(source_validation.get("present_scene_count"))
+            <= _int_value(source_validation.get("expected_scene_count"))
+        )
+        if not checks[source_key]:
+            notes.append(f"readiness source_usdz_cache state is incomplete for {preset}")
 
     blocker_ids = [
         str(row.get("id") or "")
@@ -1517,8 +1564,20 @@ def _expected_readiness_blocker_ids(
 ) -> list[str]:
     ids: list[str] = []
     credentials = _dict_or_empty(readiness.get("credentials"))
-    if credentials.get("hf_token_required_for_cache_build") is True and not bool(
-        credentials.get("hf_token_present")
+    scale_stages = [
+        stage for stage in readiness_stages if bool(stage.get("requires_local_usdz_cache"))
+    ]
+    source_cache_link_ready = bool(scale_stages) and all(
+        _dict_or_empty(_dict_or_empty(stage.get("source_usdz_cache")).get("validation")).get(
+            "valid"
+        )
+        is True
+        for stage in scale_stages
+    )
+    if (
+        credentials.get("hf_token_required_for_cache_build") is True
+        and not bool(credentials.get("hf_token_present"))
+        and not source_cache_link_ready
     ):
         ids.append("hf_token_missing")
 

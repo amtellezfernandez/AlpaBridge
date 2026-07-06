@@ -442,6 +442,32 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             audit["readiness_consistency"]["notes"],
         )
 
+    def test_readiness_source_cache_flag_drift_invalidates_audit(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            evidence = repo_root / "docs" / "evidence"
+            evidence.mkdir(parents=True)
+            _copy_evidence_jsons(evidence)
+            readiness_path = evidence / READINESS_RELATIVE.name
+            readiness = _read_json(readiness_path)
+            readiness["readiness"]["source_cache_link_ready"] = True
+            _write_json(readiness_path, readiness)
+            _refresh_manifest_hash(evidence / MANIFEST_RELATIVE.name, READINESS_RELATIVE)
+
+            audit = module.build_audit(repo_root=repo_root, created_at="2026-07-06")
+
+        self.assertFalse(audit["valid"])
+        self.assertFalse(
+            audit["readiness_consistency"]["checks"][
+                "readiness_source_cache_link_flag_matches_stage_state"
+            ]
+        )
+        self.assertIn(
+            "readiness.source_cache_link_ready does not match source cache state",
+            audit["readiness_consistency"]["notes"],
+        )
+
     def test_public_handoff_doc_drift_invalidates_audit(self) -> None:
         module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -757,6 +783,16 @@ def _readiness_report(
                     "required": bool(stage["requires_local_usdz_cache"]),
                     "validation": {"valid": True},
                 },
+                "source_usdz_cache": {
+                    "required": bool(stage["requires_local_usdz_cache"]),
+                    "source_usdz_dir": stage.get("source_usdz_dir"),
+                    "validation": {
+                        "schema": "wod2sim_local_usdz_cache_validation_v1",
+                        "valid": True,
+                        "expected_scene_count": scene_count,
+                        "present_scene_count": scene_count,
+                    },
+                },
                 "public_summary": {
                     "present": claim_valid,
                     "claim_valid": claim_valid,
@@ -805,6 +841,9 @@ def _readiness_report(
             for order, name in enumerate(next_group_names, start=1)
         ],
         "readiness": {
+            "all_scale_caches_valid": True,
+            "all_scale_source_caches_valid": True,
+            "source_cache_link_ready": True,
             "claim_valid_scale_summaries_present": all(scale_claims) if scale_claims else False,
         },
         "stages": stages,
