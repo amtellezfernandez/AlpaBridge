@@ -44,23 +44,25 @@ Current blocker IDs from readiness:
 
 | Blocker ID | Blocks |
 | --- | --- |
-| `hf_token_missing` | Downloading the local 26.02 USDZ cache from gated Hugging Face assets. Operators with a complete local `all-usdzs` directory can use the offline link command instead. |
-| `front_camera_50scene_public2602_cache_invalid` | 50-scene shard execution. |
+| `hf_token_missing` | Downloading additional local 26.02 USDZ cache assets from gated Hugging Face sources. Operators with a complete local `all-usdzs` directory can use the offline link command instead. |
+| `free_disk_below_threshold` | Additional cache builds or rollout work until the workspace has at least the configured 200 GiB free. |
 | `front_camera_50scene_public2602_claim_summary_missing` | 50-scene claim promotion and strict audit readiness. |
 | `front_camera_100scene_public2602_cache_invalid` | 100-scene shard execution. |
 | `front_camera_100scene_public2602_claim_summary_missing` | 100-scene claim promotion and strict audit readiness. |
 
 Runtime image status: the current live-probed readiness refresh sees Docker,
 the NVIDIA runtime, one NVIDIA GPU, and the local `alpasim-base:0.66.0` image.
-The closed-loop runner remains blocked only because the required scale-stage
-USDZ caches and claim summaries are missing.
+The 50-scene `front_camera_50scene_public2602` local USDZ cache now validates
+with 50/50 required 26.02 scenes present. The closed-loop runner remains blocked
+by the missing 50-scene claim summary, low free disk on this workspace, and the
+missing 100-scene cache and claim summary.
 
 The offline cache-link path is tracked but not currently ready on this
 workspace: after local cleanup, the public readiness snapshot sees 0 USDZ files
 in the source directory and `source_usdz_cache.matching_scene_count` is `0` for both
 `front_camera_50scene_public2602` and `front_camera_100scene_public2602`. A
-cache builder needs either a complete local `all-usdzs` directory for those
-presets or gated Hugging Face access.
+cache builder needs either a complete local `all-usdzs` directory for the
+remaining 100-scene cache or gated Hugging Face access.
 Anonymous Hugging Face access is sufficient to list the selected 26.02 USDZ
 paths for the 50/100-scene presets, but direct HEAD requests against those USDZ
 files return HTTP 401 without an authenticated token. Do not start scale
