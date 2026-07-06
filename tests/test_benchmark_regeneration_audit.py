@@ -494,6 +494,38 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             audit["readiness_consistency"]["notes"],
         )
 
+    def test_readiness_cache_inventory_drift_invalidates_audit(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            evidence = repo_root / "docs" / "evidence"
+            evidence.mkdir(parents=True)
+            _copy_evidence_jsons(evidence)
+            readiness_path = evidence / READINESS_RELATIVE.name
+            readiness = _read_json(readiness_path)
+            readiness["stages"][1]["source_usdz_cache"]["matching_scene_count"] = 10
+            _write_json(readiness_path, readiness)
+            _refresh_manifest_hash(evidence / MANIFEST_RELATIVE.name, READINESS_RELATIVE)
+
+            audit = module.build_audit(repo_root=repo_root, created_at="2026-07-06")
+
+        self.assertFalse(audit["valid"])
+        self.assertFalse(
+            audit["readiness_consistency"]["checks"][
+                (
+                    "front_camera_50scene_public2602_readiness_source_usdz_cache_"
+                    "inventory_counts_match_validation"
+                )
+            ]
+        )
+        self.assertIn(
+            (
+                "readiness source_usdz_cache inventory counts do not match validation "
+                "for front_camera_50scene_public2602"
+            ),
+            audit["readiness_consistency"]["notes"],
+        )
+
     def test_public_handoff_doc_drift_invalidates_audit(self) -> None:
         module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -823,11 +855,22 @@ def _readiness_report(
                 "local_usdz_cache": {
                     "required": requires_cache,
                     "local_usdz_dir": stage["local_usdz_dir"] if requires_cache else None,
-                    "validation": {"valid": True},
+                    "usdz_file_count": scene_count if requires_cache else None,
+                    "matching_scene_count": scene_count if requires_cache else None,
+                    "nonmatching_usdz_file_count": 0 if requires_cache else None,
+                    "validation": {
+                        "schema": "wod2sim_local_usdz_cache_validation_v1",
+                        "valid": True,
+                        "expected_scene_count": scene_count,
+                        "present_scene_count": scene_count,
+                    },
                 },
                 "source_usdz_cache": {
                     "required": requires_cache,
                     "source_usdz_dir": stage.get("source_usdz_dir"),
+                    "usdz_file_count": scene_count if requires_cache else None,
+                    "matching_scene_count": scene_count if requires_cache else None,
+                    "nonmatching_usdz_file_count": 0 if requires_cache else None,
                     "validation": {
                         "schema": "wod2sim_local_usdz_cache_validation_v1",
                         "valid": True,

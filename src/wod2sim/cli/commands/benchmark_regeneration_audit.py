@@ -1501,6 +1501,14 @@ def _readiness_consistency(
         )
         if not checks[source_key]:
             notes.append(f"readiness source_usdz_cache state is incomplete for {preset}")
+        for cache_name in ("local_usdz_cache", "source_usdz_cache"):
+            cache = _dict_or_empty(stage.get(cache_name))
+            inventory_key = f"{preset}_readiness_{cache_name}_inventory_counts_match_validation"
+            checks[inventory_key] = _cache_inventory_counts_match_validation(cache)
+            if not checks[inventory_key]:
+                notes.append(
+                    f"readiness {cache_name} inventory counts do not match validation for {preset}"
+                )
 
     blocker_ids = [
         str(row.get("id") or "")
@@ -1658,6 +1666,21 @@ def _cache_requirements_match_stage(
             if requires_cache
             else cache_requirements.get("source_usdz_dir") is None
         )
+    )
+
+
+def _cache_inventory_counts_match_validation(cache: dict[str, Any]) -> bool:
+    if cache.get("required") is not True:
+        return True
+    validation = _dict_or_empty(cache.get("validation"))
+    usdz_file_count = _int_value(cache.get("usdz_file_count"))
+    present_scene_count = _int_value(validation.get("present_scene_count"))
+    matching_scene_count = _int_value(cache.get("matching_scene_count"))
+    nonmatching_usdz_file_count = _int_value(cache.get("nonmatching_usdz_file_count"))
+    return (
+        usdz_file_count >= present_scene_count
+        and matching_scene_count == present_scene_count
+        and nonmatching_usdz_file_count == usdz_file_count - present_scene_count
     )
 
 

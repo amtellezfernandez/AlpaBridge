@@ -234,22 +234,26 @@
       "readiness",
       "shards"
     ],
-    "sha256": "c8a04cf192dcac06fac6cd0bb23f6c34cfd417b362601335d3db573ea9b89e18",
-    "size_bytes": 8568,
+    "sha256": "6fc0e8a915b4b1d4ae3db3959e5204404a71e62c63cfccbafa262d92f493c240",
+    "size_bytes": 8626,
     "valid": true
   },
   "readiness_artifact": "docs/evidence/benchmark_regeneration_readiness_20260706.json",
   "readiness_consistency": {
     "checks": {
       "front_camera_100scene_public2602_readiness_cache_requirements_match_preset": true,
+      "front_camera_100scene_public2602_readiness_local_usdz_cache_inventory_counts_match_validation": true,
       "front_camera_100scene_public2602_readiness_source_cache_state_present": true,
+      "front_camera_100scene_public2602_readiness_source_usdz_cache_inventory_counts_match_validation": true,
       "front_camera_100scene_public2602_readiness_stage_matches_audit": true,
       "front_camera_100scene_public2602_readiness_summary_state_matches_audit": true,
       "front_camera_10scene_smoke_readiness_cache_requirements_match_preset": true,
       "front_camera_10scene_smoke_readiness_stage_matches_audit": true,
       "front_camera_10scene_smoke_readiness_summary_state_matches_audit": true,
       "front_camera_50scene_public2602_readiness_cache_requirements_match_preset": true,
+      "front_camera_50scene_public2602_readiness_local_usdz_cache_inventory_counts_match_validation": true,
       "front_camera_50scene_public2602_readiness_source_cache_state_present": true,
+      "front_camera_50scene_public2602_readiness_source_usdz_cache_inventory_counts_match_validation": true,
       "front_camera_50scene_public2602_readiness_stage_matches_audit": true,
       "front_camera_50scene_public2602_readiness_summary_state_matches_audit": true,
       "readiness_artifact_loaded": true,

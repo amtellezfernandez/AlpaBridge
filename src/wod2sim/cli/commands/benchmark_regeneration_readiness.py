@@ -695,13 +695,18 @@ def _local_cache_status(
         local_usdz_dir=local_usdz_dir,
         hf_revision=hf_revision,
     )
+    compact_validation = _compact_cache_validation(validation)
+    usdz_file_count = _usdz_file_count(local_usdz_dir)
     return {
         "required": True,
         "local_usdz_dir": _display_path(local_usdz_dir, repo_root=repo_root),
-        "usdz_file_count": len(list(local_usdz_dir.glob("*.usdz")))
-        if local_usdz_dir.is_dir()
-        else 0,
-        "validation": _compact_cache_validation(validation),
+        "usdz_file_count": usdz_file_count,
+        "matching_scene_count": compact_validation["present_scene_count"],
+        "nonmatching_usdz_file_count": max(
+            0,
+            usdz_file_count - int(compact_validation["present_scene_count"]),
+        ),
+        "validation": compact_validation,
     }
 
 
@@ -725,13 +730,18 @@ def _source_cache_status(
         local_usdz_dir=source_usdz_dir,
         hf_revision=hf_revision,
     )
+    compact_validation = _compact_cache_validation(validation)
+    usdz_file_count = _usdz_file_count(source_usdz_dir)
     return {
         "required": True,
         "source_usdz_dir": _display_path(source_usdz_dir, repo_root=repo_root),
-        "usdz_file_count": len(list(source_usdz_dir.glob("*.usdz")))
-        if source_usdz_dir.is_dir()
-        else 0,
-        "validation": _compact_cache_validation(validation),
+        "usdz_file_count": usdz_file_count,
+        "matching_scene_count": compact_validation["present_scene_count"],
+        "nonmatching_usdz_file_count": max(
+            0,
+            usdz_file_count - int(compact_validation["present_scene_count"]),
+        ),
+        "validation": compact_validation,
     }
 
 
@@ -739,6 +749,10 @@ def _stage_scene_ids(stage: dict[str, Any]) -> list[str]:
     from wod2sim.cli.commands.run_alpasim_local_external import _scene_ids
 
     return _scene_ids(str(stage["scene_preset"]), [])
+
+
+def _usdz_file_count(path: Path) -> int:
+    return len(list(path.glob("*.usdz"))) if path.is_dir() else 0
 
 
 def _cache_requirements(*, stage: dict[str, Any], repo_root: Path) -> dict[str, Any]:

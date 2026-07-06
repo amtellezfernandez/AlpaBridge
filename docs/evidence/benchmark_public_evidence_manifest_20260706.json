@@ -18,8 +18,8 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_benchmark_regeneration_audit_v1",
-      "sha256": "a82ce9a01bb90d8e56f03a8b755095782bb5e68dd1ddd7c27c477a8fee83a949",
-      "size_bytes": 19501
+      "sha256": "73ef526ff93ea7e24a8c3c3c5d7ca01f2c1f662efb6341ca48eb30a47e1ea771",
+      "size_bytes": 19937
     },
     {
       "artifact_type": "benchmark_regeneration_control",
@@ -48,8 +48,8 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_benchmark_regeneration_readiness_v1",
-      "sha256": "67adb2c820e268447f74dc57541825eaf08884a64f9fcc679afe6963aeaf3055",
-      "size_bytes": 22274
+      "sha256": "a95f820441178a1ef6b50dd4a1ce46e407de4d52099934bd8200798d257676f1",
+      "size_bytes": 22584
     },
     {
       "artifact_type": "benchmark_regeneration_control",

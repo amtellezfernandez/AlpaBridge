@@ -384,6 +384,8 @@
       },
       "local_usdz_cache": {
         "local_usdz_dir": "workspace/alpasim/data/nre-artifacts/local-2602-usdzs-50",
+        "matching_scene_count": 0,
+        "nonmatching_usdz_file_count": 0,
         "required": true,
         "usdz_file_count": 0,
         "validation": {
@@ -426,6 +428,8 @@
       "scene_count": 50,
       "scene_preset": "front_camera_50scene_public2602",
       "source_usdz_cache": {
+        "matching_scene_count": 0,
+        "nonmatching_usdz_file_count": 10,
         "required": true,
         "source_usdz_dir": "workspace/alpasim/data/nre-artifacts/all-usdzs",
         "usdz_file_count": 10,
@@ -480,6 +484,8 @@
       },
       "local_usdz_cache": {
         "local_usdz_dir": "workspace/alpasim/data/nre-artifacts/local-2602-usdzs-100",
+        "matching_scene_count": 0,
+        "nonmatching_usdz_file_count": 0,
         "required": true,
         "usdz_file_count": 0,
         "validation": {
@@ -522,6 +528,8 @@
       "scene_count": 100,
       "scene_preset": "front_camera_100scene_public2602",
       "source_usdz_cache": {
+        "matching_scene_count": 0,
+        "nonmatching_usdz_file_count": 10,
         "required": true,
         "source_usdz_dir": "workspace/alpasim/data/nre-artifacts/all-usdzs",
         "usdz_file_count": 10,
