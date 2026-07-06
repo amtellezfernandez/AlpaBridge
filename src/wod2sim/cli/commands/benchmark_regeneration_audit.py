@@ -138,6 +138,7 @@ def build_audit(
     )
     regeneration_commands = _regeneration_commands_consistency(
         plan_path=plan_path,
+        readiness=readiness,
         status=status,
         repo_root=repo_root,
     )
@@ -1061,6 +1062,7 @@ def _regeneration_plan_consistency(
 def _regeneration_commands_consistency(
     *,
     plan_path: Path,
+    readiness: dict[str, Any],
     status: dict[str, Any],
     repo_root: Path,
 ) -> dict[str, Any]:
@@ -1124,6 +1126,14 @@ def _regeneration_commands_consistency(
     if not checks["regeneration_commands_group_counts_match"]:
         notes.append("regeneration commands group_counts do not match expected rows")
 
+    readiness_renderer_groups = _readiness_command_renderer_groups(readiness)
+    command_group_counts = _dict_or_empty(commands.get("group_counts"))
+    checks["regeneration_commands_cover_readiness_renderer_groups"] = all(
+        _int_value(command_group_counts.get(group)) > 0 for group in readiness_renderer_groups
+    )
+    if not checks["regeneration_commands_cover_readiness_renderer_groups"]:
+        notes.append("regeneration commands do not cover readiness command_renderer_groups")
+
     checks["regeneration_commands_rows_match_plan_renderer"] = rows == expected_rows
     if not checks["regeneration_commands_rows_match_plan_renderer"]:
         notes.append("regeneration commands rows do not match the audited plan renderer output")
@@ -1135,7 +1145,19 @@ def _regeneration_commands_consistency(
         "notes": notes,
         "row_count": len(rows),
         "group_counts": _dict_or_empty(commands.get("group_counts")),
+        "readiness_renderer_groups": readiness_renderer_groups,
     }
+
+
+def _readiness_command_renderer_groups(readiness: dict[str, Any]) -> list[str]:
+    groups: set[str] = set()
+    for command_group in _list_or_empty(readiness.get("next_command_groups")):
+        if not isinstance(command_group, dict):
+            continue
+        for renderer_group in _list_or_empty(command_group.get("command_renderer_groups")):
+            if isinstance(renderer_group, str) and renderer_group:
+                groups.add(renderer_group)
+    return sorted(groups)
 
 
 def _operator_matrix_consistency(

@@ -214,6 +214,7 @@
   "regeneration_commands": {
     "artifact": "docs/evidence/benchmark_regeneration_commands_20260706.json",
     "checks": {
+      "regeneration_commands_cover_readiness_renderer_groups": true,
       "regeneration_commands_filters_are_all_stage": true,
       "regeneration_commands_group_counts_match": true,
       "regeneration_commands_loaded": true,
@@ -234,6 +235,14 @@
       "shards": 30
     },
     "notes": [],
+    "readiness_renderer_groups": [
+      "cache",
+      "merge",
+      "post",
+      "promote",
+      "readiness",
+      "shards"
+    ],
     "row_count": 44,
     "valid": true
   },

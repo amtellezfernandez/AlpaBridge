@@ -63,6 +63,11 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
                 "regeneration_commands_rows_match_plan_renderer"
             ]
         )
+        self.assertTrue(
+            audit["regeneration_commands"]["checks"][
+                "regeneration_commands_cover_readiness_renderer_groups"
+            ]
+        )
         self.assertTrue(audit["operator_matrix"]["valid"])
         self.assertEqual(OPERATOR_MATRIX_RELATIVE.as_posix(), audit["operator_matrix"]["artifact"])
         self.assertTrue(
@@ -554,6 +559,41 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         )
         self.assertIn(
             "regeneration commands row_count does not match expected rows",
+            audit["regeneration_commands"]["notes"],
+        )
+
+    def test_regeneration_commands_must_cover_readiness_renderer_groups(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            evidence = repo_root / "docs" / "evidence"
+            evidence.mkdir(parents=True)
+            _copy_evidence_jsons(evidence)
+            commands_path = evidence / COMMANDS_RELATIVE.name
+            commands = _read_json(commands_path)
+            commands["commands"] = [
+                row for row in commands["commands"] if row.get("group") != "cache"
+            ]
+            commands["row_count"] = len(commands["commands"])
+            commands["group_counts"].pop("cache")
+            _write_json(commands_path, commands)
+            _refresh_manifest_hash(evidence / MANIFEST_RELATIVE.name, COMMANDS_RELATIVE)
+
+            audit = module.build_audit(repo_root=repo_root, created_at="2026-07-06")
+
+        self.assertFalse(audit["valid"])
+        self.assertFalse(
+            audit["regeneration_commands"]["checks"][
+                "regeneration_commands_cover_readiness_renderer_groups"
+            ]
+        )
+        self.assertTrue(
+            audit["public_evidence_manifest"]["checks"][
+                "public_evidence_manifest_hashes_match_tracked_files"
+            ]
+        )
+        self.assertIn(
+            "regeneration commands do not cover readiness command_renderer_groups",
             audit["regeneration_commands"]["notes"],
         )
 
