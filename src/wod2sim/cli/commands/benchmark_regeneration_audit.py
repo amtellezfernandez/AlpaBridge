@@ -112,6 +112,7 @@ def build_audit(
     objective_completion = _objective_completion(
         stage_reports=stage_reports,
         diagnostic_evidence=diagnostic_evidence,
+        readiness=readiness,
         claim_ready=claim_ready,
     )
     valid = (
@@ -570,41 +571,59 @@ def _objective_completion(
     *,
     stage_reports: list[dict[str, Any]],
     diagnostic_evidence: dict[str, Any],
+    readiness: dict[str, Any],
     claim_ready: bool,
 ) -> dict[str, Any]:
     by_count = {
         _int_value(stage.get("expected_scene_count")): stage for stage in stage_reports
     }
+    readiness_context = _readiness_completion_context(readiness)
+    fifty_preset = "front_camera_50scene_public2602"
+    hundred_preset = "front_camera_100scene_public2602"
     requirements = [
         _objective_requirement(
             requirement="validate_10_scene_pilot",
             satisfied=bool(_dict_or_empty(by_count.get(10)).get("claim_valid")),
             evidence=_dict_or_empty(by_count.get(10)).get("summary_artifact"),
             detail="Tracked 10-scene batch summary is claim-valid.",
+            blockers=[],
+            next_command_groups=[],
         ),
         _objective_requirement(
             requirement="track_50_scene_scale_progress",
             satisfied=bool(diagnostic_evidence.get("valid")),
             evidence=_diagnostic_scale_evidence(diagnostic_evidence),
             detail="Diagnostic 50-preset probe and partial-attempt summaries are audited as non-claim evidence.",
+            blockers=[],
+            next_command_groups=[],
         ),
         _objective_requirement(
             requirement="produce_claim_valid_50_scene_summary",
             satisfied=bool(_dict_or_empty(by_count.get(50)).get("claim_valid")),
             evidence=_dict_or_empty(by_count.get(50)).get("summary_artifact"),
             detail="Requires a clean full-stage 50-scene public summary.",
+            blockers=_requirement_blockers(readiness_context, scene_preset=fifty_preset),
+            next_command_groups=_scale_command_groups(readiness_context),
         ),
         _objective_requirement(
             requirement="produce_claim_valid_100_scene_summary",
             satisfied=bool(_dict_or_empty(by_count.get(100)).get("claim_valid")),
             evidence=_dict_or_empty(by_count.get(100)).get("summary_artifact"),
             detail="Requires a clean full-stage 100-scene public summary.",
+            blockers=_requirement_blockers(readiness_context, scene_preset=hundred_preset),
+            next_command_groups=_scale_command_groups(readiness_context),
         ),
         _objective_requirement(
             requirement="pass_strict_claim_gate",
             satisfied=claim_ready,
             evidence="wod2sim-benchmark-audit --strict --json",
             detail="Strict audit passes only when every planned stage is claim-valid.",
+            blockers=_claim_gate_blockers(readiness_context),
+            next_command_groups=[
+                group
+                for group in _next_command_group_names(readiness_context)
+                if group in {"refresh_status", "verify_claim_gate"}
+            ],
         ),
     ]
     return {
@@ -630,13 +649,84 @@ def _objective_requirement(
     satisfied: bool,
     evidence: object,
     detail: str,
+    blockers: list[str],
+    next_command_groups: list[str],
 ) -> dict[str, Any]:
-    return {
+    row = {
         "requirement": requirement,
         "satisfied": satisfied,
         "evidence": evidence,
         "detail": detail,
     }
+    if not satisfied:
+        row["blocking_requirements"] = blockers
+        row["next_command_groups"] = next_command_groups
+    return row
+
+
+def _readiness_completion_context(readiness: dict[str, Any]) -> dict[str, Any]:
+    blockers = [
+        blocker
+        for blocker in _list_or_empty(readiness.get("blocking_requirements"))
+        if isinstance(blocker, dict)
+    ]
+    command_groups = [
+        group
+        for group in _list_or_empty(readiness.get("next_command_groups"))
+        if isinstance(group, dict)
+    ]
+    return {
+        "blockers": blockers,
+        "command_groups": command_groups,
+    }
+
+
+def _requirement_blockers(
+    readiness_context: dict[str, Any],
+    *,
+    scene_preset: str,
+) -> list[str]:
+    blockers = []
+    for blocker in _list_or_empty(readiness_context.get("blockers")):
+        blocker_map = _dict_or_empty(blocker)
+        blocker_id = blocker_map.get("id")
+        if not isinstance(blocker_id, str):
+            continue
+        if blocker_map.get("scene_preset") == scene_preset or blocker_map.get("scene_preset") is None:
+            blockers.append(blocker_id)
+    return blockers
+
+
+def _claim_gate_blockers(readiness_context: dict[str, Any]) -> list[str]:
+    return [
+        str(blocker["id"])
+        for blocker in _list_or_empty(readiness_context.get("blockers"))
+        if isinstance(blocker, dict)
+        and blocker.get("id")
+        and blocker.get("blocks") in {"full_benchmark_claim", "closed_loop_rollout"}
+    ]
+
+
+def _scale_command_groups(readiness_context: dict[str, Any]) -> list[str]:
+    return [
+        group
+        for group in _next_command_group_names(readiness_context)
+        if group
+        in {
+            "build_and_validate_scale_caches",
+            "run_scale_shards_and_promote_summaries",
+            "refresh_status",
+            "verify_claim_gate",
+        }
+    ]
+
+
+def _next_command_group_names(readiness_context: dict[str, Any]) -> list[str]:
+    return [
+        str(group["name"])
+        for group in _list_or_empty(readiness_context.get("command_groups"))
+        if isinstance(group, dict) and group.get("name")
+    ]
 
 
 def _diagnostic_scale_evidence(diagnostic_evidence: dict[str, Any]) -> list[str]:

@@ -93,20 +93,55 @@
         "satisfied": true
       },
       {
+        "blocking_requirements": [
+          "hf_token_missing",
+          "alpasim_base_image_missing",
+          "front_camera_50scene_public2602_cache_invalid",
+          "front_camera_50scene_public2602_claim_summary_missing"
+        ],
         "detail": "Requires a clean full-stage 50-scene public summary.",
         "evidence": "docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json",
+        "next_command_groups": [
+          "build_and_validate_scale_caches",
+          "run_scale_shards_and_promote_summaries",
+          "refresh_status",
+          "verify_claim_gate"
+        ],
         "requirement": "produce_claim_valid_50_scene_summary",
         "satisfied": false
       },
       {
+        "blocking_requirements": [
+          "hf_token_missing",
+          "alpasim_base_image_missing",
+          "front_camera_100scene_public2602_cache_invalid",
+          "front_camera_100scene_public2602_claim_summary_missing"
+        ],
         "detail": "Requires a clean full-stage 100-scene public summary.",
         "evidence": "docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json",
+        "next_command_groups": [
+          "build_and_validate_scale_caches",
+          "run_scale_shards_and_promote_summaries",
+          "refresh_status",
+          "verify_claim_gate"
+        ],
         "requirement": "produce_claim_valid_100_scene_summary",
         "satisfied": false
       },
       {
+        "blocking_requirements": [
+          "alpasim_base_image_missing",
+          "front_camera_50scene_public2602_cache_invalid",
+          "front_camera_50scene_public2602_claim_summary_missing",
+          "front_camera_100scene_public2602_cache_invalid",
+          "front_camera_100scene_public2602_claim_summary_missing"
+        ],
         "detail": "Strict audit passes only when every planned stage is claim-valid.",
         "evidence": "wod2sim-benchmark-audit --strict --json",
+        "next_command_groups": [
+          "refresh_status",
+          "verify_claim_gate"
+        ],
         "requirement": "pass_strict_claim_gate",
         "satisfied": false
       }

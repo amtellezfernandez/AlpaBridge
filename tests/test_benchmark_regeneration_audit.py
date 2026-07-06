@@ -91,6 +91,22 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         self.assertTrue(requirements["validate_10_scene_pilot"]["satisfied"])
         self.assertTrue(requirements["track_50_scene_scale_progress"]["satisfied"])
         self.assertFalse(requirements["pass_strict_claim_gate"]["satisfied"])
+        self.assertIn(
+            "front_camera_50scene_public2602_cache_invalid",
+            requirements["produce_claim_valid_50_scene_summary"]["blocking_requirements"],
+        )
+        self.assertIn(
+            "front_camera_100scene_public2602_claim_summary_missing",
+            requirements["produce_claim_valid_100_scene_summary"]["blocking_requirements"],
+        )
+        self.assertIn(
+            "run_scale_shards_and_promote_summaries",
+            requirements["produce_claim_valid_50_scene_summary"]["next_command_groups"],
+        )
+        self.assertIn(
+            "verify_claim_gate",
+            requirements["pass_strict_claim_gate"]["next_command_groups"],
+        )
 
     def test_strict_main_fails_until_all_planned_summaries_are_claim_valid(self) -> None:
         module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")

@@ -172,4 +172,5 @@ Diagnostic scale-probe evidence is audited separately as non-claim evidence; it
 does not satisfy the strict 50/100-scene claim gate.
 The audit's `objective_completion` section is the public checklist for which
 parts of the regeneration objective are satisfied and which claim artifacts
-remain missing.
+remain missing. Unsatisfied rows include readiness blocker IDs and the command
+groups to run next.
