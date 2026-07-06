@@ -58,6 +58,11 @@ directory, but `source_usdz_cache.matching_scene_count` is `0` for both
 `front_camera_50scene_public2602` and `front_camera_100scene_public2602`. A
 cache builder needs either a complete local `all-usdzs` directory for those
 presets or gated Hugging Face access.
+The same cache inventory is mirrored in
+[`docs/evidence/benchmark_regeneration_status_20260706.json`](evidence/benchmark_regeneration_status_20260706.json)
+under `scale_status.<preset>.source_usdz_cache` and
+`scale_status.<preset>.local_usdz_cache`; use those fields for open-repo review
+without probing private paths or runtime state.
 
 ## Who Can Do What
 
