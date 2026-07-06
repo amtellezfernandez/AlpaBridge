@@ -287,6 +287,9 @@ boundary. Validate the local USDZ cache offline with
 `wod2sim-batch-summary` using the `--merge-summary` and
 `--expected-scene-count` options, then promoted with
 `wod2sim-promote-batch-summary`.
+To resume only shard work that the current audit marks missing or invalid, run
+`wod2sim-benchmark-commands --resume-missing-shards-from-audit --group shards --json`;
+add `--stage` or `--shard-index` to narrow the output.
 The cache validation report includes `missing_scene_ids`,
 `invalid_revision_scene_ids`, and `invalid_cache_files`; any non-empty list is a
 pre-run stop condition for 50/100-scene shards.

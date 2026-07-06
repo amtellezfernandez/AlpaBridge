@@ -445,8 +445,8 @@
       "readiness",
       "shards"
     ],
-    "sha256": "bc2ad0392ca692dfa24bc56067af87289dc8fc001fa152e52264be37c3699b25",
-    "size_bytes": 10164,
+    "sha256": "f14547fec12aae4045830549dc7c8fda272fe57a8789816b17277ff5791e5dbc",
+    "size_bytes": 10248,
     "valid": true
   },
   "readiness_artifact": "docs/evidence/benchmark_regeneration_readiness_20260706.json",

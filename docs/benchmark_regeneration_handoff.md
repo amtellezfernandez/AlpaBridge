@@ -82,6 +82,7 @@ page:
 ```bash
 wod2sim-benchmark-commands --group all --json
 wod2sim-benchmark-commands --group cleanup --json
+wod2sim-benchmark-commands --resume-missing-shards-from-audit --group shards --json
 wod2sim-benchmark-commands --group cache --stage front_camera_50scene_public2602 --json
 wod2sim-benchmark-commands --group shards --stage front_camera_50scene_public2602 --json
 wod2sim-benchmark-commands --group shards --stage front_camera_100scene_public2602 --json
