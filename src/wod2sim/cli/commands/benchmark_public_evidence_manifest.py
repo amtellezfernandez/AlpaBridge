@@ -125,6 +125,18 @@ def build_public_evidence_manifest(
         "claim_gate": {
             "valid": _audit_valid_without_public_evidence_manifest(audit),
             "claim_ready": bool(audit.get("claim_ready")),
+            "objective": objective_completion.get("objective"),
+            "objective_complete": bool(objective_completion.get("complete")),
+            "satisfied_requirement_count": _int_or_none(
+                objective_completion.get("satisfied_count")
+            ),
+            "total_requirement_count": _int_or_none(objective_completion.get("total_count")),
+            "remaining_requirements": _strings(objective_completion.get("remaining_requirements")),
+            "blocking_requirements": _strings(objective_completion.get("blocking_requirements")),
+            "next_command_groups": _strings(objective_completion.get("next_command_groups")),
+            "next_command_renderer_groups": _string_list_mapping(
+                objective_completion.get("next_command_renderer_groups")
+            ),
             "missing_claim_valid_summaries": list(audit.get("missing_claim_valid_summaries", [])),
             "scale_claim_gaps": [
                 gap
@@ -269,6 +281,21 @@ def _dict_or_empty(value: object) -> dict[str, Any]:
 
 def _list_or_empty(value: object) -> list[object]:
     return value if isinstance(value, list) else []
+
+
+def _strings(value: object) -> list[str]:
+    return [item for item in _list_or_empty(value) if isinstance(item, str)]
+
+
+def _string_list_mapping(value: object) -> dict[str, list[str]]:
+    mapping = _dict_or_empty(value)
+    return {
+        key: _strings(group_values) for key, group_values in mapping.items() if isinstance(key, str)
+    }
+
+
+def _int_or_none(value: object) -> int | None:
+    return value if isinstance(value, int) else None
 
 
 def _print_human_summary(manifest: dict[str, Any]) -> None:

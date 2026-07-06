@@ -18,8 +18,8 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_benchmark_regeneration_audit_v1",
-      "sha256": "cebf2bde53f282285735472890d5725da98ca5d6916b94aeb09ed598fb8a07a5",
-      "size_bytes": 60308
+      "sha256": "7d300c110042257e901b6463d8c6c404ace05eb805fc187236703b8c69d18587",
+      "size_bytes": 60383
     },
     {
       "artifact_type": "benchmark_regeneration_control",
@@ -113,10 +113,54 @@
     }
   ],
   "claim_gate": {
+    "blocking_requirements": [
+      "hf_token_missing",
+      "docker_daemon_unavailable",
+      "alpasim_base_image_missing",
+      "nvidia_gpu_unavailable",
+      "docker_nvidia_runtime_unavailable",
+      "front_camera_50scene_public2602_cache_invalid",
+      "front_camera_50scene_public2602_claim_summary_missing",
+      "front_camera_100scene_public2602_cache_invalid",
+      "front_camera_100scene_public2602_claim_summary_missing"
+    ],
     "claim_ready": false,
     "missing_claim_valid_summaries": [
       "docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json",
       "docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json"
+    ],
+    "next_command_groups": [
+      "refresh_readiness",
+      "build_and_validate_scale_caches",
+      "run_scale_shards_and_promote_summaries",
+      "refresh_status",
+      "verify_claim_gate"
+    ],
+    "next_command_renderer_groups": {
+      "build_and_validate_scale_caches": [
+        "cache"
+      ],
+      "refresh_readiness": [
+        "readiness"
+      ],
+      "refresh_status": [
+        "post"
+      ],
+      "run_scale_shards_and_promote_summaries": [
+        "shards",
+        "merge",
+        "promote"
+      ],
+      "verify_claim_gate": [
+        "post"
+      ]
+    },
+    "objective": "Regenerate WOD2Sim closed-loop benchmark artifacts from scratch, validate 10-scene pilot, scale as feasible to 50/100 scenes, and track public-safe evidence.",
+    "objective_complete": false,
+    "remaining_requirements": [
+      "produce_claim_valid_50_scene_summary",
+      "produce_claim_valid_100_scene_summary",
+      "pass_strict_claim_gate"
     ],
     "resume_repair_scope": {
       "affected_stage_count": 2,
@@ -471,6 +515,7 @@
         }
       ]
     },
+    "satisfied_requirement_count": 2,
     "scale_claim_gaps": [
       {
         "blocking_requirements": [
@@ -642,6 +687,7 @@
       }
     ],
     "strict_command": "wod2sim-benchmark-audit --strict --json",
+    "total_requirement_count": 5,
     "valid": true
   },
   "created_at": "2026-07-06",

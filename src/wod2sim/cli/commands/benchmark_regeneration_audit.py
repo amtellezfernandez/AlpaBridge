@@ -1321,6 +1321,24 @@ def _public_evidence_manifest_consistency(
     if not checks["public_evidence_manifest_claim_gate_matches_audit"]:
         notes.append("public evidence manifest claim_gate does not match current audit")
 
+    checks["public_evidence_manifest_objective_completion_matches_audit"] = (
+        claim_gate.get("objective") == objective_completion.get("objective")
+        and bool(claim_gate.get("objective_complete")) == bool(objective_completion.get("complete"))
+        and _optional_int(claim_gate.get("satisfied_requirement_count"))
+        == _optional_int(objective_completion.get("satisfied_count"))
+        and _optional_int(claim_gate.get("total_requirement_count"))
+        == _optional_int(objective_completion.get("total_count"))
+        and claim_gate.get("remaining_requirements")
+        == objective_completion.get("remaining_requirements")
+        and claim_gate.get("blocking_requirements")
+        == objective_completion.get("blocking_requirements")
+        and claim_gate.get("next_command_groups") == objective_completion.get("next_command_groups")
+        and claim_gate.get("next_command_renderer_groups")
+        == objective_completion.get("next_command_renderer_groups")
+    )
+    if not checks["public_evidence_manifest_objective_completion_matches_audit"]:
+        notes.append("public evidence manifest objective completion does not match current audit")
+
     checks["public_evidence_manifest_scale_claim_gaps_match_audit"] = claim_gate.get(
         "scale_claim_gaps"
     ) == objective_completion.get("scale_claim_gaps")

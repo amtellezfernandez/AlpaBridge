@@ -19,6 +19,36 @@ RESUME_COMMANDS_RELATIVE = Path(
 )
 MISSING_50_RELATIVE = Path("docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json")
 MISSING_100_RELATIVE = Path("docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json")
+EXPECTED_REMAINING_REQUIREMENTS = [
+    "produce_claim_valid_50_scene_summary",
+    "produce_claim_valid_100_scene_summary",
+    "pass_strict_claim_gate",
+]
+EXPECTED_BLOCKING_REQUIREMENTS = [
+    "hf_token_missing",
+    "docker_daemon_unavailable",
+    "alpasim_base_image_missing",
+    "nvidia_gpu_unavailable",
+    "docker_nvidia_runtime_unavailable",
+    "front_camera_50scene_public2602_cache_invalid",
+    "front_camera_50scene_public2602_claim_summary_missing",
+    "front_camera_100scene_public2602_cache_invalid",
+    "front_camera_100scene_public2602_claim_summary_missing",
+]
+EXPECTED_NEXT_COMMAND_GROUPS = [
+    "refresh_readiness",
+    "build_and_validate_scale_caches",
+    "run_scale_shards_and_promote_summaries",
+    "refresh_status",
+    "verify_claim_gate",
+]
+EXPECTED_NEXT_COMMAND_RENDERER_GROUPS = {
+    "build_and_validate_scale_caches": ["cache"],
+    "refresh_readiness": ["readiness"],
+    "refresh_status": ["post"],
+    "run_scale_shards_and_promote_summaries": ["shards", "merge", "promote"],
+    "verify_claim_gate": ["post"],
+}
 
 
 def test_public_evidence_manifest_builder_hashes_tracked_artifacts() -> None:
@@ -49,6 +79,16 @@ def test_public_evidence_manifest_builder_hashes_tracked_artifacts() -> None:
         "front_camera_50scene_public2602",
         "front_camera_100scene_public2602",
     ]
+    assert manifest["claim_gate"]["objective_complete"] is False
+    assert manifest["claim_gate"]["satisfied_requirement_count"] == 2
+    assert manifest["claim_gate"]["total_requirement_count"] == 5
+    assert manifest["claim_gate"]["remaining_requirements"] == EXPECTED_REMAINING_REQUIREMENTS
+    assert manifest["claim_gate"]["blocking_requirements"] == EXPECTED_BLOCKING_REQUIREMENTS
+    assert manifest["claim_gate"]["next_command_groups"] == EXPECTED_NEXT_COMMAND_GROUPS
+    assert (
+        manifest["claim_gate"]["next_command_renderer_groups"]
+        == EXPECTED_NEXT_COMMAND_RENDERER_GROUPS
+    )
     assert manifest["claim_gate"]["scale_claim_gaps"][0]["public_summary_errors"] == [
         "summary_missing"
     ]
@@ -137,6 +177,7 @@ def test_public_evidence_manifest_main_writes_json_without_runtime_probes() -> N
     assert emitted == artifact
     assert artifact["claim_gate"]["valid"] is True
     assert artifact["claim_gate"]["claim_ready"] is False
+    assert artifact["claim_gate"]["remaining_requirements"] == EXPECTED_REMAINING_REQUIREMENTS
 
 
 def test_public_evidence_manifest_recovers_from_stale_manifest_audit_state() -> None:
@@ -168,6 +209,7 @@ def test_public_evidence_manifest_recovers_from_stale_manifest_audit_state() -> 
 
     assert manifest["claim_gate"]["valid"] is True
     assert manifest["claim_gate"]["claim_ready"] is False
+    assert manifest["claim_gate"]["next_command_groups"] == EXPECTED_NEXT_COMMAND_GROUPS
 
 
 def test_tracked_public_evidence_manifest_is_public_safe_and_complete() -> None:
@@ -193,6 +235,16 @@ def test_tracked_public_evidence_manifest_is_public_safe_and_complete() -> None:
         MISSING_50_RELATIVE.as_posix(),
         MISSING_100_RELATIVE.as_posix(),
     ]
+    assert manifest["claim_gate"]["objective_complete"] is False
+    assert manifest["claim_gate"]["satisfied_requirement_count"] == 2
+    assert manifest["claim_gate"]["total_requirement_count"] == 5
+    assert manifest["claim_gate"]["remaining_requirements"] == EXPECTED_REMAINING_REQUIREMENTS
+    assert manifest["claim_gate"]["blocking_requirements"] == EXPECTED_BLOCKING_REQUIREMENTS
+    assert manifest["claim_gate"]["next_command_groups"] == EXPECTED_NEXT_COMMAND_GROUPS
+    assert (
+        manifest["claim_gate"]["next_command_renderer_groups"]
+        == EXPECTED_NEXT_COMMAND_RENDERER_GROUPS
+    )
     assert len(manifest["claim_gate"]["scale_claim_gaps"]) == 2
     assert manifest["claim_gate"]["scale_claim_gaps"][0]["local_usdz_cache"]["valid"] is False
     assert manifest["claim_gate"]["scale_claim_gaps"][0]["expected_merge_input_count"] == 5
