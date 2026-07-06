@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from datetime import datetime
 from pathlib import Path
@@ -11,6 +12,7 @@ PLAN_SCHEMA = "wod2sim_benchmark_regeneration_plan_v1"
 STATUS_SCHEMA = "wod2sim_benchmark_regeneration_status_v1"
 READINESS_SCHEMA = "wod2sim_benchmark_regeneration_readiness_v1"
 BATCH_SCHEMA = "wod2sim_closed_loop_batch_summary_v1"
+PUBLIC_EVIDENCE_MANIFEST_SCHEMA = "wod2sim_benchmark_public_evidence_manifest_v1"
 DEFAULT_AUDIT = Path("docs/evidence/benchmark_regeneration_audit_20260706.json")
 DEFAULT_PLAN = Path("docs/evidence/benchmark_regeneration_plan_20260706.json")
 DEFAULT_STATUS = Path("docs/evidence/benchmark_regeneration_status_20260706.json")
@@ -115,11 +117,24 @@ def build_audit(
         readiness=readiness,
         claim_ready=claim_ready,
     )
-    valid = (
+    expected_valid_without_manifest = (
         input_valid
         and status_consistency["valid"]
         and readiness_consistency["valid"]
         and diagnostic_evidence["valid"]
+    )
+    public_evidence_manifest = _public_evidence_manifest_consistency(
+        plan_path=plan_path,
+        status_path=status_path,
+        status=status,
+        stage_reports=stage_reports,
+        claim_ready=claim_ready,
+        expected_audit_valid_without_manifest=expected_valid_without_manifest,
+        repo_root=repo_root,
+    )
+    valid = (
+        expected_valid_without_manifest
+        and public_evidence_manifest["valid"]
     )
 
     return {
@@ -142,6 +157,7 @@ def build_audit(
         "objective_completion": objective_completion,
         "regeneration_provenance": regeneration_provenance,
         "diagnostic_evidence": diagnostic_evidence,
+        "public_evidence_manifest": public_evidence_manifest,
         "status_consistency": status_consistency,
         "readiness_consistency": readiness_consistency,
         "stages": stage_reports,
@@ -833,6 +849,124 @@ def _status_consistency(
     }
 
 
+def _public_evidence_manifest_consistency(
+    *,
+    plan_path: Path,
+    status_path: Path,
+    status: dict[str, Any],
+    stage_reports: list[dict[str, Any]],
+    claim_ready: bool,
+    expected_audit_valid_without_manifest: bool,
+    repo_root: Path,
+) -> dict[str, Any]:
+    checks: dict[str, bool] = {}
+    notes: list[str] = []
+    evidence_artifacts = _dict_or_empty(status.get("evidence_artifacts"))
+    manifest_artifact = str(evidence_artifacts.get("public_evidence_manifest") or "")
+
+    checks["public_evidence_manifest_referenced"] = bool(manifest_artifact)
+    if not checks["public_evidence_manifest_referenced"]:
+        notes.append("status.evidence_artifacts.public_evidence_manifest is missing")
+        return {"valid": False, "artifact": manifest_artifact, "checks": checks, "notes": notes}
+
+    manifest_path = _resolve_path(repo_root, Path(manifest_artifact))
+    manifest = _load_manifest(manifest_path, notes=notes)
+    checks["public_evidence_manifest_loaded"] = bool(manifest)
+    if not checks["public_evidence_manifest_loaded"]:
+        return {"valid": False, "artifact": manifest_artifact, "checks": checks, "notes": notes}
+
+    checks["public_evidence_manifest_schema_matches"] = (
+        manifest.get("schema") == PUBLIC_EVIDENCE_MANIFEST_SCHEMA
+    )
+    if not checks["public_evidence_manifest_schema_matches"]:
+        notes.append("public evidence manifest schema mismatch")
+
+    checks["public_evidence_manifest_self_path_matches_status"] = (
+        manifest.get("manifest_artifact") == manifest_artifact
+    )
+    if not checks["public_evidence_manifest_self_path_matches_status"]:
+        notes.append("public evidence manifest self path does not match status reference")
+
+    source_artifacts = _dict_or_empty(manifest.get("source_artifacts"))
+    checks["public_evidence_manifest_sources_match_audit"] = (
+        source_artifacts.get("plan") == _display_path(plan_path)
+        and source_artifacts.get("status") == _display_path(status_path)
+        and source_artifacts.get("audit") == _display_path(DEFAULT_AUDIT)
+    )
+    if not checks["public_evidence_manifest_sources_match_audit"]:
+        notes.append("public evidence manifest source_artifacts do not match audit inputs")
+
+    expected_missing = [
+        stage["summary_artifact"] for stage in stage_reports if not stage["claim_valid"]
+    ]
+    claim_gate = _dict_or_empty(manifest.get("claim_gate"))
+    checks["public_evidence_manifest_claim_gate_matches_audit"] = (
+        bool(claim_gate.get("valid")) == bool(expected_audit_valid_without_manifest)
+        and bool(claim_gate.get("claim_ready")) == bool(claim_ready)
+        and claim_gate.get("missing_claim_valid_summaries") == expected_missing
+        and claim_gate.get("strict_command") == "wod2sim-benchmark-audit --strict --json"
+    )
+    if not checks["public_evidence_manifest_claim_gate_matches_audit"]:
+        notes.append("public evidence manifest claim_gate does not match current audit")
+
+    artifacts = [
+        artifact for artifact in _list_or_empty(manifest.get("artifacts")) if isinstance(artifact, dict)
+    ]
+    checks["public_evidence_manifest_artifact_count_matches"] = (
+        _int_value(manifest.get("artifact_count")) == len(artifacts)
+    )
+    if not checks["public_evidence_manifest_artifact_count_matches"]:
+        notes.append("public evidence manifest artifact_count does not match artifacts length")
+
+    artifact_paths = [str(artifact.get("path") or "") for artifact in artifacts]
+    checks["public_evidence_manifest_artifact_paths_unique"] = (
+        len(artifact_paths) == len(set(artifact_paths)) and all(artifact_paths)
+    )
+    if not checks["public_evidence_manifest_artifact_paths_unique"]:
+        notes.append("public evidence manifest artifact paths are missing or duplicated")
+
+    checks["public_evidence_manifest_excludes_self_hash"] = manifest_artifact not in set(artifact_paths)
+    if not checks["public_evidence_manifest_excludes_self_hash"]:
+        notes.append("public evidence manifest must not include its own hash entry")
+
+    hash_mismatches = _manifest_hash_mismatches(
+        artifacts,
+        repo_root=repo_root,
+        audit_artifact=_display_path(DEFAULT_AUDIT),
+    )
+    checks["public_evidence_manifest_hashes_match_tracked_files"] = not hash_mismatches
+    if hash_mismatches:
+        notes.extend(hash_mismatches)
+
+    missing_expected = [
+        item
+        for item in _list_or_empty(manifest.get("missing_expected_artifacts"))
+        if isinstance(item, dict)
+    ]
+    expected_missing_rows = [
+        {
+            "path": path,
+            "present": False,
+            "required_for_full_claim": True,
+            "claim_scope": "missing_claim_valid_scale_summary",
+        }
+        for path in expected_missing
+    ]
+    checks["public_evidence_manifest_missing_expected_matches_audit"] = (
+        missing_expected == expected_missing_rows
+    )
+    if not checks["public_evidence_manifest_missing_expected_matches_audit"]:
+        notes.append("public evidence manifest missing_expected_artifacts do not match audit")
+
+    return {
+        "valid": all(checks.values()) if checks else False,
+        "artifact": manifest_artifact,
+        "checks": checks,
+        "notes": notes,
+        "artifact_count": len(artifacts),
+    }
+
+
 def _readiness_consistency(
     *,
     plan_path: Path,
@@ -931,6 +1065,45 @@ def _load_json(path: Path, *, errors: list[str], label: str) -> dict[str, Any]:
     except json.JSONDecodeError as exc:
         errors.append(f"{label} is not valid JSON: {path}: {exc}")
         return {}
+
+
+def _load_manifest(path: Path, *, notes: list[str]) -> dict[str, Any]:
+    if not path.is_file():
+        notes.append(f"public evidence manifest missing: {path}")
+        return {}
+    try:
+        return _read_json(path)
+    except json.JSONDecodeError as exc:
+        notes.append(f"public evidence manifest is not valid JSON: {path}: {exc}")
+        return {}
+
+
+def _manifest_hash_mismatches(
+    artifacts: list[dict[str, Any]],
+    *,
+    repo_root: Path,
+    audit_artifact: str,
+) -> list[str]:
+    mismatches: list[str] = []
+    for artifact in artifacts:
+        display_path = str(artifact.get("path") or "")
+        if display_path == audit_artifact:
+            # The audit artifact is the output of this command, so enforcing its
+            # recorded hash here would create a circular fixed-point requirement.
+            continue
+        path = _resolve_path(repo_root, Path(display_path))
+        if not path.is_file():
+            mismatches.append(f"manifest artifact missing: {display_path}")
+            continue
+        raw = path.read_bytes()
+        expected_size = _int_value(artifact.get("size_bytes"))
+        expected_hash = str(artifact.get("sha256") or "")
+        actual_hash = hashlib.sha256(raw).hexdigest()
+        if expected_size != len(raw):
+            mismatches.append(f"manifest size mismatch: {display_path}")
+        if expected_hash != actual_hash:
+            mismatches.append(f"manifest hash mismatch: {display_path}")
+    return mismatches
 
 
 def _read_json(path: Path) -> dict[str, Any]:

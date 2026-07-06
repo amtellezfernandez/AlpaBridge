@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import importlib
 import json
 import shutil
@@ -14,6 +15,7 @@ AUDIT_RELATIVE = Path("docs/evidence/benchmark_regeneration_audit_20260706.json"
 PLAN_RELATIVE = Path("docs/evidence/benchmark_regeneration_plan_20260706.json")
 STATUS_RELATIVE = Path("docs/evidence/benchmark_regeneration_status_20260706.json")
 READINESS_RELATIVE = Path("docs/evidence/benchmark_regeneration_readiness_20260706.json")
+MANIFEST_RELATIVE = Path("docs/evidence/benchmark_public_evidence_manifest_20260706.json")
 PROBE_50_RELATIVE = Path(
     "docs/evidence/closed_loop_spotlight_reflex_50scene_localprobe_1scene.json"
 )
@@ -34,6 +36,16 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         self.assertEqual(READINESS_RELATIVE.as_posix(), audit["readiness_artifact"])
         self.assertTrue(audit["readiness_consistency"]["valid"])
         self.assertTrue(audit["diagnostic_evidence"]["valid"])
+        self.assertTrue(audit["public_evidence_manifest"]["valid"])
+        self.assertEqual(
+            MANIFEST_RELATIVE.as_posix(),
+            audit["public_evidence_manifest"]["artifact"],
+        )
+        self.assertTrue(
+            audit["public_evidence_manifest"]["checks"][
+                "public_evidence_manifest_hashes_match_tracked_files"
+            ]
+        )
         self.assertEqual(PROBE_50_RELATIVE.as_posix(), audit["diagnostic_evidence"]["artifact"])
         self.assertEqual(
             "diagnostic_only_not_full_stage_claim",
@@ -162,6 +174,11 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             _write_json(
                 evidence / READINESS_RELATIVE.name,
                 _readiness_report(plan, claim_valid_scene_counts={10, 50, 100}),
+            )
+            _write_public_evidence_manifest(
+                evidence,
+                claim_ready=True,
+                missing_claim_valid_summaries=[],
             )
 
             audit = module.build_audit(repo_root=repo_root, created_at="2026-07-06")
@@ -372,6 +389,33 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             audit["status_consistency"]["notes"],
         )
 
+    def test_public_evidence_manifest_hash_mismatch_invalidates_audit(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            evidence = repo_root / "docs" / "evidence"
+            evidence.mkdir(parents=True)
+            _copy_evidence_jsons(evidence)
+            manifest = _read_json(evidence / MANIFEST_RELATIVE.name)
+            for artifact in manifest["artifacts"]:
+                if artifact["path"] == "docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json":
+                    artifact["sha256"] = "0" * 64
+                    break
+            _write_json(evidence / MANIFEST_RELATIVE.name, manifest)
+
+            audit = module.build_audit(repo_root=repo_root, created_at="2026-07-06")
+
+        self.assertFalse(audit["valid"])
+        self.assertFalse(
+            audit["public_evidence_manifest"]["checks"][
+                "public_evidence_manifest_hashes_match_tracked_files"
+            ]
+        )
+        self.assertIn(
+            "manifest hash mismatch: docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json",
+            audit["public_evidence_manifest"]["notes"],
+        )
+
     def test_missing_diagnostic_probe_invalidates_audit_artifact_set(self) -> None:
         module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -493,6 +537,79 @@ def _copy_status_and_probe(evidence_dir: Path) -> None:
     shutil.copy2(ROOT / STATUS_RELATIVE, evidence_dir / STATUS_RELATIVE.name)
     shutil.copy2(ROOT / PROBE_50_RELATIVE, evidence_dir / PROBE_50_RELATIVE.name)
     shutil.copy2(ROOT / ATTEMPT_50_RELATIVE, evidence_dir / ATTEMPT_50_RELATIVE.name)
+
+
+def _copy_evidence_jsons(evidence_dir: Path) -> None:
+    for path in sorted((ROOT / "docs" / "evidence").glob("*.json")):
+        shutil.copy2(path, evidence_dir / path.name)
+
+
+def _write_public_evidence_manifest(
+    evidence_dir: Path,
+    *,
+    claim_ready: bool,
+    missing_claim_valid_summaries: list[str],
+) -> None:
+    manifest_path = evidence_dir / MANIFEST_RELATIVE.name
+    artifacts = []
+    for path in sorted(evidence_dir.glob("*.json")):
+        if path.name == MANIFEST_RELATIVE.name:
+            continue
+        raw = path.read_bytes()
+        relative = f"docs/evidence/{path.name}"
+        artifacts.append(
+            {
+                "path": relative,
+                "present": True,
+                "public_safe": True,
+                "schema": _read_json(path).get("schema"),
+                "artifact_type": "test_fixture_public_evidence",
+                "claim_scope": (
+                    "manifest_source_artifact"
+                    if relative
+                    in {
+                        PLAN_RELATIVE.as_posix(),
+                        STATUS_RELATIVE.as_posix(),
+                    }
+                    else "test_fixture_public_evidence"
+                ),
+                "size_bytes": len(raw),
+                "sha256": hashlib.sha256(raw).hexdigest(),
+            }
+        )
+    manifest = {
+        "schema": "wod2sim_benchmark_public_evidence_manifest_v1",
+        "created_at": "2026-07-06",
+        "manifest_artifact": MANIFEST_RELATIVE.as_posix(),
+        "source_artifacts": {
+            "audit": AUDIT_RELATIVE.as_posix(),
+            "plan": PLAN_RELATIVE.as_posix(),
+            "status": STATUS_RELATIVE.as_posix(),
+        },
+        "generator": {
+            "command": "wod2sim-benchmark-evidence-manifest",
+            "no_download_or_rollout_probes": True,
+            "excludes_self_hash": True,
+        },
+        "claim_gate": {
+            "valid": True,
+            "claim_ready": claim_ready,
+            "missing_claim_valid_summaries": missing_claim_valid_summaries,
+            "strict_command": "wod2sim-benchmark-audit --strict --json",
+        },
+        "artifact_count": len(artifacts),
+        "artifacts": artifacts,
+        "missing_expected_artifacts": [
+            {
+                "path": path,
+                "present": False,
+                "required_for_full_claim": True,
+                "claim_scope": "missing_claim_valid_scale_summary",
+            }
+            for path in missing_claim_valid_summaries
+        ],
+    }
+    _write_json(manifest_path, manifest)
 
 
 def _write_json(path: Path, payload: dict[str, object]) -> None:

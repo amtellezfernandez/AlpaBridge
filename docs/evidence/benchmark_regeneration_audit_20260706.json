@@ -150,6 +150,25 @@
     "total_count": 5
   },
   "plan_artifact": "docs/evidence/benchmark_regeneration_plan_20260706.json",
+  "public_evidence_manifest": {
+    "artifact": "docs/evidence/benchmark_public_evidence_manifest_20260706.json",
+    "artifact_count": 10,
+    "checks": {
+      "public_evidence_manifest_artifact_count_matches": true,
+      "public_evidence_manifest_artifact_paths_unique": true,
+      "public_evidence_manifest_claim_gate_matches_audit": true,
+      "public_evidence_manifest_excludes_self_hash": true,
+      "public_evidence_manifest_hashes_match_tracked_files": true,
+      "public_evidence_manifest_loaded": true,
+      "public_evidence_manifest_missing_expected_matches_audit": true,
+      "public_evidence_manifest_referenced": true,
+      "public_evidence_manifest_schema_matches": true,
+      "public_evidence_manifest_self_path_matches_status": true,
+      "public_evidence_manifest_sources_match_audit": true
+    },
+    "notes": [],
+    "valid": true
+  },
   "readiness_artifact": "docs/evidence/benchmark_regeneration_readiness_20260706.json",
   "readiness_consistency": {
     "checks": {
