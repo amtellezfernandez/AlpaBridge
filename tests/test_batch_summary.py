@@ -79,6 +79,26 @@ class BatchSummaryTests(unittest.TestCase):
         self.assertEqual(2, summary["aggregate"]["planned_scene_count"])
         self.assertTrue(summary["clean_closed_loop_batch"])
 
+    def test_launch_metadata_drift_prevents_clean_claim_summary(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.batch_summary")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            _write_batch(root)
+            _write_run(root, "001_scene-a", collision_any=0.0, wrong_lane=0.0, progress=0.7)
+            _write_run(root, "002_scene-b", collision_any=0.0, wrong_lane=0.0, progress=0.8)
+            _write_launch_metadata(root, "001_scene-a", scene_preset="fresh_3scene")
+            _write_launch_metadata(root, "002_scene-b", scene_preset="front_camera_10scene_smoke")
+
+            summary = module.build_summary(batch_dir=root)
+
+        self.assertTrue(summary["valid"])
+        self.assertFalse(summary["clean_closed_loop_batch"])
+        self.assertEqual(1, summary["provenance"]["critical_error_count"])
+        self.assertIn(
+            "run_001:scene-a:scene_preset_mismatch:fresh_3scene",
+            summary["provenance"]["critical_errors"],
+        )
+
     def test_merge_summaries_combines_clean_shards_into_claim_summary(self) -> None:
         module = importlib.import_module("wod2sim.cli.commands.batch_summary")
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -254,6 +274,19 @@ def _write_run(
     )
     (aggregate / "metrics_results.png").write_bytes(b"png\n")
     (rollout / "camera_front.mp4").write_bytes(b"mp4\n")
+
+
+def _write_launch_metadata(root: Path, name: str, *, scene_preset: str) -> None:
+    scene_id = name.split("_", 1)[1]
+    _write_json(
+        root / name / "launch-metadata.json",
+        {
+            "model": "spotlight_reflex",
+            "scene_preset": scene_preset,
+            "scene_ids": [scene_id],
+            "wizard_args": [],
+        },
+    )
 
 
 def _write_json(path: Path, payload: dict[str, object]) -> None:

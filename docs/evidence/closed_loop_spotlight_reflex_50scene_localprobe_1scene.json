@@ -154,6 +154,17 @@
     "open_loop_reference_available": false,
     "status": "closed_loop_only_summary"
   },
+  "provenance": {
+    "critical_error_count": 0,
+    "critical_errors": [],
+    "expected_model": "spotlight_reflex",
+    "expected_scene_count": 1,
+    "expected_scene_preset": "front_camera_50scene_public2602",
+    "launch_metadata_missing_count": 0,
+    "launch_metadata_present_count": 1,
+    "warning_count": 0,
+    "warnings": []
+  },
   "run_config": {
     "max_retries": 0,
     "mode": "both",
@@ -192,6 +203,17 @@
       "first_sensor_failure": null,
       "frame_count": 199,
       "index": 1,
+      "launch_metadata": {
+        "model": "spotlight_reflex",
+        "present": true,
+        "scene_ids": [
+          "clipgt-01d503d4-449b-46fc-8d78-9085e70d3554"
+        ],
+        "scene_preset": "front_camera_50scene_public2602",
+        "wizard_arg_keys": [
+          "scenes.local_usdz_dir"
+        ]
+      },
       "metrics": {
         "collision_any": 1.0,
         "collision_at_fault": 0.0,
