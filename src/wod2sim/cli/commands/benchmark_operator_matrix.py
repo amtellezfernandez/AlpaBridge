@@ -497,6 +497,7 @@ def _resume_repair_scope(
                 "completion_gate": _resume_stage_completion_gate_scope(
                     _dict_or_empty(stage.get("completion_gate"))
                 ),
+                "claim_gap": _resume_stage_claim_gap_scope(_dict_or_empty(stage.get("claim_gap"))),
             }
         )
     return {
@@ -568,6 +569,62 @@ def _resume_stage_completion_gate_scope(completion_gate: dict[str, Any]) -> dict
             completion_gate.get("required_clean_closed_loop_batch")
         ),
         "strict_audit_command": completion_gate.get("strict_audit_command"),
+    }
+
+
+def _resume_stage_claim_gap_scope(claim_gap: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "claim_valid": bool(claim_gap.get("claim_valid")),
+        "public_summary_present": bool(claim_gap.get("public_summary_present")),
+        "public_summary_claim_valid": bool(claim_gap.get("public_summary_claim_valid")),
+        "public_summary_errors": [
+            str(error)
+            for error in _list_or_empty(claim_gap.get("public_summary_errors"))
+            if isinstance(error, str)
+        ],
+        "merge_input_progress": _resume_merge_input_progress_scope(
+            _dict_or_empty(claim_gap.get("merge_input_progress"))
+        ),
+        "local_usdz_cache": _resume_cache_gap_scope(
+            _dict_or_empty(claim_gap.get("local_usdz_cache"))
+        ),
+        "source_usdz_cache": _resume_cache_gap_scope(
+            _dict_or_empty(claim_gap.get("source_usdz_cache"))
+        ),
+        "blocking_requirements": [
+            str(blocker)
+            for blocker in _list_or_empty(claim_gap.get("blocking_requirements"))
+            if isinstance(blocker, str)
+        ],
+        "next_command_groups": [
+            str(group)
+            for group in _list_or_empty(claim_gap.get("next_command_groups"))
+            if isinstance(group, str)
+        ],
+    }
+
+
+def _resume_merge_input_progress_scope(progress: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "expected_count": _optional_int(progress.get("expected_count")),
+        "present_count": _optional_int(progress.get("present_count")),
+        "missing_count": _optional_int(progress.get("missing_count")),
+        "claim_valid_count": _optional_int(progress.get("claim_valid_count")),
+        "invalid_present_count": _optional_int(progress.get("invalid_present_count")),
+        "complete": bool(progress.get("complete")),
+    }
+
+
+def _resume_cache_gap_scope(cache: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "required": bool(cache.get("required")),
+        "valid": bool(cache.get("valid")),
+        "expected_scene_count": _optional_int(cache.get("expected_scene_count")),
+        "present_scene_count": _optional_int(cache.get("present_scene_count")),
+        "missing_scene_count": _optional_int(cache.get("missing_scene_count")),
+        "usdz_file_count": _optional_int(cache.get("usdz_file_count")),
+        "matching_scene_count": _optional_int(cache.get("matching_scene_count")),
+        "nonmatching_usdz_file_count": _optional_int(cache.get("nonmatching_usdz_file_count")),
     }
 
 

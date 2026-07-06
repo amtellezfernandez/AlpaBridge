@@ -138,6 +138,18 @@ def test_public_evidence_manifest_builder_hashes_tracked_artifacts() -> None:
         ]
         == MISSING_50_RELATIVE.as_posix()
     )
+    assert (
+        manifest["claim_gate"]["resume_repair_scope"]["stages"][0]["claim_gap"][
+            "merge_input_progress"
+        ]["missing_count"]
+        == 5
+    )
+    assert (
+        "front_camera_50scene_public2602_cache_invalid"
+        in manifest["claim_gate"]["resume_repair_scope"]["stages"][0]["claim_gap"][
+            "blocking_requirements"
+        ]
+    )
     assert {Path(row["path"]) for row in manifest["missing_expected_artifacts"]} == {
         MISSING_50_RELATIVE,
         MISSING_100_RELATIVE,
@@ -298,6 +310,18 @@ def test_tracked_public_evidence_manifest_is_public_safe_and_complete() -> None:
             "expected_completed_scene_count"
         ]
         == 100
+    )
+    assert (
+        manifest["claim_gate"]["resume_repair_scope"]["stages"][1]["claim_gap"][
+            "source_usdz_cache"
+        ]["missing_scene_count"]
+        == 100
+    )
+    assert (
+        manifest["claim_gate"]["resume_repair_scope"]["stages"][1]["claim_gap"][
+            "next_command_groups"
+        ]
+        == EXPECTED_NEXT_COMMAND_GROUPS[1:]
     )
     assert {Path(row["path"]) for row in manifest["missing_expected_artifacts"]} == {
         MISSING_50_RELATIVE,

@@ -197,6 +197,9 @@ and claim scopes for tracked public JSON while keeping the 50/100 missing
 summary artifacts and audited resume repair scope, including per-shard scene
 windows, cache preflight validation, completion-gate counts, remaining
 requirements, blocker IDs, and next command groups, explicit.
+Each stage in the tracked resume snapshot also carries a compact `claim_gap`
+block with merge-input progress, cache inventory, blockers, and next command
+groups.
 The readiness/status flow includes `blocking_requirements` and
 `next_command_groups` so operators can map missing cache/runtime prerequisites
 back to plan command groups. Short setup groups include copyable `display`

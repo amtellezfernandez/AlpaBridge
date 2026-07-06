@@ -94,6 +94,62 @@ EXPECTED_50_COMPLETION_GATE = _expected_completion_gate(50, 5)
 EXPECTED_100_COMPLETION_GATE = _expected_completion_gate(100, 10)
 
 
+def _expected_claim_gap(scene_count: int, expected_merge_input_count: int) -> dict[str, object]:
+    return {
+        "blocking_requirements": [
+            "hf_token_missing",
+            "docker_daemon_unavailable",
+            "alpasim_base_image_missing",
+            "nvidia_gpu_unavailable",
+            "docker_nvidia_runtime_unavailable",
+            f"front_camera_{scene_count}scene_public2602_cache_invalid",
+            f"front_camera_{scene_count}scene_public2602_claim_summary_missing",
+        ],
+        "claim_valid": False,
+        "local_usdz_cache": {
+            "expected_scene_count": scene_count,
+            "matching_scene_count": 0,
+            "missing_scene_count": scene_count,
+            "nonmatching_usdz_file_count": 0,
+            "present_scene_count": 0,
+            "required": True,
+            "usdz_file_count": 0,
+            "valid": False,
+        },
+        "merge_input_progress": {
+            "claim_valid_count": 0,
+            "complete": False,
+            "expected_count": expected_merge_input_count,
+            "invalid_present_count": 0,
+            "missing_count": expected_merge_input_count,
+            "present_count": 0,
+        },
+        "next_command_groups": [
+            "build_and_validate_scale_caches",
+            "run_scale_shards_and_promote_summaries",
+            "refresh_status",
+            "verify_claim_gate",
+        ],
+        "public_summary_claim_valid": False,
+        "public_summary_errors": ["summary_missing"],
+        "public_summary_present": False,
+        "source_usdz_cache": {
+            "expected_scene_count": scene_count,
+            "matching_scene_count": 0,
+            "missing_scene_count": scene_count,
+            "nonmatching_usdz_file_count": 0,
+            "present_scene_count": 0,
+            "required": True,
+            "usdz_file_count": 0,
+            "valid": False,
+        },
+    }
+
+
+EXPECTED_50_CLAIM_GAP = _expected_claim_gap(50, 5)
+EXPECTED_100_CLAIM_GAP = _expected_claim_gap(100, 10)
+
+
 def test_operator_matrix_builder_reflects_tracked_readiness_blockers() -> None:
     module = importlib.import_module("wod2sim.cli.commands.benchmark_operator_matrix")
 
@@ -167,6 +223,8 @@ def test_operator_matrix_builder_reflects_tracked_readiness_blockers() -> None:
     assert matrix["resume_repair_scope"]["stages"][1]["completion_gate"] == (
         EXPECTED_100_COMPLETION_GATE
     )
+    assert matrix["resume_repair_scope"]["stages"][0]["claim_gap"] == EXPECTED_50_CLAIM_GAP
+    assert matrix["resume_repair_scope"]["stages"][1]["claim_gap"] == EXPECTED_100_CLAIM_GAP
     assert "open_repo_reviewer" in summary["ready_roles"]
     assert "closed_loop_runner" in summary["blocked_roles"]
     assert "build_and_validate_scale_caches" in summary["next_command_groups"]
@@ -311,6 +369,7 @@ def test_tracked_operator_matrix_is_public_safe_and_explicit_about_who_can_run()
         "missing_shard_summary_count": 15,
         "stages": [
             {
+                "claim_gap": EXPECTED_50_CLAIM_GAP,
                 "completion_gate": EXPECTED_50_COMPLETION_GATE,
                 "merge_command_included": True,
                 "missing_shard_indexes": [1, 2, 3, 4, 5],
@@ -332,6 +391,7 @@ def test_tracked_operator_matrix_is_public_safe_and_explicit_about_who_can_run()
                 "stage": "workshop_scale",
             },
             {
+                "claim_gap": EXPECTED_100_CLAIM_GAP,
                 "completion_gate": EXPECTED_100_COMPLETION_GATE,
                 "merge_command_included": True,
                 "missing_shard_indexes": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],

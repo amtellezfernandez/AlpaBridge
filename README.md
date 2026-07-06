@@ -283,6 +283,8 @@ promotion commands. The resume artifact also includes `resume_plan`, which lists
 the affected 50/100 stages, missing shard summary paths, and included
 merge/promote/post repair steps, including per-shard scene offsets and limits,
 validate-only cache preflight commands, and completion-gate expectations,
+plus per-stage `claim_gap` progress with merge-input counts, cache inventory,
+blockers, and next command groups,
 without promoting those rows to a benchmark claim. Cache rebuilds and live
 rollouts remain limited to operators with gated assets and an x86_64
 NVIDIA/Docker AlpaSim host.
