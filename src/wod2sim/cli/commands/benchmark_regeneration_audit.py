@@ -561,6 +561,9 @@ def _partial_attempt_evidence(
     ) == "tracked_public_partial_attempt_summary" and "not a claim-valid 50-scene" in str(
         status_row.get("claim_scope") or ""
     )
+    checks["partial_attempt_summary_scope_is_non_claim"] = "not a claim-valid stage summary" in str(
+        summary.get("claim_boundary") or ""
+    )
     checks["partial_attempt_schema_matches"] = summary.get("schema") == BATCH_SCHEMA
     checks["partial_attempt_preset_matches"] = (
         run_config.get("scene_preset") == "front_camera_50scene_public2602"

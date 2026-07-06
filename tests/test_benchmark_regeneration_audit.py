@@ -774,6 +774,32 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             audit["diagnostic_evidence"]["notes"],
         )
 
+    def test_partial_attempt_summary_scope_drift_invalidates_audit(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            evidence = repo_root / "docs" / "evidence"
+            evidence.mkdir(parents=True)
+            _copy_evidence_jsons(evidence)
+            attempt_path = evidence / ATTEMPT_50_RELATIVE.name
+            attempt = _read_json(attempt_path)
+            attempt["claim_boundary"] = "ambiguous partial evidence"
+            _write_json(attempt_path, attempt)
+            _refresh_manifest_hash(evidence / MANIFEST_RELATIVE.name, ATTEMPT_50_RELATIVE)
+
+            audit = module.build_audit(repo_root=repo_root, created_at="2026-07-06")
+
+        partial_attempt = audit["diagnostic_evidence"]["scale_attempts"][
+            "fifty_scene_partial_attempt"
+        ]
+        self.assertFalse(audit["valid"])
+        self.assertFalse(audit["diagnostic_evidence"]["valid"])
+        self.assertFalse(partial_attempt["checks"]["partial_attempt_summary_scope_is_non_claim"])
+        self.assertIn(
+            "partial_attempt_summary_scope_is_non_claim failed",
+            partial_attempt["notes"],
+        )
+
 
 def _batch_summary(
     scene_count: int,

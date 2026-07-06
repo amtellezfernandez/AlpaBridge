@@ -23,7 +23,7 @@
     "raw_scene_assets_included": false,
     "redistribution_note": "Do not publish rollout frames or videos unless the Waymo/AlpaSim asset terms explicitly permit redistribution."
   },
-  "claim_boundary": "This is local closed-loop AlpaSim evidence generated from user-provided or gated scene assets. The summary intentionally excludes raw scene assets and videos.",
+  "claim_boundary": "This is local closed-loop AlpaSim evidence generated from user-provided or gated scene assets. It can support a benchmark claim only when the promoted stage expects 1 scene(s) and the strict public audit accepts the artifact. The summary intentionally excludes raw scene assets and videos.",
   "clean_closed_loop_batch": true,
   "created_at": "2026-07-06",
   "failure_taxonomy": {

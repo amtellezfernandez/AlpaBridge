@@ -41,6 +41,7 @@
           "partial_attempt_status_counts_match_summary": true,
           "partial_attempt_status_scope_is_non_claim": true,
           "partial_attempt_summary_present": true,
+          "partial_attempt_summary_scope_is_non_claim": true,
           "partial_attempt_summary_valid_json": true
         },
         "claim_scope": "diagnostic_only_not_full_stage_claim",
@@ -344,7 +345,7 @@
       "observed": {
         "clean_closed_loop_batch": true,
         "completed_scene_count": 10,
-        "created_at": "2026-07-05T21:45:56",
+        "created_at": "2026-07-06",
         "failed_scene_count": 0,
         "planned_scene_count": 10,
         "schema": "wod2sim_closed_loop_batch_summary_v1",
@@ -356,7 +357,7 @@
       "summary_artifact": "docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json",
       "summary_present": true,
       "summary_provenance": {
-        "created_at": "2026-07-05T21:45:56",
+        "created_at": "2026-07-06",
         "expected_batch_dir_name": "benchmark_spotlight_reflex_10scene_fresh",
         "expected_summary_kind": "batch_directory_summary",
         "notes": [],
