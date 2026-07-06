@@ -113,6 +113,7 @@ def build_audit(
     status_consistency = _status_consistency(
         plan_path=plan_path,
         readiness_artifact=readiness_artifact,
+        readiness=readiness,
         status=status,
         stage_reports=stage_reports,
         claim_ready=claim_ready,
@@ -841,6 +842,7 @@ def _status_consistency(
     *,
     plan_path: Path,
     readiness_artifact: str,
+    readiness: dict[str, Any],
     status: dict[str, Any],
     stage_reports: list[dict[str, Any]],
     claim_ready: bool,
@@ -896,6 +898,9 @@ def _status_consistency(
         notes.append("status artifact does not match wod2sim-benchmark-status output")
 
     scale_status = _dict_or_empty(status.get("scale_status"))
+    readiness_stages = _stages_by_preset(
+        [stage for stage in _list_or_empty(readiness.get("stages")) if isinstance(stage, dict)]
+    )
     for stage in stage_reports:
         preset = str(stage.get("scene_preset") or "")
         if "public2602" not in preset:
@@ -907,11 +912,33 @@ def _status_consistency(
         )
         if not checks[key]:
             notes.append(f"scale_status.{preset}.claim_valid_closed_loop_summary_tracked mismatch")
+        readiness_stage = _dict_or_empty(readiness_stages.get(preset))
+        for cache_name in ("local_usdz_cache", "source_usdz_cache"):
+            cache_key = f"{preset}_{cache_name}_inventory_matches_readiness"
+            checks[cache_key] = _dict_or_empty(status_row.get(cache_name)) == (
+                _status_cache_inventory(_dict_or_empty(readiness_stage.get(cache_name)))
+            )
+            if not checks[cache_key]:
+                notes.append(f"scale_status.{preset}.{cache_name} does not match readiness")
 
     return {
         "valid": all(checks.values()) if checks else False,
         "checks": checks,
         "notes": notes,
+    }
+
+
+def _status_cache_inventory(cache: dict[str, Any]) -> dict[str, Any]:
+    validation = _dict_or_empty(cache.get("validation"))
+    return {
+        "required": cache.get("required"),
+        "valid": validation.get("valid"),
+        "expected_scene_count": _optional_int(validation.get("expected_scene_count")),
+        "present_scene_count": _optional_int(validation.get("present_scene_count")),
+        "missing_scene_count": _optional_int(validation.get("missing_scene_count")),
+        "usdz_file_count": _optional_int(cache.get("usdz_file_count")),
+        "matching_scene_count": _optional_int(cache.get("matching_scene_count")),
+        "nonmatching_usdz_file_count": _optional_int(cache.get("nonmatching_usdz_file_count")),
     }
 
 
@@ -1576,6 +1603,10 @@ def _stage_by_scene_count(
         if stage.get("expected_scene_count") == scene_count:
             return stage
     return None
+
+
+def _stages_by_preset(stages: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    return {str(stage.get("scene_preset") or ""): stage for stage in stages}
 
 
 def _expected_readiness_blocker_ids(
