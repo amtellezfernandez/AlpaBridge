@@ -42,8 +42,11 @@ Current blocker IDs from readiness:
 
 | Blocker ID | Blocks |
 | --- | --- |
-| `hf_token_missing` | Building or validating the local 26.02 USDZ cache from gated Hugging Face assets. |
-| `alpasim_base_image_missing` | Live AlpaSim SensorSim rollouts. |
+| `hf_token_missing` | Downloading the local 26.02 USDZ cache from gated Hugging Face assets. Operators with a complete local `all-usdzs` directory can use the offline link command instead. |
+| `docker_daemon_unavailable` | Live AlpaSim SensorSim rollouts. The tracked public snapshot skips runtime probes, so this remains conservative until refreshed on a live runner. |
+| `alpasim_base_image_missing` | Live AlpaSim SensorSim rollouts. The tracked public snapshot skips image inspection, so this remains conservative until refreshed on a live runner. |
+| `nvidia_gpu_unavailable` | Live AlpaSim SensorSim rollouts. The tracked public snapshot skips `nvidia-smi`, so this remains conservative until refreshed on a live runner. |
+| `docker_nvidia_runtime_unavailable` | Live AlpaSim SensorSim rollouts. The tracked public snapshot skips Docker runtime inspection, so this remains conservative until refreshed on a live runner. |
 | `front_camera_50scene_public2602_cache_invalid` | 50-scene shard execution. |
 | `front_camera_50scene_public2602_claim_summary_missing` | 50-scene claim promotion and strict audit readiness. |
 | `front_camera_100scene_public2602_cache_invalid` | 100-scene shard execution. |
@@ -54,7 +57,7 @@ Current blocker IDs from readiness:
 | Role | Can Run Now From Public State | Can Do | Cannot Do |
 | --- | --- | --- | --- |
 | Open-repo reviewer | Yes | Run public tests, dry plans, status, command rendering, operator matrix rendering, manifest checks, and non-mutating audits. | Download gated USDZs, build private caches, or execute live SensorSim rollouts. |
-| Cache builder | No | Build and validate 26.02 local USDZ caches after `HF_TOKEN` and disk prerequisites are available. | Produce claim-valid closed-loop summaries without a separate live runner. |
+| Cache builder | No | Hardlink selected 26.02 assets from an existing local `all-usdzs` directory, or build and validate caches after `HF_TOKEN` and disk prerequisites are available. | Produce claim-valid closed-loop summaries without a separate live runner. |
 | Closed-loop runner | No | Execute 50/100 live shards after x86_64 Linux, Docker, NVIDIA runtime, AlpaSim images, and valid caches are available. | Publish a 50/100 claim until every planned shard is complete and merged. |
 | Claim promoter | No | Promote completed compact summaries and refresh the public status/audit artifacts. | Promote missing, partial, or diagnostic summaries as full benchmark claims. |
 | ARM/DGX Spark-style host | Preparation only | Build caches and run diagnostics that do not start the amd64 SensorSim container. | Run live SensorSim rollouts by default; the required image is amd64-only. |
@@ -78,7 +81,7 @@ request from the tracked plan.
 | Order | Readiness Group | Renderer Groups | Purpose |
 | --- | --- | --- | --- |
 | 1 | `refresh_readiness` | `readiness` | Recompute no-download/no-rollout readiness before touching caches or rollouts. |
-| 2 | `build_and_validate_scale_caches` | `cache` | Build and validate 50/100 local USDZ caches after credentials and disk are ready. |
+| 2 | `build_and_validate_scale_caches` | `cache` | Link 50/100 local USDZ caches from `all-usdzs` when already present, otherwise build them from gated assets, then validate. |
 | 3 | `run_scale_shards_and_promote_summaries` | `shards`, `merge`, `promote` | Run all planned 50/100 shards, merge shard summaries, and promote compact public summaries. |
 | 4 | `refresh_status` | `post` | Regenerate public benchmark status from tracked compact evidence. |
 | 5 | `verify_claim_gate` | `post` | Run the strict audit; it must pass before claiming the full 10/50/100 benchmark. |
@@ -116,7 +119,7 @@ failures, and successful promotion through `wod2sim-promote-batch-summary`.
 After promotion, refresh the public chain in this order:
 
 ```bash
-wod2sim-benchmark-readiness --stable-public-snapshot --json
+wod2sim-benchmark-readiness --stable-public-snapshot --skip-runtime-probes --json
 wod2sim-benchmark-status --json
 wod2sim-benchmark-audit --strict --json
 wod2sim-benchmark-evidence-manifest --json

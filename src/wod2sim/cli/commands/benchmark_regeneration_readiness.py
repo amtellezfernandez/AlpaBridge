@@ -63,6 +63,14 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Omit exact volatile fields such as disk.free_bytes from tracked public snapshots.",
     )
+    parser.add_argument(
+        "--skip-runtime-probes",
+        action="store_true",
+        help=(
+            "Do not execute Docker or nvidia-smi probes. The report remains conservative and "
+            "marks live rollout runtime prerequisites as unavailable."
+        ),
+    )
     return parser
 
 
@@ -79,6 +87,7 @@ def main() -> int:
         created_at=args.created_at,
         min_free_disk_gb=args.min_free_disk_gb,
         stable_public_snapshot=args.stable_public_snapshot,
+        skip_runtime_probes=args.skip_runtime_probes,
     )
     if args.output is not None:
         args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -104,6 +113,7 @@ def build_readiness_report(
     created_at: str | None = None,
     min_free_disk_gb: int = DEFAULT_MIN_FREE_DISK_GB,
     stable_public_snapshot: bool = False,
+    skip_runtime_probes: bool = False,
     env: dict[str, str] | None = None,
     command_runner: Callable[[list[str]], dict[str, Any]] | None = None,
     disk_usage: Callable[[Path], Any] = shutil.disk_usage,
@@ -122,7 +132,7 @@ def build_readiness_report(
         created_at=created_at,
     )
 
-    runner = command_runner or _run_probe_command
+    runner = _skipped_probe_command if skip_runtime_probes else command_runner or _run_probe_command
     host = _host_report(env=env_map)
     probes = _runtime_probes(env=env_map, command_runner=runner)
     disk = _disk_report(
@@ -182,6 +192,7 @@ def build_readiness_report(
             "hf_token_required_for_cache_build": True,
         },
         "runtime_probes": probes,
+        "runtime_probes_skipped": bool(skip_runtime_probes),
         "readiness": {
             "cache_build_ready": cache_build_ready,
             "closed_loop_runner_ready": closed_loop_runner_ready,
@@ -361,7 +372,11 @@ def _blocking_requirements(
             {
                 "id": "hf_token_missing",
                 "blocks": "scale_cache_build",
-                "detail": "HF_TOKEN is required before running scale-stage build_local_cache commands.",
+                "detail": (
+                    "HF_TOKEN is required before running scale-stage build_local_cache commands. "
+                    "Operators with a complete local all-usdzs directory can use "
+                    "link_local_cache_from_all_usdzs instead."
+                ),
                 "plan_command_groups": ["stages[].commands.build_local_cache"],
             }
         )
@@ -434,6 +449,7 @@ def _blocking_requirements(
                         f"{cache_validation.get('expected_scene_count', stage['scene_count'])} scenes present."
                     ),
                     "plan_command_groups": [
+                        f"stages[{stage['stage']}].commands.link_local_cache_from_all_usdzs",
                         f"stages[{stage['stage']}].commands.build_local_cache",
                         f"stages[{stage['stage']}].commands.validate_local_cache",
                     ],
@@ -516,7 +532,11 @@ def _next_command_groups(
                 continue
             plan_stage = _dict_or_empty(plan_stages_by_stage.get(str(stage["stage"])))
             commands = _dict_or_empty(plan_stage.get("commands"))
-            for command_name in ("build_local_cache", "validate_local_cache"):
+            for command_name in (
+                "link_local_cache_from_all_usdzs",
+                "build_local_cache",
+                "validate_local_cache",
+            ):
                 cache_commands.extend(
                     _resolved_command_rows(
                         stage=str(stage["stage"]),
@@ -532,6 +552,11 @@ def _next_command_groups(
                 "name": "build_and_validate_scale_caches",
                 "command_renderer_groups": ["cache"],
                 "plan_command_groups": [
+                    f"stages[{stage['stage']}].commands.link_local_cache_from_all_usdzs"
+                    for stage in scale_stages
+                    if not stage["local_usdz_cache"]["validation"]["valid"]
+                ]
+                + [
                     f"stages[{stage['stage']}].commands.build_local_cache"
                     for stage in scale_stages
                     if not stage["local_usdz_cache"]["validation"]["valid"]
@@ -788,6 +813,17 @@ def _run_probe_command(argv: list[str]) -> dict[str, Any]:
         "returncode": result.returncode,
         "stdout": _truncate(result.stdout),
         "stderr": _truncate(result.stderr),
+    }
+
+
+def _skipped_probe_command(argv: list[str]) -> dict[str, Any]:
+    return {
+        "ok": False,
+        "status": "skipped",
+        "argv": argv,
+        "returncode": None,
+        "stdout": "",
+        "stderr": "runtime probe skipped by --skip-runtime-probes",
     }
 
 

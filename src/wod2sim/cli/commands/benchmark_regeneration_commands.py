@@ -146,7 +146,9 @@ def render_commands(
 
     rows: list[dict[str, Any]] = []
     if "readiness" in selected_groups:
-        check_readiness = _dict_or_empty(_dict_or_empty(plan.get("commands")).get("check_readiness"))
+        check_readiness = _dict_or_empty(
+            _dict_or_empty(plan.get("commands")).get("check_readiness")
+        )
         rows.extend(
             _command_rows(
                 stage=None,
@@ -164,12 +166,17 @@ def render_commands(
                     stage=stage,
                     group="cache",
                     commands={
+                        "link_local_cache_from_all_usdzs": commands.get(
+                            "link_local_cache_from_all_usdzs"
+                        ),
                         "build_local_cache": commands.get("build_local_cache"),
                         "validate_local_cache": commands.get("validate_local_cache"),
                     },
                 )
             )
-        render_full_run = "run" in selected_groups or (all_mode and not _list_of_dicts(stage.get("shards")))
+        render_full_run = "run" in selected_groups or (
+            all_mode and not _list_of_dicts(stage.get("shards"))
+        )
         if render_full_run:
             rows.extend(
                 _command_rows(
@@ -181,7 +188,9 @@ def render_commands(
                     },
                 )
             )
-        render_shards = "shards" in selected_groups or (all_mode and bool(_list_of_dicts(stage.get("shards"))))
+        render_shards = "shards" in selected_groups or (
+            all_mode and bool(_list_of_dicts(stage.get("shards")))
+        )
         if render_shards:
             rows.extend(
                 _shard_command_rows(

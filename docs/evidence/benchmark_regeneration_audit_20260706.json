@@ -95,7 +95,10 @@
       {
         "blocking_requirements": [
           "hf_token_missing",
+          "docker_daemon_unavailable",
           "alpasim_base_image_missing",
+          "nvidia_gpu_unavailable",
+          "docker_nvidia_runtime_unavailable",
           "front_camera_50scene_public2602_cache_invalid",
           "front_camera_50scene_public2602_claim_summary_missing"
         ],
@@ -113,7 +116,10 @@
       {
         "blocking_requirements": [
           "hf_token_missing",
+          "docker_daemon_unavailable",
           "alpasim_base_image_missing",
+          "nvidia_gpu_unavailable",
+          "docker_nvidia_runtime_unavailable",
           "front_camera_100scene_public2602_cache_invalid",
           "front_camera_100scene_public2602_claim_summary_missing"
         ],
@@ -130,7 +136,10 @@
       },
       {
         "blocking_requirements": [
+          "docker_daemon_unavailable",
           "alpasim_base_image_missing",
+          "nvidia_gpu_unavailable",
+          "docker_nvidia_runtime_unavailable",
           "front_camera_50scene_public2602_cache_invalid",
           "front_camera_50scene_public2602_claim_summary_missing",
           "front_camera_100scene_public2602_cache_invalid",
@@ -208,7 +217,10 @@
     "notes": [],
     "readiness_blocker_ids": [
       "hf_token_missing",
+      "docker_daemon_unavailable",
       "alpasim_base_image_missing",
+      "nvidia_gpu_unavailable",
+      "docker_nvidia_runtime_unavailable",
       "front_camera_50scene_public2602_cache_invalid",
       "front_camera_50scene_public2602_claim_summary_missing",
       "front_camera_100scene_public2602_cache_invalid",
@@ -222,8 +234,8 @@
       "readiness",
       "shards"
     ],
-    "sha256": "b10a0d453d62a74d8e4e5d17535465a5f3cffd50c13a3b80c857dc2c0eab9e4d",
-    "size_bytes": 7337,
+    "sha256": "877066b3a507a277cf098eef8b37b581d9ea74bd380afdd9238b9b84a468460b",
+    "size_bytes": 8218,
     "valid": true
   },
   "readiness_artifact": "docs/evidence/benchmark_regeneration_readiness_20260706.json",
@@ -263,7 +275,7 @@
       "regeneration_commands_schema_matches": true
     },
     "group_counts": {
-      "cache": 4,
+      "cache": 6,
       "merge": 2,
       "post": 2,
       "promote": 3,
@@ -280,7 +292,7 @@
       "readiness",
       "shards"
     ],
-    "row_count": 44,
+    "row_count": 46,
     "valid": true
   },
   "regeneration_plan": {

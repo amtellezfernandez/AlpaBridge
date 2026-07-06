@@ -118,7 +118,10 @@ def test_tracked_operator_matrix_is_public_safe_and_explicit_about_who_can_run()
     }
     assert summary["remaining_blocker_ids"] == [
         "hf_token_missing",
+        "docker_daemon_unavailable",
         "alpasim_base_image_missing",
+        "nvidia_gpu_unavailable",
+        "docker_nvidia_runtime_unavailable",
         "front_camera_50scene_public2602_cache_invalid",
         "front_camera_50scene_public2602_claim_summary_missing",
         "front_camera_100scene_public2602_cache_invalid",

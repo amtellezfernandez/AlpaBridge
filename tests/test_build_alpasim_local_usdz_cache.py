@@ -16,6 +16,7 @@ from wod2sim.cli.commands.build_alpasim_local_usdz_cache import (
     _existing_by_scene,
     _link_or_copy,
     _selected_catalog_rows,
+    build_local_usdz_cache_from_source,
     validate_local_usdz_cache,
 )
 
@@ -85,11 +86,58 @@ class BuildAlpaSimLocalUsdzCacheTests(unittest.TestCase):
             target = Path(tmp) / "target.usdz"
             source.write_text("stub", encoding="utf-8")
 
-            with patch("wod2sim.cli.commands.build_alpasim_local_usdz_cache.os.link", side_effect=OSError):
+            with patch(
+                "wod2sim.cli.commands.build_alpasim_local_usdz_cache.os.link", side_effect=OSError
+            ):
                 status = _link_or_copy(source, target)
 
             self.assertEqual("copy", status)
             self.assertEqual("stub", target.read_text(encoding="utf-8"))
+
+    def test_build_local_cache_from_source_links_selected_assets(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source_dir = root / "all-usdzs"
+            target_dir = root / "local-usdzs-50"
+            source_dir.mkdir()
+            target_dir.mkdir()
+            _write_usdz(source_dir / "uuid-a.usdz", scene_id="scene-a", uuid="uuid-a")
+            _write_usdz(source_dir / "uuid-b.usdz", scene_id="scene-b", uuid="uuid-b")
+
+            manifest = build_local_usdz_cache_from_source(
+                scene_ids=["scene-a", "scene-b"],
+                source_usdz_dir=source_dir,
+                local_usdz_dir=target_dir,
+                hf_revision="26.02",
+            )
+            target_names = {path.name for path in target_dir.glob("*.usdz")}
+
+        self.assertEqual("source_usdz_dir", manifest["cache_mode"])
+        self.assertEqual([], manifest["errors"])
+        self.assertEqual(2, manifest["scene_count"])
+        self.assertEqual({"uuid-a.usdz", "uuid-b.usdz"}, target_names)
+        self.assertEqual(["scene-a", "scene-b"], [row["scene_id"] for row in manifest["scenes"]])
+
+    def test_build_local_cache_from_source_reports_missing_without_download(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source_dir = root / "all-usdzs"
+            target_dir = root / "local-usdzs-50"
+            source_dir.mkdir()
+            target_dir.mkdir()
+            _write_usdz(source_dir / "uuid-a.usdz", scene_id="scene-a", uuid="uuid-a")
+
+            manifest = build_local_usdz_cache_from_source(
+                scene_ids=["scene-a", "scene-b"],
+                source_usdz_dir=source_dir,
+                local_usdz_dir=target_dir,
+                hf_revision="26.02",
+            )
+
+        self.assertEqual(1, manifest["scene_count"])
+        self.assertEqual(
+            [{"scene_id": "scene-b", "error": "source_usdz_missing"}], manifest["errors"]
+        )
 
     def test_validate_local_usdz_cache_accepts_complete_metadata_cache(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -147,7 +195,13 @@ class BuildAlpaSimLocalUsdzCacheTests(unittest.TestCase):
         self.assertEqual(1, report["present_scene_count"])
         self.assertEqual(["scene-b"], report["missing_scene_ids"])
         self.assertEqual(
-            [{"path": str(cache_dir / "corrupt.usdz"), "kind": "read_error", "error": "File is not a zip file"}],
+            [
+                {
+                    "path": str(cache_dir / "corrupt.usdz"),
+                    "kind": "read_error",
+                    "error": "File is not a zip file",
+                }
+            ],
             report["invalid_cache_files"],
         )
 
@@ -192,29 +246,33 @@ class BuildAlpaSimLocalUsdzCacheTests(unittest.TestCase):
             cache_dir = Path(tmp)
             _write_usdz(cache_dir / "uuid-a.usdz", scene_id="scene-a", uuid="uuid-a")
 
-            with patch.object(module, "_resolve_alpasim_root", return_value=Path("/tmp/alpasim")), patch.object(
-                module, "_scene_ids", return_value=["scene-a"]
-            ), patch.object(
-                module,
-                "_hf_available_paths",
-                side_effect=AssertionError("validate-only must not query Hugging Face"),
-            ), patch.object(
-                sys,
-                "argv",
-                [
-                    "wod2sim-build-local-cache",
-                    "--scene-preset",
-                    "front_camera_50scene_public2602",
-                    "--local-usdz-dir",
-                    str(cache_dir),
-                    "--hf-revision",
-                    "26.02",
-                    "--validate-only",
-                ],
-            ), patch(
-                "sys.stdout",
-                new_callable=io.StringIO,
-            ) as stdout:
+            with (
+                patch.object(module, "_resolve_alpasim_root", return_value=Path("/tmp/alpasim")),
+                patch.object(module, "_scene_ids", return_value=["scene-a"]),
+                patch.object(
+                    module,
+                    "_hf_available_paths",
+                    side_effect=AssertionError("validate-only must not query Hugging Face"),
+                ),
+                patch.object(
+                    sys,
+                    "argv",
+                    [
+                        "wod2sim-build-local-cache",
+                        "--scene-preset",
+                        "front_camera_50scene_public2602",
+                        "--local-usdz-dir",
+                        str(cache_dir),
+                        "--hf-revision",
+                        "26.02",
+                        "--validate-only",
+                    ],
+                ),
+                patch(
+                    "sys.stdout",
+                    new_callable=io.StringIO,
+                ) as stdout,
+            ):
                 returncode = module.main()
 
             payload = json.loads(stdout.getvalue())
@@ -222,6 +280,55 @@ class BuildAlpaSimLocalUsdzCacheTests(unittest.TestCase):
         self.assertEqual(0, returncode)
         self.assertTrue(payload["valid"])
         self.assertEqual("wod2sim_local_usdz_cache_validation_v1", payload["schema"])
+
+    def test_source_usdz_dir_main_is_offline_and_does_not_query_huggingface(self) -> None:
+        from wod2sim.cli.commands import build_alpasim_local_usdz_cache as module
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source_dir = root / "all-usdzs"
+            target_dir = root / "local-usdzs-50"
+            source_dir.mkdir()
+            _write_usdz(source_dir / "uuid-a.usdz", scene_id="scene-a", uuid="uuid-a")
+
+            with (
+                patch.object(module, "_resolve_alpasim_root", return_value=Path("/tmp/alpasim")),
+                patch.object(module, "_scene_ids", return_value=["scene-a"]),
+                patch.object(
+                    module,
+                    "_scene_catalog_paths",
+                    return_value=[],
+                ),
+                patch.object(
+                    module,
+                    "_hf_available_paths",
+                    side_effect=AssertionError("source-usdz-dir must not query Hugging Face"),
+                ),
+                patch.object(
+                    sys,
+                    "argv",
+                    [
+                        "wod2sim-build-local-cache",
+                        "--scene-preset",
+                        "front_camera_50scene_public2602",
+                        "--source-usdz-dir",
+                        str(source_dir),
+                        "--local-usdz-dir",
+                        str(target_dir),
+                        "--hf-revision",
+                        "26.02",
+                    ],
+                ),
+            ):
+                returncode = module.main()
+
+            manifest = json.loads(
+                (target_dir / "wod2sim-local-usdz-cache-manifest.json").read_text(encoding="utf-8")
+            )
+
+        self.assertEqual(0, returncode)
+        self.assertEqual("source_usdz_dir", manifest["cache_mode"])
+        self.assertEqual([], manifest["errors"])
 
 
 def _write_usdz(

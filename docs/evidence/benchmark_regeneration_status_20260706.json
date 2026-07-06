@@ -10,12 +10,12 @@
     "claim_valid_scale_summaries_present": false,
     "closed_loop_runner_supported": true,
     "derived_from": "docs/evidence/benchmark_regeneration_readiness_20260706.json",
-    "disk_free_gib_at_readiness": 279.47,
+    "disk_free_gib_at_readiness": 279.45,
     "disk_meets_min_free_disk_gb": true,
-    "docker_daemon_ok": true,
-    "docker_nvidia_runtime_present": true,
+    "docker_daemon_ok": false,
+    "docker_nvidia_runtime_present": null,
     "host_machine": "x86_64",
-    "nvidia_smi_ok": true
+    "nvidia_smi_ok": false
   },
   "current_public_evidence": {
     "fifty_scene_local_probe": {

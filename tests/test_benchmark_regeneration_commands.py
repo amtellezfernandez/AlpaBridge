@@ -23,9 +23,10 @@ def test_command_renderer_outputs_selected_shard_commands() -> None:
     )
     displays = [row["display"] for row in rows]
 
-    assert rows[0]["command"] == "build_local_cache"
+    assert rows[0]["command"] == "link_local_cache_from_all_usdzs"
     assert rows[0]["group"] == "cache"
-    assert "HF_TOKEN=required wod2sim-build-local-cache" in rows[0]["display"]
+    assert "--source-usdz-dir /path/to/alpasim/data/nre-artifacts/all-usdzs" in rows[0]["display"]
+    assert any("HF_TOKEN=required wod2sim-build-local-cache" in display for display in displays)
     assert [row["shard_index"] for row in rows if row["group"] == "shards"] == [2, 2]
     assert any("shards/010_019" in display for display in displays)
     assert any("wod2sim-batch-summary --merge-summary" in display for display in displays)
@@ -61,22 +62,26 @@ def test_command_renderer_main_writes_json_rows() -> None:
     with TemporaryDirectory() as tmpdir:
         output = Path(tmpdir) / "commands.json"
 
-        with output.open("w", encoding="utf-8") as handle, patch.object(
-            sys,
-            "argv",
-            [
-                "wod2sim-benchmark-commands",
-                "--plan",
-                str(ROOT / PLAN_RELATIVE),
-                "--stage",
-                "workshop_scale",
-                "--group",
-                "shards",
-                "--shard-index",
-                "1",
-                "--json",
-            ],
-        ), patch("sys.stdout", handle):
+        with (
+            output.open("w", encoding="utf-8") as handle,
+            patch.object(
+                sys,
+                "argv",
+                [
+                    "wod2sim-benchmark-commands",
+                    "--plan",
+                    str(ROOT / PLAN_RELATIVE),
+                    "--stage",
+                    "workshop_scale",
+                    "--group",
+                    "shards",
+                    "--shard-index",
+                    "1",
+                    "--json",
+                ],
+            ),
+            patch("sys.stdout", handle),
+        ):
             returncode = module.main()
 
         payload = json.loads(output.read_text(encoding="utf-8"))
@@ -102,7 +107,7 @@ def test_command_renderer_builds_public_command_artifact() -> None:
     assert artifact["renderer"]["no_runtime_execution"] is True
     assert artifact["row_count"] == len(artifact["commands"])
     assert artifact["group_counts"]["shards"] == 30
-    assert artifact["group_counts"]["cache"] == 4
+    assert artifact["group_counts"]["cache"] == 6
     assert artifact["commands"][-1]["command"] == "verify_claim_gate"
 
 
@@ -112,22 +117,26 @@ def test_command_renderer_output_writes_artifact_without_changing_stdout_rows() 
         stdout = Path(tmpdir) / "stdout.json"
         output = Path(tmpdir) / "artifact.json"
 
-        with stdout.open("w", encoding="utf-8") as handle, patch.object(
-            sys,
-            "argv",
-            [
-                "wod2sim-benchmark-commands",
-                "--plan",
-                str(ROOT / PLAN_RELATIVE),
-                "--group",
-                "all",
-                "--created-at",
-                "2026-07-06",
-                "--output",
-                str(output),
-                "--json",
-            ],
-        ), patch("sys.stdout", handle):
+        with (
+            stdout.open("w", encoding="utf-8") as handle,
+            patch.object(
+                sys,
+                "argv",
+                [
+                    "wod2sim-benchmark-commands",
+                    "--plan",
+                    str(ROOT / PLAN_RELATIVE),
+                    "--group",
+                    "all",
+                    "--created-at",
+                    "2026-07-06",
+                    "--output",
+                    str(output),
+                    "--json",
+                ],
+            ),
+            patch("sys.stdout", handle),
+        ):
             returncode = module.main()
 
         rows = json.loads(stdout.read_text(encoding="utf-8"))
@@ -146,9 +155,9 @@ def test_tracked_command_artifact_is_public_safe_and_complete() -> None:
     assert artifact["schema"] == "wod2sim_benchmark_regeneration_commands_v1"
     assert artifact["plan_artifact"] == PLAN_RELATIVE.as_posix()
     assert artifact["renderer"]["no_runtime_execution"] is True
-    assert artifact["row_count"] == 44
+    assert artifact["row_count"] == 46
     assert artifact["group_counts"] == {
-        "cache": 4,
+        "cache": 6,
         "merge": 2,
         "post": 2,
         "promote": 3,

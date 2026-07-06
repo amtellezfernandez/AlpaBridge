@@ -38,7 +38,9 @@ def _build_parser() -> argparse.ArgumentParser:
         )
     )
     parser.add_argument("--model", choices=PUBLIC_RELEASE_MODELS, default=DEFAULT_MODEL)
-    parser.add_argument("--pilot-preset", choices=tuple(SCENE_PRESETS), default=DEFAULT_PILOT_PRESET)
+    parser.add_argument(
+        "--pilot-preset", choices=tuple(SCENE_PRESETS), default=DEFAULT_PILOT_PRESET
+    )
     parser.add_argument(
         "--scale-preset",
         choices=tuple(SCENE_PRESETS),
@@ -185,6 +187,7 @@ def build_plan(
                     "--output",
                     READINESS_ARTIFACT,
                     "--stable-public-snapshot",
+                    "--skip-runtime-probes",
                     "--json",
                 ]
             )
@@ -266,8 +269,14 @@ def _stage_plan(
         if requires_local_usdz_cache
         else None
     )
+    source_usdz_dir = (
+        _join(alpasim_root, "data", "nre-artifacts", "all-usdzs")
+        if requires_local_usdz_cache
+        else None
+    )
 
     commands: dict[str, Any] = {
+        "link_local_cache_from_all_usdzs": None,
         "build_local_cache": None,
         "validate_local_cache": None,
         "run_batch": _command(
@@ -304,6 +313,21 @@ def _stage_plan(
         ),
     }
     if local_usdz_dir is not None:
+        commands["link_local_cache_from_all_usdzs"] = _command(
+            [
+                "wod2sim-build-local-cache",
+                "--scene-preset",
+                scene_preset,
+                "--alpasim-root",
+                alpasim_root,
+                "--source-usdz-dir",
+                str(source_usdz_dir),
+                "--local-usdz-dir",
+                local_usdz_dir,
+                "--hf-revision",
+                hf_revision,
+            ]
+        )
         commands["build_local_cache"] = _command(
             [
                 "wod2sim-build-local-cache",
@@ -368,6 +392,7 @@ def _stage_plan(
         "scene_count": scene_count,
         "requires_local_usdz_cache": requires_local_usdz_cache,
         "local_usdz_dir": local_usdz_dir,
+        "source_usdz_dir": source_usdz_dir,
         "run_dir": run_dir,
         "public_summary_target": (
             f"docs/evidence/closed_loop_{model}_{scene_count}scene_batch.json"

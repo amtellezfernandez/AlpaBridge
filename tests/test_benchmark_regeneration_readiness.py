@@ -141,6 +141,27 @@ class BenchmarkRegenerationReadinessTests(unittest.TestCase):
         self.assertIn("unsupported_closed_loop_host", blocker_ids)
         self.assertIn("fresh_3scene_cache_invalid", blocker_ids)
 
+    def test_build_report_can_skip_runtime_probes(self) -> None:
+        from wod2sim.cli.commands import benchmark_regeneration_readiness as module
+
+        with tempfile.TemporaryDirectory() as tmp:
+            report = module.build_readiness_report(
+                pilot_preset="fresh_3scene",
+                scale_presets=["fresh_3scene"],
+                alpasim_root=Path(tmp) / "alpasim",
+                repo_root=Path(tmp),
+                created_at="2026-07-06",
+                env={"HF_TOKEN": "token"},
+                command_runner=lambda argv: (_ for _ in ()).throw(AssertionError(argv)),
+                disk_usage=lambda _path: _DiskUsage(),
+                skip_runtime_probes=True,
+            )
+
+        self.assertTrue(report["runtime_probes_skipped"])
+        self.assertEqual("skipped", report["runtime_probes"]["docker_daemon"]["status"])
+        self.assertEqual("skipped", report["runtime_probes"]["alpasim_base_image"]["status"])
+        self.assertFalse(report["readiness"]["closed_loop_runner_ready"])
+
     def test_tracked_readiness_snapshot_is_public_safe_and_records_remaining_scale_gap(
         self,
     ) -> None:
@@ -150,6 +171,7 @@ class BenchmarkRegenerationReadinessTests(unittest.TestCase):
 
         self.assertEqual("wod2sim_benchmark_regeneration_readiness_v1", report["schema"])
         self.assertTrue(report["no_download_or_rollout_probes"])
+        self.assertTrue(report["runtime_probes_skipped"])
         self.assertNotIn("/home/", rendered)
         self.assertNotIn("GPU-", rendered)
         self.assertIn("blocking_requirements", report)
@@ -164,14 +186,18 @@ class BenchmarkRegenerationReadinessTests(unittest.TestCase):
         self.assertEqual("verify_claim_gate", report["next_command_groups"][-1]["name"])
         refresh_display = report["next_command_groups"][0]["commands"][0]["display"]
         self.assertIn("--stable-public-snapshot", refresh_display)
+        self.assertIn("--skip-runtime-probes", refresh_display)
         build_group = _command_group(report, "build_and_validate_scale_caches")
         self.assertEqual(["cache"], build_group["command_renderer_groups"])
-        self.assertEqual(4, len(build_group["commands"]))
+        self.assertEqual(6, len(build_group["commands"]))
         self.assertTrue(
             all(
                 "wod2sim-build-local-cache" in command["display"]
                 for command in build_group["commands"]
             )
+        )
+        self.assertTrue(
+            any("--source-usdz-dir" in command["display"] for command in build_group["commands"])
         )
         shard_group = _command_group(report, "run_scale_shards_and_promote_summaries")
         self.assertEqual(["shards", "merge", "promote"], shard_group["command_renderer_groups"])

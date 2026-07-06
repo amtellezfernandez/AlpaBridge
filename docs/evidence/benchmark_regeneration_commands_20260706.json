@@ -2,7 +2,7 @@
   "commands": [
     {
       "command": "check_readiness",
-      "display": "wod2sim-benchmark-readiness --alpasim-root /path/to/alpasim --output docs/evidence/benchmark_regeneration_readiness_20260706.json --stable-public-snapshot --json",
+      "display": "wod2sim-benchmark-readiness --alpasim-root /path/to/alpasim --output docs/evidence/benchmark_regeneration_readiness_20260706.json --stable-public-snapshot --skip-runtime-probes --json",
       "group": "readiness",
       "scene_preset": null,
       "stage": null
@@ -27,6 +27,13 @@
       "group": "promote",
       "scene_preset": "front_camera_10scene_smoke",
       "stage": "pilot"
+    },
+    {
+      "command": "link_local_cache_from_all_usdzs",
+      "display": "wod2sim-build-local-cache --scene-preset front_camera_50scene_public2602 --alpasim-root /path/to/alpasim --source-usdz-dir /path/to/alpasim/data/nre-artifacts/all-usdzs --local-usdz-dir /path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50 --hf-revision 26.02",
+      "group": "cache",
+      "scene_preset": "front_camera_50scene_public2602",
+      "stage": "workshop_scale"
     },
     {
       "command": "build_local_cache",
@@ -145,6 +152,13 @@
       "group": "promote",
       "scene_preset": "front_camera_50scene_public2602",
       "stage": "workshop_scale"
+    },
+    {
+      "command": "link_local_cache_from_all_usdzs",
+      "display": "wod2sim-build-local-cache --scene-preset front_camera_100scene_public2602 --alpasim-root /path/to/alpasim --source-usdz-dir /path/to/alpasim/data/nre-artifacts/all-usdzs --local-usdz-dir /path/to/alpasim/data/nre-artifacts/local-2602-usdzs-100 --hf-revision 26.02",
+      "group": "cache",
+      "scene_preset": "front_camera_100scene_public2602",
+      "stage": "stronger_benchmark"
     },
     {
       "command": "build_local_cache",
@@ -378,7 +392,7 @@
     "stages": []
   },
   "group_counts": {
-    "cache": 4,
+    "cache": 6,
     "merge": 2,
     "post": 2,
     "promote": 3,
@@ -391,6 +405,6 @@
     "command": "wod2sim-benchmark-commands",
     "no_runtime_execution": true
   },
-  "row_count": 44,
+  "row_count": 46,
   "schema": "wod2sim_benchmark_regeneration_commands_v1"
 }

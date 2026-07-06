@@ -38,6 +38,16 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--target-count", type=int, default=None)
     parser.add_argument("--local-usdz-dir", type=Path, default=None)
     parser.add_argument("--download-dir", type=Path, default=None)
+    parser.add_argument(
+        "--source-usdz-dir",
+        type=Path,
+        default=None,
+        help=(
+            "Offline source directory containing existing *.usdz assets. When set, selected "
+            "preset assets are hardlinked or copied into --local-usdz-dir without querying "
+            "Hugging Face."
+        ),
+    )
     parser.add_argument("--hf-repo", default=DEFAULT_HF_REPO)
     parser.add_argument("--hf-revision", default=DEFAULT_HF_REVISION)
     parser.add_argument("--workers", type=int, default=3)
@@ -69,6 +79,7 @@ def main() -> int:
         if args.download_dir is not None
         else alpasim_root / "data" / "nre-artifacts" / ".hf-downloads" / args.hf_revision
     )
+    source_usdz_dir = args.source_usdz_dir.resolve() if args.source_usdz_dir is not None else None
 
     if args.validate_only:
         report = validate_local_usdz_cache(
@@ -79,6 +90,42 @@ def main() -> int:
         )
         print(json.dumps(report, indent=2, sort_keys=True))
         return 0 if report["valid"] else 1
+
+    if source_usdz_dir is not None:
+        if args.dry_run:
+            report = validate_local_usdz_cache(
+                scene_preset=args.scene_preset,
+                scene_ids=scene_ids,
+                local_usdz_dir=source_usdz_dir,
+                hf_revision=args.hf_revision,
+            )
+            report["schema"] = "wod2sim_local_usdz_source_cache_plan_v1"
+            report["target_local_usdz_dir"] = str(local_usdz_dir)
+            print(json.dumps(report, indent=2, sort_keys=True))
+            return 0 if report["valid"] else 1
+        local_usdz_dir.mkdir(parents=True, exist_ok=True)
+        manifest = build_local_usdz_cache_from_source(
+            scene_ids=scene_ids,
+            source_usdz_dir=source_usdz_dir,
+            local_usdz_dir=local_usdz_dir,
+            hf_revision=args.hf_revision,
+        )
+        manifest.update(
+            {
+                "source_preset": args.scene_preset,
+                "source_catalogs": [
+                    str(path) for path in _scene_catalog_paths(args.scene_preset, alpasim_root)
+                ],
+            }
+        )
+        manifest_path = local_usdz_dir / MANIFEST_NAME
+        manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+        print(f"wrote {manifest_path}")
+        print(f"local_usdz_dir={local_usdz_dir}")
+        print(f"scene_count={manifest['scene_count']}")
+        if manifest["errors"]:
+            raise SystemExit(1)
+        return 0
 
     rows = _selected_catalog_rows(
         catalog_paths=_scene_catalog_paths(args.scene_preset, alpasim_root),
@@ -129,7 +176,9 @@ def main() -> int:
     manifest.update(
         {
             "source_preset": args.scene_preset,
-            "source_catalogs": [str(path) for path in _scene_catalog_paths(args.scene_preset, alpasim_root)],
+            "source_catalogs": [
+                str(path) for path in _scene_catalog_paths(args.scene_preset, alpasim_root)
+            ],
         }
     )
     manifest_path = local_usdz_dir / MANIFEST_NAME
@@ -154,7 +203,9 @@ def validate_local_usdz_cache(
     )
     expected_scene_ids = set(scene_ids)
     missing_scene_ids = [scene_id for scene_id in scene_ids if scene_id not in existing]
-    extra_scene_ids = sorted(scene_id for scene_id in existing if scene_id not in expected_scene_ids)
+    extra_scene_ids = sorted(
+        scene_id for scene_id in existing if scene_id not in expected_scene_ids
+    )
     invalid_revisions = [
         scene_id
         for scene_id in scene_ids
@@ -163,11 +214,7 @@ def validate_local_usdz_cache(
         and not _metadata_version_matches(str(existing[scene_id]["version_string"]), hf_revision)
     ]
     duplicate_uuids = _duplicate_values(
-        [
-            str(existing[scene_id].get("uuid", ""))
-            for scene_id in scene_ids
-            if scene_id in existing
-        ]
+        [str(existing[scene_id].get("uuid", "")) for scene_id in scene_ids if scene_id in existing]
     )
     present_scene_count = len([scene_id for scene_id in scene_ids if scene_id in existing])
     valid = (
@@ -290,6 +337,82 @@ def build_local_usdz_cache(
     }
 
 
+def build_local_usdz_cache_from_source(
+    *,
+    scene_ids: list[str],
+    source_usdz_dir: Path,
+    local_usdz_dir: Path,
+    hf_revision: str,
+) -> dict[str, Any]:
+    source_existing, source_invalid = (
+        _scan_existing_by_scene(source_usdz_dir) if source_usdz_dir.is_dir() else ({}, [])
+    )
+    target_existing, target_invalid = (
+        _scan_existing_by_scene(local_usdz_dir) if local_usdz_dir.is_dir() else ({}, [])
+    )
+    errors: list[dict[str, str]] = []
+    errors.extend(
+        {"scene_id": "", "error": f"invalid_source_cache_file:{item['path']}:{item['error']}"}
+        for item in source_invalid
+    )
+    errors.extend(
+        {"scene_id": "", "error": f"invalid_target_cache_file:{item['path']}:{item['error']}"}
+        for item in target_invalid
+    )
+
+    results: list[dict[str, str]] = []
+    for scene_id in scene_ids:
+        if scene_id in target_existing:
+            target = target_existing[scene_id]
+            version_string = str(target.get("version_string", ""))
+            if _metadata_version_matches(version_string, hf_revision):
+                results.append({"scene_id": scene_id, "status": "cached", **target})
+            else:
+                errors.append(
+                    {
+                        "scene_id": scene_id,
+                        "error": f"target_revision_mismatch:{version_string}",
+                    }
+                )
+            continue
+
+        source = source_existing.get(scene_id)
+        if source is None:
+            errors.append({"scene_id": scene_id, "error": "source_usdz_missing"})
+            continue
+        version_string = str(source.get("version_string", ""))
+        if version_string and not _metadata_version_matches(version_string, hf_revision):
+            errors.append(
+                {"scene_id": scene_id, "error": f"source_revision_mismatch:{version_string}"}
+            )
+            continue
+
+        source_path = Path(str(source["path"]))
+        final_path = local_usdz_dir / f"{source['uuid']}.usdz"
+        status = _link_or_copy(source_path, final_path)
+        results.append(
+            {
+                "scene_id": scene_id,
+                "status": status,
+                "path": str(final_path),
+                "uuid": str(source["uuid"]),
+                "version_string": version_string,
+            }
+        )
+
+    return {
+        "schema": "wod2sim_local_usdz_cache_manifest_v1",
+        "cache_mode": "source_usdz_dir",
+        "source_usdz_dir": str(source_usdz_dir),
+        "hf_revision": hf_revision,
+        "local_usdz_dir": str(local_usdz_dir),
+        "scene_count": len(results),
+        "expected_scene_count": len(scene_ids),
+        "errors": errors,
+        "scenes": results,
+    }
+
+
 def _fetch_one(
     *,
     row: dict[str, str],
@@ -344,7 +467,9 @@ def _existing_by_scene(local_usdz_dir: Path) -> dict[str, dict[str, str]]:
     return existing
 
 
-def _scan_existing_by_scene(local_usdz_dir: Path) -> tuple[dict[str, dict[str, str]], list[dict[str, str]]]:
+def _scan_existing_by_scene(
+    local_usdz_dir: Path,
+) -> tuple[dict[str, dict[str, str]], list[dict[str, str]]]:
     existing: dict[str, dict[str, str]] = {}
     invalid_cache_files: list[dict[str, str]] = []
     for path in sorted(local_usdz_dir.glob("*.usdz")):
@@ -400,10 +525,7 @@ def _metadata_text(metadata: dict[str, Any], key: str) -> str:
 
 
 def _format_cache_scan_errors(invalid_cache_files: list[dict[str, str]]) -> str:
-    samples = [
-        f"{item['path']}: {item['error']}"
-        for item in invalid_cache_files[:3]
-    ]
+    samples = [f"{item['path']}: {item['error']}" for item in invalid_cache_files[:3]]
     suffix = f"; {len(invalid_cache_files) - 3} more" if len(invalid_cache_files) > 3 else ""
     return f"local USDZ cache contains {len(invalid_cache_files)} invalid file(s): {'; '.join(samples)}{suffix}"
 

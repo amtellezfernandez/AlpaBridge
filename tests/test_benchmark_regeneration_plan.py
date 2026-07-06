@@ -29,6 +29,7 @@ class BenchmarkRegenerationPlanTests(unittest.TestCase):
         self.assertEqual("wod2sim-benchmark-readiness", readiness_command[0])
         self.assertIn(READINESS_RELATIVE.as_posix(), readiness_command)
         self.assertIn("--stable-public-snapshot", readiness_command)
+        self.assertIn("--skip-runtime-probes", readiness_command)
         self.assertEqual(
             {
                 "front_camera_10scene_smoke",
@@ -50,13 +51,23 @@ class BenchmarkRegenerationPlanTests(unittest.TestCase):
         scale_stage = stages["front_camera_50scene_public2602"]
         self.assertTrue(scale_stage["requires_local_usdz_cache"])
         self.assertEqual(
+            "/path/to/alpasim/data/nre-artifacts/all-usdzs",
+            scale_stage["source_usdz_dir"],
+        )
+        link_cache_command = scale_stage["commands"]["link_local_cache_from_all_usdzs"]["argv"]
+        self.assertEqual("wod2sim-build-local-cache", link_cache_command[0])
+        self.assertIn("--source-usdz-dir", link_cache_command)
+        self.assertIn("/path/to/alpasim/data/nre-artifacts/all-usdzs", link_cache_command)
+        self.assertEqual(
             {"HF_TOKEN": "required"},
             scale_stage["commands"]["build_local_cache"]["env"],
         )
         validate_cache_command = scale_stage["commands"]["validate_local_cache"]["argv"]
         self.assertEqual("wod2sim-build-local-cache", validate_cache_command[0])
         self.assertIn("--validate-only", validate_cache_command)
-        self.assertIn("/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50", validate_cache_command)
+        self.assertIn(
+            "/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50", validate_cache_command
+        )
         self.assertIn(
             "scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50",
             scale_stage["commands"]["run_batch"]["argv"],
@@ -76,7 +87,9 @@ class BenchmarkRegenerationPlanTests(unittest.TestCase):
             "runs/benchmark_spotlight_reflex_50scene_public2602_fresh/wod2sim-batch-summary.json",
             promote_command,
         )
-        self.assertIn("docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json", promote_command)
+        self.assertIn(
+            "docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json", promote_command
+        )
         self.assertIn("--overwrite", promote_command)
         self.assertEqual(5, len(scale_stage["shards"]))
         self.assertEqual(0, scale_stage["shards"][0]["scene_offset"])
@@ -124,8 +137,10 @@ class BenchmarkRegenerationPlanTests(unittest.TestCase):
             self.assertIsNone(stage["shard_note"])
             self.assertIsNone(stage["commands"]["merge_shard_summaries"])
             if stage["requires_local_usdz_cache"]:
+                self.assertIsNotNone(stage["commands"]["link_local_cache_from_all_usdzs"])
                 self.assertIsNotNone(stage["commands"]["validate_local_cache"])
             else:
+                self.assertIsNone(stage["commands"]["link_local_cache_from_all_usdzs"])
                 self.assertIsNone(stage["commands"]["validate_local_cache"])
             self.assertIsNotNone(stage["commands"]["promote_public_summary"])
 

@@ -8,9 +8,10 @@
         "--output",
         "docs/evidence/benchmark_regeneration_readiness_20260706.json",
         "--stable-public-snapshot",
+        "--skip-runtime-probes",
         "--json"
       ],
-      "display": "wod2sim-benchmark-readiness --alpasim-root /path/to/alpasim --output docs/evidence/benchmark_regeneration_readiness_20260706.json --stable-public-snapshot --json"
+      "display": "wod2sim-benchmark-readiness --alpasim-root /path/to/alpasim --output docs/evidence/benchmark_regeneration_readiness_20260706.json --stable-public-snapshot --skip-runtime-probes --json"
     }
   },
   "created_at": "2026-07-06",
@@ -27,6 +28,7 @@
     {
       "commands": {
         "build_local_cache": null,
+        "link_local_cache_from_all_usdzs": null,
         "merge_shard_summaries": null,
         "promote_public_summary": {
           "argv": [
@@ -91,6 +93,7 @@
       "scene_preset": "front_camera_10scene_smoke",
       "shard_note": null,
       "shards": [],
+      "source_usdz_dir": null,
       "stage": "pilot"
     },
     {
@@ -115,6 +118,22 @@
           "env": {
             "HF_TOKEN": "required"
           }
+        },
+        "link_local_cache_from_all_usdzs": {
+          "argv": [
+            "wod2sim-build-local-cache",
+            "--scene-preset",
+            "front_camera_50scene_public2602",
+            "--alpasim-root",
+            "/path/to/alpasim",
+            "--source-usdz-dir",
+            "/path/to/alpasim/data/nre-artifacts/all-usdzs",
+            "--local-usdz-dir",
+            "/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50",
+            "--hf-revision",
+            "26.02"
+          ],
+          "display": "wod2sim-build-local-cache --scene-preset front_camera_50scene_public2602 --alpasim-root /path/to/alpasim --source-usdz-dir /path/to/alpasim/data/nre-artifacts/all-usdzs --local-usdz-dir /path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50 --hf-revision 26.02"
         },
         "merge_shard_summaries": {
           "argv": [
@@ -463,6 +482,7 @@
           "scene_offset": 40
         }
       ],
+      "source_usdz_dir": "/path/to/alpasim/data/nre-artifacts/all-usdzs",
       "stage": "workshop_scale"
     },
     {
@@ -487,6 +507,22 @@
           "env": {
             "HF_TOKEN": "required"
           }
+        },
+        "link_local_cache_from_all_usdzs": {
+          "argv": [
+            "wod2sim-build-local-cache",
+            "--scene-preset",
+            "front_camera_100scene_public2602",
+            "--alpasim-root",
+            "/path/to/alpasim",
+            "--source-usdz-dir",
+            "/path/to/alpasim/data/nre-artifacts/all-usdzs",
+            "--local-usdz-dir",
+            "/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-100",
+            "--hf-revision",
+            "26.02"
+          ],
+          "display": "wod2sim-build-local-cache --scene-preset front_camera_100scene_public2602 --alpasim-root /path/to/alpasim --source-usdz-dir /path/to/alpasim/data/nre-artifacts/all-usdzs --local-usdz-dir /path/to/alpasim/data/nre-artifacts/local-2602-usdzs-100 --hf-revision 26.02"
         },
         "merge_shard_summaries": {
           "argv": [
@@ -1090,6 +1126,7 @@
           "scene_offset": 90
         }
       ],
+      "source_usdz_dir": "/path/to/alpasim/data/nre-artifacts/all-usdzs",
       "stage": "stronger_benchmark"
     }
   ],
