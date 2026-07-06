@@ -72,6 +72,10 @@ class BenchmarkRegenerationReadinessTests(unittest.TestCase):
             {requirement["id"] for requirement in report["blocking_requirements"]},
         )
         self.assertEqual("refresh_readiness", report["next_command_groups"][0]["name"])
+        self.assertIn(
+            "wod2sim-benchmark-readiness",
+            report["next_command_groups"][0]["commands"][0]["display"],
+        )
         self.assertEqual("verify_claim_gate", report["next_command_groups"][-1]["name"])
         self.assertFalse(any(command[:2] == ["docker", "run"] for command in seen_commands))
 
@@ -130,6 +134,32 @@ class BenchmarkRegenerationReadinessTests(unittest.TestCase):
         self.assertIn("alpasim_base_image_missing", blocker_ids)
         self.assertIn("front_camera_50scene_public2602_cache_invalid", blocker_ids)
         self.assertEqual("verify_claim_gate", report["next_command_groups"][-1]["name"])
+        build_group = _command_group(report, "build_and_validate_scale_caches")
+        self.assertEqual(4, len(build_group["commands"]))
+        self.assertTrue(
+            all(
+                "wod2sim-build-local-cache" in command["display"]
+                for command in build_group["commands"]
+            )
+        )
+        shard_group = _command_group(report, "run_scale_shards_and_promote_summaries")
+        self.assertEqual(
+            [
+                {
+                    "stage": "workshop_scale",
+                    "scene_preset": "front_camera_50scene_public2602",
+                    "planned_shards": 5,
+                    "minimum_commands": 12,
+                },
+                {
+                    "stage": "stronger_benchmark",
+                    "scene_preset": "front_camera_100scene_public2602",
+                    "planned_shards": 10,
+                    "minimum_commands": 22,
+                },
+            ],
+            shard_group["stage_command_counts"],
+        )
         self.assertTrue(stages[10]["public_summary"]["claim_valid"])
         self.assertFalse(stages[50]["local_usdz_cache"]["validation"]["valid"])
         self.assertFalse(stages[50]["public_summary"]["present"])
@@ -141,6 +171,13 @@ class _DiskUsage:
     total = 500 * 1024**3
     used = 200 * 1024**3
     free = 300 * 1024**3
+
+
+def _command_group(report: dict[str, object], name: str) -> dict[str, object]:
+    for group in report["next_command_groups"]:
+        if group["name"] == name:
+            return group
+    raise AssertionError(name)
 
 
 def _write_usdz(

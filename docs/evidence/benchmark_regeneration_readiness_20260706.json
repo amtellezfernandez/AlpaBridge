@@ -72,7 +72,7 @@
     "hf_token_required_for_cache_build": true
   },
   "disk": {
-    "free_bytes": 300082483200,
+    "free_bytes": 300081491968,
     "free_gib": 279.47,
     "meets_min_free_disk_gb": true,
     "min_free_disk_gb": 200,
@@ -90,11 +90,43 @@
   },
   "next_command_groups": [
     {
+      "commands": [
+        {
+          "command": "check_readiness",
+          "display": "wod2sim-benchmark-readiness --alpasim-root workspace/alpasim --output docs/evidence/benchmark_regeneration_readiness_20260706.json --json"
+        }
+      ],
       "name": "refresh_readiness",
       "order": 1,
       "plan_command_group": "commands.check_readiness"
     },
     {
+      "commands": [
+        {
+          "command": "build_local_cache",
+          "display": "HF_TOKEN=required wod2sim-build-local-cache --scene-preset front_camera_50scene_public2602 --alpasim-root workspace/alpasim --local-usdz-dir workspace/alpasim/data/nre-artifacts/local-2602-usdzs-50 --hf-repo nvidia/PhysicalAI-Autonomous-Vehicles-NuRec --hf-revision 26.02 --workers 3",
+          "scene_preset": "front_camera_50scene_public2602",
+          "stage": "workshop_scale"
+        },
+        {
+          "command": "validate_local_cache",
+          "display": "wod2sim-build-local-cache --scene-preset front_camera_50scene_public2602 --alpasim-root workspace/alpasim --local-usdz-dir workspace/alpasim/data/nre-artifacts/local-2602-usdzs-50 --hf-revision 26.02 --validate-only",
+          "scene_preset": "front_camera_50scene_public2602",
+          "stage": "workshop_scale"
+        },
+        {
+          "command": "build_local_cache",
+          "display": "HF_TOKEN=required wod2sim-build-local-cache --scene-preset front_camera_100scene_public2602 --alpasim-root workspace/alpasim --local-usdz-dir workspace/alpasim/data/nre-artifacts/local-2602-usdzs-100 --hf-repo nvidia/PhysicalAI-Autonomous-Vehicles-NuRec --hf-revision 26.02 --workers 3",
+          "scene_preset": "front_camera_100scene_public2602",
+          "stage": "stronger_benchmark"
+        },
+        {
+          "command": "validate_local_cache",
+          "display": "wod2sim-build-local-cache --scene-preset front_camera_100scene_public2602 --alpasim-root workspace/alpasim --local-usdz-dir workspace/alpasim/data/nre-artifacts/local-2602-usdzs-100 --hf-revision 26.02 --validate-only",
+          "scene_preset": "front_camera_100scene_public2602",
+          "stage": "stronger_benchmark"
+        }
+      ],
       "name": "build_and_validate_scale_caches",
       "order": 2,
       "plan_command_groups": [
@@ -112,6 +144,20 @@
         "stages[].shards[].commands.write_batch_summary",
         "stages[].commands.merge_shard_summaries",
         "stages[].commands.promote_public_summary"
+      ],
+      "stage_command_counts": [
+        {
+          "minimum_commands": 12,
+          "planned_shards": 5,
+          "scene_preset": "front_camera_50scene_public2602",
+          "stage": "workshop_scale"
+        },
+        {
+          "minimum_commands": 22,
+          "planned_shards": 10,
+          "scene_preset": "front_camera_100scene_public2602",
+          "stage": "stronger_benchmark"
+        }
       ]
     },
     {

@@ -171,7 +171,9 @@ The current public-safe 10/50/100 rerun plan is
 The no-download/no-rollout host readiness snapshot is
 [`docs/evidence/benchmark_regeneration_readiness_20260706.json`](evidence/benchmark_regeneration_readiness_20260706.json).
 It includes `blocking_requirements` and `next_command_groups` so operators can
-map missing cache/runtime prerequisites back to plan command groups.
+map missing cache/runtime prerequisites back to plan command groups. Short setup
+groups include copyable `display` commands; long shard groups point back to the
+full plan.
 The plan includes readiness reporting, local-cache validation, 10-scene shard
 commands for constrained x86_64 hosts, and public-safe merge/promotion commands
 for shard summaries.

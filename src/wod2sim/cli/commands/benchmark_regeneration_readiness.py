@@ -181,7 +181,11 @@ def build_readiness_report(
             ),
         },
         "blocking_requirements": blocking_requirements,
-        "next_command_groups": _next_command_groups(stages=stages),
+        "next_command_groups": _next_command_groups(
+            plan=plan,
+            stages=stages,
+            repo_root=repo_root,
+        ),
         "stages": stages,
     }
 
@@ -460,17 +464,48 @@ def _append_probe_requirement(
 
 def _next_command_groups(
     *,
+    plan: dict[str, Any],
     stages: list[dict[str, Any]],
+    repo_root: Path,
 ) -> list[dict[str, Any]]:
+    check_readiness = _dict_or_empty(_dict_or_empty(plan.get("commands")).get("check_readiness"))
     groups: list[dict[str, Any]] = [
         {
             "order": 1,
             "name": "refresh_readiness",
             "plan_command_group": "commands.check_readiness",
+            "commands": _resolved_command_rows(
+                stage=None,
+                scene_preset=None,
+                command_name="check_readiness",
+                command=check_readiness,
+                repo_root=repo_root,
+            ),
         }
     ]
     scale_stages = [stage for stage in stages if stage["requires_local_usdz_cache"]]
+    plan_stages_by_stage = {
+        str(stage.get("stage") or ""): stage
+        for stage in _list_or_empty(plan.get("stages"))
+        if isinstance(stage, dict)
+    }
     if any(not stage["local_usdz_cache"]["validation"]["valid"] for stage in scale_stages):
+        cache_commands: list[dict[str, Any]] = []
+        for stage in scale_stages:
+            if stage["local_usdz_cache"]["validation"]["valid"]:
+                continue
+            plan_stage = _dict_or_empty(plan_stages_by_stage.get(str(stage["stage"])))
+            commands = _dict_or_empty(plan_stage.get("commands"))
+            for command_name in ("build_local_cache", "validate_local_cache"):
+                cache_commands.extend(
+                    _resolved_command_rows(
+                        stage=str(stage["stage"]),
+                        scene_preset=str(stage["scene_preset"]),
+                        command_name=command_name,
+                        command=_dict_or_empty(commands.get(command_name)),
+                        repo_root=repo_root,
+                    )
+                )
         groups.append(
             {
                 "order": len(groups) + 1,
@@ -485,9 +520,13 @@ def _next_command_groups(
                     for stage in scale_stages
                     if not stage["local_usdz_cache"]["validation"]["valid"]
                 ],
+                "commands": cache_commands,
             }
         )
     if any(not stage["public_summary"]["claim_valid"] for stage in scale_stages):
+        missing_summary_stages = [
+            stage for stage in scale_stages if not stage["public_summary"]["claim_valid"]
+        ]
         groups.append(
             {
                 "order": len(groups) + 1,
@@ -497,6 +536,14 @@ def _next_command_groups(
                     "stages[].shards[].commands.write_batch_summary",
                     "stages[].commands.merge_shard_summaries",
                     "stages[].commands.promote_public_summary",
+                ],
+                "stage_command_counts": [
+                    _stage_command_count(
+                        stage=stage,
+                        plan_stage=plan_stages_by_stage[str(stage["stage"])],
+                    )
+                    for stage in missing_summary_stages
+                    if str(stage["stage"]) in plan_stages_by_stage
                 ],
             }
         )
@@ -509,6 +556,47 @@ def _next_command_groups(
         }
     )
     return groups
+
+
+def _stage_command_count(
+    *,
+    stage: dict[str, Any],
+    plan_stage: dict[str, Any],
+) -> dict[str, Any]:
+    planned_shards = len(_list_or_empty(plan_stage.get("shards")))
+    return {
+        "stage": stage["stage"],
+        "scene_preset": stage["scene_preset"],
+        "planned_shards": planned_shards,
+        "minimum_commands": planned_shards * 2 + 2,
+    }
+
+
+def _resolved_command_rows(
+    *,
+    stage: str | None,
+    scene_preset: str | None,
+    command_name: str,
+    command: dict[str, Any],
+    repo_root: Path,
+) -> list[dict[str, Any]]:
+    display = _sanitize_display_command(str(command.get("display") or "").strip(), repo_root=repo_root)
+    if not display:
+        return []
+    row: dict[str, Any] = {
+        "command": command_name,
+        "display": display,
+    }
+    if stage is not None:
+        row["stage"] = stage
+    if scene_preset is not None:
+        row["scene_preset"] = scene_preset
+    return [row]
+
+
+def _sanitize_display_command(display: str, *, repo_root: Path) -> str:
+    root_prefix = str(repo_root.resolve()).rstrip("/") + "/"
+    return display.replace(root_prefix, "")
 
 
 def _local_cache_status(
@@ -689,6 +777,14 @@ def _int_value(value: object) -> int:
         except ValueError:
             return 0
     return 0
+
+
+def _list_or_empty(value: object) -> list[object]:
+    return value if isinstance(value, list) else []
+
+
+def _dict_or_empty(value: object) -> dict[str, Any]:
+    return value if isinstance(value, dict) else {}
 
 
 def _optional_int(value: object) -> int | None:
