@@ -1637,6 +1637,12 @@ def _public_handoff_doc_consistency(
     if not checks["public_handoff_doc_lists_command_renderer_groups"]:
         notes.append("public handoff doc does not list command renderer groups")
 
+    checks["public_handoff_doc_lists_resume_command"] = (
+        "wod2sim-benchmark-commands --resume-missing-shards-from-audit" in text
+    )
+    if not checks["public_handoff_doc_lists_resume_command"]:
+        notes.append("public handoff doc does not list the audit-based shard resume command")
+
     checks["public_handoff_doc_states_current_strict_gate"] = (
         "wod2sim-benchmark-audit --strict --json" in text
         and "valid=true" in text

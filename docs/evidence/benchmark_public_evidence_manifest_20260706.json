@@ -18,8 +18,8 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_benchmark_regeneration_audit_v1",
-      "sha256": "553bc298a64d25e6ab869f1eac3c77d53921878f69b964450adafad50b59970c",
-      "size_bytes": 41284
+      "sha256": "8a2d9f545c913956d9d6a01c2a211cdc20fb2fa8a302d4d5c4a58cabe7607514",
+      "size_bytes": 41339
     },
     {
       "artifact_type": "benchmark_regeneration_control",

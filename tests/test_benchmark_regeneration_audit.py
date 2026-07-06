@@ -103,6 +103,9 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         self.assertTrue(audit["operator_matrix"]["checks"]["operator_matrix_roles_matches_sources"])
         self.assertTrue(audit["public_handoff_doc"]["valid"])
         self.assertEqual(HANDOFF_RELATIVE.as_posix(), audit["public_handoff_doc"]["artifact"])
+        self.assertTrue(
+            audit["public_handoff_doc"]["checks"]["public_handoff_doc_lists_resume_command"]
+        )
         self.assertTrue(audit["public_evidence_manifest"]["valid"])
         self.assertEqual(
             MANIFEST_RELATIVE.as_posix(),
@@ -833,6 +836,34 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             audit["public_handoff_doc"]["notes"],
         )
 
+    def test_public_handoff_resume_command_drift_invalidates_audit(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            evidence = repo_root / "docs" / "evidence"
+            evidence.mkdir(parents=True)
+            _copy_evidence_jsons(evidence)
+            handoff_path = repo_root / HANDOFF_RELATIVE
+            handoff = handoff_path.read_text(encoding="utf-8")
+            handoff_path.write_text(
+                handoff.replace(
+                    "wod2sim-benchmark-commands --resume-missing-shards-from-audit",
+                    "resume command omitted",
+                ),
+                encoding="utf-8",
+            )
+
+            audit = module.build_audit(repo_root=repo_root, created_at="2026-07-06")
+
+        self.assertFalse(audit["valid"])
+        self.assertFalse(
+            audit["public_handoff_doc"]["checks"]["public_handoff_doc_lists_resume_command"]
+        )
+        self.assertIn(
+            "public handoff doc does not list the audit-based shard resume command",
+            audit["public_handoff_doc"]["notes"],
+        )
+
     def test_status_evidence_artifacts_must_match_audited_chain(self) -> None:
         module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -1401,6 +1432,7 @@ def _write_test_handoff_doc(
         *(f"`{group}`" for group in renderer_groups),
         "wod2sim-benchmark-audit --strict --json",
         "wod2sim-benchmark-cleanup --json",
+        "wod2sim-benchmark-commands --resume-missing-shards-from-audit",
         "dry-run by default",
         "tracked files",
         "--include-gated-assets",

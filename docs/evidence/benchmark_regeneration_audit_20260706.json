@@ -416,6 +416,7 @@
       "public_handoff_doc_lists_missing_claim_summaries": true,
       "public_handoff_doc_lists_next_command_groups": true,
       "public_handoff_doc_lists_readiness_blockers": true,
+      "public_handoff_doc_lists_resume_command": true,
       "public_handoff_doc_present": true,
       "public_handoff_doc_states_cleanup_boundary": true,
       "public_handoff_doc_states_current_strict_gate": true,
