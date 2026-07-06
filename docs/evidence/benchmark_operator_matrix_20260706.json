@@ -1,0 +1,202 @@
+{
+  "created_at": "2026-07-06",
+  "current_local_state": {
+    "all_scale_caches_valid": false,
+    "alpasim_base_image_present": false,
+    "cache_build_ready": false,
+    "claim_valid_scale_summaries_present": false,
+    "closed_loop_runner_ready": false,
+    "closed_loop_runner_supported": true,
+    "docker_daemon_ok": true,
+    "docker_nvidia_runtime_present": true,
+    "host_machine": "x86_64",
+    "nvidia_smi_ok": true
+  },
+  "generator": {
+    "command": "wod2sim-benchmark-operators",
+    "no_download_or_rollout_probes": true
+  },
+  "public_artifact_policy": {
+    "tracked": "Compact JSON summaries, documentation, commands, tests, and public-safe hashes/metrics.",
+    "untracked": "Raw AlpaSim media, support bundles, USDZ scene assets, Hugging Face caches, Docker layers, and gated scene-derived files."
+  },
+  "roles": [
+    {
+      "can_run": [
+        "public tests",
+        "dry benchmark plans",
+        "compact summary/status/command/operator artifacts",
+        "non-mutating evidence audits"
+      ],
+      "can_run_now_from_tracked_state": true,
+      "cannot_run": [
+        "download gated USDZ artifacts",
+        "build private local scene caches without credentials",
+        "execute live AlpaSim SensorSim rollouts"
+      ],
+      "claim_scope": "Can review existing public evidence but cannot create new closed-loop scale claims.",
+      "current_blocker_ids": [],
+      "requires_gpu": false,
+      "requires_private_assets": false,
+      "requires_x86_64_linux": false,
+      "role": "open_repo_reviewer",
+      "who_can_do": "Anyone with the repository and a supported Python environment."
+    },
+    {
+      "can_run": [
+        "wod2sim-build-local-cache",
+        "wod2sim-build-local-cache --validate-only"
+      ],
+      "can_run_now_from_tracked_state": false,
+      "cannot_run": [
+        "produce claim-valid closed-loop summaries without a separate live runner"
+      ],
+      "claim_scope": "Can prepare required local USDZ caches; cache validity alone is not a benchmark claim.",
+      "current_blocker_ids": [
+        "hf_token_missing"
+      ],
+      "requires_gpu": false,
+      "requires_private_assets": true,
+      "requires_x86_64_linux": false,
+      "role": "cache_builder",
+      "who_can_do": "Operator with Hugging Face access to the 26.02 artifacts, enough disk, and the Python cache-builder dependencies."
+    },
+    {
+      "can_run": [
+        "wod2sim-batch live AlpaSim rollouts",
+        "scale-stage shard commands",
+        "wod2sim-batch-summary for completed shard summaries"
+      ],
+      "can_run_now_from_tracked_state": false,
+      "cannot_run": [
+        "publish a full 50/100 claim until every planned shard is complete and merged"
+      ],
+      "claim_scope": "Can produce the raw inputs for claim-valid scale summaries when prerequisites are ready.",
+      "current_blocker_ids": [
+        "alpasim_base_image_missing",
+        "front_camera_50scene_public2602_cache_invalid",
+        "front_camera_100scene_public2602_cache_invalid"
+      ],
+      "requires_gpu": true,
+      "requires_private_assets": true,
+      "requires_x86_64_linux": true,
+      "role": "closed_loop_runner",
+      "who_can_do": "Operator on x86_64 Linux with Docker, NVIDIA runtime, AlpaSim images, valid local scene caches, and gated scene access."
+    },
+    {
+      "can_run": [
+        "wod2sim-promote-batch-summary",
+        "wod2sim-benchmark-status",
+        "wod2sim-benchmark-audit --strict --json"
+      ],
+      "can_run_now_from_tracked_state": false,
+      "cannot_run": [
+        "promote missing or partial 50/100 summaries as full benchmark claims"
+      ],
+      "claim_scope": "Can publish compact claim evidence only after full-stage summaries pass the audit gate.",
+      "current_blocker_ids": [
+        "front_camera_50scene_public2602_claim_summary_missing",
+        "front_camera_100scene_public2602_claim_summary_missing"
+      ],
+      "requires_gpu": false,
+      "requires_private_assets": false,
+      "requires_x86_64_linux": false,
+      "role": "claim_promoter",
+      "who_can_do": "Maintainer with completed closed-loop summaries, shard provenance, and permission to publish compact public evidence."
+    },
+    {
+      "can_run": [
+        "cache preparation when credentials and disk are available",
+        "diagnostic commands that do not start the amd64 SensorSim container"
+      ],
+      "can_run_now_from_tracked_state": true,
+      "cannot_run": [
+        "live SensorSim rollouts by default because the required AlpaSim image is amd64-only"
+      ],
+      "claim_scope": "Can assist with preparation but is not a supported live rollout host by default.",
+      "current_blocker_ids": [
+        "live_rollout_blocked_by_default_on_arm64"
+      ],
+      "requires_gpu": false,
+      "requires_private_assets": false,
+      "requires_x86_64_linux": false,
+      "role": "arm_dgx_spark_host",
+      "who_can_do": "ARM/Linux operator, including DGX Spark-style hosts."
+    }
+  ],
+  "schema": "wod2sim_benchmark_operator_matrix_v1",
+  "source_artifacts": {
+    "plan": "docs/evidence/benchmark_regeneration_plan_20260706.json",
+    "readiness": "docs/evidence/benchmark_regeneration_readiness_20260706.json",
+    "status": "docs/evidence/benchmark_regeneration_status_20260706.json"
+  },
+  "task_matrix": [
+    {
+      "claim_boundary": "Review only; does not create new benchmark evidence.",
+      "command_groups": [
+        "status",
+        "commands",
+        "operators",
+        "audit"
+      ],
+      "current_blocker_ids": [],
+      "current_state": "ready",
+      "evidence_artifacts": [
+        "docs/evidence/benchmark_regeneration_audit_20260706.json",
+        "docs/evidence/benchmark_regeneration_commands_20260706.json",
+        "docs/evidence/benchmark_regeneration_plan_20260706.json",
+        "docs/evidence/benchmark_regeneration_readiness_20260706.json",
+        "docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json",
+        "docs/evidence/closed_loop_spotlight_reflex_50scene_attempt_partial.json",
+        "docs/evidence/closed_loop_spotlight_reflex_50scene_localprobe_1scene.json"
+      ],
+      "requires_private_assets": false,
+      "task": "review_public_evidence",
+      "who_can_run": "open_repo_reviewer"
+    },
+    {
+      "claim_boundary": "Required prerequisite for scale rollouts, not a closed-loop claim.",
+      "command_groups": [
+        "cache"
+      ],
+      "current_blocker_ids": [
+        "hf_token_missing"
+      ],
+      "current_state": "blocked_in_tracked_state",
+      "requires_private_assets": true,
+      "task": "build_and_validate_26_02_usdz_cache",
+      "who_can_run": "cache_builder"
+    },
+    {
+      "claim_boundary": "Shard outputs are checkpoints until full-stage summaries are merged.",
+      "command_groups": [
+        "shards",
+        "merge"
+      ],
+      "current_blocker_ids": [
+        "alpasim_base_image_missing",
+        "front_camera_50scene_public2602_cache_invalid",
+        "front_camera_100scene_public2602_cache_invalid"
+      ],
+      "current_state": "blocked_in_tracked_state",
+      "requires_private_assets": true,
+      "task": "run_live_scale_shards",
+      "who_can_run": "closed_loop_runner"
+    },
+    {
+      "claim_boundary": "Only complete 50/100 summaries may satisfy the strict claim gate.",
+      "command_groups": [
+        "promote",
+        "post"
+      ],
+      "current_blocker_ids": [
+        "front_camera_50scene_public2602_claim_summary_missing",
+        "front_camera_100scene_public2602_claim_summary_missing"
+      ],
+      "current_state": "blocked_in_tracked_state",
+      "requires_private_assets": false,
+      "task": "promote_claim_valid_50_100_summaries",
+      "who_can_run": "claim_promoter"
+    }
+  ]
+}

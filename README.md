@@ -153,6 +153,11 @@ Runtime compatibility is split by task:
 | Live AlpaSim closed-loop rollouts | x86_64 Linux hosts with Docker, NVIDIA GPU runtime, AlpaSim images, and cached scene artifacts. |
 | ARM/Linux hosts | Supported for cache building and diagnostics only; live rollouts are blocked by default because the AlpaSim sensorsim image used here is amd64-only. |
 
+The generated operator matrix is tracked at
+[`docs/evidence/benchmark_operator_matrix_20260706.json`](docs/evidence/benchmark_operator_matrix_20260706.json)
+and records which roles can review, build caches, run live shards, or promote
+claim artifacts from the current evidence state.
+
 Set `WAYSPAN_ALLOW_UNSUPPORTED_ALPASIM_ARM=1` only when intentionally testing an
 unsupported ARM rollout path.
 
@@ -344,6 +349,7 @@ wod2sim-launch --mode print --model direct_actor_planner --oracle-actor-proxy /p
 | `wod2sim-benchmark-readiness` | Report host/cache/image readiness without downloads or rollouts. |
 | `wod2sim-benchmark-status` | Regenerate public benchmark status from compact evidence artifacts. |
 | `wod2sim-benchmark-commands` | Render copyable cache/shard/merge/promotion commands from the plan. |
+| `wod2sim-benchmark-operators` | Render the public who-can-review/build/run/promote capability matrix. |
 | `wod2sim-benchmark-audit` | Gate tracked regeneration artifacts against the 10/50/100 claim. |
 | `wod2sim-promote-batch-summary` | Promote a generated compact batch summary into public evidence. |
 | `wod2sim-benchmark-summary` | Aggregate evidence directories into one benchmark JSON. |

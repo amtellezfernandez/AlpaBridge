@@ -80,6 +80,7 @@
     "claim_audit": "docs/evidence/benchmark_regeneration_audit_20260706.json",
     "fifty_scene_local_probe": "docs/evidence/closed_loop_spotlight_reflex_50scene_localprobe_1scene.json",
     "fifty_scene_partial_attempt": "docs/evidence/closed_loop_spotlight_reflex_50scene_attempt_partial.json",
+    "operator_matrix": "docs/evidence/benchmark_operator_matrix_20260706.json",
     "readiness_snapshot": "docs/evidence/benchmark_regeneration_readiness_20260706.json",
     "regeneration_commands": "docs/evidence/benchmark_regeneration_commands_20260706.json",
     "regeneration_plan": "docs/evidence/benchmark_regeneration_plan_20260706.json",
@@ -127,6 +128,7 @@
     "no_download_or_rollout_probes": true,
     "referenced_artifacts": {
       "claim_audit": "docs/evidence/benchmark_regeneration_audit_20260706.json",
+      "operator_matrix": "docs/evidence/benchmark_operator_matrix_20260706.json",
       "regeneration_commands": "docs/evidence/benchmark_regeneration_commands_20260706.json"
     }
   }

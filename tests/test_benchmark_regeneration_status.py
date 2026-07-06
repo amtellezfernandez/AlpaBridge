@@ -21,6 +21,7 @@ PLAN_RELATIVE = Path("docs/evidence/benchmark_regeneration_plan_20260706.json")
 READINESS_RELATIVE = Path("docs/evidence/benchmark_regeneration_readiness_20260706.json")
 AUDIT_RELATIVE = Path("docs/evidence/benchmark_regeneration_audit_20260706.json")
 COMMANDS_RELATIVE = Path("docs/evidence/benchmark_regeneration_commands_20260706.json")
+OPERATOR_MATRIX_RELATIVE = Path("docs/evidence/benchmark_operator_matrix_20260706.json")
 
 
 def test_regeneration_status_matches_tracked_ten_scene_evidence() -> None:
@@ -137,6 +138,7 @@ def test_readme_links_current_regeneration_status() -> None:
     assert PROBE_50_RELATIVE.as_posix() in readme
     assert ATTEMPT_50_RELATIVE.as_posix() in readme
     assert COMMANDS_RELATIVE.as_posix() in readme
+    assert OPERATOR_MATRIX_RELATIVE.as_posix() in readme
     assert "Open-repo readers can review the compact JSON summaries" in readme
     assert "ARM/DGX Spark" in readme
     assert "| `wod2sim-benchmark-status` |" in readme
@@ -155,6 +157,7 @@ def test_status_links_current_public_evidence_chain() -> None:
         "regeneration_plan": PLAN_RELATIVE.as_posix(),
         "readiness_snapshot": READINESS_RELATIVE.as_posix(),
         "regeneration_commands": COMMANDS_RELATIVE.as_posix(),
+        "operator_matrix": OPERATOR_MATRIX_RELATIVE.as_posix(),
         "claim_audit": AUDIT_RELATIVE.as_posix(),
     }
     assert plan["status_artifact"] == STATUS_RELATIVE.as_posix()
@@ -236,6 +239,7 @@ def test_status_generator_does_not_require_existing_audit_artifact_for_completed
     assert status["completion_status"]["full_objective_complete"] is True
     assert status["status_generator"]["referenced_artifacts"] == {
         "regeneration_commands": COMMANDS_RELATIVE.as_posix(),
+        "operator_matrix": OPERATOR_MATRIX_RELATIVE.as_posix(),
         "claim_audit": AUDIT_RELATIVE.as_posix()
     }
     assert "claim_audit" not in status["status_generator"]["inputs"]

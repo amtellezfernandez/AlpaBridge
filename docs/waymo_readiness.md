@@ -157,6 +157,11 @@ Use the right host role for the job:
 | Closed-loop runner | Run live AlpaSim batches on x86_64 Linux with Docker, NVIDIA GPU runtime, AlpaSim images, and cached scene artifacts. |
 | ARM/Linux host | Build caches and run diagnostics, but live sensorsim rollouts are disabled by default because the required sensorsim image is amd64-only. |
 
+The current machine-readable role matrix is
+[`docs/evidence/benchmark_operator_matrix_20260706.json`](evidence/benchmark_operator_matrix_20260706.json).
+Regenerate it with `wod2sim-benchmark-operators`; it only reads tracked compact
+JSON and does not probe Docker, GPUs, caches, or gated assets.
+
 `WAYSPAN_ALLOW_UNSUPPORTED_ALPASIM_ARM=1` is reserved for intentional unsupported
 ARM rollout diagnostics.
 
