@@ -84,6 +84,7 @@ def test_operator_matrix_main_writes_artifact_without_runtime_probes() -> None:
     assert emitted == artifact
     assert artifact["created_at"] == "2026-07-06"
     assert artifact["current_local_state"]["closed_loop_runner_ready"] is False
+    assert artifact["current_local_state"]["source_cache_link_ready"] is False
 
 
 def test_tracked_operator_matrix_is_public_safe_and_explicit_about_who_can_run() -> None:
@@ -131,6 +132,8 @@ def test_tracked_operator_matrix_is_public_safe_and_explicit_about_who_can_run()
     assert roles["open_repo_reviewer"]["can_run_now_from_tracked_state"] is True
     assert roles["cache_builder"]["requires_gpu"] is False
     assert roles["cache_builder"]["requires_private_assets"] is True
+    assert matrix["current_local_state"]["all_scale_source_caches_valid"] is False
+    assert matrix["current_local_state"]["source_cache_link_ready"] is False
     assert roles["closed_loop_runner"]["requires_gpu"] is True
     assert roles["closed_loop_runner"]["can_run_now_from_tracked_state"] is False
     assert roles["arm_dgx_spark_host"]["claim_scope"].endswith(

@@ -52,6 +52,12 @@ Current blocker IDs from readiness:
 | `front_camera_100scene_public2602_cache_invalid` | 100-scene shard execution. |
 | `front_camera_100scene_public2602_claim_summary_missing` | 100-scene claim promotion and strict audit readiness. |
 
+The offline cache-link path is tracked but not currently ready on this
+workspace: `source_usdz_cache.validation.present_scene_count` is `0/50` for
+`front_camera_50scene_public2602` and `0/100` for
+`front_camera_100scene_public2602`. A cache builder needs either a complete
+local `all-usdzs` directory for those presets or gated Hugging Face access.
+
 ## Who Can Do What
 
 | Role | Can Run Now From Public State | Can Do | Cannot Do |

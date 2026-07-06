@@ -352,6 +352,8 @@ def _runtime_state_from_readiness(
         "alpasim_base_image_present": _probe_ok(runtime_probes.get("alpasim_base_image")),
         "nvidia_smi_ok": _probe_ok(runtime_probes.get("nvidia_smi")),
         "all_scale_caches_valid": readiness_flags.get("all_scale_caches_valid"),
+        "all_scale_source_caches_valid": readiness_flags.get("all_scale_source_caches_valid"),
+        "source_cache_link_ready": readiness_flags.get("source_cache_link_ready"),
         "claim_valid_scale_summaries_present": readiness_flags.get(
             "claim_valid_scale_summaries_present"
         ),
