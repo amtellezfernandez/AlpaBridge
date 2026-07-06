@@ -324,6 +324,7 @@
       "public_evidence_manifest_loaded": true,
       "public_evidence_manifest_missing_expected_matches_audit": true,
       "public_evidence_manifest_referenced": true,
+      "public_evidence_manifest_scale_claim_gaps_match_audit": true,
       "public_evidence_manifest_schema_matches": true,
       "public_evidence_manifest_self_path_matches_status": true,
       "public_evidence_manifest_sources_match_audit": true
