@@ -122,7 +122,7 @@ def build_public_evidence_manifest(
             "excludes_self_hash": True,
         },
         "claim_gate": {
-            "valid": bool(audit.get("valid")),
+            "valid": _audit_valid_without_public_evidence_manifest(audit),
             "claim_ready": bool(audit.get("claim_ready")),
             "missing_claim_valid_summaries": list(audit.get("missing_claim_valid_summaries", [])),
             "strict_command": "wod2sim-benchmark-audit --strict --json",
@@ -132,6 +132,20 @@ def build_public_evidence_manifest(
         "artifacts": artifacts,
         "missing_expected_artifacts": missing_claim_summaries,
     }
+
+
+def _audit_valid_without_public_evidence_manifest(audit: dict[str, Any]) -> bool:
+    required_sections = (
+        "status_consistency",
+        "readiness_consistency",
+        "diagnostic_evidence",
+        "regeneration_commands",
+        "operator_matrix",
+    )
+    return not audit.get("errors") and all(
+        _dict_or_empty(audit.get(section)).get("valid") is True
+        for section in required_sections
+    )
 
 
 def _artifact_entry(

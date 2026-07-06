@@ -8,6 +8,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from wod2sim.cli.commands.benchmark_operator_matrix import (
+    MATRIX_SCHEMA,
+    build_operator_matrix,
+)
 from wod2sim.cli.commands.benchmark_regeneration_commands import (
     COMMANDS_SCHEMA,
     render_commands,
@@ -128,12 +132,20 @@ def build_audit(
         status=status,
         repo_root=repo_root,
     )
+    operator_matrix = _operator_matrix_consistency(
+        plan_path=plan_path,
+        status_path=status_path,
+        readiness_artifact=readiness_artifact,
+        status=status,
+        repo_root=repo_root,
+    )
     expected_valid_without_manifest = (
         input_valid
         and status_consistency["valid"]
         and readiness_consistency["valid"]
         and diagnostic_evidence["valid"]
         and regeneration_commands["valid"]
+        and operator_matrix["valid"]
     )
     public_evidence_manifest = _public_evidence_manifest_consistency(
         plan_path=plan_path,
@@ -170,6 +182,7 @@ def build_audit(
         "regeneration_provenance": regeneration_provenance,
         "diagnostic_evidence": diagnostic_evidence,
         "regeneration_commands": regeneration_commands,
+        "operator_matrix": operator_matrix,
         "public_evidence_manifest": public_evidence_manifest,
         "status_consistency": status_consistency,
         "readiness_consistency": readiness_consistency,
@@ -1060,6 +1073,91 @@ def _regeneration_commands_consistency(
     }
 
 
+def _operator_matrix_consistency(
+    *,
+    plan_path: Path,
+    status_path: Path,
+    readiness_artifact: str,
+    status: dict[str, Any],
+    repo_root: Path,
+) -> dict[str, Any]:
+    checks: dict[str, bool] = {}
+    notes: list[str] = []
+    evidence_artifacts = _dict_or_empty(status.get("evidence_artifacts"))
+    operator_artifact = str(evidence_artifacts.get("operator_matrix") or "")
+
+    checks["operator_matrix_referenced"] = bool(operator_artifact)
+    if not checks["operator_matrix_referenced"]:
+        notes.append("status.evidence_artifacts.operator_matrix is missing")
+        return {"valid": False, "artifact": operator_artifact, "checks": checks, "notes": notes}
+
+    operator_path = _resolve_path(repo_root, Path(operator_artifact))
+    operator_matrix = _load_manifest(
+        operator_path,
+        notes=notes,
+        label="operator matrix artifact",
+    )
+    checks["operator_matrix_loaded"] = bool(operator_matrix)
+    if not checks["operator_matrix_loaded"]:
+        return {"valid": False, "artifact": operator_artifact, "checks": checks, "notes": notes}
+
+    checks["operator_matrix_schema_matches"] = operator_matrix.get("schema") == MATRIX_SCHEMA
+    if not checks["operator_matrix_schema_matches"]:
+        notes.append("operator matrix schema mismatch")
+
+    source_artifacts = _dict_or_empty(operator_matrix.get("source_artifacts"))
+    checks["operator_matrix_sources_match_audit"] = (
+        source_artifacts.get("plan") == _display_path(plan_path)
+        and source_artifacts.get("status") == _display_path(status_path)
+        and source_artifacts.get("readiness") == readiness_artifact
+    )
+    if not checks["operator_matrix_sources_match_audit"]:
+        notes.append("operator matrix source_artifacts do not match audit inputs")
+
+    generator = _dict_or_empty(operator_matrix.get("generator"))
+    checks["operator_matrix_generator_is_non_runtime"] = (
+        generator.get("command") == "wod2sim-benchmark-operators"
+        and generator.get("no_download_or_rollout_probes") is True
+    )
+    if not checks["operator_matrix_generator_is_non_runtime"]:
+        notes.append("operator matrix generator metadata is not public-safe")
+
+    expected = _expected_operator_matrix(
+        plan_path=plan_path,
+        status_path=status_path,
+        readiness_artifact=readiness_artifact,
+        repo_root=repo_root,
+        notes=notes,
+    )
+    checks["operator_matrix_expected_rebuilt"] = bool(expected)
+    if expected:
+        for key in (
+            "public_artifact_policy",
+            "current_local_state",
+            "roles",
+            "task_matrix",
+        ):
+            check_key = f"operator_matrix_{key}_matches_sources"
+            checks[check_key] = operator_matrix.get(key) == expected.get(key)
+            if not checks[check_key]:
+                notes.append(f"operator matrix {key} does not match audited sources")
+    else:
+        notes.append("operator matrix could not be rebuilt from audited sources")
+
+    roles = [row for row in _list_or_empty(operator_matrix.get("roles")) if isinstance(row, dict)]
+    tasks = [
+        row for row in _list_or_empty(operator_matrix.get("task_matrix")) if isinstance(row, dict)
+    ]
+    return {
+        "valid": all(checks.values()) if checks else False,
+        "artifact": operator_artifact,
+        "checks": checks,
+        "notes": notes,
+        "role_count": len(roles),
+        "task_count": len(tasks),
+    }
+
+
 def _readiness_consistency(
     *,
     plan_path: Path,
@@ -1168,6 +1266,30 @@ def _load_manifest(path: Path, *, notes: list[str], label: str) -> dict[str, Any
         return _read_json(path)
     except json.JSONDecodeError as exc:
         notes.append(f"{label} is not valid JSON: {path}: {exc}")
+        return {}
+
+
+def _expected_operator_matrix(
+    *,
+    plan_path: Path,
+    status_path: Path,
+    readiness_artifact: str,
+    repo_root: Path,
+    notes: list[str],
+) -> dict[str, Any]:
+    if not readiness_artifact:
+        notes.append("operator matrix cannot be rebuilt without readiness_artifact")
+        return {}
+    try:
+        return build_operator_matrix(
+            plan_path=plan_path,
+            status_path=status_path,
+            readiness_path=Path(readiness_artifact),
+            repo_root=repo_root,
+            created_at="audit_expected",
+        )
+    except (FileNotFoundError, ValueError, json.JSONDecodeError, OSError) as exc:
+        notes.append(f"operator matrix rebuild failed: {exc}")
         return {}
 
 

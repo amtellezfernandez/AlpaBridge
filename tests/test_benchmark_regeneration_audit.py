@@ -17,6 +17,7 @@ STATUS_RELATIVE = Path("docs/evidence/benchmark_regeneration_status_20260706.jso
 READINESS_RELATIVE = Path("docs/evidence/benchmark_regeneration_readiness_20260706.json")
 MANIFEST_RELATIVE = Path("docs/evidence/benchmark_public_evidence_manifest_20260706.json")
 COMMANDS_RELATIVE = Path("docs/evidence/benchmark_regeneration_commands_20260706.json")
+OPERATOR_MATRIX_RELATIVE = Path("docs/evidence/benchmark_operator_matrix_20260706.json")
 PROBE_50_RELATIVE = Path(
     "docs/evidence/closed_loop_spotlight_reflex_50scene_localprobe_1scene.json"
 )
@@ -43,6 +44,11 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             audit["regeneration_commands"]["checks"][
                 "regeneration_commands_rows_match_plan_renderer"
             ]
+        )
+        self.assertTrue(audit["operator_matrix"]["valid"])
+        self.assertEqual(OPERATOR_MATRIX_RELATIVE.as_posix(), audit["operator_matrix"]["artifact"])
+        self.assertTrue(
+            audit["operator_matrix"]["checks"]["operator_matrix_roles_matches_sources"]
         )
         self.assertTrue(audit["public_evidence_manifest"]["valid"])
         self.assertEqual(
@@ -183,6 +189,7 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
                 evidence / READINESS_RELATIVE.name,
                 _readiness_report(plan, claim_valid_scene_counts={10, 50, 100}),
             )
+            _write_operator_matrix(evidence)
             _write_public_evidence_manifest(
                 evidence,
                 claim_ready=True,
@@ -453,6 +460,33 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             audit["regeneration_commands"]["notes"],
         )
 
+    def test_operator_matrix_drift_invalidates_audit(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            evidence = repo_root / "docs" / "evidence"
+            evidence.mkdir(parents=True)
+            _copy_evidence_jsons(evidence)
+            operator_path = evidence / OPERATOR_MATRIX_RELATIVE.name
+            operator_matrix = _read_json(operator_path)
+            operator_matrix["roles"][0]["can_run_now_from_tracked_state"] = False
+            _write_json(operator_path, operator_matrix)
+            _refresh_manifest_hash(evidence / MANIFEST_RELATIVE.name, OPERATOR_MATRIX_RELATIVE)
+
+            audit = module.build_audit(repo_root=repo_root, created_at="2026-07-06")
+
+        self.assertFalse(audit["valid"])
+        self.assertFalse(audit["operator_matrix"]["checks"]["operator_matrix_roles_matches_sources"])
+        self.assertTrue(
+            audit["public_evidence_manifest"]["checks"][
+                "public_evidence_manifest_hashes_match_tracked_files"
+            ]
+        )
+        self.assertIn(
+            "operator matrix roles does not match audited sources",
+            audit["operator_matrix"]["notes"],
+        )
+
     def test_missing_diagnostic_probe_invalidates_audit_artifact_set(self) -> None:
         module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -573,6 +607,7 @@ def _read_json(path: Path) -> dict[str, object]:
 def _copy_status_and_probe(evidence_dir: Path) -> None:
     shutil.copy2(ROOT / STATUS_RELATIVE, evidence_dir / STATUS_RELATIVE.name)
     shutil.copy2(ROOT / COMMANDS_RELATIVE, evidence_dir / COMMANDS_RELATIVE.name)
+    shutil.copy2(ROOT / OPERATOR_MATRIX_RELATIVE, evidence_dir / OPERATOR_MATRIX_RELATIVE.name)
     shutil.copy2(ROOT / PROBE_50_RELATIVE, evidence_dir / PROBE_50_RELATIVE.name)
     shutil.copy2(ROOT / ATTEMPT_50_RELATIVE, evidence_dir / ATTEMPT_50_RELATIVE.name)
 
@@ -648,6 +683,19 @@ def _write_public_evidence_manifest(
         ],
     }
     _write_json(manifest_path, manifest)
+
+
+def _write_operator_matrix(evidence_dir: Path) -> None:
+    module = importlib.import_module("wod2sim.cli.commands.benchmark_operator_matrix")
+    repo_root = evidence_dir.parents[1]
+    matrix = module.build_operator_matrix(
+        repo_root=repo_root,
+        plan_path=PLAN_RELATIVE,
+        status_path=STATUS_RELATIVE,
+        readiness_path=READINESS_RELATIVE,
+        created_at="2026-07-06",
+    )
+    _write_json(evidence_dir / OPERATOR_MATRIX_RELATIVE.name, matrix)
 
 
 def _refresh_manifest_hash(manifest_path: Path, artifact_relative: Path) -> None:

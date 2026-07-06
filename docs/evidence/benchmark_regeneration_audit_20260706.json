@@ -149,6 +149,25 @@
     "satisfied_count": 2,
     "total_count": 5
   },
+  "operator_matrix": {
+    "artifact": "docs/evidence/benchmark_operator_matrix_20260706.json",
+    "checks": {
+      "operator_matrix_current_local_state_matches_sources": true,
+      "operator_matrix_expected_rebuilt": true,
+      "operator_matrix_generator_is_non_runtime": true,
+      "operator_matrix_loaded": true,
+      "operator_matrix_public_artifact_policy_matches_sources": true,
+      "operator_matrix_referenced": true,
+      "operator_matrix_roles_matches_sources": true,
+      "operator_matrix_schema_matches": true,
+      "operator_matrix_sources_match_audit": true,
+      "operator_matrix_task_matrix_matches_sources": true
+    },
+    "notes": [],
+    "role_count": 5,
+    "task_count": 4,
+    "valid": true
+  },
   "plan_artifact": "docs/evidence/benchmark_regeneration_plan_20260706.json",
   "public_evidence_manifest": {
     "artifact": "docs/evidence/benchmark_public_evidence_manifest_20260706.json",
