@@ -127,11 +127,38 @@ generation. The larger public-scene presets are:
 | Preset | Purpose |
 | --- | --- |
 | `front_camera_10scene_smoke` | Local pilot and screenshot/evidence generation. |
-| `front_camera_50scene_public2602` | Workshop-scale batch once scene cache and token access are ready. |
-| `front_camera_100scene_public2602` | Stronger systems benchmark claim with the same public AlpaSim catalog. |
+| `front_camera_50scene_public2602` | Workshop-scale batch once a local 26.02 USDZ cache is built. |
+| `front_camera_100scene_public2602` | Stronger systems benchmark claim using the same validated public 26.02 catalog subset. |
 
-The 50/100-scene presets still require local access to the public AlpaSim scene
-artifacts, typically through a populated Hugging Face cache or an `HF_TOKEN`.
+The 50/100-scene presets require local access to public AlpaSim scene artifacts.
+Build a metadata-valid local USDZ directory first:
+
+```bash
+HF_TOKEN=... wod2sim-build-local-cache \
+  --scene-preset front_camera_50scene_public2602 \
+  --alpasim-root /path/to/alpasim \
+  --local-usdz-dir /path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50
+```
+
+Then pass it to the batch runner:
+
+```bash
+wod2sim-batch ... \
+  --scene-preset front_camera_50scene_public2602 \
+  --wizard-arg scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50
+```
+
+Use the right host role for the job:
+
+| Role | What It Can Do |
+| --- | --- |
+| Reviewer | Run public tests, dry plans, summaries, and evidence audits without gated assets. |
+| Cache builder | Build a metadata-valid 26.02 USDZ directory with Hugging Face access and disk capacity; GPU is optional. |
+| Closed-loop runner | Run live AlpaSim batches on x86_64 Linux with Docker, NVIDIA GPU runtime, AlpaSim images, and cached scene artifacts. |
+| ARM/Linux host | Build caches and run diagnostics, but live sensorsim rollouts are disabled by default because the required sensorsim image is amd64-only. |
+
+`WAYSPAN_ALLOW_UNSUPPORTED_ALPASIM_ARM=1` is reserved for intentional unsupported
+ARM rollout diagnostics.
 
 The current public evidence artifact is
 [`docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json`](evidence/closed_loop_spotlight_reflex_10scene_batch.json).

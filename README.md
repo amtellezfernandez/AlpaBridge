@@ -144,6 +144,42 @@ wod2sim-batch \
   --continue-on-error
 ```
 
+Runtime compatibility is split by task:
+
+| Task | Who Can Run It |
+| --- | --- |
+| Public package checks, dry reproduction plans, summaries | Any supported Python host; no AlpaSim assets required. |
+| 26.02 local USDZ cache construction | Hosts with Hugging Face access, enough disk, and Python dependencies; GPU is not required. |
+| Live AlpaSim closed-loop rollouts | x86_64 Linux hosts with Docker, NVIDIA GPU runtime, AlpaSim images, and cached scene artifacts. |
+| ARM/Linux hosts | Supported for cache building and diagnostics only; live rollouts are blocked by default because the AlpaSim sensorsim image used here is amd64-only. |
+
+Set `WAYSPAN_ALLOW_UNSUPPORTED_ALPASIM_ARM=1` only when intentionally testing an
+unsupported ARM rollout path.
+
+For the larger 26.02 presets, first build a local USDZ directory from the
+Hugging Face artifact revision. This uses each USDZ's `metadata.yaml` as the
+source of truth and avoids relying on stale catalog UUIDs:
+
+```bash
+HF_TOKEN=... wod2sim-build-local-cache \
+  --scene-preset front_camera_50scene_public2602 \
+  --alpasim-root /path/to/alpasim \
+  --local-usdz-dir /path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50 \
+  --workers 3
+
+wod2sim-batch \
+  --mode both \
+  --model spotlight_reflex \
+  --scene-preset front_camera_50scene_public2602 \
+  --alpasim-root /path/to/alpasim \
+  --batch-dir runs/benchmark_spotlight_reflex_50scene \
+  --timeout 900 \
+  --driver-warmup-seconds 5 \
+  --max-retries 1 \
+  --continue-on-error \
+  --wizard-arg scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50
+```
+
 Then publish compact summaries instead of raw gated artifacts:
 
 ```bash
@@ -233,6 +269,7 @@ wod2sim-launch --mode print --model direct_actor_planner --oracle-actor-proxy /p
 | `wod2sim-setup` | Wire WOD2Sim into a local AlpaSim checkout. |
 | `wod2sim-ready` | Validate AlpaSim runtime and scene readiness. |
 | `wod2sim-launch` | Print or launch AlpaSim external-driver runs. |
+| `wod2sim-build-local-cache` | Build a metadata-valid local USDZ cache for larger 26.02 AlpaSim presets. |
 | `wod2sim-reproduce` | Plan or execute the full closed-loop evidence workflow. |
 | `wod2sim-audit-run` | Summarize executed run logs and sensor freshness. |
 | `wod2sim-support-bundle` | Package key run logs, configs, and audit output. |

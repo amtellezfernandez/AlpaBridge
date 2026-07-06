@@ -1,102 +1,105 @@
 scenes:
   scene_ids:
     - clipgt-01d503d4-449b-46fc-8d78-9085e70d3554
-    - clipgt-023b7fcc-671c-40e3-9bd2-c66b0b073fbc
-    - clipgt-0245ff75-aa3f-46b7-ba87-16a7afb841af
-    - clipgt-026d6a39-bd8f-4175-bc61-fe50ed0403a3
     - clipgt-02e075b9-fd24-426b-971b-7cfcb2074cc9
-    - clipgt-02eadd92-02f1-46d8-86fe-a9e338fed0b6
-    - clipgt-032b6f21-6799-4ad8-8712-0405f087ac4a
-    - clipgt-04394343-92f3-409c-9695-e7cd5397fa02
-    - clipgt-04749bb9-9b37-495b-bed0-77f0e33ac7da
     - clipgt-048b974e-1546-488a-b8f9-d32bff77f5aa
     - clipgt-0499fb41-122d-4180-83af-f954a9974d3b
-    - clipgt-04db1bb2-90fe-47a7-9d09-27d020c618d4
-    - clipgt-054b5901-fdcb-4146-b125-eb2bb333cf02
-    - clipgt-05a1d902-b975-4d11-a9ed-e6bfc774577f
-    - clipgt-05bb8212-63e1-40a8-b4fc-3142c0e94646
-    - clipgt-05e74bef-0afa-468e-b679-b7f14079be30
-    - clipgt-05ecbbf5-d88c-41b7-97f2-f4ac2615a8c9
     - clipgt-05f35348-9de0-4f68-ac65-f31316dbb59e
-    - clipgt-060131e7-ee72-477c-89da-083e0b446566
-    - clipgt-065dcac9-ee67-4434-a835-c6b816c88e48
     - clipgt-07981e6a-22dd-4796-ad2f-1252037ecd28
-    - clipgt-07ab4a5b-e934-4fff-b5d1-47efedadac47
-    - clipgt-08990ec8-0ba9-4284-9919-65b71750a5fa
-    - clipgt-095cf563-c5d6-4f4f-9e98-7f179e733560
-    - clipgt-096988dd-9367-4fdf-84f9-5a73c5061c6e
     - clipgt-098e2482-6db2-473b-b08a-2a80be9320f3
-    - clipgt-09a95ffa-37b7-486d-9404-ac8cf1c3e045
-    - clipgt-09b3c476-dc23-4739-8586-15472e99ee9b
-    - clipgt-0a18c5a4-9aca-4efd-b604-c75f3269c502
-    - clipgt-0ac02819-4171-4363-9458-ad2f192884bf
-    - clipgt-0aed52b3-1394-4dc3-8553-c60929e6acf8
-    - clipgt-0b10bce8-61f1-4350-8577-cf3c9493ffc3
-    - clipgt-0b1c9f60-1e7b-40e4-a221-f9e1c281aad7
-    - clipgt-0b54c8d4-8119-431e-9ae8-5c70f5e64716
-    - clipgt-0caa8f1a-3c23-4520-98b2-28be9697fbf4
     - clipgt-0ce02937-f31b-4b4e-8286-3af73ae8861e
     - clipgt-0ce6f2a3-a6cf-42c3-9133-111139be1dd1
-    - clipgt-0cf6368d-ff81-4489-b01e-4103371ba12c
-    - clipgt-0d1fcd2c-ed47-4c72-b756-8e24bce0b9f4
-    - clipgt-0d4893f5-f575-4d98-b33f-0bdf3816bbed
-    - clipgt-0d59b8c8-3706-4e32-82ed-3f6e0cfb6840
-    - clipgt-0d76134f-350d-44b5-a694-208e9dab9600
-    - clipgt-0d79a6a0-4aa7-4eb1-aea1-31fd55bd71d7
-    - clipgt-0dbb91dd-8db1-4e10-b155-14fdf46218bc
-    - clipgt-0e002edd-c307-437c-9b97-6a1f6d28ac91
-    - clipgt-0e02fb8c-182a-41a6-a194-010bc7ef4f28
-    - clipgt-0e256b3c-e706-4d6c-ba17-751e4ab7f226
-    - clipgt-0e899dd3-e544-4a30-a689-f00d08ba5770
-    - clipgt-0f1f60d5-785b-4a47-8436-7046ad1a3d21
     - clipgt-0fa7060f-1481-4ff3-977e-510285e2515d
     - clipgt-0fd06bc3-1899-4b45-9278-c5c018b3968d
     - clipgt-0fd2c051-f5e1-4416-9bb5-9b93d92f55fb
-    - clipgt-0feb3afa-28c0-4a48-b74c-636676892966
-    - clipgt-0fee0fbf-439e-4901-a2aa-66152468491d
-    - clipgt-1089758a-8d07-48f8-9e9d-49f9a6bd18bd
-    - clipgt-10d64934-74a5-40ce-b35e-6debe2cd3d9c
-    - clipgt-11336325-e0c8-49ab-9f34-0be03dd1b8e2
-    - clipgt-118a3400-83ce-4a64-98dd-f38f786be4b2
     - clipgt-11e62ffc-ebd9-448b-88ca-61796a5e5db6
     - clipgt-11fce928-d921-42fb-b202-29608242745a
     - clipgt-12449274-01ce-4d5e-b5f8-5fe675668dd0
-    - clipgt-127c4f85-a5db-4920-9813-7970dcd6ebdb
-    - clipgt-12855a41-ba51-42a7-b5d6-8d75ae7cfb5c
-    - clipgt-12a09194-85c2-4ecf-b665-9c5078bae240
-    - clipgt-1316f5fa-9b99-4979-90eb-1a8d56b32a73
-    - clipgt-13a9767e-35c2-4d91-bba1-4326fc018dfc
-    - clipgt-13d646af-4ff3-48e4-9a88-012a58eb6cd6
     - clipgt-13fb89b9-2196-4545-abb4-c3029d89fcbe
-    - clipgt-1492c7af-08ad-45a1-90d2-cd1519d844ae
     - clipgt-14a02b32-08ac-493f-b9b5-5367df0cc568
-    - clipgt-15d28b17-4484-4e58-a5a2-8d99c1422c41
     - clipgt-15dd433e-ff56-47b5-82c4-ea91f8f7443f
-    - clipgt-16195ead-b47b-40cd-b944-851c82ecc519
-    - clipgt-166fe701-83b5-473b-9f3f-a2401fec3c78
-    - clipgt-167f9d8c-812a-48d1-98b9-c9fd29feb860
-    - clipgt-16b83346-578c-437d-b51b-14784ffdf6c1
-    - clipgt-16db28cb-4a75-4216-b6c9-afd2d97c5f85
-    - clipgt-16fc3dfe-41bd-4199-86e9-69188de13312
-    - clipgt-17a28ca0-d124-468c-bea3-6f2e75f23734
-    - clipgt-187e6244-f541-48ed-8372-62d6da8b547a
-    - clipgt-18d28973-336c-430e-be57-49f6b56fd827
-    - clipgt-18f8dbd6-6fe7-401c-9943-10404407e112
     - clipgt-1920170b-0317-4211-9b7c-1002c9925d7a
-    - clipgt-19f339ba-4f3a-4025-b774-4b271e639f2a
-    - clipgt-1a050ead-6fcd-4676-ac5a-2355300a909c
     - clipgt-1a5da90a-b970-412c-b97a-a1111119b456
-    - clipgt-1a7b81b8-9bca-4385-a591-64f74eb59db2
-    - clipgt-1aac210f-756a-4093-b5c6-6d522d7e99b0
-    - clipgt-1acf2f5d-f674-408f-ba18-6aacb4f4c739
-    - clipgt-1b45d8e1-d2fd-4c7c-8440-c7ddb15ea152
-    - clipgt-1b7d131a-7007-4b60-a1f0-a5f4a326c776
-    - clipgt-1ba6bd49-8153-48f9-8427-4241f95b00fb
-    - clipgt-1bbe02fc-9785-48a6-9fa2-026b42c99654
-    - clipgt-1bc5e591-0f30-4d73-a7e9-fa04fa160530
-    - clipgt-1bccdc21-6e9c-425a-a0a1-392e2353f2b3
-    - clipgt-1be86721-4f0e-4237-909d-1bc33ca56f5d
-    - clipgt-1be9be8f-d443-4f2d-924d-f96d280f0c81
     - clipgt-1bfd39ec-e09c-41fd-94e7-5fa70aac3a47
-    - clipgt-1c0c89e4-807f-4a5e-ac16-c52ef00dd313
-    - clipgt-1c45ce3a-0960-4e08-88ed-6cfc008ad02a
+    - clipgt-1c841180-ba2a-41f0-836b-650e535d8741
+    - clipgt-1d205d02-7180-40c0-8242-22e57ad977d7
+    - clipgt-1ef4e5bc-ea88-4cf0-9b07-d0dffdaed145
+    - clipgt-21829be5-61af-4627-8758-7170324a3236
+    - clipgt-225eb8de-bf61-4fa9-b4b1-1f749cf8b57f
+    - clipgt-22a92557-7661-4a06-9854-b0a7f17d5c84
+    - clipgt-23f7c59c-bdb4-4359-a1f5-05ca0aac824b
+    - clipgt-24e426ed-e651-4278-b4ea-7a4b90d80edd
+    - clipgt-26344d44-4751-4446-a31d-e982c4629eb4
+    - clipgt-2854bbf0-3dac-431a-9e48-4c26ebcd1c77
+    - clipgt-2b4b2e84-cff4-4697-a4b5-ccb706f69438
+    - clipgt-2bcf87fb-e50e-46fd-b221-01caecb2145e
+    - clipgt-2c9a4206-432a-45f6-8507-98a8648621ca
+    - clipgt-2ce64e22-57fe-4d5f-a0ea-2d1825b01ea9
+    - clipgt-3080d0eb-830c-4035-a7a4-393ae04556c1
+    - clipgt-317fbc5f-bffa-4c17-b143-f214d9453d8d
+    - clipgt-34226720-8869-4f9b-ac91-76bdc4f80afc
+    - clipgt-34f76732-139a-467b-a4f5-4d881add96a8
+    - clipgt-36626308-fe08-4180-abc6-76ef1fa1cb39
+    - clipgt-37113280-a033-4be4-afdd-cb199299e028
+    - clipgt-3948d3e6-fc32-4a96-a590-7c6db2470a06
+    - clipgt-39875322-9804-49ef-afe2-93719b034d37
+    - clipgt-3cd82dee-d715-4152-a696-f49bc0e98dfd
+    - clipgt-41424eff-22b8-4b7d-8cc9-3197c3dc2825
+    - clipgt-4530d50a-8c39-4929-b55d-ea657d5e863d
+    - clipgt-45727fa6-6f3b-4a4c-a7d2-0e1d35328a7a
+    - clipgt-4627a337-8422-47af-a6db-d69cf7c155fb
+    - clipgt-4832dde8-363e-4f96-98b2-f299ddc5478e
+    - clipgt-48a50c2a-ab84-4249-aa38-d983b3466e64
+    - clipgt-497bf4e1-dfc1-44f2-b112-93c3f24542cf
+    - clipgt-49b58a05-9a02-4dba-b958-a484386c5dc2
+    - clipgt-4a495c2d-2bec-4591-a304-09ab964538ef
+    - clipgt-4ccb410f-907e-47d9-897c-56db0a8c5f71
+    - clipgt-518b91d7-c8d7-4863-92b8-c59caa8128ad
+    - clipgt-55b7be99-88a0-41b7-b46b-e96509c2d38c
+    - clipgt-593e97fb-eaba-497a-9e1a-cc29460900e9
+    - clipgt-5ab1d9cb-778a-46d5-b89f-720b6f185457
+    - clipgt-5ac1a321-a0cc-414e-95c1-1463a9fcc957
+    - clipgt-5b39ea08-21a5-4427-8ab3-8038c45f4458
+    - clipgt-5c4a277a-dfc2-46de-828a-e80eb658f68e
+    - clipgt-5dde348a-e6d1-4b78-bbea-f60a963a277f
+    - clipgt-5eee2b9e-513e-4514-b639-980326ba2b2e
+    - clipgt-5f064b02-2066-4dc4-a04b-b4386ff80c84
+    - clipgt-601c88bb-a638-4b9a-9274-0020e5d92dd4
+    - clipgt-61fb78e2-4034-4ace-ab87-accc23b0ba7a
+    - clipgt-632d7f35-cdc1-4c54-80cf-c68012fa5f45
+    - clipgt-63ca82ed-e867-4cc8-9587-847a34f29c59
+    - clipgt-6404193c-f3a9-4172-8852-d6b157d2dd1a
+    - clipgt-66291265-ce4e-4859-80b7-d4f3dd85a970
+    - clipgt-6ab146ad-75c6-4cd2-b7ac-4a306dcb01f5
+    - clipgt-6d268a11-8a3b-4cfe-ac96-ffcb3e543e64
+    - clipgt-6dab4ce7-1dda-4a3c-8692-b92c50ee69c0
+    - clipgt-6dd0b533-cb90-43c4-838e-518e84487751
+    - clipgt-6e190b33-73c2-4958-8448-db999b871a78
+    - clipgt-6ee9ee78-cb61-4a1c-a45f-2d808f311c7f
+    - clipgt-6f34d20b-4c3d-48e7-b7bd-e29208915358
+    - clipgt-6f3be572-0c6a-407c-b9fa-136cce998e3c
+    - clipgt-70d535f2-bd5e-4028-af69-b1c1c0b41602
+    - clipgt-71473118-103d-481e-8752-f6f27ffc9fa2
+    - clipgt-7171354f-dced-498b-a50a-545c053c7b0e
+    - clipgt-734f6aa3-f1db-4eae-abed-21a1773335aa
+    - clipgt-75ad98a4-a2de-4eb8-be40-dadfa0d10351
+    - clipgt-764c8a4a-bddc-4e3c-9df4-0941982efeba
+    - clipgt-76c2bb81-6435-44e9-859a-2033ca05173b
+    - clipgt-7747986c-9aae-450d-b10c-b7c42b882c68
+    - clipgt-77a1c037-1ade-4326-b5de-9eb9d49263b7
+    - clipgt-7a4272ec-f67d-4c51-835c-357a3395efcb
+    - clipgt-7a824ffa-5404-478b-8f20-667d342cbc69
+    - clipgt-7b403b05-e309-4dfd-b1be-4fa98fb3c3fa
+    - clipgt-8023dce5-c512-43b2-a946-45fa7c19ef9d
+    - clipgt-82f505c9-6a41-4984-b72e-1d71254c4bd9
+    - clipgt-844c717f-dea4-4f72-86cf-92752eceebe5
+    - clipgt-85461521-d2ea-4880-b348-c6c4c42c5acb
+    - clipgt-862841cb-413b-4be7-9544-bc20c41fe22e
+    - clipgt-8cf7348a-6353-4470-9cfc-31c00d332a6a
+    - clipgt-8e9691d4-0a0b-44bd-88c9-316ef126b10a
+    - clipgt-8f9ca4ab-5534-4c9c-8a6b-aa8f745bc7af
+    - clipgt-91f9b960-2988-4daf-ab6c-d43e6730a81e
+    - clipgt-92af888e-acdd-45e9-b8bb-06406f232300
+alpasim:
+  scenes_csv:
+    - data/scenes/sim_scenes_2602.csv

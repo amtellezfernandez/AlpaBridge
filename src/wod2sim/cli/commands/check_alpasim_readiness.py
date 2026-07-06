@@ -14,6 +14,7 @@ from wod2sim.cli.commands.run_alpasim_local_external import (
     _preflight_platform_compatibility,
     _preflight_scene_artifacts,
     _resolve_alpasim_root,
+    _scene_catalog_paths,
     _scene_ids,
     _validate_alpasim_checkout,
 )
@@ -58,6 +59,7 @@ def main() -> None:
     args = _parse_args()
     alpasim_root = _resolve_alpasim_root(args.alpasim_root)
     scene_ids = _scene_ids(args.scene_preset, args.scene_id)
+    scene_catalog_paths = _scene_catalog_paths(args.scene_preset, alpasim_root)
 
     _validate_alpasim_checkout(alpasim_root)
     _preflight_docker_access()
@@ -66,13 +68,18 @@ def main() -> None:
         _preflight_alpasim_base_image()
     _preflight_nvidia_container_runtime()
     if not args.skip_scene_artifacts:
-        _preflight_scene_artifacts(alpasim_root=alpasim_root, scene_ids=scene_ids)
+        _preflight_scene_artifacts(
+            alpasim_root=alpasim_root,
+            scene_ids=scene_ids,
+            scene_catalog_paths=scene_catalog_paths,
+        )
 
     token_state = "present" if os.environ.get("HF_TOKEN") else "not set"
     print("AlpaSim readiness: OK")
     print(f"  ALPASIM_ROOT: {alpasim_root}")
     print(f"  scene count: {len(scene_ids)}")
     print(f"  scene preset: {args.scene_preset}")
+    print(f"  scene catalogs: {', '.join(str(path) for path in scene_catalog_paths)}")
     print(f"  HF_TOKEN: {token_state}")
     print("  docker: accessible")
     print("  gpu runtime: accessible")

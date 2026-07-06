@@ -74,9 +74,39 @@ Recommended progression:
 | Workshop-scale | `front_camera_50scene_public2602` | Multi-scene failure taxonomy and baseline comparison. |
 | Stronger benchmark | `front_camera_100scene_public2602` | More credible aggregate rates and scenario diversity. |
 
-The 50/100-scene stages require a complete local AlpaSim scene cache or token
-access to the public scene artifacts. Public releases should publish compact
-JSON summaries, metric tables, hashes, and redistribution-cleared images only.
+The 50/100-scene stages require a metadata-valid local AlpaSim USDZ directory.
+Build it from the Hugging Face artifact revision before running:
+
+```bash
+HF_TOKEN=... wod2sim-build-local-cache \
+  --scene-preset front_camera_50scene_public2602 \
+  --alpasim-root /path/to/alpasim \
+  --local-usdz-dir /path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50
+```
+
+Then pass the directory to AlpaSim:
+
+```bash
+wod2sim-batch ... \
+  --scene-preset front_camera_50scene_public2602 \
+  --wizard-arg scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50
+```
+
+Execution roles:
+
+| Role | Minimum Capability |
+| --- | --- |
+| Reviewer | Run tests, dry reproduction plans, summaries, and audits without private assets. |
+| Cache builder | Download and validate public 26.02 USDZs with Hugging Face access and sufficient disk; GPU is not required. |
+| Closed-loop runner | Execute live AlpaSim batches on x86_64 Linux with Docker, NVIDIA GPU runtime, AlpaSim images, and cached scene artifacts. |
+| ARM/Linux host | Use for cache building or diagnostics; live sensorsim rollouts are blocked by default because the AlpaSim sensorsim image is amd64-only. |
+
+Set `WAYSPAN_ALLOW_UNSUPPORTED_ALPASIM_ARM=1` only for an intentional unsupported
+ARM rollout diagnostic.
+
+Public releases should publish compact JSON summaries, metric tables, hashes,
+and redistribution-cleared images only. Do not publish raw USDZ assets, rollout
+videos, or support bundles containing gated content.
 
 Current tracked pilot evidence:
 

@@ -193,6 +193,8 @@ def _scene_command(args: argparse.Namespace, *, scene_id: str, run_dir: Path) ->
         args.mode,
         "--model",
         args.model,
+        "--scene-preset",
+        args.scene_preset,
         "--scene-id",
         scene_id,
         "--run-dir",

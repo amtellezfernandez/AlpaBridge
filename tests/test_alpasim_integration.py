@@ -68,6 +68,10 @@ class AlpaSimIntegrationTests(unittest.TestCase):
             "wod2sim.simulator.alpasim_configs",
         )
         self.assertEqual(
+            pyproject["project.scripts"]["wod2sim-build-local-cache"],
+            "wod2sim.cli.commands.build_alpasim_local_usdz_cache:main",
+        )
+        self.assertEqual(
             pyproject["project.scripts"]["wod2sim-build-oracle-proxy"],
             "wod2sim.cli.commands.build_alpasim_oracle_actor_proxy:main",
         )

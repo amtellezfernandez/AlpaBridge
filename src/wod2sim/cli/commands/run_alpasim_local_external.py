@@ -386,12 +386,17 @@ def main() -> None:
         raise SystemExit(f"AlpaSim wizard binary not found: {alpasim_wizard}")
 
     scene_ids = _scene_ids(args.scene_preset, args.scene_id)
+    scene_catalog_paths = _scene_catalog_paths(args.scene_preset, alpasim_root)
     _preflight_platform_compatibility()
     if args.mode != "print":
         _preflight_docker_access()
         _preflight_alpasim_base_image()
         _preflight_nvidia_container_runtime()
-        _preflight_scene_artifacts(alpasim_root=alpasim_root, scene_ids=scene_ids)
+        _preflight_scene_artifacts(
+            alpasim_root=alpasim_root,
+            scene_ids=scene_ids,
+            scene_catalog_paths=scene_catalog_paths,
+        )
     run_dir = _resolve_run_dir(args)
     _prepare_run_dir(run_dir, allow_existing=args.allow_existing_run_dir)
 
@@ -438,6 +443,7 @@ def main() -> None:
         timeout=args.timeout,
         topology=args.topology,
         dry_run=args.wizard_dry_run,
+        scene_catalog_paths=scene_catalog_paths,
         extra_args=args.wizard_arg,
     )
 
@@ -445,6 +451,7 @@ def main() -> None:
         "model": args.model,
         "scene_preset": args.scene_preset,
         "scene_ids": scene_ids,
+        "scene_catalog_paths": [str(path) for path in scene_catalog_paths],
         "port": args.port,
         "baseport": args.baseport,
         "timeout": args.timeout,
@@ -552,14 +559,41 @@ def main() -> None:
 def _scene_ids(scene_preset: str, explicit_scene_ids: list[str]) -> list[str]:
     if explicit_scene_ids:
         return explicit_scene_ids
+    payload = _scene_preset_payload(scene_preset)
+    scene_ids = payload.get("scenes", {}).get("scene_ids", [])
+    if not scene_ids:
+        raise SystemExit(f"No scene_ids found in {SCENE_PRESETS[scene_preset]}")
+    return [str(scene_id) for scene_id in scene_ids]
+
+
+def _scene_preset_payload(scene_preset: str) -> dict[str, object]:
     preset_path = SCENE_PRESETS[scene_preset]
     if not preset_path.is_file():
         raise SystemExit(f"Scene preset file not found: {preset_path}")
-    payload = yaml.safe_load(preset_path.read_text())
-    scene_ids = payload.get("scenes", {}).get("scene_ids", [])
-    if not scene_ids:
-        raise SystemExit(f"No scene_ids found in {preset_path}")
-    return [str(scene_id) for scene_id in scene_ids]
+    payload = yaml.safe_load(preset_path.read_text()) or {}
+    if not isinstance(payload, dict):
+        raise SystemExit(f"Scene preset must be a YAML mapping: {preset_path}")
+    return payload
+
+
+def _scene_catalog_paths(scene_preset: str, alpasim_root: Path) -> list[Path]:
+    payload = _scene_preset_payload(scene_preset)
+    alpasim_payload = payload.get("alpasim", {})
+    if not isinstance(alpasim_payload, dict):
+        raise SystemExit(f"Invalid alpasim metadata in {SCENE_PRESETS[scene_preset]}")
+    scenes_csv = alpasim_payload.get("scenes_csv", [])
+    if not scenes_csv:
+        return [alpasim_root / "data" / "scenes" / "sim_scenes.csv"]
+    if not isinstance(scenes_csv, list):
+        raise SystemExit(f"alpasim.scenes_csv must be a list in {SCENE_PRESETS[scene_preset]}")
+
+    catalog_paths: list[Path] = []
+    for catalog in scenes_csv:
+        catalog_path = Path(str(catalog))
+        if not catalog_path.is_absolute():
+            catalog_path = alpasim_root / catalog_path
+        catalog_paths.append(catalog_path)
+    return catalog_paths
 
 
 def _resolve_alpasim_root(cli_value: Path | None) -> Path:
@@ -604,23 +638,35 @@ def _resolve_run_dir(args: argparse.Namespace) -> Path:
     return (args.runs_root.resolve() / f"alpasim_{args.model}_{args.scene_preset}_{stamp}")
 
 
-def _preflight_scene_artifacts(*, alpasim_root: Path, scene_ids: list[str]) -> None:
-    scene_catalog = alpasim_root / "data" / "scenes" / "sim_scenes.csv"
-    if not scene_catalog.is_file():
+def _preflight_scene_artifacts(
+    *,
+    alpasim_root: Path,
+    scene_ids: list[str],
+    scene_catalog_paths: list[Path] | None = None,
+) -> None:
+    catalog_paths = scene_catalog_paths or [alpasim_root / "data" / "scenes" / "sim_scenes.csv"]
+    scene_rows: dict[str, dict[str, str]] = {}
+    existing_catalogs = [catalog_path for catalog_path in catalog_paths if catalog_path.is_file()]
+    if not existing_catalogs:
+        if scene_catalog_paths is not None:
+            raise SystemExit(
+                "AlpaSim scene catalog files are missing: "
+                f"{', '.join(str(path) for path in catalog_paths)}"
+            )
         return
 
-    scene_rows: dict[str, dict[str, str]] = {}
-    with scene_catalog.open(newline="", encoding="utf-8") as handle:
-        for row in csv.DictReader(handle):
-            scene_id = str(row.get("scene_id", "")).strip()
-            if scene_id:
-                scene_rows[scene_id] = row
+    for scene_catalog in existing_catalogs:
+        with scene_catalog.open(newline="", encoding="utf-8") as handle:
+            for row in csv.DictReader(handle):
+                scene_id = str(row.get("scene_id", "")).strip()
+                if scene_id:
+                    scene_rows[scene_id] = row
 
     missing_catalog = [scene_id for scene_id in scene_ids if scene_id not in scene_rows]
     if missing_catalog:
         raise SystemExit(
-            "Scene IDs not found in AlpaSim scene catalog "
-            f"{scene_catalog}: {', '.join(missing_catalog)}"
+            "Scene IDs not found in AlpaSim scene catalogs "
+            f"{', '.join(str(path) for path in catalog_paths)}: {', '.join(missing_catalog)}"
         )
 
     if os.getenv("HF_TOKEN", "").strip():
@@ -878,6 +924,7 @@ def _wizard_command(
     timeout: int,
     topology: str,
     dry_run: bool,
+    scene_catalog_paths: list[Path] | None = None,
     extra_args: list[str] | None = None,
 ) -> list[str]:
     cmd = [
@@ -892,6 +939,8 @@ def _wizard_command(
         f"wizard.dry_run={'true' if dry_run else 'false'}",
         f"scenes.scene_ids={json.dumps(scene_ids)}",
     ]
+    if scene_catalog_paths:
+        cmd.append(f"scenes.scenes_csv={json.dumps([str(path) for path in scene_catalog_paths])}")
     if extra_args:
         cmd.extend(extra_args)
     return cmd

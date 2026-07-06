@@ -35,6 +35,7 @@ from wod2sim.cli.commands.run_alpasim_local_external import (
     _preflight_docker_access,
     _preflight_platform_compatibility,
     _preflight_scene_artifacts,
+    _scene_catalog_paths,
     _scene_ids,
     _wizard_command,
     _wizard_deploy_target,
@@ -208,6 +209,53 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
             with patch.dict(os.environ, {}, clear=True):
                 _preflight_scene_artifacts(alpasim_root=root, scene_ids=["scene-1"])
 
+    def test_scene_catalog_paths_can_use_public_2602_catalog(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            alpasim_root = Path(tmp) / "alpasim"
+
+            paths = _scene_catalog_paths("front_camera_50scene_public2602", alpasim_root)
+
+        self.assertEqual([alpasim_root / "data" / "scenes" / "sim_scenes_2602.csv"], paths)
+
+    def test_preflight_uses_requested_scene_catalog(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "alpasim"
+            scenes_dir = root / "data" / "scenes"
+            all_usdzs_dir = root / "data" / "nre-artifacts" / "all-usdzs"
+            scenes_dir.mkdir(parents=True)
+            all_usdzs_dir.mkdir(parents=True)
+            (scenes_dir / "sim_scenes.csv").write_text(
+                "uuid,scene_id,nre_version_string,path,last_modified,artifact_repository,hf_revision\n"
+                "old-uuid,scene-2602,25.7.9,ignored,ignored,huggingface,25.07\n",
+                encoding="utf-8",
+            )
+            (scenes_dir / "sim_scenes_2602.csv").write_text(
+                "uuid,scene_id,nre_version_string,path,last_modified,artifact_repository,hf_revision\n"
+                "new-uuid,scene-2602,26.1.112,ignored,ignored,huggingface,26.02\n",
+                encoding="utf-8",
+            )
+            (all_usdzs_dir / "new-uuid.usdz").write_text("stub", encoding="utf-8")
+
+            with patch.dict(os.environ, {}, clear=True):
+                _preflight_scene_artifacts(
+                    alpasim_root=root,
+                    scene_ids=["scene-2602"],
+                    scene_catalog_paths=[scenes_dir / "sim_scenes_2602.csv"],
+                )
+
+    def test_preflight_rejects_missing_requested_catalog(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "alpasim"
+
+            with self.assertRaises(SystemExit) as ctx:
+                _preflight_scene_artifacts(
+                    alpasim_root=root,
+                    scene_ids=["scene-1"],
+                    scene_catalog_paths=[root / "data" / "scenes" / "missing.csv"],
+                )
+
+        self.assertIn("scene catalog files are missing", str(ctx.exception))
+
     def test_preflight_docker_access_rejects_socket_permission_denied(self) -> None:
         denied = subprocess.CompletedProcess(
             ["docker", "info"],
@@ -359,6 +407,23 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
         self.assertEqual("planned", status["phase"])
         self.assertEqual("missing", status["aggregate_status"])
         self.assertEqual("/tmp/run/driver.stdout.log", status["driver_stdout_log"])
+
+    def test_wizard_command_includes_scene_catalog_override(self) -> None:
+        command = _wizard_command(
+            alpasim_wizard=Path("/tmp/alpasim/.venv/bin/alpasim_wizard"),
+            wizard_driver="spotlight_reflex",
+            deploy_target="deploy.local",
+            run_dir=Path("/tmp/run"),
+            scene_ids=["scene-1"],
+            baseport=6000,
+            port=6789,
+            timeout=900,
+            topology="1gpu",
+            dry_run=False,
+            scene_catalog_paths=[Path("/tmp/alpasim/data/scenes/sim_scenes_2602.csv")],
+        )
+
+        self.assertIn('scenes.scenes_csv=["/tmp/alpasim/data/scenes/sim_scenes_2602.csv"]', command)
 
     def test_complete_run_status_writes_lifecycle_result(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

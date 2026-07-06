@@ -195,6 +195,7 @@ def run_release_bootstrap_smoke(*, source_root: Path, keep_temp: bool, installer
         ("launch_help", [str(venv_bin / "wod2sim-launch"), "--help"]),
         ("setup_help", [str(venv_bin / "wod2sim-setup"), "--help"]),
         ("ready_help", [str(venv_bin / "wod2sim-ready"), "--help"]),
+        ("local_cache_help", [str(venv_bin / "wod2sim-build-local-cache"), "--help"]),
         ("oracle_proxy_help", [str(venv_bin / "wod2sim-build-oracle-proxy"), "--help"]),
         ("audit_run_help", [str(venv_bin / "wod2sim-audit-run"), "--help"]),
         ("support_bundle_help", [str(venv_bin / "wod2sim-support-bundle"), "--help"]),

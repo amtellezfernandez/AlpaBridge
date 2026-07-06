@@ -13,6 +13,7 @@ from wod2sim.cli.commands.check_alpasim_readiness import (
     _preflight_nvidia_container_runtime,
     _preflight_platform_compatibility,
     _preflight_scene_artifacts,
+    _scene_catalog_paths,
     _scene_ids,
     _validate_alpasim_checkout,
 )
@@ -29,6 +30,7 @@ EXPECTED_CONSOLE_SCRIPTS = (
     "wod2sim-ready",
     "wod2sim-launch",
     "wod2sim-batch",
+    "wod2sim-build-local-cache",
     "wod2sim-build-oracle-proxy",
     "wod2sim-audit-signal",
     "wod2sim-audit-run",
@@ -44,6 +46,7 @@ EXPECTED_WRAPPERS = {
     "wod2sim-ready": "scripts/check_alpasim_readiness.py",
     "wod2sim-launch": "scripts/run_alpasim_local_external.py",
     "wod2sim-batch": "scripts/run_alpasim_scene_batch.py",
+    "wod2sim-build-local-cache": "scripts/build_alpasim_local_usdz_cache.py",
     "wod2sim-build-oracle-proxy": "scripts/build_alpasim_oracle_actor_proxy.py",
     "wod2sim-audit-signal": "scripts/audit_alpasignal_bridge.py",
     "wod2sim-audit-run": "scripts/audit_run.py",
@@ -202,6 +205,7 @@ def _build_environment_report(
     skip_scene_artifacts: bool,
 ) -> dict[str, object]:
     scene_ids = _scene_ids(scene_preset, explicit_scene_ids)
+    scene_catalog_paths = _scene_catalog_paths(scene_preset, alpasim_root)
     statuses: dict[str, str] = {}
     errors: dict[str, str] = {}
 
@@ -244,6 +248,7 @@ def _build_environment_report(
             _preflight_scene_artifacts,
             alpasim_root=alpasim_root,
             scene_ids=scene_ids,
+            scene_catalog_paths=scene_catalog_paths,
         )
         record("scene_artifacts", status, error)
 
@@ -253,6 +258,7 @@ def _build_environment_report(
         "alpasim_root": str(alpasim_root),
         "scene_preset": scene_preset,
         "scene_ids": scene_ids,
+        "scene_catalog_paths": [str(path) for path in scene_catalog_paths],
         "statuses": statuses,
         "errors": errors,
         "valid": valid,

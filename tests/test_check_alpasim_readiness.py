@@ -12,9 +12,15 @@ class CheckAlpaSimReadinessTests(unittest.TestCase):
     def test_readiness_script_calls_all_preflights(self) -> None:
         with patch.object(check_alpasim_readiness, "_resolve_alpasim_root", return_value=Path("/tmp/alpasim")), patch.object(
             check_alpasim_readiness, "_scene_ids", return_value=["scene-1", "scene-2"]
+        ), patch.object(
+            check_alpasim_readiness,
+            "_scene_catalog_paths",
+            return_value=[Path("/tmp/alpasim/data/scenes/sim_scenes.csv")],
         ), patch.object(check_alpasim_readiness, "_validate_alpasim_checkout") as validate, patch.object(
             check_alpasim_readiness, "_preflight_docker_access"
         ) as docker, patch.object(
+            check_alpasim_readiness, "_preflight_platform_compatibility"
+        ) as platform_check, patch.object(
             check_alpasim_readiness, "_preflight_nvidia_container_runtime"
         ) as gpu_runtime, patch.object(
             check_alpasim_readiness, "_preflight_alpasim_base_image"
@@ -31,14 +37,24 @@ class CheckAlpaSimReadinessTests(unittest.TestCase):
 
         validate.assert_called_once_with(Path("/tmp/alpasim"))
         docker.assert_called_once_with()
+        platform_check.assert_called_once_with()
         gpu_runtime.assert_called_once_with()
         image.assert_called_once_with()
-        artifacts.assert_called_once_with(alpasim_root=Path("/tmp/alpasim"), scene_ids=["scene-1", "scene-2"])
+        artifacts.assert_called_once_with(
+            alpasim_root=Path("/tmp/alpasim"),
+            scene_ids=["scene-1", "scene-2"],
+            scene_catalog_paths=[Path("/tmp/alpasim/data/scenes/sim_scenes.csv")],
+        )
         self.assertIn("AlpaSim readiness: OK", stdout.getvalue())
+        self.assertIn("scene catalogs: /tmp/alpasim/data/scenes/sim_scenes.csv", stdout.getvalue())
 
     def test_readiness_script_can_skip_optional_checks(self) -> None:
         with patch.object(check_alpasim_readiness, "_resolve_alpasim_root", return_value=Path("/tmp/alpasim")), patch.object(
             check_alpasim_readiness, "_scene_ids", return_value=["scene-1"]
+        ), patch.object(
+            check_alpasim_readiness,
+            "_scene_catalog_paths",
+            return_value=[Path("/tmp/alpasim/data/scenes/sim_scenes.csv")],
         ), patch.object(check_alpasim_readiness, "_validate_alpasim_checkout"), patch.object(
             check_alpasim_readiness, "_preflight_docker_access"
         ), patch.object(

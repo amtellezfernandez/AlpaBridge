@@ -32,6 +32,7 @@ dev = [
     "ruff>=0.6",
 ]
 alpasim = [
+    "huggingface_hub>=0.30",
     "pyarrow>=16",
 ]
 viz = ["Pillow>=10"]
@@ -50,6 +51,7 @@ wod2sim-setup = "wod2sim.cli.commands.setup_alpasim_local_plugin:main"
 wod2sim-ready = "wod2sim.cli.commands.check_alpasim_readiness:main"
 wod2sim-launch = "wod2sim.cli.commands.run_alpasim_local_external:main"
 wod2sim-batch = "wod2sim.cli.commands.run_alpasim_scene_batch:main"
+wod2sim-build-local-cache = "wod2sim.cli.commands.build_alpasim_local_usdz_cache:main"
 wod2sim-build-oracle-proxy = "wod2sim.cli.commands.build_alpasim_oracle_actor_proxy:main"
 wod2sim-audit-signal = "wod2sim.cli.commands.audit_alpasignal_bridge:main"
 wod2sim-audit-run = "wod2sim.cli.commands.audit_run:main"

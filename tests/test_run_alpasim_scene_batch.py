@@ -66,6 +66,7 @@ class RunAlpaSimSceneBatchTests(unittest.TestCase):
             python="python",
             mode="both",
             model="token_dagger_iter2_hybrid_clamped",
+            scene_preset="front_camera_50scene_public2602",
             baseport=6000,
             port=6789,
             timeout=900,
@@ -93,6 +94,8 @@ class RunAlpaSimSceneBatchTests(unittest.TestCase):
         )
         self.assertIn("--scene-id", command)
         self.assertIn("clipgt-scene-1", command)
+        self.assertIn("--scene-preset", command)
+        self.assertEqual("front_camera_50scene_public2602", command[command.index("--scene-preset") + 1])
         self.assertIn("--allow-existing-run-dir", command)
         self.assertIn("--wizard-arg", command)
         self.assertEqual("wizard.timeout=1200", command[-1])
@@ -104,6 +107,7 @@ class RunAlpaSimSceneBatchTests(unittest.TestCase):
             python="python",
             mode="both",
             model="token_dagger_iter2_axis_constrained_oracle_actor_clamped",
+            scene_preset="front_camera_50scene_public2602",
             baseport=6000,
             port=6789,
             timeout=900,
