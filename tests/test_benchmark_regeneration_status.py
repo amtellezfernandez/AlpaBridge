@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+import importlib
 import json
+import sys
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 STATUS_RELATIVE = Path("docs/evidence/benchmark_regeneration_status_20260706.json")
@@ -108,6 +112,51 @@ def test_status_links_current_public_evidence_chain() -> None:
     assert audit["readiness_artifact"] == READINESS_RELATIVE.as_posix()
     assert audit["valid"] is True
     assert audit["claim_ready"] is False
+
+
+def test_status_generator_rebuilds_tracked_public_state() -> None:
+    module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_status")
+
+    status = module.build_status(repo_root=ROOT, created_at="2026-07-06")
+    tracked = _read_json(ROOT / STATUS_RELATIVE)
+
+    assert status["schema"] == tracked["schema"]
+    assert status["created_at"] == "2026-07-06"
+    assert status["evidence_artifacts"] == tracked["evidence_artifacts"]
+    assert status["current_public_evidence"] == tracked["current_public_evidence"]
+    assert status["scale_status"] == tracked["scale_status"]
+    assert status["completion_status"] == tracked["completion_status"]
+    assert status["status_generator"]["command"] == "wod2sim-benchmark-status"
+    assert status["status_generator"]["no_download_or_rollout_probes"] is True
+
+
+def test_status_main_writes_json_without_runtime_probes() -> None:
+    module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_status")
+    with TemporaryDirectory() as tmpdir:
+        output = Path(tmpdir) / "status.json"
+
+        with patch.object(
+            sys,
+            "argv",
+            [
+                "wod2sim-benchmark-status",
+                "--repo-root",
+                str(ROOT),
+                "--created-at",
+                "2026-07-06",
+                "--output",
+                str(output),
+                "--json",
+            ],
+        ):
+            returncode = module.main()
+
+        payload = json.loads(output.read_text(encoding="utf-8"))
+
+    assert returncode == 0
+    assert payload["created_at"] == "2026-07-06"
+    assert payload["current_local_runtime_state"]["derived_from"] == READINESS_RELATIVE.as_posix()
+    assert "docker_containers" not in payload["current_local_runtime_state"]
 
 
 def _read_json(path: Path) -> dict[str, Any]:

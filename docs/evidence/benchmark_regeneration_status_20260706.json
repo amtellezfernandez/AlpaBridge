@@ -1,66 +1,87 @@
 {
-  "schema": "wod2sim_benchmark_regeneration_status_v1",
-  "created_at": "2026-07-06",
-  "source_commit_at_audit": "d492a43",
-  "objective": "Regenerate WOD2Sim closed-loop benchmark artifacts from scratch, validate 10-scene pilot, scale as feasible to 50/100 scenes, add needed public evidence/docs, and commit/push the results.",
-  "evidence_artifacts": {
-    "ten_scene_pilot": "docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json",
-    "regeneration_plan": "docs/evidence/benchmark_regeneration_plan_20260706.json",
-    "readiness_snapshot": "docs/evidence/benchmark_regeneration_readiness_20260706.json",
-    "claim_audit": "docs/evidence/benchmark_regeneration_audit_20260706.json"
+  "completion_status": {
+    "full_objective_complete": false,
+    "reason": "The repository tracks a valid 10-scene public summary plus a plan, readiness snapshot, and audit gate, but fresh regenerated claim-valid scale summaries are not currently present: docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json, docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json."
   },
-  "public_artifact_policy": {
-    "tracked": "Compact JSON summaries, documentation, commands, tests, and public-safe hashes/metrics.",
-    "untracked": "Raw AlpaSim media, support bundles, USDZ scene assets, Hugging Face caches, Docker layers, and gated scene-derived files."
+  "created_at": "2026-07-06",
+  "current_local_runtime_state": {
+    "all_scale_caches_valid": false,
+    "alpasim_base_image_present": false,
+    "claim_valid_scale_summaries_present": false,
+    "closed_loop_runner_supported": true,
+    "derived_from": "docs/evidence/benchmark_regeneration_readiness_20260706.json",
+    "disk_free_gib_at_readiness": 279.47,
+    "disk_meets_min_free_disk_gb": true,
+    "docker_daemon_ok": true,
+    "docker_nvidia_runtime_present": true,
+    "host_machine": "x86_64",
+    "nvidia_smi_ok": true
   },
   "current_public_evidence": {
     "ten_scene_pilot": {
       "artifact": "docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json",
-      "schema": "wod2sim_closed_loop_batch_summary_v1",
       "clean_closed_loop_batch": true,
-      "planned_scene_count": 10,
       "completed_scene_count": 10,
       "failed_scene_count": 0,
-      "sensor_failure_scene_count": 0,
-      "total_audited_frames": 1990,
       "failure_taxonomy": {
-        "collision_scene_count": 5,
         "at_fault_collision_scene_count": 2,
-        "wrong_lane_scene_count": 3,
-        "offroad_scene_count": 0,
+        "collision_scene_count": 5,
+        "high_plan_deviation_scene_count": 2,
         "low_progress_scene_count": 7,
-        "high_plan_deviation_scene_count": 2
+        "offroad_scene_count": 0,
+        "wrong_lane_scene_count": 3
       },
-      "status": "tracked_public_summary"
+      "planned_scene_count": 10,
+      "schema": "wod2sim_closed_loop_batch_summary_v1",
+      "sensor_failure_scene_count": 0,
+      "status": "tracked_public_summary",
+      "total_audited_frames": 1990
     }
   },
-  "current_local_runtime_state": {
-    "docker_containers": 0,
-    "docker_build_cache": "0B",
-    "alpasim_base_image_present": false,
-    "nre_sensorsim_image_present": false,
-    "local_public2602_usdz_cache_present": false,
-    "baseline_local_usdz_count": 10,
-    "disk_free_at_audit": "280G"
+  "evidence_artifacts": {
+    "claim_audit": "docs/evidence/benchmark_regeneration_audit_20260706.json",
+    "readiness_snapshot": "docs/evidence/benchmark_regeneration_readiness_20260706.json",
+    "regeneration_plan": "docs/evidence/benchmark_regeneration_plan_20260706.json",
+    "ten_scene_pilot": "docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json"
+  },
+  "objective": "Regenerate WOD2Sim closed-loop benchmark artifacts from scratch, validate 10-scene pilot evidence, scale to 50/100 scenes when runtime prerequisites are available, and track only public-safe artifacts.",
+  "public_artifact_policy": {
+    "tracked": "Compact JSON summaries, documentation, commands, tests, and public-safe hashes/metrics.",
+    "untracked": "Raw AlpaSim media, support bundles, USDZ scene assets, Hugging Face caches, Docker layers, and gated scene-derived files."
   },
   "scale_status": {
-    "front_camera_50scene_public2602": {
-      "preset_tracked": true,
-      "cache_builder_workflow_tracked": true,
-      "summary_artifact": "docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json",
-      "claim_valid_closed_loop_summary_tracked": false,
-      "remaining_runtime_requirement": "Rebuild the local 26.02 USDZ cache and rerun on an x86_64 AlpaSim runner with Docker/NVIDIA runtime images installed."
-    },
     "front_camera_100scene_public2602": {
-      "preset_tracked": true,
       "cache_builder_workflow_tracked": true,
-      "summary_artifact": "docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json",
       "claim_valid_closed_loop_summary_tracked": false,
-      "remaining_runtime_requirement": "Rebuild the local 26.02 USDZ cache and rerun on an x86_64 AlpaSim runner with Docker/NVIDIA runtime images installed."
+      "local_usdz_cache_valid": false,
+      "preset_tracked": true,
+      "remaining_runtime_requirement": "Rebuild the local 26.02 USDZ cache and rerun on an x86_64 AlpaSim runner with Docker/NVIDIA runtime images installed.",
+      "scene_count": 100,
+      "stage": "stronger_benchmark",
+      "summary_artifact": "docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json",
+      "summary_present": false
+    },
+    "front_camera_50scene_public2602": {
+      "cache_builder_workflow_tracked": true,
+      "claim_valid_closed_loop_summary_tracked": false,
+      "local_usdz_cache_valid": false,
+      "preset_tracked": true,
+      "remaining_runtime_requirement": "Rebuild the local 26.02 USDZ cache and rerun on an x86_64 AlpaSim runner with Docker/NVIDIA runtime images installed.",
+      "scene_count": 50,
+      "stage": "workshop_scale",
+      "summary_artifact": "docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json",
+      "summary_present": false
     }
   },
-  "completion_status": {
-    "full_objective_complete": false,
-    "reason": "The repository tracks a valid 10-scene public summary plus a plan, readiness snapshot, and audit gate for 50/100-scene scale-up, but fresh regenerated 50/100 closed-loop summaries are not currently present and the heavy local runtime assets were intentionally cleaned."
+  "schema": "wod2sim_benchmark_regeneration_status_v1",
+  "status_generator": {
+    "command": "wod2sim-benchmark-status",
+    "inputs": {
+      "claim_audit": "docs/evidence/benchmark_regeneration_audit_20260706.json",
+      "readiness_snapshot": "docs/evidence/benchmark_regeneration_readiness_20260706.json",
+      "regeneration_plan": "docs/evidence/benchmark_regeneration_plan_20260706.json",
+      "ten_scene_pilot": "docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json"
+    },
+    "no_download_or_rollout_probes": true
   }
 }

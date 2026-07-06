@@ -126,6 +126,9 @@ Current scale status:
 
 The current machine-readable regeneration status is tracked at
 [`docs/evidence/benchmark_regeneration_status_20260706.json`](evidence/benchmark_regeneration_status_20260706.json).
+Regenerate it from the tracked compact evidence chain with
+`wod2sim-benchmark-status`; the command does not probe Docker, GPUs, or local
+scene caches.
 The matching command-level rerun plan is tracked at
 [`docs/evidence/benchmark_regeneration_plan_20260706.json`](evidence/benchmark_regeneration_plan_20260706.json).
 The no-download/no-rollout host readiness snapshot is tracked at
