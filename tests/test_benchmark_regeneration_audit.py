@@ -27,7 +27,27 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         self.assertFalse(audit["claim_ready"])
         self.assertEqual(READINESS_RELATIVE.as_posix(), audit["readiness_artifact"])
         self.assertTrue(audit["readiness_consistency"]["valid"])
+        self.assertFalse(audit["regeneration_provenance"]["all_stage_sources_match_plan"])
+        self.assertEqual(
+            ["front_camera_10scene_smoke"],
+            audit["regeneration_provenance"]["present_stage_source_mismatches"],
+        )
         self.assertTrue(stages["front_camera_10scene_smoke"]["claim_valid"])
+        self.assertFalse(
+            stages["front_camera_10scene_smoke"]["summary_provenance"]["source_matches_plan"]
+        )
+        self.assertEqual(
+            "benchmark_spotlight_reflex_10scene",
+            stages["front_camera_10scene_smoke"]["summary_provenance"][
+                "expected_batch_dir_name"
+            ],
+        )
+        self.assertEqual(
+            "benchmark_spotlight_reflex_10scene_fresh",
+            stages["front_camera_10scene_smoke"]["summary_provenance"][
+                "observed_batch_dir_name"
+            ],
+        )
         self.assertFalse(stages["front_camera_50scene_public2602"]["claim_valid"])
         self.assertFalse(stages["front_camera_100scene_public2602"]["claim_valid"])
         self.assertIn(
@@ -100,7 +120,11 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
 
         self.assertTrue(audit["valid"])
         self.assertTrue(audit["claim_ready"])
+        self.assertFalse(audit["regeneration_provenance"]["all_stage_sources_match_plan"])
         self.assertEqual([], audit["missing_claim_valid_summaries"])
+        self.assertTrue(
+            stages["front_camera_10scene_smoke"]["summary_provenance"]["source_matches_plan"]
+        )
         self.assertFalse(
             stages["front_camera_50scene_public2602"]["merge_provenance"]["summary_is_merged"]
         )
@@ -144,12 +168,18 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             stages = {stage["scene_preset"]: stage for stage in audit["stages"]}
 
         self.assertTrue(audit["claim_ready"])
+        self.assertTrue(audit["regeneration_provenance"]["all_stage_sources_match_plan"])
         self.assertTrue(
             stages["front_camera_50scene_public2602"]["merge_provenance"]["summary_is_merged"]
         )
         self.assertTrue(
             stages["front_camera_50scene_public2602"]["merge_provenance"][
                 "input_summaries_match_plan"
+            ]
+        )
+        self.assertTrue(
+            stages["front_camera_50scene_public2602"]["summary_provenance"][
+                "source_matches_plan"
             ]
         )
 
@@ -179,6 +209,11 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         self.assertFalse(
             stages["front_camera_50scene_public2602"]["merge_provenance"][
                 "input_summaries_match_plan"
+            ]
+        )
+        self.assertFalse(
+            stages["front_camera_50scene_public2602"]["summary_provenance"][
+                "source_matches_plan"
             ]
         )
 
@@ -298,6 +333,12 @@ def _batch_summary(
             "failed_scene_count": 0,
             "sensor_failure_scene_count": 0,
             "total_audited_frames": scene_count * 199,
+        },
+        "created_at": "2026-07-06",
+        "source": {
+            "batch_dir_name": f"benchmark_spotlight_reflex_{scene_count}scene",
+            "batch_status": "batch-status.json",
+            "batch_manifest": "batch-manifest.json",
         },
     }
     if input_summaries is not None:

@@ -26,6 +26,17 @@
     "notes": [],
     "valid": true
   },
+  "regeneration_provenance": {
+    "all_stage_sources_match_plan": false,
+    "present_stage_source_mismatches": [
+      "front_camera_10scene_smoke"
+    ],
+    "source_mismatch_or_missing_stages": [
+      "front_camera_10scene_smoke",
+      "front_camera_50scene_public2602",
+      "front_camera_100scene_public2602"
+    ]
+  },
   "schema": "wod2sim_benchmark_regeneration_audit_v1",
   "stages": [
     {
@@ -43,6 +54,7 @@
       "observed": {
         "clean_closed_loop_batch": true,
         "completed_scene_count": 10,
+        "created_at": "2026-07-05T21:45:56",
         "failed_scene_count": 0,
         "planned_scene_count": 10,
         "schema": "wod2sim_closed_loop_batch_summary_v1",
@@ -52,7 +64,18 @@
       "scene_preset": "front_camera_10scene_smoke",
       "stage": "pilot",
       "summary_artifact": "docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json",
-      "summary_present": true
+      "summary_present": true,
+      "summary_provenance": {
+        "created_at": "2026-07-05T21:45:56",
+        "expected_batch_dir_name": "benchmark_spotlight_reflex_10scene",
+        "expected_summary_kind": "batch_directory_summary",
+        "notes": [
+          "summary batch directory does not match the regeneration plan"
+        ],
+        "observed_batch_dir_name": "benchmark_spotlight_reflex_10scene_fresh",
+        "observed_summary_kind": "batch_directory_summary",
+        "source_matches_plan": false
+      }
     },
     {
       "claim_valid": false,
@@ -77,6 +100,7 @@
       "observed": {
         "clean_closed_loop_batch": null,
         "completed_scene_count": null,
+        "created_at": null,
         "failed_scene_count": null,
         "planned_scene_count": null,
         "schema": null,
@@ -86,7 +110,18 @@
       "scene_preset": "front_camera_50scene_public2602",
       "stage": "workshop_scale",
       "summary_artifact": "docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json",
-      "summary_present": false
+      "summary_present": false,
+      "summary_provenance": {
+        "created_at": null,
+        "expected_batch_dir_name": "benchmark_spotlight_reflex_50scene",
+        "expected_summary_kind": "merged_batch_summaries",
+        "notes": [
+          "summary is not present"
+        ],
+        "observed_batch_dir_name": null,
+        "observed_summary_kind": null,
+        "source_matches_plan": false
+      }
     },
     {
       "claim_valid": false,
@@ -116,6 +151,7 @@
       "observed": {
         "clean_closed_loop_batch": null,
         "completed_scene_count": null,
+        "created_at": null,
         "failed_scene_count": null,
         "planned_scene_count": null,
         "schema": null,
@@ -125,7 +161,18 @@
       "scene_preset": "front_camera_100scene_public2602",
       "stage": "stronger_benchmark",
       "summary_artifact": "docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json",
-      "summary_present": false
+      "summary_present": false,
+      "summary_provenance": {
+        "created_at": null,
+        "expected_batch_dir_name": "benchmark_spotlight_reflex_100scene",
+        "expected_summary_kind": "merged_batch_summaries",
+        "notes": [
+          "summary is not present"
+        ],
+        "observed_batch_dir_name": null,
+        "observed_summary_kind": null,
+        "source_matches_plan": false
+      }
     }
   ],
   "status_artifact": "docs/evidence/benchmark_regeneration_status_20260706.json",

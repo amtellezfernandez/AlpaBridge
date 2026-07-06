@@ -107,6 +107,7 @@ def build_audit(
         readiness=readiness,
         stage_reports=stage_reports,
     )
+    regeneration_provenance = _regeneration_provenance(stage_reports)
     valid = input_valid and status_consistency["valid"] and readiness_consistency["valid"]
 
     return {
@@ -126,6 +127,7 @@ def build_audit(
         "missing_claim_valid_summaries": [
             stage["summary_artifact"] for stage in stage_reports if not stage["claim_valid"]
         ],
+        "regeneration_provenance": regeneration_provenance,
         "status_consistency": status_consistency,
         "readiness_consistency": readiness_consistency,
         "stages": stage_reports,
@@ -169,6 +171,12 @@ def _audit_stage(stage: dict[str, Any], *, repo_root: Path) -> dict[str, Any]:
             stage_errors.append("sensor_failure_scene_count_nonzero")
     merge_provenance = _merge_provenance(summary=summary, stage=stage)
     stage_errors.extend(merge_provenance["errors"])
+    summary_provenance = _summary_provenance(
+        summary=summary,
+        stage=stage,
+        summary_present=summary_present,
+        merge_provenance=merge_provenance,
+    )
 
     return {
         "stage": stage.get("stage"),
@@ -181,6 +189,7 @@ def _audit_stage(stage: dict[str, Any], *, repo_root: Path) -> dict[str, Any]:
         "observed": {
             "schema": summary.get("schema"),
             "clean_closed_loop_batch": summary.get("clean_closed_loop_batch"),
+            "created_at": summary.get("created_at"),
             "planned_scene_count": _optional_int(aggregate.get("planned_scene_count")),
             "completed_scene_count": _optional_int(aggregate.get("completed_scene_count")),
             "failed_scene_count": _optional_int(aggregate.get("failed_scene_count")),
@@ -190,6 +199,7 @@ def _audit_stage(stage: dict[str, Any], *, repo_root: Path) -> dict[str, Any]:
             "total_audited_frames": _optional_int(aggregate.get("total_audited_frames")),
         },
         "merge_provenance": merge_provenance,
+        "summary_provenance": summary_provenance,
     }
 
 
@@ -216,6 +226,86 @@ def _merge_provenance(*, summary: dict[str, Any], stage: dict[str, Any]) -> dict
         "input_summaries_match_plan": actual_inputs == expected_inputs if is_merged else None,
         "errors": errors,
     }
+
+
+def _summary_provenance(
+    *,
+    summary: dict[str, Any],
+    stage: dict[str, Any],
+    summary_present: bool,
+    merge_provenance: dict[str, Any],
+) -> dict[str, Any]:
+    source = _dict_or_empty(summary.get("source"))
+    expected_inputs = _list_or_empty(merge_provenance.get("expected_input_summaries"))
+    expected_summary_kind = "merged_batch_summaries" if expected_inputs else "batch_directory_summary"
+    observed_summary_kind = _observed_summary_kind(source=source)
+    expected_batch_dir_name = _path_name(stage.get("run_dir"))
+    observed_batch_dir_name = (
+        str(source.get("batch_dir_name")) if source.get("batch_dir_name") is not None else None
+    )
+    notes: list[str] = []
+
+    if not summary_present:
+        notes.append("summary is not present")
+        source_matches_plan = False
+    elif expected_summary_kind == "merged_batch_summaries":
+        source_matches_plan = bool(merge_provenance.get("input_summaries_match_plan"))
+        if not source_matches_plan:
+            notes.append("merged summary inputs do not match the regeneration plan")
+    else:
+        source_matches_plan = (
+            observed_summary_kind == "batch_directory_summary"
+            and observed_batch_dir_name == expected_batch_dir_name
+        )
+        if observed_summary_kind != "batch_directory_summary":
+            notes.append("summary source is not a direct batch-directory summary")
+        if observed_batch_dir_name != expected_batch_dir_name:
+            notes.append("summary batch directory does not match the regeneration plan")
+
+    return {
+        "expected_summary_kind": expected_summary_kind,
+        "observed_summary_kind": observed_summary_kind,
+        "expected_batch_dir_name": expected_batch_dir_name,
+        "observed_batch_dir_name": observed_batch_dir_name,
+        "created_at": summary.get("created_at"),
+        "source_matches_plan": source_matches_plan,
+        "notes": notes,
+    }
+
+
+def _regeneration_provenance(stage_reports: list[dict[str, Any]]) -> dict[str, Any]:
+    source_mismatch_or_missing_stages = [
+        str(stage.get("scene_preset") or stage.get("stage") or "")
+        for stage in stage_reports
+        if not _dict_or_empty(stage.get("summary_provenance")).get("source_matches_plan")
+    ]
+    present_stage_source_mismatches = [
+        str(stage.get("scene_preset") or stage.get("stage") or "")
+        for stage in stage_reports
+        if stage.get("summary_present")
+        and not _dict_or_empty(stage.get("summary_provenance")).get("source_matches_plan")
+    ]
+    return {
+        "all_stage_sources_match_plan": bool(stage_reports)
+        and not source_mismatch_or_missing_stages,
+        "source_mismatch_or_missing_stages": source_mismatch_or_missing_stages,
+        "present_stage_source_mismatches": present_stage_source_mismatches,
+    }
+
+
+def _observed_summary_kind(*, source: dict[str, Any]) -> str | None:
+    summary_kind = source.get("summary_kind")
+    if isinstance(summary_kind, str) and summary_kind:
+        return summary_kind
+    if source.get("batch_dir_name") is not None:
+        return "batch_directory_summary"
+    return None
+
+
+def _path_name(value: object) -> str | None:
+    if not isinstance(value, str) or not value:
+        return None
+    return Path(value).name
 
 
 def _merge_summary_inputs_from_command(command: dict[str, Any]) -> list[str]:
