@@ -123,3 +123,6 @@ Current scale status:
 | 10-scene pilot | Tracked as the compact public JSON above. Raw AlpaSim media, support bundles, and gated scene artifacts are intentionally untracked. |
 | 50-scene public 26.02 preset | Preset and cache-builder workflow are tracked. A claim-valid 50-scene closed-loop summary still requires rebuilding the local USDZ cache and executing on an x86_64 AlpaSim runner. |
 | 100-scene public 26.02 preset | Preset and cache-builder workflow are tracked. A claim-valid 100-scene closed-loop summary still requires the same cache/runtime prerequisites at larger scale. |
+
+The current machine-readable regeneration status is tracked at
+[`docs/evidence/benchmark_regeneration_status_20260706.json`](evidence/benchmark_regeneration_status_20260706.json).

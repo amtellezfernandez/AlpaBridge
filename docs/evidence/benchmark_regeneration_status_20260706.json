@@ -1,0 +1,58 @@
+{
+  "schema": "wod2sim_benchmark_regeneration_status_v1",
+  "created_at": "2026-07-06",
+  "source_commit_at_audit": "1442176",
+  "objective": "Regenerate WOD2Sim closed-loop benchmark artifacts from scratch, validate 10-scene pilot, scale as feasible to 50/100 scenes, add needed public evidence/docs, and commit/push the results.",
+  "public_artifact_policy": {
+    "tracked": "Compact JSON summaries, documentation, commands, tests, and public-safe hashes/metrics.",
+    "untracked": "Raw AlpaSim media, support bundles, USDZ scene assets, Hugging Face caches, Docker layers, and gated scene-derived files."
+  },
+  "current_public_evidence": {
+    "ten_scene_pilot": {
+      "artifact": "docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json",
+      "schema": "wod2sim_closed_loop_batch_summary_v1",
+      "clean_closed_loop_batch": true,
+      "planned_scene_count": 10,
+      "completed_scene_count": 10,
+      "failed_scene_count": 0,
+      "sensor_failure_scene_count": 0,
+      "total_audited_frames": 1990,
+      "failure_taxonomy": {
+        "collision_scene_count": 5,
+        "at_fault_collision_scene_count": 2,
+        "wrong_lane_scene_count": 3,
+        "offroad_scene_count": 0,
+        "low_progress_scene_count": 7,
+        "high_plan_deviation_scene_count": 2
+      },
+      "status": "tracked_public_summary"
+    }
+  },
+  "current_local_runtime_state": {
+    "docker_containers": 0,
+    "docker_build_cache": "0B",
+    "alpasim_base_image_present": false,
+    "nre_sensorsim_image_present": false,
+    "local_public2602_usdz_cache_present": false,
+    "baseline_local_usdz_count": 10,
+    "disk_free_at_audit": "280G"
+  },
+  "scale_status": {
+    "front_camera_50scene_public2602": {
+      "preset_tracked": true,
+      "cache_builder_workflow_tracked": true,
+      "claim_valid_closed_loop_summary_tracked": false,
+      "remaining_runtime_requirement": "Rebuild the local 26.02 USDZ cache and rerun on an x86_64 AlpaSim runner with Docker/NVIDIA runtime images installed."
+    },
+    "front_camera_100scene_public2602": {
+      "preset_tracked": true,
+      "cache_builder_workflow_tracked": true,
+      "claim_valid_closed_loop_summary_tracked": false,
+      "remaining_runtime_requirement": "Rebuild the local 26.02 USDZ cache and rerun on an x86_64 AlpaSim runner with Docker/NVIDIA runtime images installed."
+    }
+  },
+  "completion_status": {
+    "full_objective_complete": false,
+    "reason": "The repository tracks a valid 10-scene public summary and 50/100-scene cache workflow, but fresh regenerated 50/100 closed-loop summaries are not currently present and the heavy local runtime assets were intentionally cleaned."
+  }
+}
