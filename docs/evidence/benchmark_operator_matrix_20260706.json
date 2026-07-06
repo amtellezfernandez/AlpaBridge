@@ -28,7 +28,7 @@
     "public_review_command_count": 4,
     "row_count": 47
   },
-  "created_at": "2026-07-06T11:00:39",
+  "created_at": "2026-07-06T13:14:31",
   "current_local_state": {
     "all_scale_caches_valid": false,
     "all_scale_source_caches_valid": false,
@@ -96,19 +96,19 @@
         "claim_gap": {
           "blocking_requirements": [
             "hf_token_missing",
-            "front_camera_50scene_public2602_cache_invalid",
+            "free_disk_below_threshold",
             "front_camera_50scene_public2602_claim_summary_missing"
           ],
           "claim_valid": false,
           "local_usdz_cache": {
             "expected_scene_count": 50,
-            "matching_scene_count": 0,
-            "missing_scene_count": 50,
+            "matching_scene_count": 50,
+            "missing_scene_count": 0,
             "nonmatching_usdz_file_count": 0,
-            "present_scene_count": 0,
+            "present_scene_count": 50,
             "required": true,
-            "usdz_file_count": 0,
-            "valid": false
+            "usdz_file_count": 50,
+            "valid": true
           },
           "merge_input_progress": {
             "claim_valid_count": 0,
@@ -249,6 +249,7 @@
         "claim_gap": {
           "blocking_requirements": [
             "hf_token_missing",
+            "free_disk_below_threshold",
             "front_camera_100scene_public2602_cache_invalid",
             "front_camera_100scene_public2602_claim_summary_missing"
           ],
@@ -523,7 +524,6 @@
       ],
       "claim_scope": "Can produce the raw inputs for claim-valid scale summaries when prerequisites are ready.",
       "current_blocker_ids": [
-        "front_camera_50scene_public2602_cache_invalid",
         "front_camera_100scene_public2602_cache_invalid"
       ],
       "requires_gpu": true,
@@ -646,7 +646,7 @@
     ],
     "remaining_blocker_ids": [
       "hf_token_missing",
-      "front_camera_50scene_public2602_cache_invalid",
+      "free_disk_below_threshold",
       "front_camera_50scene_public2602_claim_summary_missing",
       "front_camera_100scene_public2602_cache_invalid",
       "front_camera_100scene_public2602_claim_summary_missing"
@@ -727,7 +727,6 @@
         "merge"
       ],
       "current_blocker_ids": [
-        "front_camera_50scene_public2602_cache_invalid",
         "front_camera_100scene_public2602_cache_invalid"
       ],
       "current_state": "blocked_in_tracked_state",
