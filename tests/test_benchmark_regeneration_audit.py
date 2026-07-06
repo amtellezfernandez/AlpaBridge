@@ -193,6 +193,69 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             },
             completion["next_command_renderer_groups"],
         )
+        scale_claim_gaps = {row["scene_preset"]: row for row in completion["scale_claim_gaps"]}
+        self.assertEqual(
+            {
+                "front_camera_50scene_public2602",
+                "front_camera_100scene_public2602",
+            },
+            set(scale_claim_gaps),
+        )
+        self.assertEqual(
+            50, scale_claim_gaps["front_camera_50scene_public2602"]["expected_scene_count"]
+        )
+        self.assertFalse(scale_claim_gaps["front_camera_50scene_public2602"]["claim_valid"])
+        self.assertFalse(
+            scale_claim_gaps["front_camera_50scene_public2602"]["public_summary_present"]
+        )
+        self.assertEqual(
+            ["summary_missing"],
+            scale_claim_gaps["front_camera_50scene_public2602"]["public_summary_errors"],
+        )
+        self.assertEqual(
+            {
+                "expected_scene_count": 50,
+                "matching_scene_count": 0,
+                "missing_scene_count": 50,
+                "nonmatching_usdz_file_count": 0,
+                "present_scene_count": 0,
+                "required": True,
+                "usdz_file_count": 0,
+                "valid": False,
+            },
+            scale_claim_gaps["front_camera_50scene_public2602"]["local_usdz_cache"],
+        )
+        self.assertEqual(
+            {
+                "expected_scene_count": 50,
+                "matching_scene_count": 0,
+                "missing_scene_count": 50,
+                "nonmatching_usdz_file_count": 10,
+                "present_scene_count": 0,
+                "required": True,
+                "usdz_file_count": 10,
+                "valid": False,
+            },
+            scale_claim_gaps["front_camera_50scene_public2602"]["source_usdz_cache"],
+        )
+        self.assertIn(
+            "front_camera_50scene_public2602_claim_summary_missing",
+            scale_claim_gaps["front_camera_50scene_public2602"]["blocking_requirements"],
+        )
+        self.assertIn(
+            "run_scale_shards_and_promote_summaries",
+            scale_claim_gaps["front_camera_50scene_public2602"]["next_command_groups"],
+        )
+        self.assertEqual(
+            100,
+            scale_claim_gaps["front_camera_100scene_public2602"]["expected_scene_count"],
+        )
+        self.assertEqual(
+            100,
+            scale_claim_gaps["front_camera_100scene_public2602"]["local_usdz_cache"][
+                "missing_scene_count"
+            ],
+        )
         requirements = {item["requirement"]: item for item in completion["requirements"]}
         self.assertTrue(requirements["validate_10_scene_pilot"]["satisfied"])
         self.assertTrue(requirements["track_50_scene_scale_progress"]["satisfied"])
@@ -286,6 +349,15 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         self.assertEqual([], audit["objective_completion"]["blocking_requirements"])
         self.assertEqual([], audit["objective_completion"]["next_command_groups"])
         self.assertEqual({}, audit["objective_completion"]["next_command_renderer_groups"])
+        self.assertTrue(
+            all(row["claim_valid"] for row in audit["objective_completion"]["scale_claim_gaps"])
+        )
+        self.assertTrue(
+            all(
+                row["local_usdz_cache"]["valid"]
+                for row in audit["objective_completion"]["scale_claim_gaps"]
+            )
+        )
         self.assertFalse(audit["regeneration_provenance"]["all_stage_sources_match_plan"])
         self.assertEqual([], audit["missing_claim_valid_summaries"])
         self.assertTrue(

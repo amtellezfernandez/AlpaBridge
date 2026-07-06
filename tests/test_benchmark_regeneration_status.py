@@ -210,6 +210,7 @@ def test_public_handoff_doc_tracks_current_claim_gate() -> None:
     assert "wod2sim-benchmark-commands --group shards" in handoff
     assert "valid=true" in handoff
     assert "claim_ready=false" in handoff
+    assert "`scale_claim_gaps`" in handoff
     assert "`next_command_renderer_groups`" in handoff
     assert "Do not commit raw USDZ assets" in handoff
 

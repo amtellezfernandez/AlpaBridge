@@ -205,4 +205,6 @@ remain missing. Unsatisfied rows include readiness blocker IDs and the command
 groups to run next. The same object also carries top-level
 `blocking_requirements`, `next_command_groups`, and
 `next_command_renderer_groups` fields for a compact machine-readable view of
-remaining work.
+remaining work. Its `scale_claim_gaps` rows summarize each 50/100 stage's
+local/source cache validity, missing summary state, blockers, and next command
+groups required before the strict claim gate can pass.

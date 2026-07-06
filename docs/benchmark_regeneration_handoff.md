@@ -124,7 +124,9 @@ remaining requirements limited to:
 The audit's `objective_completion` object also exposes the current
 `blocking_requirements`, `next_command_groups`, and `next_command_renderer_groups`
 summary so reviewers can map the remaining claim gaps back to the command
-renderer without executing private cache or rollout work.
+renderer without executing private cache or rollout work. Its `scale_claim_gaps`
+rows summarize each 50/100 stage's local/source cache validity, missing summary
+state, blockers, and next command groups.
 
 ## Promotion Boundary
 
