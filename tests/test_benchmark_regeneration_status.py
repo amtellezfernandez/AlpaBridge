@@ -169,6 +169,7 @@ def test_readme_links_current_regeneration_status() -> None:
     assert OPERATOR_MATRIX_RELATIVE.as_posix() in readme
     assert EVIDENCE_MANIFEST_RELATIVE.as_posix() in readme
     assert "Open-repo readers can review the compact JSON summaries" in readme
+    assert "`command_execution` counts" in readme
     assert "`execution_boundary_counts`" in readme
     assert "`private_execution_command_count`" in readme
     assert "`scale_status.<preset>.source_usdz_cache`" in readme
@@ -191,6 +192,7 @@ def test_public_handoff_doc_tracks_current_claim_gate() -> None:
     assert READINESS_RELATIVE.as_posix() in handoff
     assert OPERATOR_MATRIX_RELATIVE.as_posix() in handoff
     assert COMMANDS_RELATIVE.as_posix() in handoff
+    assert "command execution counts by role" in handoff
     assert "execution-boundary and operator-role counts" in handoff
     assert "`scale_status.<preset>.source_usdz_cache`" in handoff
     assert "`scale_status.<preset>.source_usdz_cache`" in evaluation_protocol

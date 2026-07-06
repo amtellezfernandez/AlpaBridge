@@ -199,6 +199,7 @@
   "operator_matrix": {
     "artifact": "docs/evidence/benchmark_operator_matrix_20260706.json",
     "checks": {
+      "operator_matrix_command_execution_matches_sources": true,
       "operator_matrix_current_local_state_matches_sources": true,
       "operator_matrix_expected_rebuilt": true,
       "operator_matrix_generator_is_non_runtime": true,
@@ -272,8 +273,8 @@
       "readiness",
       "shards"
     ],
-    "sha256": "b2e724f3c129d55969384d10d37c2828a7a8a473d0cb2ae771af25d97012db44",
-    "size_bytes": 9300,
+    "sha256": "b5c7e0090b2129ec9cff732d87506904f56053b153d99efcd4db77446ca63243",
+    "size_bytes": 9335,
     "valid": true
   },
   "readiness_artifact": "docs/evidence/benchmark_regeneration_readiness_20260706.json",

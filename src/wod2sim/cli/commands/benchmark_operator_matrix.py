@@ -78,10 +78,16 @@ def build_operator_matrix(
     next_command_groups = _list_of_dicts(readiness.get("next_command_groups"))
     current_runtime = _dict_or_empty(status.get("current_local_runtime_state"))
     evidence_artifacts = _dict_or_empty(status.get("evidence_artifacts"))
+    command_artifact_path = Path(str(evidence_artifacts.get("regeneration_commands") or ""))
+    command_artifact = _read_json(_resolve_path(repo_root, command_artifact_path))
     public_policy = _dict_or_empty(status.get("public_artifact_policy"))
     current_local_state = _current_local_state(
         readiness_flags=readiness_flags,
         current_runtime=current_runtime,
+    )
+    command_execution = _command_execution_summary(
+        command_artifact=command_artifact,
+        command_artifact_path=command_artifact_path,
     )
     roles = _roles(readiness_flags=readiness_flags, blockers=blockers)
     task_matrix = _task_matrix(
@@ -99,11 +105,13 @@ def build_operator_matrix(
             next_command_groups=next_command_groups,
             roles=roles,
             task_matrix=task_matrix,
+            command_execution=command_execution,
         ),
         "source_artifacts": {
             "plan": _display_path(plan_path),
             "status": _display_path(status_path),
             "readiness": _display_path(readiness_path),
+            "regeneration_commands": _display_path(command_artifact_path),
         },
         "generator": {
             "command": "wod2sim-benchmark-operators",
@@ -114,6 +122,7 @@ def build_operator_matrix(
             "untracked": public_policy.get("untracked"),
         },
         "current_local_state": current_local_state,
+        "command_execution": command_execution,
         "roles": roles,
         "task_matrix": task_matrix,
     }
@@ -323,6 +332,7 @@ def _matrix_summary(
     next_command_groups: list[dict[str, Any]],
     roles: list[dict[str, Any]],
     task_matrix: list[dict[str, Any]],
+    command_execution: dict[str, Any],
 ) -> dict[str, Any]:
     ready_roles = [
         str(role.get("role"))
@@ -366,6 +376,14 @@ def _matrix_summary(
             for group in next_command_groups
             if group.get("name")
         },
+        "command_execution_boundary_counts": _dict_or_empty(
+            command_execution.get("execution_boundary_counts")
+        ),
+        "command_operator_role_counts": _dict_or_empty(
+            command_execution.get("operator_role_counts")
+        ),
+        "public_review_command_count": command_execution.get("public_review_command_count"),
+        "private_execution_command_count": command_execution.get("private_execution_command_count"),
         "live_rollout_host_requirement": (
             "x86_64 Linux with Docker, NVIDIA runtime, AlpaSim images, "
             "valid local USDZ caches, and gated scene access"
@@ -373,6 +391,28 @@ def _matrix_summary(
         "public_claim_boundary": (
             "Open-repo reviewers can audit compact public evidence; new 50/100 "
             "closed-loop claims require completed full-stage summaries."
+        ),
+    }
+
+
+def _command_execution_summary(
+    *,
+    command_artifact: dict[str, Any],
+    command_artifact_path: Path,
+) -> dict[str, Any]:
+    return {
+        "artifact": _display_path(command_artifact_path),
+        "row_count": _optional_int(command_artifact.get("row_count")),
+        "group_counts": _dict_or_empty(command_artifact.get("group_counts")),
+        "execution_boundary_counts": _dict_or_empty(
+            command_artifact.get("execution_boundary_counts")
+        ),
+        "operator_role_counts": _dict_or_empty(command_artifact.get("operator_role_counts")),
+        "public_review_command_count": _optional_int(
+            command_artifact.get("public_review_command_count")
+        ),
+        "private_execution_command_count": _optional_int(
+            command_artifact.get("private_execution_command_count")
         ),
     }
 
@@ -420,6 +460,14 @@ def _list_of_dicts(value: object) -> list[dict[str, Any]]:
 
 def _list_or_empty(value: object) -> list[object]:
     return value if isinstance(value, list) else []
+
+
+def _optional_int(value: object) -> int | None:
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, int):
+        return value
+    return None
 
 
 def _print_human_summary(matrix: dict[str, Any]) -> None:

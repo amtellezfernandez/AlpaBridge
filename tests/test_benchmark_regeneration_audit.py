@@ -97,6 +97,9 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         self.assertTrue(
             audit["operator_matrix"]["checks"]["operator_matrix_summary_matches_sources"]
         )
+        self.assertTrue(
+            audit["operator_matrix"]["checks"]["operator_matrix_command_execution_matches_sources"]
+        )
         self.assertTrue(audit["operator_matrix"]["checks"]["operator_matrix_roles_matches_sources"])
         self.assertTrue(audit["public_handoff_doc"]["valid"])
         self.assertEqual(HANDOFF_RELATIVE.as_posix(), audit["public_handoff_doc"]["artifact"])
@@ -867,6 +870,30 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         )
         self.assertIn(
             "operator matrix roles does not match audited sources",
+            audit["operator_matrix"]["notes"],
+        )
+
+    def test_operator_matrix_command_execution_drift_invalidates_audit(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            evidence = repo_root / "docs" / "evidence"
+            evidence.mkdir(parents=True)
+            _copy_evidence_jsons(evidence)
+            operator_path = evidence / OPERATOR_MATRIX_RELATIVE.name
+            operator_matrix = _read_json(operator_path)
+            operator_matrix["command_execution"]["public_review_command_count"] = 0
+            _write_json(operator_path, operator_matrix)
+            _refresh_manifest_hash(evidence / MANIFEST_RELATIVE.name, OPERATOR_MATRIX_RELATIVE)
+
+            audit = module.build_audit(repo_root=repo_root, created_at="2026-07-06")
+
+        self.assertFalse(audit["valid"])
+        self.assertFalse(
+            audit["operator_matrix"]["checks"]["operator_matrix_command_execution_matches_sources"]
+        )
+        self.assertIn(
+            "operator matrix command_execution does not match audited sources",
             audit["operator_matrix"]["notes"],
         )
 

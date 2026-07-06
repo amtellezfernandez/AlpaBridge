@@ -12,6 +12,7 @@ PLAN_RELATIVE = Path("docs/evidence/benchmark_regeneration_plan_20260706.json")
 STATUS_RELATIVE = Path("docs/evidence/benchmark_regeneration_status_20260706.json")
 READINESS_RELATIVE = Path("docs/evidence/benchmark_regeneration_readiness_20260706.json")
 OPERATOR_MATRIX_RELATIVE = Path("docs/evidence/benchmark_operator_matrix_20260706.json")
+COMMANDS_RELATIVE = Path("docs/evidence/benchmark_regeneration_commands_20260706.json")
 
 
 def test_operator_matrix_builder_reflects_tracked_readiness_blockers() -> None:
@@ -29,9 +30,14 @@ def test_operator_matrix_builder_reflects_tracked_readiness_blockers() -> None:
     assert matrix["schema"] == "wod2sim_benchmark_operator_matrix_v1"
     assert matrix["created_at"] == "2026-07-06"
     assert matrix["source_artifacts"]["plan"] == (ROOT / PLAN_RELATIVE).as_posix()
+    assert matrix["source_artifacts"]["regeneration_commands"] == COMMANDS_RELATIVE.as_posix()
     assert matrix["generator"]["no_download_or_rollout_probes"] is True
     assert summary["open_repo_review_ready"] is True
     assert summary["claim_ready"] is False
+    assert summary["command_execution_boundary_counts"]["public_metadata_review"] == 3
+    assert summary["command_operator_role_counts"]["closed_loop_runner"] == 32
+    assert summary["private_execution_command_count"] == 43
+    assert summary["public_review_command_count"] == 3
     assert "open_repo_reviewer" in summary["ready_roles"]
     assert "closed_loop_runner" in summary["blocked_roles"]
     assert "build_and_validate_scale_caches" in summary["next_command_groups"]
@@ -96,6 +102,7 @@ def test_tracked_operator_matrix_is_public_safe_and_explicit_about_who_can_run()
 
     assert matrix["schema"] == "wod2sim_benchmark_operator_matrix_v1"
     assert matrix["source_artifacts"] == {
+        "regeneration_commands": COMMANDS_RELATIVE.as_posix(),
         "plan": PLAN_RELATIVE.as_posix(),
         "readiness": READINESS_RELATIVE.as_posix(),
         "status": STATUS_RELATIVE.as_posix(),
@@ -104,6 +111,34 @@ def test_tracked_operator_matrix_is_public_safe_and_explicit_about_who_can_run()
     assert "/home/" not in rendered
     assert summary["claim_ready"] is False
     assert summary["open_repo_review_ready"] is True
+    assert matrix["command_execution"] == {
+        "artifact": COMMANDS_RELATIVE.as_posix(),
+        "execution_boundary_counts": {
+            "claim_summary_merge": 2,
+            "claim_summary_promotion": 3,
+            "live_closed_loop_rollout": 32,
+            "private_cache_preparation": 6,
+            "public_metadata_review": 3,
+        },
+        "group_counts": {
+            "cache": 6,
+            "merge": 2,
+            "post": 2,
+            "promote": 3,
+            "readiness": 1,
+            "run": 2,
+            "shards": 30,
+        },
+        "operator_role_counts": {
+            "cache_builder": 6,
+            "claim_promoter": 5,
+            "closed_loop_runner": 32,
+            "open_repo_reviewer": 3,
+        },
+        "private_execution_command_count": 43,
+        "public_review_command_count": 3,
+        "row_count": 46,
+    }
     assert summary["ready_tasks"] == ["review_public_evidence"]
     assert summary["blocked_tasks"] == [
         "build_and_validate_26_02_usdz_cache",

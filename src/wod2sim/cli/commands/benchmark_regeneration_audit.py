@@ -1438,6 +1438,8 @@ def _operator_matrix_consistency(
         source_artifacts.get("plan") == _display_path(plan_path)
         and source_artifacts.get("status") == _display_path(status_path)
         and source_artifacts.get("readiness") == readiness_artifact
+        and source_artifacts.get("regeneration_commands")
+        == evidence_artifacts.get("regeneration_commands")
     )
     if not checks["operator_matrix_sources_match_audit"]:
         notes.append("operator matrix source_artifacts do not match audit inputs")
@@ -1463,6 +1465,7 @@ def _operator_matrix_consistency(
             "summary",
             "public_artifact_policy",
             "current_local_state",
+            "command_execution",
             "roles",
             "task_matrix",
         ):

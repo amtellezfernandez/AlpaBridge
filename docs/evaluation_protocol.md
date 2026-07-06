@@ -104,7 +104,10 @@ Execution roles:
 The machine-readable operator matrix is tracked at
 [`docs/evidence/benchmark_operator_matrix_20260706.json`](evidence/benchmark_operator_matrix_20260706.json).
 It is generated with `wod2sim-benchmark-operators` from the tracked plan,
-status, and readiness JSON without runtime probes.
+status, readiness JSON, and rendered command artifact without runtime probes.
+Its `command_execution` object mirrors command counts by execution boundary and
+operator role so reviewers can see which commands are public metadata review
+versus private cache, rollout, merge, or promotion work.
 
 Set `WAYSPAN_ALLOW_UNSUPPORTED_ALPASIM_ARM=1` only for an intentional unsupported
 ARM rollout diagnostic.
