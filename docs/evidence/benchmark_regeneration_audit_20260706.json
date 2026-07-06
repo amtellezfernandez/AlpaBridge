@@ -558,6 +558,46 @@
       "front_camera_100scene_public2602"
     ]
   },
+  "regeneration_resume_commands": {
+    "artifact": "docs/evidence/benchmark_regeneration_resume_commands_20260706.json",
+    "checks": {
+      "regeneration_resume_commands_boundary_totals_match": true,
+      "regeneration_resume_commands_execution_boundary_counts_match": true,
+      "regeneration_resume_commands_filters_match_resume_mode": true,
+      "regeneration_resume_commands_group_counts_match": true,
+      "regeneration_resume_commands_loaded": true,
+      "regeneration_resume_commands_operator_role_counts_match": true,
+      "regeneration_resume_commands_plan_matches_audit": true,
+      "regeneration_resume_commands_referenced": true,
+      "regeneration_resume_commands_renderer_is_non_runtime": true,
+      "regeneration_resume_commands_row_count_matches": true,
+      "regeneration_resume_commands_rows_match_audit_renderer": true,
+      "regeneration_resume_commands_schema_matches": true
+    },
+    "execution_boundary_counts": {
+      "claim_summary_merge": 2,
+      "claim_summary_promotion": 2,
+      "live_closed_loop_rollout": 30,
+      "public_metadata_review": 2
+    },
+    "expected_row_count": 36,
+    "group_counts": {
+      "merge": 2,
+      "post": 2,
+      "promote": 2,
+      "shards": 30
+    },
+    "notes": [],
+    "operator_role_counts": {
+      "claim_promoter": 4,
+      "closed_loop_runner": 30,
+      "open_repo_reviewer": 2
+    },
+    "private_execution_command_count": 34,
+    "public_review_command_count": 2,
+    "row_count": 36,
+    "valid": true
+  },
   "schema": "wod2sim_benchmark_regeneration_audit_v1",
   "stages": [
     {

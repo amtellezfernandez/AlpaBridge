@@ -85,6 +85,32 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         self.assertTrue(
             audit["regeneration_commands"]["checks"]["regeneration_commands_boundary_totals_match"]
         )
+        self.assertTrue(audit["regeneration_resume_commands"]["valid"])
+        self.assertEqual(
+            RESUME_COMMANDS_RELATIVE.as_posix(),
+            audit["regeneration_resume_commands"]["artifact"],
+        )
+        self.assertEqual(36, audit["regeneration_resume_commands"]["row_count"])
+        self.assertEqual(36, audit["regeneration_resume_commands"]["expected_row_count"])
+        self.assertTrue(
+            audit["regeneration_resume_commands"]["checks"][
+                "regeneration_resume_commands_rows_match_audit_renderer"
+            ]
+        )
+        self.assertTrue(
+            audit["regeneration_resume_commands"]["checks"][
+                "regeneration_resume_commands_filters_match_resume_mode"
+            ]
+        )
+        self.assertEqual(
+            {
+                "claim_summary_merge": 2,
+                "claim_summary_promotion": 2,
+                "live_closed_loop_rollout": 30,
+                "public_metadata_review": 2,
+            },
+            audit["regeneration_resume_commands"]["execution_boundary_counts"],
+        )
         self.assertEqual(
             {
                 "claim_summary_merge": 2,
@@ -1121,6 +1147,37 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         self.assertIn(
             "regeneration commands execution_boundary_counts do not match expected rows",
             audit["regeneration_commands"]["notes"],
+        )
+
+    def test_regeneration_resume_commands_drift_invalidates_audit(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            evidence = repo_root / "docs" / "evidence"
+            evidence.mkdir(parents=True)
+            _copy_evidence_jsons(evidence)
+            resume_path = evidence / RESUME_COMMANDS_RELATIVE.name
+            resume = _read_json(resume_path)
+            resume["row_count"] = int(resume["row_count"]) + 1
+            _write_json(resume_path, resume)
+            _refresh_manifest_hash(evidence / MANIFEST_RELATIVE.name, RESUME_COMMANDS_RELATIVE)
+
+            audit = module.build_audit(repo_root=repo_root, created_at="2026-07-06")
+
+        self.assertFalse(audit["valid"])
+        self.assertFalse(
+            audit["regeneration_resume_commands"]["checks"][
+                "regeneration_resume_commands_row_count_matches"
+            ]
+        )
+        self.assertTrue(
+            audit["public_evidence_manifest"]["checks"][
+                "public_evidence_manifest_hashes_match_tracked_files"
+            ]
+        )
+        self.assertIn(
+            "regeneration resume commands row_count does not match expected rows",
+            audit["regeneration_resume_commands"]["notes"],
         )
 
     def test_operator_matrix_drift_invalidates_audit(self) -> None:

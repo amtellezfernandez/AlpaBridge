@@ -221,16 +221,13 @@ def render_commands(
     selected_groups = tuple(groups or ("all",))
     if resume_missing_shards_from_audit:
         audit = _read_json(audit_path)
-        if audit.get("schema") != AUDIT_SCHEMA:
-            raise ValueError(f"audit schema must be {AUDIT_SCHEMA}, got {audit.get('schema')!r}")
-        resume_groups = ("shards", "merge", "promote", "post") if all_mode else selected_groups
-        return _resume_missing_shard_command_rows(
+        return render_resume_commands_from_audit(
             plan=plan,
             audit=audit,
             audit_path=audit_path,
-            selected_stages=set(stages or []),
-            selected_groups=resume_groups,
-            selected_shard_indexes=set(shard_indexes or []),
+            stages=stages,
+            groups=groups,
+            shard_indexes=shard_indexes,
         )
     if all_mode:
         selected_groups = ("cleanup", "readiness", "cache", "merge", "promote", "post")
@@ -323,6 +320,30 @@ def render_commands(
         rows.extend(_post_command_rows(plan))
 
     return rows
+
+
+def render_resume_commands_from_audit(
+    *,
+    plan: dict[str, Any],
+    audit: dict[str, Any],
+    audit_path: Path = DEFAULT_AUDIT,
+    stages: list[str] | tuple[str, ...] | None = None,
+    groups: list[str] | tuple[str, ...] | None = None,
+    shard_indexes: list[int] | tuple[int, ...] | None = None,
+) -> list[dict[str, Any]]:
+    if audit.get("schema") != AUDIT_SCHEMA:
+        raise ValueError(f"audit schema must be {AUDIT_SCHEMA}, got {audit.get('schema')!r}")
+    selected_groups = tuple(groups or ("all",))
+    if groups is None or "all" in selected_groups:
+        selected_groups = ("shards", "merge", "promote", "post")
+    return _resume_missing_shard_command_rows(
+        plan=plan,
+        audit=audit,
+        audit_path=audit_path,
+        selected_stages=set(stages or []),
+        selected_groups=selected_groups,
+        selected_shard_indexes=set(shard_indexes or []),
+    )
 
 
 def _matching_stages(

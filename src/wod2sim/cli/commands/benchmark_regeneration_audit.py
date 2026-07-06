@@ -16,6 +16,7 @@ from wod2sim.cli.commands.benchmark_operator_matrix import (
 from wod2sim.cli.commands.benchmark_regeneration_commands import (
     COMMANDS_SCHEMA,
     render_commands,
+    render_resume_commands_from_audit,
 )
 from wod2sim.cli.commands.benchmark_regeneration_plan import build_plan
 
@@ -146,6 +147,13 @@ def build_audit(
         status=status,
         repo_root=repo_root,
     )
+    regeneration_resume_commands = _regeneration_resume_commands_consistency(
+        plan_path=plan_path,
+        plan=plan,
+        status=status,
+        stage_reports=stage_reports,
+        repo_root=repo_root,
+    )
     operator_matrix = _operator_matrix_consistency(
         plan_path=plan_path,
         status_path=status_path,
@@ -169,6 +177,7 @@ def build_audit(
         and diagnostic_evidence["valid"]
         and regeneration_plan["valid"]
         and regeneration_commands["valid"]
+        and regeneration_resume_commands["valid"]
         and operator_matrix["valid"]
         and public_handoff_doc["valid"]
     )
@@ -206,6 +215,7 @@ def build_audit(
         "diagnostic_evidence": diagnostic_evidence,
         "regeneration_plan": regeneration_plan,
         "regeneration_commands": regeneration_commands,
+        "regeneration_resume_commands": regeneration_resume_commands,
         "operator_matrix": operator_matrix,
         "public_handoff_doc": public_handoff_doc,
         "public_evidence_manifest": public_evidence_manifest,
@@ -1544,6 +1554,149 @@ def _regeneration_commands_consistency(
         ),
         "public_review_command_count": _int_value(commands.get("public_review_command_count")),
         "readiness_renderer_groups": readiness_renderer_groups,
+    }
+
+
+def _regeneration_resume_commands_consistency(
+    *,
+    plan_path: Path,
+    plan: dict[str, Any],
+    status: dict[str, Any],
+    stage_reports: list[dict[str, Any]],
+    repo_root: Path,
+) -> dict[str, Any]:
+    checks: dict[str, bool] = {}
+    notes: list[str] = []
+    evidence_artifacts = _dict_or_empty(status.get("evidence_artifacts"))
+    commands_artifact = str(evidence_artifacts.get("regeneration_resume_commands") or "")
+
+    checks["regeneration_resume_commands_referenced"] = bool(commands_artifact)
+    if not checks["regeneration_resume_commands_referenced"]:
+        notes.append("status.evidence_artifacts.regeneration_resume_commands is missing")
+        return {"valid": False, "artifact": commands_artifact, "checks": checks, "notes": notes}
+
+    commands_path = _resolve_path(repo_root, Path(commands_artifact))
+    commands = _load_manifest(
+        commands_path,
+        notes=notes,
+        label="regeneration resume commands artifact",
+    )
+    checks["regeneration_resume_commands_loaded"] = bool(commands)
+    if not checks["regeneration_resume_commands_loaded"]:
+        return {"valid": False, "artifact": commands_artifact, "checks": checks, "notes": notes}
+
+    checks["regeneration_resume_commands_schema_matches"] = (
+        commands.get("schema") == COMMANDS_SCHEMA
+    )
+    if not checks["regeneration_resume_commands_schema_matches"]:
+        notes.append("regeneration resume commands schema mismatch")
+
+    checks["regeneration_resume_commands_plan_matches_audit"] = commands.get(
+        "plan_artifact"
+    ) == _display_path(plan_path)
+    if not checks["regeneration_resume_commands_plan_matches_audit"]:
+        notes.append("regeneration resume commands plan_artifact does not match audited plan")
+
+    renderer = _dict_or_empty(commands.get("renderer"))
+    checks["regeneration_resume_commands_renderer_is_non_runtime"] = (
+        renderer.get("command") == "wod2sim-benchmark-commands"
+        and renderer.get("no_runtime_execution") is True
+    )
+    if not checks["regeneration_resume_commands_renderer_is_non_runtime"]:
+        notes.append("regeneration resume commands renderer metadata is not public-safe")
+
+    filters = _dict_or_empty(commands.get("filters"))
+    checks["regeneration_resume_commands_filters_match_resume_mode"] = (
+        filters.get("stages") == []
+        and filters.get("groups") == ["all"]
+        and filters.get("shard_indexes") == []
+        and filters.get("resume_missing_shards_from_audit") is True
+        and filters.get("audit_artifact") == _display_path(DEFAULT_AUDIT)
+    )
+    if not checks["regeneration_resume_commands_filters_match_resume_mode"]:
+        notes.append("regeneration resume commands artifact must render audit-derived resume rows")
+
+    audit_projection = {
+        "schema": AUDIT_SCHEMA,
+        "stages": stage_reports,
+    }
+    expected_rows = render_resume_commands_from_audit(
+        plan=plan,
+        audit=audit_projection,
+        audit_path=DEFAULT_AUDIT,
+    )
+    rows = [row for row in _list_or_empty(commands.get("commands")) if isinstance(row, dict)]
+    checks["regeneration_resume_commands_row_count_matches"] = (
+        _int_value(commands.get("row_count")) == len(rows) == len(expected_rows)
+    )
+    if not checks["regeneration_resume_commands_row_count_matches"]:
+        notes.append("regeneration resume commands row_count does not match expected rows")
+
+    expected_group_counts = dict(
+        sorted(Counter(str(row.get("group") or "unknown") for row in expected_rows).items())
+    )
+    checks["regeneration_resume_commands_group_counts_match"] = (
+        _dict_or_empty(commands.get("group_counts")) == expected_group_counts
+    )
+    if not checks["regeneration_resume_commands_group_counts_match"]:
+        notes.append("regeneration resume commands group_counts do not match expected rows")
+
+    expected_execution_boundary_counts = dict(
+        sorted(
+            Counter(
+                str(row.get("execution_boundary") or "unknown") for row in expected_rows
+            ).items()
+        )
+    )
+    checks["regeneration_resume_commands_execution_boundary_counts_match"] = (
+        _dict_or_empty(commands.get("execution_boundary_counts"))
+        == expected_execution_boundary_counts
+    )
+    if not checks["regeneration_resume_commands_execution_boundary_counts_match"]:
+        notes.append(
+            "regeneration resume commands execution_boundary_counts do not match expected rows"
+        )
+
+    expected_operator_role_counts = dict(
+        sorted(Counter(str(row.get("operator_role") or "unknown") for row in expected_rows).items())
+    )
+    checks["regeneration_resume_commands_operator_role_counts_match"] = (
+        _dict_or_empty(commands.get("operator_role_counts")) == expected_operator_role_counts
+    )
+    if not checks["regeneration_resume_commands_operator_role_counts_match"]:
+        notes.append("regeneration resume commands operator_role_counts do not match expected rows")
+
+    expected_private_count = sum(
+        1 for row in expected_rows if bool(row.get("requires_private_execution_context"))
+    )
+    expected_public_count = len(expected_rows) - expected_private_count
+    checks["regeneration_resume_commands_boundary_totals_match"] = (
+        _int_value(commands.get("private_execution_command_count")) == expected_private_count
+        and _int_value(commands.get("public_review_command_count")) == expected_public_count
+    )
+    if not checks["regeneration_resume_commands_boundary_totals_match"]:
+        notes.append("regeneration resume commands public/private command counts do not match")
+
+    checks["regeneration_resume_commands_rows_match_audit_renderer"] = rows == expected_rows
+    if not checks["regeneration_resume_commands_rows_match_audit_renderer"]:
+        notes.append(
+            "regeneration resume commands rows do not match current audit-derived renderer"
+        )
+
+    return {
+        "valid": all(checks.values()) if checks else False,
+        "artifact": commands_artifact,
+        "checks": checks,
+        "notes": notes,
+        "row_count": len(rows),
+        "expected_row_count": len(expected_rows),
+        "group_counts": _dict_or_empty(commands.get("group_counts")),
+        "execution_boundary_counts": _dict_or_empty(commands.get("execution_boundary_counts")),
+        "operator_role_counts": _dict_or_empty(commands.get("operator_role_counts")),
+        "private_execution_command_count": _int_value(
+            commands.get("private_execution_command_count")
+        ),
+        "public_review_command_count": _int_value(commands.get("public_review_command_count")),
     }
 
 
