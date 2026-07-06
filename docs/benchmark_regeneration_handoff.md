@@ -61,6 +61,10 @@ in the source directory and `source_usdz_cache.matching_scene_count` is `0` for 
 `front_camera_50scene_public2602` and `front_camera_100scene_public2602`. A
 cache builder needs either a complete local `all-usdzs` directory for those
 presets or gated Hugging Face access.
+Anonymous Hugging Face access is sufficient to list the selected 26.02 USDZ
+paths for the 50/100-scene presets, but direct HEAD requests against those USDZ
+files return HTTP 401 without an authenticated token. Do not start scale
+rollouts from this workspace until the local 26.02 USDZ cache validates.
 The same cache inventory is mirrored in
 [`docs/evidence/benchmark_regeneration_status_20260706.json`](evidence/benchmark_regeneration_status_20260706.json)
 under `scale_status.<preset>.source_usdz_cache` and

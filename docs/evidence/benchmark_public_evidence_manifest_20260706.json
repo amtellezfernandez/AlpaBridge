@@ -8,7 +8,7 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_benchmark_operator_matrix_v1",
-      "sha256": "f4bd7da1107ba1d1b7eb2d83c7b926f040f67d3ba03f3fd25be454c853ffe366",
+      "sha256": "7e389c2f65c492a6505b3aa3b45f5b3e2bacf83df886e895653f5231cf8004df",
       "size_bytes": 29625
     },
     {
@@ -18,7 +18,7 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_benchmark_regeneration_audit_v1",
-      "sha256": "982f32568c01342c3e5bca65d2d1cd0bf40243f2392b40ca3c862e8968990e1a",
+      "sha256": "b8768bfa753fd64c1df7793fd03f9e53737ebf5fdc84fe7e982b2d61e4811048",
       "size_bytes": 62948
     },
     {
@@ -68,7 +68,7 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_benchmark_regeneration_status_v1",
-      "sha256": "479e438a9e826fc52e57fcb7648fb9c4e85db0e0fd01372ba48c9f685826c80f",
+      "sha256": "67e2c767ba900d4e71218e113bf4f985de645603ce59f6925174fd07a2cc140d",
       "size_bytes": 10877
     },
     {
@@ -772,7 +772,7 @@
     "total_requirement_count": 5,
     "valid": true
   },
-  "created_at": "2026-07-06T10:53:29",
+  "created_at": "2026-07-06T11:00:40",
   "generator": {
     "command": "wod2sim-benchmark-evidence-manifest",
     "excludes_self_hash": true,

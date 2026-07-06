@@ -1,7 +1,7 @@
 {
   "claim_ready": false,
   "claim_rule": "Every stage in the regeneration plan must have a tracked wod2sim_closed_loop_batch_summary_v1 artifact with clean_closed_loop_batch=true, matching scene counts, zero failed scenes, and zero sensor-pipeline failures.",
-  "created_at": "2026-07-06T10:53:29",
+  "created_at": "2026-07-06T11:00:40",
   "diagnostic_evidence": {
     "artifact": "docs/evidence/closed_loop_spotlight_reflex_50scene_localprobe_1scene.json",
     "checks": {
@@ -422,8 +422,8 @@
       "readiness",
       "shards"
     ],
-    "sha256": "c29eec10d8bbf23bbb0f878b751fd1067418cda7771a8caa8c490cf6d62d4d92",
-    "size_bytes": 11005,
+    "sha256": "1a796814b14563bac7199a9e0f0e0383946cff3417c82b8b64e978287c444e01",
+    "size_bytes": 11307,
     "valid": true
   },
   "readiness_artifact": "docs/evidence/benchmark_regeneration_readiness_20260706.json",
