@@ -18,8 +18,8 @@
       "present": true,
       "public_safe": true,
       "schema": "wod2sim_benchmark_regeneration_audit_v1",
-      "sha256": "22fbca99fb2911b6a41335350541bb7ece07d67d7a78437c47dc589678504886",
-      "size_bytes": 25328
+      "sha256": "0aec67576f6920c174fbed3f014d6bf4a8f82cbed4aac81edeaa11354e5fbeb2",
+      "size_bytes": 25397
     },
     {
       "artifact_type": "benchmark_regeneration_control",
@@ -107,6 +107,100 @@
     "missing_claim_valid_summaries": [
       "docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json",
       "docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json"
+    ],
+    "scale_claim_gaps": [
+      {
+        "blocking_requirements": [
+          "hf_token_missing",
+          "docker_daemon_unavailable",
+          "alpasim_base_image_missing",
+          "nvidia_gpu_unavailable",
+          "docker_nvidia_runtime_unavailable",
+          "front_camera_50scene_public2602_cache_invalid",
+          "front_camera_50scene_public2602_claim_summary_missing"
+        ],
+        "claim_valid": false,
+        "expected_scene_count": 50,
+        "local_usdz_cache": {
+          "expected_scene_count": 50,
+          "matching_scene_count": 0,
+          "missing_scene_count": 50,
+          "nonmatching_usdz_file_count": 0,
+          "present_scene_count": 0,
+          "required": true,
+          "usdz_file_count": 0,
+          "valid": false
+        },
+        "next_command_groups": [
+          "build_and_validate_scale_caches",
+          "run_scale_shards_and_promote_summaries",
+          "refresh_status",
+          "verify_claim_gate"
+        ],
+        "public_summary_claim_valid": false,
+        "public_summary_errors": [
+          "summary_missing"
+        ],
+        "public_summary_present": false,
+        "scene_preset": "front_camera_50scene_public2602",
+        "source_usdz_cache": {
+          "expected_scene_count": 50,
+          "matching_scene_count": 0,
+          "missing_scene_count": 50,
+          "nonmatching_usdz_file_count": 10,
+          "present_scene_count": 0,
+          "required": true,
+          "usdz_file_count": 10,
+          "valid": false
+        },
+        "summary_artifact": "docs/evidence/closed_loop_spotlight_reflex_50scene_batch.json"
+      },
+      {
+        "blocking_requirements": [
+          "hf_token_missing",
+          "docker_daemon_unavailable",
+          "alpasim_base_image_missing",
+          "nvidia_gpu_unavailable",
+          "docker_nvidia_runtime_unavailable",
+          "front_camera_100scene_public2602_cache_invalid",
+          "front_camera_100scene_public2602_claim_summary_missing"
+        ],
+        "claim_valid": false,
+        "expected_scene_count": 100,
+        "local_usdz_cache": {
+          "expected_scene_count": 100,
+          "matching_scene_count": 0,
+          "missing_scene_count": 100,
+          "nonmatching_usdz_file_count": 0,
+          "present_scene_count": 0,
+          "required": true,
+          "usdz_file_count": 0,
+          "valid": false
+        },
+        "next_command_groups": [
+          "build_and_validate_scale_caches",
+          "run_scale_shards_and_promote_summaries",
+          "refresh_status",
+          "verify_claim_gate"
+        ],
+        "public_summary_claim_valid": false,
+        "public_summary_errors": [
+          "summary_missing"
+        ],
+        "public_summary_present": false,
+        "scene_preset": "front_camera_100scene_public2602",
+        "source_usdz_cache": {
+          "expected_scene_count": 100,
+          "matching_scene_count": 0,
+          "missing_scene_count": 100,
+          "nonmatching_usdz_file_count": 10,
+          "present_scene_count": 0,
+          "required": true,
+          "usdz_file_count": 10,
+          "valid": false
+        },
+        "summary_artifact": "docs/evidence/closed_loop_spotlight_reflex_100scene_batch.json"
+      }
     ],
     "strict_command": "wod2sim-benchmark-audit --strict --json",
     "valid": true

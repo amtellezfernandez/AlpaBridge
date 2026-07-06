@@ -176,6 +176,7 @@ def build_audit(
         status_path=status_path,
         status=status,
         stage_reports=stage_reports,
+        objective_completion=objective_completion,
         claim_ready=claim_ready,
         expected_audit_valid_without_manifest=expected_valid_without_manifest,
         repo_root=repo_root,
@@ -1054,6 +1055,7 @@ def _public_evidence_manifest_consistency(
     status_path: Path,
     status: dict[str, Any],
     stage_reports: list[dict[str, Any]],
+    objective_completion: dict[str, Any],
     claim_ready: bool,
     expected_audit_valid_without_manifest: bool,
     repo_root: Path,
@@ -1107,6 +1109,12 @@ def _public_evidence_manifest_consistency(
     )
     if not checks["public_evidence_manifest_claim_gate_matches_audit"]:
         notes.append("public evidence manifest claim_gate does not match current audit")
+
+    checks["public_evidence_manifest_scale_claim_gaps_match_audit"] = claim_gate.get(
+        "scale_claim_gaps"
+    ) == objective_completion.get("scale_claim_gaps")
+    if not checks["public_evidence_manifest_scale_claim_gaps_match_audit"]:
+        notes.append("public evidence manifest scale_claim_gaps do not match current audit")
 
     artifacts = [
         artifact

@@ -41,6 +41,13 @@ def test_public_evidence_manifest_builder_hashes_tracked_artifacts() -> None:
     assert pilot["claim_scope"] == "claim_valid_10_scene_pilot_summary"
     assert artifacts[STATUS_RELATIVE]["claim_scope"] == "manifest_source_artifact"
     assert pilot["sha256"] == hashlib.sha256((ROOT / PILOT_RELATIVE).read_bytes()).hexdigest()
+    assert [row["scene_preset"] for row in manifest["claim_gate"]["scale_claim_gaps"]] == [
+        "front_camera_50scene_public2602",
+        "front_camera_100scene_public2602",
+    ]
+    assert manifest["claim_gate"]["scale_claim_gaps"][0]["public_summary_errors"] == [
+        "summary_missing"
+    ]
     assert {Path(row["path"]) for row in manifest["missing_expected_artifacts"]} == {
         MISSING_50_RELATIVE,
         MISSING_100_RELATIVE,
@@ -135,6 +142,12 @@ def test_tracked_public_evidence_manifest_is_public_safe_and_complete() -> None:
         MISSING_50_RELATIVE.as_posix(),
         MISSING_100_RELATIVE.as_posix(),
     ]
+    assert len(manifest["claim_gate"]["scale_claim_gaps"]) == 2
+    assert manifest["claim_gate"]["scale_claim_gaps"][0]["local_usdz_cache"]["valid"] is False
+    assert (
+        manifest["claim_gate"]["scale_claim_gaps"][0]["source_usdz_cache"]["matching_scene_count"]
+        == 0
+    )
     assert {Path(row["path"]) for row in manifest["missing_expected_artifacts"]} == {
         MISSING_50_RELATIVE,
         MISSING_100_RELATIVE,

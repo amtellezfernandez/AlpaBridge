@@ -113,6 +113,11 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
                 "public_evidence_manifest_hashes_match_tracked_files"
             ]
         )
+        self.assertTrue(
+            audit["public_evidence_manifest"]["checks"][
+                "public_evidence_manifest_scale_claim_gaps_match_audit"
+            ]
+        )
         self.assertEqual(PROBE_50_RELATIVE.as_posix(), audit["diagnostic_evidence"]["artifact"])
         self.assertEqual(
             "diagnostic_only_not_full_stage_claim",
@@ -739,6 +744,31 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
             audit["public_evidence_manifest"]["notes"],
         )
 
+    def test_public_evidence_manifest_scale_gap_drift_invalidates_audit(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            evidence = repo_root / "docs" / "evidence"
+            evidence.mkdir(parents=True)
+            _copy_evidence_jsons(evidence)
+            manifest_path = evidence / MANIFEST_RELATIVE.name
+            manifest = _read_json(manifest_path)
+            manifest["claim_gate"]["scale_claim_gaps"][0]["local_usdz_cache"]["valid"] = True
+            _write_json(manifest_path, manifest)
+
+            audit = module.build_audit(repo_root=repo_root, created_at="2026-07-06")
+
+        self.assertFalse(audit["valid"])
+        self.assertFalse(
+            audit["public_evidence_manifest"]["checks"][
+                "public_evidence_manifest_scale_claim_gaps_match_audit"
+            ]
+        )
+        self.assertIn(
+            "public evidence manifest scale_claim_gaps do not match current audit",
+            audit["public_evidence_manifest"]["notes"],
+        )
+
     def test_regeneration_plan_drift_invalidates_audit(self) -> None:
         module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -1240,6 +1270,12 @@ def _write_public_evidence_manifest(
     claim_ready: bool,
     missing_claim_valid_summaries: list[str],
 ) -> None:
+    audit_module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
+    repo_root = evidence_dir.parents[1]
+    bootstrap_audit = audit_module.build_audit(repo_root=repo_root, created_at="2026-07-06")
+    _write_json(evidence_dir / AUDIT_RELATIVE.name, bootstrap_audit)
+    scale_claim_gaps = bootstrap_audit["objective_completion"]["scale_claim_gaps"]
+
     manifest_path = evidence_dir / MANIFEST_RELATIVE.name
     artifacts = []
     for path in sorted(evidence_dir.glob("*.json")):
@@ -1285,6 +1321,7 @@ def _write_public_evidence_manifest(
             "valid": True,
             "claim_ready": claim_ready,
             "missing_claim_valid_summaries": missing_claim_valid_summaries,
+            "scale_claim_gaps": scale_claim_gaps,
             "strict_command": "wod2sim-benchmark-audit --strict --json",
         },
         "artifact_count": len(artifacts),

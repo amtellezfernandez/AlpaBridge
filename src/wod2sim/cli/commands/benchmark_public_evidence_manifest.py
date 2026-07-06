@@ -106,6 +106,7 @@ def build_public_evidence_manifest(
         }
         for path in audit.get("missing_claim_valid_summaries", [])
     ]
+    objective_completion = _dict_or_empty(audit.get("objective_completion"))
 
     return {
         "schema": MANIFEST_SCHEMA,
@@ -125,6 +126,11 @@ def build_public_evidence_manifest(
             "valid": _audit_valid_without_public_evidence_manifest(audit),
             "claim_ready": bool(audit.get("claim_ready")),
             "missing_claim_valid_summaries": list(audit.get("missing_claim_valid_summaries", [])),
+            "scale_claim_gaps": [
+                gap
+                for gap in _list_or_empty(objective_completion.get("scale_claim_gaps"))
+                if isinstance(gap, dict)
+            ],
             "strict_command": "wod2sim-benchmark-audit --strict --json",
         },
         "public_artifact_policy": _dict_or_empty(status.get("public_artifact_policy")),
@@ -255,6 +261,10 @@ def _display_path(path: Path) -> str:
 
 def _dict_or_empty(value: object) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
+
+
+def _list_or_empty(value: object) -> list[object]:
+    return value if isinstance(value, list) else []
 
 
 def _print_human_summary(manifest: dict[str, Any]) -> None:
