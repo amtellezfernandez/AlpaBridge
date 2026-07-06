@@ -12,6 +12,7 @@ COMMANDS_SCHEMA = "wod2sim_benchmark_regeneration_commands_v1"
 DEFAULT_PLAN = Path("docs/evidence/benchmark_regeneration_plan_20260706.json")
 GROUPS = (
     "all",
+    "cleanup",
     "readiness",
     "cache",
     "run",
@@ -21,6 +22,11 @@ GROUPS = (
     "post",
 )
 COMMAND_BOUNDARIES = {
+    "cleanup": {
+        "execution_boundary": "public_metadata_review",
+        "operator_role": "open_repo_reviewer",
+        "requires_private_execution_context": False,
+    },
     "readiness": {
         "execution_boundary": "public_metadata_review",
         "operator_role": "open_repo_reviewer",
@@ -189,11 +195,22 @@ def render_commands(
     all_mode = groups is None or "all" in groups
     selected_groups = tuple(groups or ("all",))
     if all_mode:
-        selected_groups = ("readiness", "cache", "merge", "promote", "post")
+        selected_groups = ("cleanup", "readiness", "cache", "merge", "promote", "post")
     selected_stages = set(stages or [])
     selected_shard_indexes = set(shard_indexes or [])
 
     rows: list[dict[str, Any]] = []
+    if "cleanup" in selected_groups:
+        rows.append(
+            _command_row(
+                group="cleanup",
+                stage=None,
+                scene_preset=None,
+                command="cleanup_ignored_benchmark_artifacts",
+                display="wod2sim-benchmark-cleanup --json",
+            )
+        )
+
     if "readiness" in selected_groups:
         check_readiness = _dict_or_empty(
             _dict_or_empty(plan.get("commands")).get("check_readiness")
