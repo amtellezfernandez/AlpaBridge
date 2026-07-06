@@ -772,11 +772,23 @@ def _scale_claim_gaps(
         local_cache = _cache_gap_status(readiness_stage.get("local_usdz_cache"))
         source_cache = _cache_gap_status(readiness_stage.get("source_usdz_cache"))
         public_summary = _dict_or_empty(readiness_stage.get("public_summary"))
+        merge_provenance = _dict_or_empty(stage_report.get("merge_provenance"))
+        expected_merge_inputs = [
+            str(item)
+            for item in _list_or_empty(merge_provenance.get("expected_input_summaries"))
+            if isinstance(item, str)
+        ]
         rows.append(
             {
                 "scene_preset": scene_preset,
                 "expected_scene_count": expected_scene_count,
                 "summary_artifact": stage_report.get("summary_artifact"),
+                "claim_summary_acceptance": _claim_summary_acceptance(
+                    expected_scene_count=expected_scene_count,
+                    expected_merge_inputs=expected_merge_inputs,
+                ),
+                "expected_merge_input_count": len(expected_merge_inputs),
+                "expected_merge_input_summaries": expected_merge_inputs,
                 "claim_valid": bool(stage_report.get("claim_valid")),
                 "public_summary_present": bool(public_summary.get("present")),
                 "public_summary_claim_valid": bool(public_summary.get("claim_valid")),
@@ -795,6 +807,26 @@ def _scale_claim_gaps(
             }
         )
     return rows
+
+
+def _claim_summary_acceptance(
+    *,
+    expected_scene_count: int,
+    expected_merge_inputs: list[str],
+) -> dict[str, Any]:
+    return {
+        "schema": BATCH_SCHEMA,
+        "clean_closed_loop_batch": True,
+        "planned_scene_count": expected_scene_count,
+        "completed_scene_count": expected_scene_count,
+        "failed_scene_count": 0,
+        "sensor_failure_scene_count": 0,
+        "source_kind": (
+            "merged_batch_summaries" if expected_merge_inputs else "batch_directory_summary"
+        ),
+        "merge_input_summary_count": len(expected_merge_inputs),
+        "merge_input_summaries": expected_merge_inputs,
+    }
 
 
 def _cache_gap_status(cache: object) -> dict[str, Any]:
