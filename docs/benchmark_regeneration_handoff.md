@@ -53,8 +53,8 @@ Current blocker IDs from readiness:
 | `front_camera_100scene_public2602_claim_summary_missing` | 100-scene claim promotion and strict audit readiness. |
 
 The offline cache-link path is tracked but not currently ready on this
-workspace: the public readiness snapshot sees 10 USDZ files in the source
-directory, but `source_usdz_cache.matching_scene_count` is `0` for both
+workspace: after local cleanup, the public readiness snapshot sees 0 USDZ files
+in the source directory and `source_usdz_cache.matching_scene_count` is `0` for both
 `front_camera_50scene_public2602` and `front_camera_100scene_public2602`. A
 cache builder needs either a complete local `all-usdzs` directory for those
 presets or gated Hugging Face access.

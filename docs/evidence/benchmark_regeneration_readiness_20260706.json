@@ -101,7 +101,7 @@
   },
   "disk": {
     "exact_free_bytes_omitted": true,
-    "free_gib": 279.44,
+    "free_gib": 280.69,
     "meets_min_free_disk_gb": true,
     "min_free_disk_gb": 200,
     "path": "workspace/alpasim",
@@ -429,10 +429,10 @@
       "scene_preset": "front_camera_50scene_public2602",
       "source_usdz_cache": {
         "matching_scene_count": 0,
-        "nonmatching_usdz_file_count": 10,
+        "nonmatching_usdz_file_count": 0,
         "required": true,
         "source_usdz_dir": "workspace/alpasim/data/nre-artifacts/all-usdzs",
-        "usdz_file_count": 10,
+        "usdz_file_count": 0,
         "validation": {
           "duplicate_uuid_count": 0,
           "duplicate_uuids_sample": [],
@@ -529,10 +529,10 @@
       "scene_preset": "front_camera_100scene_public2602",
       "source_usdz_cache": {
         "matching_scene_count": 0,
-        "nonmatching_usdz_file_count": 10,
+        "nonmatching_usdz_file_count": 0,
         "required": true,
         "source_usdz_dir": "workspace/alpasim/data/nre-artifacts/all-usdzs",
-        "usdz_file_count": 10,
+        "usdz_file_count": 0,
         "validation": {
           "duplicate_uuid_count": 0,
           "duplicate_uuids_sample": [],
