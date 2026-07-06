@@ -139,6 +139,7 @@ def _audit_valid_without_public_evidence_manifest(audit: dict[str, Any]) -> bool
         "status_consistency",
         "readiness_consistency",
         "diagnostic_evidence",
+        "regeneration_plan",
         "regeneration_commands",
         "operator_matrix",
     )

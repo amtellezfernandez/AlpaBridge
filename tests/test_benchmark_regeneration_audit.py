@@ -38,6 +38,11 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         self.assertEqual(READINESS_RELATIVE.as_posix(), audit["readiness_artifact"])
         self.assertTrue(audit["readiness_consistency"]["valid"])
         self.assertTrue(audit["diagnostic_evidence"]["valid"])
+        self.assertTrue(audit["regeneration_plan"]["valid"])
+        self.assertEqual(PLAN_RELATIVE.as_posix(), audit["regeneration_plan"]["artifact"])
+        self.assertTrue(
+            audit["regeneration_plan"]["checks"]["regeneration_plan_matches_generator"]
+        )
         self.assertTrue(audit["regeneration_commands"]["valid"])
         self.assertEqual(COMMANDS_RELATIVE.as_posix(), audit["regeneration_commands"]["artifact"])
         self.assertTrue(
@@ -429,6 +434,35 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         self.assertIn(
             "manifest hash mismatch: docs/evidence/closed_loop_spotlight_reflex_10scene_batch.json",
             audit["public_evidence_manifest"]["notes"],
+        )
+
+    def test_regeneration_plan_drift_invalidates_audit(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.benchmark_regeneration_audit")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            evidence = repo_root / "docs" / "evidence"
+            evidence.mkdir(parents=True)
+            _copy_evidence_jsons(evidence)
+            plan_path = evidence / PLAN_RELATIVE.name
+            plan = _read_json(plan_path)
+            plan["who_can_do_what"][0]["role"] = "stale_reviewer"
+            _write_json(plan_path, plan)
+            _refresh_manifest_hash(evidence / MANIFEST_RELATIVE.name, PLAN_RELATIVE)
+
+            audit = module.build_audit(repo_root=repo_root, created_at="2026-07-06")
+
+        self.assertFalse(audit["valid"])
+        self.assertFalse(
+            audit["regeneration_plan"]["checks"]["regeneration_plan_matches_generator"]
+        )
+        self.assertTrue(
+            audit["public_evidence_manifest"]["checks"][
+                "public_evidence_manifest_hashes_match_tracked_files"
+            ]
+        )
+        self.assertIn(
+            "regeneration plan does not match wod2sim-benchmark-plan output",
+            audit["regeneration_plan"]["notes"],
         )
 
     def test_regeneration_commands_drift_invalidates_audit(self) -> None:

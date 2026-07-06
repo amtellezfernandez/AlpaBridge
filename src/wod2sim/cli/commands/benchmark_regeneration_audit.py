@@ -16,6 +16,7 @@ from wod2sim.cli.commands.benchmark_regeneration_commands import (
     COMMANDS_SCHEMA,
     render_commands,
 )
+from wod2sim.cli.commands.benchmark_regeneration_plan import build_plan
 
 AUDIT_SCHEMA = "wod2sim_benchmark_regeneration_audit_v1"
 PLAN_SCHEMA = "wod2sim_benchmark_regeneration_plan_v1"
@@ -127,6 +128,11 @@ def build_audit(
         readiness=readiness,
         claim_ready=claim_ready,
     )
+    regeneration_plan = _regeneration_plan_consistency(
+        plan_path=plan_path,
+        plan=plan,
+        input_valid=input_valid,
+    )
     regeneration_commands = _regeneration_commands_consistency(
         plan_path=plan_path,
         status=status,
@@ -144,6 +150,7 @@ def build_audit(
         and status_consistency["valid"]
         and readiness_consistency["valid"]
         and diagnostic_evidence["valid"]
+        and regeneration_plan["valid"]
         and regeneration_commands["valid"]
         and operator_matrix["valid"]
     )
@@ -181,6 +188,7 @@ def build_audit(
         "objective_completion": objective_completion,
         "regeneration_provenance": regeneration_provenance,
         "diagnostic_evidence": diagnostic_evidence,
+        "regeneration_plan": regeneration_plan,
         "regeneration_commands": regeneration_commands,
         "operator_matrix": operator_matrix,
         "public_evidence_manifest": public_evidence_manifest,
@@ -990,6 +998,44 @@ def _public_evidence_manifest_consistency(
         "checks": checks,
         "notes": notes,
         "artifact_count": len(artifacts),
+    }
+
+
+def _regeneration_plan_consistency(
+    *,
+    plan_path: Path,
+    plan: dict[str, Any],
+    input_valid: bool,
+) -> dict[str, Any]:
+    checks: dict[str, bool] = {}
+    notes: list[str] = []
+    artifact = _display_path(plan_path)
+
+    checks["regeneration_plan_loaded"] = bool(plan)
+    if not checks["regeneration_plan_loaded"]:
+        notes.append("regeneration plan is missing or invalid JSON")
+        return {"valid": False, "artifact": artifact, "checks": checks, "notes": notes}
+
+    checks["regeneration_plan_input_valid"] = bool(input_valid)
+    if not checks["regeneration_plan_input_valid"]:
+        notes.append("regeneration plan failed basic audit input validation")
+
+    checks["regeneration_plan_schema_matches"] = plan.get("schema") == PLAN_SCHEMA
+    if not checks["regeneration_plan_schema_matches"]:
+        notes.append("regeneration plan schema mismatch")
+
+    expected = build_plan(created_at=str(plan.get("created_at") or "audit_expected"))
+    checks["regeneration_plan_matches_generator"] = plan == expected
+    if not checks["regeneration_plan_matches_generator"]:
+        notes.append("regeneration plan does not match wod2sim-benchmark-plan output")
+
+    stages = [stage for stage in _list_or_empty(plan.get("stages")) if isinstance(stage, dict)]
+    return {
+        "valid": all(checks.values()) if checks else False,
+        "artifact": artifact,
+        "checks": checks,
+        "notes": notes,
+        "stage_count": len(stages),
     }
 
 

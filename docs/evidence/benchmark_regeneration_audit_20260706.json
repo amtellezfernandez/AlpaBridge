@@ -232,6 +232,18 @@
     "row_count": 44,
     "valid": true
   },
+  "regeneration_plan": {
+    "artifact": "docs/evidence/benchmark_regeneration_plan_20260706.json",
+    "checks": {
+      "regeneration_plan_input_valid": true,
+      "regeneration_plan_loaded": true,
+      "regeneration_plan_matches_generator": true,
+      "regeneration_plan_schema_matches": true
+    },
+    "notes": [],
+    "stage_count": 3,
+    "valid": true
+  },
   "regeneration_provenance": {
     "all_stage_sources_match_plan": false,
     "present_stage_source_mismatches": [],
