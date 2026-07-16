@@ -97,85 +97,85 @@ class DirectActorPlannerAlpaSimModel(BaseTrajectoryModel):
     ) -> "DirectActorPlannerAlpaSimModel":
         defaults = DirectPlannerConfig()
         oracle_path = os.getenv(
-            "WAYSPAN_DIRECT_PLANNER_ORACLE_ACTOR_PROXY_PATH",
+            "WOD2SIM_DIRECT_PLANNER_ORACLE_ACTOR_PROXY_PATH",
             str(_cfg_value(model_cfg, "oracle_actor_proxy_path", "") or ""),
         ).strip()
         log_path = os.getenv(
-            "WAYSPAN_DIRECT_PLANNER_LOG_PATH",
+            "WOD2SIM_DIRECT_PLANNER_LOG_PATH",
             str(_cfg_value(model_cfg, "selection_log_path", "") or ""),
         ).strip()
         config = DirectPlannerConfig(
             selection_objective=_env_str(
-                "WAYSPAN_DIRECT_PLANNER_SELECTION_OBJECTIVE",
+                "WOD2SIM_DIRECT_PLANNER_SELECTION_OBJECTIVE",
                 model_cfg,
                 "selection_objective",
                 defaults.selection_objective,
             ),
             horizon_seconds=_env_float(
-                "WAYSPAN_DIRECT_PLANNER_HORIZON_SECONDS",
+                "WOD2SIM_DIRECT_PLANNER_HORIZON_SECONDS",
                 model_cfg,
                 "horizon_seconds",
                 defaults.horizon_seconds,
             ),
-            point_count=_env_int("WAYSPAN_DIRECT_PLANNER_POINT_COUNT", model_cfg, "point_count", defaults.point_count),
+            point_count=_env_int("WOD2SIM_DIRECT_PLANNER_POINT_COUNT", model_cfg, "point_count", defaults.point_count),
             clearance_target_m=_env_float(
-                "WAYSPAN_DIRECT_PLANNER_CLEARANCE_TARGET_M",
+                "WOD2SIM_DIRECT_PLANNER_CLEARANCE_TARGET_M",
                 model_cfg,
                 "clearance_target_m",
                 defaults.clearance_target_m,
             ),
             lane_margin_buffer_m=_env_float(
-                "WAYSPAN_DIRECT_PLANNER_LANE_MARGIN_BUFFER_M",
+                "WOD2SIM_DIRECT_PLANNER_LANE_MARGIN_BUFFER_M",
                 model_cfg,
                 "lane_margin_buffer_m",
                 defaults.lane_margin_buffer_m,
             ),
             max_lateral_offset_m=_env_float(
-                "WAYSPAN_DIRECT_PLANNER_MAX_LATERAL_OFFSET_M",
+                "WOD2SIM_DIRECT_PLANNER_MAX_LATERAL_OFFSET_M",
                 model_cfg,
                 "max_lateral_offset_m",
                 defaults.max_lateral_offset_m,
             ),
             max_accel_speed_scale=_env_float(
-                "WAYSPAN_DIRECT_PLANNER_MAX_ACCEL_SPEED_SCALE",
+                "WOD2SIM_DIRECT_PLANNER_MAX_ACCEL_SPEED_SCALE",
                 model_cfg,
                 "max_accel_speed_scale",
                 defaults.max_accel_speed_scale,
             ),
             speed_scales=_float_tuple(
-                os.getenv("WAYSPAN_DIRECT_PLANNER_SPEED_SCALES"),
+                os.getenv("WOD2SIM_DIRECT_PLANNER_SPEED_SCALES"),
                 _cfg_value(model_cfg, "speed_scales", defaults.speed_scales),
             ),
             lateral_offsets_m=_float_tuple(
-                os.getenv("WAYSPAN_DIRECT_PLANNER_LATERAL_OFFSETS_M"),
+                os.getenv("WOD2SIM_DIRECT_PLANNER_LATERAL_OFFSETS_M"),
                 _cfg_value(model_cfg, "lateral_offsets_m", defaults.lateral_offsets_m),
             ),
             clearance_samples=_env_int(
-                "WAYSPAN_DIRECT_PLANNER_CLEARANCE_SAMPLES",
+                "WOD2SIM_DIRECT_PLANNER_CLEARANCE_SAMPLES",
                 model_cfg,
                 "clearance_samples",
                 defaults.clearance_samples,
             ),
             clearance_max_depth=_env_int(
-                "WAYSPAN_DIRECT_PLANNER_CLEARANCE_MAX_DEPTH",
+                "WOD2SIM_DIRECT_PLANNER_CLEARANCE_MAX_DEPTH",
                 model_cfg,
                 "clearance_max_depth",
                 defaults.clearance_max_depth,
             ),
             progress_weight=_env_float(
-                "WAYSPAN_DIRECT_PLANNER_PROGRESS_WEIGHT",
+                "WOD2SIM_DIRECT_PLANNER_PROGRESS_WEIGHT",
                 model_cfg,
                 "progress_weight",
                 defaults.progress_weight,
             ),
             speed_preference_weight=_env_float(
-                "WAYSPAN_DIRECT_PLANNER_SPEED_PREFERENCE_WEIGHT",
+                "WOD2SIM_DIRECT_PLANNER_SPEED_PREFERENCE_WEIGHT",
                 model_cfg,
                 "speed_preference_weight",
                 defaults.speed_preference_weight,
             ),
             rear_flow_weight=_env_float(
-                "WAYSPAN_DIRECT_PLANNER_REAR_FLOW_WEIGHT",
+                "WOD2SIM_DIRECT_PLANNER_REAR_FLOW_WEIGHT",
                 model_cfg,
                 "rear_flow_weight",
                 defaults.rear_flow_weight,
@@ -190,7 +190,7 @@ class DirectActorPlannerAlpaSimModel(BaseTrajectoryModel):
             oracle_actor_proxy_path=Path(oracle_path) if oracle_path else None,
             oracle_actor_proxy_tolerance_us=int(
                 os.getenv(
-                    "WAYSPAN_DIRECT_PLANNER_ORACLE_ACTOR_PROXY_TOLERANCE_US",
+                    "WOD2SIM_DIRECT_PLANNER_ORACLE_ACTOR_PROXY_TOLERANCE_US",
                     str(_cfg_value(model_cfg, "oracle_actor_proxy_tolerance_us", 50_000)),
                 )
             ),

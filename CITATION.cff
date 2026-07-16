@@ -3,9 +3,10 @@ message: "If you use WOD2Sim in academic work, please cite the paper and this so
 title: "WOD2Sim: Adapting WOD-Style Driving Policies to AlpaSim Closed-Loop Execution"
 authors:
   - family-names: "Tellez Fernandez"
-    given-names: "Andres Miguel"
-repository-code: "https://github.com/amtellezfernandez/wayspan"
+    given-names: "Alba Maria"
+    orcid: "https://orcid.org/0009-0000-1379-3562"
+repository-code: "https://github.com/amtellezfernandez/WOD2Sim"
 license: "BSD-3-Clause"
 version: "0.1.0"
-date-released: "2026-07-05"
+date-released: "2026-07-17"
 type: software

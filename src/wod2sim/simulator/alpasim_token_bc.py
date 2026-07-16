@@ -120,38 +120,38 @@ class TokenBCAlpaSimModel(BaseTrajectoryModel):
             raise ValueError("TokenBCAlpaSimModel requires model.checkpoint_path")
         cfg_device = _cfg_value(model_cfg, "device", None)
         requested_device = str(cfg_device if cfg_device is not None else "cuda")
-        trajectory_mode = os.getenv("WAYSPAN_TOKENBC_TRAJECTORY_MODE", str(_cfg_value(model_cfg, "trajectory_mode", "token")))
+        trajectory_mode = os.getenv("WOD2SIM_TOKENBC_TRAJECTORY_MODE", str(_cfg_value(model_cfg, "trajectory_mode", "token")))
         max_lateral_offset_m = float(
-            os.getenv("WAYSPAN_TOKENBC_MAX_LATERAL_OFFSET_M", str(_cfg_value(model_cfg, "max_lateral_offset_m", 2.0)))
+            os.getenv("WOD2SIM_TOKENBC_MAX_LATERAL_OFFSET_M", str(_cfg_value(model_cfg, "max_lateral_offset_m", 2.0)))
         )
-        selection_mode = os.getenv("WAYSPAN_TOKENBC_SELECTION_MODE", str(_cfg_value(model_cfg, "selection_mode", "argmax")))
-        hybrid_top_k = int(os.getenv("WAYSPAN_TOKENBC_HYBRID_TOP_K", str(_cfg_value(model_cfg, "hybrid_top_k", 3))))
+        selection_mode = os.getenv("WOD2SIM_TOKENBC_SELECTION_MODE", str(_cfg_value(model_cfg, "selection_mode", "argmax")))
+        hybrid_top_k = int(os.getenv("WOD2SIM_TOKENBC_HYBRID_TOP_K", str(_cfg_value(model_cfg, "hybrid_top_k", 3))))
         hybrid_geo_weight = float(
-            os.getenv("WAYSPAN_TOKENBC_HYBRID_GEOMETRIC_WEIGHT", str(_cfg_value(model_cfg, "hybrid_geometric_weight", 0.75)))
+            os.getenv("WOD2SIM_TOKENBC_HYBRID_GEOMETRIC_WEIGHT", str(_cfg_value(model_cfg, "hybrid_geometric_weight", 0.75)))
         )
         hybrid_policy_temperature = float(
             os.getenv(
-                "WAYSPAN_TOKENBC_HYBRID_POLICY_TEMPERATURE",
+                "WOD2SIM_TOKENBC_HYBRID_POLICY_TEMPERATURE",
                 str(_cfg_value(model_cfg, "hybrid_policy_temperature", 1.0)),
             )
         )
         hybrid_veto_margin = float(
-            os.getenv("WAYSPAN_TOKENBC_HYBRID_VETO_MARGIN", str(_cfg_value(model_cfg, "hybrid_veto_margin", 8.0)))
+            os.getenv("WOD2SIM_TOKENBC_HYBRID_VETO_MARGIN", str(_cfg_value(model_cfg, "hybrid_veto_margin", 8.0)))
         )
         hybrid_max_geometric_rank = int(
             os.getenv(
-                "WAYSPAN_TOKENBC_HYBRID_MAX_GEOMETRIC_RANK",
+                "WOD2SIM_TOKENBC_HYBRID_MAX_GEOMETRIC_RANK",
                 str(_cfg_value(model_cfg, "hybrid_max_geometric_rank", 2)),
             )
         )
-        selection_log_path = os.getenv("WAYSPAN_TOKENBC_SELECTION_LOG_PATH", str(_cfg_value(model_cfg, "selection_log_path", "")))
+        selection_log_path = os.getenv("WOD2SIM_TOKENBC_SELECTION_LOG_PATH", str(_cfg_value(model_cfg, "selection_log_path", "")))
         oracle_actor_proxy_path = os.getenv(
-            "WAYSPAN_TOKENBC_ORACLE_ACTOR_PROXY_PATH",
+            "WOD2SIM_TOKENBC_ORACLE_ACTOR_PROXY_PATH",
             str(_cfg_value(model_cfg, "oracle_actor_proxy_path", "")),
         )
         oracle_actor_proxy_tolerance_us = int(
             os.getenv(
-                "WAYSPAN_TOKENBC_ORACLE_ACTOR_PROXY_TOLERANCE_US",
+                "WOD2SIM_TOKENBC_ORACLE_ACTOR_PROXY_TOLERANCE_US",
                 str(_cfg_value(model_cfg, "oracle_actor_proxy_tolerance_us", 50_000)),
             )
         )

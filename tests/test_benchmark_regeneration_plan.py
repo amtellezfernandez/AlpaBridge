@@ -146,14 +146,14 @@ class BenchmarkRegenerationPlanTests(unittest.TestCase):
 
     def test_tracked_plan_links_current_public_status_and_docs(self) -> None:
         plan = _read_json(ROOT / PLAN_RELATIVE)
-        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        workflow = (ROOT / "docs/benchmark_evidence_workflow.md").read_text(encoding="utf-8")
         evaluation_protocol = (ROOT / "docs/evaluation_protocol.md").read_text(encoding="utf-8")
 
         self.assertEqual("wod2sim_benchmark_regeneration_plan_v1", plan["schema"])
         self.assertEqual(STATUS_RELATIVE.as_posix(), plan["status_artifact"])
         self.assertEqual(READINESS_RELATIVE.as_posix(), plan["readiness_artifact"])
-        self.assertIn(PLAN_RELATIVE.as_posix(), readme)
-        self.assertIn(READINESS_RELATIVE.as_posix(), readme)
+        self.assertIn(PLAN_RELATIVE.name, workflow)
+        self.assertIn(READINESS_RELATIVE.name, workflow)
         self.assertIn(PLAN_RELATIVE.name, evaluation_protocol)
         self.assertIn(READINESS_RELATIVE.name, evaluation_protocol)
 

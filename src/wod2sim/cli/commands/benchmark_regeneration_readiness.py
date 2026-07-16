@@ -234,7 +234,7 @@ def _host_report(*, env: dict[str, str]) -> dict[str, Any]:
     normalized_machine = machine.lower()
     is_arm = normalized_machine in {"aarch64", "arm64"}
     is_x86_64 = normalized_machine in {"x86_64", "amd64"}
-    override_enabled = env.get("WAYSPAN_ALLOW_UNSUPPORTED_ALPASIM_ARM", "").strip() == "1"
+    override_enabled = env.get("WOD2SIM_ALLOW_UNSUPPORTED_ALPASIM_ARM", "").strip() == "1"
     closed_loop_supported = system == "Linux" and is_x86_64
     notes: list[str] = []
     if is_arm and not override_enabled:

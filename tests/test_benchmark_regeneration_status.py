@@ -27,6 +27,8 @@ RESUME_COMMANDS_RELATIVE = Path(
 OPERATOR_MATRIX_RELATIVE = Path("docs/evidence/benchmark_operator_matrix_20260706.json")
 EVIDENCE_MANIFEST_RELATIVE = Path("docs/evidence/benchmark_public_evidence_manifest_20260706.json")
 HANDOFF_RELATIVE = Path("docs/benchmark_regeneration_handoff.md")
+WORKFLOW_RELATIVE = Path("docs/benchmark_evidence_workflow.md")
+CLI_REFERENCE_RELATIVE = Path("docs/cli_reference.md")
 EXPECTED_REMAINING_REQUIREMENTS = [
     "produce_claim_valid_50_scene_summary",
     "produce_claim_valid_100_scene_summary",
@@ -145,7 +147,13 @@ def test_large_scale_status_is_workflow_ready_but_not_claim_valid() -> None:
         }
         assert scale_status["source_usdz_cache"]["usdz_file_count"] == 0
         assert scale_status["source_usdz_cache"]["matching_scene_count"] == 0
-        assert "x86_64 AlpaSim runner" in scale_status["remaining_runtime_requirement"]
+        runtime_requirement = scale_status["remaining_runtime_requirement"]
+        assert "x86_64 AlpaSim runner" in runtime_requirement
+        if expected_local_valid:
+            assert "local 26.02 USDZ cache is ready" in runtime_requirement
+            assert "Build or restore" not in runtime_requirement
+        else:
+            assert "Build or restore a metadata-valid local 26.02 USDZ cache" in runtime_requirement
 
 
 def test_status_tracks_50_scene_local_probe_as_diagnostic_only() -> None:
@@ -209,28 +217,34 @@ def test_public_artifact_policy_excludes_heavy_or_gated_runtime_artifacts() -> N
         assert expected in untracked_policy
 
 
-def test_readme_links_current_regeneration_status() -> None:
+def test_public_docs_link_current_regeneration_status() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    compact_readme = " ".join(readme.split())
+    workflow = (ROOT / WORKFLOW_RELATIVE).read_text(encoding="utf-8")
+    handoff = (ROOT / HANDOFF_RELATIVE).read_text(encoding="utf-8")
+    cli_reference = (ROOT / CLI_REFERENCE_RELATIVE).read_text(encoding="utf-8")
+    compact_workflow = " ".join(workflow.split())
 
-    assert STATUS_RELATIVE.as_posix() in readme
     assert HANDOFF_RELATIVE.as_posix() in readme
-    assert PROBE_50_RELATIVE.as_posix() in readme
-    assert ATTEMPT_50_RELATIVE.as_posix() in readme
-    assert COMMANDS_RELATIVE.as_posix() in readme
-    assert RESUME_COMMANDS_RELATIVE.as_posix() in readme
-    assert OPERATOR_MATRIX_RELATIVE.as_posix() in readme
-    assert EVIDENCE_MANIFEST_RELATIVE.as_posix() in readme
-    assert "Open-repo readers can review the compact JSON summaries" in readme
-    assert "`command_execution` counts" in readme
-    assert "`execution_boundary_counts`" in readme
-    assert "`private_execution_command_count`" in readme
-    assert "`scale_status.<preset>.source_usdz_cache`" in readme
-    assert "`matching_scene_count` of `0` for both presets" in readme
-    assert "cache building, live shard execution, and claim promotion" in compact_readme
-    assert "ARM/DGX Spark" in readme
-    assert "| `wod2sim-benchmark-cleanup` |" in readme
-    assert "| `wod2sim-benchmark-status` |" in readme
+    assert PILOT_RELATIVE.as_posix() in readme
+    assert WORKFLOW_RELATIVE.as_posix() in readme
+    assert CLI_REFERENCE_RELATIVE.as_posix() in readme
+
+    assert STATUS_RELATIVE.name in workflow
+    assert PROBE_50_RELATIVE.name in workflow
+    assert ATTEMPT_50_RELATIVE.name in workflow
+    assert COMMANDS_RELATIVE.name in workflow
+    assert RESUME_COMMANDS_RELATIVE.name in workflow
+    assert OPERATOR_MATRIX_RELATIVE.name in workflow
+    assert EVIDENCE_MANIFEST_RELATIVE.name in workflow
+    assert "`command_execution` counts" in workflow
+    assert "`execution_boundary_counts`" in workflow
+    assert "`private_execution_command_count`" in workflow
+    assert "cache rebuilds and live rollouts remain limited to operators" in compact_workflow
+
+    assert "`scale_status.<preset>.source_usdz_cache`" in handoff
+    assert "ARM/DGX Spark" in handoff
+    assert "| `wod2sim-benchmark-cleanup` |" in cli_reference
+    assert "| `wod2sim-benchmark-status` |" in cli_reference
 
 
 def test_public_handoff_doc_tracks_current_claim_gate() -> None:
@@ -253,7 +267,9 @@ def test_public_handoff_doc_tracks_current_claim_gate() -> None:
     assert "`scale_status.<preset>.source_usdz_cache`" in evaluation_protocol
     assert "wod2sim-benchmark-cleanup --json" in handoff
     assert "`execution_boundary_counts`" in evaluation_protocol
-    assert "`matching_scene_count` of `0` for both 50/100 presets" in evaluation_protocol
+    assert "`source_usdz_cache.matching_scene_count` is `0` for both presets" in evaluation_protocol
+    assert "local 50-scene cache is independently valid at 50/50" in evaluation_protocol
+    assert "local 100-scene cache remains invalid at 0/100" in evaluation_protocol
     for missing in audit["missing_claim_valid_summaries"]:
         assert missing in handoff
     for blocker in readiness["blocking_requirements"]:

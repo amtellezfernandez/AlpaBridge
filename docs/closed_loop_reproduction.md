@@ -157,4 +157,4 @@ support bundle, benchmark summary JSON, exact command line, commit SHA, model
 artifact provenance, and a clear statement of which gated assets were used.
 
 For a stricter benchmark-style protocol and the remaining reasons this is not a
-Waymo-grade artifact yet, see [`waymo_readiness.md`](waymo_readiness.md).
+Waymo-grade artifact yet, see [`evaluation_protocol.md`](evaluation_protocol.md).

@@ -38,10 +38,11 @@ path uses them, and because project-authored modifications were made here.
 
 The corresponding first-party integration code lives in:
 
-- [`src/wod2sim/simulator/README.md`](../../src/wod2sim/simulator/README.md)
+- [`src/wod2sim/simulator/`](../../src/wod2sim/simulator/)
 
 The corresponding audit / reproduction path lives in the repo-level setup, readiness,
-launch, and test workflow documented in the root README.
+launch, and test workflow documented in the root README and
+[`docs/README.md`](../../docs/README.md).
 
 ## Licensing
 

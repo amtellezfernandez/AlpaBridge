@@ -680,7 +680,7 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
 
     def test_tracked_audit_artifact_is_linked_from_docs(self) -> None:
         audit = _read_json(ROOT / AUDIT_RELATIVE)
-        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        workflow = (ROOT / "docs/benchmark_evidence_workflow.md").read_text(encoding="utf-8")
         evaluation_protocol = (ROOT / "docs/evaluation_protocol.md").read_text(encoding="utf-8")
 
         self.assertEqual("wod2sim_benchmark_regeneration_audit_v1", audit["schema"])
@@ -700,7 +700,7 @@ class BenchmarkRegenerationAuditTests(unittest.TestCase):
         self.assertIn("objective_completion", audit)
         self.assertFalse(audit["objective_completion"]["complete"])
         self.assertFalse(audit["claim_ready"])
-        self.assertIn(AUDIT_RELATIVE.as_posix(), readme)
+        self.assertIn(AUDIT_RELATIVE.name, workflow)
         self.assertIn(AUDIT_RELATIVE.name, evaluation_protocol)
 
     def test_missing_readiness_artifact_invalidates_audit_artifact_set(self) -> None:
