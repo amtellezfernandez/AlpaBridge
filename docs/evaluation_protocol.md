@@ -23,9 +23,10 @@ Unsupported claims:
 
 - WOD2Sim is not a new driving model.
 - WOD2Sim is not a full Waymo Open Dataset scene-to-AlpaSim converter.
-- WOD2Sim does not redistribute Waymo data, AlpaSim assets, private checkpoints,
-  rollout videos, or support bundles.
-- One recorded scene is integration evidence, not a broad benchmark result.
+- WOD2Sim does not redistribute Waymo data, AlpaSim assets, private
+  checkpoints, rollout videos, support bundles, or gated scene-derived files.
+- Dry-run plans and one-off diagnostics are review artifacts, not broad
+  benchmark results.
 
 ## Baselines
 
@@ -40,24 +41,25 @@ Use these baselines when making benchmark claims:
 | WOD2Sim without route reconstruction | Ablates route geometry preservation. |
 | WOD2Sim without lifecycle hardening | Ablates robust session handling. |
 
-The strongest result is a paired example where the same policy appears acceptable
-under open-loop evaluation but fails differently under closed-loop execution.
+The strongest result is a paired example where the same policy appears
+acceptable under open-loop evaluation but fails differently under closed-loop
+execution.
 
 ## Metrics
 
 Closed-loop reports should include:
 
-| Metric group | Examples |
+| Metric Group | Examples |
 | --- | --- |
 | Driving outcome | collision rate, off-road rate, route progress, scenario completion, timeout rate |
 | Runtime validity | valid-frame ratio, sensor freshness, action latency, late-message rate |
 | Evidence validity | manifest present, audit valid, support bundle valid, support bundle hash present |
 | Failure taxonomy | route drift, stale observations, heading-error compounding, recovery failure, lifecycle crash |
 
-`wod2sim-batch-summary` is the compact artifact for multi-scene AlpaSim batches.
-It reports per-scene completion, audited frames, closed-loop metric rates,
-failure taxonomy, and local artifact hashes without embedding rollout videos or
-scene assets.
+`wod2sim-batch-summary` is the compact artifact for multi-scene AlpaSim
+batches. It reports per-scene completion, audited frames, closed-loop metric
+rates, failure taxonomy, and local artifact hashes without embedding rollout
+videos or scene assets.
 
 ## Scene Coverage
 
@@ -66,57 +68,23 @@ straight driving, turns, dense traffic, route merges, occlusion, and stop/go
 cases. A stronger benchmark claim should scale to dozens of scenes and report
 success/failure counts per route type.
 
-Recommended progression:
-
-| Stage | Preset | Claim strength |
+| Stage | Preset | Claim Strength |
 | --- | --- | --- |
 | Pilot | `front_camera_10scene_smoke` | Runtime stability and concrete closed-loop evidence. |
 | Workshop-scale | `front_camera_50scene_public2602` | Multi-scene failure taxonomy and baseline comparison. |
 | Stronger benchmark | `front_camera_100scene_public2602` | More credible aggregate rates and scenario diversity. |
 
-The 50/100-scene stages require a metadata-valid local AlpaSim USDZ directory.
-Build it from the Hugging Face artifact revision before running:
+The 50/100-scene stages require a metadata-valid local AlpaSim USDZ directory,
+gated scene access, and an x86_64 NVIDIA/Docker AlpaSim runner. ARM/Linux hosts
+can build caches and run diagnostics, but live sensorsim rollouts are disabled
+by default because the required sensorsim image is amd64-only.
 
-```bash
-HF_TOKEN=... wod2sim-build-local-cache \
-  --scene-preset front_camera_50scene_public2602 \
-  --alpasim-root /path/to/alpasim \
-  --local-usdz-dir /path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50
-```
+Set `WOD2SIM_ALLOW_UNSUPPORTED_ALPASIM_ARM=1` only for an intentional
+unsupported ARM rollout diagnostic.
 
-Then pass the directory to AlpaSim:
+## Current Public State
 
-```bash
-wod2sim-batch ... \
-  --scene-preset front_camera_50scene_public2602 \
-  --wizard-arg scenes.local_usdz_dir=/path/to/alpasim/data/nre-artifacts/local-2602-usdzs-50
-```
-
-Execution roles:
-
-| Role | Minimum Capability |
-| --- | --- |
-| Reviewer | Run tests, dry reproduction plans, summaries, and audits without private assets. |
-| Cache builder | Download and validate public 26.02 USDZs with Hugging Face access and sufficient disk; GPU is not required. |
-| Closed-loop runner | Execute live AlpaSim batches on x86_64 Linux with Docker, NVIDIA GPU runtime, AlpaSim images, and cached scene artifacts. |
-| ARM/Linux host | Use for cache building or diagnostics; live sensorsim rollouts are blocked by default because the AlpaSim sensorsim image is amd64-only. |
-
-The machine-readable operator matrix is tracked at
-[`docs/evidence/benchmark_operator_matrix_20260706.json`](evidence/benchmark_operator_matrix_20260706.json).
-It is generated with `wod2sim-benchmark-operators` from the tracked plan,
-status, readiness JSON, and rendered command artifact without runtime probes.
-Its `command_execution` object mirrors command counts by execution boundary and
-operator role so reviewers can see which commands are public metadata review
-versus private cache, rollout, merge, or promotion work.
-
-Set `WAYSPAN_ALLOW_UNSUPPORTED_ALPASIM_ARM=1` only for an intentional unsupported
-ARM rollout diagnostic.
-
-Public releases should publish compact JSON summaries, metric tables, hashes,
-and redistribution-cleared images only. Do not publish raw USDZ assets, rollout
-videos, or support bundles containing gated content.
-
-Current tracked pilot evidence:
+The tracked 10-scene `spotlight_reflex` pilot is valid integration evidence:
 
 | Artifact | Result |
 | --- | --- |
@@ -124,94 +92,41 @@ Current tracked pilot evidence:
 | [`docs/evidence/closed_loop_spotlight_reflex_50scene_localprobe_1scene.json`](evidence/closed_loop_spotlight_reflex_50scene_localprobe_1scene.json) | Diagnostic 50-preset local probe only: 1/1 completed scene, 199 audited frames, 0 sensor-pipeline failures. Not a 50-scene claim summary. |
 | [`docs/evidence/closed_loop_spotlight_reflex_50scene_attempt_partial.json`](evidence/closed_loop_spotlight_reflex_50scene_attempt_partial.json) | Diagnostic partial 50-preset attempt only: 2/50 attempted scenes failed before audited frames were produced. Not a 50-scene claim summary. |
 | Failure taxonomy | 5 collision scenes, 2 at-fault collision scenes, 3 wrong-lane scenes, 0 offroad scenes, 7 low-progress scenes. |
-| Claim boundary | Closed-loop integration evidence for `spotlight_reflex`, not a policy-quality benchmark claim. |
 
-Current scale status:
+The 50- and 100-scene public 26.02 stages are planned but not claim-ready. The
+current status tracks the 50/100 cache and summary gap explicitly:
+`scale_status.<preset>.source_usdz_cache`,
+`scale_status.<preset>.local_usdz_cache`, and the summary state. The tracked
+`source_usdz_cache.matching_scene_count` is `0` for both presets after source
+cache cleanup. The local 50-scene cache is independently valid at 50/50; the
+local 100-scene cache remains invalid at 0/100. Neither scale stage has a
+claim-valid summary.
 
-| Stage | Public Artifact Status |
+## Regeneration Artifacts
+
+The current evidence chain is machine-readable and public-safe:
+
+| Artifact | Purpose |
 | --- | --- |
-| 10-scene pilot | Tracked as the compact public JSON above. Raw AlpaSim media, support bundles, and gated scene artifacts are intentionally untracked. |
-| 50-scene public 26.02 preset | Preset, cache-builder workflow, one diagnostic local-probe summary, and one partial-attempt summary are tracked. A claim-valid 50-scene closed-loop summary still requires rebuilding the local USDZ cache and executing the full stage on an x86_64 AlpaSim runner. |
-| 100-scene public 26.02 preset | Preset and cache-builder workflow are tracked. A claim-valid 100-scene closed-loop summary still requires the same cache/runtime prerequisites at larger scale. |
+| [`docs/evidence/benchmark_regeneration_plan_20260706.json`](evidence/benchmark_regeneration_plan_20260706.json) | 10/50/100 rerun plan, scene presets, shard boundaries, merge commands, and promotion targets. |
+| [`docs/evidence/benchmark_regeneration_readiness_20260706.json`](evidence/benchmark_regeneration_readiness_20260706.json) | No-download/no-rollout host readiness snapshot. |
+| [`docs/evidence/benchmark_regeneration_status_20260706.json`](evidence/benchmark_regeneration_status_20260706.json) | Public benchmark status, `claim_ready`, objective-completion fields, and per-preset scale status. |
+| [`docs/evidence/benchmark_regeneration_commands_20260706.json`](evidence/benchmark_regeneration_commands_20260706.json) | Rendered cache, shard, merge, promotion, status, and audit commands. Its `execution_boundary_counts`, `operator_role_counts`, `public_review_command_count`, and `private_execution_command_count` separate public review from private cache/rollout/promotion work. |
+| [`docs/evidence/benchmark_regeneration_resume_commands_20260706.json`](evidence/benchmark_regeneration_resume_commands_20260706.json) | Audit-derived resume commands for missing or invalid planned 50/100 shard summaries. |
+| [`docs/evidence/benchmark_regeneration_audit_20260706.json`](evidence/benchmark_regeneration_audit_20260706.json) | Strict claim gate over summaries, readiness, public handoff, manifest hashes, and diagnostic non-claim evidence. |
+| [`docs/evidence/benchmark_public_evidence_manifest_20260706.json`](evidence/benchmark_public_evidence_manifest_20260706.json) | Hash/size/schema manifest for compact public evidence and expected missing 50/100 claim summaries. |
+| [`docs/evidence/benchmark_operator_matrix_20260706.json`](evidence/benchmark_operator_matrix_20260706.json) | Role matrix for public review, cache building, live rollouts, merge, and promotion. |
+| [`docs/benchmark_regeneration_handoff.md`](benchmark_regeneration_handoff.md) | Human handoff with blocker IDs, role boundaries, current command groups, cleanup boundary, and promotion boundary. |
 
-The current machine-readable regeneration status is tracked at
-[`docs/evidence/benchmark_regeneration_status_20260706.json`](evidence/benchmark_regeneration_status_20260706.json).
-For scale stages, its `scale_status.<preset>.source_usdz_cache` and
-`scale_status.<preset>.local_usdz_cache` fields expose the public cache
-inventory used by the claim gate. The current snapshot records 0 source USDZ
-files after local cleanup; `matching_scene_count` of `0` for both 50/100 presets; no valid local scale cache; and no claim-valid scale summary.
-It also exposes `claim_ready` and compact `objective_completion` fields so
-reviewers can see remaining requirements, blocker IDs, and next command groups
-before opening the full audit.
-Regenerate it from the tracked compact evidence chain with
-`wod2sim-benchmark-status`; the command does not probe Docker, GPUs, or local
-scene caches.
-The compact evidence manifest is tracked at
-[`docs/evidence/benchmark_public_evidence_manifest_20260706.json`](evidence/benchmark_public_evidence_manifest_20260706.json).
-Regenerate it with `wod2sim-benchmark-evidence-manifest` to verify hashes,
-schemas, claim scopes, and the expected missing 50/100 claim-summary artifacts.
-The matching command-level rerun plan is tracked at
-[`docs/evidence/benchmark_regeneration_plan_20260706.json`](evidence/benchmark_regeneration_plan_20260706.json).
-The one-page public operator handoff is
-[`docs/benchmark_regeneration_handoff.md`](benchmark_regeneration_handoff.md);
-it summarizes current blocker IDs, who can review/build/run/promote, and which
-plan command groups remain before a 50/100-scene claim can pass.
-The no-download/no-rollout host readiness snapshot is tracked at
-[`docs/evidence/benchmark_regeneration_readiness_20260706.json`](evidence/benchmark_regeneration_readiness_20260706.json)
-and can be regenerated with `wod2sim-benchmark-readiness`.
-Tracked public readiness snapshots should use `--stable-public-snapshot`, which
-omits exact volatile disk byte counts while preserving rounded free GiB and the
-minimum-disk gate.
-After promoting new public summaries, regenerate readiness first, then status
-with `wod2sim-benchmark-status`, then the strict audit. The status command
-derives claim flags from the current summary artifacts and only references the
-audit path, so the audit can validate a freshly regenerated status artifact
-without a refresh cycle.
-Use its `blocking_requirements` and `next_command_groups` fields to identify the
-remaining cache/runtime blockers and the matching plan command groups. Short
-setup groups include copyable `display` commands; long shard groups remain
-referenced through the full plan to avoid duplicating every shard command. Use
-`wod2sim-benchmark-commands --group shards --stage <stage-or-preset>` to render
-those shard commands from the tracked plan when executing a scale stage. The
-all-stage rendered command artifact is tracked at
-[`docs/evidence/benchmark_regeneration_commands_20260706.json`](evidence/benchmark_regeneration_commands_20260706.json)
-for review without local runtime access. The audit-derived missing-shard resume
-snapshot is tracked at
-[`docs/evidence/benchmark_regeneration_resume_commands_20260706.json`](evidence/benchmark_regeneration_resume_commands_20260706.json).
-Each stage in that snapshot also carries a compact `claim_gap` block with
-merge-input progress, cache inventory, blockers, and next command groups.
-Its `execution_boundary_counts`,
-`operator_role_counts`, `public_review_command_count`, and
-`private_execution_command_count` fields distinguish public review commands from
-cache-building, live-rollout, merge, and promotion commands; executing cache
-rebuilds or rollouts still requires the gated assets and an x86_64 NVIDIA/Docker
-AlpaSim host.
-Its scale stages include 10-scene shard commands for constrained hosts; shard
-summaries are operational checkpoints, not replacements for a complete 50/100
-public summary. Validate the local USDZ cache offline with
-`wod2sim-build-local-cache --validate-only` before launching shards. After all shards complete, merge their
-compact summaries with `wod2sim-batch-summary --merge-summary ...
---expected-scene-count N`, then promote the validated summary with
-`wod2sim-promote-batch-summary`.
-Validation failures are machine-readable: `missing_scene_ids`,
-`invalid_revision_scene_ids`, or `invalid_cache_files` must be resolved before
-claim-valid scale shards are started.
-The public claim gate for those artifacts is tracked at
-[`docs/evidence/benchmark_regeneration_audit_20260706.json`](evidence/benchmark_regeneration_audit_20260706.json).
-For merged scale summaries, the audit also verifies that the recorded shard
-summary inputs match the regeneration plan. It also verifies that the tracked
-readiness snapshot references the same plan/status artifacts and agrees with
-the audited public summary state for each stage. Each stage also reports
-`summary_provenance`, including the summary creation time and whether the
-recorded batch directory or merge inputs match the current regeneration plan.
-Diagnostic scale-probe evidence is audited separately as non-claim evidence; it
-does not satisfy the strict 50/100-scene claim gate.
-The audit's `objective_completion` section is the public checklist for which
-parts of the regeneration objective are satisfied and which claim artifacts
-remain missing. Unsatisfied rows include readiness blocker IDs and the command
-groups to run next. The same object also carries top-level
-`blocking_requirements`, `next_command_groups`, and
-`next_command_renderer_groups` fields for a compact machine-readable view of
-remaining work. Its `scale_claim_gaps` rows summarize each 50/100 stage's
-local/source cache validity, missing summary state, blockers, and next command
-groups required before the strict claim gate can pass.
+Use [`benchmark_evidence_workflow.md`](benchmark_evidence_workflow.md) for the
+copyable cache, batch, merge, promotion, status, and audit workflow. Short setup
+groups include display commands; long shard groups are rendered from the plan
+with `wod2sim-benchmark-commands --group shards` to avoid duplicating every
+shard command in prose.
+
+## Publication Rule
+
+Public releases should publish compact JSON summaries, metric tables, hashes,
+and redistribution-cleared images only. Do not publish raw USDZ assets, rollout
+videos, Docker layers, Hugging Face caches, or support bundles containing gated
+content.

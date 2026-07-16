@@ -415,7 +415,10 @@ def _scale_status(
             "summary_artifact": stage.get("public_summary_target"),
             "summary_present": bool(stage_report.get("summary_present")),
             "claim_valid_closed_loop_summary_tracked": claim_valid,
-            "remaining_runtime_requirement": _scale_runtime_requirement(claim_valid=claim_valid),
+            "remaining_runtime_requirement": _scale_runtime_requirement(
+                claim_valid=claim_valid,
+                local_cache_valid=validation.get("valid") is True,
+            ),
         }
     return rows
 
@@ -550,15 +553,20 @@ def _cache_inventory_status(cache: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _scale_runtime_requirement(*, claim_valid: bool) -> str:
+def _scale_runtime_requirement(*, claim_valid: bool, local_cache_valid: bool) -> str:
     if claim_valid:
         return (
             "No remaining runtime requirement for the tracked public claim; rerunning still "
             "requires an x86_64 AlpaSim runner with Docker/NVIDIA runtime images installed."
         )
+    if local_cache_valid:
+        return (
+            "The local 26.02 USDZ cache is ready; run the remaining stage and promote its "
+            "summary on an x86_64 AlpaSim runner with Docker/NVIDIA runtime images installed."
+        )
     return (
-        "Rebuild the local 26.02 USDZ cache and rerun on an x86_64 AlpaSim runner "
-        "with Docker/NVIDIA runtime images installed."
+        "Build or restore a metadata-valid local 26.02 USDZ cache, then run the stage on an "
+        "x86_64 AlpaSim runner with Docker/NVIDIA runtime images installed."
     )
 
 

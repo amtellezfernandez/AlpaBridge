@@ -79,7 +79,7 @@ class SpotlightReflexAlpaSimModel(BaseTrajectoryModel):
         context_length: int | None,
         output_frequency_hz: int,
     ) -> "SpotlightReflexAlpaSimModel":
-        log_path = os.getenv("WAYSPAN_SPOTLIGHT_LOG_PATH", str(_model_cfg_value(model_cfg, "log_path", "") or "")).strip()
+        log_path = os.getenv("WOD2SIM_SPOTLIGHT_LOG_PATH", str(_model_cfg_value(model_cfg, "log_path", "") or "")).strip()
         return cls(
             camera_ids=camera_ids,
             context_length=context_length or 1,

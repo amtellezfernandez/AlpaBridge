@@ -38,7 +38,7 @@ def _parse_args() -> argparse.Namespace:
         description=(
             "Build an oracle actor-proxy JSON from AlpaSim ASL logs. The output is keyed by "
             "sim timestamp and can be injected into the learned AlpaSim adapter with "
-            "WAYSPAN_TOKENBC_ORACLE_ACTOR_PROXY_PATH."
+            "WOD2SIM_TOKENBC_ORACLE_ACTOR_PROXY_PATH."
         )
     )
     parser.add_argument("--asl", action="append", type=Path, default=[], help="Input rollout.asl file.")

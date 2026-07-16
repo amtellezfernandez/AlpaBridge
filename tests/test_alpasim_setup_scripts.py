@@ -325,22 +325,22 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
     def test_driver_env_expands_run_dir_and_oracle_actor_proxy(self) -> None:
         env = _driver_env(
             {
-                "WAYSPAN_TOKENBC_SELECTION_LOG_PATH": "{run_dir}/driver/selection-log.jsonl",
-                "WAYSPAN_TOKENBC_ORACLE_ACTOR_PROXY_PATH": "{oracle_actor_proxy_path}",
+                "WOD2SIM_TOKENBC_SELECTION_LOG_PATH": "{run_dir}/driver/selection-log.jsonl",
+                "WOD2SIM_TOKENBC_ORACLE_ACTOR_PROXY_PATH": "{oracle_actor_proxy_path}",
             },
             run_dir=Path("/tmp/run"),
             oracle_actor_proxy=Path("/tmp/oracle.json"),
         )
 
-        self.assertEqual("/tmp/run/driver/selection-log.jsonl", env["WAYSPAN_TOKENBC_SELECTION_LOG_PATH"])
-        self.assertEqual("/tmp/oracle.json", env["WAYSPAN_TOKENBC_ORACLE_ACTOR_PROXY_PATH"])
+        self.assertEqual("/tmp/run/driver/selection-log.jsonl", env["WOD2SIM_TOKENBC_SELECTION_LOG_PATH"])
+        self.assertEqual("/tmp/oracle.json", env["WOD2SIM_TOKENBC_ORACLE_ACTOR_PROXY_PATH"])
 
     def test_actor_axis_preset_requires_oracle_actor_proxy(self) -> None:
         preset = _ALL_MODEL_PRESETS["token_dagger_iter2_actor_axis_oracle_actor_clamped"]
 
         self.assertTrue(preset["requires_oracle_actor_proxy"])
-        self.assertEqual("actor_axis_constrained", preset["driver_env"]["WAYSPAN_TOKENBC_SELECTION_MODE"])
-        self.assertEqual("3", preset["driver_env"]["WAYSPAN_TOKENBC_HYBRID_TOP_K"])
+        self.assertEqual("actor_axis_constrained", preset["driver_env"]["WOD2SIM_TOKENBC_SELECTION_MODE"])
+        self.assertEqual("3", preset["driver_env"]["WOD2SIM_TOKENBC_HYBRID_TOP_K"])
 
     def test_direct_actor_planner_preset_requires_oracle_actor_proxy(self) -> None:
         preset = _ALL_MODEL_PRESETS["direct_actor_planner_oracle"]
@@ -349,7 +349,7 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
         self.assertFalse(preset["force_cuda"])
         self.assertEqual(
             "{oracle_actor_proxy_path}",
-            preset["driver_env"]["WAYSPAN_DIRECT_PLANNER_ORACLE_ACTOR_PROXY_PATH"],
+            preset["driver_env"]["WOD2SIM_DIRECT_PLANNER_ORACLE_ACTOR_PROXY_PATH"],
         )
 
     def test_direct_actor_planner_max_clearance_preset_sets_objective(self) -> None:
@@ -357,10 +357,10 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
 
         self.assertTrue(preset["requires_oracle_actor_proxy"])
         self.assertFalse(preset["force_cuda"])
-        self.assertEqual("max_clearance", preset["driver_env"]["WAYSPAN_DIRECT_PLANNER_SELECTION_OBJECTIVE"])
+        self.assertEqual("max_clearance", preset["driver_env"]["WOD2SIM_DIRECT_PLANNER_SELECTION_OBJECTIVE"])
         self.assertEqual(
             "{oracle_actor_proxy_path}",
-            preset["driver_env"]["WAYSPAN_DIRECT_PLANNER_ORACLE_ACTOR_PROXY_PATH"],
+            preset["driver_env"]["WOD2SIM_DIRECT_PLANNER_ORACLE_ACTOR_PROXY_PATH"],
         )
 
     def test_public_release_models_match_curated_surface(self) -> None:
@@ -375,15 +375,15 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
     def test_public_release_models_emit_driver_logs_by_default(self) -> None:
         self.assertEqual(
             "{run_dir}/driver/spotlight-log.jsonl",
-            MODEL_PRESETS["spotlight_reflex"]["driver_env"]["WAYSPAN_SPOTLIGHT_LOG_PATH"],
+            MODEL_PRESETS["spotlight_reflex"]["driver_env"]["WOD2SIM_SPOTLIGHT_LOG_PATH"],
         )
         self.assertEqual(
             "{run_dir}/driver/selection-log.jsonl",
-            MODEL_PRESETS["token_dagger_bc"]["driver_env"]["WAYSPAN_TOKENBC_SELECTION_LOG_PATH"],
+            MODEL_PRESETS["token_dagger_bc"]["driver_env"]["WOD2SIM_TOKENBC_SELECTION_LOG_PATH"],
         )
         self.assertEqual(
             "{run_dir}/driver/direct-planner-log.jsonl",
-            MODEL_PRESETS["direct_actor_planner"]["driver_env"]["WAYSPAN_DIRECT_PLANNER_LOG_PATH"],
+            MODEL_PRESETS["direct_actor_planner"]["driver_env"]["WOD2SIM_DIRECT_PLANNER_LOG_PATH"],
         )
 
     def test_planned_run_status_starts_as_planned(self) -> None:
@@ -919,7 +919,7 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
                 self.assertEqual("local_arm_external_driver", _wizard_deploy_target())
 
     def test_wizard_deploy_target_allows_env_override(self) -> None:
-        with patch.dict(os.environ, {"WAYSPAN_ALPASIM_DEPLOY_TARGET": "custom_profile"}, clear=False):
+        with patch.dict(os.environ, {"WOD2SIM_ALPASIM_DEPLOY_TARGET": "custom_profile"}, clear=False):
             with patch("platform.machine", return_value="x86_64"):
                 self.assertEqual("custom_profile", _wizard_deploy_target())
 
@@ -931,7 +931,7 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
         self.assertIn("amd64-only", str(ctx.exception))
 
     def test_platform_preflight_allows_arm_with_override(self) -> None:
-        with patch.dict(os.environ, {"WAYSPAN_ALLOW_UNSUPPORTED_ALPASIM_ARM": "1"}, clear=False):
+        with patch.dict(os.environ, {"WOD2SIM_ALLOW_UNSUPPORTED_ALPASIM_ARM": "1"}, clear=False):
             with patch("platform.machine", return_value="aarch64"):
                 _preflight_platform_compatibility()
 

@@ -30,7 +30,7 @@ _ALL_MODEL_PRESETS = {
         "wizard_driver": "spotlight_reflex",
         "checkpoint": None,
         "driver_env": {
-            "WAYSPAN_SPOTLIGHT_LOG_PATH": "{run_dir}/driver/spotlight-log.jsonl",
+            "WOD2SIM_SPOTLIGHT_LOG_PATH": "{run_dir}/driver/spotlight-log.jsonl",
         },
     },
     "token_dagger_bc": {
@@ -39,7 +39,7 @@ _ALL_MODEL_PRESETS = {
         "checkpoint": None,
         "checkpoint_required": True,
         "driver_env": {
-            "WAYSPAN_TOKENBC_SELECTION_LOG_PATH": "{run_dir}/driver/selection-log.jsonl",
+            "WOD2SIM_TOKENBC_SELECTION_LOG_PATH": "{run_dir}/driver/selection-log.jsonl",
         },
     },
     "direct_actor_planner": {
@@ -49,9 +49,9 @@ _ALL_MODEL_PRESETS = {
         "requires_oracle_actor_proxy": True,
         "force_cuda": False,
         "driver_env": {
-            "WAYSPAN_DIRECT_PLANNER_ORACLE_ACTOR_PROXY_PATH": "{oracle_actor_proxy_path}",
-            "WAYSPAN_DIRECT_PLANNER_ORACLE_ACTOR_PROXY_TOLERANCE_US": "50000",
-            "WAYSPAN_DIRECT_PLANNER_LOG_PATH": "{run_dir}/driver/direct-planner-log.jsonl",
+            "WOD2SIM_DIRECT_PLANNER_ORACLE_ACTOR_PROXY_PATH": "{oracle_actor_proxy_path}",
+            "WOD2SIM_DIRECT_PLANNER_ORACLE_ACTOR_PROXY_TOLERANCE_US": "50000",
+            "WOD2SIM_DIRECT_PLANNER_LOG_PATH": "{run_dir}/driver/direct-planner-log.jsonl",
         },
     },
     "direct_actor_planner_oracle": {
@@ -61,9 +61,9 @@ _ALL_MODEL_PRESETS = {
         "requires_oracle_actor_proxy": True,
         "force_cuda": False,
         "driver_env": {
-            "WAYSPAN_DIRECT_PLANNER_ORACLE_ACTOR_PROXY_PATH": "{oracle_actor_proxy_path}",
-            "WAYSPAN_DIRECT_PLANNER_ORACLE_ACTOR_PROXY_TOLERANCE_US": "50000",
-            "WAYSPAN_DIRECT_PLANNER_LOG_PATH": "{run_dir}/driver/direct-planner-log.jsonl",
+            "WOD2SIM_DIRECT_PLANNER_ORACLE_ACTOR_PROXY_PATH": "{oracle_actor_proxy_path}",
+            "WOD2SIM_DIRECT_PLANNER_ORACLE_ACTOR_PROXY_TOLERANCE_US": "50000",
+            "WOD2SIM_DIRECT_PLANNER_LOG_PATH": "{run_dir}/driver/direct-planner-log.jsonl",
         },
     },
     "direct_actor_planner_max_clearance_oracle": {
@@ -73,10 +73,10 @@ _ALL_MODEL_PRESETS = {
         "requires_oracle_actor_proxy": True,
         "force_cuda": False,
         "driver_env": {
-            "WAYSPAN_DIRECT_PLANNER_SELECTION_OBJECTIVE": "max_clearance",
-            "WAYSPAN_DIRECT_PLANNER_ORACLE_ACTOR_PROXY_PATH": "{oracle_actor_proxy_path}",
-            "WAYSPAN_DIRECT_PLANNER_ORACLE_ACTOR_PROXY_TOLERANCE_US": "50000",
-            "WAYSPAN_DIRECT_PLANNER_LOG_PATH": "{run_dir}/driver/direct-planner-log.jsonl",
+            "WOD2SIM_DIRECT_PLANNER_SELECTION_OBJECTIVE": "max_clearance",
+            "WOD2SIM_DIRECT_PLANNER_ORACLE_ACTOR_PROXY_PATH": "{oracle_actor_proxy_path}",
+            "WOD2SIM_DIRECT_PLANNER_ORACLE_ACTOR_PROXY_TOLERANCE_US": "50000",
+            "WOD2SIM_DIRECT_PLANNER_LOG_PATH": "{run_dir}/driver/direct-planner-log.jsonl",
         },
     },
     "token_dagger_iter2": {
@@ -96,8 +96,8 @@ _ALL_MODEL_PRESETS = {
         "wizard_driver": "spotlight_reflex",
         "checkpoint": ARTIFACT_ROOT / "bc_models_iter2" / "token_dagger_bc.pt",
         "driver_env": {
-            "WAYSPAN_TOKENBC_TRAJECTORY_MODE": "clamped_lateral",
-            "WAYSPAN_TOKENBC_MAX_LATERAL_OFFSET_M": "2.0",
+            "WOD2SIM_TOKENBC_TRAJECTORY_MODE": "clamped_lateral",
+            "WOD2SIM_TOKENBC_MAX_LATERAL_OFFSET_M": "2.0",
         },
     },
     "token_dagger_iter2_hybrid": {
@@ -105,13 +105,13 @@ _ALL_MODEL_PRESETS = {
         "wizard_driver": "spotlight_reflex",
         "checkpoint": ARTIFACT_ROOT / "bc_models_iter2" / "token_dagger_bc.pt",
         "driver_env": {
-            "WAYSPAN_TOKENBC_SELECTION_MODE": "hybrid_veto",
-            "WAYSPAN_TOKENBC_HYBRID_TOP_K": "3",
-            "WAYSPAN_TOKENBC_HYBRID_GEOMETRIC_WEIGHT": "0.75",
-            "WAYSPAN_TOKENBC_HYBRID_POLICY_TEMPERATURE": "1.0",
-            "WAYSPAN_TOKENBC_HYBRID_VETO_MARGIN": "8.0",
-            "WAYSPAN_TOKENBC_HYBRID_MAX_GEOMETRIC_RANK": "2",
-            "WAYSPAN_TOKENBC_SELECTION_LOG_PATH": "{run_dir}/driver/selection-log.jsonl",
+            "WOD2SIM_TOKENBC_SELECTION_MODE": "hybrid_veto",
+            "WOD2SIM_TOKENBC_HYBRID_TOP_K": "3",
+            "WOD2SIM_TOKENBC_HYBRID_GEOMETRIC_WEIGHT": "0.75",
+            "WOD2SIM_TOKENBC_HYBRID_POLICY_TEMPERATURE": "1.0",
+            "WOD2SIM_TOKENBC_HYBRID_VETO_MARGIN": "8.0",
+            "WOD2SIM_TOKENBC_HYBRID_MAX_GEOMETRIC_RANK": "2",
+            "WOD2SIM_TOKENBC_SELECTION_LOG_PATH": "{run_dir}/driver/selection-log.jsonl",
         },
     },
     "token_dagger_iter2_hybrid_clamped": {
@@ -119,15 +119,15 @@ _ALL_MODEL_PRESETS = {
         "wizard_driver": "spotlight_reflex",
         "checkpoint": ARTIFACT_ROOT / "bc_models_iter2" / "token_dagger_bc.pt",
         "driver_env": {
-            "WAYSPAN_TOKENBC_SELECTION_MODE": "hybrid_veto",
-            "WAYSPAN_TOKENBC_HYBRID_TOP_K": "3",
-            "WAYSPAN_TOKENBC_HYBRID_GEOMETRIC_WEIGHT": "0.75",
-            "WAYSPAN_TOKENBC_HYBRID_POLICY_TEMPERATURE": "1.0",
-            "WAYSPAN_TOKENBC_HYBRID_VETO_MARGIN": "8.0",
-            "WAYSPAN_TOKENBC_HYBRID_MAX_GEOMETRIC_RANK": "2",
-            "WAYSPAN_TOKENBC_TRAJECTORY_MODE": "clamped_lateral",
-            "WAYSPAN_TOKENBC_MAX_LATERAL_OFFSET_M": "2.0",
-            "WAYSPAN_TOKENBC_SELECTION_LOG_PATH": "{run_dir}/driver/selection-log.jsonl",
+            "WOD2SIM_TOKENBC_SELECTION_MODE": "hybrid_veto",
+            "WOD2SIM_TOKENBC_HYBRID_TOP_K": "3",
+            "WOD2SIM_TOKENBC_HYBRID_GEOMETRIC_WEIGHT": "0.75",
+            "WOD2SIM_TOKENBC_HYBRID_POLICY_TEMPERATURE": "1.0",
+            "WOD2SIM_TOKENBC_HYBRID_VETO_MARGIN": "8.0",
+            "WOD2SIM_TOKENBC_HYBRID_MAX_GEOMETRIC_RANK": "2",
+            "WOD2SIM_TOKENBC_TRAJECTORY_MODE": "clamped_lateral",
+            "WOD2SIM_TOKENBC_MAX_LATERAL_OFFSET_M": "2.0",
+            "WOD2SIM_TOKENBC_SELECTION_LOG_PATH": "{run_dir}/driver/selection-log.jsonl",
         },
     },
     "token_dagger_iter2_axis_constrained_clamped": {
@@ -135,12 +135,12 @@ _ALL_MODEL_PRESETS = {
         "wizard_driver": "spotlight_reflex",
         "checkpoint": ARTIFACT_ROOT / "bc_models_iter2" / "token_dagger_bc.pt",
         "driver_env": {
-            "WAYSPAN_TOKENBC_SELECTION_MODE": "axis_constrained",
-            "WAYSPAN_TOKENBC_HYBRID_TOP_K": "3",
-            "WAYSPAN_TOKENBC_HYBRID_POLICY_TEMPERATURE": "1.0",
-            "WAYSPAN_TOKENBC_TRAJECTORY_MODE": "clamped_lateral",
-            "WAYSPAN_TOKENBC_MAX_LATERAL_OFFSET_M": "2.0",
-            "WAYSPAN_TOKENBC_SELECTION_LOG_PATH": "{run_dir}/driver/selection-log.jsonl",
+            "WOD2SIM_TOKENBC_SELECTION_MODE": "axis_constrained",
+            "WOD2SIM_TOKENBC_HYBRID_TOP_K": "3",
+            "WOD2SIM_TOKENBC_HYBRID_POLICY_TEMPERATURE": "1.0",
+            "WOD2SIM_TOKENBC_TRAJECTORY_MODE": "clamped_lateral",
+            "WOD2SIM_TOKENBC_MAX_LATERAL_OFFSET_M": "2.0",
+            "WOD2SIM_TOKENBC_SELECTION_LOG_PATH": "{run_dir}/driver/selection-log.jsonl",
         },
     },
     "token_dagger_iter2_axis_constrained_oracle_actor_clamped": {
@@ -149,14 +149,14 @@ _ALL_MODEL_PRESETS = {
         "checkpoint": ARTIFACT_ROOT / "bc_models_iter2" / "token_dagger_bc.pt",
         "requires_oracle_actor_proxy": True,
         "driver_env": {
-            "WAYSPAN_TOKENBC_SELECTION_MODE": "axis_constrained",
-            "WAYSPAN_TOKENBC_HYBRID_TOP_K": "3",
-            "WAYSPAN_TOKENBC_HYBRID_POLICY_TEMPERATURE": "1.0",
-            "WAYSPAN_TOKENBC_TRAJECTORY_MODE": "clamped_lateral",
-            "WAYSPAN_TOKENBC_MAX_LATERAL_OFFSET_M": "2.0",
-            "WAYSPAN_TOKENBC_SELECTION_LOG_PATH": "{run_dir}/driver/selection-log.jsonl",
-            "WAYSPAN_TOKENBC_ORACLE_ACTOR_PROXY_PATH": "{oracle_actor_proxy_path}",
-            "WAYSPAN_TOKENBC_ORACLE_ACTOR_PROXY_TOLERANCE_US": "50000",
+            "WOD2SIM_TOKENBC_SELECTION_MODE": "axis_constrained",
+            "WOD2SIM_TOKENBC_HYBRID_TOP_K": "3",
+            "WOD2SIM_TOKENBC_HYBRID_POLICY_TEMPERATURE": "1.0",
+            "WOD2SIM_TOKENBC_TRAJECTORY_MODE": "clamped_lateral",
+            "WOD2SIM_TOKENBC_MAX_LATERAL_OFFSET_M": "2.0",
+            "WOD2SIM_TOKENBC_SELECTION_LOG_PATH": "{run_dir}/driver/selection-log.jsonl",
+            "WOD2SIM_TOKENBC_ORACLE_ACTOR_PROXY_PATH": "{oracle_actor_proxy_path}",
+            "WOD2SIM_TOKENBC_ORACLE_ACTOR_PROXY_TOLERANCE_US": "50000",
         },
     },
     "token_dagger_iter2_axis_lexicographic_oracle_actor_clamped": {
@@ -165,14 +165,14 @@ _ALL_MODEL_PRESETS = {
         "checkpoint": ARTIFACT_ROOT / "bc_models_iter2" / "token_dagger_bc.pt",
         "requires_oracle_actor_proxy": True,
         "driver_env": {
-            "WAYSPAN_TOKENBC_SELECTION_MODE": "axis_lexicographic",
-            "WAYSPAN_TOKENBC_HYBRID_TOP_K": "3",
-            "WAYSPAN_TOKENBC_HYBRID_POLICY_TEMPERATURE": "1.0",
-            "WAYSPAN_TOKENBC_TRAJECTORY_MODE": "clamped_lateral",
-            "WAYSPAN_TOKENBC_MAX_LATERAL_OFFSET_M": "2.0",
-            "WAYSPAN_TOKENBC_SELECTION_LOG_PATH": "{run_dir}/driver/selection-log.jsonl",
-            "WAYSPAN_TOKENBC_ORACLE_ACTOR_PROXY_PATH": "{oracle_actor_proxy_path}",
-            "WAYSPAN_TOKENBC_ORACLE_ACTOR_PROXY_TOLERANCE_US": "50000",
+            "WOD2SIM_TOKENBC_SELECTION_MODE": "axis_lexicographic",
+            "WOD2SIM_TOKENBC_HYBRID_TOP_K": "3",
+            "WOD2SIM_TOKENBC_HYBRID_POLICY_TEMPERATURE": "1.0",
+            "WOD2SIM_TOKENBC_TRAJECTORY_MODE": "clamped_lateral",
+            "WOD2SIM_TOKENBC_MAX_LATERAL_OFFSET_M": "2.0",
+            "WOD2SIM_TOKENBC_SELECTION_LOG_PATH": "{run_dir}/driver/selection-log.jsonl",
+            "WOD2SIM_TOKENBC_ORACLE_ACTOR_PROXY_PATH": "{oracle_actor_proxy_path}",
+            "WOD2SIM_TOKENBC_ORACLE_ACTOR_PROXY_TOLERANCE_US": "50000",
         },
     },
     "token_dagger_iter2_actor_axis_oracle_actor_clamped": {
@@ -181,14 +181,14 @@ _ALL_MODEL_PRESETS = {
         "checkpoint": ARTIFACT_ROOT / "bc_models_iter2" / "token_dagger_bc.pt",
         "requires_oracle_actor_proxy": True,
         "driver_env": {
-            "WAYSPAN_TOKENBC_SELECTION_MODE": "actor_axis_constrained",
-            "WAYSPAN_TOKENBC_HYBRID_TOP_K": "3",
-            "WAYSPAN_TOKENBC_HYBRID_POLICY_TEMPERATURE": "1.0",
-            "WAYSPAN_TOKENBC_TRAJECTORY_MODE": "clamped_lateral",
-            "WAYSPAN_TOKENBC_MAX_LATERAL_OFFSET_M": "2.0",
-            "WAYSPAN_TOKENBC_SELECTION_LOG_PATH": "{run_dir}/driver/selection-log.jsonl",
-            "WAYSPAN_TOKENBC_ORACLE_ACTOR_PROXY_PATH": "{oracle_actor_proxy_path}",
-            "WAYSPAN_TOKENBC_ORACLE_ACTOR_PROXY_TOLERANCE_US": "50000",
+            "WOD2SIM_TOKENBC_SELECTION_MODE": "actor_axis_constrained",
+            "WOD2SIM_TOKENBC_HYBRID_TOP_K": "3",
+            "WOD2SIM_TOKENBC_HYBRID_POLICY_TEMPERATURE": "1.0",
+            "WOD2SIM_TOKENBC_TRAJECTORY_MODE": "clamped_lateral",
+            "WOD2SIM_TOKENBC_MAX_LATERAL_OFFSET_M": "2.0",
+            "WOD2SIM_TOKENBC_SELECTION_LOG_PATH": "{run_dir}/driver/selection-log.jsonl",
+            "WOD2SIM_TOKENBC_ORACLE_ACTOR_PROXY_PATH": "{oracle_actor_proxy_path}",
+            "WOD2SIM_TOKENBC_ORACLE_ACTOR_PROXY_TOLERANCE_US": "50000",
         },
     },
     "token_dagger_srcdecay_clamped": {
@@ -196,8 +196,8 @@ _ALL_MODEL_PRESETS = {
         "wizard_driver": "spotlight_reflex",
         "checkpoint": ARTIFACT_ROOT / "bc_models_iter3_srcdecay" / "token_dagger_bc.pt",
         "driver_env": {
-            "WAYSPAN_TOKENBC_TRAJECTORY_MODE": "clamped_lateral",
-            "WAYSPAN_TOKENBC_MAX_LATERAL_OFFSET_M": "2.0",
+            "WOD2SIM_TOKENBC_TRAJECTORY_MODE": "clamped_lateral",
+            "WOD2SIM_TOKENBC_MAX_LATERAL_OFFSET_M": "2.0",
         },
     },
     "token_dagger_srcdecay_hybrid": {
@@ -205,13 +205,13 @@ _ALL_MODEL_PRESETS = {
         "wizard_driver": "spotlight_reflex",
         "checkpoint": ARTIFACT_ROOT / "bc_models_iter3_srcdecay" / "token_dagger_bc.pt",
         "driver_env": {
-            "WAYSPAN_TOKENBC_SELECTION_MODE": "hybrid_veto",
-            "WAYSPAN_TOKENBC_HYBRID_TOP_K": "3",
-            "WAYSPAN_TOKENBC_HYBRID_GEOMETRIC_WEIGHT": "0.75",
-            "WAYSPAN_TOKENBC_HYBRID_POLICY_TEMPERATURE": "1.0",
-            "WAYSPAN_TOKENBC_HYBRID_VETO_MARGIN": "8.0",
-            "WAYSPAN_TOKENBC_HYBRID_MAX_GEOMETRIC_RANK": "2",
-            "WAYSPAN_TOKENBC_SELECTION_LOG_PATH": "{run_dir}/driver/selection-log.jsonl",
+            "WOD2SIM_TOKENBC_SELECTION_MODE": "hybrid_veto",
+            "WOD2SIM_TOKENBC_HYBRID_TOP_K": "3",
+            "WOD2SIM_TOKENBC_HYBRID_GEOMETRIC_WEIGHT": "0.75",
+            "WOD2SIM_TOKENBC_HYBRID_POLICY_TEMPERATURE": "1.0",
+            "WOD2SIM_TOKENBC_HYBRID_VETO_MARGIN": "8.0",
+            "WOD2SIM_TOKENBC_HYBRID_MAX_GEOMETRIC_RANK": "2",
+            "WOD2SIM_TOKENBC_SELECTION_LOG_PATH": "{run_dir}/driver/selection-log.jsonl",
         },
     },
     "token_dagger_srcdecay_hybrid_clamped": {
@@ -219,15 +219,15 @@ _ALL_MODEL_PRESETS = {
         "wizard_driver": "spotlight_reflex",
         "checkpoint": ARTIFACT_ROOT / "bc_models_iter3_srcdecay" / "token_dagger_bc.pt",
         "driver_env": {
-            "WAYSPAN_TOKENBC_SELECTION_MODE": "hybrid_veto",
-            "WAYSPAN_TOKENBC_HYBRID_TOP_K": "3",
-            "WAYSPAN_TOKENBC_HYBRID_GEOMETRIC_WEIGHT": "0.75",
-            "WAYSPAN_TOKENBC_HYBRID_POLICY_TEMPERATURE": "1.0",
-            "WAYSPAN_TOKENBC_HYBRID_VETO_MARGIN": "8.0",
-            "WAYSPAN_TOKENBC_HYBRID_MAX_GEOMETRIC_RANK": "2",
-            "WAYSPAN_TOKENBC_TRAJECTORY_MODE": "clamped_lateral",
-            "WAYSPAN_TOKENBC_MAX_LATERAL_OFFSET_M": "2.0",
-            "WAYSPAN_TOKENBC_SELECTION_LOG_PATH": "{run_dir}/driver/selection-log.jsonl",
+            "WOD2SIM_TOKENBC_SELECTION_MODE": "hybrid_veto",
+            "WOD2SIM_TOKENBC_HYBRID_TOP_K": "3",
+            "WOD2SIM_TOKENBC_HYBRID_GEOMETRIC_WEIGHT": "0.75",
+            "WOD2SIM_TOKENBC_HYBRID_POLICY_TEMPERATURE": "1.0",
+            "WOD2SIM_TOKENBC_HYBRID_VETO_MARGIN": "8.0",
+            "WOD2SIM_TOKENBC_HYBRID_MAX_GEOMETRIC_RANK": "2",
+            "WOD2SIM_TOKENBC_TRAJECTORY_MODE": "clamped_lateral",
+            "WOD2SIM_TOKENBC_MAX_LATERAL_OFFSET_M": "2.0",
+            "WOD2SIM_TOKENBC_SELECTION_LOG_PATH": "{run_dir}/driver/selection-log.jsonl",
         },
     },
 }
@@ -742,7 +742,7 @@ def _preflight_alpasim_base_image() -> None:
 
 
 def _preflight_nvidia_container_runtime() -> None:
-    if os.getenv("WAYSPAN_SKIP_ALPASIM_GPU_RUNTIME_CHECK", "").strip() == "1":
+    if os.getenv("WOD2SIM_SKIP_ALPASIM_GPU_RUNTIME_CHECK", "").strip() == "1":
         return
 
     image_tag = os.getenv("ALPASIM_BASE_IMAGE_TAG", "alpasim-base:0.66.0")
@@ -777,13 +777,13 @@ def _preflight_platform_compatibility() -> None:
     machine = platform.machine().lower()
     if machine not in {"aarch64", "arm64"}:
         return
-    if os.getenv("WAYSPAN_ALLOW_UNSUPPORTED_ALPASIM_ARM", "").strip() == "1":
+    if os.getenv("WOD2SIM_ALLOW_UNSUPPORTED_ALPASIM_ARM", "").strip() == "1":
         return
     raise SystemExit(
         "AlpaSim local external-driver rollouts are not currently supported on ARM hosts in this "
         "repo because the required NRE sensorsim image is amd64-only. On DGX Spark / arm64 we "
         "observed sensorsim either fail under emulation or stall before opening its gRPC port. "
-        "Run the AlpaSim matrix on an x86_64 host, or set WAYSPAN_ALLOW_UNSUPPORTED_ALPASIM_ARM=1 "
+        "Run the AlpaSim matrix on an x86_64 host, or set WOD2SIM_ALLOW_UNSUPPORTED_ALPASIM_ARM=1 "
         "to force the launch anyway."
     )
 
@@ -947,7 +947,7 @@ def _wizard_command(
 
 
 def _wizard_deploy_target() -> str:
-    override = os.getenv("WAYSPAN_ALPASIM_DEPLOY_TARGET", "").strip()
+    override = os.getenv("WOD2SIM_ALPASIM_DEPLOY_TARGET", "").strip()
     if override:
         return override
     machine = platform.machine().lower()

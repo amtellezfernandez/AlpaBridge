@@ -71,9 +71,9 @@ wod2sim-batch-summary = "wod2sim.cli.commands.batch_summary:main"
 wod2sim-evidence = "wod2sim.neutral.alpasim_metrics:main"
 
 [project.urls]
-Homepage = "https://github.com/amtellezfernandez/wayspan"
-Repository = "https://github.com/amtellezfernandez/wayspan"
-Issues = "https://github.com/amtellezfernandez/wayspan/issues"
+Homepage = "https://github.com/amtellezfernandez/WOD2Sim"
+Repository = "https://github.com/amtellezfernandez/WOD2Sim"
+Issues = "https://github.com/amtellezfernandez/WOD2Sim/issues"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

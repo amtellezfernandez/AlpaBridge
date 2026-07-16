@@ -1,9 +1,13 @@
 PYTHON ?= python3
+ARXIV_PDF ?= arxiv.pdf
 
-.PHONY: paper paper-verify lint coverage test smoke build verify clean
+.PHONY: arxiv paper paper-verify lint coverage test smoke build verify clean
 
-paper:
+paper: arxiv
+
+arxiv:
 	$(MAKE) -C paper
+	cp paper/paper.pdf $(ARXIV_PDF)
 
 # Rebuild in a temp dir so verification does not rewrite the tracked PDF.
 paper-verify:

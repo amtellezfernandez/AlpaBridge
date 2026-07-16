@@ -120,3 +120,24 @@ packet:
 
 That is what makes the repo useful: it turns a WOD-style policy idea into an
 auditable closed-loop run.
+
+## Waymax In Context
+
+Waymax is the closest paper-level comparison point: it is a data-driven,
+accelerated simulator for large-scale autonomous driving research. WOD2Sim is
+not a competing simulator; it is a bridge that turns WOD-style policy adapters
+into auditable AlpaSim closed-loop evidence.
+
+| Capability | Waymax | WOD2Sim |
+| --- | --- | --- |
+| Multi-agent closed-loop simulation | Yes | No |
+| Accelerator-backed execution | JAX/XLA on GPU/TPU | CLI-driven evidence generation around AlpaSim runs |
+| Real driving data | Waymo Open Motion Dataset scenarios | WOD-style adapters and benchmark inputs |
+| Expert data playback | Logged trajectories and expert actors | Compact benchmark summaries and reproduction artifacts |
+| Sim agents | Reactive rule-based and learned agents | Operator workflows, audits, and claim gating |
+| Routes / goals | Route-conditioned planning inputs | Benchmark scopes, scene presets, and handoff guidance |
+| Metrics | Route progress, off-road, collision, kinematic infeasibility, ADE | Claim-ready summaries, audits, manifests, and operator matrix |
+| Sensor simulation | Out of scope | Out of scope |
+| Training loop support | In-graph training and evaluation | Command rendering and evidence packaging |
+
+Waymax is the simulator. WOD2Sim is the evidence layer.

@@ -186,7 +186,7 @@
       },
       "local_usdz_cache_valid": false,
       "preset_tracked": true,
-      "remaining_runtime_requirement": "Rebuild the local 26.02 USDZ cache and rerun on an x86_64 AlpaSim runner with Docker/NVIDIA runtime images installed.",
+      "remaining_runtime_requirement": "Build or restore a metadata-valid local 26.02 USDZ cache, then run the stage on an x86_64 AlpaSim runner with Docker/NVIDIA runtime images installed.",
       "scene_count": 100,
       "source_usdz_cache": {
         "expected_scene_count": 100,
@@ -217,7 +217,7 @@
       },
       "local_usdz_cache_valid": true,
       "preset_tracked": true,
-      "remaining_runtime_requirement": "Rebuild the local 26.02 USDZ cache and rerun on an x86_64 AlpaSim runner with Docker/NVIDIA runtime images installed.",
+      "remaining_runtime_requirement": "The local 26.02 USDZ cache is ready; run the remaining stage and promote its summary on an x86_64 AlpaSim runner with Docker/NVIDIA runtime images installed.",
       "scene_count": 50,
       "source_usdz_cache": {
         "expected_scene_count": 50,
