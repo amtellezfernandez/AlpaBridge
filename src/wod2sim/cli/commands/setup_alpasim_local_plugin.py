@@ -16,9 +16,7 @@ ALPASIM_OVERRIDE_ROOT = package_path("alpasim_overrides")
 REPO_ROOT = repo_path()
 INSTALL_ROOT = REPO_ROOT or Path.cwd()
 UV_CACHE_DIR = workspace_path(".uv-cache")
-REQUIRED_MODELS = ("spotlight_reflex", "token_dagger_bc", "direct_actor_planner")
-# Remove stale predecessor installs so plugin resolution is unambiguous.
-LEGACY_DISTRIBUTIONS_TO_REMOVE = ("slipway", "minimal-shot-av", "wayspan", "way2sim")
+REQUIRED_MODELS = ("token_dagger_bc", "direct_actor_planner")
 TORCH_PACKAGE = "torch==2.11.0+cu129"
 TORCH_INDEX_URL = "https://download.pytorch.org/whl/cu129"
 ALPASIM_CORE_DEPENDENCIES = (
@@ -184,7 +182,8 @@ def main() -> None:
     print(
         "  ALPASIM_ROOT="
         + shlex_quote(str(alpasim_root))
-        + " wod2sim-launch --mode print --model spotlight_reflex --scene-preset fresh_3scene"
+        + " wod2sim-launch --mode print --model token_dagger_bc"
+        + " --checkpoint /path/to/token_dagger_bc.pt --scene-preset fresh_3scene"
     )
 
 
@@ -347,9 +346,6 @@ def _bootstrap_alpasim_venv(alpasim_root: Path, *, uv_bin: str) -> None:
             ],
             cwd=alpasim_root,
         )
-    _remove_conflicting_wod2sim_distributions(venv_python=venv_python, cwd=alpasim_root)
-
-
 def _patch_effectively_present(alpasim_root: Path, patch_file: Path) -> bool:
     checks = PATCH_EFFECTIVE_SNIPPETS.get(patch_file.name)
     if not checks:
@@ -500,31 +496,6 @@ def _fail_on_duplicate_public_model_entry_points(snapshot: dict[str, object]) ->
             "Duplicate public WOD2Sim model entry points detected in the AlpaSim environment. "
             "Remove stale installations and rerun wod2sim-setup.\n"
             + "\n".join(duplicate_messages)
-        )
-
-
-def _remove_conflicting_wod2sim_distributions(*, venv_python: Path, cwd: Path) -> None:
-    for distribution in LEGACY_DISTRIBUTIONS_TO_REMOVE:
-        probe = _run(
-            [
-                str(venv_python),
-                "-c",
-                (
-                    "from importlib.metadata import distributions\n"
-                    f"name = {distribution!r}.lower().replace('_', '-')\n"
-                    "present = any((dist.metadata.get('Name', '') or '').lower().replace('_', '-') == name "
-                    "for dist in distributions())\n"
-                    "print('1' if present else '0')\n"
-                ),
-            ],
-            cwd=cwd,
-            capture_output=True,
-        )
-        if probe.stdout.strip() != "1":
-            continue
-        _run(
-            [str(venv_python), "-m", "pip", "uninstall", "-y", distribution],
-            cwd=cwd,
         )
 
 

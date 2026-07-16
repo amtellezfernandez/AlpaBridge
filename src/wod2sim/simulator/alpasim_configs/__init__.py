@@ -1,1 +1,1 @@
-"""Hydra config package for the optional AlpaSim Spotlight Reflex plugin."""
+"""Hydra configs for WOD2Sim AlpaSim model plugins."""

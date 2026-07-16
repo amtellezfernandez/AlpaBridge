@@ -246,7 +246,7 @@ def _write_batch(
         {
             "schema": "alpasim_scene_batch_v1",
             "mode": "both",
-            "model": "spotlight_reflex",
+            "model": "token_dagger_bc",
             "scene_preset": "front_camera_10scene_smoke",
             "scene_ids": [scene_a, scene_b],
             "topology": "1gpu",
@@ -294,7 +294,7 @@ def _write_batch(
             "schema": "alpasim_scene_batch_summary_v1",
             "batch_dir": str(root),
             "mode": "both",
-            "model": "spotlight_reflex",
+            "model": "token_dagger_bc",
             "scene_count": 2,
             "runs": runs,
         },
@@ -336,7 +336,7 @@ def _write_launch_metadata(root: Path, name: str, *, scene_preset: str) -> None:
     _write_json(
         root / name / "launch-metadata.json",
         {
-            "model": "spotlight_reflex",
+            "model": "token_dagger_bc",
             "scene_preset": scene_preset,
             "scene_ids": [scene_id],
             "wizard_args": [],

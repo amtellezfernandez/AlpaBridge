@@ -65,7 +65,6 @@ jobs:
           from wod2sim.cli.commands.setup_alpasim_local_plugin import ALPASIM_OVERRIDE_ROOT
 
           assert tuple(MODEL_PRESETS) == (
-              "spotlight_reflex",
               "token_dagger_bc",
               "direct_actor_planner",
           ), tuple(MODEL_PRESETS)
@@ -88,13 +87,13 @@ jobs:
           assert not bad_paths, bad_paths
           print("wheel artifact hygiene OK")
           PY
-          /tmp/wod2sim-wheel-smoke/bin/wod2sim-audit-signal --output /tmp/wod2sim-wheel-audit.json
+          printf 'command-materialization-smoke' > /tmp/wod2sim-token-checkpoint.pt
           /tmp/wod2sim-wheel-smoke/bin/wod2sim-batch \
             --mode print \
-            --model spotlight_reflex \
+            --model token_dagger_bc \
+            --checkpoint /tmp/wod2sim-token-checkpoint.pt \
             --scene-limit 1 \
             --batch-dir /tmp/wod2sim-wheel-batch
-          test -f /tmp/wod2sim-wheel-audit.json
           test -f /tmp/wod2sim-wheel-batch/batch-status.json
 
       - name: Check tracked-file hygiene

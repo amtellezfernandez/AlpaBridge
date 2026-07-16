@@ -29,11 +29,6 @@ SEVERITY_POLICIES = {
         "lane_violation_event_threshold": 0.8,
         "lane_violation_high_m": 1.2,
     },
-    "internal:spotlight": {
-        **DEFAULT_SEVERITY_POLICY,
-        "profile": "internal:spotlight",
-        "near_miss_high_clearance_m": 0.4,
-    },
     "alpasim:fresh_3scene": {
         **DEFAULT_SEVERITY_POLICY,
         "profile": "alpasim:fresh_3scene",
@@ -181,7 +176,7 @@ def has_intervention(frame: dict[str, Any]) -> bool:
     if action_mode and action_mode not in {"maintain", "direct_actor_planner"}:
         return True
     decision_type = str(step.get("decision_type", "") or "")
-    if decision_type and decision_type not in {"spotlight_wins", "maintain"}:
+    if decision_type and decision_type not in {"geometric_wins", "maintain"}:
         return True
     selection_mode = str(planner.get("selection_mode", "") or "")
     if selection_mode and selection_mode != "hybrid_veto":

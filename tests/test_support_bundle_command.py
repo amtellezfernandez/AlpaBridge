@@ -38,14 +38,14 @@ class WOD2SimSupportBundleTests(unittest.TestCase):
             output = Path(tmpdir) / "bundle.tar.gz"
             (run_dir / "driver").mkdir(parents=True)
             (run_dir / "launch-metadata.json").write_text(
-                json.dumps({"model": "spotlight_reflex", "scene_preset": "fresh_3scene", "scene_ids": ["clipgt-1"]}),
+                json.dumps({"model": "token_dagger_bc", "scene_preset": "fresh_3scene", "scene_ids": ["clipgt-1"]}),
                 encoding="utf-8",
             )
             (run_dir / "run-status.json").write_text(
                 json.dumps({"state": "failed", "phase": "both"}, indent=2),
                 encoding="utf-8",
             )
-            (run_dir / "driver" / "spotlight-log.jsonl").write_text(
+            (run_dir / "driver" / "selection-log.jsonl").write_text(
                 json.dumps(
                     {
                         "frame_index": 1,
@@ -74,7 +74,7 @@ class WOD2SimSupportBundleTests(unittest.TestCase):
             self.assertIn("run_support_bundle/run-audit.json", names)
             self.assertIn("run_support_bundle/run-status.json", names)
             self.assertIn("run_support_bundle/audit/manifest.json", names)
-            self.assertIn("run_support_bundle/driver/spotlight-log.jsonl", names)
+            self.assertIn("run_support_bundle/driver/selection-log.jsonl", names)
             self.assertIn("run_support_bundle/support-bundle-manifest.json", names)
 
     def test_script_can_write_json_report(self) -> None:
@@ -85,10 +85,10 @@ class WOD2SimSupportBundleTests(unittest.TestCase):
             report_path = Path(tmpdir) / "bundle-report.json"
             (run_dir / "driver").mkdir(parents=True)
             (run_dir / "launch-metadata.json").write_text(
-                json.dumps({"model": "spotlight_reflex", "scene_preset": "fresh_3scene", "scene_ids": ["clipgt-1"]}),
+                json.dumps({"model": "token_dagger_bc", "scene_preset": "fresh_3scene", "scene_ids": ["clipgt-1"]}),
                 encoding="utf-8",
             )
-            (run_dir / "driver" / "spotlight-log.jsonl").write_text(
+            (run_dir / "driver" / "selection-log.jsonl").write_text(
                 json.dumps(
                     {
                         "frame_index": 1,

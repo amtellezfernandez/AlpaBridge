@@ -32,18 +32,9 @@ EXPECTED_CONSOLE_SCRIPTS = (
     "wod2sim-batch",
     "wod2sim-build-local-cache",
     "wod2sim-build-oracle-proxy",
-    "wod2sim-audit-signal",
     "wod2sim-audit-run",
     "wod2sim-support-bundle",
     "wod2sim-reproduce",
-    "wod2sim-benchmark-plan",
-    "wod2sim-benchmark-readiness",
-    "wod2sim-benchmark-audit",
-    "wod2sim-benchmark-status",
-    "wod2sim-benchmark-commands",
-    "wod2sim-benchmark-operators",
-    "wod2sim-benchmark-evidence-manifest",
-    "wod2sim-benchmark-cleanup",
     "wod2sim-promote-batch-summary",
     "wod2sim-benchmark-summary",
     "wod2sim-batch-summary",
@@ -57,18 +48,9 @@ EXPECTED_WRAPPERS = {
     "wod2sim-batch": "scripts/run_alpasim_scene_batch.py",
     "wod2sim-build-local-cache": "scripts/build_alpasim_local_usdz_cache.py",
     "wod2sim-build-oracle-proxy": "scripts/build_alpasim_oracle_actor_proxy.py",
-    "wod2sim-audit-signal": "scripts/audit_alpasignal_bridge.py",
     "wod2sim-audit-run": "scripts/audit_run.py",
     "wod2sim-support-bundle": "scripts/support_bundle.py",
     "wod2sim-reproduce": "scripts/reproduce_closed_loop.py",
-    "wod2sim-benchmark-plan": "scripts/benchmark_regeneration_plan.py",
-    "wod2sim-benchmark-readiness": "scripts/benchmark_regeneration_readiness.py",
-    "wod2sim-benchmark-audit": "scripts/benchmark_regeneration_audit.py",
-    "wod2sim-benchmark-status": "scripts/benchmark_regeneration_status.py",
-    "wod2sim-benchmark-commands": "scripts/benchmark_regeneration_commands.py",
-    "wod2sim-benchmark-operators": "scripts/benchmark_operator_matrix.py",
-    "wod2sim-benchmark-evidence-manifest": "scripts/benchmark_public_evidence_manifest.py",
-    "wod2sim-benchmark-cleanup": "scripts/benchmark_cleanup.py",
     "wod2sim-promote-batch-summary": "scripts/promote_batch_summary.py",
     "wod2sim-benchmark-summary": "scripts/benchmark_summary.py",
     "wod2sim-batch-summary": "scripts/batch_summary.py",
@@ -77,9 +59,6 @@ PUBLIC_MODEL_CONFIGS = {
     model: Path(MODEL_PRESETS[model]["config_file"]).resolve()
     for model in PUBLIC_RELEASE_MODELS
 }
-LEGACY_DISTRIBUTIONS = ("slipway", "minimal-shot-av", "wayspan", "way2sim")
-
-
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Validate the public WOD2Sim release surface before wiring it into AlpaSim."
@@ -180,17 +159,6 @@ def _distribution_display_name(dist) -> str:
     metadata = getattr(dist, "metadata", {}) or {}
     raw = metadata.get("Name", "") or getattr(dist, "name", "") or "unknown"
     return str(raw)
-
-
-def _legacy_distributions_present() -> list[str]:
-    normalized_legacy = {_normalized_distribution_name(name) for name in LEGACY_DISTRIBUTIONS}
-    present: list[str] = []
-    for dist in distributions():
-        name = _distribution_display_name(dist)
-        normalized = _normalized_distribution_name(name)
-        if normalized in normalized_legacy and normalized not in present:
-            present.append(normalized)
-    return sorted(present)
 
 
 def _public_model_entry_point_providers() -> dict[str, list[dict[str, str]]]:
@@ -330,7 +298,6 @@ def build_report(
     missing_model_configs = [
         name for name, path in PUBLIC_MODEL_CONFIGS.items() if not path.is_file()
     ]
-    legacy_distributions_present = _legacy_distributions_present()
     public_model_entry_point_providers = _public_model_entry_point_providers()
     missing_public_model_entry_points = [
         name for name, entries in public_model_entry_point_providers.items() if not entries
@@ -351,13 +318,12 @@ def build_report(
     checks = {
         "python_supported": sys.version_info >= (3, 10),
         "public_model_surface_curated": tuple(PUBLIC_RELEASE_MODELS)
-        == ("spotlight_reflex", "token_dagger_bc", "direct_actor_planner"),
+        == ("token_dagger_bc", "direct_actor_planner"),
         "public_model_registry_curated": tuple(MODEL_PRESETS) == tuple(PUBLIC_RELEASE_MODELS),
         "scene_presets_present": not missing_scene_presets,
         "public_model_configs_present": not missing_model_configs,
         "wrapper_scripts_present": wrapper_scripts_present,
         "installed_entry_points_present": not installed_entry_points_missing,
-        "legacy_distributions_absent": not legacy_distributions_present,
         "public_model_entry_points_unique": not duplicate_public_model_entry_points,
         "public_model_entry_points_owned_by_wod2sim": not unexpected_public_model_providers,
         "installed_public_model_entry_points_present": install_mode != "installed"
@@ -395,7 +361,6 @@ def build_report(
             and checks["scene_presets_present"]
             and checks["public_model_configs_present"]
             and release_surface_ok
-            and checks["legacy_distributions_absent"]
             and checks["public_model_entry_points_unique"]
             and checks["public_model_entry_points_owned_by_wod2sim"]
             and checks["installed_public_model_entry_points_present"]
@@ -416,13 +381,14 @@ def build_report(
             "public_model_entry_points": missing_public_model_entry_points if install_mode == "installed" else [],
         },
         "conflicts": {
-            "legacy_distributions": legacy_distributions_present,
             "duplicate_public_model_entry_points": duplicate_public_model_entry_points,
             "unexpected_public_model_providers": unexpected_public_model_providers,
         },
         "artifacts": {
             "repo_root": None if repo_root is None else str(repo_root),
-            "docs_integration_guide": None if repo_root is None else str(repo_root / "docs" / "integration_guide.md"),
+            "docs_getting_started": None
+            if repo_root is None
+            else str(repo_root / "docs" / "getting-started.md"),
             "paper_source": None if repo_root is None else str(repo_root / "paper"),
             "package_root": str(package_path()),
             "source_repo_root": None if SOURCE_REPO_ROOT is None else str(SOURCE_REPO_ROOT),
@@ -478,9 +444,9 @@ def _print_human_report(report: dict[str, object], *, strict_installed: bool) ->
             print(f"    {name} error: {error}")
 
     print("  next:")
-    print("    1. Read docs/integration_guide.md")
+    print("    1. Read docs/getting-started.md")
     if any(conflicts.values()):
-        print("    2. Remove stale legacy distributions or duplicate public model providers")
+        print("    2. Remove duplicate or unexpected public model providers")
         print("    3. If this is an AlpaSim plugin env, rerun wod2sim-setup --alpasim-root /path/to/alpasim")
         print("    4. Then rerun wod2sim-doctor")
         return
@@ -496,9 +462,15 @@ def _print_human_report(report: dict[str, object], *, strict_installed: bool) ->
         elif environment["statuses"].get("scene_artifacts") == "failed":
             print("    3. If you only want host/runtime validation, rerun with --skip-scene-artifacts")
             print("    4. Or point doctor at a different cached preset with --scene-preset ...")
-            print("    5. After the cache issue is fixed, start with wod2sim-launch --mode print --model spotlight_reflex")
+            print(
+                "    5. After the cache issue is fixed, run wod2sim-launch --mode print "
+                "--model token_dagger_bc --checkpoint /path/to/token_dagger_bc.pt"
+            )
         else:
-            print("    3. Start with wod2sim-launch --mode print --model spotlight_reflex")
+            print(
+                "    3. Run wod2sim-launch --mode print --model token_dagger_bc "
+                "--checkpoint /path/to/token_dagger_bc.pt"
+            )
 
 
 def main() -> int:

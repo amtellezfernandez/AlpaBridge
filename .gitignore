@@ -18,3 +18,4 @@ paper/*.blg
 paper/*.log
 paper/*.out
 paper/*.pdf
+!paper/wod2sim.pdf

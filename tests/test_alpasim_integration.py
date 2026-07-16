@@ -22,39 +22,34 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from tests.pyproject_helpers import load_string_tables
-from wod2sim.audit.alpasim_export import export_alpasim_audit_log
 from wod2sim.neutral.alpasim_metrics import build_alpasim_evidence, load_alpasim_metrics
+from wod2sim.simulator.alpasim_contract import DriveCommand
 from wod2sim.simulator.alpasim_direct_actor_planner import (
     DirectActorPlannerAlpaSimModel,
     DirectPlannerConfig,
     plan_direct_actor_trajectory,
 )
 from wod2sim.simulator.alpasim_signal import extract_alpasim_signal, scenario_from_command
-from wod2sim.simulator.alpasim_spotlight import DriveCommand, SpotlightReflexAlpaSimModel
 from wod2sim.simulator.alpasim_token_bc import (
     TOKEN_ORDER,
     TokenBCAlpaSimModel,
     _actor_axis_route_guard_required,
     _actor_route_stable_violation,
-    _adapter_spotlight_config,
+    _adapter_maneuver_config,
     _candidate_axis_signals,
     _GeomMLP,
     _prediction_ego_pose_world,
     _prediction_timestamp_us,
 )
 from wod2sim.simulator.environment import scenario_at_tick
+from wod2sim.simulator.maneuver_candidates import evaluate_maneuver_candidates
 from wod2sim.simulator.perception import perceive_scene
-from wod2sim.simulator.spotlight_reflex import evaluate_maneuver_candidates
 from wod2sim.simulator.world_model import update_world_state
 
 
 class AlpaSimIntegrationTests(unittest.TestCase):
     def test_pyproject_registers_alpasim_plugin_entrypoints(self) -> None:
         pyproject = load_string_tables("pyproject.toml")
-        self.assertEqual(
-            pyproject['project.entry-points."alpasim.models"']["spotlight_reflex"],
-            "wod2sim.simulator.alpasim_spotlight:SpotlightReflexAlpaSimModel",
-        )
         self.assertEqual(
             pyproject['project.entry-points."alpasim.models"']["token_dagger_bc"],
             "wod2sim.simulator.alpasim_token_bc:TokenBCAlpaSimModel",
@@ -64,7 +59,7 @@ class AlpaSimIntegrationTests(unittest.TestCase):
             "wod2sim.simulator.alpasim_direct_actor_planner:DirectActorPlannerAlpaSimModel",
         )
         self.assertEqual(
-            pyproject['project.entry-points."alpasim.configs"']["spotlight_reflex"],
+            pyproject['project.entry-points."alpasim.configs"']["wod2sim"],
             "wod2sim.simulator.alpasim_configs",
         )
         self.assertEqual(
@@ -84,47 +79,9 @@ class AlpaSimIntegrationTests(unittest.TestCase):
             "wod2sim.cli.commands.support_bundle:main",
         )
         self.assertEqual(
-            pyproject["project.scripts"]["wod2sim-benchmark-plan"],
-            "wod2sim.cli.commands.benchmark_regeneration_plan:main",
-        )
-        self.assertEqual(
-            pyproject["project.scripts"]["wod2sim-benchmark-readiness"],
-            "wod2sim.cli.commands.benchmark_regeneration_readiness:main",
-        )
-        self.assertEqual(
-            pyproject["project.scripts"]["wod2sim-benchmark-audit"],
-            "wod2sim.cli.commands.benchmark_regeneration_audit:main",
-        )
-        self.assertEqual(
-            pyproject["project.scripts"]["wod2sim-benchmark-status"],
-            "wod2sim.cli.commands.benchmark_regeneration_status:main",
-        )
-        self.assertEqual(
-            pyproject["project.scripts"]["wod2sim-benchmark-commands"],
-            "wod2sim.cli.commands.benchmark_regeneration_commands:main",
-        )
-        self.assertEqual(
-            pyproject["project.scripts"]["wod2sim-benchmark-operators"],
-            "wod2sim.cli.commands.benchmark_operator_matrix:main",
-        )
-        self.assertEqual(
-            pyproject["project.scripts"]["wod2sim-benchmark-evidence-manifest"],
-            "wod2sim.cli.commands.benchmark_public_evidence_manifest:main",
-        )
-        self.assertEqual(
-            pyproject["project.scripts"]["wod2sim-benchmark-cleanup"],
-            "wod2sim.cli.commands.benchmark_cleanup:main",
-        )
-        self.assertEqual(
             pyproject["project.scripts"]["wod2sim-promote-batch-summary"],
             "wod2sim.cli.commands.promote_batch_summary:main",
         )
-
-    def test_alpasim_driver_config_exists(self) -> None:
-        config_path = Path("src/wod2sim/simulator/alpasim_configs/driver/spotlight_reflex.yaml")
-        config = config_path.read_text()
-        self.assertIn("model_type: spotlight_reflex", config)
-        self.assertIn("output_frequency_hz: 4", config)
 
     def test_direct_actor_planner_config_exists(self) -> None:
         config_path = Path("src/wod2sim/simulator/alpasim_configs/driver/direct_actor_planner.yaml")
@@ -526,35 +483,6 @@ class AlpaSimIntegrationTests(unittest.TestCase):
 
         self.assertAlmostEqual(scenario.actors[0].heading, 1.2, places=6)
 
-    def test_alpasim_adapter_reasoning_exposes_world_state_summary(self) -> None:
-        model = SpotlightReflexAlpaSimModel(camera_ids=["front"], context_length=1, output_frequency_hz=4)
-        prediction_input = SimpleNamespace(
-            camera_images={"front": [SimpleNamespace(image=np.full((4, 4, 3), 180, dtype=np.uint8))]},
-            command=DriveCommand.STRAIGHT,
-            speed=6.0,
-            acceleration=0.0,
-            ego_pose_history=[],
-            structured_hazards=[
-                {
-                    "x": 8.0,
-                    "y": 1.0,
-                    "radius": 0.9,
-                    "length_m": 4.5,
-                    "heading_rad": 0.0,
-                    "kind": "vehicle",
-                    "label": "lead_vehicle",
-                }
-            ],
-        )
-
-        prediction = model.predict(prediction_input)
-        reasoning = prediction.reasoning_text
-
-        self.assertIsNotNone(reasoning)
-        assert reasoning is not None
-        self.assertIn('"route_blockage"', reasoning)
-        self.assertIn('"preferred_escape_side"', reasoning)
-        self.assertIn('"obstacle_pressure"', reasoning)
 
     def test_token_bc_alpasim_adapter_loads_checkpoint_and_predicts(self) -> None:
         with TemporaryDirectory() as tmp:
@@ -691,14 +619,14 @@ class AlpaSimIntegrationTests(unittest.TestCase):
             self.assertEqual("hybrid_veto", reasoning_payload["selection_mode"])
             self.assertEqual("evasive_left", trace["dagger_argmax_token"])
             self.assertEqual("maintain", trace["hybrid_token"])
-            self.assertEqual("maintain", trace["spotlight_token"])
+            self.assertEqual("maintain", trace["geometric_token"])
             self.assertTrue(selection_log_path.is_file())
             records = [json.loads(line) for line in selection_log_path.read_text(encoding="utf-8").splitlines() if line.strip()]
             self.assertEqual(1, len(records))
             self.assertEqual("clipgt-test-scene", records[0]["scene_id"])
             self.assertEqual("evasive_left", records[0]["dagger_argmax_token"])
             self.assertEqual("maintain", records[0]["hybrid_token"])
-            self.assertEqual("spotlight_wins", records[0]["decision_type"])
+            self.assertEqual("geometric_wins", records[0]["decision_type"])
 
     def test_token_bc_alpasim_adapter_hard_veto_suppresses_bad_argmax(self) -> None:
         with TemporaryDirectory() as tmp:
@@ -899,7 +827,7 @@ class AlpaSimIntegrationTests(unittest.TestCase):
         self.assertEqual("evasive_left", trace["dagger_argmax_token"])
         self.assertEqual("maintain", trace["hybrid_token"])
         self.assertFalse(trace["dagger_argmax_vetoed"])
-        self.assertEqual("spotlight_wins", trace["decision_type"])
+        self.assertEqual("geometric_wins", trace["decision_type"])
 
     def test_token_bc_alpasim_adapter_actor_axis_logs_explicit_axis_signals(self) -> None:
         with TemporaryDirectory() as tmp:
@@ -1022,7 +950,7 @@ class AlpaSimIntegrationTests(unittest.TestCase):
         position = scenario.start
         perception = perceive_scene(scenario, position)
         world_state = update_world_state(scenario, position, perception)
-        config = _adapter_spotlight_config(
+        config = _adapter_maneuver_config(
             trajectory_mode="clamped_lateral",
             max_lateral_offset_m=2.0,
             selection_mode="actor_axis_constrained",
@@ -1415,152 +1343,6 @@ class AlpaSimIntegrationTests(unittest.TestCase):
         self.assertAlmostEqual(4.0, pose["world_y"])
         self.assertAlmostEqual(0.5, pose["world_heading"])
 
-    def test_spotlight_adapter_rejects_stale_camera_stream_when_ego_pose_moves(self) -> None:
-        model = SpotlightReflexAlpaSimModel(camera_ids=["front"], context_length=1, output_frequency_hz=4)
-        first_input = SimpleNamespace(
-            camera_images={"front": [SimpleNamespace(timestamp_us=1000, image=np.full((4, 4, 3), 180, dtype=np.uint8))]},
-            command=DriveCommand.STRAIGHT,
-            speed=6.0,
-            acceleration=0.0,
-            ego_pose_history=[SimpleNamespace(timestamp_us=1000, x=0.0, y=0.0, yaw=0.0)],
-        )
-        second_input = SimpleNamespace(
-            camera_images={"front": [SimpleNamespace(timestamp_us=1000, image=np.full((4, 4, 3), 180, dtype=np.uint8))]},
-            command=DriveCommand.STRAIGHT,
-            speed=6.0,
-            acceleration=0.0,
-            ego_pose_history=[SimpleNamespace(timestamp_us=1100, x=1.0, y=0.0, yaw=0.0)],
-        )
-
-        model.predict(first_input)
-        with self.assertRaises(RuntimeError) as ctx:
-            model.predict(second_input)
-
-        self.assertIn("stale camera stream", str(ctx.exception))
-
-    def test_spotlight_adapter_rejects_first_call_when_pose_time_leads_camera(self) -> None:
-        model = SpotlightReflexAlpaSimModel(camera_ids=["front"], context_length=1, output_frequency_hz=4)
-        prediction_input = SimpleNamespace(
-            camera_images={"front": [SimpleNamespace(timestamp_us=1000, image=np.full((4, 4, 3), 180, dtype=np.uint8))]},
-            command=DriveCommand.STRAIGHT,
-            speed=6.0,
-            acceleration=0.0,
-            ego_pose_history=[SimpleNamespace(timestamp_us=110000, x=1.0, y=0.0, yaw=0.0)],
-        )
-
-        with self.assertRaises(RuntimeError) as ctx:
-            model.predict(prediction_input)
-
-        self.assertIn("latest ego pose timestamp", str(ctx.exception))
-
-    def test_spotlight_adapter_rejects_frozen_camera_content_when_timestamps_advance(self) -> None:
-        model = SpotlightReflexAlpaSimModel(camera_ids=["front"], context_length=1, output_frequency_hz=4)
-        first_input = SimpleNamespace(
-            camera_images={"front": [SimpleNamespace(timestamp_us=1000, image=np.full((4, 4, 3), 180, dtype=np.uint8))]},
-            command=DriveCommand.STRAIGHT,
-            speed=6.0,
-            acceleration=0.0,
-            ego_pose_history=[SimpleNamespace(timestamp_us=1000, x=0.0, y=0.0, yaw=0.0)],
-        )
-        second_input = SimpleNamespace(
-            camera_images={"front": [SimpleNamespace(timestamp_us=1100, image=np.full((4, 4, 3), 180, dtype=np.uint8))]},
-            command=DriveCommand.STRAIGHT,
-            speed=6.0,
-            acceleration=0.0,
-            ego_pose_history=[SimpleNamespace(timestamp_us=1100, x=1.0, y=0.0, yaw=0.0)],
-        )
-
-        model.predict(first_input)
-        with self.assertRaises(RuntimeError) as ctx:
-            model.predict(second_input)
-
-        self.assertIn("frozen camera stream", str(ctx.exception))
-
-    def test_spotlight_adapter_writes_sensor_freshness_log(self) -> None:
-        with TemporaryDirectory() as tmp:
-            log_path = Path(tmp) / "spotlight-log.jsonl"
-            model = SpotlightReflexAlpaSimModel(
-                camera_ids=["front"],
-                context_length=1,
-                output_frequency_hz=4,
-                log_path=log_path,
-            )
-            prediction_input = SimpleNamespace(
-                camera_images={"front": [SimpleNamespace(timestamp_us=1000, image=np.full((4, 4, 3), 180, dtype=np.uint8))]},
-                command=DriveCommand.STRAIGHT,
-                speed=6.0,
-                acceleration=0.0,
-                ego_pose_history=[SimpleNamespace(timestamp_us=1000, x=0.0, y=0.0, yaw=0.0)],
-                scene_id="clipgt-spotlight-log",
-            )
-
-            prediction = model.predict(prediction_input)
-            reasoning = json.loads(prediction.reasoning_text or "{}")
-            records = [json.loads(line) for line in log_path.read_text(encoding="utf-8").splitlines() if line.strip()]
-
-        self.assertEqual("ok_initial", reasoning["sensor_freshness"]["status"])
-        self.assertEqual(1, len(records))
-        self.assertEqual("clipgt-spotlight-log", records[0]["scene_id"])
-        self.assertEqual("ok", records[0]["result"])
-        self.assertEqual("ok_initial", records[0]["sensor_freshness"]["status"])
-
-    def test_spotlight_adapter_logs_sensor_failure_before_raising(self) -> None:
-        with TemporaryDirectory() as tmp:
-            log_path = Path(tmp) / "spotlight-log.jsonl"
-            model = SpotlightReflexAlpaSimModel(
-                camera_ids=["front"],
-                context_length=1,
-                output_frequency_hz=4,
-                log_path=log_path,
-            )
-            first_input = SimpleNamespace(
-                camera_images={"front": [SimpleNamespace(timestamp_us=1000, image=np.full((4, 4, 3), 180, dtype=np.uint8))]},
-                command=DriveCommand.STRAIGHT,
-                speed=6.0,
-                acceleration=0.0,
-                ego_pose_history=[SimpleNamespace(timestamp_us=1000, x=0.0, y=0.0, yaw=0.0)],
-                scene_id="clipgt-spotlight-log",
-            )
-            second_input = SimpleNamespace(
-                camera_images={"front": [SimpleNamespace(timestamp_us=1000, image=np.full((4, 4, 3), 180, dtype=np.uint8))]},
-                command=DriveCommand.STRAIGHT,
-                speed=6.0,
-                acceleration=0.0,
-                ego_pose_history=[SimpleNamespace(timestamp_us=1100, x=1.0, y=0.0, yaw=0.0)],
-                scene_id="clipgt-spotlight-log",
-            )
-
-            model.predict(first_input)
-            with self.assertRaises(RuntimeError):
-                model.predict(second_input)
-            records = [json.loads(line) for line in log_path.read_text(encoding="utf-8").splitlines() if line.strip()]
-
-        self.assertEqual(2, len(records))
-        self.assertEqual("sensor_failure", records[-1]["result"])
-        self.assertEqual("stale_camera_timestamp", records[-1]["sensor_freshness"]["status"])
-        self.assertIn("stale camera stream", records[-1]["sensor_error"])
-
-    def test_spotlight_adapter_allows_advancing_camera_content_when_pose_moves(self) -> None:
-        model = SpotlightReflexAlpaSimModel(camera_ids=["front"], context_length=1, output_frequency_hz=4)
-        first_input = SimpleNamespace(
-            camera_images={"front": [SimpleNamespace(timestamp_us=1000, image=np.full((4, 4, 3), 180, dtype=np.uint8))]},
-            command=DriveCommand.STRAIGHT,
-            speed=6.0,
-            acceleration=0.0,
-            ego_pose_history=[SimpleNamespace(timestamp_us=1000, x=0.0, y=0.0, yaw=0.0)],
-        )
-        second_input = SimpleNamespace(
-            camera_images={"front": [SimpleNamespace(timestamp_us=1100, image=np.full((4, 4, 3), 181, dtype=np.uint8))]},
-            command=DriveCommand.STRAIGHT,
-            speed=6.0,
-            acceleration=0.0,
-            ego_pose_history=[SimpleNamespace(timestamp_us=1100, x=1.0, y=0.0, yaw=0.0)],
-        )
-
-        model.predict(first_input)
-        prediction = model.predict(second_input)
-
-        self.assertEqual((20, 2), prediction.trajectory_xy.shape)
 
     def test_direct_actor_planner_rejects_stale_camera_stream_when_ego_pose_moves(self) -> None:
         model = DirectActorPlannerAlpaSimModel(camera_ids=["front"], context_length=1, output_frequency_hz=4)
@@ -1730,45 +1512,6 @@ class AlpaSimIntegrationTests(unittest.TestCase):
         self.assertEqual("ok", records[0]["result"])
         self.assertEqual("ok_initial", records[0]["sensor_freshness"]["status"])
 
-    def test_export_alpasim_audit_log_reads_spotlight_logs(self) -> None:
-        with TemporaryDirectory() as tmp:
-            run_dir = Path(tmp) / "run"
-            output_dir = Path(tmp) / "audit"
-            (run_dir / "driver").mkdir(parents=True)
-            (run_dir / "launch-metadata.json").write_text(
-                json.dumps({"model": "spotlight_reflex", "scene_preset": "fresh_3scene", "scene_ids": ["clipgt-1"]}),
-                encoding="utf-8",
-            )
-            (run_dir / "driver" / "spotlight-log.jsonl").write_text(
-                json.dumps(
-                    {
-                        "frame_index": 1,
-                        "scene_id": "clipgt-1",
-                        "command": "straight",
-                        "speed_mps": 6.0,
-                        "selected_maneuver": "maintain",
-                        "candidate_count": 9,
-                        "reference_count": 2,
-                        "alpasim_signal": {"structured_hazards": [], "route_waypoints": []},
-                        "sensor_freshness": {"status": "ok_initial"},
-                        "result": "ok",
-                    }
-                )
-                + "\n",
-                encoding="utf-8",
-            )
-
-            manifest = export_alpasim_audit_log(run_dir, output_dir)
-            frames = [
-                json.loads(line)
-                for line in (output_dir / "frames.jsonl").read_text(encoding="utf-8").splitlines()
-                if line.strip()
-            ]
-
-        self.assertEqual(1, manifest["frame_count"])
-        self.assertEqual(1, len(frames))
-        self.assertEqual("ok_initial", frames[0]["trigger_state"]["sensor_freshness"]["status"])
-        self.assertEqual("maintain", frames[0]["step"]["selected_maneuver"])
 
     def test_token_bc_alpasim_adapter_rejects_unknown_checkpoint_tokens(self) -> None:
         with TemporaryDirectory() as tmp:
@@ -1804,7 +1547,7 @@ class AlpaSimIntegrationTests(unittest.TestCase):
             metrics_file.write_text(
                 "\n".join(
                     [
-                        "Run: spotlight_reflex",
+                        "Run: token_dagger_bc",
                         "n_clips: 4, n_rollouts/clip: 2",
                         "collision_at_fault        0.00 ± 0.00      MAX",
                         "offroad                   0.01 ± 0.00      MAX",

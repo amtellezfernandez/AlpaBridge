@@ -60,7 +60,6 @@ from wod2sim.cli.commands.setup_alpasim_local_plugin import (
     _compile_alpasim_protos,
     _install_torch_for_alpasim,
     _patch_effectively_present,
-    _remove_conflicting_wod2sim_distributions,
     _should_copy_override_path,
 )
 from wod2sim.cli.commands.setup_alpasim_local_plugin import (
@@ -365,7 +364,7 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
 
     def test_public_release_models_match_curated_surface(self) -> None:
         self.assertEqual(
-            ("spotlight_reflex", "token_dagger_bc", "direct_actor_planner"),
+            ("token_dagger_bc", "direct_actor_planner"),
             PUBLIC_RELEASE_MODELS,
         )
 
@@ -373,10 +372,6 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
         self.assertEqual(PUBLIC_RELEASE_MODELS, tuple(MODEL_PRESETS))
 
     def test_public_release_models_emit_driver_logs_by_default(self) -> None:
-        self.assertEqual(
-            "{run_dir}/driver/spotlight-log.jsonl",
-            MODEL_PRESETS["spotlight_reflex"]["driver_env"]["WOD2SIM_SPOTLIGHT_LOG_PATH"],
-        )
         self.assertEqual(
             "{run_dir}/driver/selection-log.jsonl",
             MODEL_PRESETS["token_dagger_bc"]["driver_env"]["WOD2SIM_TOKENBC_SELECTION_LOG_PATH"],
@@ -389,7 +384,7 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
     def test_planned_run_status_starts_as_planned(self) -> None:
         args = argparse.Namespace(
             mode="print",
-            model="spotlight_reflex",
+            model="token_dagger_bc",
             scene_preset="fresh_3scene",
             scene_id=[],
         )
@@ -411,7 +406,7 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
     def test_wizard_command_includes_scene_catalog_override(self) -> None:
         command = _wizard_command(
             alpasim_wizard=Path("/tmp/alpasim/.venv/bin/alpasim_wizard"),
-            wizard_driver="spotlight_reflex",
+            wizard_driver="token_dagger_bc",
             deploy_target="deploy.local",
             run_dir=Path("/tmp/run"),
             scene_ids=["scene-1"],
@@ -432,7 +427,7 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
             status_path = run_dir / "run-status.json"
             args = argparse.Namespace(
                 mode="both",
-                model="spotlight_reflex",
+                model="token_dagger_bc",
                 scene_preset="fresh_3scene",
                 scene_id=[],
             )
@@ -481,7 +476,7 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
         parser = build_run_parser()
         model_action = next(action for action in parser._actions if action.dest == "model")
 
-        self.assertEqual("spotlight_reflex", parser.get_default("model"))
+        self.assertEqual("token_dagger_bc", parser.get_default("model"))
         self.assertEqual(PUBLIC_RELEASE_MODELS, model_action.choices)
 
     def test_print_mode_skips_live_runtime_and_scene_artifact_preflights(self) -> None:
@@ -495,10 +490,12 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
             (alpasim_root / ".git").mkdir()
             (alpasim_root / ".venv" / "bin" / "python").write_text("", encoding="utf-8")
             (alpasim_root / ".venv" / "bin" / "alpasim_wizard").write_text("", encoding="utf-8")
+            checkpoint = Path(tmp) / "token_dagger_bc.pt"
+            checkpoint.write_bytes(b"command-materialization-smoke")
             args = argparse.Namespace(
                 mode="print",
-                model="spotlight_reflex",
-                checkpoint=None,
+                model="token_dagger_bc",
+                checkpoint=checkpoint,
                 oracle_actor_proxy=None,
                 scene_preset="fresh_3scene",
                 scene_id=[],
@@ -851,28 +848,6 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
             self.assertTrue((proto_root / "egodriver_pb2.py").is_file())
             self.assertTrue((proto_root / "sensorsim_pb2.py").is_file())
 
-    def test_remove_conflicting_wod2sim_distributions_uninstalls_legacy_slipway(self) -> None:
-        calls: list[tuple[list[str], bool]] = []
-
-        def fake_run(cmd: list[str], *, cwd: Path, capture_output: bool = False):
-            calls.append((cmd, capture_output))
-            if capture_output:
-                present = "name = 'slipway'" in cmd[-1]
-                return type("Result", (), {"stdout": "1\n" if present else "0\n", "stderr": "", "returncode": 0})()
-            return type("Result", (), {"stdout": "", "stderr": "", "returncode": 0})()
-
-        with patch("wod2sim.cli.commands.setup_alpasim_local_plugin._run", side_effect=fake_run):
-            _remove_conflicting_wod2sim_distributions(
-                venv_python=Path("/tmp/alpasim/.venv/bin/python"),
-                cwd=Path("/tmp/alpasim"),
-            )
-
-        uninstall_calls = [cmd for cmd, capture_output in calls if not capture_output and cmd[:4] == ["/tmp/alpasim/.venv/bin/python", "-m", "pip", "uninstall"]]
-        self.assertEqual(
-            [["/tmp/alpasim/.venv/bin/python", "-m", "pip", "uninstall", "-y", "slipway"]],
-            uninstall_calls,
-        )
-
     def test_driver_command_uses_alpasim_venv_python(self) -> None:
         cmd = _driver_command(
             alpasim_python=Path("/tmp/alpasim/.venv/bin/python"),
@@ -884,7 +859,7 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
     def test_wizard_command_uses_alpasim_venv_binary(self) -> None:
         cmd = _wizard_command(
             alpasim_wizard=Path("/tmp/alpasim/.venv/bin/alpasim_wizard"),
-            wizard_driver="spotlight_reflex",
+            wizard_driver="token_dagger_bc",
             deploy_target="local_external_driver",
             run_dir=Path("/tmp/run"),
             scene_ids=["scene-1"],
@@ -900,7 +875,7 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
     def test_wizard_command_can_append_overrides(self) -> None:
         cmd = _wizard_command(
             alpasim_wizard=Path("/tmp/alpasim/.venv/bin/alpasim_wizard"),
-            wizard_driver="spotlight_reflex",
+            wizard_driver="token_dagger_bc",
             deploy_target="local_external_driver",
             run_dir=Path("/tmp/run"),
             scene_ids=["scene-1"],

@@ -41,7 +41,7 @@ state that was not recorded with the experiment. We call the resulting adapter
 external-driver contract at these four points: route geometry, model discovery, session
 lifecycle, and launch state. The implementation patches \texttt{PredictionInput} and the
 driver session, makes built-in model imports lazy, treats late session messages
-idempotently, registers three project policies through \texttt{alpasim.models}, converts
+idempotently, registers two project adapters through \texttt{alpasim.models}, converts
 AlpaSim prediction inputs into policy-facing route and scene signal, and provides setup,
 readiness, launch, and validation commands. The contribution is not a new driving policy
 or a log converter. WOD2Sim defines and validates an adapter contract that turns
@@ -73,8 +73,8 @@ This paper is about extending that simulator-side contract so WOD-style policies
 as ordinary AlpaSim external drivers. WOD2Sim preserves route geometry at
 prediction time, decouples external plugin discovery from unrelated built-in backends,
 makes session handling idempotent under normal service ordering, and records launch state
-before rollout. On top of that contract, the project registers a reflex policy, a learned
-token BC/DAgger policy, and a direct actor-aware planner through
+before rollout. On top of that contract, the project registers a learned token
+BC/DAgger policy and a direct actor-aware planner through
 \texttt{alpasim.models}, reconstructs a policy-facing signal from AlpaSim inputs, and
 provides setup, readiness, launch, and validation commands. The artifact claim is narrow:
 this is not a new autonomy method, but a reusable external-driver contract extension for
@@ -295,18 +295,11 @@ printed, inspected, and rerun.
 
 \subsection{Project-Side Plugins}
 
-The project registers three AlpaSim model entry points:
-\texttt{spotlight\_reflex}, \texttt{token\_dagger\_bc}, and
-\texttt{direct\_actor\_planner}. Each implements AlpaSim's
+The project registers two AlpaSim model entry points:
+\texttt{token\_dagger\_bc} and \texttt{direct\_actor\_planner}. Each implements AlpaSim's
 \texttt{BaseTrajectoryModel.from\_config} factory and returns
 \texttt{ModelPrediction} objects with trajectory points, headings, and structured
 reasoning metadata.
-
-\paragraph{Minimal-shot reflex plugin.}
-The reflex plugin maps AlpaSim's \texttt{DriveCommand} to the policy's route command,
-extracts route and scene signal, evaluates maneuver candidates, applies route-stability
-constraints, resamples the selected trajectory to the configured output frequency, and
-returns headings.
 
 \paragraph{Token BC/DAgger plugin.}
 The learned plugin loads token-policy checkpoints, normalizes geometric features,
@@ -329,8 +322,8 @@ The code split follows the contract split. Route propagation, model discovery, s
 lifecycle, and deploy behavior are patched in the AlpaSim checkout through
 \texttt{route\_waypoints.patch} and \texttt{local\_checkout.patch}. Policy registration,
 signal reconstruction, and policy logic stay in project code through
-\texttt{pyproject.toml}, \texttt{alpasim\_signal.py}, \texttt{alpasim\_spotlight.py},
-\texttt{alpasim\_token\_bc.py}, and the direct planner adapter. Setup, readiness, and
+\texttt{pyproject.toml}, \texttt{alpasim\_signal.py}, \texttt{alpasim\_contract.py},
+\texttt{maneuver\_candidates.py}, \texttt{alpasim\_token\_bc.py}, and the direct planner adapter. Setup, readiness, and
 launch commands then make that combined surface runnable as one external-driver artifact.
 
 \section{Policy Signal}
@@ -350,7 +343,7 @@ velocity, size, heading, and inferred or explicit behavior. Route waypoints beco
 local lane centerline used by the policy and planner. If no explicit hazard is available
 but visibility or dynamics indicate a high-risk state, the adapter can add a caution-zone
 obstacle. This translation is intentionally independent of WOD protobufs and AlpaSim
-internals: it is the shared policy input used by all three AlpaSim plugins.
+internals: it is the shared policy input used by both AlpaSim plugins.
 
 \section{Launch Contract}
 
@@ -409,9 +402,9 @@ Scene signal is policy-facing, not protobuf-facing &
 Tests pass structured hazards through multiple input aliases and verify static
 obstacles, moving actors, shape metadata, headings, velocities, and inferred behaviors. \\
 Core adapters satisfy the trajectory-model contract &
-The reflex and direct planner adapters return trajectory arrays, headings, and
-structured reasoning payloads through the AlpaSim model API without learned-checkpoint
-runtime requirements. \\
+The direct planner adapter and shared contract utilities return trajectory arrays,
+headings, and structured reasoning payloads through the AlpaSim model API without
+learned-checkpoint runtime requirements. \\
 Learned-policy executables are contract-checked &
 Torch-gated token-policy tests verify checkpoint loading, token names, feature
 normalizers, device selection, tensor inference, and selection-log outputs; bad token
@@ -506,8 +499,8 @@ log replay \\
 \bottomrule
 \end{tabular}
 \caption{Evaluation protocol for claims built on WOD2Sim. The current release validates
-the contract and records one closed-loop run; broader benchmark claims require larger
-scene counts and baselines.}
+the adapter contract; any policy benchmark claim requires executed scenes, baselines,
+and complete failure reporting.}
 \label{tab:eval_protocol}
 \end{table}
 
@@ -528,8 +521,8 @@ prediction time; keep policy code independent of dataset protobufs and simulator
 internals; register policies through the existing \texttt{alpasim.models} mechanism;
 separate base driver abstractions from optional heavyweight backends; handle late session
 messages idempotently; and materialize launch state before rollout. Those choices let
-very different policies share one closed-loop runtime. In this artifact, the reflex
-policy, learned token policy, and direct actor planner all run through the same route
+very different policies share one closed-loop runtime. In this artifact, the learned
+token policy and direct actor planner run through the same route
 signal, resampling path, and launch system.
 
 The result is therefore more than a WOD integration. It is a concrete reference for what
@@ -552,7 +545,7 @@ The extension preserves route geometry at prediction time, decouples external pl
 discovery from unselected built-in backends, treats late session messages idempotently,
 and records launch state before rollout. Project policies then run as ordinary
 \texttt{alpasim.models} plugins over a compact policy-facing signal. The result is a
-closed-loop harness for minimal-shot, learned token, and actor-aware planning policies,
+closed-loop harness for learned token and actor-aware planning policies,
 and a reference contract for building additional AlpaSim adapters.
 
 \bibliography{paper}

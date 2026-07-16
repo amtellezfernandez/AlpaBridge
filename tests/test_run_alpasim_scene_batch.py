@@ -161,7 +161,7 @@ class RunAlpaSimSceneBatchTests(unittest.TestCase):
             aggregate_dir.mkdir(parents=True)
             (aggregate_dir / "metrics_results.txt").write_text("ok\n", encoding="utf-8")
             (run_dir / "launch-metadata.json").write_text(
-                '{"model":"spotlight_reflex","scene_ids":["clipgt-scene-1"]}\n',
+                '{"model":"token_dagger_bc","scene_ids":["clipgt-scene-1"]}\n',
                 encoding="utf-8",
             )
             (run_dir / "run-status.json").write_text(
@@ -176,7 +176,7 @@ class RunAlpaSimSceneBatchTests(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
-            (driver_dir / "spotlight-log.jsonl").write_text(
+            (driver_dir / "selection-log.jsonl").write_text(
                 (
                     '{"frame_index":0,"result":"sensor_failure","scene_id":"clipgt-scene-1",'
                     '"sensor_error":"stale camera stream",'
@@ -194,7 +194,7 @@ class RunAlpaSimSceneBatchTests(unittest.TestCase):
         self.assertEqual(1, diagnostics["driver_returncode"])
         self.assertEqual(2, diagnostics["wizard_returncode"])
         self.assertTrue(diagnostics["driver_log_present"])
-        self.assertEqual("spotlight", diagnostics["driver_log_kind"])
+        self.assertEqual("selection", diagnostics["driver_log_kind"])
         self.assertEqual(1, diagnostics["sensor_failure_count"])
         self.assertEqual("stale_camera_timestamp", diagnostics["first_sensor_failure"]["status"])
 
@@ -226,7 +226,7 @@ class RunAlpaSimSceneBatchTests(unittest.TestCase):
         summary = module._build_batch_summary(
             batch_dir=Path("/tmp/batch"),
             mode="both",
-            model="spotlight_reflex",
+            model="token_dagger_bc",
             scene_count=2,
             statuses=statuses,
         )

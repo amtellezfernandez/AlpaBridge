@@ -16,11 +16,10 @@ def export_alpasim_audit_log(run_dir: Path, output_dir: Path) -> dict[str, Any]:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     launch_metadata = _load_json_if_exists(run_dir / "launch-metadata.json")
-    spotlight_rows = _load_jsonl_if_exists(run_dir / "driver" / "spotlight-log.jsonl")
     selection_rows = _load_jsonl_if_exists(run_dir / "driver" / "selection-log.jsonl")
     direct_rows = _load_jsonl_if_exists(run_dir / "driver" / "direct-planner-log.jsonl")
     controller_rows = _load_controller_rows(run_dir / "controller")
-    frames = _build_alpasim_frames(spotlight_rows, selection_rows, direct_rows, controller_rows)
+    frames = _build_alpasim_frames(selection_rows, direct_rows, controller_rows)
     metrics_evidence = _safe_metrics_evidence(run_dir)
 
     manifest = {
@@ -48,7 +47,6 @@ def export_alpasim_audit_log(run_dir: Path, output_dir: Path) -> dict[str, Any]:
 
 
 def _build_alpasim_frames(
-    spotlight_rows: list[dict[str, Any]],
     selection_rows: list[dict[str, Any]],
     direct_rows: list[dict[str, Any]],
     controller_rows: list[dict[str, float | int]],
@@ -57,8 +55,6 @@ def _build_alpasim_frames(
         return [_frame_from_direct_row(row, controller_rows) for row in direct_rows]
     if selection_rows:
         return [_frame_from_selection_row(row, controller_rows) for row in selection_rows]
-    if spotlight_rows:
-        return [_frame_from_spotlight_row(row, controller_rows) for row in spotlight_rows]
     return []
 
 
@@ -87,7 +83,7 @@ def _frame_from_selection_row(row: dict[str, Any], controller_rows: list[dict[st
         "active_obstacles": [row_actor for row_actor in signal.get("structured_hazards", []) if not _is_moving_hazard(row_actor)],
         "media": _media_refs_from_row(row, signal),
         "step": {
-            "action_mode": str(row.get("hybrid_token", row.get("spotlight_token", ""))),
+            "action_mode": str(row.get("hybrid_token", row.get("geometric_token", ""))),
             "decision_type": row.get("decision_type"),
             "collision_risk": float(signal.get("dynamics_risk", 0.0) or 0.0),
             "lane_error": 0.0,
@@ -98,8 +94,12 @@ def _frame_from_selection_row(row: dict[str, Any], controller_rows: list[dict[st
             "selection_mode": row.get("selection_mode"),
             "trajectory_mode": row.get("trajectory_mode"),
             "top_logits": row.get("top_logits", []),
-            "selection_trace": {k: v for k, v in row.items() if k not in {"alpasim_signal", "top_logits", "spotlight_top_candidates"}},
-            "spotlight_top_candidates": row.get("spotlight_top_candidates", []),
+            "selection_trace": {
+                key: value
+                for key, value in row.items()
+                if key not in {"alpasim_signal", "top_logits", "geometric_top_candidates"}
+            },
+            "geometric_top_candidates": row.get("geometric_top_candidates", []),
         },
         "controller": controller_row,
         "trigger_state": {
@@ -147,56 +147,6 @@ def _frame_from_direct_row(row: dict[str, Any], controller_rows: list[dict[str, 
             "planner": row.get("planner"),
             "latency_ms": row.get("planner_latency_ms"),
             "plan": plan,
-        },
-        "controller": controller_row,
-        "trigger_state": {
-            "sensor_freshness": row.get("sensor_freshness"),
-            "sensor_error": row.get("sensor_error"),
-            "result": row.get("result"),
-        },
-        "signal": signal,
-    }
-
-
-def _frame_from_spotlight_row(row: dict[str, Any], controller_rows: list[dict[str, float | int]]) -> dict[str, Any]:
-    command = str(row.get("command", "straight"))
-    signal = row.get("alpasim_signal", {}) if isinstance(row.get("alpasim_signal"), dict) else {}
-    scenario = scenario_from_command(command, signal)
-    controller_row = _nearest_controller_row(controller_rows, _signal_timestamp_us(signal))
-    ego_x, ego_y, ego_speed = _ego_state_from_sources(controller_row, signal, scenario)
-    return {
-        "frame_idx": int(row.get("frame_index", 0)),
-        "timestamp_s": round((int(row.get("frame_index", 0)) - 1) * 0.25, 3),
-        "ego": {
-            "x": ego_x,
-            "y": ego_y,
-            "speed": ego_speed if ego_speed is not None else float(row.get("speed_mps", 0.0)),
-        },
-        "route": {
-            "start": list(scenario.start),
-            "goal": list(scenario.goal),
-            "lane_center": [list(point) for point in scenario.lane_center],
-            "route_center": [list(point) for point in route_centerline(scenario)],
-            "lane_half_width": float(scenario.lane_half_width),
-        },
-        "actors": [row_actor for row_actor in signal.get("structured_hazards", []) if _is_moving_hazard(row_actor)],
-        "active_obstacles": [
-            row_actor for row_actor in signal.get("structured_hazards", []) if not _is_moving_hazard(row_actor)
-        ],
-        "media": _media_refs_from_row(row, signal),
-        "step": {
-            "action_mode": str(row.get("selected_maneuver", "")),
-            "decision_type": row.get("decision_reason"),
-            "collision_risk": float(signal.get("dynamics_risk", 0.0) or 0.0),
-            "lane_error": 0.0,
-            "min_obstacle_distance": 0.0,
-            "selected_maneuver": row.get("selected_maneuver"),
-        },
-        "planner": {
-            "planner": "spotlight_reflex",
-            "candidate_count": row.get("candidate_count"),
-            "reference_count": row.get("reference_count"),
-            "top_candidate_summaries": row.get("top_candidate_summaries", []),
         },
         "controller": controller_row,
         "trigger_state": {

@@ -25,17 +25,8 @@ ARTIFACT_ROOT = workspace_path("artifacts")
 RUN_STATUS_FILENAME = "run-status.json"
 
 _ALL_MODEL_PRESETS = {
-    "spotlight_reflex": {
-        "config_file": CONFIG_ROOT / "spotlight_reflex.yaml",
-        "wizard_driver": "spotlight_reflex",
-        "checkpoint": None,
-        "driver_env": {
-            "WOD2SIM_SPOTLIGHT_LOG_PATH": "{run_dir}/driver/spotlight-log.jsonl",
-        },
-    },
     "token_dagger_bc": {
         "config_file": CONFIG_ROOT / "token_dagger_bc.yaml",
-        "wizard_driver": "spotlight_reflex",
         "checkpoint": None,
         "checkpoint_required": True,
         "driver_env": {
@@ -44,7 +35,6 @@ _ALL_MODEL_PRESETS = {
     },
     "direct_actor_planner": {
         "config_file": CONFIG_ROOT / "direct_actor_planner.yaml",
-        "wizard_driver": "spotlight_reflex",
         "checkpoint": None,
         "requires_oracle_actor_proxy": True,
         "force_cuda": False,
@@ -56,7 +46,6 @@ _ALL_MODEL_PRESETS = {
     },
     "direct_actor_planner_oracle": {
         "config_file": CONFIG_ROOT / "direct_actor_planner.yaml",
-        "wizard_driver": "spotlight_reflex",
         "checkpoint": None,
         "requires_oracle_actor_proxy": True,
         "force_cuda": False,
@@ -68,7 +57,6 @@ _ALL_MODEL_PRESETS = {
     },
     "direct_actor_planner_max_clearance_oracle": {
         "config_file": CONFIG_ROOT / "direct_actor_planner.yaml",
-        "wizard_driver": "spotlight_reflex",
         "checkpoint": None,
         "requires_oracle_actor_proxy": True,
         "force_cuda": False,
@@ -81,19 +69,16 @@ _ALL_MODEL_PRESETS = {
     },
     "token_dagger_iter2": {
         "config_file": CONFIG_ROOT / "token_dagger_bc.yaml",
-        "wizard_driver": "spotlight_reflex",
         "checkpoint": ARTIFACT_ROOT / "bc_models_iter2" / "token_dagger_bc.pt",
         "driver_env": {},
     },
     "token_dagger_srcdecay": {
         "config_file": CONFIG_ROOT / "token_dagger_srcdecay.yaml",
-        "wizard_driver": "spotlight_reflex",
         "checkpoint": ARTIFACT_ROOT / "bc_models_iter3_srcdecay" / "token_dagger_bc.pt",
         "driver_env": {},
     },
     "token_dagger_iter2_clamped": {
         "config_file": CONFIG_ROOT / "token_dagger_bc_clamped.yaml",
-        "wizard_driver": "spotlight_reflex",
         "checkpoint": ARTIFACT_ROOT / "bc_models_iter2" / "token_dagger_bc.pt",
         "driver_env": {
             "WOD2SIM_TOKENBC_TRAJECTORY_MODE": "clamped_lateral",
@@ -102,7 +87,6 @@ _ALL_MODEL_PRESETS = {
     },
     "token_dagger_iter2_hybrid": {
         "config_file": CONFIG_ROOT / "token_dagger_bc.yaml",
-        "wizard_driver": "spotlight_reflex",
         "checkpoint": ARTIFACT_ROOT / "bc_models_iter2" / "token_dagger_bc.pt",
         "driver_env": {
             "WOD2SIM_TOKENBC_SELECTION_MODE": "hybrid_veto",
@@ -116,7 +100,6 @@ _ALL_MODEL_PRESETS = {
     },
     "token_dagger_iter2_hybrid_clamped": {
         "config_file": CONFIG_ROOT / "token_dagger_bc_clamped.yaml",
-        "wizard_driver": "spotlight_reflex",
         "checkpoint": ARTIFACT_ROOT / "bc_models_iter2" / "token_dagger_bc.pt",
         "driver_env": {
             "WOD2SIM_TOKENBC_SELECTION_MODE": "hybrid_veto",
@@ -132,7 +115,6 @@ _ALL_MODEL_PRESETS = {
     },
     "token_dagger_iter2_axis_constrained_clamped": {
         "config_file": CONFIG_ROOT / "token_dagger_bc_clamped.yaml",
-        "wizard_driver": "spotlight_reflex",
         "checkpoint": ARTIFACT_ROOT / "bc_models_iter2" / "token_dagger_bc.pt",
         "driver_env": {
             "WOD2SIM_TOKENBC_SELECTION_MODE": "axis_constrained",
@@ -145,7 +127,6 @@ _ALL_MODEL_PRESETS = {
     },
     "token_dagger_iter2_axis_constrained_oracle_actor_clamped": {
         "config_file": CONFIG_ROOT / "token_dagger_bc_clamped.yaml",
-        "wizard_driver": "spotlight_reflex",
         "checkpoint": ARTIFACT_ROOT / "bc_models_iter2" / "token_dagger_bc.pt",
         "requires_oracle_actor_proxy": True,
         "driver_env": {
@@ -161,7 +142,6 @@ _ALL_MODEL_PRESETS = {
     },
     "token_dagger_iter2_axis_lexicographic_oracle_actor_clamped": {
         "config_file": CONFIG_ROOT / "token_dagger_bc_clamped.yaml",
-        "wizard_driver": "spotlight_reflex",
         "checkpoint": ARTIFACT_ROOT / "bc_models_iter2" / "token_dagger_bc.pt",
         "requires_oracle_actor_proxy": True,
         "driver_env": {
@@ -177,7 +157,6 @@ _ALL_MODEL_PRESETS = {
     },
     "token_dagger_iter2_actor_axis_oracle_actor_clamped": {
         "config_file": CONFIG_ROOT / "token_dagger_bc_clamped.yaml",
-        "wizard_driver": "spotlight_reflex",
         "checkpoint": ARTIFACT_ROOT / "bc_models_iter2" / "token_dagger_bc.pt",
         "requires_oracle_actor_proxy": True,
         "driver_env": {
@@ -193,7 +172,6 @@ _ALL_MODEL_PRESETS = {
     },
     "token_dagger_srcdecay_clamped": {
         "config_file": CONFIG_ROOT / "token_dagger_srcdecay_clamped.yaml",
-        "wizard_driver": "spotlight_reflex",
         "checkpoint": ARTIFACT_ROOT / "bc_models_iter3_srcdecay" / "token_dagger_bc.pt",
         "driver_env": {
             "WOD2SIM_TOKENBC_TRAJECTORY_MODE": "clamped_lateral",
@@ -202,7 +180,6 @@ _ALL_MODEL_PRESETS = {
     },
     "token_dagger_srcdecay_hybrid": {
         "config_file": CONFIG_ROOT / "token_dagger_srcdecay.yaml",
-        "wizard_driver": "spotlight_reflex",
         "checkpoint": ARTIFACT_ROOT / "bc_models_iter3_srcdecay" / "token_dagger_bc.pt",
         "driver_env": {
             "WOD2SIM_TOKENBC_SELECTION_MODE": "hybrid_veto",
@@ -216,7 +193,6 @@ _ALL_MODEL_PRESETS = {
     },
     "token_dagger_srcdecay_hybrid_clamped": {
         "config_file": CONFIG_ROOT / "token_dagger_srcdecay_clamped.yaml",
-        "wizard_driver": "spotlight_reflex",
         "checkpoint": ARTIFACT_ROOT / "bc_models_iter3_srcdecay" / "token_dagger_bc.pt",
         "driver_env": {
             "WOD2SIM_TOKENBC_SELECTION_MODE": "hybrid_veto",
@@ -242,7 +218,6 @@ SCENE_PRESETS = {
 }
 
 PUBLIC_RELEASE_MODELS = (
-    "spotlight_reflex",
     "token_dagger_bc",
     "direct_actor_planner",
 )
@@ -265,11 +240,10 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--model",
         choices=PUBLIC_RELEASE_MODELS,
-        default="spotlight_reflex",
+        default="token_dagger_bc",
         help=(
             "Public release model preset to evaluate. "
-            "Use spotlight_reflex for checkpoint-free smoke tests, "
-            "token_dagger_bc with --checkpoint, or direct_actor_planner "
+            "Use token_dagger_bc with --checkpoint, or direct_actor_planner "
             "with --oracle-actor-proxy."
         ),
     )
@@ -424,7 +398,7 @@ def main() -> None:
         checkpoint=checkpoint,
         port=args.port,
         output_dir=run_dir / "driver",
-        force_cuda=bool(model_preset.get("force_cuda", args.model != "spotlight_reflex")),
+        force_cuda=bool(model_preset.get("force_cuda", True)),
     )
 
     driver_cmd = _driver_command(
@@ -434,7 +408,7 @@ def main() -> None:
     driver_env = _driver_env(model_preset.get("driver_env", {}), run_dir=run_dir, oracle_actor_proxy=oracle_actor_proxy)
     wizard_cmd = _wizard_command(
         alpasim_wizard=alpasim_wizard,
-        wizard_driver=model_preset["wizard_driver"],
+        wizard_driver=Path(model_preset["config_file"]).stem,
         deploy_target=_wizard_deploy_target(),
         run_dir=run_dir,
         scene_ids=scene_ids,
@@ -460,7 +434,7 @@ def main() -> None:
         "wizard_args": args.wizard_arg,
         "driver_config_template": str(model_preset["config_file"]),
         "driver_config_path": str(driver_config_path),
-        "wizard_driver": model_preset["wizard_driver"],
+        "wizard_driver": Path(model_preset["config_file"]).stem,
         "wizard_deploy_target": _wizard_deploy_target(),
         "checkpoint": str(checkpoint) if checkpoint else None,
         "oracle_actor_proxy": str(oracle_actor_proxy) if oracle_actor_proxy else None,

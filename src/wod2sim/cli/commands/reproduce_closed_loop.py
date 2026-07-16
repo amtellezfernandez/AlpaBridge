@@ -46,7 +46,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--model",
         choices=PUBLIC_RELEASE_MODELS,
-        default="spotlight_reflex",
+        default="token_dagger_bc",
         help="Public model preset to reproduce.",
     )
     parser.add_argument("--checkpoint", type=Path, default=None)

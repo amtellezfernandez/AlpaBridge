@@ -22,16 +22,15 @@ from wod2sim.simulator.environment import (
     obstacle_signed_distance,
     scenario_at_tick,
 )
-from wod2sim.simulator.perception import perceive_scene
-from wod2sim.simulator.spotlight_reflex import (
-    DEFAULT_SPOTLIGHT_CONFIG,
+from wod2sim.simulator.maneuver_candidates import (
+    DEFAULT_MANEUVER_CONFIG,
+    ManeuverCandidateConfig,
     SimulatorBackedScoreConfig,
-    SpotlightReflexConfig,
     _min_obstacle_clearance,
     _min_obstacle_clearance_with_config,
     generate_maneuver_candidates,
-    select_maneuver,
 )
+from wod2sim.simulator.perception import perceive_scene
 from wod2sim.simulator.trajectory_selector import (
     TrajectoryCandidate,
     TrajectoryReference,
@@ -41,8 +40,8 @@ from wod2sim.simulator.trajectory_selector import (
 )
 from wod2sim.simulator.world_model import update_world_state
 
-SELECTOR_3S_INDEX = DEFAULT_SPOTLIGHT_CONFIG.selector.index_3s
-SELECTOR_5S_INDEX = DEFAULT_SPOTLIGHT_CONFIG.selector.index_5s
+SELECTOR_3S_INDEX = DEFAULT_MANEUVER_CONFIG.selector.index_3s
+SELECTOR_5S_INDEX = DEFAULT_MANEUVER_CONFIG.selector.index_5s
 
 
 def straight_trajectory(lateral_offset: float = 0.0, longitudinal_offset: float = 0.0) -> list[tuple[float, float]]:
@@ -295,23 +294,6 @@ class ManeuverLibraryTests(unittest.TestCase):
         self.assertGreater(candidates["evasive_left"].trajectory[-1][1], candidates["nudge_left"].trajectory[-1][1])
         self.assertLess(candidates["evasive_right"].trajectory[-1][1], candidates["nudge_right"].trajectory[-1][1])
 
-    def test_selector_prefers_lateral_avoidance_under_obstacle_pressure(self) -> None:
-        scenario = Scenario(
-            width=40.0,
-            height=20.0,
-            lane_center=[(0.0, 0.0), (30.0, 0.0)],
-            lane_half_width=5.0,
-            obstacles=[Obstacle(x=4.0, y=1.0, radius=1.0)],
-            start=(0.0, 0.0),
-            goal=(30.0, 0.0),
-            seed=123,
-        )
-        position = scenario.start
-        perception = perceive_scene(scenario, position)
-        world_state = update_world_state(scenario, position, perception)
-        selection = select_maneuver(scenario, position, world_state, perception, 1.25)
-        self.assertIn(selection.candidate.name, {"nudge_right", "evasive_right"})
-
     def test_world_geometry_summary_is_label_free(self) -> None:
         base = Scenario(
             width=40.0,
@@ -377,36 +359,6 @@ class ManeuverLibraryTests(unittest.TestCase):
         elongated_state = update_world_state(elongated, elongated.start, perceive_scene(elongated, elongated.start))
 
         self.assertGreater(elongated_state.route_blockage, compact_state.route_blockage)
-
-    def test_selector_explains_selected_maneuver_and_alternatives(self) -> None:
-        scenario = Scenario(
-            width=40.0,
-            height=20.0,
-            lane_center=[(0.0, 0.0), (30.0, 0.0)],
-            lane_half_width=5.0,
-            obstacles=[Obstacle(x=4.0, y=1.0, radius=1.0)],
-            start=(0.0, 0.0),
-            goal=(30.0, 0.0),
-            seed=124,
-        )
-        perception = perceive_scene(scenario, scenario.start)
-        world_state = update_world_state(scenario, scenario.start, perception)
-
-        selection = select_maneuver(scenario, scenario.start, world_state, perception, 1.25)
-        metadata = selection.to_metadata()
-
-        self.assertGreater(selection.effective_score, selection.score.combined_score - 1000.0)
-        self.assertGreaterEqual(len(selection.decision_reasons), 6)
-        self.assertIn("3s_reference=", selection.decision_reasons[0])
-        self.assertIn("action_clearance=", " ".join(selection.decision_reasons))
-        self.assertEqual(metadata["decision_reasons"], list(selection.decision_reasons))
-        summaries = metadata["top_candidate_summaries"]
-        self.assertIsInstance(summaries, list)
-        self.assertGreaterEqual(len(summaries), 1)
-        self.assertEqual(summaries[0]["candidate"], selection.candidate.name)
-        self.assertIn("effective_score", summaries[0])
-        self.assertIn("action_clearance_m", summaries[0])
-        self.assertIn("reasons", summaries[0])
 
     def test_forecast_clearance_keeps_static_obstacle_with_same_label_as_moving_actor(self) -> None:
         scenario = Scenario(
@@ -498,7 +450,7 @@ class ManeuverLibraryTests(unittest.TestCase):
             ],
         )
         active = scenario_at_tick(scenario, 0)
-        config = SpotlightReflexConfig(
+        config = ManeuverCandidateConfig(
             scoring=SimulatorBackedScoreConfig(use_privileged_actor_forecast=True)
         )
 
@@ -532,7 +484,7 @@ class ManeuverLibraryTests(unittest.TestCase):
             ],
         )
         active = scenario_at_tick(scenario, 0)
-        config = SpotlightReflexConfig(
+        config = ManeuverCandidateConfig(
             scoring=SimulatorBackedScoreConfig(use_privileged_actor_forecast=True)
         )
 
@@ -553,11 +505,11 @@ class ManeuverLibraryTests(unittest.TestCase):
         candidates = generate_maneuver_candidates(active.start, (1.0, 0.0), 1.0)
         maintain = next(candidate for candidate in candidates if candidate.name == "maintain")
 
-        without_origin = _min_obstacle_clearance_with_config(maintain.trajectory[:1], active, DEFAULT_SPOTLIGHT_CONFIG)
+        without_origin = _min_obstacle_clearance_with_config(maintain.trajectory[:1], active, DEFAULT_MANEUVER_CONFIG)
         with_origin = _min_obstacle_clearance_with_config(
             maintain.trajectory[:1],
             active,
-            DEFAULT_SPOTLIGHT_CONFIG,
+            DEFAULT_MANEUVER_CONFIG,
             origin=active.start,
         )
 

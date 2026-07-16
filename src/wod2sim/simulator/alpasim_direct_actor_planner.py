@@ -11,16 +11,16 @@ from typing import Any
 
 import numpy as np
 
-from .alpasim_signal import extract_alpasim_signal, scenario_from_command
-from .alpasim_spotlight import (
+from .alpasim_contract import (
     BaseTrajectoryModel,
     DriveCommand,
     ModelPrediction,
     PredictionInput,
-    _prediction_scene_id,
-    _resample_to_frequency,
-    _SensorFreshnessGuard,
+    SensorFreshnessGuard,
+    prediction_scene_id,
+    resample_trajectory,
 )
+from .alpasim_signal import extract_alpasim_signal, scenario_from_command
 from .alpasim_token_bc import (
     _cfg_value,
     _load_oracle_actor_proxy,
@@ -219,7 +219,7 @@ class DirectActorPlannerAlpaSimModel(BaseTrajectoryModel):
         self._log_path = log_path
         self._log_lock = Lock()
         self._prediction_counter = 0
-        self._sensor_freshness_guard = _SensorFreshnessGuard(self.__class__.__name__)
+        self._sensor_freshness_guard = SensorFreshnessGuard(self.__class__.__name__)
 
     @property
     def camera_ids(self) -> list[str]:
@@ -257,7 +257,7 @@ class DirectActorPlannerAlpaSimModel(BaseTrajectoryModel):
         except RuntimeError as exc:
             self._append_log(
                 {
-                    "scene_id": _prediction_scene_id(prediction_input),
+                    "scene_id": prediction_scene_id(prediction_input),
                     "command": command,
                     "speed_mps": round(float(speed_mps), 4),
                     "result": "sensor_failure",
@@ -272,14 +272,14 @@ class DirectActorPlannerAlpaSimModel(BaseTrajectoryModel):
         plan_start = time.perf_counter()
         plan = plan_direct_actor_trajectory(scenario, speed_mps=speed_mps, config=self._config)
         planner_latency_ms = (time.perf_counter() - plan_start) * 1000.0
-        trajectory_xy = _resample_to_frequency(
+        trajectory_xy = resample_trajectory(
             plan.trajectory.astype(np.float32),
             output_frequency_hz=self._output_frequency_hz,
             horizon_seconds=self._config.horizon_seconds,
         )
         headings = self._compute_headings_from_trajectory(trajectory_xy)
         reasoning_payload = {
-            "scene_id": _prediction_scene_id(prediction_input),
+            "scene_id": prediction_scene_id(prediction_input),
             "adapter": "wod2sim.simulator.alpasim_direct_actor_planner",
             "command": command,
             "planner": "selector_free_actor_aware_grid",
