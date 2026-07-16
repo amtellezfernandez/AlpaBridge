@@ -46,11 +46,6 @@ def _clean_wod2sim_dist(module) -> FakeDist:
     ]
     wod2sim_model_entry_points = [
         SimpleNamespace(
-            name="spotlight_reflex",
-            group="alpasim.models",
-            value="wod2sim.simulator.alpasim_spotlight:SpotlightReflexAlpaSimModel",
-        ),
-        SimpleNamespace(
             name="token_dagger_bc",
             group="alpasim.models",
             value="wod2sim.simulator.alpasim_token_bc:TokenBCAlpaSimModel",
@@ -77,13 +72,12 @@ class WOD2SimDoctorTests(unittest.TestCase):
         self.assertTrue(report["valid"])
         self.assertEqual("wod2sim_doctor_v1", report["schema"])
         self.assertEqual(
-            ["spotlight_reflex", "token_dagger_bc", "direct_actor_planner"],
+            ["token_dagger_bc", "direct_actor_planner"],
             report["public_models"],
         )
         self.assertTrue(report["checks"]["public_model_registry_curated"])
         self.assertTrue(report["checks"]["scene_presets_present"])
         self.assertTrue(report["checks"]["public_model_configs_present"])
-        self.assertTrue(report["checks"]["legacy_distributions_absent"])
         self.assertTrue(report["checks"]["public_model_entry_points_unique"])
         self.assertTrue(report["checks"]["public_model_entry_points_owned_by_wod2sim"])
         self.assertTrue(
@@ -91,7 +85,6 @@ class WOD2SimDoctorTests(unittest.TestCase):
             or report["checks"]["wrapper_scripts_present"]
         )
         self.assertIsNone(report["environment"])
-        self.assertEqual([], report["conflicts"]["legacy_distributions"])
         self.assertEqual([], report["conflicts"]["duplicate_public_model_entry_points"])
         self.assertEqual([], report["conflicts"]["unexpected_public_model_providers"])
 
@@ -232,7 +225,7 @@ class WOD2SimDoctorTests(unittest.TestCase):
         self.assertIn("bootstrap_alpasim_checkout.sh", rendered)
         self.assertIn("--probe-default-environment", rendered)
 
-    def test_build_report_flags_legacy_distribution_and_duplicate_model_provider_conflicts(self) -> None:
+    def test_build_report_flags_duplicate_model_provider_conflicts(self) -> None:
         module = _load_module()
 
         wod2sim_console_scripts = [
@@ -240,11 +233,6 @@ class WOD2SimDoctorTests(unittest.TestCase):
             for name in module.EXPECTED_CONSOLE_SCRIPTS
         ]
         wod2sim_model_entry_points = [
-            SimpleNamespace(
-                name="spotlight_reflex",
-                group="alpasim.models",
-                value="wod2sim.simulator.alpasim_spotlight:SpotlightReflexAlpaSimModel",
-            ),
             SimpleNamespace(
                 name="token_dagger_bc",
                 group="alpasim.models",
@@ -257,37 +245,35 @@ class WOD2SimDoctorTests(unittest.TestCase):
             ),
         ]
         wod2sim_dist = FakeDist("wod2sim", wod2sim_console_scripts + wod2sim_model_entry_points)
-        stale_slipway_dist = FakeDist(
-            "slipway",
+        competing_dist = FakeDist(
+            "another-package",
             [
                 SimpleNamespace(
-                    name="spotlight_reflex",
+                    name="token_dagger_bc",
                     group="alpasim.models",
-                    value="slipway.simulator.alpasim_spotlight:SpotlightReflexAlpaSimModel",
+                    value="another_package.token_bc:TokenBCAlpaSimModel",
                 )
             ],
         )
 
         with patch.object(module, "distribution", return_value=wod2sim_dist), patch.object(
-            module, "distributions", return_value=[wod2sim_dist, stale_slipway_dist]
+            module, "distributions", return_value=[wod2sim_dist, competing_dist]
         ):
             report = module.build_report()
 
         self.assertFalse(report["valid"])
-        self.assertFalse(report["checks"]["legacy_distributions_absent"])
         self.assertFalse(report["checks"]["public_model_entry_points_unique"])
         self.assertFalse(report["checks"]["public_model_entry_points_owned_by_wod2sim"])
-        self.assertEqual(["slipway"], report["conflicts"]["legacy_distributions"])
         self.assertEqual(
             [
-                "spotlight_reflex: wod2sim -> wod2sim.simulator.alpasim_spotlight:SpotlightReflexAlpaSimModel, "
-                "slipway -> slipway.simulator.alpasim_spotlight:SpotlightReflexAlpaSimModel"
+                "token_dagger_bc: wod2sim -> wod2sim.simulator.alpasim_token_bc:TokenBCAlpaSimModel, "
+                "another-package -> another_package.token_bc:TokenBCAlpaSimModel"
             ],
             report["conflicts"]["duplicate_public_model_entry_points"],
         )
         self.assertEqual(
             [
-                "spotlight_reflex: slipway -> slipway.simulator.alpasim_spotlight:SpotlightReflexAlpaSimModel"
+                "token_dagger_bc: another-package -> another_package.token_bc:TokenBCAlpaSimModel"
             ],
             report["conflicts"]["unexpected_public_model_providers"],
         )
@@ -295,10 +281,10 @@ class WOD2SimDoctorTests(unittest.TestCase):
     def test_build_report_deduplicates_identical_model_entry_points_from_same_distribution(self) -> None:
         module = _load_module()
 
-        duplicated_spotlight = SimpleNamespace(
-            name="spotlight_reflex",
+        duplicated_token = SimpleNamespace(
+            name="token_dagger_bc",
             group="alpasim.models",
-            value="wod2sim.simulator.alpasim_spotlight:SpotlightReflexAlpaSimModel",
+            value="wod2sim.simulator.alpasim_token_bc:TokenBCAlpaSimModel",
         )
         wod2sim_console_scripts = [
             SimpleNamespace(name=name, group="console_scripts", value=f"wod2sim.cli:{name}")
@@ -308,13 +294,8 @@ class WOD2SimDoctorTests(unittest.TestCase):
             "wod2sim",
             wod2sim_console_scripts
             + [
-                duplicated_spotlight,
-                duplicated_spotlight,
-                SimpleNamespace(
-                    name="token_dagger_bc",
-                    group="alpasim.models",
-                    value="wod2sim.simulator.alpasim_token_bc:TokenBCAlpaSimModel",
-                ),
+                duplicated_token,
+                duplicated_token,
                 SimpleNamespace(
                     name="direct_actor_planner",
                     group="alpasim.models",
@@ -334,10 +315,10 @@ class WOD2SimDoctorTests(unittest.TestCase):
             [
                 {
                     "dist": "wod2sim",
-                    "value": "wod2sim.simulator.alpasim_spotlight:SpotlightReflexAlpaSimModel",
+                    "value": "wod2sim.simulator.alpasim_token_bc:TokenBCAlpaSimModel",
                 }
             ],
-            report["public_model_entry_point_providers"]["spotlight_reflex"],
+            report["public_model_entry_point_providers"]["token_dagger_bc"],
         )
 
     def test_human_report_surfaces_environment_conflicts(self) -> None:
@@ -349,12 +330,11 @@ class WOD2SimDoctorTests(unittest.TestCase):
             report = module.build_report()
         report["valid"] = False
         report["conflicts"] = {
-            "legacy_distributions": ["slipway"],
             "duplicate_public_model_entry_points": [
-                "spotlight_reflex: wod2sim -> wod2sim.simulator.alpasim_spotlight:SpotlightReflexAlpaSimModel, slipway -> slipway.simulator.alpasim_spotlight:SpotlightReflexAlpaSimModel"
+                "token_dagger_bc: wod2sim -> wod2sim.simulator.alpasim_token_bc:TokenBCAlpaSimModel, another-package -> another_package.token_bc:TokenBCAlpaSimModel"
             ],
             "unexpected_public_model_providers": [
-                "spotlight_reflex: slipway -> slipway.simulator.alpasim_spotlight:SpotlightReflexAlpaSimModel"
+                "token_dagger_bc: another-package -> another_package.token_bc:TokenBCAlpaSimModel"
             ],
         }
 
@@ -362,7 +342,6 @@ class WOD2SimDoctorTests(unittest.TestCase):
             module._print_human_report(report, strict_installed=False)
 
         rendered = stdout.getvalue()
-        self.assertIn("legacy_distributions: slipway", rendered)
         self.assertIn("duplicate_public_model_entry_points", rendered)
         self.assertIn("rerun wod2sim-setup", rendered)
 

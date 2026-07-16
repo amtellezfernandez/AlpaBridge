@@ -15,7 +15,6 @@ from .environment import (
     static_obstacles_at_time,
 )
 from .perception import ScenePerception, perceived_obstacle_axis_extent
-from .planner import PlannedAction
 from .trajectory_selector import (
     Trajectory,
     TrajectoryCandidate,
@@ -93,7 +92,7 @@ class TrajectoryGenerationConfig:
 
 
 @dataclass(frozen=True)
-class SpotlightReflexConfig:
+class ManeuverCandidateConfig:
     selector: TrajectorySelectorConfig = field(default_factory=TrajectorySelectorConfig)
     references: ReferenceRuleConfig = field(default_factory=ReferenceRuleConfig)
     scoring: SimulatorBackedScoreConfig = field(default_factory=SimulatorBackedScoreConfig)
@@ -111,39 +110,7 @@ class SpotlightReflexConfig:
     )
 
 
-DEFAULT_SPOTLIGHT_CONFIG = SpotlightReflexConfig()
-
-
-@dataclass(frozen=True)
-class SpotlightSelection:
-    candidate: TrajectoryCandidate
-    score: TrajectorySelectorScore
-    candidate_count: int
-    reference_count: int
-    effective_score: float
-    decision_reasons: tuple[str, ...]
-    top_candidate_summaries: tuple[dict[str, object], ...]
-    extra_metadata: dict[str, object] = field(default_factory=dict)
-
-    def to_metadata(self) -> dict[str, object]:
-        metadata = {
-            "candidate_count": self.candidate_count,
-            "reference_count": self.reference_count,
-            "selected_maneuver": self.candidate.name,
-            "selector_score": self.score.combined_score,
-            "selector_effective_score": self.effective_score,
-            "selector_3s_score": self.score.score_3s,
-            "selector_5s_score": self.score.score_5s,
-            "selector_3s_reference": self.score.reference_3s_label,
-            "selector_5s_reference": self.score.reference_5s_label,
-            "selector_3s_inside_region": self.score.inside_3s_region,
-            "selector_5s_inside_region": self.score.inside_5s_region,
-            "decision_reason": "; ".join(self.decision_reasons[:6]),
-            "decision_reasons": list(self.decision_reasons),
-            "top_candidate_summaries": list(self.top_candidate_summaries),
-        }
-        metadata.update(self.extra_metadata)
-        return metadata
+DEFAULT_MANEUVER_CONFIG = ManeuverCandidateConfig()
 
 
 @dataclass(frozen=True)
@@ -185,7 +152,7 @@ class CandidateScoreExplanation:
 
 
 @dataclass(frozen=True)
-class SpotlightCandidateEvaluation:
+class ManeuverCandidateEvaluation:
     candidate: TrajectoryCandidate
     score: TrajectorySelectorScore
     explanation: CandidateScoreExplanation
@@ -195,9 +162,9 @@ def generate_maneuver_candidates(
     position: tuple[float, float],
     heading: tuple[float, float],
     speed_mps: float,
-    config: SpotlightReflexConfig | None = None,
+    config: ManeuverCandidateConfig | None = None,
 ) -> list[TrajectoryCandidate]:
-    config = config or DEFAULT_SPOTLIGHT_CONFIG
+    config = config or DEFAULT_MANEUVER_CONFIG
     forward = _normalize(heading)
     if forward == (0.0, 0.0):
         forward = (1.0, 0.0)
@@ -234,9 +201,9 @@ def generate_pseudo_references(
     perception: ScenePerception,
     speed_mps: float,
     heading: tuple[float, float] | None = None,
-    config: SpotlightReflexConfig | None = None,
+    config: ManeuverCandidateConfig | None = None,
 ) -> list[TrajectoryReference]:
-    config = config or DEFAULT_SPOTLIGHT_CONFIG
+    config = config or DEFAULT_MANEUVER_CONFIG
     rules = config.references
     reference_heading = heading if heading is not None else perception.lane_heading
     candidates = {
@@ -319,58 +286,15 @@ def generate_pseudo_references(
     return references
 
 
-def select_maneuver(
-    scenario: Scenario,
-    position: tuple[float, float],
-    world_state: WorldState,
-    perception: ScenePerception,
-    speed_mps: float,
-    config: SpotlightReflexConfig | None = None,
-) -> SpotlightSelection:
-    config = config or DEFAULT_SPOTLIGHT_CONFIG
-    evaluations, reference_count = evaluate_maneuver_candidates(
-        scenario,
-        position,
-        world_state,
-        perception,
-        speed_mps,
-        config,
-    )
-    best_evaluation = evaluations[0]
-    for evaluation in evaluations[1:]:
-        if (
-            evaluation.explanation.effective_score,
-            evaluation.candidate.confidence,
-        ) > (
-            best_evaluation.explanation.effective_score,
-            best_evaluation.candidate.confidence,
-        ):
-            best_evaluation = evaluation
-
-    top_candidate_summaries = tuple(
-        evaluation.explanation.to_summary()
-        for evaluation in sorted(evaluations, key=lambda item: item.explanation.effective_score, reverse=True)[:3]
-    )
-    return SpotlightSelection(
-        best_evaluation.candidate,
-        best_evaluation.score,
-        len(evaluations),
-        reference_count,
-        best_evaluation.explanation.effective_score,
-        best_evaluation.explanation.reasons,
-        top_candidate_summaries,
-    )
-
-
 def evaluate_maneuver_candidates(
     scenario: Scenario,
     position: tuple[float, float],
     world_state: WorldState,
     perception: ScenePerception,
     speed_mps: float,
-    config: SpotlightReflexConfig | None = None,
-) -> tuple[list[SpotlightCandidateEvaluation], int]:
-    config = config or DEFAULT_SPOTLIGHT_CONFIG
+    config: ManeuverCandidateConfig | None = None,
+) -> tuple[list[ManeuverCandidateEvaluation], int]:
+    config = config or DEFAULT_MANEUVER_CONFIG
     heading = _planning_heading(position, world_state, perception, scenario, config)
     candidates = generate_maneuver_candidates(position, heading, speed_mps, config)
     references = generate_pseudo_references(scenario, position, world_state, perception, speed_mps, heading, config)
@@ -378,7 +302,7 @@ def evaluate_maneuver_candidates(
         candidate.name != "stop" and _action_clearance(candidate.trajectory, scenario, config) >= config.scoring.min_action_clearance_m
         for candidate in candidates
     )
-    evaluations: list[SpotlightCandidateEvaluation] = []
+    evaluations: list[ManeuverCandidateEvaluation] = []
     for candidate in candidates:
         candidate_score = score_candidate(candidate, references, speed_mps, config.selector)
         explanation = _explain_simulator_backed_score(
@@ -391,37 +315,13 @@ def evaluate_maneuver_candidates(
             config,
         )
         evaluations.append(
-            SpotlightCandidateEvaluation(
+            ManeuverCandidateEvaluation(
                 candidate=candidate,
                 score=candidate_score,
                 explanation=explanation,
             )
         )
     return evaluations, len(references)
-
-
-def plan_spotlight_reflex_action(
-    scenario: Scenario,
-    position: tuple[float, float],
-    world_state: WorldState,
-    perception: ScenePerception,
-    nominal_step_size: float = 1.25,
-    config: SpotlightReflexConfig | None = None,
-) -> tuple[PlannedAction, SpotlightSelection]:
-    config = config or DEFAULT_SPOTLIGHT_CONFIG
-    speed_mps = max(0.0, nominal_step_size)
-    selection = select_maneuver(scenario, position, world_state, perception, speed_mps, config)
-    next_point = selection.candidate.trajectory[config.trajectory.action_index]
-    step_vector = (next_point[0] - position[0], next_point[1] - position[1])
-    step_distance = math.hypot(step_vector[0], step_vector[1])
-    direction = _normalize(step_vector)
-    action = PlannedAction(
-        direction=direction,
-        speed=step_distance,
-        mode=f"spotlight_reflex:{selection.candidate.name}",
-        score=selection.score.combined_score,
-    )
-    return action, selection
 
 
 def _simulator_backed_score(
@@ -431,7 +331,7 @@ def _simulator_backed_score(
     position: tuple[float, float],
     world_state: WorldState,
     moving_candidate_is_safe: bool,
-    config: SpotlightReflexConfig,
+    config: ManeuverCandidateConfig,
 ) -> float:
     return _explain_simulator_backed_score(
         score,
@@ -451,7 +351,7 @@ def _explain_simulator_backed_score(
     position: tuple[float, float],
     world_state: WorldState,
     moving_candidate_is_safe: bool,
-    config: SpotlightReflexConfig,
+    config: ManeuverCandidateConfig,
 ) -> CandidateScoreExplanation:
     scoring = config.scoring
     action_clearance = _action_clearance(candidate.trajectory, scenario, config, origin=position)
@@ -568,10 +468,10 @@ def _round_float(value: float) -> float | str:
 def _action_clearance(
     trajectory: Trajectory,
     scenario: Scenario,
-    config: SpotlightReflexConfig | None = None,
+    config: ManeuverCandidateConfig | None = None,
     origin: tuple[float, float] | None = None,
 ) -> float:
-    config = config or DEFAULT_SPOTLIGHT_CONFIG
+    config = config or DEFAULT_MANEUVER_CONFIG
     return _min_obstacle_clearance_with_config(trajectory[: config.trajectory.action_index + 1], scenario, config, origin=origin)
 
 
@@ -580,13 +480,18 @@ def _min_obstacle_clearance(
     scenario: Scenario,
     origin: tuple[float, float] | None = None,
 ) -> float:
-    return _min_obstacle_clearance_with_config(trajectory, scenario, DEFAULT_SPOTLIGHT_CONFIG, origin=origin)
+    return _min_obstacle_clearance_with_config(
+        trajectory,
+        scenario,
+        DEFAULT_MANEUVER_CONFIG,
+        origin=origin,
+    )
 
 
 def _min_obstacle_clearance_with_config(
     trajectory: Trajectory,
     scenario: Scenario,
-    config: SpotlightReflexConfig,
+    config: ManeuverCandidateConfig,
     origin: tuple[float, float] | None = None,
 ) -> float:
     min_clearance = math.inf
@@ -605,7 +510,7 @@ def _trajectory_segment_clearance(
     end: tuple[float, float],
     scenario: Scenario,
     point_index: int,
-    config: SpotlightReflexConfig,
+    config: ManeuverCandidateConfig,
 ) -> float:
     if not config.scoring.use_privileged_actor_forecast or not scenario.actors:
         return min_segment_clearance(start, end, scenario.obstacles, ego_radius=DEFAULT_EGO_RADIUS_M)
@@ -626,7 +531,7 @@ def _trajectory_segment_clearance(
 def _trajectory_step_obstacles(
     scenario: Scenario,
     point_index: int,
-    config: SpotlightReflexConfig,
+    config: ManeuverCandidateConfig,
 ) -> list[Obstacle]:
     if not config.scoring.use_privileged_actor_forecast or not scenario.actors:
         return scenario.obstacles
@@ -679,7 +584,7 @@ def _trajectory(
     lateral_profile: str = "smooth",
     config: TrajectoryGenerationConfig | None = None,
 ) -> Trajectory:
-    config = config or DEFAULT_SPOTLIGHT_CONFIG.trajectory
+    config = config or DEFAULT_MANEUVER_CONFIG.trajectory
     points: Trajectory = []
     for step in range(1, config.point_count + 1):
         t = step / config.point_count
@@ -697,7 +602,7 @@ def _trajectory(
 
 
 def _lateral_interpolation(t: float, profile: str, config: TrajectoryGenerationConfig | None = None) -> float:
-    config = config or DEFAULT_SPOTLIGHT_CONFIG.trajectory
+    config = config or DEFAULT_MANEUVER_CONFIG.trajectory
     if profile == "smooth":
         return t * t * (config.smoothstep_a - config.smoothstep_b * t)
     if profile == "early":
@@ -709,9 +614,9 @@ def _lane_center_reference(
     position: tuple[float, float],
     world_state: WorldState,
     speed_mps: float,
-    config: SpotlightReflexConfig | None = None,
+    config: ManeuverCandidateConfig | None = None,
 ) -> Trajectory:
-    config = config or DEFAULT_SPOTLIGHT_CONFIG
+    config = config or DEFAULT_MANEUVER_CONFIG
     forward = _normalize((world_state.target_point[0] - position[0], world_state.target_point[1] - position[1]))
     if forward == (0.0, 0.0):
         forward = (1.0, 0.0)
@@ -731,9 +636,9 @@ def _lane_recover_reference(
     perception: ScenePerception,
     speed_mps: float,
     heading: tuple[float, float] | None = None,
-    config: SpotlightReflexConfig | None = None,
+    config: ManeuverCandidateConfig | None = None,
 ) -> Trajectory:
-    config = config or DEFAULT_SPOTLIGHT_CONFIG
+    config = config or DEFAULT_MANEUVER_CONFIG
     forward = _normalize(heading if heading is not None else perception.lane_heading)
     if forward == (0.0, 0.0):
         forward = (1.0, 0.0)
@@ -756,9 +661,9 @@ def _planning_heading(
     world_state: WorldState,
     perception: ScenePerception,
     scenario: Scenario,
-    config: SpotlightReflexConfig | None = None,
+    config: ManeuverCandidateConfig | None = None,
 ) -> tuple[float, float]:
-    config = config or DEFAULT_SPOTLIGHT_CONFIG
+    config = config or DEFAULT_MANEUVER_CONFIG
     goal_vector = (scenario.goal[0] - position[0], scenario.goal[1] - position[1])
     goal_heading = _normalize(goal_vector)
     lane_heading = _normalize(perception.lane_heading)
@@ -778,7 +683,7 @@ def _obstacle_pressure(
     perception: ScenePerception,
     config: SimulatorBackedScoreConfig | None = None,
 ) -> float:
-    config = config or DEFAULT_SPOTLIGHT_CONFIG.scoring
+    config = config or DEFAULT_MANEUVER_CONFIG.scoring
     nearest_signed_distance = min(
         (obstacle.signed_distance for obstacle in perception.visible_obstacles),
         default=config.obstacle_pressure_distance_m * 2.0,
@@ -791,9 +696,9 @@ def _avoidance_side(
     perception: ScenePerception,
     candidates: dict[str, TrajectoryCandidate],
     scenario: Scenario,
-    config: SpotlightReflexConfig | None = None,
+    config: ManeuverCandidateConfig | None = None,
 ) -> str:
-    config = config or DEFAULT_SPOTLIGHT_CONFIG
+    config = config or DEFAULT_MANEUVER_CONFIG
     scoring = config.scoring
 
     def _side_clearance(side: str) -> float:

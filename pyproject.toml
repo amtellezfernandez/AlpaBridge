@@ -9,7 +9,7 @@ description = "Standalone code and paper release for adapting WOD-style driving 
 readme = "README.md"
 requires-python = ">=3.10"
 license = "BSD-3-Clause"
-license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md", "LICENSES/*"]
+license-files = ["LICENSE", "LICENSES/*"]
 dependencies = [
     "numpy>=1.26",
     "PyYAML>=6",
@@ -38,12 +38,11 @@ alpasim = [
 viz = ["Pillow>=10"]
 
 [project.entry-points."alpasim.models"]
-spotlight_reflex = "wod2sim.simulator.alpasim_spotlight:SpotlightReflexAlpaSimModel"
 token_dagger_bc = "wod2sim.simulator.alpasim_token_bc:TokenBCAlpaSimModel"
 direct_actor_planner = "wod2sim.simulator.alpasim_direct_actor_planner:DirectActorPlannerAlpaSimModel"
 
 [project.entry-points."alpasim.configs"]
-spotlight_reflex = "wod2sim.simulator.alpasim_configs"
+wod2sim = "wod2sim.simulator.alpasim_configs"
 
 [project.scripts]
 wod2sim-doctor = "wod2sim.cli.commands.wod2sim_doctor:main"
@@ -53,18 +52,9 @@ wod2sim-launch = "wod2sim.cli.commands.run_alpasim_local_external:main"
 wod2sim-batch = "wod2sim.cli.commands.run_alpasim_scene_batch:main"
 wod2sim-build-local-cache = "wod2sim.cli.commands.build_alpasim_local_usdz_cache:main"
 wod2sim-build-oracle-proxy = "wod2sim.cli.commands.build_alpasim_oracle_actor_proxy:main"
-wod2sim-audit-signal = "wod2sim.cli.commands.audit_alpasignal_bridge:main"
 wod2sim-audit-run = "wod2sim.cli.commands.audit_run:main"
 wod2sim-support-bundle = "wod2sim.cli.commands.support_bundle:main"
 wod2sim-reproduce = "wod2sim.cli.commands.reproduce_closed_loop:main"
-wod2sim-benchmark-plan = "wod2sim.cli.commands.benchmark_regeneration_plan:main"
-wod2sim-benchmark-readiness = "wod2sim.cli.commands.benchmark_regeneration_readiness:main"
-wod2sim-benchmark-audit = "wod2sim.cli.commands.benchmark_regeneration_audit:main"
-wod2sim-benchmark-status = "wod2sim.cli.commands.benchmark_regeneration_status:main"
-wod2sim-benchmark-commands = "wod2sim.cli.commands.benchmark_regeneration_commands:main"
-wod2sim-benchmark-operators = "wod2sim.cli.commands.benchmark_operator_matrix:main"
-wod2sim-benchmark-evidence-manifest = "wod2sim.cli.commands.benchmark_public_evidence_manifest:main"
-wod2sim-benchmark-cleanup = "wod2sim.cli.commands.benchmark_cleanup:main"
 wod2sim-promote-batch-summary = "wod2sim.cli.commands.promote_batch_summary:main"
 wod2sim-benchmark-summary = "wod2sim.cli.commands.benchmark_summary:main"
 wod2sim-batch-summary = "wod2sim.cli.commands.batch_summary:main"

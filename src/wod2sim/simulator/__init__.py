@@ -1,1 +1,1 @@
-"""Simulator-only COMPASS, AlpaSim, and Spotlight Reflex stack."""
+"""WOD-style policy adapters and AlpaSim integration utilities."""

@@ -18,15 +18,15 @@ except ImportError:  # pragma: no cover - exercised only in non-alpasim installs
     torch = None
     nn = None
 
-from .alpasim_signal import extract_alpasim_signal, scenario_from_command
-from .alpasim_spotlight import (
+from .alpasim_contract import (
     BaseTrajectoryModel,
     DriveCommand,
     ModelPrediction,
     PredictionInput,
-    _resample_to_frequency,
-    _SensorFreshnessGuard,
+    SensorFreshnessGuard,
+    resample_trajectory,
 )
+from .alpasim_signal import extract_alpasim_signal, scenario_from_command
 from .environment import (
     DEFAULT_EGO_RADIUS_M,
     SIM_TICK_DT_S,
@@ -38,13 +38,13 @@ from .environment import (
     scenario_at_tick,
     static_obstacles_at_time,
 )
-from .perception import perceive_scene
-from .spotlight_reflex import (
-    DEFAULT_SPOTLIGHT_CONFIG,
+from .maneuver_candidates import (
+    DEFAULT_MANEUVER_CONFIG,
     _planning_heading,
     evaluate_maneuver_candidates,
     generate_maneuver_candidates,
 )
+from .perception import perceive_scene
 from .world_model import update_world_state
 
 N_FEATURES = 10
@@ -217,7 +217,7 @@ class TokenBCAlpaSimModel(BaseTrajectoryModel):
         )
         self._selection_log_lock = Lock()
         self._prediction_counter = 0
-        self._sensor_freshness_guard = _SensorFreshnessGuard(self.__class__.__name__)
+        self._sensor_freshness_guard = SensorFreshnessGuard(self.__class__.__name__)
         self._model, self._feat_mean, self._feat_std, self._token_order = _load_checkpoint(
             Path(checkpoint_path),
             device=self._device,
@@ -291,9 +291,9 @@ class TokenBCAlpaSimModel(BaseTrajectoryModel):
             selection_world_state,
             selection_perception,
             active_selection_scenario,
-            DEFAULT_SPOTLIGHT_CONFIG,
+            DEFAULT_MANEUVER_CONFIG,
         )
-        adapter_config = _adapter_spotlight_config(
+        adapter_config = _adapter_maneuver_config(
             trajectory_mode=self._trajectory_mode,
             max_lateral_offset_m=self._max_lateral_offset_m,
             selection_mode=self._selection_mode,
@@ -304,7 +304,7 @@ class TokenBCAlpaSimModel(BaseTrajectoryModel):
             speed_mps,
             config=adapter_config,
         )
-        spotlight_evaluations, reference_count = evaluate_maneuver_candidates(
+        candidate_evaluations, reference_count = evaluate_maneuver_candidates(
             active_selection_scenario,
             position,
             selection_world_state,
@@ -314,7 +314,7 @@ class TokenBCAlpaSimModel(BaseTrajectoryModel):
         )
         axis_signals = (
             _candidate_axis_signals(
-                spotlight_evaluations,
+                candidate_evaluations,
                 scenario=active_selection_scenario,
                 position=position,
                 speed_mps=speed_mps,
@@ -326,7 +326,7 @@ class TokenBCAlpaSimModel(BaseTrajectoryModel):
         selection_info = _select_token_with_mode(
             logits=logits,
             token_order=self._token_order,
-            evaluations=spotlight_evaluations,
+            evaluations=candidate_evaluations,
             axis_signals=axis_signals,
             selection_mode=self._selection_mode,
             hybrid_top_k=self._hybrid_top_k,
@@ -337,7 +337,7 @@ class TokenBCAlpaSimModel(BaseTrajectoryModel):
         )
         chosen_token = str(selection_info["hybrid_token"])
         candidate = candidates.get(chosen_token) or candidates["maintain"]
-        trajectory_xy = _resample_to_frequency(
+        trajectory_xy = resample_trajectory(
             np.asarray(candidate.trajectory, dtype=np.float32),
             output_frequency_hz=self._output_frequency_hz,
             horizon_seconds=self._HORIZON_SECONDS,
@@ -353,13 +353,13 @@ class TokenBCAlpaSimModel(BaseTrajectoryModel):
                 "trajectory_mode": self._trajectory_mode,
                 "max_lateral_offset_m": self._max_lateral_offset_m,
                 "top_logits": _top_logits(logits, self._token_order),
-                "spotlight_selected_maneuver": selection_info["spotlight_token"],
+                "geometric_selected_maneuver": selection_info["geometric_token"],
                 "selection_trace": selection_info,
                 "reference_count": reference_count,
                 "top_candidate_summaries": [
                     evaluation.explanation.to_summary()
                     for evaluation in sorted(
-                        spotlight_evaluations,
+                        candidate_evaluations,
                         key=lambda item: item.explanation.effective_score,
                         reverse=True,
                     )[:3]
@@ -383,7 +383,7 @@ class TokenBCAlpaSimModel(BaseTrajectoryModel):
             speed_mps=speed_mps,
             selection_info=selection_info,
             logits=logits,
-            spotlight_evaluations=spotlight_evaluations,
+            candidate_evaluations=candidate_evaluations,
             alpasim_signal=alpasim_signal,
             sensor_freshness=sensor_freshness,
         )
@@ -397,7 +397,7 @@ class TokenBCAlpaSimModel(BaseTrajectoryModel):
         speed_mps: float,
         selection_info: dict[str, Any],
         logits: np.ndarray,
-        spotlight_evaluations: list[Any],
+        candidate_evaluations: list[Any],
         alpasim_signal: dict[str, Any],
         sensor_freshness: dict[str, Any],
     ) -> None:
@@ -416,12 +416,12 @@ class TokenBCAlpaSimModel(BaseTrajectoryModel):
             "hybrid_veto_margin": self._hybrid_veto_margin,
             "hybrid_max_geometric_rank": self._hybrid_max_geometric_rank,
             "dagger_argmax_token": selection_info["dagger_argmax_token"],
-            "spotlight_token": selection_info["spotlight_token"],
+            "geometric_token": selection_info["geometric_token"],
             "hybrid_token": selection_info["hybrid_token"],
             "dagger_argmax_vetoed": selection_info["dagger_argmax_vetoed"],
             "used_fallback_geometric": selection_info["used_fallback_geometric"],
             "hybrid_matches_dagger": selection_info["hybrid_matches_dagger"],
-            "hybrid_matches_spotlight": selection_info["hybrid_matches_spotlight"],
+            "hybrid_matches_geometric": selection_info["hybrid_matches_geometric"],
             "decision_type": selection_info["decision_type"],
             "dagger_topk_tokens": selection_info["dagger_topk_tokens"],
             "dagger_argmax_geo_gap": selection_info["dagger_argmax_geo_gap"],
@@ -436,10 +436,10 @@ class TokenBCAlpaSimModel(BaseTrajectoryModel):
             "axis_signals": selection_info.get("axis_signals", {}),
             "hybrid_axis_scores": selection_info.get("hybrid_axis_scores", {}),
             "top_logits": _top_logits(logits, self._token_order),
-            "spotlight_top_candidates": [
+            "geometric_top_candidates": [
                 evaluation.explanation.to_summary()
                 for evaluation in sorted(
-                    spotlight_evaluations,
+                    candidate_evaluations,
                     key=lambda item: item.explanation.effective_score,
                     reverse=True,
                 )[:3]
@@ -560,8 +560,8 @@ def _resolve_selection_mode(mode: str) -> str:
     return normalized
 
 
-def _adapter_spotlight_config(*, trajectory_mode: str, max_lateral_offset_m: float, selection_mode: str = "argmax") -> Any:
-    config = DEFAULT_SPOTLIGHT_CONFIG
+def _adapter_maneuver_config(*, trajectory_mode: str, max_lateral_offset_m: float, selection_mode: str = "argmax") -> Any:
+    config = DEFAULT_MANEUVER_CONFIG
     if trajectory_mode != "token":
         adjusted_maneuvers = []
         for spec in config.maneuvers:
@@ -1000,7 +1000,7 @@ def _select_token_with_mode(
 ) -> dict[str, Any]:
     raw_idx = int(np.argmax(logits))
     raw_token = str(token_order[raw_idx])
-    spotlight_eval_by_name = {evaluation.candidate.name: evaluation for evaluation in evaluations}
+    candidate_eval_by_name = {evaluation.candidate.name: evaluation for evaluation in evaluations}
     safe_global = [
         evaluation
         for evaluation in evaluations
@@ -1013,12 +1013,12 @@ def _select_token_with_mode(
     )
     geometric_ranks = {evaluation.candidate.name: rank + 1 for rank, evaluation in enumerate(safe_ordered)}
     best_geometric_score = float(safe_ordered[0].explanation.effective_score)
-    spotlight_best = max(
+    geometric_best = max(
         evaluations,
         key=lambda item: (item.explanation.effective_score, item.candidate.confidence),
     )
-    spotlight_token = str(spotlight_best.candidate.name)
-    raw_evaluation = spotlight_eval_by_name.get(raw_token)
+    geometric_token = str(geometric_best.candidate.name)
+    raw_evaluation = candidate_eval_by_name.get(raw_token)
     if raw_evaluation is None:
         raise ValueError(f"checkpoint selected token {raw_token!r}, but no matching candidate exists")
     if selection_mode == "argmax":
@@ -1026,7 +1026,7 @@ def _select_token_with_mode(
             token_order=token_order,
             raw_idx=raw_idx,
             chosen_idx=raw_idx,
-            spotlight_token=spotlight_token,
+            geometric_token=geometric_token,
             topk_indices=[raw_idx],
             safe_topk_indices=[raw_idx] if raw_evaluation.explanation.safety_penalty <= 0.0 else [],
             used_fallback_geometric=False,
@@ -1052,7 +1052,7 @@ def _select_token_with_mode(
             topk_indices=topk_indices,
             policy_log_probs=policy_log_probs,
             evaluations=evaluations,
-            spotlight_eval_by_name=spotlight_eval_by_name,
+            candidate_eval_by_name=candidate_eval_by_name,
             axis_signals=axis_signals,
             geometric_scores={
                 evaluation.candidate.name: float(evaluation.explanation.effective_score)
@@ -1060,7 +1060,7 @@ def _select_token_with_mode(
             },
             geometric_ranks=geometric_ranks,
             best_geometric_score=best_geometric_score,
-            spotlight_token=spotlight_token,
+            geometric_token=geometric_token,
             veto_margin=hybrid_veto_margin,
             max_geometric_rank=hybrid_max_geometric_rank,
         )
@@ -1071,14 +1071,14 @@ def _select_token_with_mode(
             topk_indices=topk_indices,
             policy_log_probs=policy_log_probs,
             evaluations=evaluations,
-            spotlight_eval_by_name=spotlight_eval_by_name,
+            candidate_eval_by_name=candidate_eval_by_name,
             geometric_scores={
                 evaluation.candidate.name: float(evaluation.explanation.effective_score)
                 for evaluation in evaluations
             },
             geometric_ranks=geometric_ranks,
             best_geometric_score=best_geometric_score,
-            spotlight_token=spotlight_token,
+            geometric_token=geometric_token,
             veto_margin=hybrid_veto_margin,
             max_geometric_rank=hybrid_max_geometric_rank,
         )
@@ -1089,14 +1089,14 @@ def _select_token_with_mode(
             topk_indices=topk_indices,
             policy_log_probs=policy_log_probs,
             evaluations=evaluations,
-            spotlight_eval_by_name=spotlight_eval_by_name,
+            candidate_eval_by_name=candidate_eval_by_name,
             geometric_scores={
                 evaluation.candidate.name: float(evaluation.explanation.effective_score)
                 for evaluation in evaluations
             },
             geometric_ranks=geometric_ranks,
             best_geometric_score=best_geometric_score,
-            spotlight_token=spotlight_token,
+            geometric_token=geometric_token,
             veto_margin=hybrid_veto_margin,
             max_geometric_rank=hybrid_max_geometric_rank,
         )
@@ -1106,7 +1106,7 @@ def _select_token_with_mode(
     raw_veto_reason = "none"
     for idx in topk_indices:
         token = str(token_order[idx])
-        evaluation = spotlight_eval_by_name.get(token)
+        evaluation = candidate_eval_by_name.get(token)
         if evaluation is None:
             vetoed_tokens.append({"token": token, "reason": "missing_evaluation"})
             if idx == raw_idx:
@@ -1154,7 +1154,7 @@ def _select_token_with_mode(
         token_order=token_order,
         raw_idx=raw_idx,
         chosen_idx=chosen_idx,
-        spotlight_token=spotlight_token,
+        geometric_token=geometric_token,
         topk_indices=topk_indices,
         safe_topk_indices=safe_topk_indices,
         used_fallback_geometric=used_fallback_geometric,
@@ -1177,12 +1177,12 @@ def _select_actor_axis_constrained(
     topk_indices: list[int],
     policy_log_probs: np.ndarray,
     evaluations: list[Any],
-    spotlight_eval_by_name: dict[str, Any],
+    candidate_eval_by_name: dict[str, Any],
     axis_signals: dict[str, dict[str, Any]],
     geometric_scores: dict[str, float],
     geometric_ranks: dict[str, int],
     best_geometric_score: float,
-    spotlight_token: str,
+    geometric_token: str,
     veto_margin: float,
     max_geometric_rank: int,
 ) -> dict[str, Any]:
@@ -1192,24 +1192,24 @@ def _select_actor_axis_constrained(
         topk_indices=topk_indices,
         policy_log_probs=policy_log_probs,
         evaluations=evaluations,
-        spotlight_eval_by_name=spotlight_eval_by_name,
+        candidate_eval_by_name=candidate_eval_by_name,
         geometric_scores=geometric_scores,
         geometric_ranks=geometric_ranks,
         best_geometric_score=best_geometric_score,
-        spotlight_token=spotlight_token,
+        geometric_token=geometric_token,
         veto_margin=veto_margin,
         max_geometric_rank=max_geometric_rank,
     )
     actor_axis_scores = {
         str(token_order[idx]): _actor_axis_score_summary(
-            spotlight_eval_by_name[str(token_order[idx])],
+            candidate_eval_by_name[str(token_order[idx])],
             axis_signals.get(str(token_order[idx]), {}),
             float(policy_log_probs[idx]),
         )
         for idx in topk_indices
     }
     base_chosen_token = str(base_record["hybrid_token"])
-    if not _actor_axis_route_guard_required(base_chosen_token, spotlight_eval_by_name, axis_signals):
+    if not _actor_axis_route_guard_required(base_chosen_token, candidate_eval_by_name, axis_signals):
         base_record["axis_signals"] = _selection_axis_signals(axis_signals)
         base_record["hybrid_axis_scores"] = actor_axis_scores
         base_record["actor_route_guard_applied"] = False
@@ -1220,7 +1220,7 @@ def _select_actor_axis_constrained(
     stable_topk_indices, stable_vetoes = _actor_route_stable_candidates(
         token_order=token_order,
         candidate_indices=topk_indices,
-        spotlight_eval_by_name=spotlight_eval_by_name,
+        candidate_eval_by_name=candidate_eval_by_name,
         axis_signals=axis_signals,
     )
     used_fallback_geometric = False
@@ -1229,7 +1229,7 @@ def _select_actor_axis_constrained(
             max(
                 stable_topk_indices,
                 key=lambda idx: _actor_route_stable_key(
-                    spotlight_eval_by_name[str(token_order[idx])],
+                    candidate_eval_by_name[str(token_order[idx])],
                     axis_signals[str(token_order[idx])],
                     float(policy_log_probs[idx]),
                 ),
@@ -1241,7 +1241,7 @@ def _select_actor_axis_constrained(
         stable_all_indices, stable_all_vetoes = _actor_route_stable_candidates(
             token_order=token_order,
             candidate_indices=all_indices,
-            spotlight_eval_by_name=spotlight_eval_by_name,
+            candidate_eval_by_name=candidate_eval_by_name,
             axis_signals=axis_signals,
         )
         stable_vetoes.extend(stable_all_vetoes)
@@ -1250,7 +1250,7 @@ def _select_actor_axis_constrained(
                 max(
                     stable_all_indices,
                     key=lambda idx: _actor_route_stable_key(
-                        spotlight_eval_by_name[str(token_order[idx])],
+                        candidate_eval_by_name[str(token_order[idx])],
                         axis_signals[str(token_order[idx])],
                         float(policy_log_probs[idx]),
                     ),
@@ -1272,7 +1272,7 @@ def _select_actor_axis_constrained(
         token_order=token_order,
         raw_idx=raw_idx,
         chosen_idx=chosen_idx,
-        spotlight_token=spotlight_token,
+        geometric_token=geometric_token,
         topk_indices=topk_indices,
         safe_topk_indices=safe_indices,
         used_fallback_geometric=used_fallback_geometric,
@@ -1305,11 +1305,11 @@ def _select_axis_constrained(
     topk_indices: list[int],
     policy_log_probs: np.ndarray,
     evaluations: list[Any],
-    spotlight_eval_by_name: dict[str, Any],
+    candidate_eval_by_name: dict[str, Any],
     geometric_scores: dict[str, float],
     geometric_ranks: dict[str, int],
     best_geometric_score: float,
-    spotlight_token: str,
+    geometric_token: str,
     veto_margin: float,
     max_geometric_rank: int,
 ) -> dict[str, Any]:
@@ -1319,7 +1319,7 @@ def _select_axis_constrained(
 
     for idx in topk_indices:
         token = str(token_order[idx])
-        evaluation = spotlight_eval_by_name.get(token)
+        evaluation = candidate_eval_by_name.get(token)
         reason = _axis_constraint_violation(token, evaluation)
         if reason is not None:
             vetoed_tokens.append({"token": token, "reason": reason})
@@ -1358,7 +1358,7 @@ def _select_axis_constrained(
         token_order=token_order,
         raw_idx=raw_idx,
         chosen_idx=chosen_idx,
-        spotlight_token=spotlight_token,
+        geometric_token=geometric_token,
         topk_indices=topk_indices,
         safe_topk_indices=safe_topk_indices,
         used_fallback_geometric=used_fallback_geometric,
@@ -1384,11 +1384,11 @@ def _select_axis_lexicographic(
     topk_indices: list[int],
     policy_log_probs: np.ndarray,
     evaluations: list[Any],
-    spotlight_eval_by_name: dict[str, Any],
+    candidate_eval_by_name: dict[str, Any],
     geometric_scores: dict[str, float],
     geometric_ranks: dict[str, int],
     best_geometric_score: float,
-    spotlight_token: str,
+    geometric_token: str,
     veto_margin: float,
     max_geometric_rank: int,
 ) -> dict[str, Any]:
@@ -1398,7 +1398,7 @@ def _select_axis_lexicographic(
 
     for idx in topk_indices:
         token = str(token_order[idx])
-        evaluation = spotlight_eval_by_name.get(token)
+        evaluation = candidate_eval_by_name.get(token)
         reason = _axis_constraint_violation(token, evaluation)
         if reason is not None:
             vetoed_tokens.append({"token": token, "reason": reason})
@@ -1414,7 +1414,7 @@ def _select_axis_lexicographic(
             max(
                 safe_topk_indices,
                 key=lambda idx: _axis_lexicographic_key(
-                    spotlight_eval_by_name[str(token_order[idx])],
+                    candidate_eval_by_name[str(token_order[idx])],
                     float(policy_log_probs[idx]),
                 ),
             )
@@ -1438,7 +1438,7 @@ def _select_axis_lexicographic(
         token_order=token_order,
         raw_idx=raw_idx,
         chosen_idx=chosen_idx,
-        spotlight_token=spotlight_token,
+        geometric_token=geometric_token,
         topk_indices=topk_indices,
         safe_topk_indices=safe_topk_indices,
         used_fallback_geometric=used_fallback_geometric,
@@ -1472,7 +1472,7 @@ def _axis_constraint_violation(token: str, evaluation: Any | None) -> str | None
 
 def _actor_axis_route_guard_required(
     chosen_token: str,
-    spotlight_eval_by_name: dict[str, Any],
+    candidate_eval_by_name: dict[str, Any],
     axis_signals: dict[str, dict[str, Any]],
 ) -> bool:
     if not any(
@@ -1485,7 +1485,7 @@ def _actor_axis_route_guard_required(
         return (
             _actor_route_stable_violation(
                 chosen_token,
-                spotlight_eval_by_name.get(chosen_token),
+                candidate_eval_by_name.get(chosen_token),
                 axis_signals.get(chosen_token),
             )
             is not None
@@ -1497,7 +1497,7 @@ def _actor_route_stable_candidates(
     *,
     token_order: tuple[str, ...],
     candidate_indices: list[int],
-    spotlight_eval_by_name: dict[str, Any],
+    candidate_eval_by_name: dict[str, Any],
     axis_signals: dict[str, dict[str, Any]],
 ) -> tuple[list[int], list[dict[str, Any]]]:
     stable_indices: list[int] = []
@@ -1510,7 +1510,7 @@ def _actor_route_stable_candidates(
         token = str(token_order[idx])
         reason = _actor_route_stable_violation(
             token,
-            spotlight_eval_by_name.get(token),
+            candidate_eval_by_name.get(token),
             axis_signals.get(token),
         )
         if reason is None:
@@ -1779,7 +1779,7 @@ def _selection_record(
     token_order: tuple[str, ...],
     raw_idx: int,
     chosen_idx: int,
-    spotlight_token: str,
+    geometric_token: str,
     topk_indices: list[int],
     safe_topk_indices: list[int],
     used_fallback_geometric: bool,
@@ -1799,24 +1799,24 @@ def _selection_record(
     hybrid_token = str(token_order[chosen_idx])
     if used_fallback_geometric:
         decision_type = "fallback_geometric"
-    elif hybrid_token == dagger_token == spotlight_token:
+    elif hybrid_token == dagger_token == geometric_token:
         decision_type = "agreement"
     elif hybrid_token == dagger_token:
         decision_type = "dagger_wins"
-    elif hybrid_token == spotlight_token:
-        decision_type = "spotlight_wins"
+    elif hybrid_token == geometric_token:
+        decision_type = "geometric_wins"
     else:
         decision_type = "compromise"
     record = {
         "dagger_argmax_token": dagger_token,
-        "spotlight_token": spotlight_token,
+        "geometric_token": geometric_token,
         "hybrid_token": hybrid_token,
         "dagger_topk_tokens": [str(token_order[idx]) for idx in topk_indices],
         "safe_topk_tokens": [str(token_order[idx]) for idx in safe_topk_indices],
         "dagger_argmax_vetoed": bool(dagger_argmax_vetoed),
         "used_fallback_geometric": bool(used_fallback_geometric),
         "hybrid_matches_dagger": hybrid_token == dagger_token,
-        "hybrid_matches_spotlight": hybrid_token == spotlight_token,
+        "hybrid_matches_geometric": hybrid_token == geometric_token,
         "decision_type": decision_type,
         "hybrid_policy_scores": hybrid_policy_scores,
         "hybrid_geometric_scores": hybrid_geometric_scores,

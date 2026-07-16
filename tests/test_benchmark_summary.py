@@ -27,7 +27,7 @@ class BenchmarkSummaryTests(unittest.TestCase):
         self.assertEqual(2, summary["run_count"])
         self.assertEqual(1, summary["valid_claim_evidence_count"])
         self.assertEqual({"planned": 1, "completed": 1}, summary["aggregate"]["statuses"])
-        self.assertEqual({"spotlight_reflex": 2}, summary["aggregate"]["models"])
+        self.assertEqual({"token_dagger_bc": 2}, summary["aggregate"]["models"])
         self.assertEqual(2, summary["aggregate"]["scene_count"])
         self.assertEqual(42, summary["aggregate"]["total_frames"])
         self.assertEqual(0, summary["aggregate"]["sensor_failure_count"])
@@ -96,7 +96,7 @@ def _write_valid_evidence(evidence_dir: Path) -> None:
             "status": "completed",
             "mode": "execute",
             "valid_claim_evidence": True,
-            "model": "spotlight_reflex",
+            "model": "token_dagger_bc",
             "scene_preset": "front_camera_10scene_smoke",
             "scene_ids": ["scene-a"],
             "run_dir": str(evidence_dir.parent / "run"),
@@ -110,7 +110,7 @@ def _write_valid_evidence(evidence_dir: Path) -> None:
         {
             "schema": "wod2sim_run_audit_v1",
             "valid": True,
-            "model": "spotlight_reflex",
+            "model": "token_dagger_bc",
             "scene_ids": ["scene-a"],
             "frame_count": 42,
             "sensor_pipeline_ok": True,
@@ -119,7 +119,7 @@ def _write_valid_evidence(evidence_dir: Path) -> None:
             "sensor_status_counts": {"ok_camera_advanced": 42},
             "max_pose_camera_lag_us": 0,
             "run_status": {"state": "completed", "phase": "both", "aggregate_status": "completed"},
-            "driver_log": {"kind": "spotlight", "present": True},
+            "driver_log": {"kind": "selection", "present": True},
         },
     )
     _write_json(
@@ -135,7 +135,7 @@ def _write_valid_evidence(evidence_dir: Path) -> None:
                 "valid": True,
                 "sensor_pipeline_ok": True,
                 "sensor_failure_count": 0,
-                "driver_log_kind": "spotlight",
+                "driver_log_kind": "selection",
             },
         },
     )
@@ -151,7 +151,7 @@ def _write_plan_evidence(evidence_dir: Path) -> None:
             "status": "planned",
             "mode": "plan",
             "valid_claim_evidence": False,
-            "model": "spotlight_reflex",
+            "model": "token_dagger_bc",
             "scene_preset": "fresh_3scene",
             "scene_ids": ["scene-b"],
             "run_dir": str(evidence_dir.parent / "run"),

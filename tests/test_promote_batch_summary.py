@@ -15,14 +15,14 @@ class PromoteBatchSummaryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             source = root / "wod2sim-batch-summary.json"
-            output = root / "docs" / "evidence" / "closed_loop_spotlight_reflex_2scene_batch.json"
+            output = root / "docs" / "evidence" / "closed_loop_token_dagger_bc_2scene_batch.json"
             _write_json(source, _summary(scene_count=2))
 
             report = module.promote_summary(
                 summary_path=source,
                 output_path=output,
                 expected_scene_count=2,
-                model="spotlight_reflex",
+                model="token_dagger_bc",
                 scene_preset="front_camera_10scene_smoke",
             )
 
@@ -42,7 +42,7 @@ class PromoteBatchSummaryTests(unittest.TestCase):
                 summary_path=source,
                 output_path=output,
                 expected_scene_count=2,
-                model="spotlight_reflex",
+                model="token_dagger_bc",
                 scene_preset="front_camera_10scene_smoke",
             )
 
@@ -69,7 +69,7 @@ class PromoteBatchSummaryTests(unittest.TestCase):
                     "--expected-scene-count",
                     "2",
                     "--model",
-                    "spotlight_reflex",
+                    "token_dagger_bc",
                     "--scene-preset",
                     "front_camera_50scene_public2602",
                     "--json",
@@ -87,7 +87,7 @@ def _summary(*, scene_count: int) -> dict[str, object]:
         "valid": True,
         "clean_closed_loop_batch": True,
         "run_config": {
-            "model": "spotlight_reflex",
+            "model": "token_dagger_bc",
             "scene_preset": "front_camera_10scene_smoke",
         },
         "aggregate": {

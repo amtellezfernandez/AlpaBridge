@@ -79,7 +79,6 @@ Keep this repo focused on the WOD-to-AlpaSim bridge surface:
 
 Keep the public CLI surface aligned with the release README:
 
-- `spotlight_reflex`
 - `token_dagger_bc`
 - `direct_actor_planner`
 

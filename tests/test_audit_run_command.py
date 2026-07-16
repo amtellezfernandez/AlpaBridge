@@ -36,14 +36,14 @@ class WOD2SimAuditRunTests(unittest.TestCase):
             run_dir = Path(tmpdir) / "run"
             (run_dir / "driver").mkdir(parents=True)
             (run_dir / "launch-metadata.json").write_text(
-                json.dumps({"model": "spotlight_reflex", "scene_preset": "fresh_3scene", "scene_ids": ["clipgt-1"]}),
+                json.dumps({"model": "token_dagger_bc", "scene_preset": "fresh_3scene", "scene_ids": ["clipgt-1"]}),
                 encoding="utf-8",
             )
             (run_dir / "run-status.json").write_text(
                 json.dumps({"state": "failed", "phase": "both", "driver_returncode": -15, "wizard_returncode": 1}),
                 encoding="utf-8",
             )
-            (run_dir / "driver" / "spotlight-log.jsonl").write_text(
+            (run_dir / "driver" / "selection-log.jsonl").write_text(
                 "\n".join(
                     [
                         json.dumps(
@@ -82,7 +82,7 @@ class WOD2SimAuditRunTests(unittest.TestCase):
         self.assertFalse(report["valid"])
         self.assertTrue(report["run_status"]["present"])
         self.assertEqual("failed", report["run_status"]["state"])
-        self.assertEqual("spotlight", report["driver_log"]["kind"])
+        self.assertEqual("selection", report["driver_log"]["kind"])
         self.assertEqual(2, report["frame_count"])
         self.assertFalse(report["sensor_pipeline_ok"])
         self.assertEqual(1, report["sensor_failure_count"])
@@ -96,10 +96,10 @@ class WOD2SimAuditRunTests(unittest.TestCase):
             audit_dir = Path(tmpdir) / "audit"
             (run_dir / "driver").mkdir(parents=True)
             (run_dir / "launch-metadata.json").write_text(
-                json.dumps({"model": "spotlight_reflex", "scene_preset": "fresh_3scene", "scene_ids": ["clipgt-1"]}),
+                json.dumps({"model": "token_dagger_bc", "scene_preset": "fresh_3scene", "scene_ids": ["clipgt-1"]}),
                 encoding="utf-8",
             )
-            (run_dir / "driver" / "spotlight-log.jsonl").write_text(
+            (run_dir / "driver" / "selection-log.jsonl").write_text(
                 json.dumps(
                     {
                         "frame_index": 1,
@@ -134,10 +134,10 @@ class WOD2SimAuditRunTests(unittest.TestCase):
             output = Path(tmpdir) / "audit-report.json"
             (run_dir / "driver").mkdir(parents=True)
             (run_dir / "launch-metadata.json").write_text(
-                json.dumps({"model": "spotlight_reflex", "scene_preset": "fresh_3scene", "scene_ids": ["clipgt-1"]}),
+                json.dumps({"model": "token_dagger_bc", "scene_preset": "fresh_3scene", "scene_ids": ["clipgt-1"]}),
                 encoding="utf-8",
             )
-            (run_dir / "driver" / "spotlight-log.jsonl").write_text(
+            (run_dir / "driver" / "selection-log.jsonl").write_text(
                 json.dumps(
                     {
                         "frame_index": 1,

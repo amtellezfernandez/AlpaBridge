@@ -49,5 +49,6 @@ launch, and test workflow documented in the root README and
 Files in this tree that carry an NVIDIA copyright header (`SPDX-License-Identifier:
 Apache-2.0`, `Copyright (c) 2025-2026 NVIDIA Corporation`) are derived from NVIDIA
 AlpaSim and are redistributed, with project-authored modifications, under the
-Apache License 2.0. See `THIRD_PARTY_NOTICES.md` and `LICENSES/Apache-2.0.txt` at
+Apache License 2.0. See `LICENSES/THIRD_PARTY_NOTICES.md` and
+`LICENSES/Apache-2.0.txt` at
 the repository root. Everything else in the repository is BSD 3-Clause.

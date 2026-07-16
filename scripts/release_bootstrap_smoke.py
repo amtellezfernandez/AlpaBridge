@@ -161,10 +161,11 @@ def run_release_bootstrap_smoke(*, source_root: Path, keep_temp: bool, installer
     venv_bin = venv_root / "bin"
     doctor_json = checkout_root / "bootstrap-doctor.json"
     source_doctor_json = checkout_root / "bootstrap-doctor-source.json"
-    audit_json = checkout_root / "bootstrap-audit.json"
     batch_dir = checkout_root / "bootstrap-batch"
     reproduce_dir = checkout_root / "bootstrap-reproduce"
     benchmark_summary_json = checkout_root / "bootstrap-benchmark-summary.json"
+    checkpoint_path = checkout_root / "bootstrap-token-checkpoint.pt"
+    checkpoint_path.write_bytes(b"command-materialization-smoke")
 
     step_specs = [
         *_bootstrap_install_steps(
@@ -224,7 +225,6 @@ def run_release_bootstrap_smoke(*, source_root: Path, keep_temp: bool, installer
                 "--json",
             ],
         ),
-        ("audit_signal", [str(venv_bin / "wod2sim-audit-signal"), "--output", str(audit_json)]),
         (
             "batch_print",
             [
@@ -232,7 +232,9 @@ def run_release_bootstrap_smoke(*, source_root: Path, keep_temp: bool, installer
                 "--mode",
                 "print",
                 "--model",
-                "spotlight_reflex",
+                "token_dagger_bc",
+                "--checkpoint",
+                str(checkpoint_path),
                 "--scene-limit",
                 "1",
                 "--batch-dir",
@@ -255,7 +257,6 @@ def run_release_bootstrap_smoke(*, source_root: Path, keep_temp: bool, installer
     artifacts = {
         "doctor_json": str(doctor_json),
         "source_doctor_json": str(source_doctor_json),
-        "audit_json": str(audit_json),
         "batch_dir": str(batch_dir),
         "reproduce_manifest": str(
             reproduce_dir / "evidence" / "closed-loop-reproduction-manifest.json"
@@ -268,11 +269,10 @@ def run_release_bootstrap_smoke(*, source_root: Path, keep_temp: bool, installer
         ok = bool(
             installed_summary["valid"]
             and source_summary["valid"]
-            and installed_summary["public_models"] == ["spotlight_reflex", "token_dagger_bc", "direct_actor_planner"]
-            and source_summary["public_models"] == ["spotlight_reflex", "token_dagger_bc", "direct_actor_planner"]
+            and installed_summary["public_models"] == ["token_dagger_bc", "direct_actor_planner"]
+            and source_summary["public_models"] == ["token_dagger_bc", "direct_actor_planner"]
             and installed_summary["public_model_registry_curated"]
             and source_summary["public_model_registry_curated"]
-            and audit_json.is_file()
             and (reproduce_dir / "evidence" / "closed-loop-reproduction-manifest.json").is_file()
             and benchmark_summary_json.is_file()
             and (batch_dir / "batch-status.json").is_file()
