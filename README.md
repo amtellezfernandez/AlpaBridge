@@ -8,7 +8,7 @@
 
 <p align="center">
   <strong>Run WOD-style trajectory policies as auditable AlpaSim external drivers.</strong><br>
-  <a href="paper/wod2sim.pdf">Paper</a> |
+  <a href="wod2sim.pdf">Paper</a> |
   <a href="docs/README.md">Documentation</a> |
   <a href="CITATION.cff">Citation</a>
 </p>
@@ -16,6 +16,47 @@
 WOD2Sim preserves the policy information lost at the dataset-to-simulator
 boundary: route geometry, policy-facing scene state, trajectory timing, and run
 provenance. It is an adapter and evaluation artifact, not a new driving policy.
+
+## Visual Overview
+
+<table>
+  <tr>
+    <td width="50%">
+      <a href="https://waymo.com/intl/jp/open/data/motion/">
+        <img src="https://lh3.googleusercontent.com/fUoUF5eid46CnlfsfbRSIVrU0u7oDnn5zzgxXE6ihD2OVNucq_lzIXUWtXlHYEekIx_r6FsMSV3ta6wICLeoYxRv-S56-9d7SuE=e365-s420" alt="Waymo Open Motion Dataset scenario visualization with multi-agent tracks and map geometry" width="100%">
+      </a>
+      <br>
+      <strong>Input side.</strong> WOD-style policies consume logged agent
+      tracks, route context, and vector map geometry. The image links to the
+      official Waymo Motion page and is not copied into this repository.
+    </td>
+    <td width="50%">
+      <img src="docs/assets/readme/alpasim-rollout-screenshot.jpg" alt="AlpaSim rollout view with map, front camera, and runtime metrics" width="100%">
+      <br>
+      <strong>Simulator side.</strong> AlpaSim runs the adapted policy in a
+      reactive scene, while WOD2Sim records the command, trajectory outputs, and
+      audit artifacts needed to review the rollout.
+    </td>
+  </tr>
+</table>
+
+<p align="center">
+  <img src="docs/assets/readme/integration-terminal.svg" alt="WOD2Sim terminal manifest showing a token_dagger_bc command plan and invalid claim evidence before execution" width="92%">
+</p>
+
+<p align="center">
+  <img src="docs/assets/readme/evidence-metrics.png" alt="AlpaSim runtime metrics dashboard with RPC timing, queue depth, rollout duration, CPU use, GPU use, and GPU memory" width="92%">
+</p>
+
+**Figure 1.** The images show the adapter boundary, not a benchmark result. The
+terminal panel is a command-manifest example: `valid_claim_evidence` remains
+false until an executed AlpaSim rollout is audited. The metrics dashboard
+explains the runtime graph family: RPC timing, service queue depth, rollout
+duration, step duration, CPU utilization, GPU utilization, GPU memory, and
+service replica counts. These graphs diagnose execution health and capacity;
+they do not evaluate policy quality.
+
+## Architecture
 
 ```mermaid
 flowchart LR
@@ -30,7 +71,7 @@ flowchart LR
     G --> H[Manifest, audit,<br/>summary, hashes]
 ```
 
-**Figure 1.** WOD2Sim sits inside the closed loop. It translates AlpaSim state
+**Figure 2.** WOD2Sim sits inside the closed loop. It translates AlpaSim state
 into the policy contract, converts the returned five-second trajectory to the
 runtime rate, and records evidence separately from policy behavior.
 
@@ -100,7 +141,7 @@ and a clean paper rebuild.
 ## Citation
 
 Use [`CITATION.cff`](CITATION.cff) for software metadata and
-[`paper/wod2sim.pdf`](paper/wod2sim.pdf) for the accompanying paper.
+[`wod2sim.pdf`](wod2sim.pdf) for the accompanying paper.
 
 ## License And Disclaimer
 

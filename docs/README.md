@@ -9,5 +9,5 @@
 | [CLI](cli.md) | Supported public commands. |
 | [Changelog](changelog.md) | Public release history. |
 
-The [paper source](../paper/) and [built PDF](../paper/wod2sim.pdf) describe the
+The [paper source](../paper/) and [built PDF](../wod2sim.pdf) describe the
 adapter contract in detail.

@@ -1,5 +1,5 @@
 PYTHON ?= python3
-PAPER_PDF ?= paper/wod2sim.pdf
+PAPER_PDF ?= wod2sim.pdf
 
 .PHONY: paper paper-verify lint coverage test smoke build verify clean
 
