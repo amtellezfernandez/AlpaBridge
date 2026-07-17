@@ -44,8 +44,8 @@ host-specific paths, runtime identifiers, and local simulator state.
 - Simulator adapters and contracts: `src/wod2sim/simulator`.
 - Audit and evidence tools: `src/wod2sim/audit`, `src/wod2sim/neutral`.
 - AlpaSim patches/overrides: `src/wod2sim/alpasim_overrides`.
-- Test directory: `tests` with 24 top-level test files and 300 passing
-  dependency-light conformance tests in the latest release gate.
+- Test directory: `tests` with 23 top-level test files. Runtime pass/skip
+  counts are recorded in [`test_report.md`](test_report.md).
 
 ## Current Evidence Package
 

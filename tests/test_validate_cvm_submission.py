@@ -1353,6 +1353,55 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         self.assertIn("public_local_reference_missing:README.md:docs/assets/missing.svg", failures)
         self.assertIn("public_local_reference_outside_root:README.md:../outside.md", failures)
 
+    def test_repository_inventory_accepts_current_test_file_count(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "tests").mkdir()
+            (root / "tests" / "test_alpha.py").write_text("", encoding="utf-8")
+            (root / "tests" / "test_beta.py").write_text("", encoding="utf-8")
+            report_dir = root / "artifacts" / "cvm" / "reports"
+            report_dir.mkdir(parents=True)
+            (report_dir / "repository_inventory.md").write_text(
+                "- Test directory: `tests` with 2 top-level test files. Runtime pass/skip "
+                "counts are recorded in [`test_report.md`](test_report.md).\n",
+                encoding="utf-8",
+            )
+
+            failures = module._repository_inventory_failures(repo_root=root)
+
+        self.assertEqual([], failures)
+
+    def test_repository_inventory_reports_stale_test_count(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "tests").mkdir()
+            (root / "tests" / "test_alpha.py").write_text("", encoding="utf-8")
+            report_dir = root / "artifacts" / "cvm" / "reports"
+            report_dir.mkdir(parents=True)
+            (report_dir / "repository_inventory.md").write_text(
+                "- Test directory: `tests` with 3 top-level test files and 300 passing "
+                "dependency-light conformance tests in the latest release gate.\n",
+                encoding="utf-8",
+            )
+
+            failures = module._repository_inventory_failures(repo_root=root)
+
+        self.assertIn(
+            "repository_inventory_test_count_mismatch:"
+            "artifacts/cvm/reports/repository_inventory.md:1:3",
+            failures,
+        )
+        self.assertIn(
+            "repository_inventory_missing_test_report_reference:artifacts/cvm/reports/repository_inventory.md",
+            failures,
+        )
+        self.assertIn(
+            "repository_inventory_stale_pass_count:artifacts/cvm/reports/repository_inventory.md",
+            failures,
+        )
+
     def test_release_hygiene_accepts_defined_cvm_acronym(self) -> None:
         module = _load_module()
         with tempfile.TemporaryDirectory() as tmp:

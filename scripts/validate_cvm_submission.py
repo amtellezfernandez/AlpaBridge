@@ -155,6 +155,10 @@ REQUIRED_SCENE_FIELDS = (
 )
 CVM_DEFINITION_TERM = "contract-validation matrix (CVM)"
 CVM_ACRONYM_RE = re.compile(r"\bCVM\b")
+REPOSITORY_INVENTORY_TEST_COUNT_RE = re.compile(
+    r"Test directory:\s*`tests`\s+with\s+(?P<count>\d+)\s+top-level test files",
+    re.IGNORECASE,
+)
 CONTRACT_TEST_AUDIT_REQUIRED_TERMS = (
     "# Contract Test Audit",
     "Semantic Contract",
@@ -2041,6 +2045,7 @@ def _release_hygiene_failures(*, repo_root: Path, canonical_paper: Path) -> list
     failures.extend(_ci_workflow_failures(repo_root=root))
     failures.extend(_cli_documentation_failures(repo_root=root))
     failures.extend(_community_template_failures(repo_root=root))
+    failures.extend(_repository_inventory_failures(repo_root=root))
     for path in _iter_public_scan_files(root):
         try:
             text = path.read_text(encoding="utf-8")
@@ -2055,6 +2060,32 @@ def _release_hygiene_failures(*, repo_root: Path, canonical_paper: Path) -> list
         failures.extend(_public_image_alt_failures(path=path, text=text, root=root))
     for archive_path in _iter_public_scan_archives(root):
         failures.extend(_archive_hygiene_failures(archive_path, root=root))
+    return failures
+
+
+def _repository_inventory_failures(*, repo_root: Path) -> list[str]:
+    root = repo_root.resolve()
+    path = root / "artifacts" / "cvm" / "reports" / "repository_inventory.md"
+    if not path.exists():
+        return []
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    normalized = re.sub(r"\s+", " ", text)
+    match = REPOSITORY_INVENTORY_TEST_COUNT_RE.search(normalized)
+    failures: list[str] = []
+    if match is None:
+        failures.append(f"repository_inventory_test_count_missing:{path.relative_to(root)}")
+    else:
+        reported_count = int(match.group("count"))
+        actual_count = len(list((root / "tests").glob("test_*.py")))
+        if reported_count != actual_count:
+            failures.append(
+                f"repository_inventory_test_count_mismatch:{path.relative_to(root)}:"
+                f"{actual_count}:{reported_count}"
+            )
+    if "test_report.md" not in text:
+        failures.append(f"repository_inventory_missing_test_report_reference:{path.relative_to(root)}")
+    if re.search(r"\b\d+\s+passing\s+dependency-light\s+conformance\s+tests\b", normalized):
+        failures.append(f"repository_inventory_stale_pass_count:{path.relative_to(root)}")
     return failures
 
 
