@@ -84,6 +84,9 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "temporal: temporal contract tests selected by the SII 2027 release gate",
+]
 
 [tool.coverage.run]
 branch = true

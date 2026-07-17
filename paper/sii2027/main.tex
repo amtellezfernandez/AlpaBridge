@@ -289,7 +289,62 @@ README, reports, and generated artifacts all preserve the same claim boundary: s
 diagnostics are public service-harness evidence, while closed-loop scene rows are not
 claim-valid until executed, audited, and retained in the aggregate denominators.
 
-\IEEEtriggeratref{4}
+The public repository intentionally separates source, execution evidence, and paper
+assets. The implementation layer contains the simulator adapters, route and scene-signal
+conversion, temporal resampling, plugin entry points, setup/readiness commands, audit
+logic, and support-bundle generation. The evaluation layer contains the SII matrix
+configuration, scene manifest, row manifests, retained CSV/JSON summaries, blocked-run
+reports, and generated table and figure assets. The manuscript layer consumes only those
+generated artifacts; manual edits to tables are not part of the release workflow.
+
+The temporal adapter is traceable at unit-test level. Runtime frequency and horizon are
+validated as positive finite values; trajectories must be finite \((N,2)\) arrays; the
+current ego pose is the interpolation origin; optional source timestamps must be finite,
+strictly increasing, and inside the configured horizon; and headings are recomputed on
+the resampled runtime grid. These tests support the temporal contract statement, but
+they do not substitute for the blocked temporal-ablation scene matrix.
+
+The three paper figures serve different audit roles. The architecture figure identifies
+where semantic, temporal, lifecycle, deployment, and evidence failures cross the
+external-driver boundary. The evaluation-pipeline figure shows how readiness, launch
+manifests, rollout status, audit, aggregation, and paper assets are chained. The results
+figure is deliberately a denominator plot: it shows configured, completed, and blocked
+rows rather than decorating an unavailable closed-loop result.
+
+The release package also records what is absent. Gated scenes, private credentials,
+learned checkpoints, and proprietary container layers are not bundled. When they are
+needed for a future rollout, the repository records identifiers, hashes, commands, and
+blocked preconditions so that restricted material does not become part of the public
+artifact and missing inputs are not misreported as policy behavior.
+
+The intended reading order for the public artifact is therefore not only the paper. The
+repository inventory records the source tree, environment, build commands, and known
+gated prerequisites. The contract-test audit maps each required semantic, temporal,
+lifecycle, deployment, plugin, evidence, and fault-injection behavior to executable
+tests or to an explicit gap. The claim-evidence matrix is the final gate: a statement
+may appear as a paper claim only when it names the producing command, test, and artifact
+that support it. The blockers report keeps unavailable closed-loop rows visible instead
+of allowing them to disappear from denominators.
+
+This structure is deliberately stricter than a demo-first release. The synthetic demo
+proves that command materialization, audit generation, support-bundle construction, and
+public plotting work without restricted assets. It does not prove closed-loop policy
+performance. Conversely, the matrix runner can create manifests for blocked scene rows
+before launch, preserving scene identifiers, policy names, seeds, configuration hashes,
+and precondition failures. That makes a future rerun additive: once gated assets and
+runtime dependencies exist, new completed rows can be aggregated beside the retained
+blocked rows rather than replacing them.
+
+The release commands follow the same separation. Inventory captures repository and
+environment state; check runs lint, conformance, and submission validation; demo
+generates a public synthetic run; synthetic evaluation executes lifecycle and
+fault-injection harnesses; scene evaluation records the current closed-loop blockers;
+aggregation regenerates result tables and figures; the paper target rebuilds the sole
+root-level PDF; and validation checks page count, A4 size, metadata, generated-artifact
+hashes, unresolved references, forbidden placeholder text, private paths, credentials,
+and duplicate manuscript PDFs. These gates are engineering controls, not scientific
+results.
+
 \bibliographystyle{ieeetr}
 \bibliography{references}
 

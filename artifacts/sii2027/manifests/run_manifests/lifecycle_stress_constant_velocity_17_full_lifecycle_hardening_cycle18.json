@@ -6,7 +6,7 @@
   "completed": true,
   "config_path": "configs/sii2027/lifecycle_stress.yaml",
   "config_sha256": "15dfba63142217c1f43cba3d85ea2863abb67e27388714c00d6e6d7a42db3f47",
-  "created_at": "2026-07-17T12:45:10.767654+00:00",
+  "created_at": "2026-07-17T13:05:06.781374+00:00",
   "detail": "Synthetic lifecycle service classified duplicate-close and late-message events.",
   "execution_mode": "synthetic_lifecycle_harness",
   "failure_code": "",

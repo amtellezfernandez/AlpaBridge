@@ -6,7 +6,7 @@
   "completed": true,
   "config_path": "configs/sii2027/fault_injection.yaml",
   "config_sha256": "d446d0b3f5a277efaf81a7b9e9d21755161bbd711b4e81b4976df7cdf1900e00",
-  "created_at": "2026-07-17T12:45:10.833501+00:00",
+  "created_at": "2026-07-17T13:05:06.907061+00:00",
   "detail": "Synthetic fault-injection harness detected the configured contract fault.",
   "execution_mode": "synthetic_fault_injection",
   "failure_code": "lifecycle.late_image",

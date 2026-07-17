@@ -16,7 +16,7 @@ bodies in `tests/`, and filtered test runs recorded in `artifacts/sii2027/report
 | Contract area | Required tests | Supported | Partial | Missing | Skipped or gated |
 |---|---:|---:|---:|---:|---:|
 | Semantic | 8 | 5 | 3 | 0 | 0 |
-| Temporal | 10 | 3 | 3 | 4 | 0 |
+| Temporal | 10 | 10 | 0 | 0 | 0 |
 | Lifecycle | 8 | 0 | 2 | 6 | 0 |
 | Plugin/dependency boundary | 9 | 5 | 2 | 1 | 1 |
 | Deployment | 9 | 5 | 4 | 0 | 0 |
@@ -47,14 +47,14 @@ claim closed-loop lifecycle stress or simulator-backed fault-localization covera
 |---|---|---|
 | `test_resampling_identity_when_grids_match` | `supported` | `tests/test_alpasim_integration.py::test_resample_trajectory_preserves_native_runtime_samples` |
 | `test_linear_endpoint_trajectory_interpolates_exactly` | `supported` | `tests/test_alpasim_integration.py::test_resample_trajectory_uses_origin_anchored_endpoint_interpolation` |
-| `test_interpolation_is_anchored_at_current_ego_origin` | `partial` | Endpoint interpolation includes the origin anchor behavior, but there is no explicit current-ego-origin regression with nonzero ego pose. |
-| `test_headings_are_recomputed_on_runtime_grid` | `partial` | `test_replay_identity_adapter_preserves_logged_trajectory_contract` compares headings to `_compute_headings_from_trajectory`; it does not isolate mismatched runtime-grid heading recomputation. |
+| `test_interpolation_is_anchored_at_current_ego_origin` | `supported` | `tests/test_alpasim_integration.py::test_interpolation_is_anchored_at_current_ego_origin` |
+| `test_headings_are_recomputed_on_runtime_grid` | `supported` | `tests/test_alpasim_integration.py::test_headings_are_recomputed_on_runtime_grid` |
 | `test_output_shape_matches_runtime_contract` | `supported` | Multiple adapter tests assert `(20, 2)` trajectory output and `(20,)` headings. |
-| `test_nonfinite_trajectory_is_rejected` | `missing` | No direct non-finite output rejection test found. |
-| `test_invalid_horizon_or_frequency_is_rejected` | `missing` | No direct invalid horizon/frequency rejection test found. |
-| `test_duplicate_or_nonmonotonic_timestamps_are_handled_explicitly` | `missing` | Sensor freshness tests cover stale/frozen streams, not duplicate/nonmonotonic trajectory timestamps. |
-| `test_curved_path_error_matches_piecewise_linear_reference` | `partial` | Route-following and maneuver tests exercise curved/segmented geometry, but no explicit interpolation error oracle exists. |
-| `test_multiple_runtime_frequencies_are_supported` | `missing` | The current public tests focus on the default 4 Hz/5 s contract, not 10 Hz and 20 Hz runtime grids. |
+| `test_nonfinite_trajectory_is_rejected` | `supported` | `tests/test_alpasim_integration.py::test_nonfinite_trajectory_is_rejected` |
+| `test_invalid_horizon_or_frequency_is_rejected` | `supported` | `tests/test_alpasim_integration.py::test_invalid_horizon_or_frequency_is_rejected` |
+| `test_duplicate_or_nonmonotonic_timestamps_are_handled_explicitly` | `supported` | `tests/test_alpasim_integration.py::test_duplicate_or_nonmonotonic_timestamps_are_handled_explicitly`; `resample_trajectory(..., source_timestamps=...)` rejects duplicate, nonmonotonic, nonfinite, and out-of-horizon source timestamps. |
+| `test_curved_path_error_matches_piecewise_linear_reference` | `supported` | `tests/test_alpasim_integration.py::test_curved_path_error_matches_piecewise_linear_reference` |
+| `test_multiple_runtime_frequencies_are_supported` | `supported` | `tests/test_alpasim_integration.py::test_multiple_runtime_frequencies_are_supported` checks 10 Hz and 20 Hz target grids over a 5 s horizon. |
 
 ## D3 Lifecycle Contract
 
