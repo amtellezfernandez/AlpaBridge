@@ -67,12 +67,21 @@ failures.
 - `artifacts/cvm/results/runs.csv`
 - `artifacts/cvm/results/failures.csv`
 - `artifacts/cvm/results/closed_loop_metrics.csv`
+- `artifacts/cvm/results/frames.csv`
 - `artifacts/cvm/results/semantic_ablation_pairs.csv`
 - `artifacts/cvm/results/summary.json`
 - `artifacts/cvm/results/fault_injection.csv`
 - `artifacts/cvm/manifests/run_manifests/*.json`
 - `artifacts/cvm/tables/*.tex`
 - `artifacts/cvm/figures/*.pdf`
+
+`frames.csv` currently contains the public-safe frame-level schema only:
+run ID, frame index, simulator and observation timestamps, observation age,
+camera count, route source and waypoint count, source/target trajectory sample
+counts, trajectory validity, inference/action latency, late-message count,
+lifecycle warning code, and policy reasoning/status code. Raw frame-level
+restricted sensor data are not bundled, and unavailable frame rows are not
+fabricated.
 
 ## Interpretation
 

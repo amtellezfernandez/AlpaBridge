@@ -60,6 +60,24 @@ SEMANTIC_PAIR_METRICS = (
     "plan_deviation",
     "dist_to_gt_trajectory",
 )
+FRAME_FIELDS = (
+    "run_id",
+    "frame_index",
+    "sim_timestamp",
+    "observation_timestamp",
+    "observation_age_ms",
+    "camera_count",
+    "route_source",
+    "route_waypoint_count",
+    "source_trajectory_samples",
+    "target_trajectory_samples",
+    "trajectory_valid",
+    "inference_latency_ms",
+    "end_to_end_action_latency_ms",
+    "late_message_count",
+    "lifecycle_warning_code",
+    "policy_reasoning_status_code",
+)
 
 
 def main() -> int:
@@ -643,19 +661,7 @@ def _write_summary_csv(path: Path, summary: dict[str, Any]) -> None:
 
 
 def _write_empty_frames(path: Path) -> None:
-    _write_csv(
-        path,
-        [],
-        [
-            "run_id",
-            "frame_index",
-            "sim_timestamp",
-            "observation_timestamp",
-            "observation_age_ms",
-            "route_source",
-            "trajectory_valid",
-        ],
-    )
+    _write_csv(path, [], list(FRAME_FIELDS))
 
 
 def _write_fault_rollup(inputs: Path, output: Path) -> None:

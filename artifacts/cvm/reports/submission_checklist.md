@@ -27,6 +27,8 @@ Additional release-specific checks:
 - [x] `pre-commit run --all-files` passes without modifying files.
 - [x] Every public run manifest carries validated integration-vs-policy
   `failure_attribution`.
+- [x] `frames.csv` exposes the required public-safe frame-level schema without
+  bundling restricted sensor frames or fabricating unavailable frame rows.
 
 Current status: complete with documented limitations for the CVM paper draft.
 The dependency-light core rows and semantic ablation provide real closed-loop

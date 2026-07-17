@@ -174,6 +174,21 @@ class AggregateCVMTests(unittest.TestCase):
         self.assertEqual(1, summary["synthetic_diagnostic_rows"])
         self.assertEqual(0, summary["claim_valid_policy_benchmark_rows"])
 
+    def test_empty_frames_csv_keeps_public_frame_schema(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "frames.csv"
+
+            module._write_empty_frames(path)
+            with path.open(newline="", encoding="utf-8") as handle:
+                header = next(csv.reader(handle))
+
+        self.assertEqual(list(module.FRAME_FIELDS), header)
+        self.assertIn("camera_count", header)
+        self.assertIn("route_waypoint_count", header)
+        self.assertIn("end_to_end_action_latency_ms", header)
+        self.assertIn("policy_reasoning_status_code", header)
+
 
 if __name__ == "__main__":
     unittest.main()

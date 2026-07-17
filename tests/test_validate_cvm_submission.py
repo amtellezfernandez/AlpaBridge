@@ -238,6 +238,30 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         self.assertIn(f"failure_attribution_layer_mismatch:{manifest_dir / 'blocked.json'}:blocked", failures)
         self.assertIn(f"failure_attribution_rule_missing:{manifest_dir / 'blocked.json'}:blocked", failures)
 
+    def test_frame_schema_accepts_required_public_fields(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "frames.csv"
+            path.write_text(",".join(module.REQUIRED_FRAME_FIELDS) + "\n", encoding="utf-8")
+
+            failures = module._frame_schema_failures(path)
+
+        self.assertEqual([], failures)
+
+    def test_frame_schema_reports_missing_fields(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "frames.csv"
+            path.write_text("run_id,frame_index,route_source\n", encoding="utf-8")
+
+            failures = module._frame_schema_failures(path)
+
+        self.assertTrue(
+            any(error.startswith(f"frames_csv_missing_fields:{path}:") for error in failures)
+        )
+        self.assertIn("camera_count", failures[0])
+        self.assertIn("policy_reasoning_status_code", failures[0])
+
 
 if __name__ == "__main__":
     unittest.main()

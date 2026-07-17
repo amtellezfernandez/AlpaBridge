@@ -64,6 +64,10 @@ and artifact names are not part of the release surface.
 - Every public run manifest carries `failure_attribution`, including
   policy-attributable status, claim-valid benchmark status, failure layer/code,
   and the integration-vs-policy attribution rule.
+- `artifacts/cvm/results/frames.csv` carries the public frame-level schema for
+  timing, route-source, trajectory, latency, lifecycle warning, and policy
+  status fields. It is currently schema-only because raw frame-level restricted
+  sensor data are not bundled.
 
 ## Gated Or Missing Prerequisites
 
