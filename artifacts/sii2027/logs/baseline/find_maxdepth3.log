@@ -1,5 +1,5 @@
 command=git ls-files | sort
-captured_at_utc=2026-07-17T13:04:44Z
+captured_at_utc=2026-07-17T13:19:43Z
 
 .github/CODE_OF_CONDUCT.md
 .github/CONTRIBUTING.md
@@ -392,6 +392,7 @@ src/wod2sim/simulator/alpasim_signal.py
 src/wod2sim/simulator/alpasim_token_bc.py
 src/wod2sim/simulator/baseline_drivers.py
 src/wod2sim/simulator/environment.py
+src/wod2sim/simulator/lifecycle_service.py
 src/wod2sim/simulator/maneuver_candidates.py
 src/wod2sim/simulator/perception.py
 src/wod2sim/simulator/planner.py
@@ -409,6 +410,7 @@ tests/test_bootstrap_alpasim_env_script.py
 tests/test_build_alpasim_local_usdz_cache.py
 tests/test_check_alpasim_readiness.py
 tests/test_import_alpasim_scene_cache_script.py
+tests/test_lifecycle_contract.py
 tests/test_maneuver_candidates.py
 tests/test_promote_batch_summary.py
 tests/test_release_bootstrap_smoke.py

@@ -1,5 +1,5 @@
 # Git state
-captured_at_utc=2026-07-17T13:04:44Z
+captured_at_utc=2026-07-17T13:19:43Z
 
 ## pwd
 <repo>
@@ -9,23 +9,12 @@ captured_at_utc=2026-07-17T13:04:44Z
 
 ## git status --short
  M artifacts/sii2027/environment/git_state.txt
- M artifacts/sii2027/logs/paper_build/pdflatex-1.log
- M artifacts/sii2027/logs/paper_build/pdflatex-2.log
- M artifacts/sii2027/logs/paper_build/pdflatex-3.log
- M artifacts/sii2027/logs/tests/pytest_temporal_resampl.log
- M artifacts/sii2027/reports/claim_evidence_matrix.md
- M artifacts/sii2027/reports/contract_test_audit.md
- M artifacts/sii2027/reports/test_report.md
- M paper/sii2027/main.tex
- M pyproject.toml
- M src/wod2sim/simulator/alpasim_contract.py
- M tests/test_alpasim_integration.py
- M wod2sim.pdf
+ M artifacts/sii2027/logs/tests/sii2027-inventory.log
 
 ## note
 This status is captured before committing regenerated artifacts; the publish state is the Git commit containing this file.
 
 ## git rev-parse HEAD
-2c9dec8723dae4249f5f9819b429a14652de1ec1
+5ee9a2e87e724215cc38d560e3520478d0c90575
 
 ## git submodule status --recursive

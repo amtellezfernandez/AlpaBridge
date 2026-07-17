@@ -1,14 +1,14 @@
 # SII 2027 Repository Inventory
 
-Captured: 2026-07-17T12:30Z UTC
+Captured: 2026-07-17T13:19Z UTC
 
 ## Repository State
 
 - Repository root: `<repo>` (`/home/...` prefix redacted in generated artifacts)
-- Git SHA at inventory refresh: `063b6d7248ad7bbca855fef0581282138e7d285a`
+- Git SHA at inventory refresh: `5ee9a2e87e724215cc38d560e3520478d0c90575`
 - Initial source state before this cleanup pass: clean `main...origin/main`
-- Current dirty state at inventory refresh: tracked release-surface updates to CI,
-  paper artifacts, inventory logs, and reproducible-generation scripts
+- Current dirty state at inventory refresh: generated inventory/environment
+  snapshots only; the publish state is the Git commit containing those artifacts
 - Git submodules: none reported by `git submodule status --recursive`
 - Raw command logs: `artifacts/sii2027/environment/git_state.txt` and `artifacts/sii2027/logs/baseline/search_*.log`
 
