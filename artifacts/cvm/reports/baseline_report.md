@@ -21,13 +21,13 @@ package.
 
 | Command | Start UTC | End UTC | Duration | Exit | Result |
 |---|---|---|---:|---:|---|
-| `./.venv/bin/python -m pytest -q tests -k "semantic or route"` | 2026-07-17T20:31:58Z | 2026-07-17T20:31:58Z | 0.28s | 0 | 10 passed, 286 deselected after release-validator hardening. |
-| `./.venv/bin/python -m pytest -q tests -k "temporal or resampl"` | 2026-07-17T20:31:58Z | 2026-07-17T20:31:58Z | 0.25s | 0 | 10 passed, 286 deselected, 15 subtests passed after release-validator hardening. |
-| `./.venv/bin/python -m pytest -q tests -k "lifecycle or session"` | 2026-07-17T20:31:58Z | 2026-07-17T20:31:58Z | 0.20s | 0 | 10 passed, 286 deselected after release-validator hardening. |
-| `./.venv/bin/python -m pytest -q tests -k "plugin or entry_point"` | 2026-07-17T20:31:58Z | 2026-07-17T20:31:58Z | 0.53s | 0 | 5 passed, 291 deselected after release-validator hardening. |
-| `./.venv/bin/python -m pytest -q tests -k "deployment or readiness or launch"` | 2026-07-17T20:31:58Z | 2026-07-17T20:31:58Z | 0.45s | 0 | 20 passed, 276 deselected after release-validator hardening. |
-| `./.venv/bin/python -m pytest -q tests -k "evidence or audit or benchmark"` | 2026-07-17T20:31:58Z | 2026-07-17T20:31:58Z | 0.35s | 0 | 22 passed, 274 deselected after release-validator hardening. |
-| `./.venv/bin/python -m pytest -q tests -k "fault"` | 2026-07-17T20:31:58Z | 2026-07-17T20:31:58Z | 0.25s | 0 | 5 passed, 291 deselected after release-validator hardening. |
+| `./.venv/bin/python -m pytest -q tests -k "semantic or route"` | 2026-07-17T21:10:55Z | 2026-07-17T21:10:55Z | 0.27s | 0 | 10 passed, 288 deselected after release-validator hardening. |
+| `./.venv/bin/python -m pytest -q tests -k "temporal or resampl"` | 2026-07-17T21:10:55Z | 2026-07-17T21:10:55Z | 0.26s | 0 | 10 passed, 288 deselected, 15 subtests passed after release-validator hardening. |
+| `./.venv/bin/python -m pytest -q tests -k "lifecycle or session"` | 2026-07-17T21:10:55Z | 2026-07-17T21:10:55Z | 0.24s | 0 | 10 passed, 288 deselected after release-validator hardening. |
+| `./.venv/bin/python -m pytest -q tests -k "plugin or entry_point"` | 2026-07-17T21:10:55Z | 2026-07-17T21:10:55Z | 0.67s | 0 | 5 passed, 293 deselected after release-validator hardening. |
+| `./.venv/bin/python -m pytest -q tests -k "deployment or readiness or launch"` | 2026-07-17T21:10:55Z | 2026-07-17T21:10:55Z | 0.61s | 0 | 20 passed, 278 deselected after release-validator hardening. |
+| `./.venv/bin/python -m pytest -q tests -k "evidence or audit or benchmark"` | 2026-07-17T21:10:55Z | 2026-07-17T21:10:55Z | 0.38s | 0 | 22 passed, 276 deselected after release-validator hardening. |
+| `./.venv/bin/python -m pytest -q tests -k "fault"` | 2026-07-17T21:10:55Z | 2026-07-17T21:10:55Z | 0.21s | 0 | 5 passed, 293 deselected after release-validator hardening. |
 
 ## Release Commands
 

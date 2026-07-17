@@ -23,13 +23,13 @@ Targeted contract selections:
 
 | Selection | Result |
 |---|---|
-| `tests -k "semantic or route"` | 10 passed, 286 deselected. |
-| `tests -k "temporal or resampl"` | 10 passed, 286 deselected, 15 subtests passed. |
-| `tests -k "lifecycle or session"` | 10 passed, 286 deselected. |
-| `tests -k "plugin or entry_point"` | 5 passed, 291 deselected. |
-| `tests -k "deployment or readiness or launch"` | 20 passed, 276 deselected. |
-| `tests -k "evidence or audit or benchmark"` | 22 passed, 274 deselected. |
-| `tests -k "fault"` | 5 passed, 291 deselected. |
+| `tests -k "semantic or route"` | 10 passed, 288 deselected. |
+| `tests -k "temporal or resampl"` | 10 passed, 288 deselected, 15 subtests passed. |
+| `tests -k "lifecycle or session"` | 10 passed, 288 deselected. |
+| `tests -k "plugin or entry_point"` | 5 passed, 293 deselected. |
+| `tests -k "deployment or readiness or launch"` | 20 passed, 278 deselected. |
+| `tests -k "evidence or audit or benchmark"` | 22 passed, 276 deselected. |
+| `tests -k "fault"` | 5 passed, 293 deselected. |
 
 The release claim boundary is intentionally narrower than the test suite:
 passing tests support contract behavior and artifact hygiene, while policy
