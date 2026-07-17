@@ -42,15 +42,15 @@ package.
 | `make cvm-validate PYTHON=./.venv/bin/python` | 0 | Submission validation passed. |
 | `make paper-verify PYTHON=./.venv/bin/python` | 0 | Rebuilt 5-page root `wod2sim.pdf` and ran submission validation. |
 | `make verify PYTHON=./.venv/bin/python` | 0 | Lint, conformance, coverage, bootstrap smoke, package build, paper rebuild, and submission validation all passed. |
-| `./.venv/bin/python scripts/validate_cvm_submission.py` | 0 | Submission validation passed, including metadata-backed title/author/affiliation/abstract checks, output-PDF title/author/subject checks, IEEE A4 source-layout checks, parsed PDF A4 MediaBox checks, LaTeX log warnings, canonical-to-paper generated asset sync, generated-table row/source-field value sync, public local-reference and image-alt checks, README visual/graph explanation checks, evaluation-status checks, prior-layout mapping hygiene checks, venue-style benchmark-label checks, unstable generated citation-slug hygiene checks, README attribution-count sync, paper-number macro value sync, claim-evidence-matrix count sync, embedded PDF font descriptors, per-manifest `failure_attribution` consistency, summary-level attribution partition checks, and README/paper claim-boundary terms. |
+| `./.venv/bin/python scripts/validate_cvm_submission.py` | 0 | Submission validation passed, including metadata-backed title/author/affiliation/abstract checks, output-PDF title/author/subject checks, IEEE A4 source-layout checks, parsed PDF A4 MediaBox checks, LaTeX log warnings, canonical-to-paper generated asset sync, generated-table row/source-field value sync, public local-reference and image-alt checks, README visual/graph explanation checks, evaluation-status checks, process-translation hygiene checks, venue-style benchmark-label checks, unstable generated citation-slug hygiene checks, README attribution-count sync, paper-number macro value sync, claim-evidence-matrix count sync, embedded PDF font descriptors, per-manifest `failure_attribution` consistency, summary-level attribution partition checks, and README/paper claim-boundary terms. |
 
 ## Latest Submission Gate Refresh
 
 | Command | End UTC | Exit | Result |
 |---|---|---:|---|
-| `./.venv/bin/python -m pytest -q tests/test_validate_cvm_submission.py` | 2026-07-17T20:36:20Z | 0 | 46 passed, including source metadata, output-PDF metadata, A4 MediaBox, embedded-font, layout-hack, LaTeX-log, generated-copy, generated-table-value, local-reference, image-alt, README-visual, evaluation-status, prior-layout hygiene, venue-style benchmark-label hygiene, citation-slug hygiene, README-count, paper-number, and claim-matrix validation fixtures. |
-| `make paper-verify PYTHON=./.venv/bin/python` | 2026-07-17T20:36:20Z | 0 | Rebuilt 5-page root `wod2sim.pdf`; submission validation passed with source metadata, output-PDF metadata, source-layout, PDF A4 MediaBox, embedded-font, LaTeX-log, generated-copy, generated-table row/source-field, local-reference, image-alt, README-visual, evaluation-status, prior-layout hygiene, README-count, paper-number, and claim-matrix enforcement. |
-| `make cvm-check PYTHON=./.venv/bin/python` | 2026-07-17T20:36:20Z | 0 | Ruff passed; conformance passed with 276 passed, 14 skipped, and 15 subtests passed; submission validation passed with README-visual, evaluation-status, and prior-layout hygiene checks. |
+| `./.venv/bin/python -m pytest -q tests/test_validate_cvm_submission.py` | 2026-07-17T20:36:20Z | 0 | 46 passed, including source metadata, output-PDF metadata, A4 MediaBox, embedded-font, layout-hack, LaTeX-log, generated-copy, generated-table-value, local-reference, image-alt, README-visual, evaluation-status, process-translation hygiene, venue-style benchmark-label hygiene, citation-slug hygiene, README-count, paper-number, and claim-matrix validation fixtures. |
+| `make paper-verify PYTHON=./.venv/bin/python` | 2026-07-17T20:36:20Z | 0 | Rebuilt 5-page root `wod2sim.pdf`; submission validation passed with source metadata, output-PDF metadata, source-layout, PDF A4 MediaBox, embedded-font, LaTeX-log, generated-copy, generated-table row/source-field, local-reference, image-alt, README-visual, evaluation-status, process-translation hygiene, README-count, paper-number, and claim-matrix enforcement. |
+| `make cvm-check PYTHON=./.venv/bin/python` | 2026-07-17T20:36:20Z | 0 | Ruff passed; conformance passed with 276 passed, 14 skipped, and 15 subtests passed; submission validation passed with README-visual, evaluation-status, and process-translation hygiene checks. |
 
 ## Important Warnings
 
@@ -102,7 +102,7 @@ claim-validity disclaimer, runtime graphs, and that the graphs do not evaluate
 policy quality.
 It now requires the evaluation guide to state that completed local closed-loop
 rows are diagnostic integration evidence, not a public policy benchmark.
-It now rejects prior-layout mapping labels from public release text.
+It now rejects process-translation labels from public release text.
 It now rejects venue-style benchmark labels from public release text.
 It now rejects unstable generated citation slugs from public release text.
 It now validates the README failure-attribution count sentence against

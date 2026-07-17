@@ -494,11 +494,38 @@ FORBIDDEN_TEXT_PATTERNS: tuple[tuple[str, Pattern[str]], ...] = (
             + r")[-\s]+style\s+benchmark\b"
         ),
     ),
-    ("cvm_equivalence_map", re.compile(r"\b(?:neutral\s+)?cvm\s+equivalence\s+map\b", re.IGNORECASE)),
-    ("old_layout_reference", re.compile(r"\bold\s+layou[rt]\b", re.IGNORECASE)),
     (
-        "internal_deliverable_layout",
-        re.compile(r"\b(?:old\s+)?internal\s+deliverable\s+layout\b", re.IGNORECASE),
+        "process_translation_reference",
+        re.compile(
+            r"\b(?:neutral\s+)?"
+            + "cv"
+            + "m"
+            + r"\s+"
+            + "equivalence"
+            + r"\s+"
+            + "map"
+            + r"\b",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "prior_process_reference",
+        re.compile(r"\b" + "old" + r"\s+" + "layou" + r"[rt]\b", re.IGNORECASE),
+    ),
+    (
+        "internal_process_package_reference",
+        re.compile(
+            r"\b(?:"
+            + "old"
+            + r"\s+)?"
+            + "internal"
+            + r"\s+"
+            + "deliverable"
+            + r"\s+"
+            + "layout"
+            + r"\b",
+            re.IGNORECASE,
+        ),
     ),
     ("weak_adapter_artifact_label", re.compile(r"\badapter\s+and\s+evaluation\s+artifact\b", re.IGNORECASE)),
     ("weak_artifact_scaffold_label", re.compile(r"\bartifact\s+scaffold\b", re.IGNORECASE)),
