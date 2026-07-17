@@ -168,7 +168,14 @@ def main() -> int:
         [row for row in rows if row["status"] != "completed"],
         RUN_FIELDS,
     )
-    summary = _summary(config=config, rows=rows, blockers=global_blockers, config_path=args.config)
+    manifest_dir = _run_manifest_dir(output)
+    summary = _summary(
+        config=config,
+        rows=rows,
+        blockers=global_blockers,
+        config_path=args.config,
+        created_at=_summary_created_at(manifest_dir, rows),
+    )
     (output / "summary.json").write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
     _write_csv(
         output / "summary.csv",
@@ -1465,12 +1472,25 @@ def _sha256_path(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _summary_created_at(manifest_dir: Path, rows: list[dict[str, str]]) -> str:
+    timestamps: list[str] = []
+    for row in rows:
+        manifest = _load_json_dict(manifest_dir / f"{_safe_filename(row['run_id'])}.json")
+        created_at = manifest.get("created_at")
+        if isinstance(created_at, str) and created_at:
+            timestamps.append(created_at)
+    if timestamps:
+        return max(timestamps)
+    return datetime.fromtimestamp(0, timezone.utc).isoformat()
+
+
 def _summary(
     *,
     config: dict[str, Any],
     rows: list[dict[str, str]],
     blockers: list[dict[str, str]],
     config_path: Path,
+    created_at: str,
 ) -> dict[str, Any]:
     failure_code_counts = Counter(row.get("failure_code", "") for row in rows if row.get("failure_code"))
     blocker_counts = Counter(
@@ -1480,7 +1500,7 @@ def _summary(
     )
     return {
         "schema": "cvm_matrix_summary_v1",
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": created_at,
         "matrix": str(config.get("name", "")),
         "config": str(config_path),
         "expected_runs": int(config.get("execution", {}).get("expected_runs", len(rows))),
