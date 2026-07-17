@@ -14,6 +14,9 @@
   `paper/cvm/metadata.json`.
 - [x] Python package metadata exposes author, README, BSD-3-Clause license
   expression, research keywords, and paper/docs/citation URLs.
+- [x] CI enforces package, conformance, coverage, smoke, wheel-install,
+  paper-validation, PDF-structure, artifact-upload, and minimal-permission
+  gates.
 - [x] All citations resolve in the final LaTeX build.
 - [x] LaTeX log has no unresolved references/citations, multiply defined
   labels, or overfull/underfull `\hbox` warnings.

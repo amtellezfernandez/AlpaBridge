@@ -22,6 +22,40 @@ def _load_module():
     return module
 
 
+def _valid_ci_workflow_fixture() -> str:
+    return (
+        "on:\n"
+        "  push:\n"
+        '    branches: ["main"]\n'
+        "  pull_request:\n"
+        "\n"
+        "permissions:\n"
+        "  contents: read\n"
+        "\n"
+        "jobs:\n"
+        "  package:\n"
+        "    steps:\n"
+        "      - uses: actions/checkout@v6\n"
+        "      - uses: actions/setup-python@v6\n"
+        "      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39\n"
+        "      - run: make lint\n"
+        "      - run: make conformance\n"
+        "      - run: make coverage\n"
+        "      - run: make smoke\n"
+        "      - run: python -m build\n"
+        "      - run: wod2sim-doctor --strict-installed --json\n"
+        "      - run: wod2sim-build-oracle-proxy --help\n"
+        "      - run: wod2sim-batch --mode print\n"
+        "      - uses: actions/upload-artifact@v7\n"
+        "  paper:\n"
+        "    steps:\n"
+        "      - run: make paper-verify\n"
+        "      - run: qpdf --check wod2sim.pdf\n"
+        "      - run: pdfinfo wod2sim.pdf\n"
+        "      - run: pdffonts wod2sim.pdf\n"
+    )
+
+
 def _write_paper_number_fixture(root: Path, module) -> tuple[Path, Path, Path, Path]:
     summary = {
         "total_rows": 10,
@@ -1070,6 +1104,9 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
                 "Contract-based integration paper\n",
                 encoding="utf-8",
             )
+            workflow = root / ".github" / "workflows" / "ci.yml"
+            workflow.parent.mkdir(parents=True)
+            workflow.write_text(_valid_ci_workflow_fixture(), encoding="utf-8")
 
             failures = module._release_hygiene_failures(
                 repo_root=root,
@@ -1352,6 +1389,53 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         self.assertIn("package_metadata_keyword_missing:pyproject.toml:system-integration", failures)
         self.assertIn("package_metadata_url_missing:pyproject.toml:Paper", failures)
         self.assertIn("package_metadata_url_missing:pyproject.toml:Citation", failures)
+
+    def test_ci_workflow_accepts_release_gate_surface(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            workflow = root / ".github" / "workflows" / "ci.yml"
+            workflow.parent.mkdir(parents=True)
+            workflow.write_text(_valid_ci_workflow_fixture(), encoding="utf-8")
+
+            failures = module._ci_workflow_failures(repo_root=root)
+
+        self.assertEqual([], failures)
+
+    def test_ci_workflow_reports_missing_release_gates(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            workflow = root / ".github" / "workflows" / "ci.yml"
+            workflow.parent.mkdir(parents=True)
+            workflow.write_text(
+                "on:\n"
+                "  push:\n"
+                "  pull_request:\n"
+                "\n"
+                "permissions:\n"
+                "  contents: write\n"
+                "\n"
+                "jobs:\n"
+                "  package:\n"
+                "    steps:\n"
+                "      - uses: actions/checkout@v6\n"
+                "      - run: make lint\n",
+                encoding="utf-8",
+            )
+
+            failures = module._ci_workflow_failures(repo_root=root)
+
+        self.assertIn(
+            "ci_workflow_gate_missing:.github/workflows/ci.yml:make paper-verify",
+            failures,
+        )
+        self.assertIn(
+            "ci_workflow_gate_missing:.github/workflows/ci.yml:python -m build",
+            failures,
+        )
+        self.assertIn("ci_workflow_permissions_not_minimal:.github/workflows/ci.yml", failures)
+        self.assertIn("ci_workflow_trigger_missing:.github/workflows/ci.yml", failures)
 
     def test_manifest_attribution_accepts_integration_blocker(self) -> None:
         module = _load_module()

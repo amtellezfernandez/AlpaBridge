@@ -425,6 +425,24 @@ REQUIRED_PROJECT_URLS = (
     "Paper",
     "Citation",
 )
+REQUIRED_CI_WORKFLOW_TOKENS = (
+    "actions/checkout@",
+    "actions/setup-python@",
+    "astral-sh/setup-uv@",
+    "make lint",
+    "make conformance",
+    "make coverage",
+    "make smoke",
+    "python -m build",
+    "wod2sim-doctor --strict-installed --json",
+    "wod2sim-build-oracle-proxy --help",
+    "wod2sim-batch",
+    "make paper-verify",
+    "qpdf --check wod2sim.pdf",
+    "pdfinfo wod2sim.pdf",
+    "pdffonts wod2sim.pdf",
+    "actions/upload-artifact@",
+)
 PUBLIC_SCAN_PATHS = (
     "README.md",
     "CITATION.cff",
@@ -1813,6 +1831,7 @@ def _release_hygiene_failures(*, repo_root: Path, canonical_paper: Path) -> list
     canonical = (root / canonical_paper).resolve() if not canonical_paper.is_absolute() else canonical_paper.resolve()
     failures = _duplicate_manuscript_pdf_failures(root=root, canonical_paper=canonical)
     failures.extend(_package_metadata_failures(repo_root=root))
+    failures.extend(_ci_workflow_failures(repo_root=root))
     failures.extend(_cli_documentation_failures(repo_root=root))
     for path in _iter_public_scan_files(root):
         try:
@@ -1827,6 +1846,24 @@ def _release_hygiene_failures(*, repo_root: Path, canonical_paper: Path) -> list
         failures.extend(_public_image_alt_failures(path=path, text=text, root=root))
     for archive_path in _iter_public_scan_archives(root):
         failures.extend(_archive_hygiene_failures(archive_path, root=root))
+    return failures
+
+
+def _ci_workflow_failures(*, repo_root: Path) -> list[str]:
+    path = repo_root / ".github" / "workflows" / "ci.yml"
+    if not path.exists():
+        return ["ci_workflow_missing:.github/workflows/ci.yml"]
+    if not path.is_file():
+        return ["ci_workflow_source_invalid:.github/workflows/ci.yml"]
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    failures: list[str] = []
+    for token in REQUIRED_CI_WORKFLOW_TOKENS:
+        if token not in text:
+            failures.append(f"ci_workflow_gate_missing:.github/workflows/ci.yml:{token}")
+    if "permissions:\n  contents: read" not in text:
+        failures.append("ci_workflow_permissions_not_minimal:.github/workflows/ci.yml")
+    if "pull_request:" not in text or 'branches: ["main"]' not in text:
+        failures.append("ci_workflow_trigger_missing:.github/workflows/ci.yml")
     return failures
 
 
