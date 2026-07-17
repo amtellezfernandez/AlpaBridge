@@ -141,12 +141,12 @@ driver-log frame; command-proxy route fallback is diagnostic only.
 ## Install
 
 ```bash
-uv venv .venv
-uv pip install --python .venv/bin/python -e ".[dev]"
-wod2sim-doctor --strict-installed --json
+uv sync --extra dev
+uv run wod2sim-doctor --strict-installed --json
 ```
 
-Installation and command planning require neither AlpaSim nor a GPU.
+The tracked `uv.lock` pins the public dependency snapshot. Installation and
+command planning require neither AlpaSim nor a GPU.
 
 ## Plan A Run
 

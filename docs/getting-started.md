@@ -13,10 +13,11 @@ does not install AlpaSim, download gated scenes, or ship policy checkpoints.
 ## Install
 
 ```bash
-uv venv .venv
-uv pip install --python .venv/bin/python -e ".[dev]"
-wod2sim-doctor --strict-installed --json
+uv sync --extra dev
+uv run wod2sim-doctor --strict-installed --json
 ```
+
+`uv sync` uses the tracked `uv.lock` dependency snapshot.
 
 ## Connect AlpaSim
 
