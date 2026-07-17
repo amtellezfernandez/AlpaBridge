@@ -69,6 +69,8 @@ jobs:
           from wod2sim.cli.commands.setup_alpasim_local_plugin import ALPASIM_OVERRIDE_ROOT
 
           assert tuple(MODEL_PRESETS) == (
+              "constant_velocity",
+              "route_following",
               "token_dagger_bc",
               "direct_actor_planner",
           ), tuple(MODEL_PRESETS)
