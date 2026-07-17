@@ -22,9 +22,13 @@
     "claim_valid_policy_benchmark": false,
     "failure_code": "",
     "failure_layer": "",
+    "integration_failure_attributable": false,
     "integration_or_evidence_invalid": true,
+    "interpretation": "completed_diagnostic_pending_evidence_gate_not_policy_failure",
     "policy_attributable": false,
-    "rule": "A behavior event is policy-attributable only after semantic, temporal, lifecycle, deployment, and evidence gates pass."
+    "policy_behavior_attributable": false,
+    "policy_failure_attributable": false,
+    "rule": "A behavior event, including a policy failure, is policy-attributable only after semantic, temporal, lifecycle, deployment, and evidence gates pass; otherwise the row remains an integration, precondition, evidence, or diagnostic record."
   },
   "failure_code": "",
   "failure_layer": "",
@@ -156,7 +160,7 @@
     "repository": {
       "dirty": false,
       "dirty_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "git_sha": "bbeed5a70473e7a21b4750e8029f7f1ca5541e92"
+      "git_sha": "3f27e5746bbbf3b46a1317754e8e3da2effd1f17"
     }
   },
   "run_id": "semantic_ablation_route_following_clipgt-048b974e-1546-488a-b8f9-d32bff77f5aa_17_command_only_route",

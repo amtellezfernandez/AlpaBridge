@@ -5,7 +5,7 @@ status names concrete generated artifacts and the paper keeps the same boundary.
 
 | Claim | Contract layer | Required evidence | Producing command | Test | Artifact | Current status | Paper location |
 |---|---|---|---|---|---|---|---|
-| WOD2Sim separates integration/precondition/evidence failures from policy-behavior attribution. | Evidence/All contracts | Failure-attribution summary plus route/sensor audit status for completed rows. | `python scripts/aggregate_cvm.py --inputs artifacts/cvm/results --output artifacts/cvm/results`. | `tests/test_aggregate_cvm.py`; `tests/test_validate_cvm_submission.py`. | `artifacts/cvm/results/summary.json`; `artifacts/cvm/results/closed_loop_metrics.csv`. | Supported for current CVM: 45 contract-valid closed-loop rows, 9 integration/evidence-invalid closed-loop rows, 36 precondition-blocked rows, 55 synthetic diagnostic rows, and 0 claim-valid policy benchmark rows. | Abstract, Introduction, Results, Conclusion. |
+| WOD2Sim separates integration/precondition/evidence failures from policy-behavior and policy-failure attribution. | Evidence/All contracts | Failure-attribution summary plus route/sensor audit status for completed rows. | `python scripts/aggregate_cvm.py --inputs artifacts/cvm/results --output artifacts/cvm/results`. | `tests/test_aggregate_cvm.py`; `tests/test_validate_cvm_submission.py`. | `artifacts/cvm/results/summary.json`; `artifacts/cvm/results/closed_loop_metrics.csv`. | Supported for current CVM: 0 policy-behavior rows, 0 policy-failure rows, 145 non-policy-attributed rows, 36 integration/precondition blockers, and 109 completed diagnostics. | Abstract, Introduction, Results, Conclusion. |
 | WOD2Sim preserves route geometry to policy-facing prediction input. | Semantic | Route-source audit showing route waypoints reach `PredictionInput`. | `python -m pytest -q tests -k "semantic or route"` and CVM execution. | `tests/test_alpasim_integration.py`. | `tests/test_alpasim_integration.py`; `artifacts/cvm/results/closed_loop_metrics.csv`. | Supported for full-contract rows: 45/45 completed full-contract rollouts are audit-valid. | Semantic Contract, Results. |
 | Command-proxy route fallback is not claim-valid evidence. | Semantic/Evidence | Completed command-only route rows rejected by audit. | `python scripts/run_cvm_matrix.py --config configs/cvm/semantic_ablation.yaml --output artifacts/cvm/results/semantic_ablation --resume --execute`. | `tests/test_alpasim_integration.py`; `tests/test_run_cvm_matrix.py`. | `artifacts/cvm/results/semantic_ablation_pairs.csv`; `artifacts/cvm/results/summary.json`. | Supported: 9/9 command-only rows completed, logged `command_proxy`, and were rejected as non-claim-valid. | Semantic Contract, Results. |
 | Semantic route loss changes measured closed-loop behavior. | Semantic/Evidence | Matched full-contract vs command-only metrics. | Same semantic CVM command and `python scripts/aggregate_cvm.py --inputs artifacts/cvm/results --output artifacts/cvm/results`. | `tests/test_aggregate_cvm.py`. | `artifacts/cvm/results/semantic_ablation_pairs.csv`. | Supported as bounded integration evidence: 9/9 metric-bearing pairs; mean full-minus-command deltas are progress -0.243, relative progress 0.007, collision-any 0.333, off-road 0.000, plan deviation 0.353. | Results. |
@@ -31,6 +31,9 @@ status names concrete generated artifacts and the paper keeps the same boundary.
 - Command-only rows rejected as non-claim-valid: 9/9.
 - Contract-valid closed-loop rows: 45.
 - Integration/evidence-invalid closed-loop rows: 9.
+- Policy-attributable behavior rows: 0.
+- Policy-attributable failure rows: 0.
+- Non-policy-attributed rows: 145.
 - Claim-valid policy benchmark rows: 0.
 - Planned rows: 0.
 - Blocked rows: 36.

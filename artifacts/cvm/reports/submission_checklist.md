@@ -26,7 +26,8 @@ Additional release-specific checks:
 - [x] `make cvm-eval` preserves completed evidence when rerun without `--execute`.
 - [x] `pre-commit run --all-files` passes without modifying files.
 - [x] Every public run manifest carries validated integration-vs-policy
-  `failure_attribution`.
+  `failure_attribution`, including separate policy-behavior and policy-failure
+  attribution fields.
 - [x] `frames.csv` exposes the required public-safe frame-level schema without
   bundling restricted sensor frames or fabricating unavailable frame rows.
 

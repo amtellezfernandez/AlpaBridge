@@ -53,7 +53,10 @@ rows are rejected as non-claim-valid. Public synthetic diagnostics execute
 reported only as diagnostics, not as policy-performance or integration-effectiveness
 claims. Planned rows (\CVMPlannedRuns{}) are separated from true precondition blockers
 (\CVMBlockedRuns{}), so unlaunched protocols, missing actor proxies, unsupported
-ablations, and incomplete evidence cannot be reported as policy behavior.
+ablations, and incomplete evidence cannot be reported as policy behavior or policy
+failure. The attribution counters report \CVMPolicyBehaviorAttributableRows{}
+policy-behavior row(s), \CVMPolicyFailureAttributableRows{} policy-failure row(s), and
+\CVMNonPolicyAttributedRows{} non-policy-attributed row(s).
 \end{abstract}
 
 \section{Introduction}
@@ -282,8 +285,9 @@ integration/evidence-invalid, \CVMBlockedRuns{} precondition-blocked row(s),
 \CVMSyntheticDiagnosticRows{} synthetic diagnostic row(s), and
 \CVMClaimValidPolicyBenchmarkRows{} claim-valid policy benchmark row(s). These counts
 are the operational separation between integration failure and policy failure in the
-current release: no row outside the contract-valid and evidence-gated boundary is
-counted as policy behavior.
+current release: \CVMPolicyBehaviorAttributableRows{} row(s) are policy-behavior
+attributable, \CVMPolicyFailureAttributableRows{} row(s) are policy-failure
+attributable, and \CVMNonPolicyAttributedRows{} row(s) remain non-policy-attributed.
 
 \section{Discussion, Limitations, and Related Work}
 

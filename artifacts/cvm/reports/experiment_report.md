@@ -37,12 +37,16 @@ being treated as valid policy evidence.
 - Integration/evidence-invalid closed-loop rows: 9.
 - Precondition-blocked rows: 36.
 - Synthetic diagnostic rows: 55.
+- Policy-attributable behavior rows: 0.
+- Policy-attributable failure rows: 0.
+- Non-policy-attributed rows: 145.
 - Claim-valid policy benchmark rows: 0.
 
 Behavior is policy-attributable only after route/sensor audit, lifecycle state,
 deployment preconditions, and evidence gates pass. Rows outside that boundary
 are integration, precondition, evidence, or diagnostic rows; they are not policy
-failures.
+failures. A policy failure can be assigned only after the same claim-valid gate
+passes.
 
 ## Remaining Blockers
 

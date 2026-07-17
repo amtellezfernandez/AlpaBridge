@@ -60,10 +60,14 @@ and artifact names are not part of the release surface.
 - Synthetic diagnostic rows: 55.
 - Blocked rows: 36, all `direct_actor_oracle_proxy_missing`.
 - Claim-valid policy benchmark rows: 0.
+- Policy-attributable behavior rows: 0.
+- Policy-attributable failure rows: 0.
+- Non-policy-attributed rows: 145.
 - Aggregate data hash: `eb4351d5729a4a9f56e828b2ab7ddddf08a206f33b8a417d5153c1e3aba229d5`.
 - Every public run manifest carries `failure_attribution`, including
-  policy-attributable status, claim-valid benchmark status, failure layer/code,
-  and the integration-vs-policy attribution rule.
+  policy-attributable behavior status, policy-failure status, claim-valid
+  benchmark status, failure layer/code, and the integration-vs-policy
+  attribution rule.
 - `artifacts/cvm/results/frames.csv` carries the public frame-level schema for
   timing, route-source, trajectory, latency, lifecycle warning, and policy
   status fields. It is currently schema-only because raw frame-level restricted

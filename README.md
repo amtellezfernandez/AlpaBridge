@@ -48,6 +48,11 @@ preconditions, and evidence audit pass.
   contract-valid rollouts, integration-invalid rows, blockers, diagnostics, and
   policy benchmark claims separately.
 
+The generated aggregate makes the boundary numeric: current artifacts contain
+`0` policy-attributable behavior rows, `0` policy-attributable failure rows,
+`36` integration/precondition blocker rows, and `109` completed diagnostic rows
+that remain non-policy-attributed.
+
 ## Visual Overview
 
 <table>

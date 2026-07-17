@@ -364,10 +364,11 @@ def _failure_attribution_summary(
     ]
     return {
         "rule": (
-            "Closed-loop behavior can be interpreted as policy behavior only after "
-            "the semantic route contract, sensor-freshness audit, lifecycle state, "
-            "deployment preconditions, and evidence gate pass. Otherwise the row is "
-            "an integration, precondition, or evidence failure."
+            "Closed-loop behavior or policy failure can be attributed to the policy "
+            "only after the semantic route contract, sensor-freshness audit, "
+            "lifecycle state, deployment preconditions, and evidence gate pass. "
+            "Otherwise the row is an integration, precondition, evidence, or "
+            "diagnostic record."
         ),
         "contract_valid_closed_loop_rows": len(contract_valid_closed_loop),
         "integration_or_evidence_invalid_closed_loop_rows": len(integration_invalid_closed_loop),
@@ -803,6 +804,8 @@ def _write_tables(output: Path, summary: dict[str, Any], rows: list[dict[str, st
         + "\\midrule\n"
         + f"CVM configured rows & {summary['total_rows']} & -- & {summary['completed_runs']} \\\\\n"
         + f"Full-contract rollouts & {full_contract_completed} & {full_contract_audit_valid} & {full_contract_completed} \\\\\n"
+        + f"Policy-attributable behavior & {summary['total_rows']} & {policy_behavior_attributable} & -- \\\\\n"
+        + f"Policy-attributable failures & {summary['total_rows']} & {policy_failure_attributable} & -- \\\\\n"
         + f"False-block observations & {false_block_denominator} & {false_blocked} & -- \\\\\n"
         + f"Semantic ablation pairs & {semantic_completed_pairs} & {semantic_metric_pairs} & -- \\\\\n"
         + f"Planned/not launched & {summary['total_rows']} & {summary['planned_runs']} & 0 \\\\\n"
