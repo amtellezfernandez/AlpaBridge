@@ -1,4 +1,4 @@
-PYTHON ?= python3
+PYTHON ?= $(shell if command -v uv >/dev/null 2>&1; then printf 'uv run python'; else printf 'python3'; fi)
 PAPER_PDF ?= wod2sim.pdf
 CONFORMANCE_TESTS ?= tests/
 DEMO_OUTPUT ?= demo/wod2sim-contract-demo
@@ -42,7 +42,7 @@ build:
 verify: lint conformance coverage smoke build paper-verify
 
 cvm-inventory:
-	./scripts/cvm_inventory.sh
+	PYTHON='$(PYTHON)' ./scripts/cvm_inventory.sh
 
 cvm-check: lint conformance
 	$(PYTHON) scripts/validate_cvm_submission.py

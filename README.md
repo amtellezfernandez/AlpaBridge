@@ -146,7 +146,9 @@ uv run wod2sim-doctor --strict-installed --json
 ```
 
 The tracked `uv.lock` pins the public dependency snapshot. Installation and
-command planning require neither AlpaSim nor a GPU.
+command planning require neither AlpaSim nor a GPU. Repository `make` targets
+prefer `uv run python` by default when `uv` is available, so they execute against
+this locked environment after `uv sync`.
 
 ## Plan A Run
 
