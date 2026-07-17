@@ -243,6 +243,8 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             draft_label = "paper " + "draft"
             weak_adapter_label = "adapter and evaluation " + "artifact"
             scaffold_label = "artifact " + "scaffold"
+            legacy_layout = "old " + "internal " + "deliverable " + "layout"
+            legacy_map = "neutral CVM " + "equivalence " + "map"
             third_party_secret = "hf_" + ("B" * 20)
             (root / "README.md").write_text(
                 "\n".join(
@@ -254,6 +256,8 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
                         draft_label,
                         weak_adapter_label,
                         scaffold_label,
+                        legacy_layout,
+                        legacy_map,
                     ]
                 ),
                 encoding="utf-8",
@@ -274,6 +278,9 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         self.assertIn("public_hygiene:paper_draft_label:README.md", failures)
         self.assertIn("public_hygiene:weak_adapter_artifact_label:README.md", failures)
         self.assertIn("public_hygiene:weak_artifact_scaffold_label:README.md", failures)
+        self.assertIn("public_hygiene:old_internal_layout_reference:README.md", failures)
+        self.assertIn("public_hygiene:legacy_deliverable_layout_reference:README.md", failures)
+        self.assertIn("public_hygiene:legacy_equivalence_map_reference:README.md", failures)
         self.assertIn("public_hygiene:huggingface_token:third_party/README.md", failures)
 
     def test_release_hygiene_reports_duplicate_manuscript_pdfs(self) -> None:
