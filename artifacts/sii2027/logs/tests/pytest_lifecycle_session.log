@@ -1,0 +1,9 @@
+command=./.venv/bin/python -m pytest -q tests -k lifecycle or session
+start_utc=2026-07-17T11:31:37Z
+
+.                                                                        [100%]
+1 passed, 201 deselected in 0.16s
+
+end_utc=2026-07-17T11:31:38Z
+duration_seconds=1
+exit_code=0

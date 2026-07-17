@@ -1,0 +1,20 @@
+{
+  "adapter_config": "full_contract",
+  "attempted": false,
+  "claim_valid": false,
+  "completed": false,
+  "config_path": "configs/sii2027/core.yaml",
+  "config_sha256": "6218ee024a66c031d88b11a52860320ddba96cdb5e42f0ae11852511ac89b75c",
+  "created_at": "2026-07-17T11:45:19.437633+00:00",
+  "detail": "Matrix was expanded and recorded; pass --execute for real rollout launch.",
+  "execution_mode": "closed_loop",
+  "failure_code": "execution_not_requested",
+  "failure_layer": "deployment",
+  "matrix": "core",
+  "policy": "route_following",
+  "run_id": "core_route_following_clipgt-02e075b9-fd24-426b-971b-7cfcb2074cc9_17_full_contract",
+  "scene_id": "clipgt-02e075b9-fd24-426b-971b-7cfcb2074cc9",
+  "schema": "sii2027_run_manifest_v1",
+  "seed": "17",
+  "status": "blocked"
+}

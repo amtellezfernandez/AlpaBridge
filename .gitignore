@@ -19,3 +19,9 @@ paper/*.blg
 paper/*.log
 paper/*.out
 paper/*.pdf
+paper/sii2027/*.aux
+paper/sii2027/*.bbl
+paper/sii2027/*.blg
+paper/sii2027/*.log
+paper/sii2027/*.out
+paper/sii2027/main.pdf

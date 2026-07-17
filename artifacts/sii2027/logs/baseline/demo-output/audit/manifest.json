@@ -1,0 +1,16 @@
+{
+  "format_version": 1,
+  "source": "alpasim",
+  "model": "constant_velocity",
+  "scene_preset": "synthetic_contract_demo",
+  "scene_ids": [
+    "synthetic-route-001"
+  ],
+  "frame_count": 8,
+  "files": {
+    "manifest": "manifest.json",
+    "frames": "frames.jsonl",
+    "launch_metadata": "launch_metadata.json",
+    "metrics_evidence": "metrics_evidence.json"
+  }
+}

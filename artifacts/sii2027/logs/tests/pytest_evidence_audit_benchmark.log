@@ -1,0 +1,9 @@
+command=./.venv/bin/python -m pytest -q tests -k evidence or audit or benchmark
+start_utc=2026-07-17T11:31:38Z
+
+..................                                                       [100%]
+18 passed, 184 deselected in 0.38s
+
+end_utc=2026-07-17T11:31:39Z
+duration_seconds=1
+exit_code=0

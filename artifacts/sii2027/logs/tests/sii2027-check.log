@@ -1,0 +1,16 @@
+command=make sii2027-check PYTHON=./.venv/bin/python
+start_utc=2026-07-17T11:31:21Z
+
+./.venv/bin/python -m ruff check .
+All checks passed!
+WOD2SIM_CORE_CONFORMANCE=1 ./.venv/bin/python -m pytest -q tests/
+................................ssssssssssssss.......................... [ 35%]
+........................................................................ [ 71%]
+..........................................................               [100%]
+188 passed, 14 skipped in 0.98s
+./.venv/bin/python scripts/validate_sii2027_submission.py
+sii2027 submission validation passed
+
+end_utc=2026-07-17T11:31:22Z
+duration_seconds=1
+exit_code=0

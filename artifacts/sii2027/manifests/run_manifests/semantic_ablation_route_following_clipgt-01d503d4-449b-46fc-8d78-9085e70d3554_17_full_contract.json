@@ -1,0 +1,20 @@
+{
+  "adapter_config": "full_contract",
+  "attempted": false,
+  "claim_valid": false,
+  "completed": false,
+  "config_path": "configs/sii2027/semantic_ablation.yaml",
+  "config_sha256": "beb9b22afc03ad27f9344cced121b56ab2a6268160b4e5cb34d292c79d92cdb9",
+  "created_at": "2026-07-17T11:40:01.042104+00:00",
+  "detail": "Matrix was expanded and recorded; pass --execute for real rollout launch.",
+  "execution_mode": "closed_loop_ablation",
+  "failure_code": "execution_not_requested",
+  "failure_layer": "deployment",
+  "matrix": "semantic_ablation",
+  "policy": "route_following",
+  "run_id": "semantic_ablation_route_following_clipgt-01d503d4-449b-46fc-8d78-9085e70d3554_17_full_contract",
+  "scene_id": "clipgt-01d503d4-449b-46fc-8d78-9085e70d3554",
+  "schema": "sii2027_run_manifest_v1",
+  "seed": "17",
+  "status": "blocked"
+}
