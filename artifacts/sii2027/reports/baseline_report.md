@@ -21,8 +21,8 @@ Baseline policy: run the existing repository gates before SII functional or manu
 - `pre-commit run --all-files` is a baseline failure, not an SII implementation failure. The hook uses `ruff-format` and would reformat 43 existing tracked files. Those formatting edits were discarded to preserve the objective's rule against unrelated reformatting.
 - The test suite skips 14 learned-policy tests because `torch` is not installed or the Torch environment is unavailable. This means the current environment validates dependency-light and adapter-contract paths, not learned-policy execution.
 - `make demo` produced a valid synthetic contract artifact with `benchmark_claim=false` and `valid_claim_evidence=false`; it must not be presented as a closed-loop benchmark result.
-- Legacy manuscript validation is incomplete because `pdfinfo`, `pdffonts`, `qpdf`, and `latexmk` are unavailable.
-- The SII draft now validates with local `mutool` and LaTeX/source fallback checks.
+- Full `pdfinfo`/`pdffonts`/`qpdf` validation is unavailable in this environment.
+- The canonical `wod2sim.pdf` draft validates with local `mutool` and LaTeX/source fallback checks.
 
 ## Baseline Demo Evidence
 
@@ -49,8 +49,11 @@ These are synthetic contract diagnostics only. They are useful for artifact/sche
 
 ## Baseline Blockers
 
-- Legacy `paper/paper.pdf` is 9 pages and Letter-sized, so it does not meet SII 2027 regular-paper constraints.
+- Legacy `paper/paper.tex` remains as historical source and is no longer the
+  top-level release paper target.
 - SII-specific scripts, configs, paper directory, generated tables, generated figures, and Make targets now exist.
-- `paper/sii2027/paper.pdf` and top-level `wod2sim.pdf` are 4-page A4 SII drafts with configured/blocked closed-loop claims and public synthetic diagnostics only.
+- The tracked canonical PDF is top-level `wod2sim.pdf`, built from
+  `paper/sii2027/main.tex` with configured/blocked closed-loop claims and public
+  synthetic diagnostics only.
 - Real closed-loop experiment readiness is incomplete because the canonical `alpasim-base:latest` image is missing, AlpaSim worktrees are dirty, and learned-policy checkpoint/Torch availability is unverified.
 - Gated USDZ scene assets exist locally but must remain referenced by identifiers/digests and never copied into public artifacts.

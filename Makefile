@@ -8,15 +8,10 @@ DEMO_OUTPUT ?= demo/wod2sim-contract-demo
 .PHONY: sii2027-paper sii2027-validate sii2027-all
 
 paper:
-	$(MAKE) -C paper
-	cp paper/paper.pdf $(PAPER_PDF)
+	$(MAKE) sii2027-paper PYTHON=$(PYTHON)
 
-# Rebuild in a temp dir so verification does not rewrite the tracked PDF.
 paper-verify:
-	tmpdir="$$(mktemp -d)"; \
-	trap 'rm -rf "$$tmpdir"' EXIT; \
-	cp -R paper/. "$$tmpdir"/; \
-	cd "$$tmpdir" && pdflatex paper && bibtex paper && pdflatex paper && pdflatex paper
+	$(MAKE) sii2027-paper PYTHON=$(PYTHON)
 
 test:
 	$(PYTHON) -m pytest tests/

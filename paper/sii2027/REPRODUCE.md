@@ -62,8 +62,9 @@ diagnostic service-harness evidence only; they are not claim-valid closed-loop s
 make sii2027-paper
 ```
 
-The output PDF is `paper/sii2027/paper.pdf`; the README-level copy is
-`wod2sim.pdf`.
+The output PDF is the repository-root `wod2sim.pdf`. The `paper/sii2027/`
+directory contains the source and generated TeX inputs, not a second tracked
+paper PDF.
 
 ## Paper Validation
 

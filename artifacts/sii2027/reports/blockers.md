@@ -2,8 +2,12 @@
 
 ## Manuscript And Template
 
-- Legacy manuscript `paper/paper.pdf` remains 9 pages and Letter-sized.
-- SII draft `paper/sii2027/paper.pdf` now builds as an IEEEtran A4 PDF with 4 pages and a size below 6 MB.
+- The release now tracks one canonical paper PDF: `wod2sim.pdf` at repository root.
+- The SII/WOD2Sim source lives under `paper/sii2027/`; generated local build PDFs
+  under that directory are ignored and not part of the tracked release surface.
+- Legacy manuscript source remains under `paper/` for history, but the top-level
+  `paper` target now builds the canonical WOD2Sim/SII draft instead of the legacy
+  Letter-sized manuscript.
 - `IEEEtran.cls` was not installed by TeX Live, so the CTAN IEEEtran class was copied locally into `paper/sii2027/IEEEtran.cls`; only trailing whitespace was normalized for repository hygiene.
 - `pdfinfo`, `pdffonts`, `qpdf`, and `latexmk` are unavailable. Validation currently uses `mutool` and source/log checks as fallbacks, so the requested `pdffonts`/`qpdf` checks remain unavailable in this environment.
 

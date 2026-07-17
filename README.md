@@ -8,7 +8,7 @@
 
 <p align="center">
   <strong>Run WOD-style trajectory policies as auditable AlpaSim external drivers.</strong><br>
-  <a href="wod2sim.pdf">SII Paper</a> |
+  <a href="wod2sim.pdf">Paper</a> |
   <a href="docs/README.md">Documentation</a> |
   <a href="CITATION.cff">Citation</a>
 </p>
@@ -16,6 +16,12 @@
 WOD2Sim preserves the policy information lost at the dataset-to-simulator
 boundary: route geometry, policy-facing scene state, trajectory timing, and run
 provenance. It is an adapter and evaluation artifact, not a new driving policy.
+
+This repository has one canonical paper PDF: [`wod2sim.pdf`](wod2sim.pdf). The
+paper source lives in [`paper/sii2027`](paper/sii2027), while the generated
+evidence, manifests, tables, and figures live in [`artifacts/sii2027`](artifacts/sii2027).
+Those directories are the reproducibility package for WOD2Sim; they are not a
+separate project.
 
 Here, **WOD-style** means a short-horizon trajectory-policy interface inspired
 by the Waymo Open Dataset end-to-end setting: logged observations, route intent,
@@ -168,6 +174,22 @@ make verify
 checkpoints, Docker, GPU, or gated scenes. `make verify` runs lint, tests and
 coverage, a fresh-install smoke test, package builds, and a clean paper rebuild.
 
+## Paper And SII Artifacts
+
+```bash
+make sii2027-check
+make sii2027-synthetic
+make sii2027-aggregate
+make sii2027-paper
+make sii2027-validate
+```
+
+`make sii2027-paper` rebuilds the canonical [`wod2sim.pdf`](wod2sim.pdf) from
+the same generated tables and figures used by the repository reports. The
+current aggregate remains `claim_valid=false`: public synthetic diagnostics run,
+but real closed-loop SII rows are still blocked until they are executed and
+audited.
+
 ## Ungated Demo
 
 ```bash
@@ -185,7 +207,7 @@ for command-proxy route loss and road-center/ego-route offset. See
 ## Citation
 
 Use [`CITATION.cff`](CITATION.cff) for software metadata and
-[`wod2sim.pdf`](wod2sim.pdf) for the SII paper draft.
+[`wod2sim.pdf`](wod2sim.pdf) for the WOD2Sim paper draft.
 
 ## License And Disclaimer
 

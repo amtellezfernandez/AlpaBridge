@@ -267,6 +267,28 @@ execution. That blocked status is a useful integration outcome: it keeps runtime
 precondition, and evidence failures separate from policy behavior until real audited
 rollouts exist.
 
+\appendix[WOD2Sim Repository Artifact Map]
+
+The repository and paper share one release surface. The canonical manuscript artifact is
+\texttt{wod2sim.pdf} at the repository root; \texttt{paper/sii2027/} contains the
+IEEE source, bibliography, generated tables, and copied figure inputs used to build that
+PDF. The legacy source under \texttt{paper/} remains in history but is not the release
+paper and is not built by the top-level \texttt{paper} target.
+
+The implementation artifacts cited by this paper are repository-native. Semantic and
+temporal adapter code lives under \texttt{src/wod2sim/simulator/}; public launch,
+readiness, audit, support-bundle, and reproduction commands live in the CLI command
+package and thin \texttt{scripts/} wrappers. The SII configuration files in
+\texttt{configs/sii2027/} expand into immutable row manifests under
+\texttt{artifacts/sii2027/manifests/}. Aggregation reads matrix CSVs from
+\texttt{artifacts/sii2027/results/} and regenerates every paper number, table, and
+figure used in the build.
+
+This appendix is a traceability map, not an additional result. The current root PDF,
+README, reports, and generated artifacts all preserve the same claim boundary: synthetic
+diagnostics are public service-harness evidence, while closed-loop scene rows are not
+claim-valid until executed, audited, and retained in the aggregate denominators.
+
 \bibliographystyle{ieeetr}
 \bibliography{references}
 

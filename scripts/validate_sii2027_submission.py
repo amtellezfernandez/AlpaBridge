@@ -15,7 +15,7 @@ EXPECTED_AUTHOR = "Alba Maria Tellez Fernandez"
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Validate the SII 2027 paper artifact.")
-    parser.add_argument("--paper", default=Path("paper/sii2027/paper.pdf"), type=Path)
+    parser.add_argument("--paper", default=Path("wod2sim.pdf"), type=Path)
     parser.add_argument("--source", default=Path("paper/sii2027"), type=Path)
     parser.add_argument("--max-pages", default=6, type=int)
     parser.add_argument("--allow-eight-pages", action="store_true")

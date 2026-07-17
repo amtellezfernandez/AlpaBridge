@@ -13,13 +13,13 @@ Captured: 2026-07-17T11:18Z UTC
 
 ## Manuscript And PDF
 
-- Current manuscript source: `paper/paper.tex`
-- Current bibliography: `paper/paper.bib`
-- Current project style: `paper/wod_alpasim_2026.sty`
-- Legacy generated PDF: `paper/paper.pdf`
-- Legacy PDF metadata fallback: `mutool info` reports 9 pages, 612x792 pt media box, PDF 1.5
-- SII generated PDFs: `paper/sii2027/paper.pdf`, `wod2sim.pdf`
-- SII PDF metadata fallback: `mutool info` reports 4 pages, A4 media box, PDF 1.5
+- Historical manuscript source retained in Git: `paper/paper.tex`,
+  `paper/paper.bib`, and `paper/wod_alpasim_2026.sty`
+- Canonical release paper source: `paper/sii2027/main.tex`
+- Canonical tracked release PDF: `wod2sim.pdf`
+- Local build byproducts under `paper/sii2027/` are ignored so the repository has
+  one tracked paper PDF.
+- PDF metadata fallback: `mutool info` reports an A4 PDF 1.5 build below 6 MB.
 - Missing local validators: `pdfinfo`, `pdffonts`, `qpdf`, and `latexmk` are unavailable; `pdflatex`, `bibtex`, and `mutool` are available.
 
 ## Python And Packaging

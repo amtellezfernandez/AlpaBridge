@@ -8,6 +8,9 @@
 - Added a buildable IEEEtran A4 draft in `main.tex` using the CTAN IEEEtran class copied
   into the paper directory because TeX Live did not provide `IEEEtran.cls`; only trailing
   whitespace was normalized for repository hygiene.
-- Built `paper.pdf` as a 4-page A4 draft whose claims are limited to configured/blocked SII rows.
+- Built root-level `wod2sim.pdf` as the canonical A4 paper draft whose claims are
+  limited to configured/blocked SII rows.
 - Preserved the claim boundary: no closed-loop SII result, ablation result, lifecycle-stress result,
   or fault-localization result is reported as completed.
+- Added a repository artifact-map appendix so the paper remains connected to the
+  WOD2Sim source tree rather than appearing as a detached SII package.

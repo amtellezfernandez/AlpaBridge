@@ -24,7 +24,7 @@ if grep -q '\\bibliography' main.tex; then
 else
   pdflatex -interaction=nonstopmode -halt-on-error main.tex | tee "$LOG_DIR/pdflatex-2.log"
 fi
-cp main.pdf paper.pdf
-cp paper.pdf "$ROOT/wod2sim.pdf"
+cp main.pdf "$ROOT/wod2sim.pdf"
+rm -f main.pdf paper.pdf
 
 find "$LOG_DIR" -maxdepth 1 -type f -name '*.log' -exec perl -pi -e 's/[ \t]+$//' {} +
