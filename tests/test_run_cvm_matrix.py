@@ -181,6 +181,24 @@ class RunCVMMatrixTests(unittest.TestCase):
         self.assertIn(":(exclude)paper/cvm/generated", pathspec)
         self.assertIn(":(exclude)wod2sim.pdf", pathspec)
 
+    def test_git_status_paths_extracts_modified_and_untracked_paths(self) -> None:
+        module = _load_module()
+
+        paths = module._git_status_paths(
+            " M Dockerfile\n"
+            "R  old/path.py -> new/path.py\n"
+            "?? src/wizard/configs/deploy/local_arm_external_driver.yaml\n"
+        )
+
+        self.assertEqual(
+            [
+                "Dockerfile",
+                "new/path.py",
+                "src/wizard/configs/deploy/local_arm_external_driver.yaml",
+            ],
+            paths,
+        )
+
     def test_failure_attribution_never_treats_unvalidated_rows_as_policy_failure(self) -> None:
         module = _load_module()
 
