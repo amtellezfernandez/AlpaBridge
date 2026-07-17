@@ -8,11 +8,11 @@ DEMO_OUTPUT ?= demo/wod2sim-contract-demo
 .PHONY: cvm-paper cvm-validate cvm-all
 
 paper:
-	$(MAKE) cvm-paper PYTHON=$(PYTHON)
+	$(MAKE) cvm-paper PYTHON='$(PYTHON)'
 
 paper-verify:
-	$(MAKE) cvm-paper PYTHON=$(PYTHON)
-	$(MAKE) cvm-validate PYTHON=$(PYTHON)
+	$(MAKE) cvm-paper PYTHON='$(PYTHON)'
+	$(MAKE) cvm-validate PYTHON='$(PYTHON)'
 
 test:
 	$(PYTHON) -m pytest tests/
@@ -68,11 +68,11 @@ cvm-validate:
 	$(PYTHON) scripts/validate_cvm_submission.py
 
 cvm-all: cvm-inventory cvm-check cvm-demo cvm-synthetic
-	$(MAKE) cvm-eval PYTHON=$(PYTHON); status=$$?; \
+	$(MAKE) cvm-eval PYTHON='$(PYTHON)'; status=$$?; \
 	if [ "$$status" -ne 0 ] && [ "$$status" -ne 2 ]; then exit "$$status"; fi; \
-	$(MAKE) cvm-aggregate PYTHON=$(PYTHON); \
-	$(MAKE) cvm-paper PYTHON=$(PYTHON); \
-	$(MAKE) cvm-validate PYTHON=$(PYTHON); \
+	$(MAKE) cvm-aggregate PYTHON='$(PYTHON)'; \
+	$(MAKE) cvm-paper PYTHON='$(PYTHON)'; \
+	$(MAKE) cvm-validate PYTHON='$(PYTHON)'; \
 	exit "$$status"
 
 clean:

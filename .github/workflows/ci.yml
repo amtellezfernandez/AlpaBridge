@@ -28,32 +28,31 @@ jobs:
 
       - name: Install package
         run: |
-          uv venv .venv
-          uv pip install --python .venv/bin/python -e ".[dev]"
+          uv sync --extra dev
 
       - name: Run static checks
         run: |
-          PATH="$PWD/.venv/bin:$PATH" make lint
+          make lint PYTHON='uv run python'
 
       - name: Run core conformance tier
         run: |
-          PATH="$PWD/.venv/bin:$PATH" make conformance
+          make conformance PYTHON='uv run python'
 
       - name: Run tests with coverage
         run: |
-          PATH="$PWD/.venv/bin:$PATH" make coverage
+          make coverage PYTHON='uv run python'
 
       - name: Run strict installed doctor
         run: |
-          .venv/bin/wod2sim-doctor --strict-installed --json
+          uv run wod2sim-doctor --strict-installed --json
 
       - name: Run fresh-checkout bootstrap smoke
         run: |
-          PATH="$PWD/.venv/bin:$PATH" make smoke
+          make smoke PYTHON='uv run python'
 
       - name: Build package
         run: |
-          .venv/bin/python -m build
+          uv run python -m build
 
       - name: Smoke test built wheel install
         run: |
@@ -132,8 +131,7 @@ jobs:
 
       - name: Install paper dependencies
         run: |
-          uv venv .venv
-          uv pip install --python .venv/bin/python -e ".[dev]"
+          uv sync --extra dev
 
       - name: Install TeX packages
         run: |
@@ -149,7 +147,7 @@ jobs:
 
       - name: Build and validate canonical CVM paper
         run: |
-          PATH="$PWD/.venv/bin:$PATH" make paper-verify
+          make paper-verify PYTHON='uv run python'
           test -s wod2sim.pdf
           qpdf --check wod2sim.pdf
           pdfinfo wod2sim.pdf

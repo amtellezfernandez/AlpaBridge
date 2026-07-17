@@ -27,25 +27,26 @@ Email: amtellezfernandez@gmail.com}
 \maketitle
 
 \begin{abstract}
-Offline driving policies and closed-loop simulators fail in different ways. A policy
-trained or evaluated on dataset logs expects stable observations, route geometry or
-intent, and short-horizon ego-relative trajectories. In a distributed simulator, the
-same policy must run as a persistent external driver: sensor and route messages arrive
-asynchronously, commands are consumed on the simulator clock, and every rollout needs
-provenance before its behavior can be interpreted. If this boundary is treated as
-simple format conversion, missing route geometry, stale observations, bad resampling,
-duplicate lifecycle events, or incomplete evidence can be mistaken for policy failure.
+Closed-loop simulation can make a dataset-trained driving policy appear worse than it
+is when the integration boundary silently changes the policy's inputs, timing, or
+runtime state. A WOD-style trajectory policy expects logged observations, route intent
+or route geometry, and short-horizon ego-relative predictions. An AlpaSim external
+driver instead receives asynchronous simulator messages, must answer on the simulator
+clock, and must leave enough provenance to explain the run afterward. Treating that
+boundary as format conversion risks reporting missing route geometry, stale
+observations, invalid resampling, duplicate lifecycle events, or incomplete manifests
+as policy behavior.
 
-WOD2Sim is a contract-based integration layer for Waymo Open Dataset (WOD)-style
-trajectory policies in AlpaSim. It makes five boundary contracts explicit: semantic
-preservation of route and scene signals, temporal adaptation to the runtime grid,
-lifecycle handling for driver sessions, deployment materialization of preconditions,
-and evidence validity for scientific claims. The reference implementation supports
-dependency-light baselines, learned-policy entry points, and actor-aware planner entry
-points through one external-driver interface. Its current public release is therefore
-not a policy benchmark. It is an auditable gate that labels executed diagnostics,
-controlled contract failures, and blocked rows separately, so policy behavior is
-discussed only after integration validity is established.
+WOD2Sim addresses the boundary as a system-integration problem. It defines five
+contracts for WOD-style policies in AlpaSim: semantic preservation of route and scene
+signals, temporal adaptation to the runtime grid, lifecycle handling for persistent
+driver sessions, deployment materialization of preconditions, and evidence validity
+for scientific claims. The reference implementation exposes dependency-light
+baselines, learned-policy entry points, and actor-aware planner entry points through a
+single external-driver interface. The current public artifact is not a closed-loop
+policy benchmark. It is a reproducible validation layer that separates integration
+failures from policy failures and permits policy-behavior claims only after the
+contract gates pass.
 \end{abstract}
 
 \section{Introduction}

@@ -38,18 +38,19 @@ def _valid_ci_workflow_fixture() -> str:
         "      - uses: actions/checkout@v6\n"
         "      - uses: actions/setup-python@v6\n"
         "      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39\n"
-        "      - run: make lint\n"
-        "      - run: make conformance\n"
-        "      - run: make coverage\n"
-        "      - run: make smoke\n"
-        "      - run: python -m build\n"
-        "      - run: wod2sim-doctor --strict-installed --json\n"
+        "      - run: uv sync --extra dev\n"
+        "      - run: make lint PYTHON='uv run python'\n"
+        "      - run: make conformance PYTHON='uv run python'\n"
+        "      - run: make coverage PYTHON='uv run python'\n"
+        "      - run: make smoke PYTHON='uv run python'\n"
+        "      - run: uv run python -m build\n"
+        "      - run: uv run wod2sim-doctor --strict-installed --json\n"
         "      - run: wod2sim-build-oracle-proxy --help\n"
         "      - run: wod2sim-batch --mode print\n"
         "      - uses: actions/upload-artifact@v7\n"
         "  paper:\n"
         "    steps:\n"
-        "      - run: make paper-verify\n"
+        "      - run: make paper-verify PYTHON='uv run python'\n"
         "      - run: qpdf --check wod2sim.pdf\n"
         "      - run: pdfinfo wod2sim.pdf\n"
         "      - run: pdffonts wod2sim.pdf\n"
@@ -1719,6 +1720,10 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         )
         self.assertIn(
             "ci_workflow_gate_missing:.github/workflows/ci.yml:python -m build",
+            failures,
+        )
+        self.assertIn(
+            "ci_workflow_gate_missing:.github/workflows/ci.yml:uv sync --extra dev",
             failures,
         )
         self.assertIn("ci_workflow_permissions_not_minimal:.github/workflows/ci.yml", failures)
