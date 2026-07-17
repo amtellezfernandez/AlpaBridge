@@ -33,7 +33,8 @@
   non-benchmark status.
 - [x] Evaluation docs distinguish completed local diagnostic closed-loop rows
   from public policy benchmark evidence.
-- [x] Public release text excludes process-translation labels.
+- [x] GitHub contribution, pull-request, issue, and security templates preserve
+  the claim boundary and restricted-asset hygiene.
 - [x] Public release text excludes venue-style benchmark labels.
 - [x] Public release text excludes unstable generated citation slugs.
 - [x] Figures are generated and legible at final size.

@@ -27,28 +27,27 @@ Email: amtellezfernandez@gmail.com}
 \maketitle
 
 \begin{abstract}
-Offline driving-policy interfaces hide system failures that appear when the same policy is
-run as a persistent service in a distributed closed-loop simulator. WOD2Sim treats that
-transition as contract-based system integration, not format translation. It defines
-semantic, temporal, lifecycle, deployment, and evidence contracts for Waymo Open Dataset
-(WOD)-style trajectory policies behind an AlpaSim external-driver boundary. The implementation
-preserves route geometry, adapts trajectory horizons to the simulator clock, isolates
-optional model backends, records launch provenance, and gates behavior attribution.
-Current artifacts configure a \CVMTotalRows{}-row contract-validation matrix over three
-policies, six locally cached but unclassified scenes, three replicate identifiers,
-lifecycle stress rows, and \CVMFaultTotal{} synthetic fault injections. The aggregate
-reports \CVMFullContractAuditValidRuns{}/\CVMFullContractCompletedRuns{} completed
-full-contract rollouts as audit-valid and
-\CVMValidFullContractFalseBlockedRuns{}/\CVMValidFullContractFalseBlockDenominator{}
-false blocks among valid full-contract rows. Matched semantic-confound evidence covers
-\CVMSemanticAblationMetricPairs{}/\CVMSemanticAblationCompletedPairs{} metric-bearing
-pairs; command-only route rows are rejected as non-claim-valid, and route loss changes
-progress by \CVMSemanticProgressDeltaMean{}. The aggregate has
-\CVMPolicyBehaviorAttributableRows{} policy-attributable behavior rows:
-\CVMBlockedRuns{} rows remain precondition blockers and \CVMSyntheticRuns{} synthetic
-rows remain diagnostics. The result is an auditable policy-vs-integration attribution
-boundary that prevents integration faults from being reported as policy behavior or
-policy failure.
+Offline driving policies are usually evaluated as functions over logged observations,
+but closed-loop simulation integrates them as long-running services. At that boundary,
+route geometry can be replaced by a command, policy horizons can be sampled on the
+wrong clock, late session messages can corrupt state, and missing provenance can make
+a simulator or precondition fault look like policy failure. WOD2Sim treats this as
+contract-based system integration. It defines semantic, temporal, lifecycle,
+deployment, and evidence contracts for Waymo Open Dataset (WOD)-style trajectory
+policies behind an AlpaSim external-driver interface. The implementation preserves
+route and scene signals, resamples trajectories deterministically, isolates optional
+model backends, materializes launch provenance, and gates behavior attribution through
+auditable manifests. We evaluate the release with a \CVMTotalRows{}-row
+contract-validation matrix combining dependency-light closed-loop rollouts, semantic
+route ablations, lifecycle stress, and synthetic fault injection. Full-contract rows
+complete audit-valid in \CVMFullContractAuditValidRuns{}/\CVMFullContractCompletedRuns{}
+cases with \CVMValidFullContractFalseBlockedRuns{}/\CVMValidFullContractFalseBlockDenominator{}
+false blocks; command-only route ablations are rejected as non-claim-valid in
+\CVMCommandProxyRejectedRuns{}/\CVMCommandProxyCompletedRuns{} cases; and
+\CVMFaultLocalized{}/\CVMFaultTotal{} injected faults are localized. The public
+aggregate deliberately reports \CVMPolicyBehaviorAttributableRows{}
+policy-attributable behavior rows: the present evidence validates the integration
+boundary, not policy quality.
 \end{abstract}
 
 \section{Introduction}

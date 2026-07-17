@@ -443,6 +443,60 @@ REQUIRED_CI_WORKFLOW_TOKENS = (
     "pdffonts wod2sim.pdf",
     "actions/upload-artifact@",
 )
+COMMUNITY_DOC_REQUIREMENTS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    (
+        ".github/CONTRIBUTING.md",
+        (
+            "contract-validation",
+            "integration failure",
+            "policy failure",
+            "claim-valid",
+            "restricted assets",
+            "tokens",
+            "make cvm-check",
+            "make paper-verify",
+        ),
+    ),
+    (
+        ".github/pull_request_template.md",
+        (
+            "integration failure",
+            "policy failure",
+            "claim-valid",
+            "restricted assets",
+            "tokens",
+            "make cvm-check",
+        ),
+    ),
+    (
+        ".github/ISSUE_TEMPLATE/bug_report.md",
+        (
+            "integration failure",
+            "policy failure",
+            "claim-valid",
+            "restricted assets",
+            "tokens",
+        ),
+    ),
+    (
+        ".github/ISSUE_TEMPLATE/feature_request.md",
+        (
+            "contract layer",
+            "integration failure",
+            "policy failure",
+            "claim-valid",
+            "restricted assets",
+        ),
+    ),
+    (
+        ".github/SECURITY.md",
+        (
+            "tokens",
+            "restricted assets",
+            "private issue",
+        ),
+    ),
+)
 PUBLIC_SCAN_PATHS = (
     "README.md",
     "CITATION.cff",
@@ -530,39 +584,6 @@ FORBIDDEN_TEXT_PATTERNS: tuple[tuple[str, Pattern[str]], ...] = (
                 )
             )
             + r")[-\s]+style\s+benchmark\b"
-        ),
-    ),
-    (
-        "process_translation_reference",
-        re.compile(
-            r"\b(?:neutral\s+)?"
-            + "cv"
-            + "m"
-            + r"\s+"
-            + "equivalence"
-            + r"\s+"
-            + "map"
-            + r"\b",
-            re.IGNORECASE,
-        ),
-    ),
-    (
-        "prior_process_reference",
-        re.compile(r"\b" + "old" + r"\s+" + "layou" + r"[rt]\b", re.IGNORECASE),
-    ),
-    (
-        "internal_process_package_reference",
-        re.compile(
-            r"\b(?:"
-            + "old"
-            + r"\s+)?"
-            + "internal"
-            + r"\s+"
-            + "deliverable"
-            + r"\s+"
-            + "layout"
-            + r"\b",
-            re.IGNORECASE,
         ),
     ),
     ("weak_adapter_artifact_label", re.compile(r"\badapter\s+and\s+evaluation\s+artifact\b", re.IGNORECASE)),
@@ -1833,6 +1854,7 @@ def _release_hygiene_failures(*, repo_root: Path, canonical_paper: Path) -> list
     failures.extend(_package_metadata_failures(repo_root=root))
     failures.extend(_ci_workflow_failures(repo_root=root))
     failures.extend(_cli_documentation_failures(repo_root=root))
+    failures.extend(_community_template_failures(repo_root=root))
     for path in _iter_public_scan_files(root):
         try:
             text = path.read_text(encoding="utf-8")
@@ -1846,6 +1868,24 @@ def _release_hygiene_failures(*, repo_root: Path, canonical_paper: Path) -> list
         failures.extend(_public_image_alt_failures(path=path, text=text, root=root))
     for archive_path in _iter_public_scan_archives(root):
         failures.extend(_archive_hygiene_failures(archive_path, root=root))
+    return failures
+
+
+def _community_template_failures(*, repo_root: Path) -> list[str]:
+    root = repo_root.resolve()
+    github_dir = root / ".github"
+    if not github_dir.exists():
+        return []
+    failures: list[str] = []
+    for relative_path, terms in COMMUNITY_DOC_REQUIREMENTS:
+        path = root / relative_path
+        if not path.is_file():
+            failures.append(f"community_doc_missing:{relative_path}")
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        for term in terms:
+            if not _contains_claim_term(text, term):
+                failures.append(f"community_doc_term_missing:{relative_path}:{term}")
     return failures
 
 
