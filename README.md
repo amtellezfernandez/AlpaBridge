@@ -228,10 +228,6 @@ dependency-light core rows and semantic ablations have executed, direct-actor
 rows remain explicitly blocked, and completed closed-loop rows are diagnostic
 integration evidence rather than policy-quality benchmark claims.
 
-The portable experiment vocabulary is the contract-validation matrix (CVM):
-configured rows, executed rows, blocked rows, and claim-valid evidence are
-reported separately.
-
 ## Ungated Demo
 
 ```bash

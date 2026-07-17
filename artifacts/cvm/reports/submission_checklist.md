@@ -23,6 +23,9 @@
 - [x] Public Markdown/HTML local links and image references resolve inside the
   repository.
 - [x] Public Markdown/HTML images carry non-empty alt text.
+- [x] README visuals explain the adapter boundary, runtime graph meanings, and
+  non-benchmark status.
+- [x] Public release text excludes prior-layout mapping labels.
 - [x] Figures are generated and legible at final size.
 - [x] Abstract contains actual results, not placeholders.
 - [x] Abstract length is validated against the release 160-210 word range.

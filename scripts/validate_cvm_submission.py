@@ -162,6 +162,23 @@ CLAIM_BOUNDARY_SOURCE_TERMS = (
     "\\CVMPolicyFailureAttributableRows{}",
     "\\CVMIntegrationFailureAttributableRows{}",
 )
+README_VISUAL_EXPLANATION_TERMS = (
+    "Visual Overview",
+    "adapter boundary",
+    "not a benchmark result",
+    "command-manifest example",
+    "valid_claim_evidence",
+    "metrics dashboard",
+    "RPC timing",
+    "service queue depth",
+    "rollout duration",
+    "step duration",
+    "CPU utilization",
+    "GPU utilization",
+    "GPU memory",
+    "service replica counts",
+    "do not evaluate policy quality",
+)
 REQUIRED_SUMMARY_ATTRIBUTION_FIELDS = (
     "rule",
     "contract_valid_closed_loop_rows",
@@ -448,6 +465,12 @@ FORBIDDEN_TEXT_PATTERNS: tuple[tuple[str, Pattern[str]], ...] = (
     ("sota_claim", re.compile(r"\bSOTA\b")),
     ("paper_draft_label", re.compile(r"\bpaper\s+draft\b", re.IGNORECASE)),
     ("venue_coupled_process_label", re.compile(r"\bvenue[-\s]+specific\b", re.IGNORECASE)),
+    ("cvm_equivalence_map", re.compile(r"\b(?:neutral\s+)?cvm\s+equivalence\s+map\b", re.IGNORECASE)),
+    ("old_layout_reference", re.compile(r"\bold\s+layou[rt]\b", re.IGNORECASE)),
+    (
+        "internal_deliverable_layout",
+        re.compile(r"\b(?:old\s+)?internal\s+deliverable\s+layout\b", re.IGNORECASE),
+    ),
     ("weak_adapter_artifact_label", re.compile(r"\badapter\s+and\s+evaluation\s+artifact\b", re.IGNORECASE)),
     ("weak_artifact_scaffold_label", re.compile(r"\bartifact\s+scaffold\b", re.IGNORECASE)),
     (
@@ -544,6 +567,12 @@ def main() -> int:
             readme_path=readme_path,
             source_text=source_text,
             source_path=main_tex,
+        )
+    )
+    failures.extend(
+        _readme_visual_explanation_failures(
+            readme_text=readme_text,
+            readme_path=readme_path,
         )
     )
 
@@ -995,6 +1024,14 @@ def _claim_boundary_text_failures(
     for term in CLAIM_BOUNDARY_SOURCE_TERMS:
         if not _contains_claim_term(source_text, term):
             failures.append(f"claim_boundary_source_missing:{source_path}:{term}")
+    return failures
+
+
+def _readme_visual_explanation_failures(*, readme_text: str, readme_path: Path) -> list[str]:
+    failures: list[str] = []
+    for term in README_VISUAL_EXPLANATION_TERMS:
+        if not _contains_claim_term(readme_text, term):
+            failures.append(f"readme_visual_explanation_missing:{readme_path}:{term}")
     return failures
 
 

@@ -452,6 +452,42 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             failures,
         )
 
+    def test_readme_visual_explanation_accepts_graph_and_claim_boundary_terms(self) -> None:
+        module = _load_module()
+        readme = (
+            "## Visual Overview\n"
+            "The images show the adapter boundary, not a benchmark result. "
+            "The terminal panel is a command-manifest example and "
+            "`valid_claim_evidence` remains false. The metrics dashboard explains "
+            "RPC timing, service queue depth, rollout duration, step duration, "
+            "CPU utilization, GPU utilization, GPU memory, and service replica counts. "
+            "These graphs do not evaluate policy quality.\n"
+        )
+
+        failures = module._readme_visual_explanation_failures(
+            readme_text=readme,
+            readme_path=Path("README.md"),
+        )
+
+        self.assertEqual([], failures)
+
+    def test_readme_visual_explanation_rejects_missing_graph_context(self) -> None:
+        module = _load_module()
+
+        failures = module._readme_visual_explanation_failures(
+            readme_text="## Visual Overview\nNice screenshots.\n",
+            readme_path=Path("README.md"),
+        )
+
+        self.assertIn(
+            "readme_visual_explanation_missing:README.md:not a benchmark result",
+            failures,
+        )
+        self.assertIn(
+            "readme_visual_explanation_missing:README.md:RPC timing",
+            failures,
+        )
+
     def test_summary_attribution_requires_policy_partition(self) -> None:
         module = _load_module()
         with tempfile.TemporaryDirectory() as tmp:
@@ -1061,6 +1097,9 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             weak_adapter_label = "adapter and evaluation " + "artifact"
             scaffold_label = "artifact " + "scaffold"
             venue_label = "venue-" + "specific row names"
+            old_layout = "old " + "layout"
+            equivalence_map = "neutral " + "CVM equivalence " + "map"
+            internal_deliverable_layout = "internal " + "deliverable " + "layout"
             stale_event_name = "s" + "ii2027"
             third_party_secret = "hf_" + ("B" * 20)
             (root / "README.md").write_text(
@@ -1074,6 +1113,9 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
                         weak_adapter_label,
                         scaffold_label,
                         venue_label,
+                        old_layout,
+                        equivalence_map,
+                        internal_deliverable_layout,
                         stale_event_name,
                     ]
                 ),
@@ -1096,6 +1138,9 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         self.assertIn("public_hygiene:venue_coupled_process_label:README.md", failures)
         self.assertIn("public_hygiene:weak_adapter_artifact_label:README.md", failures)
         self.assertIn("public_hygiene:weak_artifact_scaffold_label:README.md", failures)
+        self.assertIn("public_hygiene:old_layout_reference:README.md", failures)
+        self.assertIn("public_hygiene:cvm_equivalence_map:README.md", failures)
+        self.assertIn("public_hygiene:internal_deliverable_layout:README.md", failures)
         self.assertIn("public_hygiene:stale_target_event_artifact_name:README.md", failures)
         self.assertIn("public_hygiene:huggingface_token:third_party/README.md", failures)
 
