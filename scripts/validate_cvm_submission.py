@@ -1496,6 +1496,7 @@ def _generated_table_summary_field_failures(summary_path: Path, summary: dict[st
                 "completed_runs",
                 "audit_valid_runs",
                 "blocked_runs",
+                "service_crash_rows",
             ):
                 if field == "policy":
                     if not isinstance(item.get(field), str) or not item.get(field):
@@ -1545,6 +1546,8 @@ def _expected_core_policy_row(item: dict[str, object]) -> str:
         _format_table_metric(item.get("progress_mean")),
         f"{_format_table_metric(item.get('collision_any_mean'))}/"
         f"{_format_table_metric(item.get('offroad_mean'))}",
+        _format_table_metric(item.get("action_latency_p95_ms")),
+        item.get("service_crash_rows") if isinstance(item.get("service_crash_rows"), int) else 0,
         item.get("blocked_runs") if isinstance(item.get("blocked_runs"), int) else 0,
     )
 

@@ -61,6 +61,7 @@
   "completed_runs": 109,
   "core_policy_results": [
     {
+      "action_latency_p95_ms": null,
       "attempted_runs": 18,
       "audit_valid_runs": 18,
       "blocked_runs": 0,
@@ -70,9 +71,11 @@
       "metric_rows": 18,
       "offroad_mean": 0.0,
       "policy": "constant_velocity",
-      "progress_mean": 0.435
+      "progress_mean": 0.435,
+      "service_crash_rows": 0
     },
     {
+      "action_latency_p95_ms": null,
       "attempted_runs": 0,
       "audit_valid_runs": 0,
       "blocked_runs": 18,
@@ -82,9 +85,11 @@
       "metric_rows": 0,
       "offroad_mean": null,
       "policy": "direct_actor_planner",
-      "progress_mean": null
+      "progress_mean": null,
+      "service_crash_rows": 0
     },
     {
+      "action_latency_p95_ms": null,
       "attempted_runs": 18,
       "audit_valid_runs": 18,
       "blocked_runs": 0,
@@ -94,7 +99,8 @@
       "metric_rows": 18,
       "offroad_mean": 0.0,
       "policy": "route_following",
-      "progress_mean": 0.353333
+      "progress_mean": 0.353333,
+      "service_crash_rows": 0
     }
   ],
   "created_at": "2026-07-17T18:30:42.795575+00:00",

@@ -228,6 +228,43 @@ class AggregateCVMTests(unittest.TestCase):
         self.assertEqual("true", evidence[0]["metrics_present"])
         self.assertEqual("0.4", evidence[0]["progress"])
 
+    def test_core_policy_results_include_latency_and_terminal_crashes(self) -> None:
+        module = _load_module()
+        completed = {
+            **_row(),
+            "run_id": "core_constant_velocity_scene-a_17_full_contract",
+            "status": "completed",
+            "attempted": "true",
+            "completed": "true",
+        }
+        crashed = {
+            **_row(),
+            "run_id": "core_constant_velocity_scene-b_17_full_contract",
+            "status": "failed",
+            "attempted": "true",
+            "failure_layer": "lifecycle",
+            "failure_code": "service_crash",
+            "detail": "external driver crashed",
+        }
+        evidence = [
+            {
+                "run_id": completed["run_id"],
+                "matrix": "core",
+                "policy": "constant_velocity",
+                "metrics_present": "true",
+                "progress": "0.4",
+                "collision_any": "0",
+                "offroad": "0",
+                "action_latency_p95_ms": "12.5",
+            }
+        ]
+
+        results = module._core_policy_results([completed, crashed], evidence)
+
+        self.assertEqual(1, len(results))
+        self.assertEqual(12.5, results[0]["action_latency_p95_ms"])
+        self.assertEqual(1, results[0]["service_crash_rows"])
+
 
 if __name__ == "__main__":
     unittest.main()

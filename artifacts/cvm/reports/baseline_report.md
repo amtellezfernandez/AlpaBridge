@@ -21,20 +21,20 @@ package.
 
 | Command | Start UTC | End UTC | Duration | Exit | Result |
 |---|---|---|---:|---:|---|
-| `./.venv/bin/python -m pytest -q tests -k "semantic or route"` | 2026-07-17T21:17:37Z | 2026-07-17T21:17:37Z | 0.24s | 0 | 10 passed, 289 deselected after policy-table fallback hardening. |
-| `./.venv/bin/python -m pytest -q tests -k "temporal or resampl"` | 2026-07-17T21:17:37Z | 2026-07-17T21:17:37Z | 0.15s | 0 | 10 passed, 289 deselected, 15 subtests passed after policy-table fallback hardening. |
-| `./.venv/bin/python -m pytest -q tests -k "lifecycle or session"` | 2026-07-17T21:17:37Z | 2026-07-17T21:17:37Z | 0.18s | 0 | 10 passed, 289 deselected after policy-table fallback hardening. |
-| `./.venv/bin/python -m pytest -q tests -k "plugin or entry_point"` | 2026-07-17T21:17:37Z | 2026-07-17T21:17:37Z | 0.56s | 0 | 5 passed, 294 deselected after policy-table fallback hardening. |
-| `./.venv/bin/python -m pytest -q tests -k "deployment or readiness or launch"` | 2026-07-17T21:17:37Z | 2026-07-17T21:17:37Z | 0.54s | 0 | 20 passed, 279 deselected after policy-table fallback hardening. |
-| `./.venv/bin/python -m pytest -q tests -k "evidence or audit or benchmark"` | 2026-07-17T21:17:37Z | 2026-07-17T21:17:37Z | 0.40s | 0 | 23 passed, 276 deselected after policy-table fallback hardening. |
-| `./.venv/bin/python -m pytest -q tests -k "fault"` | 2026-07-17T21:17:37Z | 2026-07-17T21:17:37Z | 0.25s | 0 | 5 passed, 294 deselected after policy-table fallback hardening. |
+| `./.venv/bin/python -m pytest -q tests -k "semantic or route"` | 2026-07-17T21:17:37Z | 2026-07-17T21:17:37Z | 0.41s | 0 | 10 passed, 290 deselected after policy-table fallback hardening. |
+| `./.venv/bin/python -m pytest -q tests -k "temporal or resampl"` | 2026-07-17T21:17:37Z | 2026-07-17T21:17:37Z | 0.31s | 0 | 10 passed, 290 deselected, 15 subtests passed after policy-table fallback hardening. |
+| `./.venv/bin/python -m pytest -q tests -k "lifecycle or session"` | 2026-07-17T21:17:37Z | 2026-07-17T21:17:37Z | 0.36s | 0 | 10 passed, 290 deselected after policy-table fallback hardening. |
+| `./.venv/bin/python -m pytest -q tests -k "plugin or entry_point"` | 2026-07-17T21:17:37Z | 2026-07-17T21:17:37Z | 0.93s | 0 | 5 passed, 295 deselected after policy-table fallback hardening. |
+| `./.venv/bin/python -m pytest -q tests -k "deployment or readiness or launch"` | 2026-07-17T21:17:37Z | 2026-07-17T21:17:37Z | 1.68s | 0 | 20 passed, 280 deselected after policy-table fallback hardening. |
+| `./.venv/bin/python -m pytest -q tests -k "evidence or audit or benchmark"` | 2026-07-17T21:17:37Z | 2026-07-17T21:17:37Z | 0.46s | 0 | 23 passed, 277 deselected after policy-table fallback hardening. |
+| `./.venv/bin/python -m pytest -q tests -k "fault"` | 2026-07-17T21:17:37Z | 2026-07-17T21:17:37Z | 0.24s | 0 | 5 passed, 295 deselected after policy-table fallback hardening. |
 
 ## Release Commands
 
 | Command | Exit | Result |
 |---|---:|---|
 | `make cvm-inventory PYTHON=./.venv/bin/python` | 0 | Refreshed ignored redacted environment/log snapshots under `artifacts/cvm`. |
-| `make cvm-check PYTHON=./.venv/bin/python` | 0 | Ruff passed; conformance suite passed with 285 passed, 14 skipped, and 15 subtests passed after package metadata, CI workflow, community-template, policy-table fallback, paper metadata, PDF metadata/page-size/font, source-layout, LaTeX-log, generated-copy, generated-table-value, local-reference, image-alt, command-documentation, README-visual, evaluation-status, README-count, paper-number, and claim-matrix validation hardening; paper validation passed. |
+| `make cvm-check PYTHON=./.venv/bin/python` | 0 | Ruff passed; conformance suite passed with 286 passed, 14 skipped, and 15 subtests passed after package metadata, CI workflow, community-template, policy-table fallback, paper metadata, PDF metadata/page-size/font, source-layout, LaTeX-log, generated-copy, generated-table-value, local-reference, image-alt, command-documentation, README-visual, evaluation-status, README-count, paper-number, and claim-matrix validation hardening; paper validation passed. |
 | `make cvm-demo PYTHON=./.venv/bin/python` | 0 | Synthetic demo artifact valid; `valid_claim_evidence=false`. |
 | `make cvm-eval PYTHON=./.venv/bin/python` | 2 | Expected blocked-status exit: 36 completed core rows preserved, 18 direct-actor rows blocked by `direct_actor_oracle_proxy_missing`. |
 | `make cvm-aggregate PYTHON=./.venv/bin/python` | 0 | Regenerated aggregate tables and figures from retained CVM results. |
@@ -50,7 +50,7 @@ package.
 |---|---|---:|---|
 | `./.venv/bin/python -m pytest -q tests/test_validate_cvm_submission.py` | 2026-07-17T21:06:19Z | 0 | 54 passed, including package metadata, CI workflow, community-template, source metadata, output-PDF metadata, A4 MediaBox, embedded-font, layout-hack, LaTeX-log, generated-copy, generated-table-value, local-reference, image-alt, CLI command-documentation, README-visual, evaluation-status, venue-style benchmark-label hygiene, citation-slug hygiene, README-count, paper-number, and claim-matrix validation fixtures. |
 | `make paper-verify PYTHON=./.venv/bin/python` | 2026-07-17T21:06:19Z | 0 | Rebuilt 5-page root `wod2sim.pdf`; submission validation passed with package metadata, CI workflow, community-template, source metadata, output-PDF metadata, source-layout, PDF A4 MediaBox, embedded-font, LaTeX-log, generated-copy, generated-table row/source-field, local-reference, image-alt, command-documentation, README-visual, evaluation-status, README-count, paper-number, and claim-matrix enforcement. |
-| `make cvm-check PYTHON=./.venv/bin/python` | 2026-07-17T21:17:37Z | 0 | Ruff passed; conformance passed with 285 passed, 14 skipped, and 15 subtests passed; submission validation passed with package metadata, CI workflow, community-template, command-documentation, README-visual, evaluation-status, and policy-table checks. |
+| `make cvm-check PYTHON=./.venv/bin/python` | 2026-07-17T21:17:37Z | 0 | Ruff passed; conformance passed with 286 passed, 14 skipped, and 15 subtests passed; submission validation passed with package metadata, CI workflow, community-template, command-documentation, README-visual, evaluation-status, and policy-table checks. |
 
 ## Important Warnings
 
@@ -92,7 +92,9 @@ It validates every `paper_numbers.tex` macro against `summary.json`,
 table hash alone.
 It now also validates the generated table row values against the current
 `summary.json`, `lifecycle_stress.csv`, and `fault_injection.csv` source fields,
-so a table cannot drift while keeping a matching artifact hash.
+so a table cannot drift while keeping a matching artifact hash. The generated
+core policy table now also reports latency-p95 availability and terminal
+service-crash rows from the retained CVM evidence.
 It now rejects package metadata that drops the author, README, BSD-3-Clause
 license expression, research keywords, publication classifiers, or repository,
 documentation, paper, and citation URLs.
