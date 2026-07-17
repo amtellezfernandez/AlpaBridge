@@ -1,5 +1,5 @@
 command=git ls-files | sort
-captured_at_utc=2026-07-17T12:30:38Z
+captured_at_utc=2026-07-17T12:47:01Z
 
 .github/CODE_OF_CONDUCT.md
 .github/CONTRIBUTING.md
@@ -416,6 +416,7 @@ tests/test_run_alpasim_scene_batch.py
 tests/test_run_sii2027_matrix.py
 tests/test_support_bundle_command.py
 tests/test_synthetic_contract_demo.py
+tests/test_validate_sii2027_submission.py
 tests/test_wod2sim_doctor.py
 third_party/alpasim_overrides/Dockerfile.amd64
 third_party/alpasim_overrides/README.md

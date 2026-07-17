@@ -1,11 +1,12 @@
 {
   "adapter_config": "full_contract",
   "attempted": false,
+  "blocked": true,
   "claim_valid": false,
   "completed": false,
   "config_path": "configs/sii2027/semantic_ablation.yaml",
   "config_sha256": "beb9b22afc03ad27f9344cced121b56ab2a6268160b4e5cb34d292c79d92cdb9",
-  "created_at": "2026-07-17T12:15:22.553559+00:00",
+  "created_at": "2026-07-17T12:44:12.695261+00:00",
   "detail": "Matrix was expanded and recorded; pass --execute for real rollout launch.",
   "execution_mode": "closed_loop_ablation",
   "failure_code": "execution_not_requested",

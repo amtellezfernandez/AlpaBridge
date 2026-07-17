@@ -9,6 +9,34 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+REQUIRED_RUN_FIELDS = (
+    "run_id",
+    "matrix",
+    "policy",
+    "scene_id",
+    "seed",
+    "adapter_config",
+    "status",
+    "attempted",
+    "completed",
+    "blocked",
+    "failure_layer",
+    "failure_code",
+    "detail",
+    "claim_valid",
+)
+BOOLEAN_RUN_FIELDS = ("attempted", "completed", "blocked", "claim_valid")
+VALID_RUN_STATUSES = {"completed", "failed", "blocked"}
+MANIFEST_MATCH_FIELDS = (
+    "run_id",
+    "matrix",
+    "policy",
+    "scene_id",
+    "seed",
+    "adapter_config",
+    "status",
+)
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Aggregate SII 2027 run rows.")
@@ -18,6 +46,9 @@ def main() -> int:
 
     args.output.mkdir(parents=True, exist_ok=True)
     rows = _load_run_rows(args.inputs)
+    validation_errors = _validate_run_rows(rows, args.inputs)
+    if validation_errors:
+        raise SystemExit("Invalid SII aggregate inputs:\n" + "\n".join(validation_errors[:20]))
     duplicate_completed = _duplicate_completed_run_ids(rows)
     if duplicate_completed:
         raise SystemExit(f"Duplicate completed run IDs: {', '.join(duplicate_completed[:5])}")
@@ -46,6 +77,73 @@ def _load_run_rows(inputs: Path) -> list[dict[str, str]]:
                 row["_source"] = str(path)
                 rows.append(row)
     return rows
+
+
+def _validate_run_rows(rows: list[dict[str, str]], inputs: Path) -> list[str]:
+    errors: list[str] = []
+    if not rows:
+        errors.append(f"no_run_rows:{inputs}")
+        return errors
+
+    manifest_dir = inputs.parent / "manifests" / "run_manifests"
+    for row in rows:
+        run_id = row.get("run_id", "")
+        source = row.get("_source", "<unknown>")
+        for field in REQUIRED_RUN_FIELDS:
+            if field not in row:
+                errors.append(f"missing_run_field:{source}:{run_id or '<missing-run-id>'}:{field}")
+        if not run_id:
+            errors.append(f"missing_run_id:{source}")
+            continue
+        status = row.get("status", "")
+        if status not in VALID_RUN_STATUSES:
+            errors.append(f"invalid_status:{source}:{run_id}:{status}")
+        for field in BOOLEAN_RUN_FIELDS:
+            if row.get(field, "") not in {"true", "false"}:
+                errors.append(f"invalid_boolean:{source}:{run_id}:{field}={row.get(field, '')}")
+        if status == "completed" and row.get("completed") != "true":
+            errors.append(f"completed_status_without_completed_flag:{source}:{run_id}")
+        if status != "completed" and not row.get("failure_code"):
+            errors.append(f"noncompleted_row_missing_failure_code:{source}:{run_id}")
+        if status == "blocked" and row.get("blocked") != "true":
+            errors.append(f"blocked_status_without_blocked_flag:{source}:{run_id}")
+        if row.get("claim_valid") == "true" and status != "completed":
+            errors.append(f"claim_valid_noncompleted_row:{source}:{run_id}")
+        errors.extend(_manifest_consistency_errors(row, manifest_dir=manifest_dir))
+    return errors
+
+
+def _manifest_consistency_errors(row: dict[str, str], *, manifest_dir: Path) -> list[str]:
+    run_id = row.get("run_id", "")
+    source = row.get("_source", "<unknown>")
+    manifest_path = manifest_dir / f"{run_id}.json"
+    if not manifest_path.is_file():
+        return [f"missing_run_manifest:{source}:{run_id}:{manifest_path}"]
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return [f"invalid_run_manifest_json:{source}:{run_id}:{manifest_path}"]
+
+    errors: list[str] = []
+    if manifest.get("schema") != "sii2027_run_manifest_v1":
+        errors.append(f"invalid_run_manifest_schema:{source}:{run_id}:{manifest_path}")
+    for field in MANIFEST_MATCH_FIELDS:
+        if str(manifest.get(field, "")) != row.get(field, ""):
+            errors.append(f"run_manifest_field_mismatch:{source}:{run_id}:{field}")
+    for field in BOOLEAN_RUN_FIELDS:
+        if _manifest_bool(manifest.get(field)) != row.get(field, ""):
+            errors.append(f"run_manifest_field_mismatch:{source}:{run_id}:{field}")
+    if str(manifest.get("failure_code", "")) != row.get("failure_code", ""):
+        errors.append(f"run_manifest_field_mismatch:{source}:{run_id}:failure_code")
+    if str(manifest.get("failure_layer", "")) != row.get("failure_layer", ""):
+        errors.append(f"run_manifest_field_mismatch:{source}:{run_id}:failure_layer")
+    return errors
+
+
+def _manifest_bool(value: object) -> str:
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    return str(value).lower()
 
 
 def _duplicate_completed_run_ids(rows: list[dict[str, str]]) -> list[str]:

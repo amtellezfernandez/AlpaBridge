@@ -887,6 +887,7 @@ def _write_run_manifest(
         "status": row["status"],
         "attempted": row["attempted"] == "true",
         "completed": row["completed"] == "true",
+        "blocked": row.get("blocked") == "true",
         "claim_valid": row.get("claim_valid") == "true",
         "failure_layer": row.get("failure_layer", ""),
         "failure_code": row.get("failure_code", ""),

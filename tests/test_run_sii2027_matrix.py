@@ -123,6 +123,7 @@ class RunSII2027MatrixTests(unittest.TestCase):
             payload = json.loads(manifest_path.read_text(encoding="utf-8"))
 
         self.assertEqual("sii2027_run_manifest_v1", payload["schema"])
+        self.assertTrue(payload["blocked"])
         self.assertIn("planned_launch", payload)
         self.assertTrue(payload["planned_launch"]["supported"])
         self.assertIn("--scene-id", payload["planned_launch"]["command"])

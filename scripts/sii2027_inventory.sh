@@ -8,7 +8,22 @@ OUT="artifacts/sii2027"
 mkdir -p "$OUT/environment" "$OUT/logs/baseline" "$OUT/reports"
 
 redact() {
-  sed "s#${ROOT}#<repo>#g; s#${HOME:-/home/user}#~#g"
+  local host
+  host="$(hostname 2>/dev/null || true)"
+  WOD2SIM_REDACT_ROOT="$ROOT" \
+    WOD2SIM_REDACT_HOME="${HOME:-/home/user}" \
+    WOD2SIM_REDACT_HOST="$host" \
+    perl -pe '
+      BEGIN {
+        $root = quotemeta($ENV{"WOD2SIM_REDACT_ROOT"} // "");
+        $home = quotemeta($ENV{"WOD2SIM_REDACT_HOME"} // "");
+        $host = quotemeta($ENV{"WOD2SIM_REDACT_HOST"} // "");
+      }
+      s/$root/<repo>/g if length $root;
+      s/$home/~/g if length $home;
+      s/$host/<host>/g if length $host;
+      s/^ ID: [0-9a-fA-F-]{36}$/ ID: <docker-engine-id>/;
+    '
 }
 
 {
