@@ -1792,6 +1792,7 @@ def _release_hygiene_failures(*, repo_root: Path, canonical_paper: Path) -> list
     root = repo_root.resolve()
     canonical = (root / canonical_paper).resolve() if not canonical_paper.is_absolute() else canonical_paper.resolve()
     failures = _duplicate_manuscript_pdf_failures(root=root, canonical_paper=canonical)
+    failures.extend(_cli_documentation_failures(repo_root=root))
     for path in _iter_public_scan_files(root):
         try:
             text = path.read_text(encoding="utf-8")
@@ -1806,6 +1807,60 @@ def _release_hygiene_failures(*, repo_root: Path, canonical_paper: Path) -> list
     for archive_path in _iter_public_scan_archives(root):
         failures.extend(_archive_hygiene_failures(archive_path, root=root))
     return failures
+
+
+def _cli_documentation_failures(*, repo_root: Path) -> list[str]:
+    root = repo_root.resolve()
+    cli_doc = root / "docs" / "cli.md"
+    pyproject = root / "pyproject.toml"
+    makefile = root / "Makefile"
+    source_paths = (cli_doc, pyproject, makefile)
+    if not any(path.exists() for path in source_paths):
+        return []
+    failures: list[str] = []
+    if not cli_doc.is_file():
+        return ["cli_doc_missing:docs/cli.md"]
+    text = cli_doc.read_text(encoding="utf-8", errors="ignore")
+    if not pyproject.is_file():
+        failures.append("cli_doc_source_missing:pyproject.toml")
+    else:
+        for command in _project_script_names(pyproject):
+            if f"`{command}`" not in text:
+                failures.append(f"cli_doc_missing_console_script:docs/cli.md:{command}")
+    if not makefile.is_file():
+        failures.append("cli_doc_source_missing:Makefile")
+    else:
+        for target in _make_phony_targets(makefile):
+            if f"`make {target}`" not in text:
+                failures.append(f"cli_doc_missing_make_target:docs/cli.md:{target}")
+    return failures
+
+
+def _project_script_names(path: Path) -> list[str]:
+    names: list[str] = []
+    in_scripts = False
+    for line in path.read_text(encoding="utf-8", errors="ignore").splitlines():
+        stripped = line.strip()
+        if stripped == "[project.scripts]":
+            in_scripts = True
+            continue
+        if in_scripts and stripped.startswith("[") and stripped.endswith("]"):
+            break
+        if not in_scripts:
+            continue
+        match = re.match(r"([A-Za-z0-9_.-]+)\s*=", stripped)
+        if match is not None:
+            names.append(match.group(1))
+    return sorted(dict.fromkeys(names))
+
+
+def _make_phony_targets(path: Path) -> list[str]:
+    targets: list[str] = []
+    for line in path.read_text(encoding="utf-8", errors="ignore").splitlines():
+        if not line.startswith(".PHONY:"):
+            continue
+        targets.extend(token for token in line.split(":", 1)[1].split() if token)
+    return list(dict.fromkeys(targets))
 
 
 def _duplicate_manuscript_pdf_failures(*, root: Path, canonical_paper: Path) -> list[str]:

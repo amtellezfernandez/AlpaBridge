@@ -23,6 +23,7 @@
 - [x] Public Markdown/HTML local links and image references resolve inside the
   repository.
 - [x] Public Markdown/HTML images carry non-empty alt text.
+- [x] `docs/cli.md` documents every console script and `.PHONY` Make target.
 - [x] README visuals explain the adapter boundary, runtime graph meanings, and
   non-benchmark status.
 - [x] Evaluation docs distinguish completed local diagnostic closed-loop rows

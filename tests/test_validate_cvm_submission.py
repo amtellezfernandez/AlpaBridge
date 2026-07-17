@@ -1225,6 +1225,59 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             failures,
         )
 
+    def test_cli_documentation_accepts_documented_scripts_and_make_targets(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "docs").mkdir()
+            (root / "pyproject.toml").write_text(
+                "[project.scripts]\n"
+                'wod2sim-doctor = "wod2sim.cli.commands.wod2sim_doctor:main"\n'
+                'wod2sim-ready = "wod2sim.cli.commands.check_alpasim_readiness:main"\n',
+                encoding="utf-8",
+            )
+            (root / "Makefile").write_text(
+                ".PHONY: conformance cvm-check\n",
+                encoding="utf-8",
+            )
+            (root / "docs" / "cli.md").write_text(
+                "| `wod2sim-doctor` | Doctor. |\n"
+                "| `wod2sim-ready` | Readiness. |\n"
+                "| `make conformance` | Test. |\n"
+                "| `make cvm-check` | Validate. |\n",
+                encoding="utf-8",
+            )
+
+            failures = module._cli_documentation_failures(repo_root=root)
+
+        self.assertEqual([], failures)
+
+    def test_cli_documentation_reports_missing_scripts_and_make_targets(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "docs").mkdir()
+            (root / "pyproject.toml").write_text(
+                "[project.scripts]\n"
+                'wod2sim-doctor = "wod2sim.cli.commands.wod2sim_doctor:main"\n'
+                'wod2sim-ready = "wod2sim.cli.commands.check_alpasim_readiness:main"\n',
+                encoding="utf-8",
+            )
+            (root / "Makefile").write_text(
+                ".PHONY: conformance cvm-check\n",
+                encoding="utf-8",
+            )
+            (root / "docs" / "cli.md").write_text(
+                "| `wod2sim-doctor` | Doctor. |\n"
+                "| `make conformance` | Test. |\n",
+                encoding="utf-8",
+            )
+
+            failures = module._cli_documentation_failures(repo_root=root)
+
+        self.assertIn("cli_doc_missing_console_script:docs/cli.md:wod2sim-ready", failures)
+        self.assertIn("cli_doc_missing_make_target:docs/cli.md:cvm-check", failures)
+
     def test_manifest_attribution_accepts_integration_blocker(self) -> None:
         module = _load_module()
         with tempfile.TemporaryDirectory() as tmp:

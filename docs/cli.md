@@ -25,6 +25,36 @@
 | `wod2sim-promote-batch-summary` | Copy a validated local summary to an explicit destination. |
 | `wod2sim-evidence` | Inspect AlpaSim runtime metrics. |
 
+## Quality And Release Targets
+
+| Command | Purpose |
+| --- | --- |
+| `make conformance` | Run the dependency-light contract conformance tier. |
+| `make demo` | Generate the public synthetic contract demo. |
+| `make verify` | Run lint, conformance, coverage, smoke, build, paper rebuild, and validation. |
+| `make paper` | Rebuild the canonical paper PDF through the CVM paper target. |
+| `make paper-verify` | Rebuild the canonical paper PDF and run submission validation. |
+| `make cvm-inventory` | Refresh the redacted repository and environment inventory. |
+| `make cvm-check` | Run lint, conformance, and CVM submission validation. |
+| `make cvm-demo` | Write the synthetic CVM demo under `artifacts/cvm/results/demo`. |
+| `make cvm-eval` | Expand the configured CVM core matrix, preserving completed and blocked rows. |
+| `make cvm-synthetic` | Execute dependency-light lifecycle-stress and fault-injection diagnostics. |
+| `make cvm-aggregate` | Regenerate aggregate CSV/JSON, LaTeX tables, and figures from CVM results. |
+| `make cvm-paper` | Build the paper source and copy the canonical root `wod2sim.pdf`. |
+| `make cvm-validate` | Run the CVM paper and release-surface validator. |
+| `make cvm-all` | Run the end-to-end CVM release sequence, preserving exit 2 for documented blockers. |
+
+## Developer Targets
+
+| Command | Purpose |
+| --- | --- |
+| `make test` | Run the test suite without the conformance environment flag. |
+| `make lint` | Run Ruff over the repository. |
+| `make coverage` | Run the pytest coverage target. |
+| `make smoke` | Run the release bootstrap smoke check. |
+| `make build` | Build the Python package with `uv build` when available, otherwise `python -m build`. |
+| `make clean` | Remove local build, cache, demo, and Python bytecode artifacts. |
+
 Run any command with `--help` for its complete arguments.
 
 `wod2sim-ready` is a launch-readiness check: by default it requires the local
