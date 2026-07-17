@@ -1130,7 +1130,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             unsupported_claim = "we " + "outperform baselines"
             draft_label = "paper " + "draft"
             generated_draft_url = "auto-" + "draft-214"
-            venue_style_benchmark_label = "NeurIPS-" + "style benchmark"
+            venue_style_benchmark_label = "Neur" + "IPS-" + "style benchmark"
             weak_adapter_label = "adapter and evaluation " + "artifact"
             scaffold_label = "artifact " + "scaffold"
             venue_label = "venue-" + "specific row names"
