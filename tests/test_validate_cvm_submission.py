@@ -176,6 +176,19 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
                         "run_id": "blocked",
                         "status": "blocked",
                         "claim_valid": False,
+                        "scene_id": "clipgt-scene",
+                        "scenario_category": "available_front_camera_26_02_unclassified",
+                        "scene": {
+                            "scene_id": "clipgt-scene",
+                            "category": "available_front_camera_26_02_unclassified",
+                            "scenario_category": "available_front_camera_26_02_unclassified",
+                            "selection_rationale": "local cache entry",
+                            "asset_availability": "local_usdz_present",
+                            "expected_route_feature": "unverified",
+                            "expected_interaction_feature": "unverified",
+                            "license_gating_status": "gated_asset_referenced_not_redistributed",
+                            "categories_verified": False,
+                        },
                         "failure_layer": "deployment",
                         "failure_code": "direct_actor_oracle_proxy_missing",
                         "failure_attribution": {
@@ -218,6 +231,19 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
                         "run_id": "blocked",
                         "status": "blocked",
                         "claim_valid": False,
+                        "scene_id": "clipgt-scene",
+                        "scenario_category": "available_front_camera_26_02_unclassified",
+                        "scene": {
+                            "scene_id": "clipgt-scene",
+                            "category": "available_front_camera_26_02_unclassified",
+                            "scenario_category": "available_front_camera_26_02_unclassified",
+                            "selection_rationale": "local cache entry",
+                            "asset_availability": "local_usdz_present",
+                            "expected_route_feature": "unverified",
+                            "expected_interaction_feature": "unverified",
+                            "license_gating_status": "gated_asset_referenced_not_redistributed",
+                            "categories_verified": False,
+                        },
                         "failure_layer": "deployment",
                         "failure_code": "direct_actor_oracle_proxy_missing",
                         "failure_attribution": {
@@ -260,6 +286,42 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         )
         self.assertIn(f"failure_attribution_layer_mismatch:{manifest_dir / 'blocked.json'}:blocked", failures)
         self.assertIn(f"failure_attribution_rule_missing:{manifest_dir / 'blocked.json'}:blocked", failures)
+
+    def test_manifest_scene_metadata_rejects_missing_and_mismatched_fields(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "manifest.json"
+            missing = module._single_manifest_scene_failures(
+                payload={"run_id": "missing", "scene_id": "scene-a"},
+                path=path,
+                run_id="missing",
+            )
+            mismatched = module._single_manifest_scene_failures(
+                payload={
+                    "run_id": "bad",
+                    "scene_id": "scene-a",
+                    "scenario_category": "turn",
+                    "scene": {
+                        "scene_id": "scene-b",
+                        "category": "straight",
+                        "scenario_category": "turn",
+                        "selection_rationale": "test",
+                        "asset_availability": "public_synthetic",
+                        "expected_route_feature": "not_applicable",
+                        "expected_interaction_feature": "not_applicable",
+                        "license_gating_status": "",
+                        "categories_verified": "false",
+                    },
+                },
+                path=path,
+                run_id="bad",
+            )
+
+        self.assertEqual([f"missing_scene_metadata:{path}:missing"], missing)
+        self.assertIn(f"scene_metadata_id_mismatch:{path}:bad", mismatched)
+        self.assertIn(f"scenario_category_mismatch:{path}:bad", mismatched)
+        self.assertIn(f"scene_metadata_missing_license_status:{path}:bad", mismatched)
+        self.assertIn(f"scene_metadata_categories_verified_not_bool:{path}:bad", mismatched)
 
     def test_frame_schema_accepts_required_public_fields(self) -> None:
         module = _load_module()
