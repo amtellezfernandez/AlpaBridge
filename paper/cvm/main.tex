@@ -27,24 +27,24 @@ Email: amtellezfernandez@gmail.com}
 \maketitle
 
 \begin{abstract}
-Closed-loop simulation can evaluate a driving policy only after the simulator boundary
-has preserved the information and timing assumptions under which that policy was
-trained. Dataset-trained trajectory policies consume logged observations, route
-geometry or route intent, and fixed-cadence ego-relative forecasts; a distributed
-simulator delivers asynchronous sensor messages, expects actions on its own control
-clock, and depends on runtime assets whose absence can look like poor policy behavior.
-WOD2Sim frames this mismatch as contract-based system integration rather than file
-conversion. It defines a validation layer for WOD-style trajectory policies running as
-AlpaSim external drivers: semantic contracts preserve route and scene meaning,
-temporal contracts adapt trajectories to the simulator clock, lifecycle contracts make
-driver sessions explicit and idempotent, deployment contracts expose run preconditions,
-and evidence contracts decide whether a rollout can support a policy claim. The
-reference implementation provides dependency-light baselines, learned-policy and
-actor-aware planner entry points, manifests, audits, and aggregation scripts behind one
-interface. The key rule is separation between integration failure and policy failure: a
-row that violates an integration, deployment, or evidence contract is not reported as
-policy behavior or policy failure. The current release therefore presents a
-reproducible integration-validity package, not a public closed-loop policy benchmark.
+Closed-loop simulation can evaluate a dataset-trained driving policy only if the
+simulator boundary preserves the policy's semantic and timing assumptions. WOD2Sim
+treats this boundary as a contract-based system-integration problem rather than file
+conversion. It defines five contracts for WOD-style trajectory policies running as
+AlpaSim external drivers: semantic route and scene preservation, temporal trajectory
+adaptation, explicit service lifecycle handling, deployment provenance, and evidence
+validity. The reference implementation provides dependency-light baselines,
+learned-policy and actor-aware planner entry points, manifests, audits, and aggregation
+scripts behind one interface. In the current contract-validation matrix, 45 completed
+full-contract closed-loop rollouts across six locally cached but category-unverified
+scenes pass route and sensor audits, so their behavior is policy-attributable
+diagnostic evidence, not a public benchmark claim. A matched semantic ablation produces
+9/9 metric-bearing full-vs-command-proxy pairs, and all 9 command-proxy rows are
+rejected as non-claim-valid, preventing route-loss confounds from being counted as
+policy evidence. The aggregate also retains 36 direct-actor or temporal rows blocked by
+a missing scene-matched oracle proxy and 55 public synthetic diagnostics. No row is
+policy-failure-attributable and no scenario-category coverage or policy benchmark claim
+is made.
 \end{abstract}
 
 \section{Introduction}
@@ -78,8 +78,9 @@ validation distinguish integration and runtime failures from policy behavior fai
 The current repository does not yet support a complete claim-valid benchmark because
 direct actor-aware rows remain blocked by a missing scene-matched oracle proxy and
 learned checkpoints are not part of the public release. It does provide a reproducible
-evidence package whose completed, planned, blocked, and failed rows are traceable to
-repository artifacts.
+evidence package whose completed, blocked, and diagnostic rows are traceable to
+repository artifacts, including audit-valid policy-behavior diagnostic rollouts that
+are not promoted to public benchmark claims.
 
 \subsection{Failure Attribution Rule}
 
@@ -183,10 +184,11 @@ replicate identifiers. Lifecycle stress configures repeated service-harness cycl
 the fault matrix enumerates semantic, temporal, lifecycle, deployment/plugin-dependency,
 and evidence injections.
 
-Scene selection is intentionally conservative. Six scenes are selected from available
-local 26.02 front-camera USDZ artifacts, but the repository does not currently provide
-authoritative metadata proving straight, intersection, lane-change, dense-traffic,
-occlusion, or merge categories. The manifest therefore records them as available but
+Scene selection is intentionally conservative. \CVMClosedLoopSceneCount{} scenes are
+selected from available local 26.02 front-camera USDZ artifacts, but the repository
+does not currently provide authoritative metadata proving straight, intersection,
+lane-change, dense-traffic, occlusion, or merge categories. The manifest therefore
+records \CVMUnclassifiedClosedLoopSceneCount{} closed-loop scene(s) as available but
 unclassified. Each run manifest carries this \texttt{scenario\_category}, asset
 availability, selection rationale, route/interaction feature expectations, and
 license-gating status; the paper does not claim scenario-category coverage.
@@ -243,6 +245,13 @@ rejected by the audit because they use command-proxy route evidence. The aggrega
 \CVMPlannedRuns{} rows as planned/not launched and \CVMBlockedRuns{} rows as true
 precondition or unsupported-ablation blockers.
 
+The scene-coverage gate reports \CVMClosedLoopSceneCount{} unique closed-loop scene
+identifier(s), but only \CVMVerifiedRequiredScenarioCategoryCount{}/
+\CVMRequiredScenarioCategoryCount{} required scenario categories are verified by
+authoritative metadata, and \CVMUnclassifiedClosedLoopSceneCount{} closed-loop scene(s)
+remain unclassified. These rows are integration instances for exercising the contract
+boundary, not evidence of autonomous-driving scenario-category coverage.
+
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{figures/main_results.pdf}
@@ -281,12 +290,13 @@ integration/evidence-invalid, \CVMBlockedRuns{} precondition-blocked row(s),
 \CVMSyntheticDiagnosticRows{} synthetic diagnostic row(s), and
 \CVMClaimValidPolicyBenchmarkRows{} claim-valid policy benchmark row(s). These counts
 are the operational separation between integration failure and policy failure in the
-current release: \CVMPolicyBehaviorAttributableRows{} row(s) are policy-behavior
-attributable, \CVMPolicyFailureAttributableRows{} row(s) are policy-failure
-attributable, and \CVMNonPolicyAttributedRows{} row(s) remain non-policy-attributed.
-No blocked, contract-invalid, or diagnostic row can assign policy failure, even when
-its behavior metrics are degraded. A policy failure also requires the retained failure
-layer to be policy, not merely a degraded behavior metric.
+current release: \CVMPolicyBehaviorAttributableRows{} audit-valid full-contract
+closed-loop row(s) are policy-behavior-attributable diagnostic evidence,
+\CVMPolicyFailureAttributableRows{} row(s) are policy-failure-attributable, and
+\CVMNonPolicyAttributedRows{} row(s) remain non-policy-attributed. No blocked,
+contract-invalid, synthetic, or benchmark-incomplete row can assign policy failure,
+even when its behavior metrics are degraded. A policy failure also requires the
+retained failure layer to be policy, not merely a degraded behavior metric.
 
 \section{Discussion, Limitations, and Related Work}
 
@@ -311,10 +321,12 @@ because its external-driver boundary makes these contracts explicit.
 The limitations are material. WOD2Sim is not an official Waymo challenge interface, does
 not reconstruct complete WOD worlds, and does not redistribute restricted scene assets.
 The current CVM package has no completed claim-valid benchmark matrix, no validated
-scene-category coverage, and no scene-matched direct-actor proxy for direct actor-aware
-planning. Its lifecycle and fault-injection evidence comes from public synthetic
-harnesses, not simulator-backed stress trials. Learned token policies remain outside
-the public baseline unless a legitimate local checkpoint and hash are provided.
+scene-category coverage (\CVMVerifiedRequiredScenarioCategoryCount{}/
+\CVMRequiredScenarioCategoryCount{} required categories verified), and no scene-matched
+direct-actor proxy for direct actor-aware planning. Its lifecycle and fault-injection
+evidence comes from public synthetic harnesses, not simulator-backed stress trials.
+Learned token policies remain outside the public baseline unless a legitimate local
+checkpoint and hash are provided.
 
 These limitations also explain why the paper does not compare policy quality. A
 framework paper can report reliability, validity, and diagnostic coverage only after the

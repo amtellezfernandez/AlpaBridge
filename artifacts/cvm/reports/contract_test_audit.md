@@ -76,7 +76,7 @@ artifacts.
 - Temporal ablation scene rows are blocked by missing scene-matched direct-actor proxy evidence.
 - Direct-actor policy behavior is not benchmarked in the public CVM.
 - Learned token policy behavior is not benchmarked without a legitimate local checkpoint hash.
-- Scenario-category coverage is not claimed because current local scene metadata is unclassified.
+- Scenario-category coverage is not claimed because current local scene metadata is unclassified; the aggregate reports 0/6 verified required categories and 6 unclassified closed-loop scenes.
 - The strict lifecycle comparison is a synthetic diagnostic, not evidence against a functional non-contract wrapper.
 - Fault injection is framework-authored synthetic diagnostics, not external mutation-testing precision.
 - The public release contains 0 claim-valid policy benchmark rows and 0 policy-failure-attributable rows.

@@ -64,9 +64,19 @@ Public reports use this decision order:
 | Executed, audit-valid, retained by the benchmark gate, and failure layer is `policy` | Policy failure may be assigned. |
 
 The generated aggregate makes the boundary numeric: current artifacts contain
-`0` policy-attributable behavior rows, `0` policy-attributable failure rows,
-`36` integration/precondition blocker rows, and `109` completed diagnostic rows
+`45` policy-attributable behavior rows, `0` policy-attributable failure rows,
+`36` integration/precondition blocker rows, and `64` completed non-policy diagnostic rows
 that remain non-policy-attributed.
+
+## Scenario Coverage Boundary
+
+The public CVM uses six locally cached 26.02 front-camera scene artifacts as
+integration instances. The repository does not expose authoritative metadata
+for straight roads, intersections, lane changes, dense traffic, occlusions, or
+merges, so the generated coverage gate reports `0/6` verified required
+scenario categories and `6` unclassified closed-loop scenes. WOD2Sim therefore
+claims contract-valid integration behavior on those rows, not autonomous-driving
+scenario-category coverage.
 
 ## Visual Overview
 

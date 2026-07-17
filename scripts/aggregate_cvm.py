@@ -42,6 +42,15 @@ MANIFEST_MATCH_FIELDS = (
     "status",
 )
 SYNTHETIC_MATRICES = {"lifecycle_stress", "fault_injection"}
+FULL_CONTRACT_ADAPTERS = {"full_contract", "full_temporal_contract"}
+REQUIRED_SCENARIO_CATEGORIES = (
+    "straight",
+    "intersection",
+    "lane_change",
+    "dense_traffic",
+    "occlusion",
+    "merge",
+)
 CLOSED_LOOP_METRICS = (
     "collision_any",
     "collision_at_fault",
@@ -289,6 +298,7 @@ def _summary(
     )
     metric_summary = _closed_loop_metric_summary(closed_loop_evidence)
     effectiveness_summary = _integration_effectiveness_summary(closed_loop_evidence)
+    scenario_coverage_summary = _scenario_coverage_summary(closed_loop_evidence)
     semantic_delta_summary = _semantic_ablation_delta_summary(semantic_pair_rows)
     failure_attribution_summary = _failure_attribution_summary(rows, closed_loop_evidence)
     return {
@@ -315,6 +325,7 @@ def _summary(
         "closed_loop_metrics": metric_summary,
         "core_policy_results": _core_policy_results(rows, closed_loop_evidence),
         "integration_effectiveness": effectiveness_summary,
+        "scenario_coverage": scenario_coverage_summary,
         "failure_attribution": failure_attribution_summary,
         "semantic_ablation_deltas": semantic_delta_summary,
         "failed_runs": status_counts.get("failed", 0),
@@ -408,6 +419,11 @@ def _failure_attribution_summary(
         for row in closed_loop_evidence
         if row not in contract_valid_closed_loop
     ]
+    policy_behavior_run_ids = {
+        str(row.get("run_id", ""))
+        for row in contract_valid_closed_loop
+        if str(row.get("run_id", ""))
+    }
     claim_valid_policy_rows = [
         row
         for row in rows
@@ -426,17 +442,18 @@ def _failure_attribution_summary(
     diagnostic_not_policy_rows = [
         row
         for row in rows
-        if row.get("claim_valid") != "true" and row.get("status") == "completed"
+        if row.get("status") == "completed"
+        and str(row.get("run_id", "")) not in policy_behavior_run_ids
     ]
     return {
         "rule": (
-            "Closed-loop behavior or policy failure can be attributed to the policy "
-            "only after the semantic route contract, temporal adapter, sensor-freshness audit, "
-            "lifecycle state, deployment preconditions, and evidence gate pass. "
-            "Otherwise the row is an integration, precondition, evidence, or "
-            "diagnostic record and cannot be counted as a policy failure. Passing "
-            "the gate permits policy-behavior attribution; policy failure also "
-            "requires the retained failure layer to be policy."
+            "Closed-loop behavior can be attributed to the policy only after the semantic "
+            "route contract, temporal adapter, sensor-freshness audit, lifecycle state, "
+            "deployment preconditions, and evidence gate pass. Public policy benchmark "
+            "claims require the stricter benchmark gate. Rows outside the integration "
+            "gate remain integration, precondition, evidence, or diagnostic records and "
+            "cannot be counted as policy failures. A policy failure also requires the "
+            "retained failure layer to be policy."
         ),
         "contract_valid_closed_loop_rows": len(contract_valid_closed_loop),
         "integration_or_evidence_invalid_closed_loop_rows": len(integration_invalid_closed_loop),
@@ -447,11 +464,11 @@ def _failure_attribution_summary(
             for row in rows
         ),
         "claim_valid_policy_benchmark_rows": len(claim_valid_policy_rows),
-        "policy_behavior_attributable_rows": len(claim_valid_policy_rows),
+        "policy_behavior_attributable_rows": len(policy_behavior_run_ids),
         "policy_failure_attributable_rows": len(policy_failure_rows),
         "integration_failure_attributable_rows": len(integration_failure_rows),
         "diagnostic_not_policy_rows": len(diagnostic_not_policy_rows),
-        "non_policy_attributed_rows": len(rows) - len(claim_valid_policy_rows),
+        "non_policy_attributed_rows": len(rows) - len(policy_behavior_run_ids),
     }
 
 
@@ -497,6 +514,7 @@ def _closed_loop_evidence(
             "metrics_present": "false",
             "metrics_path": "",
         }
+        item.update(_manifest_scene_evidence(row))
         if run_dir is None or not run_dir.is_dir():
             fallback = fallback_rows.get(str(row.get("run_id", "")))
             if _fallback_matches_row(fallback, row):
@@ -534,6 +552,47 @@ def _closed_loop_evidence(
                         item[metric] = f"{float(value):.6g}"
         evidence_rows.append(item)
     return evidence_rows
+
+
+def _manifest_scene_evidence(row: dict[str, str]) -> dict[str, str]:
+    manifest_path = _manifest_path_for(row)
+    if manifest_path is None or not manifest_path.is_file():
+        return {
+            "scenario_category": "",
+            "categories_verified": "false",
+            "asset_availability": "",
+            "license_gating_status": "",
+        }
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {
+            "scenario_category": "",
+            "categories_verified": "false",
+            "asset_availability": "",
+            "license_gating_status": "",
+        }
+    scene = manifest.get("scene") if isinstance(manifest.get("scene"), dict) else {}
+    categories_verified = scene.get("categories_verified")
+    return {
+        "scenario_category": str(
+            manifest.get("scenario_category") or scene.get("scenario_category") or scene.get("category") or ""
+        ),
+        "categories_verified": "true" if categories_verified is True else "false",
+        "asset_availability": str(scene.get("asset_availability", "")),
+        "license_gating_status": str(scene.get("license_gating_status", "")),
+    }
+
+
+def _manifest_path_for(row: dict[str, str]) -> Path | None:
+    run_id = str(row.get("run_id", ""))
+    source = str(row.get("_source", ""))
+    if not run_id or not source:
+        return None
+    source_path = Path(source)
+    if len(source_path.parents) >= 3 and source_path.parent.parent.name == "results":
+        return source_path.parent.parent.parent / "manifests" / "run_manifests" / f"{run_id}.json"
+    return source_path.parent / "run_manifests" / f"{run_id}.json"
 
 
 def _fallback_matches_row(
@@ -587,7 +646,7 @@ def _integration_effectiveness_summary(evidence_rows: list[dict[str, Any]]) -> d
     full_contract_rows = [
         row
         for row in evidence_rows
-        if row.get("adapter_config") in {"full_contract", "full_temporal_contract"}
+        if row.get("adapter_config") in FULL_CONTRACT_ADAPTERS
     ]
     full_contract_audit_valid = [
         row for row in full_contract_rows if row.get("audit_valid") == "true"
@@ -618,6 +677,55 @@ def _integration_effectiveness_summary(evidence_rows: list[dict[str, Any]]) -> d
         "semantic_ablation_metric_pairs": semantic_pairs["metric_pairs"],
         "semantic_ablation_command_proxy_completed_runs": len(command_proxy_rows),
         "semantic_ablation_command_proxy_rejected_runs": len(command_proxy_rejected),
+    }
+
+
+def _scenario_coverage_summary(evidence_rows: list[dict[str, Any]]) -> dict[str, Any]:
+    scene_rows: dict[str, dict[str, Any]] = {}
+    for row in evidence_rows:
+        scene_id = str(row.get("scene_id", ""))
+        if not scene_id:
+            continue
+        scene_rows.setdefault(scene_id, row)
+
+    verified_categories = sorted(
+        {
+            str(row.get("scenario_category", ""))
+            for row in scene_rows.values()
+            if row.get("categories_verified") == "true"
+            and str(row.get("scenario_category", ""))
+            and "unclassified" not in str(row.get("scenario_category", ""))
+        }
+    )
+    required_categories = set(REQUIRED_SCENARIO_CATEGORIES)
+    verified_required = sorted(required_categories.intersection(verified_categories))
+    unclassified_scene_count = sum(
+        row.get("categories_verified") != "true"
+        or "unclassified" in str(row.get("scenario_category", ""))
+        for row in scene_rows.values()
+    )
+    coverage_claimed = (
+        bool(scene_rows)
+        and unclassified_scene_count == 0
+        and required_categories.issubset(set(verified_categories))
+    )
+    return {
+        "rule": (
+            "Scenario-category coverage can be claimed only when authoritative metadata "
+            "verifies each required category for the retained closed-loop scene set. "
+            "Availability-selected unclassified scenes count as integration instances, "
+            "not as coverage evidence."
+        ),
+        "closed_loop_scene_count": len(scene_rows),
+        "required_category_count": len(REQUIRED_SCENARIO_CATEGORIES),
+        "required_categories": list(REQUIRED_SCENARIO_CATEGORIES),
+        "verified_required_category_count": len(verified_required),
+        "verified_required_categories": verified_required,
+        "verified_category_count": len(verified_categories),
+        "verified_categories": verified_categories,
+        "unclassified_closed_loop_scene_count": unclassified_scene_count,
+        "scenario_category_coverage_claimed": coverage_claimed,
+        "scenario_category_coverage_claimed_int": 1 if coverage_claimed else 0,
     }
 
 
@@ -760,6 +868,12 @@ def _write_summary_csv(path: Path, summary: dict[str, Any]) -> None:
         "valid_full_contract_false_block_denominator",
         "semantic_ablation_completed_pairs",
         "semantic_ablation_metric_pairs",
+        "closed_loop_scene_count",
+        "verified_required_category_count",
+        "required_category_count",
+        "unclassified_closed_loop_scene_count",
+        "scenario_category_coverage_claimed",
+        "scenario_category_coverage_claimed_int",
         "contract_valid_closed_loop_rows",
         "integration_or_evidence_invalid_closed_loop_rows",
         "claim_valid_policy_benchmark_rows",
@@ -774,6 +888,7 @@ def _write_summary_csv(path: Path, summary: dict[str, Any]) -> None:
         "data_hash",
     ]
     effectiveness = summary.get("integration_effectiveness", {})
+    scenario_coverage = summary.get("scenario_coverage", {})
     attribution = summary.get("failure_attribution", {})
     row: dict[str, str] = {}
     for field in fields:
@@ -781,6 +896,8 @@ def _write_summary_csv(path: Path, summary: dict[str, Any]) -> None:
             row[field] = str(summary[field])
         elif isinstance(effectiveness, dict) and field in effectiveness:
             row[field] = str(effectiveness[field])
+        elif isinstance(scenario_coverage, dict) and field in scenario_coverage:
+            row[field] = str(scenario_coverage[field])
         elif isinstance(attribution, dict) and field in attribution:
             row[field] = str(attribution[field])
         else:
@@ -898,6 +1015,18 @@ def _write_tables(output: Path, summary: dict[str, Any], rows: list[dict[str, st
         effectiveness, "semantic_ablation_command_proxy_rejected_runs"
     )
     attribution = summary.get("failure_attribution", {})
+    scenario_coverage = summary.get("scenario_coverage", {})
+    closed_loop_scene_count = _summary_int(scenario_coverage, "closed_loop_scene_count")
+    required_category_count = _summary_int(scenario_coverage, "required_category_count")
+    verified_required_category_count = _summary_int(
+        scenario_coverage, "verified_required_category_count"
+    )
+    unclassified_closed_loop_scene_count = _summary_int(
+        scenario_coverage, "unclassified_closed_loop_scene_count"
+    )
+    scenario_category_coverage_claimed = (
+        1 if scenario_coverage.get("scenario_category_coverage_claimed") is True else 0
+    )
     contract_valid_closed_loop = _summary_int(
         attribution, "contract_valid_closed_loop_rows"
     )
@@ -995,6 +1124,11 @@ def _write_tables(output: Path, summary: dict[str, Any], rows: list[dict[str, st
         + f"\\newcommand{{\\CVMFullContractAuditValidRuns}}{{{full_contract_audit_valid}}}\n"
         + f"\\newcommand{{\\CVMValidFullContractFalseBlockedRuns}}{{{false_blocked}}}\n"
         + f"\\newcommand{{\\CVMValidFullContractFalseBlockDenominator}}{{{false_block_denominator}}}\n"
+        + f"\\newcommand{{\\CVMClosedLoopSceneCount}}{{{closed_loop_scene_count}}}\n"
+        + f"\\newcommand{{\\CVMRequiredScenarioCategoryCount}}{{{required_category_count}}}\n"
+        + f"\\newcommand{{\\CVMVerifiedRequiredScenarioCategoryCount}}{{{verified_required_category_count}}}\n"
+        + f"\\newcommand{{\\CVMUnclassifiedClosedLoopSceneCount}}{{{unclassified_closed_loop_scene_count}}}\n"
+        + f"\\newcommand{{\\CVMScenarioCategoryCoverageClaimed}}{{{scenario_category_coverage_claimed}}}\n"
         + f"\\newcommand{{\\CVMContractValidClosedLoopRows}}{{{contract_valid_closed_loop}}}\n"
         + f"\\newcommand{{\\CVMIntegrationInvalidClosedLoopRows}}{{{integration_invalid_closed_loop}}}\n"
         + f"\\newcommand{{\\CVMClaimValidPolicyBenchmarkRows}}{{{claim_valid_policy_benchmark}}}\n"

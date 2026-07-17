@@ -173,11 +173,37 @@ class AggregateCVMTests(unittest.TestCase):
         self.assertEqual(1, summary["precondition_blocked_rows"])
         self.assertEqual(1, summary["synthetic_diagnostic_rows"])
         self.assertEqual(0, summary["claim_valid_policy_benchmark_rows"])
-        self.assertEqual(0, summary["policy_behavior_attributable_rows"])
+        self.assertEqual(1, summary["policy_behavior_attributable_rows"])
         self.assertEqual(0, summary["policy_failure_attributable_rows"])
         self.assertEqual(1, summary["integration_failure_attributable_rows"])
-        self.assertEqual(3, summary["diagnostic_not_policy_rows"])
-        self.assertEqual(4, summary["non_policy_attributed_rows"])
+        self.assertEqual(2, summary["diagnostic_not_policy_rows"])
+        self.assertEqual(3, summary["non_policy_attributed_rows"])
+
+    def test_scenario_coverage_requires_authoritative_category_metadata(self) -> None:
+        module = _load_module()
+        evidence = [
+            {
+                "run_id": "scene-a-run",
+                "scene_id": "scene-a",
+                "scenario_category": "available_front_camera_26_02_unclassified",
+                "categories_verified": "false",
+            },
+            {
+                "run_id": "scene-b-run",
+                "scene_id": "scene-b",
+                "scenario_category": "intersection",
+                "categories_verified": "true",
+            },
+        ]
+
+        summary = module._scenario_coverage_summary(evidence)
+
+        self.assertEqual(2, summary["closed_loop_scene_count"])
+        self.assertEqual(6, summary["required_category_count"])
+        self.assertEqual(1, summary["verified_required_category_count"])
+        self.assertEqual(1, summary["unclassified_closed_loop_scene_count"])
+        self.assertFalse(summary["scenario_category_coverage_claimed"])
+        self.assertEqual(0, summary["scenario_category_coverage_claimed_int"])
 
     def test_empty_frames_csv_keeps_public_frame_schema(self) -> None:
         module = _load_module()

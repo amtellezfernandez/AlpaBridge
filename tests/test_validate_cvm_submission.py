@@ -79,15 +79,23 @@ def _write_paper_number_fixture(root: Path, module) -> tuple[Path, Path, Path, P
             "semantic_ablation_command_proxy_completed_runs": 2,
             "semantic_ablation_command_proxy_rejected_runs": 2,
         },
+        "scenario_coverage": {
+            "closed_loop_scene_count": 4,
+            "required_category_count": 6,
+            "verified_required_category_count": 0,
+            "unclassified_closed_loop_scene_count": 4,
+            "scenario_category_coverage_claimed": False,
+            "scenario_category_coverage_claimed_int": 0,
+        },
         "failure_attribution": {
             "contract_valid_closed_loop_rows": 3,
             "integration_or_evidence_invalid_closed_loop_rows": 1,
             "claim_valid_policy_benchmark_rows": 0,
-            "policy_behavior_attributable_rows": 0,
+            "policy_behavior_attributable_rows": 3,
             "policy_failure_attributable_rows": 0,
             "integration_failure_attributable_rows": 2,
-            "diagnostic_not_policy_rows": 7,
-            "non_policy_attributed_rows": 10,
+            "diagnostic_not_policy_rows": 4,
+            "non_policy_attributed_rows": 7,
             "synthetic_diagnostic_rows": 3,
         },
         "semantic_ablation_deltas": {
@@ -712,6 +720,41 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             failures,
         )
 
+    def test_summary_scenario_coverage_rejects_claim_with_unclassified_scenes(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "summary.json"
+            path.write_text(
+                json.dumps(
+                    {
+                        "scenario_coverage": {
+                            "rule": (
+                                "authoritative metadata is required because unclassified "
+                                "scenes are integration instances, not coverage evidence"
+                            ),
+                            "closed_loop_scene_count": 6,
+                            "required_category_count": 6,
+                            "verified_required_category_count": 5,
+                            "unclassified_closed_loop_scene_count": 1,
+                            "scenario_category_coverage_claimed": True,
+                            "scenario_category_coverage_claimed_int": 1,
+                        }
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            failures = module._summary_scenario_coverage_failures(path)
+
+        self.assertIn(
+            f"summary_scenario_coverage_claim_without_required_categories:{path}",
+            failures,
+        )
+        self.assertIn(
+            f"summary_scenario_coverage_claim_with_unclassified_scenes:{path}",
+            failures,
+        )
+
     def test_readme_summary_count_check_accepts_synced_counts(self) -> None:
         module = _load_module()
         with tempfile.TemporaryDirectory() as tmp:
@@ -721,8 +764,8 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             )
             readme = (
                 "The generated aggregate makes the boundary numeric: current artifacts contain "
-                "`0` policy-attributable behavior rows, `0` policy-attributable failure rows, "
-                "`2` integration/precondition blocker rows, and `7` completed diagnostic rows "
+                "`3` policy-attributable behavior rows, `0` policy-attributable failure rows, "
+                "`2` integration/precondition blocker rows, and `4` completed non-policy diagnostic rows "
                 "that remain non-policy-attributed.\n"
             )
 
@@ -745,7 +788,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
                 "`999` policy-attributable behavior rows, "
                 "`0` policy-attributable failure rows, "
                 "`2` integration/precondition blocker rows, and "
-                "`7` completed diagnostic rows.\n"
+                "`4` completed non-policy diagnostic rows.\n"
             )
 
             failures = module._readme_summary_count_failures(
@@ -756,7 +799,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
 
         self.assertIn(
             "readme_summary_count_mismatch:README.md:"
-            "policy_behavior_attributable_rows:`0` policy-attributable behavior rows",
+            "policy_behavior_attributable_rows:`3` policy-attributable behavior rows",
             failures,
         )
 
@@ -931,12 +974,20 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
                     "semantic_ablation_command_proxy_rejected_runs": 9,
                     "semantic_ablation_command_proxy_completed_runs": 9,
                 },
+                "scenario_coverage": {
+                    "closed_loop_scene_count": 6,
+                    "required_category_count": 6,
+                    "verified_required_category_count": 0,
+                    "unclassified_closed_loop_scene_count": 6,
+                    "scenario_category_coverage_claimed": False,
+                    "scenario_category_coverage_claimed_int": 0,
+                },
                 "failure_attribution": {
                     "contract_valid_closed_loop_rows": 45,
                     "integration_or_evidence_invalid_closed_loop_rows": 9,
-                    "policy_behavior_attributable_rows": 0,
+                    "policy_behavior_attributable_rows": 45,
                     "policy_failure_attributable_rows": 0,
-                    "non_policy_attributed_rows": 145,
+                    "non_policy_attributed_rows": 100,
                     "claim_valid_policy_benchmark_rows": 0,
                 },
             }
@@ -956,11 +1007,14 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
                         "- Valid full-contract false-blocked rows: 0/45.",
                         "- Matched semantic metric pairs: 9/9.",
                         "- Command-only rows rejected as non-claim-valid: 9/9.",
+                        "- Closed-loop unique scenes: 6.",
+                        "- Verified required scenario categories: 0/6.",
+                        "- Unclassified closed-loop scenes: 6.",
                         "- Contract-valid closed-loop rows: 45.",
                         "- Integration/evidence-invalid closed-loop rows: 9.",
-                        "- Policy-attributable behavior rows: 0.",
+                        "- Policy-attributable behavior rows: 45.",
                         "- Policy-attributable failure rows: 0.",
-                        "- Non-policy-attributed rows: 145.",
+                        "- Non-policy-attributed rows: 100.",
                         "- Claim-valid policy benchmark rows: 0.",
                         "- Planned rows: 0.",
                         "- Blocked rows: 36.",
@@ -1000,12 +1054,20 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
                     "semantic_ablation_command_proxy_rejected_runs": 0,
                     "semantic_ablation_command_proxy_completed_runs": 0,
                 },
+                "scenario_coverage": {
+                    "closed_loop_scene_count": 1,
+                    "required_category_count": 6,
+                    "verified_required_category_count": 0,
+                    "unclassified_closed_loop_scene_count": 1,
+                    "scenario_category_coverage_claimed": False,
+                    "scenario_category_coverage_claimed_int": 0,
+                },
                 "failure_attribution": {
                     "contract_valid_closed_loop_rows": 1,
                     "integration_or_evidence_invalid_closed_loop_rows": 0,
-                    "policy_behavior_attributable_rows": 0,
+                    "policy_behavior_attributable_rows": 1,
                     "policy_failure_attributable_rows": 0,
-                    "non_policy_attributed_rows": 2,
+                    "non_policy_attributed_rows": 1,
                     "claim_valid_policy_benchmark_rows": 0,
                 },
             }
@@ -1416,7 +1478,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
                 "| `uv run python -m pytest -q tests/test_validate_cvm_submission.py` | Passed. |\n"
                 "| `make paper-verify PYTHON='uv run python'` | Passed. |\n"
                 "| `make cvm-check PYTHON='uv run python'` | Passed with "
-                "306 passed, 14 skipped, and 15 subtests passed. |\n"
+                "308 passed, 14 skipped, and 15 subtests passed. |\n"
                 "| `make verify` | Passed with 62.45% against the configured 33.0% minimum. |\n",
                 encoding="utf-8",
             )

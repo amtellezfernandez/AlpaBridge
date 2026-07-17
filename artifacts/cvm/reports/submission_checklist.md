@@ -65,9 +65,9 @@ Additional release-specific checks:
   time alone.
 - [x] `make cvm-eval` preserves completed evidence when rerun without `--execute`.
 - [x] `pre-commit run --all-files` passes without modifying files.
-- [x] Every public run manifest carries validated integration-vs-policy
-  `failure_attribution`, including separate policy-behavior and policy-failure
-  attribution fields.
+- [x] Every public run manifest carries validated pre-audit
+  integration-vs-policy `failure_attribution`, including separate
+  policy-behavior and policy-failure attribution fields.
 - [x] Failure attribution requires semantic, temporal, lifecycle, deployment,
   and evidence gates before policy behavior or policy failure can be assigned.
 - [x] README, paper source, run manifests, and aggregate summary are all
@@ -81,6 +81,8 @@ Additional release-specific checks:
   explicit-gap coverage.
 - [x] Every public run manifest carries validated `scene` metadata and
   `scenario_category` without claiming unsupported scenario-category coverage.
+- [x] Aggregate scenario coverage reports 0/6 verified required categories and
+  6 unclassified closed-loop scenes, so no unsupported coverage claim is made.
 - [x] `frames.csv` exposes the required public-safe frame-level schema without
   bundling restricted sensor frames or fabricating unavailable frame rows.
 

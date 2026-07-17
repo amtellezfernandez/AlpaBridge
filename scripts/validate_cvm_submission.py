@@ -170,7 +170,7 @@ BASELINE_REPORT_REQUIRED_TERMS = (
     "make cvm-check",
     "make paper-verify",
     "make verify",
-    "306 passed, 14 skipped, and 15 subtests passed",
+    "308 passed, 14 skipped, and 15 subtests passed",
     "62.45% against the configured 33.0% minimum",
 )
 CONTRACT_TEST_AUDIT_REQUIRED_TERMS = (
@@ -244,6 +244,15 @@ REQUIRED_SUMMARY_ATTRIBUTION_FIELDS = (
     "diagnostic_not_policy_rows",
     "non_policy_attributed_rows",
 )
+REQUIRED_SCENARIO_COVERAGE_FIELDS = (
+    "rule",
+    "closed_loop_scene_count",
+    "required_category_count",
+    "verified_required_category_count",
+    "unclassified_closed_loop_scene_count",
+    "scenario_category_coverage_claimed",
+    "scenario_category_coverage_claimed_int",
+)
 CLAIM_MATRIX_SUMMARY_LINES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("Configured rows", ("total_rows",)),
     ("Attempted rows", ("attempted_runs",)),
@@ -276,6 +285,21 @@ CLAIM_MATRIX_SUMMARY_LINES: tuple[tuple[str, tuple[str, ...]], ...] = (
             "integration_effectiveness.semantic_ablation_command_proxy_rejected_runs",
             "integration_effectiveness.semantic_ablation_command_proxy_completed_runs",
         ),
+    ),
+    (
+        "Closed-loop unique scenes",
+        ("scenario_coverage.closed_loop_scene_count",),
+    ),
+    (
+        "Verified required scenario categories",
+        (
+            "scenario_coverage.verified_required_category_count",
+            "scenario_coverage.required_category_count",
+        ),
+    ),
+    (
+        "Unclassified closed-loop scenes",
+        ("scenario_coverage.unclassified_closed_loop_scene_count",),
     ),
     (
         "Contract-valid closed-loop rows",
@@ -323,7 +347,7 @@ README_SUMMARY_COUNT_SNIPPETS: tuple[tuple[str, str, str], ...] = (
     (
         "diagnostic_not_policy_rows",
         "failure_attribution.diagnostic_not_policy_rows",
-        "completed diagnostic rows",
+        "completed non-policy diagnostic rows",
     ),
 )
 PAPER_NUMBER_JSON_FIELDS: tuple[tuple[str, str], ...] = (
@@ -344,6 +368,23 @@ PAPER_NUMBER_JSON_FIELDS: tuple[tuple[str, str], ...] = (
     (
         "CVMValidFullContractFalseBlockDenominator",
         "integration_effectiveness.valid_full_contract_false_block_denominator",
+    ),
+    ("CVMClosedLoopSceneCount", "scenario_coverage.closed_loop_scene_count"),
+    (
+        "CVMRequiredScenarioCategoryCount",
+        "scenario_coverage.required_category_count",
+    ),
+    (
+        "CVMVerifiedRequiredScenarioCategoryCount",
+        "scenario_coverage.verified_required_category_count",
+    ),
+    (
+        "CVMUnclassifiedClosedLoopSceneCount",
+        "scenario_coverage.unclassified_closed_loop_scene_count",
+    ),
+    (
+        "CVMScenarioCategoryCoverageClaimed",
+        "scenario_coverage.scenario_category_coverage_claimed_int",
     ),
     ("CVMContractValidClosedLoopRows", "failure_attribution.contract_valid_closed_loop_rows"),
     (
@@ -432,6 +473,11 @@ GENERATED_TABLE_JSON_FIELDS: tuple[str, ...] = (
     "integration_effectiveness.semantic_ablation_metric_pairs",
     "integration_effectiveness.semantic_ablation_command_proxy_completed_runs",
     "integration_effectiveness.semantic_ablation_command_proxy_rejected_runs",
+    "scenario_coverage.closed_loop_scene_count",
+    "scenario_coverage.verified_required_category_count",
+    "scenario_coverage.required_category_count",
+    "scenario_coverage.unclassified_closed_loop_scene_count",
+    "scenario_coverage.scenario_category_coverage_claimed_int",
     "failure_attribution.policy_behavior_attributable_rows",
     "failure_attribution.policy_failure_attributable_rows",
     "failure_attribution.integration_failure_attributable_rows",
@@ -777,6 +823,7 @@ def main() -> int:
         failures.append("missing_or_invalid_summary_data_hash")
     else:
         failures.extend(_summary_attribution_failures(args.results / "summary.json"))
+        failures.extend(_summary_scenario_coverage_failures(args.results / "summary.json"))
         failures.extend(
             _summary_timestamp_failures(
                 results_dir=args.results,
@@ -1280,13 +1327,49 @@ def _summary_attribution_failures(path: Path) -> list[str]:
     policy_behavior = _summary_int(attribution, "policy_behavior_attributable_rows")
     policy_failure = _summary_int(attribution, "policy_failure_attributable_rows")
     claim_valid_policy = _summary_int(attribution, "claim_valid_policy_benchmark_rows")
+    contract_valid = _summary_int(attribution, "contract_valid_closed_loop_rows")
     non_policy = _summary_int(attribution, "non_policy_attributed_rows")
     if policy_failure > policy_behavior:
         failures.append(f"summary_policy_failure_exceeds_behavior:{path}")
-    if claim_valid_policy != policy_behavior:
-        failures.append(f"summary_claim_valid_policy_behavior_mismatch:{path}")
+    if claim_valid_policy > policy_behavior:
+        failures.append(f"summary_claim_valid_policy_exceeds_behavior:{path}")
+    if policy_behavior != contract_valid:
+        failures.append(f"summary_policy_behavior_contract_valid_mismatch:{path}")
     if isinstance(total_rows, int) and non_policy + policy_behavior != total_rows:
         failures.append(f"summary_policy_attribution_partition_mismatch:{path}")
+    return failures
+
+
+def _summary_scenario_coverage_failures(path: Path) -> list[str]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return [f"summary_scenario_coverage_unreadable:{path}"]
+    coverage = payload.get("scenario_coverage")
+    if not isinstance(coverage, dict):
+        return [f"summary_scenario_coverage_missing:{path}"]
+
+    failures: list[str] = []
+    for field in REQUIRED_SCENARIO_COVERAGE_FIELDS:
+        if field not in coverage:
+            failures.append(f"summary_scenario_coverage_field_missing:{path}:{field}")
+    rule = str(coverage.get("rule", ""))
+    for term in ("authoritative metadata", "unclassified scenes", "coverage evidence"):
+        if term not in rule:
+            failures.append(f"summary_scenario_coverage_rule_missing:{path}:{term}")
+    required = _summary_int(coverage, "required_category_count")
+    verified_required = _summary_int(coverage, "verified_required_category_count")
+    unclassified = _summary_int(coverage, "unclassified_closed_loop_scene_count")
+    claimed = coverage.get("scenario_category_coverage_claimed") is True
+    claimed_int = _summary_int(coverage, "scenario_category_coverage_claimed_int")
+    if claimed_int not in {0, 1}:
+        failures.append(f"summary_scenario_coverage_claim_flag_invalid:{path}")
+    if claimed != bool(claimed_int):
+        failures.append(f"summary_scenario_coverage_claim_flag_mismatch:{path}")
+    if claimed and verified_required < required:
+        failures.append(f"summary_scenario_coverage_claim_without_required_categories:{path}")
+    if claimed and unclassified:
+        failures.append(f"summary_scenario_coverage_claim_with_unclassified_scenes:{path}")
     return failures
 
 

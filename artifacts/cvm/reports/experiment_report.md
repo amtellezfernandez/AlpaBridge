@@ -37,9 +37,10 @@ being treated as valid policy evidence.
 - Integration/evidence-invalid closed-loop rows: 9.
 - Precondition-blocked rows: 36.
 - Synthetic diagnostic rows: 55.
-- Policy-attributable behavior rows: 0.
+- Policy-attributable behavior rows: 45.
 - Policy-attributable failure rows: 0.
-- Non-policy-attributed rows: 145.
+- Completed non-policy diagnostic rows: 64.
+- Non-policy-attributed rows: 100.
 - Claim-valid policy benchmark rows: 0.
 
 Behavior is policy-attributable only after route/sensor audit, lifecycle state,
@@ -57,6 +58,9 @@ passes and the retained failure layer is policy.
   `available_front_camera_26_02_unclassified` because the public repository does
   not expose authoritative straight/turn/lane-change/traffic/occlusion/merge
   labels.
+- The generated coverage gate reports 0/6 verified required scenario categories
+  and 6 unclassified closed-loop scenes; scenario-category coverage is not
+  claimed.
 - Synthetic lifecycle and fault rows are marked as public synthetic harness
   scenes, not closed-loop scene rollouts.
 

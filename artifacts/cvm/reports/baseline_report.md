@@ -11,7 +11,7 @@ not tracked; rerun the commands below to reproduce the release checks.
 |---|---|---|---:|---:|---|
 | `uv run python -m pytest -q tests/test_validate_cvm_submission.py` | 2026-07-17T22:56:53Z | 2026-07-17T22:56:54Z | 0.449s | 0 | 70 passed, including metadata, PDF, generated-artifact, public-hygiene, CVM acronym-definition, repository-inventory drift, baseline-report hygiene, and credential-hygiene validation fixtures. |
 | `make paper-verify PYTHON='uv run python'` | 2026-07-17T22:56:54Z | 2026-07-17T22:56:56Z | 1.739s | 0 | Rebuilt 5-page root `wod2sim.pdf` at 139638 bytes and ran submission validation. |
-| `make cvm-check PYTHON='uv run python'` | 2026-07-17T22:56:56Z | 2026-07-17T22:56:59Z | 3.497s | 0 | Ruff passed; conformance passed with 306 passed, 14 skipped, and 15 subtests passed; submission validation passed. |
+| `make cvm-check PYTHON='uv run python'` | 2026-07-17T22:56:56Z | 2026-07-17T22:56:59Z | 3.497s | 0 | Ruff passed; conformance passed with 308 passed, 14 skipped, and 15 subtests passed; submission validation passed. |
 | `make verify` | 2026-07-17T22:56:59Z | 2026-07-17T22:57:42Z | 42.510s | 0 | Ruff, conformance, coverage, smoke install, package build, paper rebuild, and submission validation passed; coverage was 62.45% against the configured 33.0% minimum. |
 
 ## Important Warnings
@@ -37,15 +37,21 @@ Waymo compatibility claim.
 
 The validator now treats the integration-vs-policy boundary as a release gate:
 blocked, failed, planned, and diagnostic rows cannot be labeled
-policy-attributable unless the corresponding manifest is explicitly
-claim-valid. The manifest rule must name semantic, temporal, lifecycle,
-deployment, and evidence gates before policy behavior or policy failure can be
-attributed to the integrated policy.
+policy-failure-attributable unless the corresponding manifest is explicitly
+claim-valid. Aggregate summary logic separately labels completed full-contract
+audit-valid rows as policy-behavior-attributable diagnostic evidence. The
+manifest rule must name semantic, temporal, lifecycle, deployment, and evidence
+gates before policy behavior or policy failure can be attributed to the
+integrated policy.
 
 The latest refresh also validates the aggregate-level attribution partition:
-policy-failure rows cannot exceed policy-behavior rows, claim-valid policy rows
-must match policy-behavior-attributable rows, and policy-attributed plus
+policy-failure rows cannot exceed policy-behavior rows, claim-valid benchmark
+rows cannot exceed policy-behavior-attributable rows, policy-behavior rows must
+match contract-valid closed-loop rows, and policy-attributed plus
 non-policy-attributed rows must cover the full CVM denominator.
+It also validates the scenario-coverage partition: scenario-category coverage
+cannot be claimed while required categories are unverified or any closed-loop
+scene remains unclassified.
 It also checks that the aggregate-status bullets in
 `artifacts/cvm/reports/claim_evidence_matrix.md` match the current
 `artifacts/cvm/results/summary.json` counts.

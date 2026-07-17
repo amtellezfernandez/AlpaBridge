@@ -58,14 +58,16 @@ host-specific paths, runtime identifiers, and local simulator state.
 - Synthetic diagnostic rows: 55.
 - Blocked rows: 36, all `direct_actor_oracle_proxy_missing`.
 - Claim-valid policy benchmark rows: 0.
-- Policy-attributable behavior rows: 0.
+- Policy-attributable behavior rows: 45.
 - Policy-attributable failure rows: 0.
-- Non-policy-attributed rows: 145.
+- Completed non-policy diagnostic rows: 64.
+- Non-policy-attributed rows: 100.
 - Aggregate data hash: `eb4351d5729a4a9f56e828b2ab7ddddf08a206f33b8a417d5153c1e3aba229d5`.
-- Every public run manifest carries `failure_attribution`, including
-  policy-attributable behavior status, policy-failure status, claim-valid
-  benchmark status, failure layer/code, and the integration-vs-policy
-  attribution rule.
+- Every public run manifest carries pre-audit `failure_attribution`, including
+  policy-failure status, claim-valid benchmark status, failure layer/code, and
+  the integration-vs-policy attribution rule. Aggregate `summary.json` upgrades
+  completed full-contract audit-valid rows to policy-behavior-attributable
+  diagnostic evidence.
 - Every public run manifest carries `scene` metadata and top-level
   `scenario_category`. Local 26.02 front-camera rows are recorded as
   `available_front_camera_26_02_unclassified`; synthetic harness rows are
@@ -82,6 +84,8 @@ host-specific paths, runtime identifiers, and local simulator state.
   from the current prediction scene.
 - Learned `token_dagger_bc` requires a legitimate local checkpoint hash.
 - Scene categories are recorded but not authoritatively verified from public
-  metadata; scenario-category coverage is not claimed.
+  metadata; the generated coverage gate reports 0/6 verified required scenario
+  categories and 6 unclassified closed-loop scenes, so scenario-category
+  coverage is not claimed.
 - Raw local simulator run directories, logs, and environment snapshots are not
   tracked in the public release.
