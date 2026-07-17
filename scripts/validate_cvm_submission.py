@@ -147,6 +147,8 @@ FORBIDDEN_TEXT_PATTERNS: tuple[tuple[str, Pattern[str]], ...] = (
     ("outperformance_claim", re.compile(r"\bwe\s+outperform\b", re.IGNORECASE)),
     ("sota_claim", re.compile(r"\bSOTA\b")),
     ("paper_draft_label", re.compile(r"\bpaper\s+draft\b", re.IGNORECASE)),
+    ("weak_adapter_artifact_label", re.compile(r"\badapter\s+and\s+evaluation\s+artifact\b", re.IGNORECASE)),
+    ("weak_artifact_scaffold_label", re.compile(r"\bartifact\s+scaffold\b", re.IGNORECASE)),
     (
         "venue_coupled_artifact_name",
         re.compile(
@@ -172,7 +174,7 @@ DUPLICATE_MANUSCRIPT_PDFS = (
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Validate the WOD2Sim paper artifact.")
+    parser = argparse.ArgumentParser(description="Validate the WOD2Sim paper release package.")
     parser.add_argument("--paper", default=Path("wod2sim.pdf"), type=Path)
     parser.add_argument("--source", default=Path("paper/cvm"), type=Path)
     parser.add_argument("--results", default=Path("artifacts/cvm/results"), type=Path)

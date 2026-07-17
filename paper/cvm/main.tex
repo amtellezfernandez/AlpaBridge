@@ -325,29 +325,28 @@ Integrating a dataset-trained trajectory policy into distributed closed-loop sim
 requires more than input/output conversion. WOD2Sim formulates the boundary as five
 contracts: semantic, temporal, lifecycle, deployment, and evidence. The current
 repository implements the contract-oriented release surface and a reproducible CVM
-artifact scaffold. The generated CVM aggregate separates completed/audit-valid rollout
+evidence pipeline. The generated CVM aggregate separates completed/audit-valid rollout
 evidence, planned rows, true blockers, and synthetic diagnostics, but it still reports
 no full claim-valid benchmark. That separation is the useful integration outcome: it
 prevents route, timing, lifecycle, deployment, and evidence failures from being
 misreported as policy failures until the complete audited matrices exist.
 
-\appendix[WOD2Sim Repository Artifact Map]
+\appendix[WOD2Sim Repository Evidence Map]
 
-The repository and paper share one release surface. The canonical manuscript artifact is
-the root-level PDF. The paper source, bibliography, generated tables, figure inputs,
-matrix configuration, row manifests, aggregate CSV and JSON files, and release reports
-are all kept in named repository directories and rebuilt by the top-level release
-targets. Obsolete manuscript sources were removed from the release tree so the root PDF
-and \texttt{paper/cvm} source form the single paper surface.
+The repository and paper share one release surface. The canonical manuscript is the
+root-level PDF. The paper source, bibliography, generated tables, figure inputs, matrix
+configuration, row manifests, aggregate CSV and JSON files, and release reports are all
+kept in named repository directories and rebuilt by the top-level release targets.
+Obsolete manuscript sources were removed from the release tree so the root PDF and
+\texttt{paper/cvm} source form the single paper surface.
 
-The implementation artifacts cited by this paper are repository-native. Simulator
-adapters implement the semantic and temporal contracts; CLI commands and script wrappers
-materialize launch, readiness, audit, support-bundle, and reproduction steps; aggregation
-regenerates every number, table, and figure used in the build from the retained matrix
-artifacts.
+Repository-native code provides the implementation evidence. Simulator adapters implement
+the semantic and temporal contracts; CLI commands materialize launch, readiness, audit,
+support-bundle, and reproduction steps; aggregation regenerates every number, table, and
+figure used in the build from retained matrix evidence.
 
 This appendix is a traceability map, not an additional result. The current root PDF,
-README, reports, and generated artifacts all preserve the same claim boundary: synthetic
+README, reports, and generated evidence all preserve the same claim boundary: synthetic
 diagnostics are public service-harness evidence, while closed-loop scene rows are not
 claim-valid until executed, audited, and retained in the aggregate denominators.
 
@@ -377,14 +376,14 @@ The release package also records what is absent. Gated scenes, private credentia
 learned checkpoints, and proprietary container layers are not bundled. When they are
 needed for a future rollout, the repository records identifiers, hashes, commands, and
 precondition states so that restricted material does not become part of the public
-artifact and missing inputs are not misreported as policy behavior.
+release and missing inputs are not misreported as policy behavior.
 
-The intended reading order for the public artifact is therefore not only the paper. The
+The intended reading order for the public release is therefore not only the paper. The
 repository inventory records the source tree, environment, build commands, and known
 gated prerequisites. The contract-test audit maps each required semantic, temporal,
 lifecycle, deployment/plugin-dependency, evidence, and fault-injection behavior to executable
 tests or to an explicit gap. The claim-evidence matrix is the final gate: a statement
-may appear as a paper claim only when it names the producing command, test, and artifact
+may appear as a paper claim only when it names the producing command, test, and evidence
 that support it. The blockers report keeps unavailable closed-loop rows visible, while
 planned rows remain visible without being misclassified as infrastructure blockers.
 

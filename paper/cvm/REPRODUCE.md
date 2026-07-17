@@ -1,6 +1,6 @@
 # Reproducing Current WOD2Sim CVM Artifacts
 
-Current status: buildable WOD2Sim paper artifact with completed dependency-light
+Current status: buildable WOD2Sim paper package with completed dependency-light
 core rows, completed semantic closed-loop ablation rows, public synthetic
 lifecycle/fault diagnostics, and explicit direct-actor blockers.
 
@@ -10,8 +10,7 @@ lifecycle/fault diagnostics, and explicit direct-actor blockers.
 make cvm-check PYTHON=./.venv/bin/python
 ```
 
-This runs lint, dependency-light conformance tests, and paper-artifact
-validation.
+This runs lint, dependency-light conformance tests, and paper validation.
 
 ## Matrix Expansion And Execution
 

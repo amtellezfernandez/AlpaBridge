@@ -15,7 +15,8 @@
 
 WOD2Sim preserves the policy information lost at the dataset-to-simulator
 boundary: route geometry, policy-facing scene state, trajectory timing, and run
-provenance. It is an adapter and evaluation artifact, not a new driving policy.
+provenance. It is a contract-validation integration framework, not a new
+driving policy.
 
 This repository has one canonical paper PDF: [`wod2sim.pdf`](wod2sim.pdf). The
 paper source lives in [`paper/cvm`](paper/cvm), while the generated evidence,

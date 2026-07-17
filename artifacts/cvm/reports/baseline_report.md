@@ -4,7 +4,7 @@ This report records the command evidence for the neutral CVM release surface.
 Commands were run from the repository root on 2026-07-17 with
 `./.venv/bin/python` because bare `python` is not available on this shell PATH.
 Temporary raw logs were written under `/tmp` and are not part of the public
-artifact.
+package.
 
 ## Baseline And Quality Gates
 
@@ -55,7 +55,7 @@ artifact.
 ## Current Interpretation
 
 The release status is complete with documented limitations for the CVM paper
-artifact. It supports dependency-light core integration evidence, semantic
+package. It supports dependency-light core integration evidence, semantic
 route-boundary ablation evidence, false-block accounting for audit-valid rows,
 and synthetic lifecycle/fault diagnostics. It does not support a policy-quality
 benchmark, learned-policy result, direct-actor temporal ablation, or official
