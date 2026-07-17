@@ -7,6 +7,21 @@ policy runtime.
 not to an official Waymo challenge submission package. Reports should state the
 actual task specification, scene source, and asset revision they use.
 
+## Failure Attribution Rule
+
+Separate integration failures from policy failures before reporting any behavior
+metric. WOD2Sim uses this operational rule:
+
+| Row state | Attribution |
+| --- | --- |
+| Route, sensor, temporal, lifecycle, deployment, or evidence contract fails. | Integration/precondition/evidence failure; do not score as policy behavior. |
+| Row executes and the route/sensor audit passes, but benchmark prerequisites are incomplete. | Contract-valid diagnostic rollout; inspectable, but not a public policy benchmark. |
+| Row executes, passes all audits, satisfies the benchmark gate, and is retained in the aggregate denominator. | Policy behavior may be analyzed and compared. |
+
+This boundary is the main evaluation object. It prevents a route adapter bug,
+stale observation, missing actor proxy, or incomplete manifest from being
+misreported as a bad driving policy.
+
 ## Contract Checks
 
 - AlpaSim discovers only the declared WOD2Sim model entry points.

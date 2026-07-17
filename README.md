@@ -29,6 +29,22 @@ and ego-relative trajectory outputs. This repository does not claim official
 Waymo challenge compatibility, leaderboard submission support, or a redistributable
 Waymo-to-AlpaSim scene conversion.
 
+## Failure Attribution Boundary
+
+WOD2Sim's central release rule is separation between integration failure and
+policy failure. A closed-loop event can be interpreted as policy behavior only
+after the semantic route contract, temporal adapter, lifecycle state, deployment
+preconditions, and evidence audit pass.
+
+- If route geometry is reduced to a command, sensors are stale, trajectory timing
+  is malformed, lifecycle state is invalid, assets are missing, or evidence is
+  incomplete, the row is an integration/precondition/evidence failure.
+- If the row is executed, audit-valid, and retained by the evidence gate, its
+  behavior metrics can be inspected without a known boundary violation.
+- This release still reports no claim-valid policy benchmark. The CVM reports
+  contract-valid rollouts, integration-invalid rows, blockers, diagnostics, and
+  policy benchmark claims separately.
+
 ## Visual Overview
 
 <table>
@@ -87,7 +103,8 @@ flowchart LR
 
 **Figure 2.** WOD2Sim sits inside the closed loop. It translates AlpaSim state
 into the policy contract, converts the returned five-second trajectory to the
-runtime rate, and records evidence separately from policy behavior.
+runtime rate, and records boundary validity before any rollout behavior can be
+attributed to the policy.
 
 ## Scope
 

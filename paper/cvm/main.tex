@@ -34,8 +34,11 @@ It defines semantic, temporal, lifecycle, deployment, and evidence contracts for
 Waymo Open Dataset (WOD)-style trajectory policies through an AlpaSim external-driver
 boundary. The reference implementation preserves route geometry, adapts policy horizons
 to the simulator clock, isolates optional model backends, records launch provenance, and
-separates claim-valid evidence from diagnostic traces. The public repository is available
-at \url{https://github.com/amtellezfernandez/WOD2Sim}. Current artifacts configure a
+separates claim-valid evidence from diagnostic traces. Its failure-attribution rule is
+conservative: behavior is policy-attributable only after semantic, temporal, lifecycle,
+deployment, and evidence contracts pass; otherwise the row is an integration,
+precondition, or evidence failure. The public repository is available at
+\url{https://github.com/amtellezfernandez/WOD2Sim}. Current artifacts configure a
 \CVMTotalRows{}-row contract-validation matrix (CVM) across core, ablation, lifecycle,
 and fault-injection rows. The aggregate records \CVMFullContractAuditValidRuns{}/
 \CVMFullContractCompletedRuns{} completed full-contract rollout(s) as audit-valid and
@@ -86,6 +89,18 @@ direct actor-aware rows remain blocked by a missing oracle proxy and learned che
 are not part of the public release. It does provide a reproducible evidence package
 whose completed, planned, blocked, and failed rows are traceable to repository
 artifacts.
+
+\subsection{Failure Attribution Rule}
+
+WOD2Sim uses an explicit attribution rule before reporting any behavior metric. A
+rollout event may be interpreted as policy behavior only when the semantic route
+contract, temporal adapter, lifecycle state, deployment preconditions, and evidence
+audit all pass. If any of those gates fails, the row is classified as an integration,
+precondition, or evidence failure. A missing actor proxy is therefore not a weak
+planner, a command-proxy route is not a bad route-conditioned policy, and an incomplete
+manifest is not a collision result. This rule is intentionally stricter than ordinary
+demo reporting because the scientific risk is misattributing adapter or runtime faults
+to the policy being integrated.
 
 \section{Integration Problem and Requirements}
 
@@ -260,6 +275,16 @@ synthetic lifecycle and fault counts are retained as diagnostics only and are no
 as evidence that the integration method is faster, safer, or more correct than a
 functional non-contract wrapper.
 
+The same aggregate also reports failure attribution. It contains
+\CVMContractValidClosedLoopRows{} contract-valid closed-loop row(s),
+\CVMIntegrationInvalidClosedLoopRows{} completed closed-loop row(s) rejected as
+integration/evidence-invalid, \CVMBlockedRuns{} precondition-blocked row(s),
+\CVMSyntheticDiagnosticRows{} synthetic diagnostic row(s), and
+\CVMClaimValidPolicyBenchmarkRows{} claim-valid policy benchmark row(s). These counts
+are the operational separation between integration failure and policy failure in the
+current release: no row outside the contract-valid and evidence-gated boundary is
+counted as policy behavior.
+
 \section{Discussion, Limitations, and Related Work}
 
 The framework generalizes beyond a single simulator because the contracts identify
@@ -303,8 +328,8 @@ repository implements the contract-oriented release surface and a reproducible C
 artifact scaffold. The generated CVM aggregate separates completed/audit-valid rollout
 evidence, planned rows, true blockers, and synthetic diagnostics, but it still reports
 no full claim-valid benchmark. That separation is the useful integration outcome: it
-keeps runtime, precondition, and evidence states separate from policy behavior until the
-complete audited matrices exist.
+prevents route, timing, lifecycle, deployment, and evidence failures from being
+misreported as policy failures until the complete audited matrices exist.
 
 \appendix[WOD2Sim Repository Artifact Map]
 

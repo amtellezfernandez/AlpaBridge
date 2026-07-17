@@ -69,3 +69,8 @@ performance claim additionally requires declared scenes, route-waypoint-backed
 driver logs, AlpaSim checkout and Docker image provenance, baselines, complete
 metrics, failure analysis, and a passing `wod2sim-benchmark-readiness` report.
 This repository currently publishes no policy benchmark result.
+
+If any route, sensor, temporal, lifecycle, deployment, or evidence gate fails,
+classify the row as an integration/precondition/evidence failure. Do not count
+that row as a policy failure, even if the rollout contains a collision,
+off-road event, timeout, or degraded progress metric.

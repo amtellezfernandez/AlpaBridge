@@ -31,6 +31,19 @@ policy-superiority claims. The deltas show that removing route geometry changes
 measured behavior and that the evidence gate prevents command-only rows from
 being treated as valid policy evidence.
 
+## Failure Attribution
+
+- Contract-valid closed-loop rows: 45.
+- Integration/evidence-invalid closed-loop rows: 9.
+- Precondition-blocked rows: 36.
+- Synthetic diagnostic rows: 55.
+- Claim-valid policy benchmark rows: 0.
+
+Behavior is policy-attributable only after route/sensor audit, lifecycle state,
+deployment preconditions, and evidence gates pass. Rows outside that boundary
+are integration, precondition, evidence, or diagnostic rows; they are not policy
+failures.
+
 ## Remaining Blockers
 
 - `direct_actor_oracle_proxy_missing`: 36 rows remain blocked across core

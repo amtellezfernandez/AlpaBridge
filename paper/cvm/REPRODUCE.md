@@ -92,3 +92,9 @@ The current aggregate supports dependency-light core execution, a bounded
 semantic integration-effectiveness claim, and an evidence-gate claim. It does
 not support direct-actor temporal ablation, learned-policy result, or
 policy-quality comparison.
+
+Failure attribution is explicit in `artifacts/cvm/results/summary.json` under
+`failure_attribution`. A behavior row is policy-attributable only after route,
+sensor, lifecycle, deployment, and evidence gates pass. Contract-invalid rows,
+blocked rows, planned rows, and synthetic diagnostics must be reported as
+integration/precondition/evidence states, not policy failures.

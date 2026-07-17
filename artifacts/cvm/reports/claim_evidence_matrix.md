@@ -5,6 +5,7 @@ status names concrete generated artifacts and the paper keeps the same boundary.
 
 | Claim | Contract layer | Required evidence | Producing command | Artifact | Current status |
 |---|---|---|---|---|---|
+| WOD2Sim separates integration/precondition/evidence failures from policy-behavior attribution. | Evidence/All contracts | Failure-attribution summary plus route/sensor audit status for completed rows. | `python scripts/aggregate_cvm.py --inputs artifacts/cvm/results --output artifacts/cvm/results`. | `artifacts/cvm/results/summary.json`; `artifacts/cvm/results/closed_loop_metrics.csv`. | Supported for current CVM: 45 contract-valid closed-loop rows, 9 integration/evidence-invalid closed-loop rows, 36 precondition-blocked rows, 55 synthetic diagnostic rows, and 0 claim-valid policy benchmark rows. |
 | WOD2Sim preserves route geometry to policy-facing prediction input. | Semantic | Route-source audit showing route waypoints reach `PredictionInput`. | `python -m pytest -q tests -k "semantic or route"` and CVM execution. | `tests/test_alpasim_integration.py`; `artifacts/cvm/results/closed_loop_metrics.csv`. | Supported for full-contract rows: 45/45 completed full-contract rollouts are audit-valid. |
 | Command-proxy route fallback is not claim-valid evidence. | Semantic/Evidence | Completed command-only route rows rejected by audit. | `python scripts/run_cvm_matrix.py --config configs/cvm/semantic_ablation.yaml --output artifacts/cvm/results/semantic_ablation --resume --execute`. | `artifacts/cvm/results/semantic_ablation_pairs.csv`; `artifacts/cvm/results/summary.json`. | Supported: 9/9 command-only rows completed, logged `command_proxy`, and were rejected as non-claim-valid. |
 | Semantic route loss changes measured closed-loop behavior. | Semantic/Evidence | Matched full-contract vs command-only metrics. | Same semantic CVM command. | `artifacts/cvm/results/semantic_ablation_pairs.csv`. | Supported as bounded integration evidence: 9/9 metric-bearing pairs; mean full-minus-command deltas are progress -0.243, relative progress 0.007, collision-any 0.333, off-road 0.000, plan deviation 0.353. |
@@ -27,6 +28,9 @@ status names concrete generated artifacts and the paper keeps the same boundary.
 - Valid full-contract false-blocked rows: 0/45.
 - Matched semantic metric pairs: 9/9.
 - Command-only rows rejected as non-claim-valid: 9/9.
+- Contract-valid closed-loop rows: 45.
+- Integration/evidence-invalid closed-loop rows: 9.
+- Claim-valid policy benchmark rows: 0.
 - Planned rows: 0.
 - Blocked rows: 36.
 - Aggregate artifact: `artifacts/cvm/results/summary.json`.
