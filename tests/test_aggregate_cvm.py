@@ -117,6 +117,63 @@ class AggregateCVMTests(unittest.TestCase):
             errors,
         )
 
+    def test_failure_attribution_separates_integration_and_policy_rows(self) -> None:
+        module = _load_module()
+        rows = [
+            {
+                **_row(),
+                "run_id": "contract-valid",
+                "status": "completed",
+                "attempted": "true",
+                "completed": "true",
+            },
+            {
+                **_row(),
+                "run_id": "command-proxy",
+                "status": "completed",
+                "attempted": "true",
+                "completed": "true",
+            },
+            {
+                **_row(),
+                "run_id": "blocked-direct-actor",
+                "status": "blocked",
+                "blocked": "true",
+                "failure_layer": "deployment",
+                "failure_code": "direct_actor_oracle_proxy_missing",
+            },
+            {
+                **_row(),
+                "run_id": "synthetic-diagnostic",
+                "matrix": "fault_injection",
+                "status": "completed",
+                "attempted": "true",
+                "completed": "true",
+            },
+        ]
+        evidence = [
+            {
+                "run_id": "contract-valid",
+                "audit_valid": "true",
+                "route_contract_ok": "true",
+                "sensor_pipeline_ok": "true",
+            },
+            {
+                "run_id": "command-proxy",
+                "audit_valid": "false",
+                "route_contract_ok": "false",
+                "sensor_pipeline_ok": "true",
+            },
+        ]
+
+        summary = module._failure_attribution_summary(rows, evidence)
+
+        self.assertEqual(1, summary["contract_valid_closed_loop_rows"])
+        self.assertEqual(1, summary["integration_or_evidence_invalid_closed_loop_rows"])
+        self.assertEqual(1, summary["precondition_blocked_rows"])
+        self.assertEqual(1, summary["synthetic_diagnostic_rows"])
+        self.assertEqual(0, summary["claim_valid_policy_benchmark_rows"])
+
 
 if __name__ == "__main__":
     unittest.main()

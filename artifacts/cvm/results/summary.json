@@ -62,6 +62,15 @@
   "created_at": "2026-07-17T17:07:34.728413+00:00",
   "data_hash": "eb4351d5729a4a9f56e828b2ab7ddddf08a206f33b8a417d5153c1e3aba229d5",
   "failed_runs": 0,
+  "failure_attribution": {
+    "claim_valid_policy_benchmark_rows": 0,
+    "contract_valid_closed_loop_rows": 45,
+    "integration_or_evidence_invalid_closed_loop_rows": 9,
+    "planned_not_launched_rows": 0,
+    "precondition_blocked_rows": 36,
+    "rule": "Closed-loop behavior can be interpreted as policy behavior only after the semantic route contract, sensor-freshness audit, lifecycle state, deployment preconditions, and evidence gate pass. Otherwise the row is an integration, precondition, or evidence failure.",
+    "synthetic_diagnostic_rows": 55
+  },
   "failure_code_counts": {
     "deployment.docker_unavailable": 1,
     "deployment.gpu_runtime_unavailable": 1,
