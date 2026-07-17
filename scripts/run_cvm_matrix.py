@@ -1198,18 +1198,46 @@ def _source_state_pathspec() -> list[str]:
 
 def _git_checkout_state(path: Path) -> dict[str, Any]:
     if not str(path):
-        return {"path": "", "present": False, "git_sha": "", "dirty": None}
+        return {
+            "path": "",
+            "present": False,
+            "git_sha": "",
+            "dirty": None,
+            "dirty_diff_sha256": "",
+            "status_paths": [],
+        }
     resolved = _resolve_repo_path(path)
     if not resolved.exists():
-        return {"path": _path_arg(path), "present": False, "git_sha": "", "dirty": None}
+        return {
+            "path": _path_arg(path),
+            "present": False,
+            "git_sha": "",
+            "dirty": None,
+            "dirty_diff_sha256": "",
+            "status_paths": [],
+        }
     git_sha = _git_output(["-C", str(resolved), "rev-parse", "HEAD"]).strip()
     status = _git_output(["-C", str(resolved), "status", "--short"]).strip()
+    diff = _git_output(["-C", str(resolved), "diff", "--binary"])
     return {
         "path": _path_arg(path),
         "present": bool(git_sha),
         "git_sha": git_sha,
         "dirty": bool(status) if git_sha else None,
+        "dirty_diff_sha256": hashlib.sha256(diff.encode("utf-8")).hexdigest() if git_sha else "",
+        "status_paths": _git_status_paths(status) if git_sha else [],
     }
+
+
+def _git_status_paths(status: str) -> list[str]:
+    paths: list[str] = []
+    for line in status.splitlines():
+        value = line[3:].strip() if len(line) > 3 else ""
+        if " -> " in value:
+            value = value.split(" -> ", 1)[1]
+        if value:
+            paths.append(value)
+    return paths
 
 
 def _patch_hashes() -> dict[str, str]:
