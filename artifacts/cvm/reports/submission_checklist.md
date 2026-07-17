@@ -20,6 +20,8 @@
 - [x] Scene/policy/replicate counts are stated exactly.
 - [x] No restricted assets are included.
 - [x] No private paths, tokens, or credentials are present in the public scan.
+- [x] Public Markdown/HTML local links and image references resolve inside the
+  repository.
 - [x] Figures are generated and legible at final size.
 - [x] Abstract contains actual results, not placeholders.
 - [x] Abstract length is validated against the release 160-210 word range.

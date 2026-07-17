@@ -9,6 +9,7 @@ import subprocess
 import tarfile
 from pathlib import Path
 from typing import Pattern
+from urllib.parse import unquote
 
 PLACEHOLDERS = ("TODO", "TBD", "FIXME", "RESULTS_PENDING", "[N]", "[M]")
 ABSTRACT_MIN_WORDS = 160
@@ -394,6 +395,8 @@ FONT_DESCRIPTOR_RE = re.compile(r"/FontDescriptor\s+(\d+)\s+0\s+R")
 DESCENDANT_FONT_RE = re.compile(r"/DescendantFonts\s*\[\s*((?:\d+\s+0\s+R\s*)+)\]")
 OBJECT_REF_RE = re.compile(r"(\d+)\s+0\s+R")
 EMBEDDED_FONT_FILE_RE = re.compile(r"/FontFile(?:2|3)?\b")
+MARKDOWN_LINK_RE = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
+HTML_LOCAL_REF_RE = re.compile(r"\b(?:href|src)\s*=\s*['\"]([^'\"]+)['\"]", re.IGNORECASE)
 ARCHIVE_TEXT_SUFFIXES = {
     ".json",
     ".jsonl",
@@ -1628,6 +1631,7 @@ def _release_hygiene_failures(*, repo_root: Path, canonical_paper: Path) -> list
         for label, pattern in FORBIDDEN_TEXT_PATTERNS:
             if pattern.search(text):
                 failures.append(f"public_hygiene:{label}:{rel_path}")
+        failures.extend(_public_local_reference_failures(path=path, text=text, root=root))
     for archive_path in _iter_public_scan_archives(root):
         failures.extend(_archive_hygiene_failures(archive_path, root=root))
     return failures
@@ -1693,6 +1697,47 @@ def _is_raw_local_execution_artifact(path: Path, *, root: Path) -> bool:
 
 def _parts_start_with(parts: tuple[str, ...], prefix: tuple[str, ...]) -> bool:
     return len(parts) >= len(prefix) and parts[: len(prefix)] == prefix
+
+
+def _public_local_reference_failures(*, path: Path, text: str, root: Path) -> list[str]:
+    if path.suffix.lower() not in {".md", ".html", ".htm"}:
+        return []
+    failures: list[str] = []
+    rel_path = path.relative_to(root)
+    for target in _public_local_reference_targets(text):
+        resolved = _resolve_public_local_reference(path=path, target=target, root=root)
+        if resolved is None:
+            continue
+        target_path, cleaned_target = resolved
+        try:
+            target_path.relative_to(root)
+        except ValueError:
+            failures.append(f"public_local_reference_outside_root:{rel_path}:{cleaned_target}")
+            continue
+        if not target_path.exists():
+            failures.append(f"public_local_reference_missing:{rel_path}:{cleaned_target}")
+    return failures
+
+
+def _public_local_reference_targets(text: str) -> list[str]:
+    targets: list[str] = []
+    targets.extend(match.group(1) for match in MARKDOWN_LINK_RE.finditer(text))
+    targets.extend(match.group(1) for match in HTML_LOCAL_REF_RE.finditer(text))
+    return targets
+
+
+def _resolve_public_local_reference(*, path: Path, target: str, root: Path) -> tuple[Path, str] | None:
+    cleaned = target.strip().strip("<>")
+    if not cleaned or cleaned.startswith("#"):
+        return None
+    if re.match(r"^[A-Za-z][A-Za-z0-9+.-]*:", cleaned) or cleaned.startswith("//"):
+        return None
+    cleaned = cleaned.split("#", 1)[0].split("?", 1)[0]
+    if not cleaned:
+        return None
+    cleaned = unquote(cleaned)
+    target_path = root / cleaned.lstrip("/") if cleaned.startswith("/") else path.parent / cleaned
+    return target_path.resolve(), cleaned
 
 
 def _archive_hygiene_failures(path: Path, *, root: Path) -> list[str]:

@@ -931,8 +931,20 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         module = _load_module()
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            (root / "README.md").write_text("WOD2Sim release notes\n", encoding="utf-8")
+            (root / "README.md").write_text(
+                "WOD2Sim release notes [paper](wod2sim.pdf) "
+                "[docs](docs/README.md#start) "
+                '<img src="docs/assets/readme/panel.svg" alt="panel"> '
+                "[external](https://example.com)\n",
+                encoding="utf-8",
+            )
             (root / "wod2sim.pdf").write_bytes(b"%PDF-1.5\n")
+            (root / "docs" / "assets" / "readme").mkdir(parents=True)
+            (root / "docs" / "README.md").write_text("Docs\n", encoding="utf-8")
+            (root / "docs" / "assets" / "readme" / "panel.svg").write_text(
+                "<svg></svg>\n",
+                encoding="utf-8",
+            )
             (root / "paper" / "cvm").mkdir(parents=True)
             (root / "paper" / "cvm" / "main.tex").write_text(
                 "Contract-based integration paper\n",
@@ -945,6 +957,27 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             )
 
         self.assertEqual([], failures)
+
+    def test_release_hygiene_reports_missing_or_escaping_public_local_references(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "README.md").write_text(
+                "[missing](docs/missing.md)\n"
+                "![missing image](docs/assets/missing.svg)\n"
+                "[escape](../outside.md)\n",
+                encoding="utf-8",
+            )
+            (root / "wod2sim.pdf").write_bytes(b"%PDF-1.5\n")
+
+            failures = module._release_hygiene_failures(
+                repo_root=root,
+                canonical_paper=root / "wod2sim.pdf",
+            )
+
+        self.assertIn("public_local_reference_missing:README.md:docs/missing.md", failures)
+        self.assertIn("public_local_reference_missing:README.md:docs/assets/missing.svg", failures)
+        self.assertIn("public_local_reference_outside_root:README.md:../outside.md", failures)
 
     def test_release_hygiene_reports_sensitive_or_weak_public_text(self) -> None:
         module = _load_module()
