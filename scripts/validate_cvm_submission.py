@@ -159,6 +159,20 @@ REPOSITORY_INVENTORY_TEST_COUNT_RE = re.compile(
     r"Test directory:\s*`tests`\s+with\s+(?P<count>\d+)\s+top-level test files",
     re.IGNORECASE,
 )
+BASELINE_REPORT_FORBIDDEN_PATTERNS: tuple[tuple[str, Pattern[str]], ...] = (
+    ("historical_release_gate", re.compile(r"\bHistorical\b", re.IGNORECASE)),
+    ("venv_python_gate", re.compile(r"\./\.venv/bin/")),
+    ("stale_hardening_count", re.compile(r"\bafter\s+[-A-Za-z0-9\s]+hardening\b", re.IGNORECASE)),
+)
+BASELINE_REPORT_REQUIRED_TERMS = (
+    "Current Release Gate Evidence",
+    "uv run python",
+    "make cvm-check",
+    "make paper-verify",
+    "make verify",
+    "306 passed, 14 skipped, and 15 subtests passed",
+    "62.45% against the configured 33.0% minimum",
+)
 CONTRACT_TEST_AUDIT_REQUIRED_TERMS = (
     "# Contract Test Audit",
     "Semantic Contract",
@@ -2046,6 +2060,7 @@ def _release_hygiene_failures(*, repo_root: Path, canonical_paper: Path) -> list
     failures.extend(_cli_documentation_failures(repo_root=root))
     failures.extend(_community_template_failures(repo_root=root))
     failures.extend(_repository_inventory_failures(repo_root=root))
+    failures.extend(_baseline_report_failures(repo_root=root))
     for path in _iter_public_scan_files(root):
         try:
             text = path.read_text(encoding="utf-8")
@@ -2060,6 +2075,23 @@ def _release_hygiene_failures(*, repo_root: Path, canonical_paper: Path) -> list
         failures.extend(_public_image_alt_failures(path=path, text=text, root=root))
     for archive_path in _iter_public_scan_archives(root):
         failures.extend(_archive_hygiene_failures(archive_path, root=root))
+    return failures
+
+
+def _baseline_report_failures(*, repo_root: Path) -> list[str]:
+    root = repo_root.resolve()
+    path = root / "artifacts" / "cvm" / "reports" / "baseline_report.md"
+    if not path.exists():
+        return []
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    failures: list[str] = []
+    relative = path.relative_to(root)
+    for label, pattern in BASELINE_REPORT_FORBIDDEN_PATTERNS:
+        if pattern.search(text):
+            failures.append(f"baseline_report_forbidden:{relative}:{label}")
+    for term in BASELINE_REPORT_REQUIRED_TERMS:
+        if not _contains_claim_term(text, term):
+            failures.append(f"baseline_report_missing_term:{relative}:{term}")
     return failures
 
 

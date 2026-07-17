@@ -1402,6 +1402,63 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             failures,
         )
 
+    def test_baseline_report_accepts_current_release_gate_evidence(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            report_dir = root / "artifacts" / "cvm" / "reports"
+            report_dir.mkdir(parents=True)
+            (report_dir / "baseline_report.md").write_text(
+                "# Baseline And Final Audit Report\n\n"
+                "## Current Release Gate Evidence\n\n"
+                "| Command | Result |\n"
+                "|---|---|\n"
+                "| `uv run python -m pytest -q tests/test_validate_cvm_submission.py` | Passed. |\n"
+                "| `make paper-verify PYTHON='uv run python'` | Passed. |\n"
+                "| `make cvm-check PYTHON='uv run python'` | Passed with "
+                "306 passed, 14 skipped, and 15 subtests passed. |\n"
+                "| `make verify` | Passed with 62.45% against the configured 33.0% minimum. |\n",
+                encoding="utf-8",
+            )
+
+            failures = module._baseline_report_failures(repo_root=root)
+
+        self.assertEqual([], failures)
+
+    def test_baseline_report_rejects_historical_or_stale_gate_evidence(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            report_dir = root / "artifacts" / "cvm" / "reports"
+            report_dir.mkdir(parents=True)
+            (report_dir / "baseline_report.md").write_text(
+                "# Baseline And Final Audit Report\n\n"
+                "## Historical Baseline And Quality Gates\n\n"
+                "| `./.venv/bin/python -m pytest -q` | "
+                "247 passed after release-validator hardening. |\n",
+                encoding="utf-8",
+            )
+
+            failures = module._baseline_report_failures(repo_root=root)
+
+        self.assertIn(
+            "baseline_report_forbidden:artifacts/cvm/reports/baseline_report.md:historical_release_gate",
+            failures,
+        )
+        self.assertIn(
+            "baseline_report_forbidden:artifacts/cvm/reports/baseline_report.md:venv_python_gate",
+            failures,
+        )
+        self.assertIn(
+            "baseline_report_forbidden:artifacts/cvm/reports/baseline_report.md:stale_hardening_count",
+            failures,
+        )
+        self.assertIn(
+            "baseline_report_missing_term:artifacts/cvm/reports/baseline_report.md:"
+            "Current Release Gate Evidence",
+            failures,
+        )
+
     def test_release_hygiene_accepts_defined_cvm_acronym(self) -> None:
         module = _load_module()
         with tempfile.TemporaryDirectory() as tmp:

@@ -1,55 +1,18 @@
 # Baseline And Final Audit Report
 
 This report records the command evidence for the contract-validation matrix
-(CVM) release surface.
-Commands were run from the repository root. The original baseline used
-`./.venv/bin/python`; the latest refresh uses the locked `uv run python`
-environment that CI now exercises.
-Temporary raw logs were written under `/tmp` and are not part of the public
-package.
+(CVM) release surface. Commands were run from the repository root with the
+locked `uv run python` environment that CI exercises. Temporary raw logs were
+not tracked; rerun the commands below to reproduce the release checks.
 
-## Historical Baseline And Quality Gates
+## Current Release Gate Evidence
 
 | Command | Start UTC | End UTC | Duration | Exit | Result |
 |---|---|---|---:|---:|---|
-| `./.venv/bin/python -m ruff check .` | 2026-07-17T17:34:13Z | 2026-07-17T17:34:13Z | 0.107s | 0 | All checks passed. |
-| `./.venv/bin/python -m build` | 2026-07-17T17:34:13Z | 2026-07-17T17:34:20Z | 7.283s | 0 | Built `wod2sim-0.1.0.tar.gz` and wheel. |
-| `./.venv/bin/pre-commit run --all-files` | 2026-07-17T17:38:18Z | 2026-07-17T17:38:18Z | 0.325s | 0 | Ruff pre-commit hook passed without modifying files. |
-| `./.venv/bin/python -m pytest -q` | 2026-07-17T18:52:54Z | 2026-07-17T18:52:58Z | 3.646s | 0 | 247 passed, 14 skipped, 15 subtests passed after release-validator hardening. |
-| `make conformance PYTHON=./.venv/bin/python` | 2026-07-17T18:52:43Z | 2026-07-17T18:52:47Z | 3.417s | 0 | 247 passed, 14 skipped, 15 subtests passed after release-validator hardening. |
-| `make demo PYTHON=./.venv/bin/python` | 2026-07-17T18:52:47Z | 2026-07-17T18:52:47Z | 0.252s | 0 | Synthetic demo valid; `valid_claim_evidence=false`. |
-
-## Historical Targeted Contract Tests
-
-| Command | Start UTC | End UTC | Duration | Exit | Result |
-|---|---|---|---:|---:|---|
-| `./.venv/bin/python -m pytest -q tests -k "semantic or route"` | 2026-07-17T21:17:37Z | 2026-07-17T21:17:37Z | 0.41s | 0 | 10 passed, 290 deselected after policy-table fallback hardening. |
-| `./.venv/bin/python -m pytest -q tests -k "temporal or resampl"` | 2026-07-17T21:17:37Z | 2026-07-17T21:17:37Z | 0.31s | 0 | 10 passed, 290 deselected, 15 subtests passed after policy-table fallback hardening. |
-| `./.venv/bin/python -m pytest -q tests -k "lifecycle or session"` | 2026-07-17T21:17:37Z | 2026-07-17T21:17:37Z | 0.36s | 0 | 10 passed, 290 deselected after policy-table fallback hardening. |
-| `./.venv/bin/python -m pytest -q tests -k "plugin or entry_point"` | 2026-07-17T21:17:37Z | 2026-07-17T21:17:37Z | 0.93s | 0 | 5 passed, 295 deselected after policy-table fallback hardening. |
-| `./.venv/bin/python -m pytest -q tests -k "deployment or readiness or launch"` | 2026-07-17T21:17:37Z | 2026-07-17T21:17:37Z | 1.68s | 0 | 20 passed, 280 deselected after policy-table fallback hardening. |
-| `./.venv/bin/python -m pytest -q tests -k "evidence or audit or benchmark"` | 2026-07-17T21:17:37Z | 2026-07-17T21:17:37Z | 0.46s | 0 | 23 passed, 277 deselected after policy-table fallback hardening. |
-| `./.venv/bin/python -m pytest -q tests -k "fault"` | 2026-07-17T21:17:37Z | 2026-07-17T21:17:37Z | 0.24s | 0 | 5 passed, 295 deselected after policy-table fallback hardening. |
-
-## Release Commands
-
-| Command | Exit | Result |
-|---|---:|---|
-| `make cvm-inventory PYTHON='uv run python'` | 0 | Refreshes ignored redacted environment/log snapshots under `artifacts/cvm`. |
-| `make cvm-check PYTHON='uv run python'` | 0 | Ruff passed; conformance suite passed with 304 passed, 14 skipped, and 15 subtests passed; paper validation passed with package metadata, CI workflow, community-template, policy-table, paper metadata, PDF metadata/page-size/font, source-layout, LaTeX-log, generated-copy, generated-table-value, local-reference, image-alt, command-documentation, README-visual, evaluation-status, README-count, paper-number, claim-matrix, contract-test audit, attribution-boundary, and generic credential-leak checks. |
-| `make demo PYTHON='uv run python'` | 0 | Synthetic demo artifact valid; `valid_claim_evidence=false`. |
-| `make cvm-eval PYTHON='uv run python'` | 2 | Expected blocked-status exit: 36 completed core rows preserved and 18 direct-actor rows blocked by `direct_actor_oracle_proxy_missing`. |
-| `make paper-verify PYTHON='uv run python'` | 0 | Rebuilt 5-page root `wod2sim.pdf` and ran submission validation. |
-| `uv run python scripts/validate_cvm_submission.py` | 0 | Submission validation passed, including package metadata checks, CI workflow gate checks, community-template claim-boundary checks, metadata-backed title/author/affiliation/abstract checks, output-PDF title/author/subject checks, IEEE A4 source-layout checks, parsed PDF A4 MediaBox checks, LaTeX log warnings, canonical-to-paper generated asset sync, generated-table row/source-field value sync, public local-reference and image-alt checks, CLI command-documentation drift checks, README visual/graph explanation checks, evaluation-status checks, venue-style benchmark-label checks, unstable generated citation-slug hygiene checks, README attribution-count sync, paper-number macro value sync, claim-evidence-matrix count sync, contract-test audit coverage checks, embedded PDF font descriptors, per-manifest `failure_attribution` consistency, summary-level attribution partition checks, generic credential-leak checks, and README/paper claim-boundary terms. |
-| `qpdf --check wod2sim.pdf && pdfinfo wod2sim.pdf && pdffonts wod2sim.pdf` | 0 | PDF syntax passed; `pdfinfo` reported 5 pages, portrait A4, and 139638 bytes; `pdffonts` reported embedded fonts. |
-
-## Latest Submission Gate Refresh
-
-| Command | End UTC | Exit | Result |
-|---|---|---:|---|
-| `uv run python -m pytest -q tests/test_validate_cvm_submission.py` | 2026-07-17T22:52:38Z | 0 | 68 passed, including package metadata, CI workflow, community-template, source metadata, output-PDF metadata, A4 MediaBox, embedded-font, layout-hack, LaTeX-log, generated-copy, generated-table-value, local-reference, image-alt, CLI command-documentation, README-visual, evaluation-status, venue-style benchmark-label hygiene, citation-slug hygiene, README-count, paper-number, claim-matrix, contract-test audit, CVM acronym-definition, repository-inventory drift, and credential-hygiene validation fixtures. |
-| `make paper-verify PYTHON='uv run python'` | 2026-07-17T22:52:40Z | 0 | Rebuilt 5-page root `wod2sim.pdf` at 139638 bytes; submission validation passed with package metadata, CI workflow, community-template, source metadata, output-PDF metadata, source-layout, PDF A4 MediaBox, embedded-font, LaTeX-log, generated-copy, generated-table row/source-field, local-reference, image-alt, command-documentation, README-visual, evaluation-status, README-count, paper-number, claim-matrix, contract-test audit, CVM acronym-definition, repository-inventory drift, and credential-hygiene enforcement. |
-| `make cvm-check PYTHON='uv run python'` | 2026-07-17T22:52:44Z | 0 | Ruff passed; conformance passed with 304 passed, 14 skipped, and 15 subtests passed; submission validation passed with package metadata, CI workflow, community-template, command-documentation, README-visual, evaluation-status, policy-table, contract-test audit, CVM acronym-definition, repository-inventory drift, and credential-hygiene checks. |
+| `uv run python -m pytest -q tests/test_validate_cvm_submission.py` | 2026-07-17T22:56:53Z | 2026-07-17T22:56:54Z | 0.449s | 0 | 70 passed, including metadata, PDF, generated-artifact, public-hygiene, CVM acronym-definition, repository-inventory drift, baseline-report hygiene, and credential-hygiene validation fixtures. |
+| `make paper-verify PYTHON='uv run python'` | 2026-07-17T22:56:54Z | 2026-07-17T22:56:56Z | 1.739s | 0 | Rebuilt 5-page root `wod2sim.pdf` at 139638 bytes and ran submission validation. |
+| `make cvm-check PYTHON='uv run python'` | 2026-07-17T22:56:56Z | 2026-07-17T22:56:59Z | 3.497s | 0 | Ruff passed; conformance passed with 306 passed, 14 skipped, and 15 subtests passed; submission validation passed. |
+| `make verify` | 2026-07-17T22:56:59Z | 2026-07-17T22:57:42Z | 42.510s | 0 | Ruff, conformance, coverage, smoke install, package build, paper rebuild, and submission validation passed; coverage was 62.45% against the configured 33.0% minimum. |
 
 ## Important Warnings
 
