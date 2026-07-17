@@ -27,6 +27,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         module = _load_module()
         body = " ".join(f"word{index}" for index in range(module.ABSTRACT_MIN_WORDS))
         source = (
+            "\\documentclass[conference,a4paper]{IEEEtran}\n"
             "\\hypersetup{pdfsubject={WOD2Sim contract-validation paper}}\n"
             "\\begin{abstract}\n"
             + body
@@ -42,6 +43,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         module = _load_module()
         draft_subject = "paper " + "draft"
         source = (
+            "\\documentclass[conference,a4paper]{IEEEtran}\n"
             f"\\hypersetup{{pdfsubject={{WOD2Sim contract-validation {draft_subject}}}}}\n"
             "\\begin{abstract}\nshort abstract\n\\end{abstract}\n"
         )
@@ -50,6 +52,67 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
 
         self.assertIn("abstract_word_count_out_of_range:main.tex:2", failures)
         self.assertIn("source_pdfsubject_marked_draft:main.tex", failures)
+
+    def test_source_text_ignores_commented_layout_commands(self) -> None:
+        module = _load_module()
+        body = " ".join(f"word{index}" for index in range(module.ABSTRACT_MIN_WORDS))
+        source = (
+            "\\documentclass[conference,a4paper]{IEEEtran}\n"
+            "% \\usepackage{geometry}\n"
+            "% \\vspace{-2em}\n"
+            "\\begin{abstract}\n"
+            + body
+            + "\n\\end{abstract}\n"
+        )
+
+        failures = module._source_text_failures(source_text=source, path=Path("main.tex"))
+
+        self.assertEqual([], failures)
+
+    def test_source_text_rejects_layout_hacks_and_non_ieee_documentclass(self) -> None:
+        module = _load_module()
+        body = " ".join(f"word{index}" for index in range(module.ABSTRACT_MIN_WORDS))
+        source = (
+            "\\documentclass{article}\n"
+            "\\usepackage{geometry}\n"
+            "\\setlength{\\textwidth}{7in}\n"
+            "\\pagestyle{plain}\n"
+            "\\setcounter{page}{2}\n"
+            "\\fontsize{9}{10}\\selectfont\n"
+            "\\vspace{-1em}\n"
+            "\\enlargethispage{1em}\n"
+            "\\IEEEoverridecommandlockouts\n"
+            "\\begin{abstract}\n"
+            + body
+            + "\n\\end{abstract}\n"
+        )
+
+        failures = module._source_text_failures(source_text=source, path=Path("main.tex"))
+
+        self.assertIn("source_documentclass_not_ieee_a4:main.tex", failures)
+        self.assertIn("source_layout_hack:main.tex:geometry_package", failures)
+        self.assertIn("source_layout_hack:main.tex:manual_margin_length", failures)
+        self.assertIn("source_layout_hack:main.tex:manual_page_style", failures)
+        self.assertIn("source_layout_hack:main.tex:manual_page_counter", failures)
+        self.assertIn("source_layout_hack:main.tex:manual_font_scaling", failures)
+        self.assertIn("source_layout_hack:main.tex:negative_spacing", failures)
+        self.assertIn("source_layout_hack:main.tex:page_enlargement", failures)
+        self.assertIn("source_layout_hack:main.tex:template_override", failures)
+
+    def test_latex_log_failures_report_reference_and_box_warnings(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "main.log"
+            path.write_text(
+                "LaTeX Warning: Citation `missing' undefined.\n"
+                "Overfull \\hbox (1.0pt too wide) in paragraph.\n",
+                encoding="utf-8",
+            )
+
+            failures = module._latex_log_failures(path)
+
+        self.assertIn("latex_log_warning:Citation `", failures)
+        self.assertIn("latex_log_warning:Overfull \\hbox", failures)
 
     def test_paper_metadata_text_accepts_matching_source(self) -> None:
         module = _load_module()

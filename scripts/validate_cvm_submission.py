@@ -13,6 +13,58 @@ from typing import Pattern
 PLACEHOLDERS = ("TODO", "TBD", "FIXME", "RESULTS_PENDING", "[N]", "[M]")
 ABSTRACT_MIN_WORDS = 160
 ABSTRACT_MAX_WORDS = 210
+IEEE_A4_DOCUMENTCLASS_RE = re.compile(
+    r"\\documentclass\s*\[\s*conference\s*,\s*a4paper\s*\]\s*\{IEEEtran\}"
+)
+MANUSCRIPT_LAYOUT_PATTERNS: tuple[tuple[str, Pattern[str]], ...] = (
+    (
+        "geometry_package",
+        re.compile(r"\\usepackage(?:\[[^\]]*\])?\s*\{\s*geometry\s*\}"),
+    ),
+    (
+        "manual_margin_length",
+        re.compile(
+            r"\\(?:setlength|addtolength)\s*\{\s*\\"
+            r"(?:textwidth|textheight|oddsidemargin|evensidemargin|topmargin|"
+            r"headheight|headsep|footskip|columnsep|hoffset|voffset)\s*\}"
+        ),
+    ),
+    (
+        "manual_page_style",
+        re.compile(r"\\(?:thispagestyle|pagestyle|pagenumbering)\s*\{"),
+    ),
+    (
+        "manual_page_counter",
+        re.compile(r"\\setcounter\s*\{\s*page\s*\}"),
+    ),
+    (
+        "manual_font_scaling",
+        re.compile(
+            r"\\(?:fontsize|linespread)\s*\{|"
+            r"\\renewcommand\s*\{\s*\\baselinestretch\s*\}"
+        ),
+    ),
+    (
+        "negative_spacing",
+        re.compile(r"\\[hv]space\*?\s*\{\s*-\s*[\d.]"),
+    ),
+    (
+        "page_enlargement",
+        re.compile(r"\\enlargethispage\b"),
+    ),
+    (
+        "template_override",
+        re.compile(r"\\IEEEoverridecommandlockouts\b"),
+    ),
+)
+LATEX_LOG_FAILURE_PATTERNS = (
+    "Undefined control sequence",
+    "Citation `",
+    "Reference `",
+    "multiply defined",
+    "Overfull \\hbox",
+    "Underfull \\hbox",
+)
 REQUIRED_TABLES = (
     "contract_map.tex",
     "main_results.tex",
@@ -323,16 +375,7 @@ def main() -> int:
             failures.append(f"private_path:{path}")
 
     log = args.source / "main.log"
-    if log.is_file():
-        text = log.read_text(encoding="utf-8", errors="ignore")
-        for pattern in (
-            "Undefined control sequence",
-            "Citation `",
-            "Reference `",
-            "multiply defined",
-        ):
-            if pattern in text:
-                failures.append(f"latex_log_warning:{pattern}")
+    failures.extend(_latex_log_failures(log))
 
     data_hash = _load_summary_data_hash(args.results / "summary.json")
     if data_hash is None:
@@ -437,6 +480,10 @@ def _load_paper_metadata(path: Path) -> tuple[dict[str, object], list[str]]:
 
 def _source_text_failures(*, source_text: str, path: Path) -> list[str]:
     failures: list[str] = []
+    active_source = _strip_latex_comments(source_text)
+    if not IEEE_A4_DOCUMENTCLASS_RE.search(active_source):
+        failures.append(f"source_documentclass_not_ieee_a4:{path}")
+    failures.extend(_source_layout_failures(source_text=source_text, path=path))
     abstract_words = _abstract_word_count(source_text)
     if abstract_words is None:
         failures.append(f"missing_abstract:{path}")
@@ -445,6 +492,22 @@ def _source_text_failures(*, source_text: str, path: Path) -> list[str]:
     if re.search(r"pdfsubject\s*=\s*\{[^}]*\bdraft\b", source_text, re.IGNORECASE):
         failures.append(f"source_pdfsubject_marked_draft:{path}")
     return failures
+
+
+def _source_layout_failures(*, source_text: str, path: Path) -> list[str]:
+    active_source = _strip_latex_comments(source_text)
+    failures: list[str] = []
+    for label, pattern in MANUSCRIPT_LAYOUT_PATTERNS:
+        if pattern.search(active_source):
+            failures.append(f"source_layout_hack:{path}:{label}")
+    return failures
+
+
+def _latex_log_failures(path: Path) -> list[str]:
+    if not path.is_file():
+        return []
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    return [f"latex_log_warning:{pattern}" for pattern in LATEX_LOG_FAILURE_PATTERNS if pattern in text]
 
 
 def _paper_metadata_text_failures(
@@ -534,8 +597,12 @@ def _abstract_body(source_text: str) -> str | None:
 
 
 def _normalize_latex_source(text: str) -> str:
-    text = re.sub(r"(?m)%.*$", "", text)
+    text = _strip_latex_comments(text)
     return re.sub(r"\s+", " ", text).strip()
+
+
+def _strip_latex_comments(text: str) -> str:
+    return re.sub(r"(?m)(?<!\\)%.*$", "", text)
 
 
 def _sha256_text(text: str) -> str:
