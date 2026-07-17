@@ -1,6 +1,6 @@
 # Baseline And Final Audit Report
 
-This report records the command evidence for the neutral CVM release surface.
+This report records the command evidence for the CVM release surface.
 Commands were run from the repository root on 2026-07-17 with
 `./.venv/bin/python` because bare `python` is not available on this shell PATH.
 Temporary raw logs were written under `/tmp` and are not part of the public
@@ -34,7 +34,7 @@ package.
 | Command | Exit | Result |
 |---|---:|---|
 | `make cvm-inventory PYTHON=./.venv/bin/python` | 0 | Refreshed ignored redacted environment/log snapshots under `artifacts/cvm`. |
-| `make cvm-check PYTHON=./.venv/bin/python` | 0 | Ruff passed; conformance suite passed with 255 passed, 14 skipped, and 15 subtests passed after metadata, PDF font, source-layout, and LaTeX-log validation hardening; paper validation passed. |
+| `make cvm-check PYTHON=./.venv/bin/python` | 0 | Ruff passed; conformance suite passed with 257 passed, 14 skipped, and 15 subtests passed after metadata, PDF font, source-layout, LaTeX-log, and generated-copy validation hardening; paper validation passed. |
 | `make cvm-demo PYTHON=./.venv/bin/python` | 0 | Synthetic demo artifact valid; `valid_claim_evidence=false`. |
 | `make cvm-eval PYTHON=./.venv/bin/python` | 2 | Expected blocked-status exit: 36 completed core rows preserved, 18 direct-actor rows blocked by `direct_actor_oracle_proxy_missing`. |
 | `make cvm-aggregate PYTHON=./.venv/bin/python` | 0 | Regenerated aggregate tables and figures from retained CVM results. |
@@ -42,15 +42,15 @@ package.
 | `make cvm-validate PYTHON=./.venv/bin/python` | 0 | Submission validation passed. |
 | `make paper-verify PYTHON=./.venv/bin/python` | 0 | Rebuilt 5-page root `wod2sim.pdf` and ran submission validation. |
 | `make verify PYTHON=./.venv/bin/python` | 0 | Lint, conformance, coverage, bootstrap smoke, package build, paper rebuild, and submission validation all passed. |
-| `./.venv/bin/python scripts/validate_cvm_submission.py` | 0 | Submission validation passed, including metadata-backed title/author/affiliation/abstract checks, IEEE A4 source-layout checks, LaTeX log warnings, embedded PDF font descriptors, per-manifest `failure_attribution` consistency, summary-level attribution partition checks, and README/paper claim-boundary terms. |
+| `./.venv/bin/python scripts/validate_cvm_submission.py` | 0 | Submission validation passed, including metadata-backed title/author/affiliation/abstract checks, IEEE A4 source-layout checks, LaTeX log warnings, canonical-to-paper generated asset sync, embedded PDF font descriptors, per-manifest `failure_attribution` consistency, summary-level attribution partition checks, and README/paper claim-boundary terms. |
 
 ## Latest Submission Gate Refresh
 
 | Command | End UTC | Exit | Result |
 |---|---|---:|---|
-| `./.venv/bin/python -m pytest -q tests/test_validate_cvm_submission.py` | 2026-07-17T19:35:04Z | 0 | 25 passed, including metadata, embedded-font, layout-hack, and LaTeX-log validation fixtures. |
-| `make paper-verify PYTHON=./.venv/bin/python` | 2026-07-17T19:35:04Z | 0 | Rebuilt 5-page root `wod2sim.pdf`; submission validation passed with metadata, source-layout, embedded-font, and LaTeX-log enforcement. |
-| `make cvm-check PYTHON=./.venv/bin/python` | 2026-07-17T19:35:04Z | 0 | Ruff passed; conformance passed with 255 passed, 14 skipped, and 15 subtests passed; submission validation passed. |
+| `./.venv/bin/python -m pytest -q tests/test_validate_cvm_submission.py` | 2026-07-17T19:41:34Z | 0 | 27 passed, including metadata, embedded-font, layout-hack, LaTeX-log, and generated-copy validation fixtures. |
+| `make paper-verify PYTHON=./.venv/bin/python` | 2026-07-17T19:41:34Z | 0 | Rebuilt 5-page root `wod2sim.pdf`; submission validation passed with metadata, source-layout, embedded-font, LaTeX-log, and generated-copy enforcement. |
+| `make cvm-check PYTHON=./.venv/bin/python` | 2026-07-17T19:41:34Z | 0 | Ruff passed; conformance passed with 257 passed, 14 skipped, and 15 subtests passed; submission validation passed. |
 
 ## Important Warnings
 

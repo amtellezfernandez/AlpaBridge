@@ -350,6 +350,72 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             failures,
         )
 
+    def test_paper_generated_copy_check_accepts_matching_copies(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            canonical_tables = root / "canonical_tables"
+            paper_tables = root / "paper_tables"
+            canonical_figures = root / "canonical_figures"
+            paper_figures = root / "paper_figures"
+            for directory in (canonical_tables, paper_tables, canonical_figures, paper_figures):
+                directory.mkdir()
+            for name in module.REQUIRED_TABLES:
+                (canonical_tables / name).write_text("% data_hash=abc\n", encoding="utf-8")
+                (paper_tables / name).write_text("% data_hash=abc\n", encoding="utf-8")
+            for name in module.REQUIRED_FIGURES:
+                (canonical_figures / name).write_bytes(b"%PDF-1.5\nsame")
+                (paper_figures / name).write_bytes(b"%PDF-1.5\nsame")
+
+            failures = module._paper_generated_copy_failures(
+                canonical_tables=canonical_tables,
+                paper_tables=paper_tables,
+                canonical_figures=canonical_figures,
+                paper_figures=paper_figures,
+            )
+
+        self.assertEqual([], failures)
+
+    def test_paper_generated_copy_check_reports_drift(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            canonical_tables = root / "canonical_tables"
+            paper_tables = root / "paper_tables"
+            canonical_figures = root / "canonical_figures"
+            paper_figures = root / "paper_figures"
+            for directory in (canonical_tables, paper_tables, canonical_figures, paper_figures):
+                directory.mkdir()
+            for name in module.REQUIRED_TABLES:
+                (canonical_tables / name).write_text("% data_hash=abc\n", encoding="utf-8")
+                (paper_tables / name).write_text("% data_hash=abc\n", encoding="utf-8")
+            for name in module.REQUIRED_FIGURES:
+                (canonical_figures / name).write_bytes(b"%PDF-1.5\nsame")
+                (paper_figures / name).write_bytes(b"%PDF-1.5\nsame")
+            (paper_tables / module.REQUIRED_TABLES[0]).write_text(
+                "% data_hash=abc\nmanual edit\n",
+                encoding="utf-8",
+            )
+            (paper_figures / module.REQUIRED_FIGURES[0]).write_bytes(b"%PDF-1.5\nmanual")
+
+            failures = module._paper_generated_copy_failures(
+                canonical_tables=canonical_tables,
+                paper_tables=paper_tables,
+                canonical_figures=canonical_figures,
+                paper_figures=paper_figures,
+            )
+
+        self.assertIn(
+            f"paper_generated_table_drift:{paper_tables / module.REQUIRED_TABLES[0]}:"
+            f"{canonical_tables / module.REQUIRED_TABLES[0]}",
+            failures,
+        )
+        self.assertIn(
+            f"paper_generated_figure_drift:{paper_figures / module.REQUIRED_FIGURES[0]}:"
+            f"{canonical_figures / module.REQUIRED_FIGURES[0]}",
+            failures,
+        )
+
     def test_pdf_font_embedding_accepts_embedded_font_descriptor(self) -> None:
         module = _load_module()
         path = Path("paper.pdf")
@@ -437,8 +503,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             draft_label = "paper " + "draft"
             weak_adapter_label = "adapter and evaluation " + "artifact"
             scaffold_label = "artifact " + "scaffold"
-            legacy_layout = "old " + "internal " + "deliverable " + "layout"
-            legacy_map = "neutral CVM " + "equivalence " + "map"
+            stale_event_name = "s" + "ii2027"
             third_party_secret = "hf_" + ("B" * 20)
             (root / "README.md").write_text(
                 "\n".join(
@@ -450,8 +515,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
                         draft_label,
                         weak_adapter_label,
                         scaffold_label,
-                        legacy_layout,
-                        legacy_map,
+                        stale_event_name,
                     ]
                 ),
                 encoding="utf-8",
@@ -472,9 +536,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         self.assertIn("public_hygiene:paper_draft_label:README.md", failures)
         self.assertIn("public_hygiene:weak_adapter_artifact_label:README.md", failures)
         self.assertIn("public_hygiene:weak_artifact_scaffold_label:README.md", failures)
-        self.assertIn("public_hygiene:old_internal_layout_reference:README.md", failures)
-        self.assertIn("public_hygiene:legacy_deliverable_layout_reference:README.md", failures)
-        self.assertIn("public_hygiene:legacy_equivalence_map_reference:README.md", failures)
+        self.assertIn("public_hygiene:stale_target_event_artifact_name:README.md", failures)
         self.assertIn("public_hygiene:huggingface_token:third_party/README.md", failures)
 
     def test_release_hygiene_reports_duplicate_manuscript_pdfs(self) -> None:

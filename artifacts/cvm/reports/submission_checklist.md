@@ -21,7 +21,7 @@
 - [x] Abstract contains actual results, not placeholders.
 - [x] Abstract length is validated against the release 160-210 word range.
 - [x] Limitations match actual coverage.
-- [x] Reproduction commands were tested with neutral CVM targets.
+- [x] Reproduction commands were tested with CVM targets.
 - [x] Git diff was inspected.
 
 Additional release-specific checks:
@@ -31,6 +31,8 @@ Additional release-specific checks:
 - [x] Generated evidence package is under `artifacts/cvm`.
 - [x] Public artifact vocabulary uses CVM naming.
 - [x] Figures and generated tables carry the aggregate data hash.
+- [x] Paper-side generated tables and figures are byte-identical to the
+  canonical CVM artifacts.
 - [x] `make cvm-eval` preserves completed evidence when rerun without `--execute`.
 - [x] `pre-commit run --all-files` passes without modifying files.
 - [x] Every public run manifest carries validated integration-vs-policy

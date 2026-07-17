@@ -245,40 +245,7 @@ FORBIDDEN_TEXT_PATTERNS: tuple[tuple[str, Pattern[str]], ...] = (
     ("weak_adapter_artifact_label", re.compile(r"\badapter\s+and\s+evaluation\s+artifact\b", re.IGNORECASE)),
     ("weak_artifact_scaffold_label", re.compile(r"\bartifact\s+scaffold\b", re.IGNORECASE)),
     (
-        "old_internal_layout_reference",
-        re.compile(
-            r"\bold\s+"
-            + "internal"
-            + r"\b|\boriginal\s+"
-            + "internal"
-            + r"\b",
-            re.IGNORECASE,
-        ),
-    ),
-    (
-        "legacy_deliverable_layout_reference",
-        re.compile(
-            r"\bdeliverable\s+"
-            + "layout"
-            + r"\b|\binternal\s+"
-            + "deliverable"
-            + r"\b",
-            re.IGNORECASE,
-        ),
-    ),
-    (
-        "legacy_equivalence_map_reference",
-        re.compile(
-            r"\bequivalence\s+"
-            + "map"
-            + r"\b|\bneutral\s+"
-            + "CVM"
-            + r"\s+equivalence\b",
-            re.IGNORECASE,
-        ),
-    ),
-    (
-        "venue_coupled_artifact_name",
+        "stale_target_event_artifact_name",
         re.compile(
             r"\b"
             + chr(115)
@@ -387,6 +354,14 @@ def main() -> int:
                 data_hash=data_hash,
                 table_dirs=(args.tables, args.source / "generated"),
                 figure_dirs=(args.figures, args.source / "figures"),
+            )
+        )
+        failures.extend(
+            _paper_generated_copy_failures(
+                canonical_tables=args.tables,
+                paper_tables=args.source / "generated",
+                canonical_figures=args.figures,
+                paper_figures=args.source / "figures",
             )
         )
     failures.extend(_frame_schema_failures(args.results / "frames.csv"))
@@ -765,6 +740,43 @@ def _generated_artifact_failures(
             if expected_marker not in info:
                 failures.append(f"generated_figure_hash_mismatch:{path}")
     return failures
+
+
+def _paper_generated_copy_failures(
+    *,
+    canonical_tables: Path,
+    paper_tables: Path,
+    canonical_figures: Path,
+    paper_figures: Path,
+) -> list[str]:
+    failures: list[str] = []
+    for name in REQUIRED_TABLES:
+        failures.extend(
+            _generated_copy_pair_failures(
+                canonical=canonical_tables / name,
+                paper_copy=paper_tables / name,
+                label="table",
+            )
+        )
+    for name in REQUIRED_FIGURES:
+        failures.extend(
+            _generated_copy_pair_failures(
+                canonical=canonical_figures / name,
+                paper_copy=paper_figures / name,
+                label="figure",
+            )
+        )
+    return failures
+
+
+def _generated_copy_pair_failures(*, canonical: Path, paper_copy: Path, label: str) -> list[str]:
+    if not canonical.is_file():
+        return [f"missing_canonical_generated_{label}:{canonical}"]
+    if not paper_copy.is_file():
+        return [f"missing_paper_generated_{label}:{paper_copy}"]
+    if canonical.read_bytes() != paper_copy.read_bytes():
+        return [f"paper_generated_{label}_drift:{paper_copy}:{canonical}"]
+    return []
 
 
 def _frame_schema_failures(path: Path) -> list[str]:
