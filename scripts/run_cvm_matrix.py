@@ -71,11 +71,17 @@ def main() -> int:
             "Paths inside this repository are stored relative to the repository root."
         ),
     )
+    parser.add_argument(
+        "--refresh-manifests",
+        action="store_true",
+        help="Rewrite preserved run manifests with current schema/provenance without relaunching rows.",
+    )
     args = parser.parse_args()
 
     config = _load_yaml(args.config)
     output = args.output
     output.mkdir(parents=True, exist_ok=True)
+    repository_state = _repository_state()
 
     rows = _expand_rows(config)
     existing_rows = _load_existing_rows(output) if args.resume else {}
@@ -134,7 +140,7 @@ def main() -> int:
     for row in rows:
         if row["run_id"] in preserved_manifest_run_ids:
             manifest_path = _run_manifest_dir(output) / f"{_safe_filename(row['run_id'])}.json"
-            if manifest_path.is_file():
+            if manifest_path.is_file() and not args.refresh_manifests:
                 continue
         _write_run_manifest(
             _run_manifest_dir(output),
@@ -143,6 +149,7 @@ def main() -> int:
             config_path=args.config,
             python_executable=args.python,
             output=output,
+            repository_state=repository_state,
         )
     exit_code = 0 if all(row["status"] == "completed" for row in rows) else 2
 
@@ -477,12 +484,15 @@ def _adapter_execution_blocker(
 
 
 def _docker_image_missing(image: str) -> bool:
-    result = subprocess.run(
-        ["docker", "image", "inspect", image],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        check=False,
-    )
+    try:
+        result = subprocess.run(
+            ["docker", "image", "inspect", image],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+    except FileNotFoundError:
+        return True
     return result.returncode != 0
 
 
@@ -1018,17 +1028,23 @@ def _write_run_manifest(
     config_path: Path,
     python_executable: str,
     output: Path,
+    repository_state: dict[str, Any] | None = None,
 ) -> None:
     directory.mkdir(parents=True, exist_ok=True)
+    path = directory / f"{_safe_filename(row['run_id'])}.json"
+    existing_manifest = _load_json_dict(path)
     launch_plan = _closed_loop_launch_plan(
         config=config,
         row=row,
         output=output,
         python_executable=python_executable,
     )
+    created_at = existing_manifest.get("created_at")
+    if not isinstance(created_at, str) or not created_at:
+        created_at = datetime.now(timezone.utc).isoformat()
     manifest = {
         "schema": "cvm_run_manifest_v1",
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": created_at,
         "run_id": row["run_id"],
         "matrix": row["matrix"],
         "scene_id": row["scene_id"],
@@ -1046,11 +1062,256 @@ def _write_run_manifest(
         "execution_mode": _execution_mode(config),
         "config_path": str(config_path),
         "config_sha256": _sha256_path(config_path),
+        "terminal_status": row["status"],
+        "failure_attribution": _failure_attribution(row),
+        "timestamps": _run_timestamps(launch_plan),
+        "provenance": _manifest_provenance(
+            config=config,
+            row=row,
+            config_path=config_path,
+            python_executable=python_executable,
+            launch_plan=launch_plan,
+            repository_state=repository_state,
+        ),
+        "contract_expectations": _contract_expectations(config, row),
     }
     if launch_plan is not None:
         manifest["planned_launch"] = launch_plan
-    path = directory / f"{_safe_filename(row['run_id'])}.json"
     path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _run_timestamps(launch_plan: dict[str, Any] | None) -> dict[str, str]:
+    if launch_plan is None:
+        return {"started_at": "", "ended_at": "", "source": "not_available"}
+    run_status = _load_json_dict(_repo_path(str(launch_plan.get("run_status", ""))))
+    started_at = str(run_status.get("created_at", "") or "")
+    ended_at = str(run_status.get("completed_at", "") or run_status.get("updated_at", "") or "")
+    return {
+        "started_at": _redact_repo_path(started_at),
+        "ended_at": _redact_repo_path(ended_at),
+        "source": "run_status" if started_at or ended_at else "not_available",
+    }
+
+
+def _manifest_provenance(
+    *,
+    config: dict[str, Any],
+    row: dict[str, str],
+    config_path: Path,
+    python_executable: str,
+    launch_plan: dict[str, Any] | None,
+    repository_state: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    execution = config.get("execution") if isinstance(config.get("execution"), dict) else {}
+    checkpoint = execution.get("token_checkpoint") if row.get("policy") == "token_dagger_bc" else None
+    required_image = str(execution.get("required_docker_image", "")).strip()
+    return {
+        "repository": repository_state or _repository_state(),
+        "python": _python_state(python_executable),
+        "alpasim": _git_checkout_state(Path(str(execution.get("alpasim_root", "")))),
+        "patches": _patch_hashes(),
+        "docker_image": _docker_image_state(required_image),
+        "gpu_runtime": _gpu_runtime_state(),
+        "checkpoint": _checkpoint_state(checkpoint),
+        "config": {
+            "path": str(config_path),
+            "sha256": _sha256_path(config_path),
+        },
+        "launch_plan_schema": "" if launch_plan is None else str(launch_plan.get("schema", "")),
+    }
+
+
+def _contract_expectations(config: dict[str, Any], row: dict[str, str]) -> dict[str, Any]:
+    execution = config.get("execution") if isinstance(config.get("execution"), dict) else {}
+    adapter_config = row.get("adapter_config", "")
+    route_source = "command_proxy" if adapter_config == "command_only_route" else "alpasim_waypoints"
+    return {
+        "route_source": route_source,
+        "claim_valid_requires_route_waypoints": route_source != "command_proxy",
+        "source_horizon_seconds": float(execution.get("horizon_seconds", 5.0)),
+        "target_runtime_frequency_hz": int(execution.get("output_frequency_hz", 4)),
+        "target_runtime_samples": int(
+            round(
+                float(execution.get("horizon_seconds", 5.0))
+                * float(execution.get("output_frequency_hz", 4))
+            )
+        ),
+        "evidence_gate": "claim_valid_false_until_audit_aggregation",
+    }
+
+
+def _failure_attribution(row: dict[str, str]) -> dict[str, Any]:
+    claim_valid = row.get("claim_valid") == "true"
+    status = row.get("status", "")
+    failure_layer = row.get("failure_layer", "")
+    failure_code = row.get("failure_code", "")
+    if claim_valid:
+        category = "policy_attributable_behavior"
+    elif status == "blocked":
+        category = "integration_precondition_or_unsupported_contract"
+    elif status == "failed":
+        category = "integration_runtime_or_evidence_failure"
+    elif status == "completed":
+        category = "diagnostic_rollout_pending_claim_gate"
+    else:
+        category = "planned_not_launched"
+    return {
+        "category": category,
+        "policy_attributable": claim_valid,
+        "claim_valid_policy_benchmark": claim_valid,
+        "integration_or_evidence_invalid": not claim_valid,
+        "failure_layer": failure_layer,
+        "failure_code": failure_code,
+        "rule": (
+            "A behavior event is policy-attributable only after semantic, temporal, "
+            "lifecycle, deployment, and evidence gates pass."
+        ),
+    }
+
+
+def _repository_state() -> dict[str, Any]:
+    pathspec = _source_state_pathspec()
+    diff = _git_output(["diff", "--binary", "--", *pathspec])
+    status = _git_output(["status", "--short", "--", *pathspec])
+    return {
+        "git_sha": _git_output(["rev-parse", "HEAD"]).strip(),
+        "dirty": bool(status.strip()),
+        "dirty_diff_sha256": hashlib.sha256(diff.encode("utf-8")).hexdigest(),
+    }
+
+
+def _source_state_pathspec() -> list[str]:
+    return [
+        ".",
+        ":(exclude)artifacts/cvm",
+        ":(exclude)paper/cvm/generated",
+        ":(exclude)paper/cvm/figures",
+        ":(exclude)paper/cvm/main.aux",
+        ":(exclude)paper/cvm/main.bbl",
+        ":(exclude)paper/cvm/main.blg",
+        ":(exclude)paper/cvm/main.log",
+        ":(exclude)paper/cvm/main.out",
+        ":(exclude)paper/cvm/paper.pdf",
+        ":(exclude)wod2sim.pdf",
+    ]
+
+
+def _git_checkout_state(path: Path) -> dict[str, Any]:
+    if not str(path):
+        return {"path": "", "present": False, "git_sha": "", "dirty": None}
+    resolved = _resolve_repo_path(path)
+    if not resolved.exists():
+        return {"path": _path_arg(path), "present": False, "git_sha": "", "dirty": None}
+    git_sha = _git_output(["-C", str(resolved), "rev-parse", "HEAD"]).strip()
+    status = _git_output(["-C", str(resolved), "status", "--short"]).strip()
+    return {
+        "path": _path_arg(path),
+        "present": bool(git_sha),
+        "git_sha": git_sha,
+        "dirty": bool(status) if git_sha else None,
+    }
+
+
+def _patch_hashes() -> dict[str, str]:
+    patch_dir = REPO_ROOT / "src" / "wod2sim" / "alpasim_overrides"
+    hashes: dict[str, str] = {}
+    for path in sorted(patch_dir.rglob("*")):
+        if path.is_file() and path.suffix in {".patch", ".yaml", ".py", ".toml", ".Dockerfile"}:
+            hashes[_path_arg(path)] = _sha256_path(path)
+    for path in sorted(patch_dir.glob("Dockerfile*")):
+        if path.is_file():
+            hashes[_path_arg(path)] = _sha256_path(path)
+    return hashes
+
+
+def _docker_image_state(image: str) -> dict[str, Any]:
+    if not image:
+        return {"tag": "", "available": False, "id": "", "repo_digests": []}
+    try:
+        result = subprocess.run(
+            ["docker", "image", "inspect", image],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            check=False,
+        )
+    except FileNotFoundError:
+        return {"tag": image, "available": False, "id": "", "repo_digests": []}
+    if result.returncode != 0:
+        return {"tag": image, "available": False, "id": "", "repo_digests": []}
+    try:
+        payload = json.loads(result.stdout)
+    except json.JSONDecodeError:
+        return {"tag": image, "available": True, "id": "", "repo_digests": []}
+    item = payload[0] if isinstance(payload, list) and payload else {}
+    return {
+        "tag": image,
+        "available": True,
+        "id": str(item.get("Id", "")),
+        "repo_digests": [str(value) for value in item.get("RepoDigests", []) if value],
+    }
+
+
+def _gpu_runtime_state() -> dict[str, str]:
+    try:
+        result = subprocess.run(
+            ["nvidia-smi", "--query-gpu=name,driver_version", "--format=csv,noheader"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            check=False,
+        )
+    except FileNotFoundError:
+        return {"available": "false", "gpu": "", "driver": ""}
+    if result.returncode != 0:
+        return {"available": "false", "gpu": "", "driver": ""}
+    first_line = result.stdout.splitlines()[0] if result.stdout.splitlines() else ""
+    gpu, _, driver = first_line.partition(",")
+    return {"available": "true", "gpu": gpu.strip(), "driver": driver.strip()}
+
+
+def _checkpoint_state(checkpoint: object) -> dict[str, str]:
+    if checkpoint in {None, ""}:
+        return {"path": "", "sha256": "", "available": "false"}
+    path = Path(str(checkpoint))
+    resolved = _resolve_repo_path(path)
+    if not resolved.is_file():
+        return {"path": _path_arg(path), "sha256": "", "available": "false"}
+    return {"path": _path_arg(path), "sha256": _sha256_path(resolved), "available": "true"}
+
+
+def _python_state(python_executable: str) -> dict[str, str]:
+    try:
+        result = subprocess.run(
+            [_python_arg(python_executable), "--version"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            check=False,
+            cwd=REPO_ROOT,
+        )
+    except FileNotFoundError:
+        result = None
+    return {
+        "executable": _python_arg(python_executable),
+        "version": result.stdout.strip() if result is not None and result.returncode == 0 else "",
+    }
+
+
+def _git_output(args: list[str]) -> str:
+    result = subprocess.run(
+        ["git", *args],
+        cwd=REPO_ROOT,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        text=True,
+        check=False,
+    )
+    return result.stdout if result.returncode == 0 else ""
+
+
+def _redact_repo_path(value: str) -> str:
+    return value.replace(str(REPO_ROOT), "<repo>").replace(str(REPO_ROOT.resolve()), "<repo>")
 
 
 def _safe_filename(value: str) -> str:

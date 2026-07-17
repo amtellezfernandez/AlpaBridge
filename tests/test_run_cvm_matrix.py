@@ -143,6 +143,64 @@ class RunCVMMatrixTests(unittest.TestCase):
         self.assertIn("planned_launch", payload)
         self.assertTrue(payload["planned_launch"]["supported"])
         self.assertIn("--scene-id", payload["planned_launch"]["command"])
+        self.assertIn("provenance", payload)
+        self.assertIn("repository", payload["provenance"])
+        self.assertIn("patches", payload["provenance"])
+        self.assertEqual(
+            "integration_precondition_or_unsupported_contract",
+            payload["failure_attribution"]["category"],
+        )
+        self.assertFalse(payload["failure_attribution"]["policy_attributable"])
+        self.assertIn("contract_expectations", payload)
+        self.assertEqual("alpasim_waypoints", payload["contract_expectations"]["route_source"])
+        self.assertEqual(5.0, payload["contract_expectations"]["source_horizon_seconds"])
+        self.assertEqual(4, payload["contract_expectations"]["target_runtime_frequency_hz"])
+
+    def test_command_only_manifest_records_proxy_route_expectation(self) -> None:
+        module = _load_module()
+        config = _base_config()
+        config["name"] = "semantic_ablation"
+        config["execution"]["mode"] = "closed_loop_ablation"
+        row = _base_row()
+        row["matrix"] = "semantic_ablation"
+        row["policy"] = "route_following"
+        row["adapter_config"] = "command_only_route"
+
+        expectations = module._contract_expectations(config, row)
+
+        self.assertEqual("command_proxy", expectations["route_source"])
+        self.assertFalse(expectations["claim_valid_requires_route_waypoints"])
+
+    def test_source_state_pathspec_ignores_generated_release_artifacts(self) -> None:
+        module = _load_module()
+
+        pathspec = module._source_state_pathspec()
+
+        self.assertEqual(".", pathspec[0])
+        self.assertIn(":(exclude)artifacts/cvm", pathspec)
+        self.assertIn(":(exclude)paper/cvm/generated", pathspec)
+        self.assertIn(":(exclude)wod2sim.pdf", pathspec)
+
+    def test_failure_attribution_never_treats_unvalidated_rows_as_policy_failure(self) -> None:
+        module = _load_module()
+
+        blocked = module._failure_attribution(_base_row())
+        completed = module._failure_attribution(
+            {
+                **_base_row(),
+                "status": "completed",
+                "attempted": "true",
+                "completed": "true",
+                "blocked": "false",
+                "failure_layer": "",
+                "failure_code": "",
+            }
+        )
+
+        self.assertEqual("integration_precondition_or_unsupported_contract", blocked["category"])
+        self.assertFalse(blocked["policy_attributable"])
+        self.assertEqual("diagnostic_rollout_pending_claim_gate", completed["category"])
+        self.assertFalse(completed["policy_attributable"])
 
     def test_resume_without_execute_preserves_completed_rows(self) -> None:
         module = _load_module()
