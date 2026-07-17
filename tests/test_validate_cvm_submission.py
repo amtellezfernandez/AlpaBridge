@@ -1134,9 +1134,9 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             weak_adapter_label = "adapter and evaluation " + "artifact"
             scaffold_label = "artifact " + "scaffold"
             venue_label = "venue-" + "specific row names"
-            old_layout = "old " + "layout"
-            equivalence_map = "neutral " + "CVM equivalence " + "map"
-            internal_deliverable_layout = "internal " + "deliverable " + "layout"
+            prior_process_label = "old " + "layout"
+            process_translation_label = "neutral " + "CVM equivalence " + "map"
+            internal_process_package = "internal " + "deliverable " + "layout"
             stale_event_name = "s" + "ii2027"
             third_party_secret = "hf_" + ("B" * 20)
             (root / "README.md").write_text(
@@ -1152,9 +1152,9 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
                         weak_adapter_label,
                         scaffold_label,
                         venue_label,
-                        old_layout,
-                        equivalence_map,
-                        internal_deliverable_layout,
+                        prior_process_label,
+                        process_translation_label,
+                        internal_process_package,
                         stale_event_name,
                     ]
                 ),
@@ -1179,9 +1179,9 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         self.assertIn("public_hygiene:venue_coupled_process_label:README.md", failures)
         self.assertIn("public_hygiene:weak_adapter_artifact_label:README.md", failures)
         self.assertIn("public_hygiene:weak_artifact_scaffold_label:README.md", failures)
-        self.assertIn("public_hygiene:old_layout_reference:README.md", failures)
-        self.assertIn("public_hygiene:cvm_equivalence_map:README.md", failures)
-        self.assertIn("public_hygiene:internal_deliverable_layout:README.md", failures)
+        self.assertIn("public_hygiene:prior_process_reference:README.md", failures)
+        self.assertIn("public_hygiene:process_translation_reference:README.md", failures)
+        self.assertIn("public_hygiene:internal_process_package_reference:README.md", failures)
         self.assertIn("public_hygiene:stale_target_event_artifact_name:README.md", failures)
         self.assertIn("public_hygiene:huggingface_token:third_party/README.md", failures)
 
