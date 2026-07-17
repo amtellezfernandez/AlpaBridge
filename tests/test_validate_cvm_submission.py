@@ -164,6 +164,80 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             failures,
         )
 
+    def test_manifest_attribution_accepts_integration_blocker(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            manifest_dir = root / "manifests"
+            manifest_dir.mkdir()
+            (manifest_dir / "blocked.json").write_text(
+                json.dumps(
+                    {
+                        "run_id": "blocked",
+                        "status": "blocked",
+                        "claim_valid": False,
+                        "failure_layer": "deployment",
+                        "failure_code": "direct_actor_oracle_proxy_missing",
+                        "failure_attribution": {
+                            "category": "integration_precondition_or_unsupported_contract",
+                            "policy_attributable": False,
+                            "claim_valid_policy_benchmark": False,
+                            "integration_or_evidence_invalid": True,
+                            "failure_layer": "deployment",
+                            "failure_code": "direct_actor_oracle_proxy_missing",
+                            "rule": (
+                                "A behavior event is policy-attributable only after "
+                                "semantic and evidence gates pass."
+                            ),
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            failures = module._manifest_attribution_failures(manifest_dir)
+
+        self.assertEqual([], failures)
+
+    def test_manifest_attribution_rejects_policy_attribution_for_blocker(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            manifest_dir = root / "manifests"
+            manifest_dir.mkdir()
+            (manifest_dir / "blocked.json").write_text(
+                json.dumps(
+                    {
+                        "run_id": "blocked",
+                        "status": "blocked",
+                        "claim_valid": False,
+                        "failure_layer": "deployment",
+                        "failure_code": "direct_actor_oracle_proxy_missing",
+                        "failure_attribution": {
+                            "category": "policy_attributable_behavior",
+                            "policy_attributable": True,
+                            "claim_valid_policy_benchmark": True,
+                            "integration_or_evidence_invalid": False,
+                            "failure_layer": "policy",
+                            "failure_code": "collision",
+                            "rule": "policy result",
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            failures = module._manifest_attribution_failures(manifest_dir)
+
+        self.assertIn(
+            f"failure_attribution_category_mismatch:{manifest_dir / 'blocked.json'}:"
+            "blocked:blocked:policy_attributable_behavior",
+            failures,
+        )
+        self.assertIn(f"policy_attributable_mismatch:{manifest_dir / 'blocked.json'}:blocked", failures)
+        self.assertIn(f"failure_attribution_layer_mismatch:{manifest_dir / 'blocked.json'}:blocked", failures)
+        self.assertIn(f"failure_attribution_rule_missing:{manifest_dir / 'blocked.json'}:blocked", failures)
+
 
 if __name__ == "__main__":
     unittest.main()

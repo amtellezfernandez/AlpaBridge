@@ -25,6 +25,8 @@ Additional release-specific checks:
 - [x] Figures and generated tables carry the aggregate data hash.
 - [x] `make cvm-eval` preserves completed evidence when rerun without `--execute`.
 - [x] `pre-commit run --all-files` passes without modifying files.
+- [x] Every public run manifest carries validated integration-vs-policy
+  `failure_attribution`.
 
 Current status: complete with documented limitations for the CVM paper draft.
 The dependency-light core rows and semantic ablation provide real closed-loop

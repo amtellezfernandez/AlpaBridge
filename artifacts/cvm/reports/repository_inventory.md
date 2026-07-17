@@ -8,7 +8,8 @@ local simulator state.
 ## Repository State
 
 - Repository root: `<repo>`.
-- Audited base commit: `a448d945ad8f6b3a7a389466a32d8f203eecbc08`.
+- Current checkout SHA is intentionally not hard-coded in this tracked report;
+  use `git rev-parse HEAD` for the exact release commit being inspected.
 - Public paper PDF: `wod2sim.pdf`.
 - Paper source: `paper/cvm/main.tex`.
 - Generated evidence package: `artifacts/cvm`.
@@ -60,6 +61,9 @@ and artifact names are not part of the release surface.
 - Blocked rows: 36, all `direct_actor_oracle_proxy_missing`.
 - Claim-valid policy benchmark rows: 0.
 - Aggregate data hash: `eb4351d5729a4a9f56e828b2ab7ddddf08a206f33b8a417d5153c1e3aba229d5`.
+- Every public run manifest carries `failure_attribution`, including
+  policy-attributable status, claim-valid benchmark status, failure layer/code,
+  and the integration-vs-policy attribution rule.
 
 ## Gated Or Missing Prerequisites
 

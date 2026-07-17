@@ -21,6 +21,19 @@ REQUIRED_FIGURES = (
     "evaluation_pipeline.pdf",
     "main_results.pdf",
 )
+ATTRIBUTION_CATEGORIES = {
+    "policy_attributable_behavior",
+    "integration_precondition_or_unsupported_contract",
+    "integration_runtime_or_evidence_failure",
+    "diagnostic_rollout_pending_claim_gate",
+    "planned_not_launched",
+}
+EXPECTED_ATTRIBUTION_BY_STATUS = {
+    "blocked": "integration_precondition_or_unsupported_contract",
+    "failed": "integration_runtime_or_evidence_failure",
+    "completed": "diagnostic_rollout_pending_claim_gate",
+    "planned": "planned_not_launched",
+}
 EXPECTED_TITLE = (
     "WOD2Sim: Contract-Based System Integration of Dataset-Trained Driving Policies "
     "into Distributed Closed-Loop Simulation"
@@ -178,6 +191,7 @@ def main() -> int:
                 figure_dirs=(args.figures, args.source / "figures"),
             )
         )
+    failures.extend(_manifest_attribution_failures(args.results.parent / "manifests" / "run_manifests"))
     failures.extend(
         _release_hygiene_failures(repo_root=args.repo_root, canonical_paper=args.paper)
     )
@@ -242,6 +256,73 @@ def _generated_artifact_failures(
             info = _mutool_info(path)
             if expected_marker not in info:
                 failures.append(f"generated_figure_hash_mismatch:{path}")
+    return failures
+
+
+def _manifest_attribution_failures(manifest_dir: Path) -> list[str]:
+    failures: list[str] = []
+    if not manifest_dir.is_dir():
+        return [f"missing_run_manifest_dir:{manifest_dir}"]
+    paths = sorted(manifest_dir.glob("*.json"))
+    if not paths:
+        return [f"empty_run_manifest_dir:{manifest_dir}"]
+    for path in paths:
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            failures.append(f"invalid_run_manifest_json:{path}")
+            continue
+        run_id = str(payload.get("run_id", path.stem))
+        attribution = payload.get("failure_attribution")
+        if not isinstance(attribution, dict):
+            failures.append(f"missing_failure_attribution:{path}:{run_id}")
+            continue
+        failures.extend(
+            _single_manifest_attribution_failures(
+                payload=payload,
+                attribution=attribution,
+                path=path,
+                run_id=run_id,
+            )
+        )
+    return failures
+
+
+def _single_manifest_attribution_failures(
+    *,
+    payload: dict[str, object],
+    attribution: dict[str, object],
+    path: Path,
+    run_id: str,
+) -> list[str]:
+    failures: list[str] = []
+    status = str(payload.get("status", ""))
+    claim_valid = payload.get("claim_valid") is True
+    category = str(attribution.get("category", ""))
+    if category not in ATTRIBUTION_CATEGORIES:
+        failures.append(f"invalid_failure_attribution_category:{path}:{run_id}:{category}")
+    expected_category = (
+        "policy_attributable_behavior"
+        if claim_valid
+        else EXPECTED_ATTRIBUTION_BY_STATUS.get(status)
+    )
+    if expected_category is not None and category != expected_category:
+        failures.append(
+            f"failure_attribution_category_mismatch:{path}:{run_id}:{status}:{category}"
+        )
+    if attribution.get("policy_attributable") is not claim_valid:
+        failures.append(f"policy_attributable_mismatch:{path}:{run_id}")
+    if attribution.get("claim_valid_policy_benchmark") is not claim_valid:
+        failures.append(f"claim_valid_policy_benchmark_mismatch:{path}:{run_id}")
+    if attribution.get("integration_or_evidence_invalid") is not (not claim_valid):
+        failures.append(f"integration_invalid_mismatch:{path}:{run_id}")
+    if str(attribution.get("failure_layer", "")) != str(payload.get("failure_layer", "")):
+        failures.append(f"failure_attribution_layer_mismatch:{path}:{run_id}")
+    if str(attribution.get("failure_code", "")) != str(payload.get("failure_code", "")):
+        failures.append(f"failure_attribution_code_mismatch:{path}:{run_id}")
+    rule = str(attribution.get("rule", ""))
+    if "policy-attributable" not in rule or "evidence" not in rule:
+        failures.append(f"failure_attribution_rule_missing:{path}:{run_id}")
     return failures
 
 
