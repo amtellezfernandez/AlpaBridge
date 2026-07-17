@@ -982,6 +982,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             (root / "README.md").write_text(
                 "WOD2Sim release notes [paper](wod2sim.pdf) "
                 "[docs](docs/README.md#start) "
+                "![rollout panel](docs/assets/readme/panel.svg) "
                 '<img src="docs/assets/readme/panel.svg" alt="panel"> '
                 "[external](https://example.com)\n",
                 encoding="utf-8",
@@ -1005,6 +1006,28 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             )
 
         self.assertEqual([], failures)
+
+    def test_release_hygiene_reports_public_images_without_alt_text(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "docs" / "assets").mkdir(parents=True)
+            (root / "docs" / "assets" / "panel.svg").write_text("<svg></svg>\n", encoding="utf-8")
+            (root / "README.md").write_text(
+                "![](docs/assets/panel.svg)\n"
+                '<img src="docs/assets/panel.svg">\n'
+                '<img src="https://example.com/remote.svg" alt="">\n',
+                encoding="utf-8",
+            )
+            (root / "wod2sim.pdf").write_bytes(b"%PDF-1.5\n")
+
+            failures = module._release_hygiene_failures(
+                repo_root=root,
+                canonical_paper=root / "wod2sim.pdf",
+            )
+
+        self.assertIn("public_image_alt_missing:README.md:docs/assets/panel.svg", failures)
+        self.assertIn("public_image_alt_missing:README.md:https://example.com/remote.svg", failures)
 
     def test_release_hygiene_reports_missing_or_escaping_public_local_references(self) -> None:
         module = _load_module()

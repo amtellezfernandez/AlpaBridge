@@ -418,7 +418,10 @@ DESCENDANT_FONT_RE = re.compile(r"/DescendantFonts\s*\[\s*((?:\d+\s+0\s+R\s*)+)\
 OBJECT_REF_RE = re.compile(r"(\d+)\s+0\s+R")
 EMBEDDED_FONT_FILE_RE = re.compile(r"/FontFile(?:2|3)?\b")
 MARKDOWN_LINK_RE = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
+MARKDOWN_IMAGE_RE = re.compile(r"!\[([^\]]*)\]\(([^)]+)\)")
 HTML_LOCAL_REF_RE = re.compile(r"\b(?:href|src)\s*=\s*['\"]([^'\"]+)['\"]", re.IGNORECASE)
+HTML_IMAGE_TAG_RE = re.compile(r"<img\b[^>]*>", re.IGNORECASE)
+HTML_ALT_ATTR_RE = re.compile(r"\balt\s*=\s*(['\"])(.*?)\1", re.IGNORECASE)
 ARCHIVE_TEXT_SUFFIXES = {
     ".json",
     ".jsonl",
@@ -1686,6 +1689,7 @@ def _release_hygiene_failures(*, repo_root: Path, canonical_paper: Path) -> list
             if pattern.search(text):
                 failures.append(f"public_hygiene:{label}:{rel_path}")
         failures.extend(_public_local_reference_failures(path=path, text=text, root=root))
+        failures.extend(_public_image_alt_failures(path=path, text=text, root=root))
     for archive_path in _iter_public_scan_archives(root):
         failures.extend(_archive_hygiene_failures(archive_path, root=root))
     return failures
@@ -1792,6 +1796,23 @@ def _resolve_public_local_reference(*, path: Path, target: str, root: Path) -> t
     cleaned = unquote(cleaned)
     target_path = root / cleaned.lstrip("/") if cleaned.startswith("/") else path.parent / cleaned
     return target_path.resolve(), cleaned
+
+
+def _public_image_alt_failures(*, path: Path, text: str, root: Path) -> list[str]:
+    if path.suffix.lower() not in {".md", ".html", ".htm"}:
+        return []
+    rel_path = path.relative_to(root)
+    failures: list[str] = []
+    for alt_text, target in MARKDOWN_IMAGE_RE.findall(text):
+        if not alt_text.strip():
+            failures.append(f"public_image_alt_missing:{rel_path}:{target.strip() or '<empty-target>'}")
+    for tag in HTML_IMAGE_TAG_RE.findall(text):
+        alt_match = HTML_ALT_ATTR_RE.search(tag)
+        if alt_match is None or not alt_match.group(2).strip():
+            src_match = re.search(r"\bsrc\s*=\s*(['\"])(.*?)\1", tag, re.IGNORECASE)
+            src = src_match.group(2).strip() if src_match else "<missing-src>"
+            failures.append(f"public_image_alt_missing:{rel_path}:{src}")
+    return failures
 
 
 def _archive_hygiene_failures(path: Path, *, root: Path) -> list[str]:
