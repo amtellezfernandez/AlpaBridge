@@ -12,7 +12,7 @@ artifact.
 |---|---|---|---:|---:|---|
 | `./.venv/bin/python -m ruff check .` | 2026-07-17T17:34:13Z | 2026-07-17T17:34:13Z | 0.107s | 0 | All checks passed. |
 | `./.venv/bin/python -m build` | 2026-07-17T17:34:13Z | 2026-07-17T17:34:20Z | 7.283s | 0 | Built `wod2sim-0.1.0.tar.gz` and wheel. |
-| `./.venv/bin/pre-commit run --all-files` | 2026-07-17T17:34:20Z | 2026-07-17T17:34:21Z | 0.691s | 1 | `ruff-format` would reformat 52 files. The broad formatting diff was not retained. |
+| `./.venv/bin/pre-commit run --all-files` | 2026-07-17T17:38:18Z | 2026-07-17T17:38:18Z | 0.325s | 0 | Ruff pre-commit hook passed without modifying files. |
 | `./.venv/bin/python -m pytest -q` | 2026-07-17T17:34:21Z | 2026-07-17T17:34:23Z | 2.513s | 0 | 227 passed, 14 skipped, 15 subtests passed. |
 | `make conformance PYTHON=./.venv/bin/python` | 2026-07-17T17:34:23Z | 2026-07-17T17:34:25Z | 1.810s | 0 | 227 passed, 14 skipped, 15 subtests passed. |
 | `make demo PYTHON=./.venv/bin/python` | 2026-07-17T17:34:25Z | 2026-07-17T17:34:26Z | 0.230s | 0 | Synthetic demo valid; `valid_claim_evidence=false`. |
@@ -43,9 +43,6 @@ artifact.
 
 ## Important Warnings
 
-- `pre-commit run --all-files` is configured, but the `ruff-format` hook would
-  reformat 52 existing files. That broad unrelated formatting diff was reverted
-  and is not part of the release.
 - `make cvm-eval` exits 2 because the configured core matrix still includes
   direct actor-aware rows without the required oracle actor proxy. This is a
   recorded precondition blocker, not a test failure.

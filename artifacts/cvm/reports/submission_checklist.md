@@ -24,10 +24,9 @@ Additional release-specific checks:
 - [x] Public artifact vocabulary uses CVM naming.
 - [x] Figures and generated tables carry the aggregate data hash.
 - [x] `make cvm-eval` preserves completed evidence when rerun without `--execute`.
-- [ ] `pre-commit run --all-files` passes without modifying files.
+- [x] `pre-commit run --all-files` passes without modifying files.
 
 Current status: complete with documented limitations for the CVM paper draft.
 The dependency-light core rows and semantic ablation provide real closed-loop
 integration evidence. Direct-actor temporal ablation and learned-policy results
-remain excluded. The configured pre-commit formatting hook is the only failed
-auxiliary gate; applying it would introduce a broad unrelated formatting diff.
+remain excluded.

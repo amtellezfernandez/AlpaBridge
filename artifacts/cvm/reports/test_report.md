@@ -12,7 +12,7 @@ repository root to reproduce the checks.
 | `make cvm-eval PYTHON=./.venv/bin/python` | Expected exit 2: preserves 36 completed core rows and reports 18 direct-actor proxy blockers. |
 | `./.venv/bin/python -m pytest -q` | Passed: 227 passed, 14 skipped, 15 subtests passed. |
 | `./.venv/bin/python -m build` | Passed: built source distribution and wheel. |
-| `./.venv/bin/pre-commit run --all-files` | Failed: `ruff-format` would reformat 52 files; broad formatting diff not retained. |
+| `./.venv/bin/pre-commit run --all-files` | Passed without modifying files. |
 | `git diff --check` | Run as final whitespace validation. |
 
 Targeted contract selections:
