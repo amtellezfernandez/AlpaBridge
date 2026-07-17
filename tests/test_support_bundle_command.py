@@ -6,6 +6,7 @@ import json
 import subprocess
 import sys
 import tarfile
+import time
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -80,6 +81,51 @@ class WOD2SimSupportBundleTests(unittest.TestCase):
             self.assertIn("run_support_bundle/audit/manifest.json", names)
             self.assertIn("run_support_bundle/driver/selection-log.jsonl", names)
             self.assertIn("run_support_bundle/support-bundle-manifest.json", names)
+
+    def test_build_report_writes_byte_stable_bundle(self) -> None:
+        module = _load_module()
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            run_dir = root / "run"
+            output = root / "bundle.tar.gz"
+            (run_dir / "driver").mkdir(parents=True)
+            (run_dir / "launch-metadata.json").write_text(
+                json.dumps(
+                    {
+                        "model": "constant_velocity",
+                        "scene_preset": "synthetic",
+                        "scene_ids": ["clipgt-1"],
+                    },
+                    sort_keys=True,
+                ),
+                encoding="utf-8",
+            )
+            (run_dir / "driver" / "baseline-log.jsonl").write_text(
+                json.dumps(
+                    {
+                        "frame_index": 1,
+                        "scene_id": "clipgt-1",
+                        "command": "straight",
+                        "result": "ok",
+                        "route_source": "alpasim_waypoints",
+                        "route_waypoint_count": 2,
+                        "alpasim_signal": {
+                            "route_waypoints": [{"x": 0.0, "y": 0.0}, {"x": 20.0, "y": 0.0}]
+                        },
+                        "sensor_freshness": {"status": "ok_initial", "pose_camera_lag_us": 0},
+                    },
+                    sort_keys=True,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            module.build_report(run_dir=run_dir, output=output, public_root=root)
+            first_bundle = output.read_bytes()
+            time.sleep(1.1)
+            module.build_report(run_dir=run_dir, output=output, public_root=root)
+
+            self.assertEqual(first_bundle, output.read_bytes())
 
     def test_script_can_write_json_report(self) -> None:
         _load_script_module()

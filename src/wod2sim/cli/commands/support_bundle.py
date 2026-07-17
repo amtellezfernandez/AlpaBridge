@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import argparse
+import gzip
 import json
 import shutil
+import tarfile
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -23,6 +25,7 @@ BUNDLE_INCLUDE_PATTERNS = (
     "aggregate/*.csv",
     "aggregate/*.json",
 )
+DETERMINISTIC_TAR_MTIME = 0
 
 
 def _parse_args() -> argparse.Namespace:
@@ -49,16 +52,19 @@ def build_report(
         raise FileNotFoundError(f"Run dir not found: {run_dir}")
     bundle_path = _resolve_output_path(run_dir, output)
     redaction_root = public_root.resolve() if public_root is not None else None
+    redact_home = redaction_root is not None
 
     with tempfile.TemporaryDirectory(prefix="wod2sim-support-bundle-") as tmpdir:
         staging_root = Path(tmpdir) / f"{run_dir.name}_support_bundle"
+        redaction_roots = ((staging_root.parent, "<bundle_tmp>"),)
+        if redaction_root is not None:
+            redaction_roots = ((redaction_root, "<repo>"), *redaction_roots)
         staging_root.mkdir(parents=True, exist_ok=True)
         copied_files, missing_files = _copy_run_artifacts(run_dir, staging_root)
 
         audit_dir = staging_root / "audit"
         run_audit = build_run_audit_report(run_dir=run_dir, audit_dir=audit_dir)
-        if redaction_root is not None:
-            run_audit = _redact_paths(run_audit, root=redaction_root)
+        run_audit = _redact_paths(run_audit, roots=redaction_roots, redact_home=redact_home)
         run_audit_path = staging_root / "run-audit.json"
         run_audit_path.write_text(json.dumps(run_audit, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
@@ -71,27 +77,12 @@ def build_report(
             "run_audit_path": str(run_audit_path.relative_to(staging_root)),
             "audit_dir": str(audit_dir.relative_to(staging_root)),
         }
-        if redaction_root is not None:
-            manifest = _redact_paths(manifest, root=redaction_root)
+        manifest = _redact_paths(manifest, roots=redaction_roots, redact_home=redact_home)
         manifest_path = staging_root / "support-bundle-manifest.json"
         manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-        if redaction_root is not None:
-            _sanitize_json_files(staging_root, root=redaction_root)
+        _sanitize_json_files(staging_root, roots=redaction_roots, redact_home=redact_home)
 
-        bundle_path.parent.mkdir(parents=True, exist_ok=True)
-        archive_base = bundle_path.with_suffix("")
-        if archive_base.suffix == ".tar":
-            archive_base = archive_base.with_suffix("")
-        created_archive = Path(
-            shutil.make_archive(
-                str(archive_base),
-                "gztar",
-                root_dir=staging_root.parent,
-                base_dir=staging_root.name,
-            )
-        ).resolve()
-        if created_archive != bundle_path:
-            created_archive.replace(bundle_path)
+        _write_deterministic_gztar(staging_root=staging_root, bundle_path=bundle_path)
 
     report = {
         "schema": "wod2sim_support_bundle_v1",
@@ -112,7 +103,11 @@ def build_report(
         },
     }
     if redaction_root is not None:
-        report = _redact_paths(report, root=redaction_root)
+        report = _redact_paths(
+            report,
+            roots=((redaction_root, "<repo>"),),
+            redact_home=True,
+        )
     return report
 
 
@@ -143,25 +138,84 @@ def _copy_run_artifacts(run_dir: Path, staging_root: Path) -> tuple[list[str], l
     return copied, missing
 
 
-def _sanitize_json_files(root_dir: Path, *, root: Path) -> None:
+def _write_deterministic_gztar(*, staging_root: Path, bundle_path: Path) -> None:
+    bundle_path.parent.mkdir(parents=True, exist_ok=True)
+    with bundle_path.open("wb") as raw_file:
+        with gzip.GzipFile(
+            filename="",
+            mode="wb",
+            fileobj=raw_file,
+            mtime=DETERMINISTIC_TAR_MTIME,
+        ) as gzip_file:
+            with tarfile.open(fileobj=gzip_file, mode="w", format=tarfile.PAX_FORMAT) as archive:
+                _add_tar_entry(archive, staging_root, staging_root.name)
+                for path in sorted(
+                    staging_root.rglob("*"),
+                    key=lambda item: item.relative_to(staging_root).as_posix(),
+                ):
+                    arcname = f"{staging_root.name}/{path.relative_to(staging_root).as_posix()}"
+                    _add_tar_entry(archive, path, arcname)
+
+
+def _add_tar_entry(archive: tarfile.TarFile, path: Path, arcname: str) -> None:
+    info = tarfile.TarInfo(arcname)
+    info.mtime = DETERMINISTIC_TAR_MTIME
+    info.uid = 0
+    info.gid = 0
+    info.uname = ""
+    info.gname = ""
+    if path.is_dir():
+        info.type = tarfile.DIRTYPE
+        info.mode = 0o755
+        archive.addfile(info)
+        return
+    if path.is_file():
+        info.size = path.stat().st_size
+        info.mode = path.stat().st_mode & 0o777
+        with path.open("rb") as file_obj:
+            archive.addfile(info, file_obj)
+
+
+def _sanitize_json_files(
+    root_dir: Path,
+    *,
+    roots: tuple[tuple[Path, str], ...],
+    redact_home: bool,
+) -> None:
     for path in sorted(root_dir.rglob("*.json")):
         payload = json.loads(path.read_text(encoding="utf-8"))
         path.write_text(
-            json.dumps(_redact_paths(payload, root=root), indent=2, sort_keys=True) + "\n",
+            json.dumps(
+                _redact_paths(payload, roots=roots, redact_home=redact_home),
+                indent=2,
+                sort_keys=True,
+            )
+            + "\n",
             encoding="utf-8",
         )
 
 
-def _redact_paths(value: Any, *, root: Path) -> Any:
+def _redact_paths(
+    value: Any,
+    *,
+    roots: tuple[tuple[Path, str], ...],
+    redact_home: bool,
+) -> Any:
     if isinstance(value, dict):
-        return {key: _redact_paths(item, root=root) for key, item in value.items()}
+        return {
+            key: _redact_paths(item, roots=roots, redact_home=redact_home)
+            for key, item in value.items()
+        }
     if isinstance(value, list):
-        return [_redact_paths(item, root=root) for item in value]
+        return [_redact_paths(item, roots=roots, redact_home=redact_home) for item in value]
     if isinstance(value, str):
-        text = value.replace(str(root), "<repo>")
-        home = str(Path.home())
-        if home != str(root):
-            text = text.replace(home, "~")
+        text = value
+        for root, replacement in roots:
+            text = text.replace(str(root), replacement)
+        if redact_home:
+            home = str(Path.home())
+            if all(home != str(root) for root, _ in roots):
+                text = text.replace(home, "~")
         return text
     return value
 
