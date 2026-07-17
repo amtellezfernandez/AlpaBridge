@@ -27,6 +27,9 @@ class BatchSummaryTests(unittest.TestCase):
         self.assertNotIn("not a claim-valid stage summary", summary["claim_boundary"])
         self.assertEqual("wod2sim_closed_loop_batch_summary_v1", summary["schema"])
         self.assertEqual(2, summary["aggregate"]["completed_scene_count"])
+        self.assertEqual(0, summary["aggregate"]["audit_invalid_scene_count"])
+        self.assertEqual(0, summary["aggregate"]["route_contract_failure_scene_count"])
+        self.assertEqual({"alpasim_waypoints": 398}, summary["aggregate"]["route_source_counts"])
         self.assertEqual(398, summary["aggregate"]["total_audited_frames"])
         self.assertEqual(0.5, summary["metrics"]["collision_any"]["mean"])
         self.assertEqual("scene_rate", summary["metrics"]["collision_any"]["interpretation"])
@@ -101,6 +104,25 @@ class BatchSummaryTests(unittest.TestCase):
         self.assertIn(
             "run_001:scene-a:scene_preset_mismatch:fresh_3scene",
             summary["provenance"]["critical_errors"],
+        )
+
+    def test_route_contract_failure_prevents_clean_claim_summary(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.batch_summary")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            _write_batch(root, route_contract_ok=False)
+            _write_run(root, "001_scene-a", collision_any=0.0, wrong_lane=0.0, progress=0.7)
+            _write_run(root, "002_scene-b", collision_any=0.0, wrong_lane=0.0, progress=0.8)
+
+            summary = module.build_summary(batch_dir=root)
+
+        self.assertTrue(summary["valid"])
+        self.assertFalse(summary["clean_closed_loop_batch"])
+        self.assertEqual(1, summary["aggregate"]["audit_invalid_scene_count"])
+        self.assertEqual(1, summary["aggregate"]["route_contract_failure_scene_count"])
+        self.assertEqual(
+            {"alpasim_waypoints": 199, "command_proxy": 199},
+            summary["aggregate"]["route_source_counts"],
         )
 
     def test_legacy_smoke_launch_label_is_a_warning_when_scene_ids_match_manifest(self) -> None:
@@ -237,6 +259,7 @@ def _write_batch(
     root: Path,
     *,
     completed: bool = True,
+    route_contract_ok: bool = True,
     scene_ids: tuple[str, str] = ("scene-a", "scene-b"),
 ) -> None:
     root.mkdir(parents=True, exist_ok=True)
@@ -266,9 +289,13 @@ def _write_batch(
             "diagnostics": {
                 "state": "completed",
                 "aggregate_status": "completed",
+                "run_audit_valid": True,
                 "frame_count": 199,
                 "sensor_pipeline_ok": True,
                 "sensor_failure_count": 0,
+                "route_contract_ok": True,
+                "route_contract_failure_count": 0,
+                "route_source_counts": {"alpasim_waypoints": 199},
             },
         },
         {
@@ -282,9 +309,15 @@ def _write_batch(
             "diagnostics": {
                 "state": "completed" if completed else "failed",
                 "aggregate_status": "completed" if completed else None,
+                "run_audit_valid": completed and route_contract_ok,
                 "frame_count": 199 if completed else 0,
                 "sensor_pipeline_ok": True if completed else None,
                 "sensor_failure_count": 0,
+                "route_contract_ok": route_contract_ok if completed else None,
+                "route_contract_failure_count": 0 if route_contract_ok else 1,
+                "route_source_counts": {"alpasim_waypoints" if route_contract_ok else "command_proxy": 199}
+                if completed
+                else {},
             },
         },
     ]

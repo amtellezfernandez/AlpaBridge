@@ -21,10 +21,10 @@
     <circle cx="166" cy="120" r="10" fill="#ffbd44"/>
     <circle cx="198" cy="120" r="10" fill="#00ca4e"/>
     <text x="236" y="128" fill="#b7c6c8" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="23">wod2sim command manifest</text>
-    <text x="132" y="206" fill="#78f0d4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="25">$ wod2sim-reproduce --model token_dagger_bc --checkpoint ckpt.pt --json</text>
+    <text x="132" y="206" fill="#78f0d4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="25">$ wod2sim-reproduce --model constant_velocity --json</text>
     <text x="132" y="260" fill="#dce8e8" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="25">state: planned</text>
     <text x="132" y="306" fill="#dce8e8" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="25">scene: example-scene</text>
-    <text x="132" y="352" fill="#dce8e8" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="25">driver: token_dagger_bc trajectory adapter</text>
+    <text x="132" y="352" fill="#dce8e8" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="25">driver: constant_velocity public baseline</text>
     <text x="132" y="398" fill="#dce8e8" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="25">audit frames: pending execution</text>
     <text x="132" y="444" fill="#dce8e8" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="25">sensor checks: planned</text>
     <text x="132" y="490" fill="#dce8e8" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="25">result counts: pending execution</text>

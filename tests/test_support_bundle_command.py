@@ -55,7 +55,10 @@ class WOD2SimSupportBundleTests(unittest.TestCase):
                         "candidate_count": 9,
                         "reference_count": 2,
                         "result": "ok",
-                        "alpasim_signal": {"structured_hazards": [], "route_waypoints": []},
+                        "alpasim_signal": {
+                            "structured_hazards": [],
+                            "route_waypoints": [{"x": 0.0, "y": 0.0}, {"x": 20.0, "y": 0.0}],
+                        },
                         "sensor_freshness": {"status": "ok_initial", "pose_camera_lag_us": 0},
                     }
                 )
@@ -67,6 +70,7 @@ class WOD2SimSupportBundleTests(unittest.TestCase):
             report = module.build_report(run_dir=run_dir, output=output)
 
             self.assertTrue(report["valid"])
+            self.assertTrue(report["run_audit"]["route_contract_ok"])
             self.assertTrue(output.is_file())
             self.assertEqual(4, report["copied_file_count"])
             with tarfile.open(output, "r:gz") as archive:
@@ -95,6 +99,9 @@ class WOD2SimSupportBundleTests(unittest.TestCase):
                         "scene_id": "clipgt-1",
                         "command": "straight",
                         "result": "ok",
+                        "alpasim_signal": {
+                            "route_waypoints": [{"x": 0.0, "y": 0.0}, {"x": 20.0, "y": 0.0}]
+                        },
                         "sensor_freshness": {"status": "ok_initial", "pose_camera_lag_us": 0},
                     }
                 )

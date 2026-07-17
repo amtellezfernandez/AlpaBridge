@@ -79,8 +79,9 @@ def build_summary(
         "valid_claim_evidence": valid_claim_evidence,
         "claim_rule": (
             "Every included run must be an executed wod2sim-reproduce run with "
-            "valid_claim_evidence=true, a valid run audit, zero sensor failures, and a valid "
-            "support bundle report."
+            "valid_claim_evidence=true, a valid run audit, zero sensor failures, "
+            "route_source=alpasim_waypoints for every audited frame, and a valid support "
+            "bundle report."
         ),
         "run_count": len(runs),
         "valid_input_count": sum(1 for run in runs if run["input_valid"]),
@@ -178,6 +179,9 @@ def _audit_summary(audit: dict[str, Any]) -> dict[str, Any]:
         "frame_count": _int_value(audit.get("frame_count")),
         "sensor_pipeline_ok": _optional_bool(audit.get("sensor_pipeline_ok")),
         "sensor_failure_count": _int_value(audit.get("sensor_failure_count")),
+        "route_contract_ok": _optional_bool(audit.get("route_contract_ok")),
+        "route_contract_failure_count": _int_value(audit.get("route_contract_failure_count")),
+        "route_source_counts": _counter_dict(audit.get("route_source_counts")),
         "result_counts": _counter_dict(audit.get("result_counts")),
         "sensor_status_counts": _counter_dict(audit.get("sensor_status_counts")),
         "max_pose_camera_lag_us": _optional_int(audit.get("max_pose_camera_lag_us")),
@@ -214,6 +218,8 @@ def _support_bundle_summary(
             "valid": _optional_bool(run_audit.get("valid")),
             "sensor_pipeline_ok": _optional_bool(run_audit.get("sensor_pipeline_ok")),
             "sensor_failure_count": _int_value(run_audit.get("sensor_failure_count")),
+            "route_contract_ok": _optional_bool(run_audit.get("route_contract_ok")),
+            "route_contract_failure_count": _int_value(run_audit.get("route_contract_failure_count")),
             "driver_log_kind": run_audit.get("driver_log_kind"),
         },
     }
@@ -231,6 +237,7 @@ def _aggregate_runs(runs: list[dict[str, Any]]) -> dict[str, Any]:
     )
     result_counts: Counter[str] = Counter()
     sensor_status_counts: Counter[str] = Counter()
+    route_source_counts: Counter[str] = Counter()
     scene_ids: set[str] = set()
     support_bundle_hashes: list[str] = []
     provenance_commits: set[str] = set()
@@ -238,6 +245,7 @@ def _aggregate_runs(runs: list[dict[str, Any]]) -> dict[str, Any]:
         scene_ids.update(run.get("scene_ids", []))
         result_counts.update(run["audit"]["result_counts"])
         sensor_status_counts.update(run["audit"]["sensor_status_counts"])
+        route_source_counts.update(run["audit"]["route_source_counts"])
         sha256 = run["support_bundle"].get("sha256")
         if sha256:
             support_bundle_hashes.append(str(sha256))
@@ -261,8 +269,15 @@ def _aggregate_runs(runs: list[dict[str, Any]]) -> dict[str, Any]:
         "sensor_failure_count": sum(
             int(run["audit"]["sensor_failure_count"]) for run in runs
         ),
+        "route_contract_ok_count": sum(
+            1 for run in runs if run["audit"]["route_contract_ok"] is True
+        ),
+        "route_contract_failure_count": sum(
+            int(run["audit"]["route_contract_failure_count"]) for run in runs
+        ),
         "result_counts": dict(sorted(result_counts.items())),
         "sensor_status_counts": dict(sorted(sensor_status_counts.items())),
+        "route_source_counts": dict(sorted(route_source_counts.items())),
         "support_bundle_valid_count": sum(
             1 for run in runs if run["support_bundle"]["valid"] is True
         ),
@@ -280,6 +295,8 @@ def _run_is_claim_evidence(run: dict[str, Any]) -> bool:
         and run["audit"]["valid"] is True
         and run["audit"]["sensor_pipeline_ok"] is True
         and int(run["audit"]["sensor_failure_count"]) == 0
+        and run["audit"]["route_contract_ok"] is True
+        and int(run["audit"]["route_contract_failure_count"]) == 0
         and run["support_bundle"]["valid"] is True
         and run["support_bundle"]["bundle_present"] is True
     )
@@ -317,6 +334,17 @@ def _advice(
         advice.append(
             "Runs with sensor-pipeline failures are adapter/runtime triage evidence, not clean benchmark evidence: "
             + ", ".join(sensor_failed)
+        )
+    route_failed = [
+        run["run_id"]
+        for run in runs
+        if int(run["audit"]["route_contract_failure_count"]) > 0
+        or run["audit"]["route_contract_ok"] is False
+    ]
+    if route_failed:
+        advice.append(
+            "Runs with command-proxy or missing route geometry are adapter triage evidence, not clean benchmark evidence: "
+            + ", ".join(route_failed)
         )
     missing_bundle = [
         run["run_id"]
@@ -430,6 +458,8 @@ def _print_human_summary(summary: dict[str, Any]) -> None:
     print(f"  scene count: {aggregate['scene_count']}")
     print(f"  total frames: {aggregate['total_frames']}")
     print(f"  sensor failures: {aggregate['sensor_failure_count']}")
+    print(f"  route contract failures: {aggregate['route_contract_failure_count']}")
+    print(f"  route sources: {aggregate['route_source_counts']}")
     print(f"  result counts: {aggregate['result_counts']}")
     if summary["advice"]:
         print("  advice:")

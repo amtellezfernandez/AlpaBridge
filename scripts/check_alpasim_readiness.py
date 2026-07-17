@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from __future__ import annotations
 
 import sys
@@ -14,6 +15,7 @@ SCENE_PRESETS = _cmd.SCENE_PRESETS
 _parse_args = _cmd._parse_args
 _preflight_alpasim_base_image = _cmd._preflight_alpasim_base_image
 _preflight_docker_access = _cmd._preflight_docker_access
+_preflight_alpasim_local_environment = _cmd._preflight_alpasim_local_environment
 _preflight_nvidia_container_runtime = _cmd._preflight_nvidia_container_runtime
 _preflight_platform_compatibility = _cmd._preflight_platform_compatibility
 _preflight_scene_artifacts = _cmd._preflight_scene_artifacts
@@ -30,6 +32,8 @@ def main() -> None:
     scene_catalog_paths = _scene_catalog_paths(args.scene_preset, alpasim_root)
 
     _validate_alpasim_checkout(alpasim_root)
+    if not args.skip_local_env:
+        _preflight_alpasim_local_environment(alpasim_root)
     _preflight_docker_access()
     _preflight_platform_compatibility()
     if not args.skip_image:
@@ -52,6 +56,7 @@ def main() -> None:
     print("  docker: accessible")
     print("  gpu runtime: accessible")
     print(f"  image: {'skipped' if args.skip_image else 'alpasim-base:0.66.0'}")
+    print(f"  local AlpaSim env: {'skipped' if args.skip_local_env else 'checked'}")
     print(f"  scene artifacts: {'skipped' if args.skip_scene_artifacts else 'checked'}")
 
 

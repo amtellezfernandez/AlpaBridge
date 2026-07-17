@@ -174,7 +174,9 @@ def build_summary(
         and aggregate["completed_scene_count"] == aggregate["planned_scene_count"]
         and not (
             aggregate["failed_scene_count"]
+            or aggregate["audit_invalid_scene_count"]
             or aggregate["sensor_failure_scene_count"]
+            or aggregate["route_contract_failure_scene_count"]
             or aggregate["missing_aggregate_scene_count"]
             or provenance["critical_error_count"]
         )
@@ -274,7 +276,9 @@ def merge_summaries(
         and aggregate["completed_scene_count"] == aggregate["planned_scene_count"]
         and not (
             aggregate["failed_scene_count"]
+            or aggregate["audit_invalid_scene_count"]
             or aggregate["sensor_failure_scene_count"]
+            or aggregate["route_contract_failure_scene_count"]
             or aggregate["missing_aggregate_scene_count"]
         )
     )
@@ -367,10 +371,14 @@ def _summarize_run(*, root: Path, row: dict[str, Any]) -> dict[str, Any]:
         "returncode": _optional_int(row.get("returncode")),
         "state": diagnostics.get("state"),
         "aggregate_status": diagnostics.get("aggregate_status"),
+        "run_audit_valid": _optional_bool(diagnostics.get("run_audit_valid")),
         "frame_count": _int_or_zero(diagnostics.get("frame_count")),
         "sensor_pipeline_ok": _optional_bool(diagnostics.get("sensor_pipeline_ok")),
         "sensor_failure_count": _int_or_zero(diagnostics.get("sensor_failure_count")),
         "first_sensor_failure": diagnostics.get("first_sensor_failure"),
+        "route_contract_ok": _optional_bool(diagnostics.get("route_contract_ok")),
+        "route_contract_failure_count": _int_or_zero(diagnostics.get("route_contract_failure_count")),
+        "route_source_counts": _counter_dict(diagnostics.get("route_source_counts")),
         "launch_metadata": launch_metadata,
         "metrics": metrics,
         "artifacts": artifacts,
@@ -543,10 +551,20 @@ def _aggregate_runs(runs: list[dict[str, Any]], *, planned_scene_count: int) -> 
     aggregate_status_counts = Counter(str(run.get("aggregate_status") or "unknown") for run in runs)
     completed = [run for run in runs if run["result"] in {"completed", "skipped_completed"}]
     failed = [run for run in runs if run["result"] == "failed"]
+    audit_invalid = [
+        run
+        for run in runs
+        if run["result"] in {"completed", "skipped_completed"} and run.get("run_audit_valid") is not True
+    ]
     sensor_failed = [
         run
         for run in runs
         if run["sensor_failure_count"] > 0 or run.get("sensor_pipeline_ok") is False
+    ]
+    route_contract_failed = [
+        run
+        for run in runs
+        if run["route_contract_failure_count"] > 0 or run.get("route_contract_ok") is False
     ]
     missing_aggregate = [
         run
@@ -554,17 +572,23 @@ def _aggregate_runs(runs: list[dict[str, Any]], *, planned_scene_count: int) -> 
         if run["result"] in {"completed", "skipped_completed"}
         and run.get("aggregate_status") != "completed"
     ]
+    route_source_counts: Counter[str] = Counter()
+    for run in runs:
+        route_source_counts.update(_counter_dict(run.get("route_source_counts")))
     return {
         "planned_scene_count": planned_scene_count or len(runs),
         "observed_scene_count": len(runs),
         "completed_scene_count": len(completed),
         "failed_scene_count": len(failed),
+        "audit_invalid_scene_count": len(audit_invalid),
         "sensor_failure_scene_count": len(sensor_failed),
+        "route_contract_failure_scene_count": len(route_contract_failed),
         "missing_aggregate_scene_count": len(missing_aggregate),
         "total_audited_frames": sum(int(run["frame_count"]) for run in runs),
         "result_counts": dict(sorted(result_counts.items())),
         "run_state_counts": dict(sorted(state_counts.items())),
         "aggregate_status_counts": dict(sorted(aggregate_status_counts.items())),
+        "route_source_counts": dict(sorted(route_source_counts.items())),
     }
 
 
@@ -639,9 +663,23 @@ def _failure_taxonomy(
         for run in runs
         if run["sensor_failure_count"] > 0 or run.get("sensor_pipeline_ok") is False
     ]
+    route_contract_failed = [
+        run
+        for run in runs
+        if run["route_contract_failure_count"] > 0 or run.get("route_contract_ok") is False
+    ]
     return {
         "runtime_failed_scene_count": len(runtime_failed),
+        "audit_invalid_scene_count": len(
+            [
+                run
+                for run in runs
+                if run["result"] in {"completed", "skipped_completed"}
+                and run.get("run_audit_valid") is not True
+            ]
+        ),
         "sensor_pipeline_failure_scene_count": len(sensor_failed),
+        "route_contract_failure_scene_count": len(route_contract_failed),
         "collision_scene_count": len(collision),
         "at_fault_collision_scene_count": len(at_fault_collision),
         "offroad_scene_count": len(offroad),
@@ -775,6 +813,15 @@ def _optional_bool(value: Any) -> bool | None:
     return value if isinstance(value, bool) else None
 
 
+def _counter_dict(value: Any) -> dict[str, int]:
+    if not isinstance(value, dict):
+        return {}
+    counter: dict[str, int] = {}
+    for key, raw in value.items():
+        counter[str(key)] = _int_or_zero(raw)
+    return counter
+
+
 def _optional_int(value: Any) -> int | None:
     try:
         return None if value is None else int(value)
@@ -823,7 +870,10 @@ def _print_human_summary(summary: dict[str, Any]) -> None:
         f"  scenes: {aggregate['completed_scene_count']}/{aggregate['planned_scene_count']} completed"
     )
     print(f"  audited frames: {aggregate['total_audited_frames']}")
+    print(f"  audit-invalid scenes: {aggregate['audit_invalid_scene_count']}")
     print(f"  sensor-failure scenes: {aggregate['sensor_failure_scene_count']}")
+    print(f"  route-contract failure scenes: {aggregate['route_contract_failure_scene_count']}")
+    print(f"  route sources: {aggregate['route_source_counts']}")
     print(f"  failure taxonomy: {summary['failure_taxonomy']}")
     if summary["metrics"]:
         print("  metrics:")

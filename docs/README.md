@@ -6,6 +6,8 @@
 | [Getting started](getting-started.md) | Installation, AlpaSim setup, and command materialization. |
 | [Reproduction](reproduction.md) | Executed-run workflow and evidence artifacts. |
 | [Evaluation](evaluation.md) | Metrics, baselines, and claim requirements. |
+| [Conformance](conformance.md) | Dependency-light core contract checks. |
+| [Demo](demo.md) | Ungated synthetic artifact demo and claim boundary. |
 | [CLI](cli.md) | Supported public commands. |
 | [Changelog](changelog.md) | Public release history. |
 

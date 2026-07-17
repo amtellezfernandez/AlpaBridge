@@ -304,6 +304,9 @@ def _scene_diagnostics(run_dir: Path) -> dict[str, Any]:
             "sensor_pipeline_ok": None,
             "sensor_failure_count": None,
             "first_sensor_failure": None,
+            "route_contract_ok": None,
+            "route_contract_failure_count": None,
+            "route_source_counts": {},
         }
 
     audit = build_run_audit_report(run_dir=run_dir)
@@ -324,6 +327,11 @@ def _scene_diagnostics(run_dir: Path) -> dict[str, Any]:
         "sensor_pipeline_ok": audit.get("sensor_pipeline_ok") if driver_log_present else None,
         "sensor_failure_count": int(audit.get("sensor_failure_count", 0)) if driver_log_present else None,
         "first_sensor_failure": audit.get("first_sensor_failure") if driver_log_present else None,
+        "route_contract_ok": audit.get("route_contract_ok") if driver_log_present else None,
+        "route_contract_failure_count": int(audit.get("route_contract_failure_count", 0))
+        if driver_log_present
+        else None,
+        "route_source_counts": audit.get("route_source_counts") if driver_log_present else {},
     }
 
 

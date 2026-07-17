@@ -1,0 +1,39 @@
+# Public dependency-light route-following baseline for AlpaSim.
+# This template follows supplied AlpaSim route waypoints with no checkpoint,
+# proxy, torch model, or private experiment artifact. It is a benchmark-readiness
+# baseline family, not a learned policy. Keep this file limited to fields
+# accepted by AlpaSim's public DriverConfig schema.
+
+defaults:
+  - _self_
+
+log_level: ${wizard.log_level}  # keep the driver log level aligned with wizard
+
+model:
+  model_type: route_following
+  device: "cpu"
+  checkpoint_path: "unused-public-baseline"
+
+host: "0.0.0.0"  # external-driver bind address inside the runtime container
+port: 6789       # overwritten by wod2sim-launch when --port is supplied
+
+inference:
+  use_cameras:  # camera validation still exercises the external-driver contract
+    - camera_front_wide_120fov
+  max_batch_size: 1
+  subsample_factor: 1
+  context_length: 1
+  output_frequency_hz: 4
+
+route:
+  default_command: 2  # straight fallback when the simulator omits a command
+  use_waypoint_commands: true
+  command_distance_threshold: 2.0
+  min_lookahead_distance: 20.0
+
+output_dir: "/mnt/output/driver"  # overwritten by wod2sim-launch
+
+trajectory_optimizer:
+  enabled: false
+
+plot_debug_images: false

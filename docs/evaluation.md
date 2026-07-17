@@ -3,17 +3,31 @@
 WOD2Sim should be evaluated as an adapter contract before it is evaluated as a
 policy runtime.
 
+`WOD-style` refers to the policy-interface shape used by logged driving tasks,
+not to an official Waymo challenge submission package. Reports should state the
+actual task specification, scene source, and asset revision they use.
+
 ## Contract Checks
 
 - AlpaSim discovers only the declared WOD2Sim model entry points.
 - Route waypoints reach policy code without being reduced to a command alone.
 - Camera, ego-motion, route, and structured hazards form a stable policy signal.
-- Five-second policy trajectories are resampled to the configured runtime rate.
+- Five-second policy trajectories preserve native-rate samples, use origin-anchored
+  endpoint interpolation when resampled, and recompute runtime headings.
+- A replay-identity adapter preserves logged trajectory points through the shared
+  output contract.
 - Late session messages and repeated close events do not corrupt a batch.
 - Run configuration and evidence artifacts are materialized before execution.
+- Claim-valid audits require `route_source=alpasim_waypoints` for every driver-log frame.
 
-These checks are covered by the dependency-light test suite. Torch-dependent
-checkpoint tests are skipped when Torch is unavailable.
+These checks are covered by the dependency-light [core conformance tier](conformance.md).
+Torch-dependent checkpoint tests are skipped from conformance and remain optional
+for learned-policy validation.
+
+The [ungated demo](demo.md) exercises the same audit and support-bundle formats
+on synthetic local artifacts and reports route-loss and lane-offset diagnostics
+on public synthetic geometry. These diagnostics make the adapter contract
+inspectable, but they are not an AlpaSim rollout or policy result.
 
 ## Policy Evaluation
 
@@ -26,12 +40,36 @@ A report using WOD2Sim should declare:
 | Baselines | At least replay/constant velocity, route following, and an unmodified AlpaSim path where applicable. |
 | Behavior | Collision, at-fault collision, off-road, wrong-lane, progress, completion, and timeout rates. |
 | Runtime | Valid-frame ratio, sensor freshness, action latency, late messages, and process failures. |
-| Evidence | Manifest, audit, summary, hashes, and failed-scene taxonomy. |
+| Evidence | Manifest, AlpaSim checkout and Docker image provenance, audit, summary, hashes, and failed-scene taxonomy. |
 
 Results must use scenes as statistical units. Partial attempts and command plans
-must not be promoted as benchmark summaries.
+must not be promoted as benchmark summaries. Runs that fall back to
+`route_source=command_proxy` are adapter triage evidence, not policy benchmark
+evidence, because route geometry did not reach the policy contract.
+
+## Benchmark Readiness Gate
+
+Use `wod2sim-batch-summary` for each executed driver batch, then gate the public
+claim with:
+
+```bash
+wod2sim-benchmark-readiness \
+  --batch-summary summaries/constant_velocity.json \
+  --batch-summary summaries/route_following.json \
+  --batch-summary summaries/token_dagger_bc.json \
+  --output summaries/benchmark-readiness.json \
+  --json
+```
+
+The default gate requires at least 15 unique executed scenes, clean closed-loop
+batch summaries only, route-waypoint-backed audited frames, behavior/runtime
+metrics, and three baseline families: replay or constant velocity, route
+following, and `token_dagger_bc`. It returns nonzero until those conditions are
+met. This is intentional: the command prevents demo artifacts, command plans,
+or partial smoke runs from being mistaken for a NeurIPS-style benchmark result.
 
 ## Current Status
 
-The release validates package, adapter, launch, and evidence contracts. It does
-not include a public checkpoint or claim-ready closed-loop benchmark result.
+The release checks package, adapter, launch, and evidence contracts. It does not
+include a public checkpoint, public scene subset, or claim-ready closed-loop
+benchmark result.

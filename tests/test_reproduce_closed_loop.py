@@ -16,7 +16,7 @@ class ReproduceClosedLoopTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             checkpoint = root / "token_dagger_bc.pt"
-            checkpoint.write_text("placeholder\n", encoding="utf-8")
+            checkpoint.write_text("checkpoint-bytes\n", encoding="utf-8")
             args = argparse.Namespace(
                 skip_setup=False,
                 alpasim_root=root / "alpasim",

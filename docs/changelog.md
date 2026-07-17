@@ -5,7 +5,7 @@ All notable public release changes are tracked here.
 ## 0.1.0 - 2026-07-17
 
 - Renamed the installable release surface to `wod2sim`.
-- Added public AlpaSim adapters for `token_dagger_bc` and `direct_actor_planner`.
+- Added public AlpaSim adapters for `constant_velocity`, `route_following`, `token_dagger_bc`, and `direct_actor_planner`.
 - Added setup, readiness, launch, batch, audit, and support-bundle CLI commands.
 - Added manifest, audit, support-bundle, and batch-summary evidence contracts.
 - Standardized runtime configuration on the `WOD2SIM_` environment namespace.

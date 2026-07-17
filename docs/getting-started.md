@@ -8,7 +8,7 @@ install AlpaSim, download gated scenes, or ship policy checkpoints.
 - Python 3.10 or newer.
 - For live rollouts: x86_64 Linux, Docker, NVIDIA Container Toolkit, and a GPU.
 - A local [AlpaSim](https://github.com/NVlabs/alpasim) checkout with scene assets.
-- A Token BC/DAgger checkpoint or a direct-planner actor proxy.
+- Optional for learned runs: a Token BC/DAgger checkpoint or a direct-planner actor proxy.
 
 ## Install
 
@@ -34,6 +34,16 @@ wod2sim-ready --alpasim-root /path/to/alpasim --scene-preset fresh_3scene
 ```
 
 ## Materialize Commands
+
+Dependency-light baseline:
+
+```bash
+wod2sim-launch \
+  --mode print \
+  --alpasim-root /path/to/alpasim \
+  --model constant_velocity \
+  --scene-preset fresh_3scene
+```
 
 Token BC/DAgger:
 

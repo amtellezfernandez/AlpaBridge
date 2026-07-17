@@ -9,6 +9,7 @@ from pathlib import Path
 from wod2sim.cli.commands.run_alpasim_local_external import (
     SCENE_PRESETS,
     _preflight_alpasim_base_image,
+    _preflight_alpasim_local_environment,
     _preflight_docker_access,
     _preflight_nvidia_container_runtime,
     _preflight_platform_compatibility,
@@ -48,6 +49,11 @@ def _parse_args() -> argparse.Namespace:
         help="Skip checking for the local alpasim-base image.",
     )
     parser.add_argument(
+        "--skip-local-env",
+        action="store_true",
+        help="Skip checking the local AlpaSim .venv and alpasim_wizard executable.",
+    )
+    parser.add_argument(
         "--skip-scene-artifacts",
         action="store_true",
         help="Skip checking gated/local USDZ scene artifacts.",
@@ -62,6 +68,8 @@ def main() -> None:
     scene_catalog_paths = _scene_catalog_paths(args.scene_preset, alpasim_root)
 
     _validate_alpasim_checkout(alpasim_root)
+    if not args.skip_local_env:
+        _preflight_alpasim_local_environment(alpasim_root)
     _preflight_docker_access()
     _preflight_platform_compatibility()
     if not args.skip_image:
@@ -84,6 +92,7 @@ def main() -> None:
     print("  docker: accessible")
     print("  gpu runtime: accessible")
     print(f"  image: {'skipped' if args.skip_image else 'alpasim-base:0.66.0'}")
+    print(f"  local AlpaSim env: {'skipped' if args.skip_local_env else 'checked'}")
     print(f"  scene artifacts: {'skipped' if args.skip_scene_artifacts else 'checked'}")
 
 

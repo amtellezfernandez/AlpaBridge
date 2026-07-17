@@ -202,6 +202,7 @@ def run_release_bootstrap_smoke(*, source_root: Path, keep_temp: bool, installer
         ("support_bundle_help", [str(venv_bin / "wod2sim-support-bundle"), "--help"]),
         ("reproduce_help", [str(venv_bin / "wod2sim-reproduce"), "--help"]),
         ("benchmark_summary_help", [str(venv_bin / "wod2sim-benchmark-summary"), "--help"]),
+        ("benchmark_readiness_help", [str(venv_bin / "wod2sim-benchmark-readiness"), "--help"]),
         (
             "reproduce_plan",
             [
@@ -269,8 +270,10 @@ def run_release_bootstrap_smoke(*, source_root: Path, keep_temp: bool, installer
         ok = bool(
             installed_summary["valid"]
             and source_summary["valid"]
-            and installed_summary["public_models"] == ["token_dagger_bc", "direct_actor_planner"]
-            and source_summary["public_models"] == ["token_dagger_bc", "direct_actor_planner"]
+            and installed_summary["public_models"]
+            == ["constant_velocity", "route_following", "token_dagger_bc", "direct_actor_planner"]
+            and source_summary["public_models"]
+            == ["constant_velocity", "route_following", "token_dagger_bc", "direct_actor_planner"]
             and installed_summary["public_model_registry_curated"]
             and source_summary["public_model_registry_curated"]
             and (reproduce_dir / "evidence" / "closed-loop-reproduction-manifest.json").is_file()

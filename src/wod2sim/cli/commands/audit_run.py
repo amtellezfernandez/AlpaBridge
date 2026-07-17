@@ -9,6 +9,8 @@ from typing import Any
 from wod2sim.audit import export_alpasim_audit_log, summarize_audit_log
 
 DRIVER_LOG_SPECS = (
+    ("constant_velocity", "baseline", "driver/baseline-log.jsonl"),
+    ("route_following", "baseline", "driver/baseline-log.jsonl"),
     ("token_dagger_bc", "selection", "driver/selection-log.jsonl"),
     ("direct_actor_planner", "direct_planner", "driver/direct-planner-log.jsonl"),
 )
@@ -59,6 +61,17 @@ def build_report(*, run_dir: Path, audit_dir: Path | None = None) -> dict[str, A
         for row in driver_rows
         if _is_sensor_failure(row)
     ]
+    route_source_counts = Counter(_route_source(row) for row in driver_rows)
+    route_contract_failures = [
+        {
+            "frame_index": int(row.get("frame_index", 0)),
+            "scene_id": row.get("scene_id"),
+            "route_source": _route_source(row),
+            "route_waypoint_count": _route_waypoint_count(row),
+        }
+        for row in driver_rows
+        if _route_source(row) != "alpasim_waypoints"
+    ]
     pose_camera_lags = [lag for lag in (_pose_camera_lag_us(row) for row in driver_rows) if lag is not None]
 
     audit_export = None
@@ -77,7 +90,8 @@ def build_report(*, run_dir: Path, audit_dir: Path | None = None) -> dict[str, A
 
     driver_log_present = driver_log_path is not None
     sensor_pipeline_ok = driver_log_present and not sensor_failures
-    valid = driver_log_present and bool(driver_rows) and sensor_pipeline_ok
+    route_contract_ok = driver_log_present and bool(driver_rows) and not route_contract_failures
+    valid = driver_log_present and bool(driver_rows) and sensor_pipeline_ok and route_contract_ok
 
     report = {
         "schema": "wod2sim_run_audit_v1",
@@ -103,6 +117,10 @@ def build_report(*, run_dir: Path, audit_dir: Path | None = None) -> dict[str, A
         "frame_count": len(driver_rows),
         "sensor_pipeline_ok": sensor_pipeline_ok,
         "sensor_failure_count": len(sensor_failures),
+        "route_contract_ok": route_contract_ok,
+        "route_contract_failure_count": len(route_contract_failures),
+        "route_source_counts": dict(sorted(route_source_counts.items())),
+        "first_route_contract_failure": route_contract_failures[0] if route_contract_failures else None,
         "result_counts": dict(sorted(result_counts.items())),
         "sensor_status_counts": dict(sorted(sensor_status_counts.items())),
         "max_pose_camera_lag_us": max(pose_camera_lags) if pose_camera_lags else None,
@@ -189,6 +207,72 @@ def _is_sensor_failure(row: dict[str, Any]) -> bool:
     return result == "sensor_failure" or status in FAILED_SENSOR_STATUSES
 
 
+def _route_source(row: dict[str, Any]) -> str:
+    value = row.get("route_source")
+    if value not in (None, ""):
+        return str(value)
+    signal = row.get("alpasim_signal")
+    if isinstance(signal, dict):
+        value = signal.get("route_source")
+        if value not in (None, ""):
+            return str(value)
+        count = _int_or_none(signal.get("route_waypoint_count"))
+        if count is None:
+            route_waypoints = signal.get("route_waypoints")
+            count = len(route_waypoints) if isinstance(route_waypoints, list) else None
+        if count is not None:
+            return "alpasim_waypoints" if count >= 2 else "command_proxy"
+    axis_signals = row.get("axis_signals")
+    if isinstance(axis_signals, dict):
+        sources = {
+            str(axis_signal.get("route_source"))
+            for axis_signal in axis_signals.values()
+            if isinstance(axis_signal, dict) and axis_signal.get("route_source") not in (None, "")
+        }
+        if len(sources) == 1:
+            return next(iter(sources))
+        if sources:
+            return "mixed"
+    count = _route_waypoint_count(row)
+    if count is not None:
+        return "alpasim_waypoints" if count >= 2 else "command_proxy"
+    return "missing"
+
+
+def _route_waypoint_count(row: dict[str, Any]) -> int | None:
+    value = row.get("route_waypoint_count")
+    if value is not None:
+        return _int_or_none(value)
+    signal = row.get("alpasim_signal")
+    if isinstance(signal, dict):
+        value = signal.get("route_waypoint_count")
+        if value is not None:
+            return _int_or_none(value)
+        route_waypoints = signal.get("route_waypoints")
+        if isinstance(route_waypoints, list):
+            return len(route_waypoints)
+    axis_signals = row.get("axis_signals")
+    if isinstance(axis_signals, dict):
+        counts = [
+            _int_or_none(axis_signal.get("route_waypoint_count"))
+            for axis_signal in axis_signals.values()
+            if isinstance(axis_signal, dict)
+        ]
+        counts = [count for count in counts if count is not None]
+        if counts:
+            return min(counts)
+    return None
+
+
+def _int_or_none(value: Any) -> int | None:
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
 def _advice(
     *,
     run_dir: Path,
@@ -214,6 +298,15 @@ def _advice(
             )
         advice.append(
             "If you need a normalized audit bundle, rerun this command with --audit-dir /path/to/audit."
+        )
+        return advice
+    route_failures = [row for row in driver_rows if _route_source(row) != "alpasim_waypoints"]
+    if route_failures:
+        advice.append(
+            "One or more frames used command-proxy or missing route geometry. Treat this run as adapter triage, not claim-valid evidence."
+        )
+        advice.append(
+            "Apply the route-waypoints AlpaSim override and rerun until every audited frame reports route_source=alpasim_waypoints."
         )
         return advice
     advice.append(
@@ -248,6 +341,9 @@ def _print_human_report(report: dict[str, Any]) -> None:
     print(f"  sensor pipeline ok: {report['sensor_pipeline_ok']}")
     print(f"  sensor failures: {report['sensor_failure_count']}")
     print(f"  sensor statuses: {report['sensor_status_counts']}")
+    print(f"  route contract ok: {report['route_contract_ok']}")
+    print(f"  route contract failures: {report['route_contract_failure_count']}")
+    print(f"  route sources: {report['route_source_counts']}")
     print(f"  result counts: {report['result_counts']}")
     if report["max_pose_camera_lag_us"] is not None:
         print(f"  max pose-camera lag us: {report['max_pose_camera_lag_us']}")
@@ -260,6 +356,12 @@ def _print_human_report(report: dict[str, Any]) -> None:
             print(f"    pose-camera lag us: {first_failure['pose_camera_lag_us']}")
         if first_failure["error"]:
             print(f"    error: {first_failure['error']}")
+    route_failure = report["first_route_contract_failure"]
+    if route_failure is not None:
+        print("  first route contract failure:")
+        print(f"    frame: {route_failure['frame_index']}")
+        print(f"    route source: {route_failure['route_source']}")
+        print(f"    route waypoint count: {route_failure['route_waypoint_count']}")
     audit_export = report["audit_export"]
     if isinstance(audit_export, dict):
         print(f"  audit export: {audit_export['audit_dir']}")

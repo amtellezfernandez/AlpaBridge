@@ -82,5 +82,5 @@ Keep the public CLI surface aligned with the release README:
 - `token_dagger_bc`
 - `direct_actor_planner`
 
-Avoid reintroducing unrelated research command surfaces from the larger private tree
-unless they are required for the bridge release itself.
+Avoid reintroducing unrelated research command surfaces unless they are required
+for the bridge release itself.

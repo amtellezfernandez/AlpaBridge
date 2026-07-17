@@ -17,6 +17,12 @@ WOD2Sim preserves the policy information lost at the dataset-to-simulator
 boundary: route geometry, policy-facing scene state, trajectory timing, and run
 provenance. It is an adapter and evaluation artifact, not a new driving policy.
 
+Here, **WOD-style** means a short-horizon trajectory-policy interface inspired
+by the Waymo Open Dataset end-to-end setting: logged observations, route intent,
+and ego-relative trajectory outputs. This repository does not claim official
+Waymo challenge compatibility, leaderboard submission support, or a redistributable
+Waymo-to-AlpaSim scene conversion.
+
 ## Visual Overview
 
 <table>
@@ -31,7 +37,7 @@ provenance. It is an adapter and evaluation artifact, not a new driving policy.
       official Waymo Motion page and is not copied into this repository.
     </td>
     <td width="50%">
-      <img src="docs/assets/readme/alpasim-rollout-screenshot.jpg" alt="AlpaSim rollout view with map, front camera, and runtime metrics" width="100%">
+      <img src="docs/assets/readme/alpasim-rollout-diagnostic.svg" alt="Synthetic AlpaSim rollout diagnostic view with route map, audit panel, and camera stream diagnostic tile" width="100%">
       <br>
       <strong>Simulator side.</strong> AlpaSim runs the adapted policy in a
       reactive scene, while WOD2Sim records the command, trajectory outputs, and
@@ -41,7 +47,7 @@ provenance. It is an adapter and evaluation artifact, not a new driving policy.
 </table>
 
 <p align="center">
-  <img src="docs/assets/readme/integration-terminal.svg" alt="WOD2Sim terminal manifest showing a token_dagger_bc command plan and invalid claim evidence before execution" width="92%">
+  <img src="docs/assets/readme/integration-terminal.svg" alt="WOD2Sim terminal manifest showing a constant_velocity command plan and invalid claim evidence before execution" width="92%">
 </p>
 
 <p align="center">
@@ -62,13 +68,15 @@ they do not evaluate policy quality.
 flowchart LR
     A[AlpaSim<br/>camera, ego motion, route] --> B[WOD2Sim input contract<br/>route + scene signal]
     B --> C{WOD-style policy}
-    C --> D[Token BC / DAgger]
-    C --> E[Direct actor planner]
-    D --> F[WOD2Sim output contract<br/>resampling + headings]
-    E --> F
-    F --> G[AlpaSim controller]
-    G --> A
-    G --> H[Manifest, audit,<br/>summary, hashes]
+    C --> D[Constant velocity / route following]
+    C --> E[Token BC / DAgger]
+    C --> F[Direct actor planner]
+    D --> G[WOD2Sim output contract<br/>resampling + headings]
+    E --> G
+    F --> G
+    G --> H[AlpaSim controller]
+    H --> A
+    H --> I[Manifest, audit,<br/>summary, hashes]
 ```
 
 **Figure 2.** WOD2Sim sits inside the closed loop. It translates AlpaSim state
@@ -77,11 +85,15 @@ runtime rate, and records evidence separately from policy behavior.
 
 ## Scope
 
+- `constant_velocity` is a dependency-light straight-line baseline.
+- `route_following` is a dependency-light waypoint-following baseline.
 - `token_dagger_bc` loads a compatible learned-policy checkpoint.
 - `direct_actor_planner` evaluates continuous candidates using an actor proxy.
-- Both adapters share route propagation, sensor checks, launch tooling, and audits.
+- All adapters share route propagation, sensor checks, launch tooling, and audits.
 
 This release contains no public checkpoint and makes no policy benchmark claim.
+Claim-valid audits require executed rollouts with route waypoints reaching every
+driver-log frame; command-proxy route fallback is diagnostic only.
 
 ## Install
 
@@ -97,8 +109,7 @@ Installation and command planning require neither AlpaSim nor a GPU.
 
 ```bash
 wod2sim-reproduce \
-  --model token_dagger_bc \
-  --checkpoint /path/to/token_dagger_bc.pt \
+  --model constant_velocity \
   --scene-id example-scene \
   --run-dir /tmp/wod2sim/run \
   --evidence-dir /tmp/wod2sim/evidence \
@@ -117,11 +128,10 @@ AlpaSim checkout, and local scene assets.
 wod2sim-reproduce \
   --execute \
   --alpasim-root /path/to/alpasim \
-  --model token_dagger_bc \
-  --checkpoint /path/to/token_dagger_bc.pt \
+  --model constant_velocity \
   --scene-preset fresh_3scene \
-  --run-dir runs/token_dagger_bc_fresh_3scene \
-  --evidence-dir runs/token_dagger_bc_fresh_3scene/evidence \
+  --run-dir runs/constant_velocity_fresh_3scene \
+  --evidence-dir runs/constant_velocity_fresh_3scene/evidence \
   --json
 ```
 
@@ -129,14 +139,48 @@ Start with the [getting-started guide](docs/getting-started.md). The
 [documentation index](docs/README.md) covers design, reproduction, evaluation,
 and every public command.
 
+## Benchmark Readiness
+
+After executing real batches, aggregate each driver with `wod2sim-batch-summary`
+and gate the public claim:
+
+```bash
+wod2sim-benchmark-readiness \
+  --batch-summary summaries/constant_velocity.json \
+  --batch-summary summaries/route_following.json \
+  --batch-summary summaries/token_dagger_bc.json \
+  --output summaries/benchmark-readiness.json \
+  --json
+```
+
+The default gate requires 15 unique executed scenes, clean closed-loop summaries,
+route-waypoint-backed audited frames, required behavior/runtime metrics, and
+three baseline families. It exits nonzero until the real matrix exists.
+
 ## Verify
 
 ```bash
+make conformance
 make verify
 ```
 
-This runs lint, tests and coverage, a fresh-install smoke test, package builds,
-and a clean paper rebuild.
+`make conformance` runs the dependency-light core contract tier without torch,
+checkpoints, Docker, GPU, or gated scenes. `make verify` runs lint, tests and
+coverage, a fresh-install smoke test, package builds, and a clean paper rebuild.
+
+## Ungated Demo
+
+```bash
+make demo
+```
+
+The demo writes a synthetic run directory under `demo/wod2sim-contract-demo`
+with a driver log, route audit, aggregate JSON, support bundle, and SVG rollout
+view. It uses public synthetic geometry and a constant-velocity stub only:
+`valid_claim_evidence` stays false, no AlpaSim scene is executed, and no policy
+quality metric is reported. The aggregate JSON includes synthetic diagnostics
+for command-proxy route loss and road-center/ego-route offset. See
+[the demo guide](docs/demo.md).
 
 ## Citation
 

@@ -64,12 +64,14 @@ def scenario_from_command(command: str, signal: dict[str, Any] | None = None) ->
 def extract_alpasim_signal(prediction_input: Any) -> dict[str, Any]:
     structured_hazards = structured_hazards_from_input(prediction_input)
     route_waypoints = route_waypoints_from_input(prediction_input)
+    route_source = "alpasim_waypoints" if len(route_waypoints) >= 2 else "command_proxy"
     visibility_risk = visibility_risk_from_cameras(prediction_input.camera_images)
     dynamics_risk_value = dynamics_risk(float(prediction_input.speed), float(prediction_input.acceleration))
     return {
         "structured_hazards": structured_hazards,
         "route_waypoints": route_waypoints,
         "route_waypoint_count": len(route_waypoints),
+        "route_source": route_source,
         "visibility_risk": round(visibility_risk, 6),
         "dynamics_risk": round(dynamics_risk_value, 6),
         "camera_count": len(prediction_input.camera_images),
@@ -190,7 +192,7 @@ def dynamics_risk(speed_mps: float, acceleration_mps2: float) -> float:
 
 
 def signal_obstacles(signal: dict[str, Any]) -> list[Obstacle]:
-    obstacles = [
+    return [
         Obstacle(
             x=float(hazard["x"]),
             y=float(hazard["y"]),
@@ -203,19 +205,6 @@ def signal_obstacles(signal: dict[str, Any]) -> list[Obstacle]:
         for hazard in signal.get("structured_hazards", [])
         if not _is_moving_hazard(hazard)
     ]
-    visibility_risk = float(signal.get("visibility_risk", 0.0))
-    dynamics_risk_value = float(signal.get("dynamics_risk", 0.0))
-    if max(visibility_risk, dynamics_risk_value) >= 0.5 and not obstacles and not signal_actors(signal):
-        obstacles.append(
-            Obstacle(
-                x=10.0 + 8.0 * dynamics_risk_value,
-                y=0.0,
-                radius=1.0 + 1.5 * max(visibility_risk, dynamics_risk_value),
-                kind="caution_zone",
-                label="alpasim_signal_caution",
-            )
-        )
-    return obstacles
 
 
 def signal_actors(signal: dict[str, Any]) -> list[Actor]:

@@ -35,6 +35,10 @@ jobs:
         run: |
           PATH="$PWD/.venv/bin:$PATH" make lint
 
+      - name: Run core conformance tier
+        run: |
+          PATH="$PWD/.venv/bin:$PATH" make conformance
+
       - name: Run tests with coverage
         run: |
           PATH="$PWD/.venv/bin:$PATH" make coverage
@@ -122,8 +126,13 @@ jobs:
           root_file: paper.tex
           working_directory: paper
 
+      - name: Stage root paper PDF
+        run: |
+          cp paper/paper.pdf wod2sim.pdf
+          test -s wod2sim.pdf
+
       - name: Upload paper artifact
         uses: actions/upload-artifact@v7
         with:
           name: wod2sim-paper
-          path: paper/paper.pdf
+          path: wod2sim.pdf

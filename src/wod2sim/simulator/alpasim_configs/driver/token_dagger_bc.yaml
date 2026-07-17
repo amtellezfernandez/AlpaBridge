@@ -8,7 +8,7 @@ log_level: ${wizard.log_level}
 
 model:
   model_type: token_dagger_bc
-  checkpoint_path: "artifacts/bc_models_iter2/token_dagger_bc.pt"
+  checkpoint_path: "set-by-wod2sim-launch"
   device: "cuda"
 
 host: "0.0.0.0"

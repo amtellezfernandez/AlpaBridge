@@ -38,6 +38,8 @@ alpasim = [
 viz = ["Pillow>=10"]
 
 [project.entry-points."alpasim.models"]
+constant_velocity = "wod2sim.simulator.baseline_drivers:ConstantVelocityAlpaSimModel"
+route_following = "wod2sim.simulator.baseline_drivers:RouteFollowingAlpaSimModel"
 token_dagger_bc = "wod2sim.simulator.alpasim_token_bc:TokenBCAlpaSimModel"
 direct_actor_planner = "wod2sim.simulator.alpasim_direct_actor_planner:DirectActorPlannerAlpaSimModel"
 
@@ -58,6 +60,7 @@ wod2sim-reproduce = "wod2sim.cli.commands.reproduce_closed_loop:main"
 wod2sim-promote-batch-summary = "wod2sim.cli.commands.promote_batch_summary:main"
 wod2sim-benchmark-summary = "wod2sim.cli.commands.benchmark_summary:main"
 wod2sim-batch-summary = "wod2sim.cli.commands.batch_summary:main"
+wod2sim-benchmark-readiness = "wod2sim.cli.commands.benchmark_readiness:main"
 wod2sim-evidence = "wod2sim.neutral.alpasim_metrics:main"
 
 [project.urls]

@@ -21,10 +21,31 @@ DEFAULT_ALPASIM_ROOT = workspace_path("workspace", "alpasim")
 DEFAULT_RUNS_ROOT = workspace_path("runs")
 SCENE_PRESET_ROOT = package_path("simulator", "alpasim_scene_presets")
 CONFIG_ROOT = package_path("simulator", "alpasim_configs", "driver")
-ARTIFACT_ROOT = workspace_path("artifacts")
 RUN_STATUS_FILENAME = "run-status.json"
 
-_ALL_MODEL_PRESETS = {
+PUBLIC_RELEASE_MODELS = (
+    "constant_velocity",
+    "route_following",
+    "token_dagger_bc",
+    "direct_actor_planner",
+)
+MODEL_PRESETS = {
+    "constant_velocity": {
+        "config_file": CONFIG_ROOT / "constant_velocity.yaml",
+        "checkpoint": None,
+        "force_cuda": False,
+        "driver_env": {
+            "WOD2SIM_BASELINE_LOG_PATH": "{run_dir}/driver/baseline-log.jsonl",
+        },
+    },
+    "route_following": {
+        "config_file": CONFIG_ROOT / "route_following.yaml",
+        "checkpoint": None,
+        "force_cuda": False,
+        "driver_env": {
+            "WOD2SIM_BASELINE_LOG_PATH": "{run_dir}/driver/baseline-log.jsonl",
+        },
+    },
     "token_dagger_bc": {
         "config_file": CONFIG_ROOT / "token_dagger_bc.yaml",
         "checkpoint": None,
@@ -44,168 +65,6 @@ _ALL_MODEL_PRESETS = {
             "WOD2SIM_DIRECT_PLANNER_LOG_PATH": "{run_dir}/driver/direct-planner-log.jsonl",
         },
     },
-    "direct_actor_planner_oracle": {
-        "config_file": CONFIG_ROOT / "direct_actor_planner.yaml",
-        "checkpoint": None,
-        "requires_oracle_actor_proxy": True,
-        "force_cuda": False,
-        "driver_env": {
-            "WOD2SIM_DIRECT_PLANNER_ORACLE_ACTOR_PROXY_PATH": "{oracle_actor_proxy_path}",
-            "WOD2SIM_DIRECT_PLANNER_ORACLE_ACTOR_PROXY_TOLERANCE_US": "50000",
-            "WOD2SIM_DIRECT_PLANNER_LOG_PATH": "{run_dir}/driver/direct-planner-log.jsonl",
-        },
-    },
-    "direct_actor_planner_max_clearance_oracle": {
-        "config_file": CONFIG_ROOT / "direct_actor_planner.yaml",
-        "checkpoint": None,
-        "requires_oracle_actor_proxy": True,
-        "force_cuda": False,
-        "driver_env": {
-            "WOD2SIM_DIRECT_PLANNER_SELECTION_OBJECTIVE": "max_clearance",
-            "WOD2SIM_DIRECT_PLANNER_ORACLE_ACTOR_PROXY_PATH": "{oracle_actor_proxy_path}",
-            "WOD2SIM_DIRECT_PLANNER_ORACLE_ACTOR_PROXY_TOLERANCE_US": "50000",
-            "WOD2SIM_DIRECT_PLANNER_LOG_PATH": "{run_dir}/driver/direct-planner-log.jsonl",
-        },
-    },
-    "token_dagger_iter2": {
-        "config_file": CONFIG_ROOT / "token_dagger_bc.yaml",
-        "checkpoint": ARTIFACT_ROOT / "bc_models_iter2" / "token_dagger_bc.pt",
-        "driver_env": {},
-    },
-    "token_dagger_srcdecay": {
-        "config_file": CONFIG_ROOT / "token_dagger_srcdecay.yaml",
-        "checkpoint": ARTIFACT_ROOT / "bc_models_iter3_srcdecay" / "token_dagger_bc.pt",
-        "driver_env": {},
-    },
-    "token_dagger_iter2_clamped": {
-        "config_file": CONFIG_ROOT / "token_dagger_bc_clamped.yaml",
-        "checkpoint": ARTIFACT_ROOT / "bc_models_iter2" / "token_dagger_bc.pt",
-        "driver_env": {
-            "WOD2SIM_TOKENBC_TRAJECTORY_MODE": "clamped_lateral",
-            "WOD2SIM_TOKENBC_MAX_LATERAL_OFFSET_M": "2.0",
-        },
-    },
-    "token_dagger_iter2_hybrid": {
-        "config_file": CONFIG_ROOT / "token_dagger_bc.yaml",
-        "checkpoint": ARTIFACT_ROOT / "bc_models_iter2" / "token_dagger_bc.pt",
-        "driver_env": {
-            "WOD2SIM_TOKENBC_SELECTION_MODE": "hybrid_veto",
-            "WOD2SIM_TOKENBC_HYBRID_TOP_K": "3",
-            "WOD2SIM_TOKENBC_HYBRID_GEOMETRIC_WEIGHT": "0.75",
-            "WOD2SIM_TOKENBC_HYBRID_POLICY_TEMPERATURE": "1.0",
-            "WOD2SIM_TOKENBC_HYBRID_VETO_MARGIN": "8.0",
-            "WOD2SIM_TOKENBC_HYBRID_MAX_GEOMETRIC_RANK": "2",
-            "WOD2SIM_TOKENBC_SELECTION_LOG_PATH": "{run_dir}/driver/selection-log.jsonl",
-        },
-    },
-    "token_dagger_iter2_hybrid_clamped": {
-        "config_file": CONFIG_ROOT / "token_dagger_bc_clamped.yaml",
-        "checkpoint": ARTIFACT_ROOT / "bc_models_iter2" / "token_dagger_bc.pt",
-        "driver_env": {
-            "WOD2SIM_TOKENBC_SELECTION_MODE": "hybrid_veto",
-            "WOD2SIM_TOKENBC_HYBRID_TOP_K": "3",
-            "WOD2SIM_TOKENBC_HYBRID_GEOMETRIC_WEIGHT": "0.75",
-            "WOD2SIM_TOKENBC_HYBRID_POLICY_TEMPERATURE": "1.0",
-            "WOD2SIM_TOKENBC_HYBRID_VETO_MARGIN": "8.0",
-            "WOD2SIM_TOKENBC_HYBRID_MAX_GEOMETRIC_RANK": "2",
-            "WOD2SIM_TOKENBC_TRAJECTORY_MODE": "clamped_lateral",
-            "WOD2SIM_TOKENBC_MAX_LATERAL_OFFSET_M": "2.0",
-            "WOD2SIM_TOKENBC_SELECTION_LOG_PATH": "{run_dir}/driver/selection-log.jsonl",
-        },
-    },
-    "token_dagger_iter2_axis_constrained_clamped": {
-        "config_file": CONFIG_ROOT / "token_dagger_bc_clamped.yaml",
-        "checkpoint": ARTIFACT_ROOT / "bc_models_iter2" / "token_dagger_bc.pt",
-        "driver_env": {
-            "WOD2SIM_TOKENBC_SELECTION_MODE": "axis_constrained",
-            "WOD2SIM_TOKENBC_HYBRID_TOP_K": "3",
-            "WOD2SIM_TOKENBC_HYBRID_POLICY_TEMPERATURE": "1.0",
-            "WOD2SIM_TOKENBC_TRAJECTORY_MODE": "clamped_lateral",
-            "WOD2SIM_TOKENBC_MAX_LATERAL_OFFSET_M": "2.0",
-            "WOD2SIM_TOKENBC_SELECTION_LOG_PATH": "{run_dir}/driver/selection-log.jsonl",
-        },
-    },
-    "token_dagger_iter2_axis_constrained_oracle_actor_clamped": {
-        "config_file": CONFIG_ROOT / "token_dagger_bc_clamped.yaml",
-        "checkpoint": ARTIFACT_ROOT / "bc_models_iter2" / "token_dagger_bc.pt",
-        "requires_oracle_actor_proxy": True,
-        "driver_env": {
-            "WOD2SIM_TOKENBC_SELECTION_MODE": "axis_constrained",
-            "WOD2SIM_TOKENBC_HYBRID_TOP_K": "3",
-            "WOD2SIM_TOKENBC_HYBRID_POLICY_TEMPERATURE": "1.0",
-            "WOD2SIM_TOKENBC_TRAJECTORY_MODE": "clamped_lateral",
-            "WOD2SIM_TOKENBC_MAX_LATERAL_OFFSET_M": "2.0",
-            "WOD2SIM_TOKENBC_SELECTION_LOG_PATH": "{run_dir}/driver/selection-log.jsonl",
-            "WOD2SIM_TOKENBC_ORACLE_ACTOR_PROXY_PATH": "{oracle_actor_proxy_path}",
-            "WOD2SIM_TOKENBC_ORACLE_ACTOR_PROXY_TOLERANCE_US": "50000",
-        },
-    },
-    "token_dagger_iter2_axis_lexicographic_oracle_actor_clamped": {
-        "config_file": CONFIG_ROOT / "token_dagger_bc_clamped.yaml",
-        "checkpoint": ARTIFACT_ROOT / "bc_models_iter2" / "token_dagger_bc.pt",
-        "requires_oracle_actor_proxy": True,
-        "driver_env": {
-            "WOD2SIM_TOKENBC_SELECTION_MODE": "axis_lexicographic",
-            "WOD2SIM_TOKENBC_HYBRID_TOP_K": "3",
-            "WOD2SIM_TOKENBC_HYBRID_POLICY_TEMPERATURE": "1.0",
-            "WOD2SIM_TOKENBC_TRAJECTORY_MODE": "clamped_lateral",
-            "WOD2SIM_TOKENBC_MAX_LATERAL_OFFSET_M": "2.0",
-            "WOD2SIM_TOKENBC_SELECTION_LOG_PATH": "{run_dir}/driver/selection-log.jsonl",
-            "WOD2SIM_TOKENBC_ORACLE_ACTOR_PROXY_PATH": "{oracle_actor_proxy_path}",
-            "WOD2SIM_TOKENBC_ORACLE_ACTOR_PROXY_TOLERANCE_US": "50000",
-        },
-    },
-    "token_dagger_iter2_actor_axis_oracle_actor_clamped": {
-        "config_file": CONFIG_ROOT / "token_dagger_bc_clamped.yaml",
-        "checkpoint": ARTIFACT_ROOT / "bc_models_iter2" / "token_dagger_bc.pt",
-        "requires_oracle_actor_proxy": True,
-        "driver_env": {
-            "WOD2SIM_TOKENBC_SELECTION_MODE": "actor_axis_constrained",
-            "WOD2SIM_TOKENBC_HYBRID_TOP_K": "3",
-            "WOD2SIM_TOKENBC_HYBRID_POLICY_TEMPERATURE": "1.0",
-            "WOD2SIM_TOKENBC_TRAJECTORY_MODE": "clamped_lateral",
-            "WOD2SIM_TOKENBC_MAX_LATERAL_OFFSET_M": "2.0",
-            "WOD2SIM_TOKENBC_SELECTION_LOG_PATH": "{run_dir}/driver/selection-log.jsonl",
-            "WOD2SIM_TOKENBC_ORACLE_ACTOR_PROXY_PATH": "{oracle_actor_proxy_path}",
-            "WOD2SIM_TOKENBC_ORACLE_ACTOR_PROXY_TOLERANCE_US": "50000",
-        },
-    },
-    "token_dagger_srcdecay_clamped": {
-        "config_file": CONFIG_ROOT / "token_dagger_srcdecay_clamped.yaml",
-        "checkpoint": ARTIFACT_ROOT / "bc_models_iter3_srcdecay" / "token_dagger_bc.pt",
-        "driver_env": {
-            "WOD2SIM_TOKENBC_TRAJECTORY_MODE": "clamped_lateral",
-            "WOD2SIM_TOKENBC_MAX_LATERAL_OFFSET_M": "2.0",
-        },
-    },
-    "token_dagger_srcdecay_hybrid": {
-        "config_file": CONFIG_ROOT / "token_dagger_srcdecay.yaml",
-        "checkpoint": ARTIFACT_ROOT / "bc_models_iter3_srcdecay" / "token_dagger_bc.pt",
-        "driver_env": {
-            "WOD2SIM_TOKENBC_SELECTION_MODE": "hybrid_veto",
-            "WOD2SIM_TOKENBC_HYBRID_TOP_K": "3",
-            "WOD2SIM_TOKENBC_HYBRID_GEOMETRIC_WEIGHT": "0.75",
-            "WOD2SIM_TOKENBC_HYBRID_POLICY_TEMPERATURE": "1.0",
-            "WOD2SIM_TOKENBC_HYBRID_VETO_MARGIN": "8.0",
-            "WOD2SIM_TOKENBC_HYBRID_MAX_GEOMETRIC_RANK": "2",
-            "WOD2SIM_TOKENBC_SELECTION_LOG_PATH": "{run_dir}/driver/selection-log.jsonl",
-        },
-    },
-    "token_dagger_srcdecay_hybrid_clamped": {
-        "config_file": CONFIG_ROOT / "token_dagger_srcdecay_clamped.yaml",
-        "checkpoint": ARTIFACT_ROOT / "bc_models_iter3_srcdecay" / "token_dagger_bc.pt",
-        "driver_env": {
-            "WOD2SIM_TOKENBC_SELECTION_MODE": "hybrid_veto",
-            "WOD2SIM_TOKENBC_HYBRID_TOP_K": "3",
-            "WOD2SIM_TOKENBC_HYBRID_GEOMETRIC_WEIGHT": "0.75",
-            "WOD2SIM_TOKENBC_HYBRID_POLICY_TEMPERATURE": "1.0",
-            "WOD2SIM_TOKENBC_HYBRID_VETO_MARGIN": "8.0",
-            "WOD2SIM_TOKENBC_HYBRID_MAX_GEOMETRIC_RANK": "2",
-            "WOD2SIM_TOKENBC_TRAJECTORY_MODE": "clamped_lateral",
-            "WOD2SIM_TOKENBC_MAX_LATERAL_OFFSET_M": "2.0",
-            "WOD2SIM_TOKENBC_SELECTION_LOG_PATH": "{run_dir}/driver/selection-log.jsonl",
-        },
-    },
 }
 
 SCENE_PRESETS = {
@@ -216,16 +75,6 @@ SCENE_PRESETS = {
     "front_camera_100scene_public2602": SCENE_PRESET_ROOT / "front_camera_100scene_public2602.yaml",
     "front_camera_collision18": SCENE_PRESET_ROOT / "front_camera_collision18.yaml",
 }
-
-PUBLIC_RELEASE_MODELS = (
-    "token_dagger_bc",
-    "direct_actor_planner",
-)
-MODEL_PRESETS = {
-    name: _ALL_MODEL_PRESETS[name]
-    for name in PUBLIC_RELEASE_MODELS
-}
-
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -243,15 +92,16 @@ def _build_parser() -> argparse.ArgumentParser:
         default="token_dagger_bc",
         help=(
             "Public release model preset to evaluate. "
-            "Use token_dagger_bc with --checkpoint, or direct_actor_planner "
-            "with --oracle-actor-proxy."
+            "constant_velocity and route_following need no learned checkpoint; "
+            "use token_dagger_bc with --checkpoint, or direct_actor_planner with "
+            "--oracle-actor-proxy."
         ),
     )
     parser.add_argument(
         "--checkpoint",
         type=Path,
         default=None,
-        help="Checkpoint path for learned-policy presets such as token_dagger_bc.",
+        help="Checkpoint path for token_dagger_bc.",
     )
     parser.add_argument(
         "--oracle-actor-proxy",
@@ -438,6 +288,10 @@ def main() -> None:
         "wizard_deploy_target": _wizard_deploy_target(),
         "checkpoint": str(checkpoint) if checkpoint else None,
         "oracle_actor_proxy": str(oracle_actor_proxy) if oracle_actor_proxy else None,
+        "provenance": {
+            "alpasim_checkout": _alpasim_checkout_provenance(alpasim_root),
+            "docker_image": _alpasim_base_image_provenance(),
+        },
         "driver_env": driver_env,
         "driver_command": driver_cmd,
         "wizard_command": wizard_cmd,
@@ -605,6 +459,23 @@ def _validate_alpasim_checkout(alpasim_root: Path) -> None:
         )
 
 
+def _preflight_alpasim_local_environment(alpasim_root: Path) -> None:
+    required_files = (
+        alpasim_root / ".venv" / "bin" / "python",
+        alpasim_root / ".venv" / "bin" / "alpasim_wizard",
+    )
+    missing = [path for path in required_files if not path.is_file()]
+    if not missing:
+        return
+    raise SystemExit(
+        "AlpaSim local Python environment is missing required executable(s): "
+        f"{', '.join(str(path) for path in missing)}. "
+        "Run ./scripts/bootstrap_alpasim_env.sh, or set ALPASIM_ROOT and run "
+        "./.venv/bin/python scripts/setup_alpasim_local_plugin.py, before "
+        "planning or launching local external-driver runs."
+    )
+
+
 def _resolve_run_dir(args: argparse.Namespace) -> Path:
     if args.run_dir is not None:
         return args.run_dir.resolve()
@@ -713,6 +584,90 @@ def _preflight_alpasim_base_image() -> None:
         f"Required local AlpaSim image is missing: {image_tag}. "
         "Build it first with ./scripts/build_alpasim_base_image.sh."
     )
+
+
+def _alpasim_checkout_provenance(alpasim_root: Path) -> dict[str, Any]:
+    return {
+        "root": str(alpasim_root),
+        "git_commit": _git_text(alpasim_root, "rev-parse", "HEAD"),
+        "git_branch": _git_text(alpasim_root, "branch", "--show-current"),
+        "git_describe": _git_text(alpasim_root, "describe", "--tags", "--always", "--dirty"),
+        "git_dirty": _git_dirty(alpasim_root),
+    }
+
+
+def _alpasim_base_image_provenance() -> dict[str, Any]:
+    image_tag = os.getenv("ALPASIM_BASE_IMAGE_TAG", "alpasim-base:0.66.0")
+    provenance: dict[str, Any] = {
+        "tag": image_tag,
+        "present": False,
+        "id": None,
+        "repo_digests": [],
+    }
+    try:
+        result = subprocess.run(
+            ["docker", "image", "inspect", image_tag],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=False,
+        )
+    except FileNotFoundError:
+        provenance["error"] = "docker executable not found"
+        return provenance
+    provenance["present"] = result.returncode == 0
+    if result.returncode != 0:
+        stderr = result.stderr.strip()
+        provenance["error"] = stderr.splitlines()[-1] if stderr else f"docker image inspect exited {result.returncode}"
+        return provenance
+    try:
+        payload = json.loads(result.stdout)
+    except json.JSONDecodeError:
+        provenance["error"] = "docker image inspect did not return JSON"
+        return provenance
+    if not isinstance(payload, list) or not payload or not isinstance(payload[0], dict):
+        provenance["error"] = "docker image inspect returned no image metadata"
+        return provenance
+    image = payload[0]
+    repo_digests = image.get("RepoDigests")
+    provenance["id"] = image.get("Id")
+    provenance["repo_digests"] = [str(item) for item in repo_digests] if isinstance(repo_digests, list) else []
+    return provenance
+
+
+def _git_text(alpasim_root: Path, *args: str) -> str | None:
+    try:
+        result = subprocess.run(
+            ["git", *args],
+            cwd=alpasim_root,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            check=False,
+        )
+    except FileNotFoundError:
+        return None
+    if result.returncode != 0:
+        return None
+    value = result.stdout.strip()
+    return value or None
+
+
+def _git_dirty(alpasim_root: Path) -> bool | None:
+    try:
+        result = subprocess.run(
+            ["git", "status", "--porcelain"],
+            cwd=alpasim_root,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            check=False,
+        )
+    except FileNotFoundError:
+        return None
+    if result.returncode != 0:
+        return None
+    return bool(result.stdout.strip())
 
 
 def _preflight_nvidia_container_runtime() -> None:
