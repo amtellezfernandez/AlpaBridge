@@ -151,6 +151,13 @@ class RunCVMMatrixTests(unittest.TestCase):
             payload["failure_attribution"]["category"],
         )
         self.assertFalse(payload["failure_attribution"]["policy_attributable"])
+        self.assertFalse(payload["failure_attribution"]["policy_behavior_attributable"])
+        self.assertFalse(payload["failure_attribution"]["policy_failure_attributable"])
+        self.assertTrue(payload["failure_attribution"]["integration_failure_attributable"])
+        self.assertEqual(
+            "integration_precondition_blocker_not_policy_failure",
+            payload["failure_attribution"]["interpretation"],
+        )
         self.assertIn("contract_expectations", payload)
         self.assertEqual("alpasim_waypoints", payload["contract_expectations"]["route_source"])
         self.assertEqual(5.0, payload["contract_expectations"]["source_horizon_seconds"])
@@ -218,8 +225,40 @@ class RunCVMMatrixTests(unittest.TestCase):
 
         self.assertEqual("integration_precondition_or_unsupported_contract", blocked["category"])
         self.assertFalse(blocked["policy_attributable"])
+        self.assertFalse(blocked["policy_failure_attributable"])
+        self.assertEqual(
+            "integration_precondition_blocker_not_policy_failure",
+            blocked["interpretation"],
+        )
         self.assertEqual("diagnostic_rollout_pending_claim_gate", completed["category"])
         self.assertFalse(completed["policy_attributable"])
+        self.assertFalse(completed["policy_failure_attributable"])
+        self.assertEqual(
+            "completed_diagnostic_pending_evidence_gate_not_policy_failure",
+            completed["interpretation"],
+        )
+
+    def test_policy_failure_attribution_requires_claim_valid_policy_layer(self) -> None:
+        module = _load_module()
+
+        policy_row = {
+            **_base_row(),
+            "status": "completed",
+            "attempted": "true",
+            "completed": "true",
+            "blocked": "false",
+            "failure_layer": "policy",
+            "failure_code": "collision",
+            "claim_valid": "true",
+        }
+
+        attribution = module._failure_attribution(policy_row)
+
+        self.assertEqual("policy_attributable_behavior", attribution["category"])
+        self.assertTrue(attribution["policy_behavior_attributable"])
+        self.assertTrue(attribution["policy_failure_attributable"])
+        self.assertFalse(attribution["integration_or_evidence_invalid"])
+        self.assertEqual("policy_behavior_allowed", attribution["interpretation"])
 
     def test_resume_without_execute_preserves_completed_rows(self) -> None:
         module = _load_module()

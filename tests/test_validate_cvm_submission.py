@@ -181,13 +181,20 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
                         "failure_attribution": {
                             "category": "integration_precondition_or_unsupported_contract",
                             "policy_attributable": False,
+                            "policy_behavior_attributable": False,
+                            "policy_failure_attributable": False,
                             "claim_valid_policy_benchmark": False,
                             "integration_or_evidence_invalid": True,
+                            "integration_failure_attributable": True,
+                            "interpretation": (
+                                "integration_precondition_blocker_not_policy_failure"
+                            ),
                             "failure_layer": "deployment",
                             "failure_code": "direct_actor_oracle_proxy_missing",
                             "rule": (
-                                "A behavior event is policy-attributable only after "
-                                "semantic and evidence gates pass."
+                                "A behavior event, including a policy failure, is "
+                                "policy-attributable only after semantic and evidence "
+                                "gates pass."
                             ),
                         },
                     }
@@ -216,8 +223,12 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
                         "failure_attribution": {
                             "category": "policy_attributable_behavior",
                             "policy_attributable": True,
+                            "policy_behavior_attributable": True,
+                            "policy_failure_attributable": True,
                             "claim_valid_policy_benchmark": True,
                             "integration_or_evidence_invalid": False,
+                            "integration_failure_attributable": False,
+                            "interpretation": "policy_behavior_allowed",
                             "failure_layer": "policy",
                             "failure_code": "collision",
                             "rule": "policy result",
@@ -235,6 +246,18 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             failures,
         )
         self.assertIn(f"policy_attributable_mismatch:{manifest_dir / 'blocked.json'}:blocked", failures)
+        self.assertIn(
+            f"policy_behavior_attributable_mismatch:{manifest_dir / 'blocked.json'}:blocked",
+            failures,
+        )
+        self.assertIn(
+            f"policy_failure_attributable_mismatch:{manifest_dir / 'blocked.json'}:blocked",
+            failures,
+        )
+        self.assertIn(
+            f"non_claim_valid_policy_failure_layer:{manifest_dir / 'blocked.json'}:blocked",
+            failures,
+        )
         self.assertIn(f"failure_attribution_layer_mismatch:{manifest_dir / 'blocked.json'}:blocked", failures)
         self.assertIn(f"failure_attribution_rule_missing:{manifest_dir / 'blocked.json'}:blocked", failures)
 

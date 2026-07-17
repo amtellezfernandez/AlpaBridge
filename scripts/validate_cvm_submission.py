@@ -29,6 +29,27 @@ ATTRIBUTION_CATEGORIES = {
     "diagnostic_rollout_pending_claim_gate",
     "planned_not_launched",
 }
+ATTRIBUTION_INTERPRETATIONS = {
+    "policy_behavior_allowed",
+    "integration_precondition_blocker_not_policy_failure",
+    "integration_runtime_or_evidence_failure_not_policy_failure",
+    "controlled_contract_diagnostic_not_policy_failure",
+    "completed_diagnostic_pending_evidence_gate_not_policy_failure",
+    "planned_not_launched_not_policy_failure",
+}
+REQUIRED_ATTRIBUTION_FIELDS = (
+    "category",
+    "policy_attributable",
+    "policy_behavior_attributable",
+    "policy_failure_attributable",
+    "claim_valid_policy_benchmark",
+    "integration_or_evidence_invalid",
+    "integration_failure_attributable",
+    "interpretation",
+    "failure_layer",
+    "failure_code",
+    "rule",
+)
 EXPECTED_ATTRIBUTION_BY_STATUS = {
     "blocked": "integration_precondition_or_unsupported_contract",
     "failed": "integration_runtime_or_evidence_failure",
@@ -335,9 +356,28 @@ def _single_manifest_attribution_failures(
     failures: list[str] = []
     status = str(payload.get("status", ""))
     claim_valid = payload.get("claim_valid") is True
+    failure_layer = str(payload.get("failure_layer", ""))
+    for field in REQUIRED_ATTRIBUTION_FIELDS:
+        if field not in attribution:
+            failures.append(f"missing_failure_attribution_field:{path}:{run_id}:{field}")
     category = str(attribution.get("category", ""))
     if category not in ATTRIBUTION_CATEGORIES:
         failures.append(f"invalid_failure_attribution_category:{path}:{run_id}:{category}")
+    interpretation = str(attribution.get("interpretation", ""))
+    if interpretation not in ATTRIBUTION_INTERPRETATIONS:
+        failures.append(
+            f"invalid_failure_attribution_interpretation:{path}:{run_id}:{interpretation}"
+        )
+    expected_interpretation = _expected_failure_interpretation(
+        status=status,
+        claim_valid=claim_valid,
+        failure_layer=failure_layer,
+    )
+    if expected_interpretation is not None and interpretation != expected_interpretation:
+        failures.append(
+            f"failure_attribution_interpretation_mismatch:{path}:{run_id}:"
+            f"{status}:{interpretation}"
+        )
     expected_category = (
         "policy_attributable_behavior"
         if claim_valid
@@ -349,18 +389,52 @@ def _single_manifest_attribution_failures(
         )
     if attribution.get("policy_attributable") is not claim_valid:
         failures.append(f"policy_attributable_mismatch:{path}:{run_id}")
+    if attribution.get("policy_behavior_attributable") is not claim_valid:
+        failures.append(f"policy_behavior_attributable_mismatch:{path}:{run_id}")
+    if attribution.get("policy_failure_attributable") is not (
+        claim_valid and failure_layer == "policy"
+    ):
+        failures.append(f"policy_failure_attributable_mismatch:{path}:{run_id}")
     if attribution.get("claim_valid_policy_benchmark") is not claim_valid:
         failures.append(f"claim_valid_policy_benchmark_mismatch:{path}:{run_id}")
     if attribution.get("integration_or_evidence_invalid") is not (not claim_valid):
         failures.append(f"integration_invalid_mismatch:{path}:{run_id}")
-    if str(attribution.get("failure_layer", "")) != str(payload.get("failure_layer", "")):
+    if attribution.get("integration_failure_attributable") is not (
+        not claim_valid and status in {"blocked", "failed"} and bool(failure_layer)
+    ):
+        failures.append(f"integration_failure_attributable_mismatch:{path}:{run_id}")
+    attribution_failure_layer = str(attribution.get("failure_layer", ""))
+    if (failure_layer == "policy" or attribution_failure_layer == "policy") and not claim_valid:
+        failures.append(f"non_claim_valid_policy_failure_layer:{path}:{run_id}")
+    if attribution_failure_layer != failure_layer:
         failures.append(f"failure_attribution_layer_mismatch:{path}:{run_id}")
     if str(attribution.get("failure_code", "")) != str(payload.get("failure_code", "")):
         failures.append(f"failure_attribution_code_mismatch:{path}:{run_id}")
     rule = str(attribution.get("rule", ""))
-    if "policy-attributable" not in rule or "evidence" not in rule:
+    if "policy-attributable" not in rule or "policy failure" not in rule or "evidence" not in rule:
         failures.append(f"failure_attribution_rule_missing:{path}:{run_id}")
     return failures
+
+
+def _expected_failure_interpretation(
+    *,
+    status: str,
+    claim_valid: bool,
+    failure_layer: str,
+) -> str | None:
+    if claim_valid:
+        return "policy_behavior_allowed"
+    if status == "blocked":
+        return "integration_precondition_blocker_not_policy_failure"
+    if status == "failed":
+        return "integration_runtime_or_evidence_failure_not_policy_failure"
+    if status == "completed" and failure_layer:
+        return "controlled_contract_diagnostic_not_policy_failure"
+    if status == "completed":
+        return "completed_diagnostic_pending_evidence_gate_not_policy_failure"
+    if status == "planned":
+        return "planned_not_launched_not_policy_failure"
+    return None
 
 
 def _release_hygiene_failures(*, repo_root: Path, canonical_paper: Path) -> list[str]:

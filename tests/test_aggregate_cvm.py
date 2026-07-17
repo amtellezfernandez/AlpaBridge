@@ -173,6 +173,11 @@ class AggregateCVMTests(unittest.TestCase):
         self.assertEqual(1, summary["precondition_blocked_rows"])
         self.assertEqual(1, summary["synthetic_diagnostic_rows"])
         self.assertEqual(0, summary["claim_valid_policy_benchmark_rows"])
+        self.assertEqual(0, summary["policy_behavior_attributable_rows"])
+        self.assertEqual(0, summary["policy_failure_attributable_rows"])
+        self.assertEqual(1, summary["integration_failure_attributable_rows"])
+        self.assertEqual(3, summary["diagnostic_not_policy_rows"])
+        self.assertEqual(4, summary["non_policy_attributed_rows"])
 
     def test_empty_frames_csv_keeps_public_frame_schema(self) -> None:
         module = _load_module()

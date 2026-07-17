@@ -1155,16 +1155,36 @@ def _failure_attribution(row: dict[str, str]) -> dict[str, Any]:
         category = "diagnostic_rollout_pending_claim_gate"
     else:
         category = "planned_not_launched"
+    if claim_valid:
+        interpretation = "policy_behavior_allowed"
+    elif status == "blocked":
+        interpretation = "integration_precondition_blocker_not_policy_failure"
+    elif status == "failed":
+        interpretation = "integration_runtime_or_evidence_failure_not_policy_failure"
+    elif status == "completed" and failure_layer:
+        interpretation = "controlled_contract_diagnostic_not_policy_failure"
+    elif status == "completed":
+        interpretation = "completed_diagnostic_pending_evidence_gate_not_policy_failure"
+    else:
+        interpretation = "planned_not_launched_not_policy_failure"
     return {
         "category": category,
         "policy_attributable": claim_valid,
+        "policy_behavior_attributable": claim_valid,
+        "policy_failure_attributable": claim_valid and failure_layer == "policy",
         "claim_valid_policy_benchmark": claim_valid,
         "integration_or_evidence_invalid": not claim_valid,
+        "integration_failure_attributable": (
+            not claim_valid and status in {"blocked", "failed"} and bool(failure_layer)
+        ),
+        "interpretation": interpretation,
         "failure_layer": failure_layer,
         "failure_code": failure_code,
         "rule": (
-            "A behavior event is policy-attributable only after semantic, temporal, "
-            "lifecycle, deployment, and evidence gates pass."
+            "A behavior event, including a policy failure, is policy-attributable "
+            "only after semantic, temporal, lifecycle, deployment, and evidence "
+            "gates pass; otherwise the row remains an integration, precondition, "
+            "evidence, or diagnostic record."
         ),
     }
 
