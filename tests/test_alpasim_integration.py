@@ -9,6 +9,7 @@ from tempfile import TemporaryDirectory
 from types import SimpleNamespace
 
 import numpy as np
+import pytest
 
 try:
     import torch
@@ -209,6 +210,7 @@ class AlpaSimIntegrationTests(unittest.TestCase):
         self.assertGreater(float(output.trajectory_xy[-1, 1]), 19.0)
         self.assertLess(abs(float(output.trajectory_xy[-1, 0])), 1e-5)
 
+    @pytest.mark.temporal
     def test_resample_trajectory_preserves_native_runtime_samples(self) -> None:
         trajectory = np.stack(
             (
@@ -227,6 +229,7 @@ class AlpaSimIntegrationTests(unittest.TestCase):
         np.testing.assert_allclose(resampled, trajectory, atol=0.0)
         self.assertEqual(np.float32, resampled.dtype)
 
+    @pytest.mark.temporal
     def test_resample_trajectory_uses_origin_anchored_endpoint_interpolation(self) -> None:
         source_t = np.linspace(1.0, 5.0, 5, dtype=np.float32)
         trajectory = np.stack((2.0 * source_t, -0.5 * source_t), axis=1).astype(np.float32)
@@ -240,6 +243,147 @@ class AlpaSimIntegrationTests(unittest.TestCase):
         )
 
         np.testing.assert_allclose(resampled, expected, atol=1e-6)
+
+    @pytest.mark.temporal
+    def test_interpolation_is_anchored_at_current_ego_origin(self) -> None:
+        trajectory = np.asarray([[4.0, 0.0], [8.0, 0.0]], dtype=np.float32)
+
+        resampled = resample_trajectory(
+            trajectory,
+            output_frequency_hz=2,
+            horizon_seconds=2.0,
+        )
+
+        expected = np.asarray([[2.0, 0.0], [4.0, 0.0], [6.0, 0.0], [8.0, 0.0]], dtype=np.float32)
+        np.testing.assert_allclose(resampled, expected, atol=1e-6)
+        self.assertNotEqual(float(resampled[0, 0]), float(trajectory[0, 0]))
+
+    @pytest.mark.temporal
+    def test_headings_are_recomputed_on_runtime_grid(self) -> None:
+        class ResamplingAdapter(BaseTrajectoryModel):
+            output_frequency_hz = 4
+            horizon_seconds = 3.0
+
+            def __init__(self, logged_trajectory: np.ndarray) -> None:
+                self._logged_trajectory = logged_trajectory
+
+            def predict(self, prediction_input: object) -> ModelPrediction:
+                trajectory_xy = resample_trajectory(
+                    self._logged_trajectory,
+                    output_frequency_hz=self.output_frequency_hz,
+                    horizon_seconds=self.horizon_seconds,
+                )
+                return ModelPrediction(
+                    trajectory_xy=trajectory_xy,
+                    headings=self._compute_headings_from_trajectory(trajectory_xy),
+                    reasoning_text="resampled",
+                )
+
+        logged = np.asarray([[1.0, 0.0], [1.0, 1.0], [2.0, 1.0]], dtype=np.float32)
+
+        prediction = ResamplingAdapter(logged).predict(object())
+
+        self.assertEqual(prediction.trajectory_xy.shape, (12, 2))
+        self.assertEqual(prediction.headings.shape, (12,))
+        self.assertTrue(np.isfinite(prediction.headings).all())
+        self.assertGreater(np.count_nonzero(np.isclose(prediction.headings, np.pi / 2.0, atol=1e-6)), 0)
+
+    @pytest.mark.temporal
+    def test_output_shape_matches_runtime_contract(self) -> None:
+        trajectory = np.asarray([[1.0, 0.0], [2.0, 0.0]], dtype=np.float32)
+
+        resampled = resample_trajectory(
+            trajectory,
+            output_frequency_hz=6,
+            horizon_seconds=2.5,
+        )
+
+        self.assertEqual(resampled.shape, (15, 2))
+        self.assertEqual(np.float32, resampled.dtype)
+
+    @pytest.mark.temporal
+    def test_nonfinite_trajectory_is_rejected(self) -> None:
+        for value in (np.nan, np.inf, -np.inf):
+            with self.subTest(value=value):
+                trajectory = np.asarray([[1.0, 0.0], [value, 1.0]], dtype=np.float32)
+                with self.assertRaisesRegex(ValueError, "finite"):
+                    resample_trajectory(
+                        trajectory,
+                        output_frequency_hz=4,
+                        horizon_seconds=5.0,
+                    )
+
+    @pytest.mark.temporal
+    def test_invalid_horizon_or_frequency_is_rejected(self) -> None:
+        trajectory = np.asarray([[1.0, 0.0]], dtype=np.float32)
+        invalid_configs = (
+            {"output_frequency_hz": 0, "horizon_seconds": 5.0},
+            {"output_frequency_hz": -4, "horizon_seconds": 5.0},
+            {"output_frequency_hz": np.inf, "horizon_seconds": 5.0},
+            {"output_frequency_hz": 4, "horizon_seconds": 0.0},
+            {"output_frequency_hz": 4, "horizon_seconds": -5.0},
+            {"output_frequency_hz": 4, "horizon_seconds": np.nan},
+        )
+
+        for config in invalid_configs:
+            with self.subTest(config=config), self.assertRaisesRegex(ValueError, "positive and finite"):
+                resample_trajectory(trajectory, **config)
+
+    @pytest.mark.temporal
+    def test_duplicate_or_nonmonotonic_timestamps_are_handled_explicitly(self) -> None:
+        trajectory = np.asarray([[1.0, 0.0], [2.0, 0.0], [3.0, 0.0]], dtype=np.float32)
+        invalid_timestamps = (
+            np.asarray([1.0, 1.0, 3.0], dtype=np.float32),
+            np.asarray([1.0, 0.5, 3.0], dtype=np.float32),
+            np.asarray([1.0, np.nan, 3.0], dtype=np.float32),
+            np.asarray([1.0, 2.0, 6.0], dtype=np.float32),
+        )
+
+        for timestamps in invalid_timestamps:
+            with self.subTest(timestamps=timestamps.tolist()), self.assertRaises(ValueError):
+                resample_trajectory(
+                    trajectory,
+                    output_frequency_hz=2,
+                    horizon_seconds=3.0,
+                    source_timestamps=timestamps,
+                )
+
+    @pytest.mark.temporal
+    def test_curved_path_error_matches_piecewise_linear_reference(self) -> None:
+        trajectory = np.asarray([[1.0, 0.0], [1.0, 1.0], [2.0, 1.0]], dtype=np.float32)
+        target_t = np.linspace(0.5, 3.0, 6, dtype=np.float64)
+        expected = np.stack(
+            (
+                np.interp(target_t, [0.0, 1.0, 2.0, 3.0], [0.0, 1.0, 1.0, 2.0]),
+                np.interp(target_t, [0.0, 1.0, 2.0, 3.0], [0.0, 0.0, 1.0, 1.0]),
+            ),
+            axis=1,
+        ).astype(np.float32)
+
+        resampled = resample_trajectory(
+            trajectory,
+            output_frequency_hz=2,
+            horizon_seconds=3.0,
+        )
+
+        np.testing.assert_allclose(resampled, expected, atol=1e-6)
+
+    @pytest.mark.temporal
+    def test_multiple_runtime_frequencies_are_supported(self) -> None:
+        source_t = np.linspace(1.0, 5.0, 5, dtype=np.float32)
+        trajectory = np.stack((source_t, source_t * 0.25), axis=1).astype(np.float32)
+
+        for frequency_hz in (10, 20):
+            with self.subTest(frequency_hz=frequency_hz):
+                resampled = resample_trajectory(
+                    trajectory,
+                    output_frequency_hz=frequency_hz,
+                    horizon_seconds=5.0,
+                )
+
+                self.assertEqual(resampled.shape, (frequency_hz * 5, 2))
+                np.testing.assert_allclose(resampled[-1], trajectory[-1], atol=1e-6)
+                self.assertEqual(np.float32, resampled.dtype)
 
     def test_replay_identity_adapter_preserves_logged_trajectory_contract(self) -> None:
         class ReplayIdentityAdapter(BaseTrajectoryModel):

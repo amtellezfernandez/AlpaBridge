@@ -70,7 +70,7 @@ For additional information on amsmath, use the `?' option.
 mf/fonts/map/pdftex/updmap/pdftex.map}{/usr/share/texlive/texmf-dist/fonts/enc/
 dvips/base/8r.enc}] (./generated/main_results.tex)
 (./generated/fault_localization.tex) [2 <./figures/system_architecture.pdf> <./
-figures/evaluation_pipeline.pdf>] (./main.bbl [3 <./figures/main_results.pdf>])
+figures/evaluation_pipeline.pdf>] [3 <./figures/main_results.pdf>] (./main.bbl)
 
 ** Conference Paper **
 Before submitting the final camera ready copy, remember to:
@@ -83,9 +83,11 @@ Before submitting the final camera ready copy, remember to:
  process uses the appropriate paper size.
 
 [4] (./main.aux) )</usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm
-/cmr9.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr
-/share/texlive/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></usr/share/texlive
-/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/share/texlive/texmf-dist/fon
-ts/type1/urw/times/utmri8a.pfb>
-Output written on main.pdf (4 pages, 100948 bytes).
+/cmmi10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10
+.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></u
+sr/share/texlive/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/share/texliv
+e/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></usr/share/texlive/texmf-dist/f
+onts/type1/urw/times/utmr8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/
+times/utmri8a.pfb>
+Output written on main.pdf (4 pages, 121474 bytes).
 Transcript written on main.log.

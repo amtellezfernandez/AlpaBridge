@@ -165,18 +165,56 @@ def resample_trajectory(
     trajectory_xy: np.ndarray,
     output_frequency_hz: int,
     horizon_seconds: float,
+    source_timestamps: np.ndarray | None = None,
 ) -> np.ndarray:
-    expected_points = max(1, int(round(output_frequency_hz * horizon_seconds)))
-    if expected_points == trajectory_xy.shape[0]:
-        return trajectory_xy
+    try:
+        output_frequency = float(output_frequency_hz)
+        horizon = float(horizon_seconds)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("output_frequency_hz and horizon_seconds must be numeric") from exc
+    if not math.isfinite(output_frequency) or output_frequency <= 0.0:
+        raise ValueError("output_frequency_hz must be positive and finite")
+    if not math.isfinite(horizon) or horizon <= 0.0:
+        raise ValueError("horizon_seconds must be positive and finite")
 
-    source_t = np.linspace(0.0, horizon_seconds, trajectory_xy.shape[0] + 1)
-    source_xy = np.vstack((np.zeros((1, 2), dtype=np.float32), trajectory_xy))
+    trajectory = np.asarray(trajectory_xy, dtype=np.float32)
+    if trajectory.ndim != 2 or trajectory.shape[1] != 2 or trajectory.shape[0] < 1:
+        raise ValueError("trajectory_xy must have shape (N, 2) with N >= 1")
+    if not np.isfinite(trajectory).all():
+        raise ValueError("trajectory_xy must contain only finite values")
+
+    expected_points = max(1, int(round(output_frequency * horizon)))
     target_t = np.linspace(
-        horizon_seconds / expected_points,
-        horizon_seconds,
+        horizon / expected_points,
+        horizon,
         expected_points,
+        dtype=np.float64,
     )
+
+    if source_timestamps is None:
+        source_t = np.linspace(0.0, horizon, trajectory.shape[0] + 1, dtype=np.float64)
+        target_grid_matches_source = expected_points == trajectory.shape[0]
+    else:
+        timestamps = np.asarray(source_timestamps, dtype=np.float64)
+        if timestamps.shape != (trajectory.shape[0],):
+            raise ValueError("source_timestamps must have shape (N,) matching trajectory_xy")
+        if not np.isfinite(timestamps).all():
+            raise ValueError("source_timestamps must contain only finite values")
+        if np.any(timestamps <= 0.0) or np.any(timestamps > horizon):
+            raise ValueError("source_timestamps must lie within (0, horizon_seconds]")
+        if np.any(np.diff(timestamps) <= 0.0):
+            raise ValueError("source_timestamps must be strictly increasing")
+        source_t = np.concatenate((np.asarray([0.0], dtype=np.float64), timestamps))
+        target_grid_matches_source = (
+            expected_points == trajectory.shape[0]
+            and np.allclose(timestamps, target_t, rtol=0.0, atol=1e-7)
+        )
+
+    if target_grid_matches_source:
+        return trajectory
+
+    # The current ego pose is the implicit origin for future ego-relative points.
+    source_xy = np.vstack((np.zeros((1, 2), dtype=np.float32), trajectory))
     x = np.interp(target_t, source_t, source_xy[:, 0])
     y = np.interp(target_t, source_t, source_xy[:, 1])
     return np.stack((x, y), axis=1).astype(np.float32)

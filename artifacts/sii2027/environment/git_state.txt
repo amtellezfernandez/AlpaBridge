@@ -1,5 +1,5 @@
 # Git state
-captured_at_utc=2026-07-17T12:54:02Z
+captured_at_utc=2026-07-17T13:04:44Z
 
 ## pwd
 <repo>
@@ -9,24 +9,23 @@ captured_at_utc=2026-07-17T12:54:02Z
 
 ## git status --short
  M artifacts/sii2027/environment/git_state.txt
- M artifacts/sii2027/logs/baseline/demo-output/audit/launch_metadata.json
- M artifacts/sii2027/logs/baseline/demo-output/audit/manifest.json
- M artifacts/sii2027/logs/baseline/demo-output/audit/metrics_evidence.json
- M artifacts/sii2027/logs/baseline/demo-output/demo-summary.json
- M artifacts/sii2027/logs/baseline/demo-output/launch-metadata.json
- M artifacts/sii2027/logs/baseline/demo-output/run-audit.json
- M artifacts/sii2027/logs/baseline/demo-output/run-status.json
- M artifacts/sii2027/logs/baseline/demo-output/support-bundle.tar.gz
- M scripts/run_synthetic_contract_demo.py
- M scripts/validate_sii2027_submission.py
- M src/wod2sim/cli/commands/support_bundle.py
- M tests/test_synthetic_contract_demo.py
- M tests/test_validate_sii2027_submission.py
+ M artifacts/sii2027/logs/paper_build/pdflatex-1.log
+ M artifacts/sii2027/logs/paper_build/pdflatex-2.log
+ M artifacts/sii2027/logs/paper_build/pdflatex-3.log
+ M artifacts/sii2027/logs/tests/pytest_temporal_resampl.log
+ M artifacts/sii2027/reports/claim_evidence_matrix.md
+ M artifacts/sii2027/reports/contract_test_audit.md
+ M artifacts/sii2027/reports/test_report.md
+ M paper/sii2027/main.tex
+ M pyproject.toml
+ M src/wod2sim/simulator/alpasim_contract.py
+ M tests/test_alpasim_integration.py
+ M wod2sim.pdf
 
 ## note
 This status is captured before committing regenerated artifacts; the publish state is the Git commit containing this file.
 
 ## git rev-parse HEAD
-2f0c19f9a0321b33845cbd84ec445db37d0d39c7
+2c9dec8723dae4249f5f9819b429a14652de1ec1
 
 ## git submodule status --recursive
