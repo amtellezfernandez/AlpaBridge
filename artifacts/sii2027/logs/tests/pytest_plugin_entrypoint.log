@@ -1,9 +1,9 @@
-command=./.venv/bin/python -m pytest -q tests -k plugin or entry_point
-start_utc=2026-07-17T11:31:38Z
+command=./.venv/bin/python -m pytest -q tests -k plugin\ or\ entry_point
+start_utc=2026-07-17T13:24:37Z
 
-..                                                                       [100%]
-2 passed, 200 deselected in 0.16s
+.....                                                                    [100%]
+5 passed, 232 deselected in 0.95s
 
-end_utc=2026-07-17T11:31:38Z
-duration_seconds=0
+end_utc=2026-07-17T13:24:38Z
+duration_seconds=1
 exit_code=0

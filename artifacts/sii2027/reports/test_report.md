@@ -6,17 +6,17 @@ Captured from logs under `artifacts/sii2027/logs/tests/`.
 
 | Command | Exit | Result |
 |---|---:|---|
-| `make conformance PYTHON=./.venv/bin/python` | 0 | 220 passed, 14 skipped, 15 subtests passed |
+| `make conformance PYTHON=./.venv/bin/python` | 0 | 223 passed, 14 skipped, 15 subtests passed |
 | `make demo PYTHON=./.venv/bin/python` | 0 | synthetic demo generated; benchmark claim false |
-| `make sii2027-check PYTHON=./.venv/bin/python` | 0 | lint, conformance, and SII validation passed: 220 passed, 14 skipped, 15 subtests passed |
-| `./.venv/bin/python -m pytest -q tests` | 0 | 220 passed, 14 skipped, 15 subtests passed |
-| `./.venv/bin/python -m pytest -q tests -k "semantic or route"` | 0 | 6 passed, 196 deselected |
-| `./.venv/bin/python -m pytest -q tests -k "temporal or resampl"` | 0 | 10 passed, 214 deselected, 15 subtests passed |
-| `./.venv/bin/python -m pytest -q tests -k "lifecycle or session"` | 0 | 10 passed, 223 deselected |
-| `./.venv/bin/python -m pytest -q tests -k "plugin or entry_point"` | 0 | 2 passed, 200 deselected |
-| `./.venv/bin/python -m pytest -q tests -k "deployment or readiness or launch"` | 0 | 16 passed, 186 deselected |
-| `./.venv/bin/python -m pytest -q tests -k "evidence or audit or benchmark"` | 0 | 19 passed, 215 deselected |
-| `./.venv/bin/python -m pytest -q tests -k "fault"` | 0 | 5 passed, 197 deselected |
+| `make sii2027-check PYTHON=./.venv/bin/python` | 0 | lint, conformance, and SII validation passed: 223 passed, 14 skipped, 15 subtests passed |
+| `./.venv/bin/python -m pytest -q tests` | 0 | 223 passed, 14 skipped, 15 subtests passed |
+| `./.venv/bin/python -m pytest -q tests -k "semantic or route"` | 0 | 8 passed, 229 deselected |
+| `./.venv/bin/python -m pytest -q tests -k "temporal or resampl"` | 0 | 10 passed, 227 deselected, 15 subtests passed |
+| `./.venv/bin/python -m pytest -q tests -k "lifecycle or session"` | 0 | 10 passed, 227 deselected |
+| `./.venv/bin/python -m pytest -q tests -k "plugin or entry_point"` | 0 | 5 passed, 232 deselected |
+| `./.venv/bin/python -m pytest -q tests -k "deployment or readiness or launch"` | 0 | 20 passed, 217 deselected |
+| `./.venv/bin/python -m pytest -q tests -k "evidence or audit or benchmark"` | 0 | 19 passed, 218 deselected |
+| `./.venv/bin/python -m pytest -q tests -k "fault"` | 0 | 5 passed, 232 deselected |
 
 ## Coverage Interpretation
 
@@ -29,5 +29,5 @@ experimental findings.
 
 Named/equivalent Phase D coverage is audited in
 `artifacts/sii2027/reports/contract_test_audit.md`. The audit finds partial coverage
-overall, with the largest remaining gaps in semantic edge cases, optional-backend
-isolation tests, and deployment manifest/preflight completeness.
+overall, with the largest remaining gaps in semantic edge cases, deployment
+manifest/preflight completeness, and SII-specific demo schema validation.

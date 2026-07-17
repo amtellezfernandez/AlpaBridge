@@ -1,9 +1,9 @@
-command=./.venv/bin/python -m pytest -q tests -k deployment or readiness or launch
-start_utc=2026-07-17T11:31:38Z
+command=./.venv/bin/python -m pytest -q tests -k deployment\ or\ readiness\ or\ launch
+start_utc=2026-07-17T13:25:12Z
 
-................                                                         [100%]
-16 passed, 186 deselected in 0.18s
+....................                                                     [100%]
+20 passed, 217 deselected in 0.43s
 
-end_utc=2026-07-17T11:31:38Z
-duration_seconds=0
+end_utc=2026-07-17T13:25:13Z
+duration_seconds=1
 exit_code=0

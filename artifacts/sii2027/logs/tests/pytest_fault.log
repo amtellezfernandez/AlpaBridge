@@ -1,9 +1,9 @@
 command=./.venv/bin/python -m pytest -q tests -k fault
-start_utc=2026-07-17T11:31:39Z
+start_utc=2026-07-17T13:25:14Z
 
 .....                                                                    [100%]
-5 passed, 197 deselected in 0.18s
+5 passed, 232 deselected in 0.44s
 
-end_utc=2026-07-17T11:31:39Z
-duration_seconds=0
+end_utc=2026-07-17T13:25:15Z
+duration_seconds=1
 exit_code=0

@@ -18,7 +18,7 @@ bodies in `tests/`, and filtered test runs recorded in `artifacts/sii2027/report
 | Semantic | 8 | 5 | 3 | 0 | 0 |
 | Temporal | 10 | 10 | 0 | 0 | 0 |
 | Lifecycle | 8 | 8 | 0 | 0 | 0 |
-| Plugin/dependency boundary | 9 | 5 | 2 | 1 | 1 |
+| Plugin/dependency boundary | 9 | 8 | 0 | 0 | 1 |
 | Deployment | 9 | 5 | 4 | 0 | 0 |
 | Evidence | 9 | 7 | 2 | 0 | 0 |
 | Fault injection | 15 | 15 | 0 | 0 | 0 |
@@ -74,10 +74,10 @@ lifecycle stress or simulator-backed fault-localization coverage.
 
 | Required behavior | Current status | Current evidence |
 |---|---|---|
-| `test_base_model_contract_imports_without_optional_backends` | `partial` | Core tests pass without learned-policy checkpoint execution; no clean-subprocess optional-backend exclusion test was found. |
+| `test_base_model_contract_imports_without_optional_backends` | `supported` | `tests/test_plugin_dependency_boundary.py::test_plugin_base_model_contract_imports_without_optional_backends` imports the base contract and dependency-light WOD2Sim models in a clean subprocess while blocking AlpaSim, Torch, TensorFlow, and JAX. |
 | `test_external_entry_points_are_discoverable` | `supported` | `tests/test_alpasim_integration.py::test_pyproject_registers_alpasim_plugin_entrypoints`; doctor entry-point checks. |
-| `test_unselected_alpamayo_or_vam_is_not_imported` | `missing` | No explicit unselected optional-module import isolation test found. |
-| `test_missing_optional_backend_has_actionable_error` | `partial` | Skipped Torch tests and setup diagnostics exist, but no dedicated actionable-error assertion for every optional backend was found. |
+| `test_unselected_alpamayo_or_vam_is_not_imported` | `supported` | `tests/test_plugin_dependency_boundary.py::test_plugin_unselected_alpamayo_or_vam_is_not_imported` blocks Alpamayo/VAM imports and verifies dependency-light WOD2Sim models load without those modules entering `sys.modules`. |
+| `test_missing_optional_backend_has_actionable_error` | `supported` | `tests/test_plugin_dependency_boundary.py::test_plugin_missing_optional_backend_has_actionable_error` blocks Torch and asserts the learned adapter reports that `TokenBCAlpaSimModel` requires Torch and the `alpasim` extra. |
 | `test_missing_checkpoint_fails_cleanly` | `supported` | Launcher/model preset tests enforce checkpoint requirements for learned/direct actor paths. |
 | `test_invalid_token_schema_is_rejected` | `skipped-or-gated` | `tests/test_alpasim_integration.py::test_token_bc_alpasim_adapter_rejects_unknown_checkpoint_tokens` exists, but token-BC adapter tests are skipped from core conformance and skip when Torch is unavailable. |
 | `test_constant_velocity_is_deterministic` | `supported` | `test_constant_velocity_baseline_is_dependency_light_and_auditable` covers deterministic geometry and audit log fields. |

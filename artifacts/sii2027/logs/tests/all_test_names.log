@@ -232,3 +232,6 @@ tests/test_benchmark_summary.py:40:    def test_strict_main_fails_for_plan_only_
 tests/test_benchmark_summary.py:69:    def test_strict_main_accepts_valid_executed_summary(self) -> None:
 tests/test_benchmark_summary.py:91:    def test_strict_main_rejects_command_proxy_route_evidence(self) -> None:
 tests/test_benchmark_summary.py:120:    def test_hash_mismatch_is_detected(self) -> None:
+tests/test_plugin_dependency_boundary.py:16:    def test_plugin_base_model_contract_imports_without_optional_backends(self) -> None:
+tests/test_plugin_dependency_boundary.py:76:    def test_plugin_unselected_alpamayo_or_vam_is_not_imported(self) -> None:
+tests/test_plugin_dependency_boundary.py:128:    def test_plugin_missing_optional_backend_has_actionable_error(self) -> None:

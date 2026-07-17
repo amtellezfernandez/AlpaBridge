@@ -1,17 +1,17 @@
 command=make sii2027-check PYTHON=./.venv/bin/python
-start_utc=2026-07-17T13:18:52Z
+start_utc=2026-07-17T13:24:44Z
 
 ./.venv/bin/python -m ruff check .
 All checks passed!
 WOD2SIM_CORE_CONFORMANCE=1 ./.venv/bin/python -m pytest -q tests/
 ...........................................ssssssssssssss [ 24%]
-........................................................................ [ 55%]
-........................................................................ [ 85%]
-.................................                                        [100%]
-220 passed, 14 skipped, 15 subtests passed in 2.40s
+........................................................................ [ 54%]
+........................................................................ [ 84%]
+....................................                                     [100%]
+223 passed, 14 skipped, 15 subtests passed in 2.00s
 ./.venv/bin/python scripts/validate_sii2027_submission.py
 sii2027 submission validation passed
 
-end_utc=2026-07-17T13:18:57Z
-duration_seconds=5
+end_utc=2026-07-17T13:24:46Z
+duration_seconds=2
 exit_code=0
