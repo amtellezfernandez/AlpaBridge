@@ -26,3 +26,5 @@ else
 fi
 cp main.pdf paper.pdf
 cp paper.pdf "$ROOT/wod2sim.pdf"
+
+find "$LOG_DIR" -maxdepth 1 -type f -name '*.log' -exec perl -pi -e 's/[ \t]+$//' {} +

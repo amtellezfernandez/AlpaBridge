@@ -5,7 +5,7 @@
   "claim_valid": false,
   "completed": 0,
   "config": "configs/sii2027/core.yaml",
-  "created_at": "2026-07-17T11:45:19.439598+00:00",
+  "created_at": "2026-07-17T12:00:07.760449+00:00",
   "expected_runs": 54,
   "failed": 0,
   "matrix": "core",

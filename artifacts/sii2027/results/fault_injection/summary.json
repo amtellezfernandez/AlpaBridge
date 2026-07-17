@@ -5,7 +5,7 @@
   "claim_valid": false,
   "completed": 15,
   "config": "configs/sii2027/fault_injection.yaml",
-  "created_at": "2026-07-17T11:45:19.391289+00:00",
+  "created_at": "2026-07-17T12:00:16.124001+00:00",
   "expected_runs": 15,
   "failed": 0,
   "matrix": "fault_injection",

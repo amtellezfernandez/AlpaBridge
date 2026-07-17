@@ -24,6 +24,9 @@ redact() {
   echo "## git status --short"
   git status --short
   echo
+  echo "## note"
+  echo "This status is captured before committing regenerated artifacts; the publish state is the Git commit containing this file."
+  echo
   echo "## git rev-parse HEAD"
   git rev-parse HEAD
   echo
@@ -98,5 +101,8 @@ PYTHON_BIN="${PYTHON:-./.venv/bin/python}"
   echo "## local scene assets"
   find workspace -path '*local-usdz*' -maxdepth 6 -type f 2>/dev/null | sort | sed 's#^#asset_file=#' | head -200
 } | redact > "$OUT/environment/simulator_state.txt"
+
+find "$OUT/environment" -type f -name '*.txt' -exec perl -pi -e 's/[ \t]+$//' {} +
+find "$OUT/logs/baseline" -maxdepth 1 -type f -name '*.log' -exec perl -pi -e 's/[ \t]+$//' {} +
 
 echo "Inventory refreshed under $OUT"

@@ -236,10 +236,11 @@ evidence condition rather than hidden inside a policy metric.
 The framework generalizes beyond a single simulator because the contracts identify
 boundary assumptions rather than AlpaSim-specific filenames. Route geometry, sampling
 cadence, lifecycle robustness, deployment provenance, and claim-valid evidence also
-matter in closed-loop planners and simulators such as nuPlan~\cite{caesar2021nuplan},
-CARLA~\cite{dosovitskiy2017carla}, Waymax~\cite{gulino2023waymax}, and
-NAVSIM~\cite{dauner2024navsim}. WOD2Sim uses AlpaSim as the case study because its
-external-driver boundary makes these contracts explicit.
+matter in WOD-style datasets~\cite{sun2020scalability} and in closed-loop planners and
+simulators such as nuPlan~\cite{caesar2021nuplan}, CARLA~\cite{dosovitskiy2017carla},
+Waymax~\cite{gulino2023waymax}, and NAVSIM~\cite{dauner2024navsim}. WOD2Sim uses
+AlpaSim as the case study because its external-driver boundary makes these contracts
+explicit.
 
 The limitations are material. WOD2Sim is not an official Waymo challenge interface, does
 not reconstruct complete WOD worlds, and does not redistribute restricted scene assets.

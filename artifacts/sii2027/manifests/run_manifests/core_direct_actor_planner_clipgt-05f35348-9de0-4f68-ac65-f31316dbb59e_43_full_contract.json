@@ -5,7 +5,7 @@
   "completed": false,
   "config_path": "configs/sii2027/core.yaml",
   "config_sha256": "6218ee024a66c031d88b11a52860320ddba96cdb5e42f0ae11852511ac89b75c",
-  "created_at": "2026-07-17T11:45:19.438848+00:00",
+  "created_at": "2026-07-17T12:00:07.759125+00:00",
   "detail": "direct_actor_planner requires a recorded oracle actor-proxy JSON.",
   "execution_mode": "closed_loop",
   "failure_code": "direct_actor_oracle_proxy_missing",

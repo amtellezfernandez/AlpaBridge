@@ -4,7 +4,7 @@
 - [x] PDF <=6 MB
 - [x] IEEE conference template unmodified
 - [x] Author names retained for single-blind review
-- [ ] All citations resolve and are verified
+- [x] All citations resolve and cited BibTeX entries include source URLs
 - [x] Every numerical paper claim maps to an artifact
 - [x] Failed runs included in denominators
 - [x] Scene/policy/seed counts stated exactly
@@ -17,5 +17,7 @@
 - [x] Git diff inspected
 
 Current state: not complete for the full objective. The paper is buildable and validates
-with local fallbacks, and public synthetic lifecycle/fault diagnostics execute. Real
-closed-loop SII experiments and requested `pdffonts`/`qpdf` validation remain unavailable.
+with local fallbacks, and public synthetic lifecycle/fault diagnostics execute. The cited
+BibTeX entries were checked against CVF, PMLR, arXiv, or NeurIPS source records on
+2026-07-17. Real closed-loop SII experiments and requested `pdffonts`/`qpdf` validation
+remain unavailable.
