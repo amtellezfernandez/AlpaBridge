@@ -27,24 +27,25 @@ Email: amtellezfernandez@gmail.com}
 \maketitle
 
 \begin{abstract}
-Dataset-trained driving policies are usually tested offline, where logged
-observations, route intent, and short-horizon trajectories arrive through a fixed
-batch interface. In closed-loop simulation, the same policy becomes a persistent
-external-driver service: it receives asynchronous sensor and route messages, must act
-on the simulator clock, and must leave enough provenance to decide whether a failed
-rollout is a policy error or an integration error. WOD2Sim treats this boundary as a
-contract-based system-integration problem rather than a file-format conversion. It
-defines five contracts: semantic preservation of route and scene signals, temporal
-adaptation of policy trajectories to the runtime grid, lifecycle handling for session
-messages, deployment materialization of run preconditions, and evidence validity for
-policy-attributable claims. The AlpaSim reference implementation applies these
-contracts to Waymo Open Dataset (WOD)-style trajectory-policy adapters, from
-dependency-light baselines to learned-policy and direct actor-aware entry points.
-The current public evidence package executes dependency-light closed-loop diagnostic
-rows, route-semantics ablations, lifecycle stress tests, and injected contract faults
-while retaining blocked rows caused by gated assets or missing scene-matched actor
-proxies. The result is not a policy benchmark; it is a reproducible gate that separates
-integration failures from policy failures before closed-loop behavior is interpreted.
+Offline driving policies and closed-loop simulators fail in different ways. A policy
+trained or evaluated on dataset logs expects stable observations, route geometry or
+intent, and short-horizon ego-relative trajectories. In a distributed simulator, the
+same policy must run as a persistent external driver: sensor and route messages arrive
+asynchronously, commands are consumed on the simulator clock, and every rollout needs
+provenance before its behavior can be interpreted. If this boundary is treated as
+simple format conversion, missing route geometry, stale observations, bad resampling,
+duplicate lifecycle events, or incomplete evidence can be mistaken for policy failure.
+
+WOD2Sim is a contract-based integration layer for Waymo Open Dataset (WOD)-style
+trajectory policies in AlpaSim. It makes five boundary contracts explicit: semantic
+preservation of route and scene signals, temporal adaptation to the runtime grid,
+lifecycle handling for driver sessions, deployment materialization of preconditions,
+and evidence validity for scientific claims. The reference implementation supports
+dependency-light baselines, learned-policy entry points, and actor-aware planner entry
+points through one external-driver interface. Its current public release is therefore
+not a policy benchmark. It is an auditable gate that labels executed diagnostics,
+controlled contract failures, and blocked rows separately, so policy behavior is
+discussed only after integration validity is established.
 \end{abstract}
 
 \section{Introduction}
