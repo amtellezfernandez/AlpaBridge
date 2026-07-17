@@ -30,23 +30,20 @@ to Closed-Loop AlpaSim Evaluation}
 \maketitle
 
 \begin{abstract}
-AlpaSim has a plugin mechanism for trajectory models, but its stock external-driver
-contract was not sufficient for Waymo Open Dataset (WOD)-style policies. The driver input
-reduced route updates to a command before prediction, while our policies needed local
-route waypoints. Model discovery could import Alpamayo or VAM before an external driver
-was selected. Closed sessions could still receive image, egomotion, route, or close
-messages. Local runs depended on Hydra, Docker, GPU runtime, scene-artifact, and checkout
-state that was not recorded with the experiment. We call the resulting adapter
-\emph{WOD2Sim}; it extends the AlpaSim
-external-driver contract at these four points: route geometry, model discovery, session
-lifecycle, and launch state. The implementation patches \texttt{PredictionInput} and the
-driver session, makes built-in model imports lazy, treats late session messages
-idempotently, registers two project adapters through \texttt{alpasim.models}, converts
-AlpaSim prediction inputs into policy-facing route and scene signal, and provides setup,
-readiness, launch, and contract-check commands. The contribution is not a new driving
-policy, log converter, or public benchmark result. WOD2Sim implements and tests an
-adapter contract for turning WOD-style logged-policy interfaces into auditable
-closed-loop AlpaSim drivers.
+Closed-loop simulation exposes interface failures that open-loop driving-policy APIs hide.
+Waymo Open Dataset (WOD)-style policies consume assembled camera and ego context, route
+intent or geometry, and short-horizon ego trajectories, while AlpaSim external drivers are
+live services that receive incremental sensor and route messages and return trajectories
+at the rollout clock. \emph{WOD2Sim} is an adapter contract and reference implementation
+for that boundary. It preserves route waypoints at prediction time, reconstructs
+policy-facing scene signals, resamples trajectories to simulator cadence, isolates
+optional model backends during discovery, hardens session lifecycle handling, and records
+launch provenance. The release ships dependency-light baselines, learned-policy adapter
+entry points, setup/readiness/launch commands, conformance tests, a synthetic public demo,
+and audit, support-bundle, and benchmark-readiness artifacts. WOD2Sim is not a new policy,
+scene converter, or public benchmark result; benchmark claims require executed multi-scene
+rollouts. Its contribution is an auditable path from WOD-style trajectory policies to
+AlpaSim external drivers, separating adapter-contract failures from policy performance.
 \end{abstract}
 
 \section{Introduction}
