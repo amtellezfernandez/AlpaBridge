@@ -10,16 +10,29 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = "BSD-3-Clause"
 license-files = ["LICENSE", "LICENSES/*"]
+authors = [
+    { name = "Alba Maria Tellez Fernandez" },
+]
+keywords = [
+    "autonomous-driving",
+    "closed-loop-simulation",
+    "contract-validation",
+    "system-integration",
+    "trajectory-policies",
+]
 dependencies = [
     "numpy>=1.26",
     "PyYAML>=6",
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Operating System :: POSIX :: Linux",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 
@@ -67,6 +80,9 @@ wod2sim-evidence = "wod2sim.neutral.alpasim_metrics:main"
 Homepage = "https://github.com/amtellezfernandez/WOD2Sim"
 Repository = "https://github.com/amtellezfernandez/WOD2Sim"
 Issues = "https://github.com/amtellezfernandez/WOD2Sim/issues"
+Documentation = "https://github.com/amtellezfernandez/WOD2Sim/tree/main/docs"
+Paper = "https://github.com/amtellezfernandez/WOD2Sim/blob/main/wod2sim.pdf"
+Citation = "https://github.com/amtellezfernandez/WOD2Sim/blob/main/CITATION.cff"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
