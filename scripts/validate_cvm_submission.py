@@ -326,6 +326,23 @@ PAPER_NUMBER_FLOAT_FIELDS: tuple[tuple[str, str], ...] = (
     ("CVMClosedLoopOffroadMean", "closed_loop_metrics.offroad.mean"),
     ("CVMClosedLoopProgressMean", "closed_loop_metrics.progress.mean"),
 )
+GENERATED_TABLE_JSON_FIELDS: tuple[str, ...] = (
+    "total_rows",
+    "completed_runs",
+    "planned_runs",
+    "blocked_runs",
+    "integration_effectiveness.full_contract_completed_runs",
+    "integration_effectiveness.full_contract_audit_valid_runs",
+    "integration_effectiveness.valid_full_contract_false_blocked_runs",
+    "integration_effectiveness.valid_full_contract_false_block_denominator",
+    "integration_effectiveness.semantic_ablation_completed_pairs",
+    "integration_effectiveness.semantic_ablation_metric_pairs",
+    "integration_effectiveness.semantic_ablation_command_proxy_completed_runs",
+    "integration_effectiveness.semantic_ablation_command_proxy_rejected_runs",
+    "failure_attribution.policy_behavior_attributable_rows",
+    "failure_attribution.policy_failure_attributable_rows",
+    "failure_attribution.integration_failure_attributable_rows",
+)
 PAPER_NUMBER_LIFECYCLE_ADAPTERS: tuple[tuple[str, str], ...] = (
     ("Full", "full_lifecycle_hardening"),
     ("Strict", "strict_or_pre_hardening_behavior"),
@@ -536,6 +553,14 @@ def main() -> int:
             _paper_number_macro_failures(
                 summary_path=args.results / "summary.json",
                 paper_numbers_path=args.tables / "paper_numbers.tex",
+                lifecycle_path=args.results / "lifecycle_stress" / "lifecycle_stress.csv",
+                fault_path=args.results / "fault_injection.csv",
+            )
+        )
+        failures.extend(
+            _generated_table_value_failures(
+                tables=args.tables,
+                summary_path=args.results / "summary.json",
                 lifecycle_path=args.results / "lifecycle_stress" / "lifecycle_stress.csv",
                 fault_path=args.results / "fault_injection.csv",
             )
@@ -1182,6 +1207,223 @@ def _paper_number_fault_counts(path: Path) -> tuple[dict[str, str], list[str]]:
         },
         failures,
     )
+
+
+def _generated_table_value_failures(
+    *,
+    tables: Path,
+    summary_path: Path,
+    lifecycle_path: Path,
+    fault_path: Path,
+) -> list[str]:
+    try:
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return [f"generated_table_summary_unreadable:{summary_path}"]
+    if not isinstance(summary, dict):
+        return [f"generated_table_summary_invalid:{summary_path}"]
+    lifecycle_counts, lifecycle_failures = _paper_number_lifecycle_counts(lifecycle_path)
+    fault_counts, fault_failures = _paper_number_fault_counts(fault_path)
+    failures = lifecycle_failures + fault_failures
+    failures.extend(_generated_table_summary_field_failures(summary_path, summary))
+    table_expectations = {
+        "contract_map.tex": _expected_contract_map_rows(),
+        "main_results.tex": _expected_main_results_rows(summary),
+        "ablations.tex": _expected_ablations_rows(summary, lifecycle_counts),
+        "fault_localization.tex": _expected_fault_localization_rows(
+            lifecycle_counts,
+            fault_counts,
+        ),
+    }
+    for name, expected_rows in table_expectations.items():
+        path = tables / name
+        failures.extend(_table_expected_row_failures(path=path, expected_rows=expected_rows))
+    return failures
+
+
+def _generated_table_summary_field_failures(summary_path: Path, summary: dict[str, object]) -> list[str]:
+    failures: list[str] = []
+    for dotted_path in GENERATED_TABLE_JSON_FIELDS:
+        if not isinstance(_json_path_value(summary, dotted_path), int):
+            failures.append(f"generated_table_summary_field_missing:{summary_path}:{dotted_path}")
+    return failures
+
+
+def _expected_contract_map_rows() -> list[str]:
+    return [
+        "Command-only route & Semantic & Preserve route geometry & route-source audit",
+        "Policy horizon/runtime grid & Temporal & Deterministic resampling & cadence tests",
+        "Script flow/session service & Lifecycle & Idempotent late-event handling & lifecycle tests",
+        "Implicit host state & Deployment & Materialized manifests & readiness checks",
+        "Process exit/evidence & Evidence & Audit-valid summaries & claim gate",
+    ]
+
+
+def _expected_main_results_rows(summary: dict[str, object]) -> list[str]:
+    return [
+        _table_row(
+            "CVM configured rows",
+            _required_int(summary, "total_rows"),
+            "--",
+            _required_int(summary, "completed_runs"),
+        ),
+        _table_row(
+            "Full-contract rollouts",
+            _required_int(summary, "integration_effectiveness.full_contract_completed_runs"),
+            _required_int(summary, "integration_effectiveness.full_contract_audit_valid_runs"),
+            _required_int(summary, "integration_effectiveness.full_contract_completed_runs"),
+        ),
+        _table_row(
+            "Policy-attributable behavior",
+            _required_int(summary, "total_rows"),
+            _required_int(summary, "failure_attribution.policy_behavior_attributable_rows"),
+            "--",
+        ),
+        _table_row(
+            "Policy-attributable failures",
+            _required_int(summary, "total_rows"),
+            _required_int(summary, "failure_attribution.policy_failure_attributable_rows"),
+            "--",
+        ),
+        _table_row(
+            "Integration/precondition failures",
+            _required_int(summary, "total_rows"),
+            _required_int(summary, "failure_attribution.integration_failure_attributable_rows"),
+            "--",
+        ),
+        _table_row(
+            "False-block observations",
+            _required_int(
+                summary,
+                "integration_effectiveness.valid_full_contract_false_block_denominator",
+            ),
+            _required_int(summary, "integration_effectiveness.valid_full_contract_false_blocked_runs"),
+            "--",
+        ),
+        _table_row(
+            "Semantic ablation pairs",
+            _required_int(summary, "integration_effectiveness.semantic_ablation_completed_pairs"),
+            _required_int(summary, "integration_effectiveness.semantic_ablation_metric_pairs"),
+            "--",
+        ),
+        _table_row(
+            "Planned/not launched",
+            _required_int(summary, "total_rows"),
+            _required_int(summary, "planned_runs"),
+            0,
+        ),
+        _table_row(
+            "Blocked",
+            _required_int(summary, "total_rows"),
+            _required_int(summary, "blocked_runs"),
+            0,
+        ),
+    ]
+
+
+def _expected_ablations_rows(
+    summary: dict[str, object],
+    lifecycle_counts: dict[str, str],
+) -> list[str]:
+    return [
+        _table_row(
+            "Full-contract audit-valid rollouts",
+            _required_int(summary, "integration_effectiveness.full_contract_audit_valid_runs"),
+            _required_int(summary, "integration_effectiveness.full_contract_completed_runs"),
+        ),
+        _table_row(
+            "False-blocked valid rollouts",
+            _required_int(summary, "integration_effectiveness.valid_full_contract_false_blocked_runs"),
+            _required_int(
+                summary,
+                "integration_effectiveness.valid_full_contract_false_block_denominator",
+            ),
+        ),
+        _table_row(
+            "Semantic ablation metric pairs",
+            _required_int(summary, "integration_effectiveness.semantic_ablation_metric_pairs"),
+            _required_int(summary, "integration_effectiveness.semantic_ablation_completed_pairs"),
+        ),
+        _table_row(
+            "Command-proxy rows rejected",
+            _required_int(
+                summary,
+                "integration_effectiveness.semantic_ablation_command_proxy_rejected_runs",
+            ),
+            _required_int(
+                summary,
+                "integration_effectiveness.semantic_ablation_command_proxy_completed_runs",
+            ),
+        ),
+        _table_row(
+            "Full lifecycle hardening",
+            lifecycle_counts.get("CVMLifecycleFullSurvived", "0"),
+            lifecycle_counts.get("CVMLifecycleFullTotal", "0"),
+        ),
+        _table_row(
+            "Strict/pre-hardening behavior",
+            lifecycle_counts.get("CVMLifecycleStrictSurvived", "0"),
+            lifecycle_counts.get("CVMLifecycleStrictTotal", "0"),
+        ),
+    ]
+
+
+def _expected_fault_localization_rows(
+    lifecycle_counts: dict[str, str],
+    fault_counts: dict[str, str],
+) -> list[str]:
+    return [
+        _table_row(
+            "Lifecycle hardening survived",
+            lifecycle_counts.get("CVMLifecycleFullSurvived", "0"),
+            lifecycle_counts.get("CVMLifecycleFullTotal", "0"),
+        ),
+        _table_row(
+            "Pre-hardening survived",
+            lifecycle_counts.get("CVMLifecycleStrictSurvived", "0"),
+            lifecycle_counts.get("CVMLifecycleStrictTotal", "0"),
+        ),
+        _table_row(
+            "Faults detected",
+            fault_counts.get("CVMFaultDetected", "0"),
+            fault_counts.get("CVMFaultTotal", "0"),
+        ),
+        _table_row(
+            "Faults localized",
+            fault_counts.get("CVMFaultLocalized", "0"),
+            fault_counts.get("CVMFaultTotal", "0"),
+        ),
+    ]
+
+
+def _table_expected_row_failures(*, path: Path, expected_rows: list[str]) -> list[str]:
+    if not path.is_file():
+        return [f"generated_table_missing_for_value_check:{path}"]
+    normalized_rows = {
+        _normalize_table_row(line)
+        for line in path.read_text(encoding="utf-8", errors="ignore").splitlines()
+    }
+    failures: list[str] = []
+    for row in expected_rows:
+        if _normalize_table_row(row) not in normalized_rows:
+            failures.append(f"generated_table_row_mismatch:{path}:{row}")
+    return failures
+
+
+def _normalize_table_row(row: str) -> str:
+    row = row.strip()
+    row = row.removesuffix(r"\\").strip()
+    row = re.sub(r"\s*&\s*", " & ", row)
+    return re.sub(r"\s+", " ", row)
+
+
+def _table_row(*values: object) -> str:
+    return " & ".join(str(value) for value in values)
+
+
+def _required_int(payload: dict[str, object], dotted_path: str) -> int:
+    value = _json_path_value(payload, dotted_path)
+    return value if isinstance(value, int) else 0
 
 
 def _read_csv_dicts(path: Path, label: str) -> tuple[list[dict[str, str]], list[str]]:

@@ -36,6 +36,8 @@ Additional release-specific checks:
 - [x] Figures and generated tables carry the aggregate data hash.
 - [x] Paper-side generated tables and figures are byte-identical to the
   canonical CVM artifacts.
+- [x] Generated table row values are validated against `summary.json`,
+  `lifecycle_stress.csv`, and `fault_injection.csv` source fields.
 - [x] `paper_numbers.tex` macros are validated against `summary.json`,
   `lifecycle_stress.csv`, and `fault_injection.csv`.
 - [x] `make cvm-eval` preserves completed evidence when rerun without `--execute`.
