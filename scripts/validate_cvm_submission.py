@@ -233,6 +233,103 @@ CLAIM_MATRIX_SUMMARY_LINES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("Planned rows", ("planned_runs",)),
     ("Blocked rows", ("blocked_runs",)),
 )
+PAPER_NUMBER_JSON_FIELDS: tuple[tuple[str, str], ...] = (
+    ("CVMTotalRows", "total_rows"),
+    ("CVMPlannedRuns", "planned_runs"),
+    ("CVMAttemptedRuns", "attempted_runs"),
+    ("CVMCompletedRuns", "completed_runs"),
+    ("CVMSyntheticCompletedRuns", "synthetic_completed_runs"),
+    ("CVMClosedLoopCompletedRuns", "closed_loop_completed_runs"),
+    ("CVMClosedLoopAuditValidRuns", "closed_loop_audit_valid_runs"),
+    ("CVMClosedLoopMetricRows", "closed_loop_metric_rows"),
+    ("CVMFullContractCompletedRuns", "integration_effectiveness.full_contract_completed_runs"),
+    ("CVMFullContractAuditValidRuns", "integration_effectiveness.full_contract_audit_valid_runs"),
+    (
+        "CVMValidFullContractFalseBlockedRuns",
+        "integration_effectiveness.valid_full_contract_false_blocked_runs",
+    ),
+    (
+        "CVMValidFullContractFalseBlockDenominator",
+        "integration_effectiveness.valid_full_contract_false_block_denominator",
+    ),
+    ("CVMContractValidClosedLoopRows", "failure_attribution.contract_valid_closed_loop_rows"),
+    (
+        "CVMIntegrationInvalidClosedLoopRows",
+        "failure_attribution.integration_or_evidence_invalid_closed_loop_rows",
+    ),
+    (
+        "CVMClaimValidPolicyBenchmarkRows",
+        "failure_attribution.claim_valid_policy_benchmark_rows",
+    ),
+    (
+        "CVMPolicyBehaviorAttributableRows",
+        "failure_attribution.policy_behavior_attributable_rows",
+    ),
+    (
+        "CVMPolicyFailureAttributableRows",
+        "failure_attribution.policy_failure_attributable_rows",
+    ),
+    (
+        "CVMIntegrationFailureAttributableRows",
+        "failure_attribution.integration_failure_attributable_rows",
+    ),
+    ("CVMDiagnosticNotPolicyRows", "failure_attribution.diagnostic_not_policy_rows"),
+    ("CVMNonPolicyAttributedRows", "failure_attribution.non_policy_attributed_rows"),
+    ("CVMSyntheticDiagnosticRows", "failure_attribution.synthetic_diagnostic_rows"),
+    (
+        "CVMSemanticAblationCompletedPairs",
+        "integration_effectiveness.semantic_ablation_completed_pairs",
+    ),
+    (
+        "CVMSemanticAblationMetricPairs",
+        "integration_effectiveness.semantic_ablation_metric_pairs",
+    ),
+    (
+        "CVMCommandProxyCompletedRuns",
+        "integration_effectiveness.semantic_ablation_command_proxy_completed_runs",
+    ),
+    (
+        "CVMCommandProxyRejectedRuns",
+        "integration_effectiveness.semantic_ablation_command_proxy_rejected_runs",
+    ),
+    ("CVMFailedRuns", "failed_runs"),
+    ("CVMBlockedRuns", "blocked_runs"),
+    ("CVMSyntheticRuns", "synthetic_completed_runs"),
+    ("CVMCoreRows", "matrix_counts.core"),
+    ("CVMSemanticRows", "matrix_counts.semantic_ablation"),
+    ("CVMTemporalRows", "matrix_counts.temporal_ablation"),
+    ("CVMLifecycleRows", "matrix_counts.lifecycle_stress"),
+    ("CVMFaultRows", "matrix_counts.fault_injection"),
+)
+PAPER_NUMBER_FLOAT_FIELDS: tuple[tuple[str, str], ...] = (
+    (
+        "CVMSemanticProgressDeltaMean",
+        "semantic_ablation_deltas.progress.mean_delta_full_minus_command_only",
+    ),
+    (
+        "CVMSemanticProgressRelDeltaMean",
+        "semantic_ablation_deltas.progress_rel.mean_delta_full_minus_command_only",
+    ),
+    (
+        "CVMSemanticOffroadDeltaMean",
+        "semantic_ablation_deltas.offroad.mean_delta_full_minus_command_only",
+    ),
+    (
+        "CVMSemanticCollisionAnyDeltaMean",
+        "semantic_ablation_deltas.collision_any.mean_delta_full_minus_command_only",
+    ),
+    (
+        "CVMSemanticPlanDeviationDeltaMean",
+        "semantic_ablation_deltas.plan_deviation.mean_delta_full_minus_command_only",
+    ),
+    ("CVMClosedLoopCollisionAnyMean", "closed_loop_metrics.collision_any.mean"),
+    ("CVMClosedLoopOffroadMean", "closed_loop_metrics.offroad.mean"),
+    ("CVMClosedLoopProgressMean", "closed_loop_metrics.progress.mean"),
+)
+PAPER_NUMBER_LIFECYCLE_ADAPTERS: tuple[tuple[str, str], ...] = (
+    ("Full", "full_lifecycle_hardening"),
+    ("Strict", "strict_or_pre_hardening_behavior"),
+)
 REQUIRED_METADATA_FIELDS = (
     "title",
     "author",
@@ -433,6 +530,14 @@ def main() -> int:
                 paper_tables=args.source / "generated",
                 canonical_figures=args.figures,
                 paper_figures=args.source / "figures",
+            )
+        )
+        failures.extend(
+            _paper_number_macro_failures(
+                summary_path=args.results / "summary.json",
+                paper_numbers_path=args.tables / "paper_numbers.tex",
+                lifecycle_path=args.results / "lifecycle_stress" / "lifecycle_stress.csv",
+                fault_path=args.results / "fault_injection.csv",
             )
         )
     failures.extend(_frame_schema_failures(args.results / "frames.csv"))
@@ -977,6 +1082,116 @@ def _generated_copy_pair_failures(*, canonical: Path, paper_copy: Path, label: s
     if canonical.read_bytes() != paper_copy.read_bytes():
         return [f"paper_generated_{label}_drift:{paper_copy}:{canonical}"]
     return []
+
+
+def _paper_number_macro_failures(
+    *,
+    summary_path: Path,
+    paper_numbers_path: Path,
+    lifecycle_path: Path,
+    fault_path: Path,
+) -> list[str]:
+    failures: list[str] = []
+    try:
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return [f"paper_numbers_summary_unreadable:{summary_path}"]
+    if not isinstance(summary, dict):
+        return [f"paper_numbers_summary_invalid:{summary_path}"]
+    macros, duplicates = _parse_latex_newcommands(paper_numbers_path)
+    if not macros and not paper_numbers_path.is_file():
+        return [f"missing_paper_numbers:{paper_numbers_path}"]
+    failures.extend(f"paper_numbers_duplicate_macro:{paper_numbers_path}:{name}" for name in duplicates)
+    expected: dict[str, str] = {}
+    for macro, dotted_path in PAPER_NUMBER_JSON_FIELDS:
+        value = _json_path_value(summary, dotted_path)
+        if not isinstance(value, int):
+            failures.append(f"paper_numbers_summary_field_missing:{summary_path}:{macro}:{dotted_path}")
+            continue
+        expected[macro] = str(value)
+    for macro, dotted_path in PAPER_NUMBER_FLOAT_FIELDS:
+        value = _json_path_value(summary, dotted_path)
+        expected[macro] = _format_paper_number_float(value)
+    lifecycle_counts, lifecycle_failures = _paper_number_lifecycle_counts(lifecycle_path)
+    failures.extend(lifecycle_failures)
+    expected.update(lifecycle_counts)
+    fault_counts, fault_failures = _paper_number_fault_counts(fault_path)
+    failures.extend(fault_failures)
+    expected.update(fault_counts)
+    for macro, expected_value in sorted(expected.items()):
+        actual_value = macros.get(macro)
+        if actual_value is None:
+            failures.append(f"paper_numbers_macro_missing:{paper_numbers_path}:{macro}")
+        elif actual_value != expected_value:
+            failures.append(
+                f"paper_numbers_macro_mismatch:{paper_numbers_path}:{macro}:"
+                f"{actual_value}:{expected_value}"
+            )
+    return failures
+
+
+def _parse_latex_newcommands(path: Path) -> tuple[dict[str, str], list[str]]:
+    if not path.is_file():
+        return {}, []
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    macros: dict[str, str] = {}
+    duplicates: list[str] = []
+    for match in re.finditer(r"\\newcommand\{\\([A-Za-z0-9]+)\}\{([^{}]*)\}", text):
+        name = match.group(1)
+        if name in macros:
+            duplicates.append(name)
+        macros[name] = match.group(2)
+    return macros, duplicates
+
+
+def _json_path_value(payload: dict[str, object], dotted_path: str) -> object:
+    value: object = payload
+    for part in dotted_path.split("."):
+        if not isinstance(value, dict) or part not in value:
+            return None
+        value = value[part]
+    return value
+
+
+def _format_paper_number_float(value: object) -> str:
+    if not isinstance(value, (int, float)):
+        return "n/a"
+    return f"{float(value):.3f}"
+
+
+def _paper_number_lifecycle_counts(path: Path) -> tuple[dict[str, str], list[str]]:
+    rows, failures = _read_csv_dicts(path, "paper_numbers_lifecycle_csv")
+    counts: dict[str, str] = {}
+    for label, adapter in PAPER_NUMBER_LIFECYCLE_ADAPTERS:
+        adapter_rows = [row for row in rows if row.get("adapter_config") == adapter]
+        survived = sum(row.get("service_survived") == "true" for row in adapter_rows)
+        counts[f"CVMLifecycle{label}Survived"] = str(survived)
+        counts[f"CVMLifecycle{label}Total"] = str(len(adapter_rows))
+    return counts, failures
+
+
+def _paper_number_fault_counts(path: Path) -> tuple[dict[str, str], list[str]]:
+    rows, failures = _read_csv_dicts(path, "paper_numbers_fault_csv")
+    detected = sum(row.get("detected") == "true" for row in rows)
+    localized = sum(row.get("correctly_localized") == "true" for row in rows)
+    return (
+        {
+            "CVMFaultDetected": str(detected),
+            "CVMFaultLocalized": str(localized),
+            "CVMFaultTotal": str(len(rows)),
+        },
+        failures,
+    )
+
+
+def _read_csv_dicts(path: Path, label: str) -> tuple[list[dict[str, str]], list[str]]:
+    if not path.is_file():
+        return [], [f"{label}_missing:{path}"]
+    with path.open(newline="", encoding="utf-8") as handle:
+        try:
+            return list(csv.DictReader(handle)), []
+        except csv.Error:
+            return [], [f"{label}_unreadable:{path}"]
 
 
 def _frame_schema_failures(path: Path) -> list[str]:
