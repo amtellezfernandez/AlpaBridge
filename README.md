@@ -230,6 +230,8 @@ dependency-light core rows and semantic ablations have executed, direct-actor
 rows remain explicitly blocked by a missing scene-matched proxy, and completed
 closed-loop rows are diagnostic integration evidence rather than policy-quality
 benchmark claims.
+The detailed test-to-contract traceability map is tracked in
+[`artifacts/cvm/reports/contract_test_audit.md`](artifacts/cvm/reports/contract_test_audit.md).
 
 ## Ungated Demo
 

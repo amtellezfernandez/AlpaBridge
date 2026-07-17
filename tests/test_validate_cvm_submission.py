@@ -1030,6 +1030,71 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             failures,
         )
 
+    def test_contract_test_audit_accepts_required_traceability(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            tests_dir = root / "tests"
+            tests_dir.mkdir()
+            (tests_dir / "test_alpasim_integration.py").write_text("", encoding="utf-8")
+            audit_path = root / "contract_test_audit.md"
+            audit_path.write_text(
+                "\n".join(
+                    [
+                        "# Contract Test Audit",
+                        "Covered; Partially covered; Gap; policy claims.",
+                        "## Semantic Contract",
+                        "`tests/test_alpasim_integration.py`",
+                        "## Temporal Contract",
+                        "## Lifecycle Contract",
+                        "## Deployment And Plugin-Dependency Contract",
+                        "## Evidence Contract",
+                        "## Fault-Injection Diagnostics",
+                        "## Explicit Gaps Kept Out Of Policy Claims",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            failures = module._contract_test_audit_failures(
+                audit_path=audit_path,
+                tests_dir=tests_dir,
+            )
+
+        self.assertEqual([], failures)
+
+    def test_contract_test_audit_rejects_missing_terms_and_test_files(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            tests_dir = root / "tests"
+            tests_dir.mkdir()
+            audit_path = root / "contract_test_audit.md"
+            audit_path.write_text(
+                "# Contract Test Audit\n"
+                "## Semantic Contract\n"
+                "`tests/test_missing.py`\n",
+                encoding="utf-8",
+            )
+
+            failures = module._contract_test_audit_failures(
+                audit_path=audit_path,
+                tests_dir=tests_dir,
+            )
+
+        self.assertIn(
+            f"contract_test_audit_missing:{audit_path}:Temporal Contract",
+            failures,
+        )
+        self.assertIn(
+            f"contract_test_audit_missing:{audit_path}:Explicit Gaps Kept Out Of Policy Claims",
+            failures,
+        )
+        self.assertIn(
+            f"contract_test_audit_missing_test_file:{audit_path}:tests/test_missing.py",
+            failures,
+        )
+
     def test_generated_artifact_hash_check_accepts_matching_tables_and_figures(self) -> None:
         module = _load_module()
         data_hash = "abc123"

@@ -73,6 +73,9 @@ Additional release-specific checks:
   `artifacts/cvm/results/summary.json`.
 - [x] Claim-evidence-matrix aggregate counts are validated against
   `artifacts/cvm/results/summary.json`.
+- [x] Contract-test audit report is validated for semantic, temporal,
+  lifecycle, deployment/plugin-dependency, evidence, fault-injection, and
+  explicit-gap coverage.
 - [x] Every public run manifest carries validated `scene` metadata and
   `scenario_category` without claiming unsupported scenario-category coverage.
 - [x] `frames.csv` exposes the required public-safe frame-level schema without
