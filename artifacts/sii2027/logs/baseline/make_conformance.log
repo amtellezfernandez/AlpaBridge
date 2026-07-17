@@ -1,0 +1,12 @@
+command=make conformance PYTHON=<repo>/.venv/bin/python
+start_utc=2026-07-17T11:16:00Z
+
+WOD2SIM_CORE_CONFORMANCE=1 pytest -q tests/
+................................ssssssssssssss.......................... [ 35%]
+........................................................................ [ 71%]
+..........................................................               [100%]
+188 passed, 14 skipped in 0.89s
+
+end_utc=2026-07-17T11:16:01Z
+duration_seconds=1
+exit_code=0

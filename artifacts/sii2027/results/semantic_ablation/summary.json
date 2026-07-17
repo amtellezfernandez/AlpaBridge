@@ -1,0 +1,14 @@
+{
+  "attempted": 0,
+  "blocked": 18,
+  "blockers": [],
+  "claim_valid": false,
+  "completed": 0,
+  "config": "configs/sii2027/semantic_ablation.yaml",
+  "created_at": "2026-07-17T11:40:01.045169+00:00",
+  "expected_runs": 18,
+  "failed": 0,
+  "matrix": "semantic_ablation",
+  "rows": 18,
+  "schema": "sii2027_matrix_summary_v1"
+}

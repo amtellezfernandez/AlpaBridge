@@ -1,0 +1,14 @@
+{
+  "attempted": 0,
+  "blocked": 54,
+  "blockers": [],
+  "claim_valid": false,
+  "completed": 0,
+  "config": "configs/sii2027/core.yaml",
+  "created_at": "2026-07-17T11:45:19.439598+00:00",
+  "expected_runs": 54,
+  "failed": 0,
+  "matrix": "core",
+  "rows": 54,
+  "schema": "sii2027_matrix_summary_v1"
+}

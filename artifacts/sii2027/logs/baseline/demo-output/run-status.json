@@ -1,0 +1,11 @@
+{
+  "aggregate_status": "synthetic_contract_artifacts_written",
+  "benchmark_claim": false,
+  "completed_at": "2026-07-17T11:16:01+00:00",
+  "driver_returncode": 0,
+  "phase": "synthetic_contract_demo",
+  "schema": "wod2sim_synthetic_contract_demo_status_v1",
+  "state": "completed",
+  "valid_claim_evidence": false,
+  "wizard_returncode": null
+}

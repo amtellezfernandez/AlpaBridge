@@ -1,0 +1,26 @@
+# Git state
+captured_at_utc=2026-07-17T11:45:17Z
+
+## pwd
+<repo>
+
+## git rev-parse --show-toplevel
+<repo>
+
+## git status --short
+ M .gitignore
+ M Makefile
+?? artifacts/
+?? configs/
+?? paper/sii2027/
+?? scripts/aggregate_sii2027.py
+?? scripts/build_sii2027_paper.sh
+?? scripts/generate_sii2027_figures.py
+?? scripts/run_sii2027_matrix.py
+?? scripts/sii2027_inventory.sh
+?? scripts/validate_sii2027_submission.py
+
+## git rev-parse HEAD
+1c5d15e0050c486da334fc3551ace87435d1c06d
+
+## git submodule status --recursive

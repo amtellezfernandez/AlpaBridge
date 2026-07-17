@@ -1,0 +1,20 @@
+{
+  "adapter_config": "naive_or_disabled_resampling",
+  "attempted": false,
+  "claim_valid": false,
+  "completed": false,
+  "config_path": "configs/sii2027/temporal_ablation.yaml",
+  "config_sha256": "2406a82804d9f49a68dd85f77dc0d481e2b5c5e4c2d0fce3202040bca735a6e0",
+  "created_at": "2026-07-17T11:40:01.044098+00:00",
+  "detail": "direct_actor_planner requires a recorded oracle actor-proxy JSON.",
+  "execution_mode": "closed_loop_ablation",
+  "failure_code": "direct_actor_oracle_proxy_missing",
+  "failure_layer": "deployment",
+  "matrix": "temporal_ablation",
+  "policy": "direct_actor_planner",
+  "run_id": "temporal_ablation_direct_actor_planner_clipgt-048b974e-1546-488a-b8f9-d32bff77f5aa_17_naive_or_disabled_resampling",
+  "scene_id": "clipgt-048b974e-1546-488a-b8f9-d32bff77f5aa",
+  "schema": "sii2027_run_manifest_v1",
+  "seed": "17",
+  "status": "blocked"
+}
