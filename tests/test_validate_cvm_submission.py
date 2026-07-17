@@ -132,6 +132,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             draft_label = "paper " + "draft"
             weak_adapter_label = "adapter and evaluation " + "artifact"
             scaffold_label = "artifact " + "scaffold"
+            third_party_secret = "hf_" + ("B" * 20)
             (root / "README.md").write_text(
                 "\n".join(
                     [
@@ -146,6 +147,8 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
+            (root / "third_party").mkdir()
+            (root / "third_party" / "README.md").write_text(third_party_secret, encoding="utf-8")
             (root / "wod2sim.pdf").write_bytes(b"%PDF-1.5\n")
 
             failures = module._release_hygiene_failures(
@@ -160,6 +163,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         self.assertIn("public_hygiene:paper_draft_label:README.md", failures)
         self.assertIn("public_hygiene:weak_adapter_artifact_label:README.md", failures)
         self.assertIn("public_hygiene:weak_artifact_scaffold_label:README.md", failures)
+        self.assertIn("public_hygiene:huggingface_token:third_party/README.md", failures)
 
     def test_release_hygiene_reports_duplicate_manuscript_pdfs(self) -> None:
         module = _load_module()

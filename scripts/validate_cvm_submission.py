@@ -94,6 +94,9 @@ EXPECTED_TITLE = (
 EXPECTED_AUTHOR = "Alba Maria Tellez Fernandez"
 PUBLIC_SCAN_PATHS = (
     "README.md",
+    "CITATION.cff",
+    "LICENSE",
+    "LICENSES",
     "docs",
     "paper",
     "scripts",
@@ -104,6 +107,7 @@ PUBLIC_SCAN_PATHS = (
     "src",
     "tests",
     "configs",
+    "third_party",
 )
 PUBLIC_SCAN_SKIP_PARTS = (
     ("artifacts", "cvm", "results", "core_probe"),
