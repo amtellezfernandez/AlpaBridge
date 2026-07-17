@@ -318,14 +318,18 @@ class DirectActorPlannerAlpaSimModel(BaseTrajectoryModel):
         if requested_timestamp is None:
             merged["oracle_actor_proxy_miss_reason"] = "missing_prediction_timestamp"
             return merged
-        frame = _nearest_oracle_actor_proxy_frame(
+        requested_scene_id = prediction_scene_id(prediction_input)
+        frame, miss_reason = _nearest_oracle_actor_proxy_frame(
             self._oracle_actor_proxy_frames,
             self._oracle_actor_proxy_timestamps,
             requested_timestamp,
             tolerance_us=self._oracle_actor_proxy_tolerance_us,
+            scene_id=requested_scene_id,
         )
         if frame is None:
-            merged["oracle_actor_proxy_miss_reason"] = "timestamp_not_found"
+            merged["oracle_actor_proxy_miss_reason"] = miss_reason
+            if requested_scene_id is not None:
+                merged["oracle_actor_proxy_requested_scene_id"] = requested_scene_id
             return merged
         hazards, transform_info = _oracle_frame_to_current_hazards(frame, prediction_input)
         if hazards is None:
@@ -340,6 +344,8 @@ class DirectActorPlannerAlpaSimModel(BaseTrajectoryModel):
         merged["oracle_actor_proxy_delta_us"] = abs(matched_timestamp - requested_timestamp)
         merged["oracle_actor_proxy_matched_timestamp_us"] = matched_timestamp
         merged["oracle_actor_proxy_scene_id"] = frame.get("scene_id")
+        if requested_scene_id is not None:
+            merged["oracle_actor_proxy_requested_scene_id"] = requested_scene_id
         merged["oracle_actor_proxy_frame_space"] = transform_info["frame_space"]
         merged["oracle_actor_proxy_current_ego_pose"] = transform_info.get("current_ego_pose")
         return merged
@@ -725,6 +731,10 @@ def _compact_signal(signal: dict[str, Any]) -> dict[str, Any]:
         "oracle_actor_proxy_count": signal.get("oracle_actor_proxy_count", 0),
         "oracle_actor_proxy_delta_us": signal.get("oracle_actor_proxy_delta_us"),
         "oracle_actor_proxy_scene_id": signal.get("oracle_actor_proxy_scene_id"),
+        "oracle_actor_proxy_requested_scene_id": signal.get(
+            "oracle_actor_proxy_requested_scene_id"
+        ),
+        "oracle_actor_proxy_miss_reason": signal.get("oracle_actor_proxy_miss_reason"),
     }
 
 

@@ -61,6 +61,7 @@ Direct actor planner:
 ```bash
 wod2sim-build-oracle-proxy \
   --alpasim-root /path/to/alpasim \
+  --run-dir /path/to/completed-scene-matched-run \
   --output /tmp/wod2sim-actor-proxy.json
 
 wod2sim-launch \
@@ -70,6 +71,11 @@ wod2sim-launch \
   --oracle-actor-proxy /tmp/wod2sim-actor-proxy.json \
   --scene-preset fresh_3scene
 ```
+
+The oracle actor proxy must come from the same scene family you plan to run.
+Adapters reject proxy frames whose `scene_id` does not match the current
+prediction scene, so a timestamp-only proxy from another rollout is diagnostic
+input, not valid direct-planner evidence.
 
 `--mode print` writes the driver config, driver command, wizard command, launch
 metadata, and planned run status without starting Docker or a rollout. Review

@@ -25,7 +25,7 @@ local simulator state.
 - Format: IEEE conference two-column template using `paper/cvm/IEEEtran.cls`.
 - Page size: A4 verified by `mutool info` mediabox `[ 0 0 595.276 841.89 ]`.
 - Page count: 5.
-- PDF size at audit: 140856 bytes.
+- PDF size at audit: 139964 bytes.
 - Root PDF is the only tracked manuscript PDF.
 
 ## Commands And Targets
@@ -76,7 +76,9 @@ local simulator state.
 
 ## Gated Or Missing Prerequisites
 
-- Direct actor-aware planner and temporal ablation require an oracle actor proxy.
+- Direct actor-aware planner and temporal ablation require a scene-matched
+  oracle actor proxy; adapters reject oracle frames whose `scene_id` differs
+  from the current prediction scene.
 - Learned `token_dagger_bc` requires a legitimate local checkpoint hash.
 - Scene categories are recorded but not authoritatively verified from public
   metadata; scenario-category coverage is not claimed.

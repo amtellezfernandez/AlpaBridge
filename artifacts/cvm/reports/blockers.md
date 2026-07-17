@@ -19,7 +19,9 @@
 ## Remaining Blockers
 
 - `direct_actor_planner` and temporal ablation rows remain blocked by
-  `direct_actor_oracle_proxy_missing`.
+  `direct_actor_oracle_proxy_missing`; the proxy must be scene-matched, and
+  adapters reject oracle frames whose `scene_id` does not match the current
+  prediction scene.
 - Scene categories remain unverified. Six local 26.02 front-camera scenes are
   selected by availability and recorded as unclassified, not authoritative
   straight/turn/lane-change/traffic category labels.

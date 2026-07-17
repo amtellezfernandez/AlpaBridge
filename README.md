@@ -131,7 +131,7 @@ attributed to the policy.
 - `constant_velocity` is a dependency-light straight-line baseline.
 - `route_following` is a dependency-light waypoint-following baseline.
 - `token_dagger_bc` loads a compatible learned-policy checkpoint.
-- `direct_actor_planner` evaluates continuous candidates using an actor proxy.
+- `direct_actor_planner` evaluates continuous candidates using a scene-matched actor proxy.
 - All adapters share route propagation, sensor checks, launch tooling, and audits.
 
 This release contains no public checkpoint and makes no policy benchmark claim.
@@ -225,8 +225,9 @@ make paper-verify
 the same generated tables and figures used by the repository reports, then runs
 the submission validator. The current aggregate remains `claim_valid=false`:
 dependency-light core rows and semantic ablations have executed, direct-actor
-rows remain explicitly blocked, and completed closed-loop rows are diagnostic
-integration evidence rather than policy-quality benchmark claims.
+rows remain explicitly blocked by a missing scene-matched proxy, and completed
+closed-loop rows are diagnostic integration evidence rather than policy-quality
+benchmark claims.
 
 ## Ungated Demo
 

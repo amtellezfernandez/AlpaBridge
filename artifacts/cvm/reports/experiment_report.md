@@ -63,7 +63,9 @@ passes and the retained failure layer is policy.
 ## Remaining Blockers
 
 - `direct_actor_oracle_proxy_missing`: 36 rows remain blocked across core
-  direct-actor rows and the temporal-ablation matrix.
+  direct-actor rows and the temporal-ablation matrix. The required proxy must
+  be scene-matched; adapters now reject oracle frames whose `scene_id` differs
+  from the current prediction scene.
 - The temporal full-vs-naive resampling scene ablation is therefore not claimed.
 - Learned `token_dagger_bc` remains outside this CVM because no legitimate
   release checkpoint hash is configured.

@@ -28,7 +28,7 @@ The package exposes four AlpaSim models:
 - `constant_velocity`: a dependency-light straight-line baseline requiring no private artifact.
 - `route_following`: a dependency-light waypoint-following baseline requiring no private artifact.
 - `token_dagger_bc`: a learned token policy requiring a compatible checkpoint.
-- `direct_actor_planner`: a continuous candidate planner requiring an actor proxy.
+- `direct_actor_planner`: a continuous candidate planner requiring a scene-matched actor proxy.
 
 All four use the same route/signal contract, sensor-freshness guard, trajectory
 resampling, launch tooling, and evidence pipeline.

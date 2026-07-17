@@ -34,7 +34,7 @@ package.
 | Command | Exit | Result |
 |---|---:|---|
 | `make cvm-inventory PYTHON=./.venv/bin/python` | 0 | Refreshed ignored redacted environment/log snapshots under `artifacts/cvm`. |
-| `make cvm-check PYTHON=./.venv/bin/python` | 0 | Ruff passed; conformance suite passed with 286 passed, 14 skipped, and 15 subtests passed after package metadata, CI workflow, community-template, policy-table fallback, paper metadata, PDF metadata/page-size/font, source-layout, LaTeX-log, generated-copy, generated-table-value, local-reference, image-alt, command-documentation, README-visual, evaluation-status, README-count, paper-number, and claim-matrix validation hardening; paper validation passed. |
+| `make cvm-check PYTHON=./.venv/bin/python` | 0 | Ruff passed; conformance suite passed with 288 passed, 14 skipped, and 15 subtests passed after package metadata, CI workflow, community-template, policy-table fallback, paper metadata, PDF metadata/page-size/font, source-layout, LaTeX-log, generated-copy, generated-table-value, local-reference, image-alt, command-documentation, README-visual, evaluation-status, README-count, paper-number, and claim-matrix validation hardening; paper validation passed. |
 | `make cvm-demo PYTHON=./.venv/bin/python` | 0 | Synthetic demo artifact valid; `valid_claim_evidence=false`. |
 | `make cvm-eval PYTHON=./.venv/bin/python` | 2 | Expected blocked-status exit: 36 completed core rows preserved, 18 direct-actor rows blocked by `direct_actor_oracle_proxy_missing`. |
 | `make cvm-aggregate PYTHON=./.venv/bin/python` | 0 | Regenerated aggregate tables and figures from retained CVM results. |
@@ -50,13 +50,13 @@ package.
 |---|---|---:|---|
 | `./.venv/bin/python -m pytest -q tests/test_validate_cvm_submission.py` | 2026-07-17T21:06:19Z | 0 | 54 passed, including package metadata, CI workflow, community-template, source metadata, output-PDF metadata, A4 MediaBox, embedded-font, layout-hack, LaTeX-log, generated-copy, generated-table-value, local-reference, image-alt, CLI command-documentation, README-visual, evaluation-status, venue-style benchmark-label hygiene, citation-slug hygiene, README-count, paper-number, and claim-matrix validation fixtures. |
 | `make paper-verify PYTHON=./.venv/bin/python` | 2026-07-17T21:06:19Z | 0 | Rebuilt 5-page root `wod2sim.pdf`; submission validation passed with package metadata, CI workflow, community-template, source metadata, output-PDF metadata, source-layout, PDF A4 MediaBox, embedded-font, LaTeX-log, generated-copy, generated-table row/source-field, local-reference, image-alt, command-documentation, README-visual, evaluation-status, README-count, paper-number, and claim-matrix enforcement. |
-| `make cvm-check PYTHON=./.venv/bin/python` | 2026-07-17T21:17:37Z | 0 | Ruff passed; conformance passed with 286 passed, 14 skipped, and 15 subtests passed; submission validation passed with package metadata, CI workflow, community-template, command-documentation, README-visual, evaluation-status, and policy-table checks. |
+| `make cvm-check PYTHON=./.venv/bin/python` | 2026-07-17T21:17:37Z | 0 | Ruff passed; conformance passed with 288 passed, 14 skipped, and 15 subtests passed; submission validation passed with package metadata, CI workflow, community-template, command-documentation, README-visual, evaluation-status, and policy-table checks. |
 
 ## Important Warnings
 
 - `make cvm-eval` exits 2 because the configured core matrix still includes
-  direct actor-aware rows without the required oracle actor proxy. This is a
-  recorded precondition blocker, not a test failure.
+  direct actor-aware rows without the required scene-matched oracle actor
+  proxy. This is a recorded precondition blocker, not a test failure.
 - The local validator uses `mutool` and LaTeX log/source checks, including a
   parsed MediaBox pass that rejects non-A4 page geometry and a font-descriptor
   pass that rejects unembedded paper fonts. CI installs Poppler and `qpdf` to

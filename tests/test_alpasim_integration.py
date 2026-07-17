@@ -512,6 +512,71 @@ class AlpaSimIntegrationTests(unittest.TestCase):
         self.assertNotIn("selected_maneuver", reasoning)
         self.assertGreater(reasoning["plan"]["progress_m"], 0.0)
 
+    def test_direct_actor_planner_rejects_oracle_actor_proxy_scene_mismatch(self) -> None:
+        with TemporaryDirectory() as tmp:
+            proxy_path = Path(tmp) / "oracle_actor_proxy.json"
+            proxy_path.write_text(
+                json.dumps(
+                    {
+                        "schema": "alpasim_oracle_actor_proxy_v2",
+                        "frames": {
+                            "1000": {
+                                "timestamp_us": 1000,
+                                "scene_id": "clipgt-other-scene",
+                                "world_actors": [
+                                    {
+                                        "world_x": 6.0,
+                                        "world_y": 0.0,
+                                        "world_vx": 0.0,
+                                        "world_vy": 0.0,
+                                        "world_heading": 0.0,
+                                        "radius": 1.2,
+                                        "kind": "automobile",
+                                        "label": "wrong-scene-car",
+                                    }
+                                ],
+                            }
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            model = DirectActorPlannerAlpaSimModel(
+                camera_ids=["front"],
+                context_length=1,
+                output_frequency_hz=4,
+                oracle_actor_proxy_path=proxy_path,
+                oracle_actor_proxy_tolerance_us=0,
+            )
+            prediction_input = SimpleNamespace(
+                camera_images={
+                    "front": [
+                        SimpleNamespace(
+                            timestamp_us=1000,
+                            image=np.full((4, 4, 3), 180, dtype=np.uint8),
+                        )
+                    ]
+                },
+                command=DriveCommand.STRAIGHT,
+                speed=6.0,
+                acceleration=0.0,
+                ego_pose_history=[SimpleNamespace(timestamp_us=1000, x=0.0, y=0.0, yaw=0.0)],
+                route_waypoints=[
+                    {"x": 0.0, "y": 0.0, "z": 0.0},
+                    {"x": 20.0, "y": 0.0, "z": 0.0},
+                ],
+                alpasignal={"hazards": []},
+                scene_id="clipgt-current-scene",
+            )
+
+            output = model.predict(prediction_input)
+            signal = json.loads(output.reasoning_text or "{}")["alpasim_signal"]
+
+        self.assertFalse(signal["oracle_actor_proxy_hit"])
+        self.assertEqual("scene_id_mismatch", signal["oracle_actor_proxy_miss_reason"])
+        self.assertEqual("clipgt-current-scene", signal["oracle_actor_proxy_requested_scene_id"])
+        self.assertNotIn("wrong-scene-car", json.dumps(signal.get("structured_hazards", [])))
+
     def test_direct_actor_planner_does_not_brake_into_closing_rear_actor(self) -> None:
         scenario = scenario_at_tick(
             scenario_from_command(

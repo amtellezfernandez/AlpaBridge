@@ -27,25 +27,24 @@ Email: amtellezfernandez@gmail.com}
 \maketitle
 
 \begin{abstract}
-Dataset-trained driving policies are often evaluated as functions over logged
-observations, but a closed-loop simulator must integrate them as long-lived
-external-driver services. A format adapter is therefore insufficient: lost route
-geometry, mismatched trajectory clocks, stale session state, missing runtime
-preconditions, or incomplete provenance can make an integration defect look like a
-policy failure. WOD2Sim addresses this attribution problem with five contracts for
-Waymo Open Dataset (WOD)-style trajectory policies in AlpaSim: semantic preservation,
-temporal resampling, service lifecycle, deployment materialization, and evidence
-validity. The reference implementation carries route and scene signals into policy
-inputs, resamples predicted trajectories onto the simulator clock, isolates optional
-model backends, records launch state, and rejects rollouts that cannot support a
-policy-attributable claim. We evaluate the release with a contract-validation matrix
-covering three policy adapters, six gated scene artifacts, route-semantics ablations,
-lifecycle stress, and injected contract faults. Completed full-contract diagnostic
-rollouts pass audit in \CVMFullContractAuditValidRuns{}/\CVMFullContractCompletedRuns{}
-cases, command-only route ablations are rejected as non-claim-valid in
-\CVMCommandProxyRejectedRuns{}/\CVMCommandProxyCompletedRuns{} cases, and direct
-actor-aware rows remain deployment-blocked by a missing public proxy. WOD2Sim therefore
-measures whether an integration is claim-valid before interpreting policy quality.
+Dataset-trained driving policies are usually tested offline, where logged
+observations, route intent, and short-horizon trajectories arrive through a fixed
+batch interface. In closed-loop simulation, the same policy becomes a persistent
+external-driver service: it receives asynchronous sensor and route messages, must act
+on the simulator clock, and must leave enough provenance to decide whether a failed
+rollout is a policy error or an integration error. WOD2Sim treats this boundary as a
+contract-based system-integration problem rather than a file-format conversion. It
+defines five contracts: semantic preservation of route and scene signals, temporal
+adaptation of policy trajectories to the runtime grid, lifecycle handling for session
+messages, deployment materialization of run preconditions, and evidence validity for
+policy-attributable claims. The AlpaSim reference implementation applies these
+contracts to Waymo Open Dataset (WOD)-style trajectory-policy adapters, from
+dependency-light baselines to learned-policy and direct actor-aware entry points.
+The current public evidence package executes dependency-light closed-loop diagnostic
+rows, route-semantics ablations, lifecycle stress tests, and injected contract faults
+while retaining blocked rows caused by gated assets or missing scene-matched actor
+proxies. The result is not a policy benchmark; it is a reproducible gate that separates
+integration failures from policy failures before closed-loop behavior is interpreted.
 \end{abstract}
 
 \section{Introduction}
@@ -77,10 +76,10 @@ This paper asks two questions: which contract mismatches prevent dataset-trained
 policies from operating as reliable simulator services, and can explicit contract
 validation distinguish integration and runtime failures from policy behavior failures?
 The current repository does not yet support a complete claim-valid benchmark because
-direct actor-aware rows remain blocked by a missing oracle proxy and learned checkpoints
-are not part of the public release. It does provide a reproducible evidence package
-whose completed, planned, blocked, and failed rows are traceable to repository
-artifacts.
+direct actor-aware rows remain blocked by a missing scene-matched oracle proxy and
+learned checkpoints are not part of the public release. It does provide a reproducible
+evidence package whose completed, planned, blocked, and failed rows are traceable to
+repository artifacts.
 
 \subsection{Failure Attribution Rule}
 
@@ -167,8 +166,8 @@ The implementation registers dependency-light baselines and learned-policy adapt
 points through AlpaSim model discovery. Constant-velocity and route-following baselines
 do not require learned checkpoints. Token BC/DAgger and direct actor-aware planning
 entry points are present, but their execution requires the relevant local checkpoint or
-actor-proxy artifacts. The current CVM therefore treats missing direct-actor proxy
-state as a deployment blocker, not as a policy failure.
+scene-matched actor-proxy artifacts. The current CVM therefore treats missing
+direct-actor proxy state as a deployment blocker, not as a policy failure.
 
 \section{Implementation and Evaluation Method}
 
@@ -311,10 +310,10 @@ because its external-driver boundary makes these contracts explicit.
 The limitations are material. WOD2Sim is not an official Waymo challenge interface, does
 not reconstruct complete WOD worlds, and does not redistribute restricted scene assets.
 The current CVM package has no completed claim-valid benchmark matrix, no validated
-scene-category coverage, and no direct-actor proxy for direct actor-aware planning. Its
-lifecycle and fault-injection evidence comes from public synthetic harnesses, not
-simulator-backed stress trials. Learned token policies remain outside the public
-baseline unless a legitimate local checkpoint and hash are provided.
+scene-category coverage, and no scene-matched direct-actor proxy for direct actor-aware
+planning. Its lifecycle and fault-injection evidence comes from public synthetic
+harnesses, not simulator-backed stress trials. Learned token policies remain outside
+the public baseline unless a legitimate local checkpoint and hash are provided.
 
 These limitations also explain why the paper does not compare policy quality. A
 framework paper can report reliability, validity, and diagnostic coverage only after the

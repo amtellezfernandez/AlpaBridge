@@ -16,7 +16,7 @@
 | Command | Purpose |
 | --- | --- |
 | `wod2sim-build-local-cache` | Build or validate a local scene cache. |
-| `wod2sim-build-oracle-proxy` | Build the actor proxy required by the direct planner. |
+| `wod2sim-build-oracle-proxy` | Build the scene-matched actor proxy required by the direct planner. |
 | `wod2sim-audit-run` | Normalize driver logs and check sensor freshness. |
 | `wod2sim-support-bundle` | Package selected logs, configs, and audit output. |
 | `wod2sim-batch-summary` | Aggregate a multi-scene batch. |

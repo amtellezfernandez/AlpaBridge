@@ -497,14 +497,18 @@ class TokenBCAlpaSimModel(BaseTrajectoryModel):
         if requested_timestamp is None:
             merged["oracle_actor_proxy_miss_reason"] = "missing_prediction_timestamp"
             return merged
-        frame = _nearest_oracle_actor_proxy_frame(
+        requested_scene_id = _prediction_scene_id(prediction_input)
+        frame, miss_reason = _nearest_oracle_actor_proxy_frame(
             self._oracle_actor_proxy_frames,
             self._oracle_actor_proxy_timestamps,
             requested_timestamp,
             tolerance_us=self._oracle_actor_proxy_tolerance_us,
+            scene_id=requested_scene_id,
         )
         if frame is None:
-            merged["oracle_actor_proxy_miss_reason"] = "timestamp_not_found"
+            merged["oracle_actor_proxy_miss_reason"] = miss_reason
+            if requested_scene_id is not None:
+                merged["oracle_actor_proxy_requested_scene_id"] = requested_scene_id
             return merged
         hazards, transform_info = _oracle_frame_to_current_hazards(frame, prediction_input)
         if hazards is None:
@@ -519,6 +523,8 @@ class TokenBCAlpaSimModel(BaseTrajectoryModel):
         merged["oracle_actor_proxy_delta_us"] = abs(matched_timestamp - requested_timestamp)
         merged["oracle_actor_proxy_matched_timestamp_us"] = matched_timestamp
         merged["oracle_actor_proxy_scene_id"] = frame.get("scene_id")
+        if requested_scene_id is not None:
+            merged["oracle_actor_proxy_requested_scene_id"] = requested_scene_id
         merged["oracle_actor_proxy_frame_space"] = transform_info["frame_space"]
         merged["oracle_actor_proxy_current_ego_pose"] = transform_info.get("current_ego_pose")
         return merged
@@ -2145,23 +2151,58 @@ def _nearest_oracle_actor_proxy_frame(
     requested_timestamp_us: int,
     *,
     tolerance_us: int,
-) -> dict[str, Any] | None:
-    if requested_timestamp_us in frames:
-        return frames[requested_timestamp_us]
+    scene_id: str | None = None,
+) -> tuple[dict[str, Any] | None, str]:
+    return _nearest_scene_checked_oracle_actor_proxy_frame(
+        frames,
+        timestamps,
+        requested_timestamp_us,
+        tolerance_us=tolerance_us,
+        scene_id=scene_id,
+    )
+
+
+def _nearest_scene_checked_oracle_actor_proxy_frame(
+    frames: dict[int, dict[str, Any]],
+    timestamps: list[int],
+    requested_timestamp_us: int,
+    *,
+    tolerance_us: int,
+    scene_id: str | None,
+) -> tuple[dict[str, Any] | None, str]:
     if not timestamps:
-        return None
+        return None, "timestamp_not_found"
     insert_at = bisect_left(timestamps, requested_timestamp_us)
-    candidates: list[int] = []
-    if insert_at < len(timestamps):
-        candidates.append(timestamps[insert_at])
-    if insert_at > 0:
-        candidates.append(timestamps[insert_at - 1])
+    candidates: list[int] = sorted(
+        {
+            timestamps[index]
+            for index in (insert_at - 1, insert_at, insert_at + 1)
+            if 0 <= index < len(timestamps)
+        },
+        key=lambda timestamp: abs(timestamp - requested_timestamp_us),
+    )
     if not candidates:
-        return None
-    nearest = min(candidates, key=lambda timestamp: abs(timestamp - requested_timestamp_us))
-    if abs(nearest - requested_timestamp_us) > tolerance_us:
-        return None
-    return frames[nearest]
+        return None, "timestamp_not_found"
+    candidates = [
+        timestamp
+        for timestamp in candidates
+        if abs(timestamp - requested_timestamp_us) <= tolerance_us
+    ]
+    if not candidates:
+        return None, "timestamp_not_found"
+    if scene_id is None or not str(scene_id).strip():
+        return frames[candidates[0]], ""
+
+    matching_scene = [
+        timestamp
+        for timestamp in candidates
+        if str(frames[timestamp].get("scene_id", "")).strip() == str(scene_id).strip()
+    ]
+    if matching_scene:
+        return frames[matching_scene[0]], ""
+    if any(not str(frames[timestamp].get("scene_id", "")).strip() for timestamp in candidates):
+        return None, "scene_id_unavailable"
+    return None, "scene_id_mismatch"
 
 
 def _first_float_attr(obj: Any, names: tuple[str, ...]) -> float | None:
