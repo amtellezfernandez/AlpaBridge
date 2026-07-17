@@ -159,9 +159,60 @@ class RunCVMMatrixTests(unittest.TestCase):
             payload["failure_attribution"]["interpretation"],
         )
         self.assertIn("contract_expectations", payload)
+        self.assertEqual("scene_metadata_unavailable", payload["scenario_category"])
+        self.assertEqual("clipgt-scene", payload["scene"]["scene_id"])
+        self.assertEqual("scene_metadata_unavailable", payload["scene"]["category"])
         self.assertEqual("alpasim_waypoints", payload["contract_expectations"]["route_source"])
         self.assertEqual(5.0, payload["contract_expectations"]["source_horizon_seconds"])
         self.assertEqual(4, payload["contract_expectations"]["target_runtime_frequency_hz"])
+
+    def test_scene_metadata_uses_configured_scene_manifest(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            scene_manifest = Path(tmp) / "scene_manifest.yaml"
+            scene_manifest.write_text(
+                "\n".join(
+                    [
+                        "schema: cvm_scene_manifest_v1",
+                        "source:",
+                        "  categories_verified: false",
+                        "scenes:",
+                        "  - scene_id: clipgt-scene",
+                        "    category: available_front_camera_26_02_unclassified",
+                        "    selection_rationale: local cache entry",
+                        "    asset_availability: local_usdz_present",
+                        "    expected_route_feature: unverified",
+                        "    expected_interaction_feature: unverified",
+                        "    license_gating_status: gated_asset_referenced_not_redistributed",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            config = _base_config()
+            config["scene_manifest"] = str(scene_manifest)
+
+            metadata = module._scene_metadata(config, _base_row())
+
+        self.assertEqual("clipgt-scene", metadata["scene_id"])
+        self.assertEqual("available_front_camera_26_02_unclassified", metadata["category"])
+        self.assertEqual(
+            "available_front_camera_26_02_unclassified",
+            metadata["scenario_category"],
+        )
+        self.assertEqual("local_usdz_present", metadata["asset_availability"])
+        self.assertFalse(metadata["categories_verified"])
+
+    def test_scene_metadata_marks_synthetic_harness_public(self) -> None:
+        module = _load_module()
+        config = {"execution": {"mode": "synthetic_fault_injection"}}
+        row = {**_base_row(), "scene_id": "synthetic_fault_harness"}
+
+        metadata = module._scene_metadata(config, row)
+
+        self.assertEqual("synthetic_fault_harness", metadata["category"])
+        self.assertEqual("public_synthetic", metadata["license_gating_status"])
+        self.assertTrue(metadata["categories_verified"])
 
     def test_command_only_manifest_records_proxy_route_expectation(self) -> None:
         module = _load_module()
