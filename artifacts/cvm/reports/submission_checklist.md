@@ -12,6 +12,8 @@
   `paper/cvm/metadata.json`.
 - [x] Generated PDF title, author, and subject metadata match
   `paper/cvm/metadata.json`.
+- [x] Python package metadata exposes author, README, BSD-3-Clause license
+  expression, research keywords, and paper/docs/citation URLs.
 - [x] All citations resolve in the final LaTeX build.
 - [x] LaTeX log has no unresolved references/citations, multiply defined
   labels, or overfull/underfull `\hbox` warnings.

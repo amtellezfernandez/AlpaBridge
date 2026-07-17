@@ -405,6 +405,26 @@ REQUIRED_METADATA_FIELDS = (
     "abstract_source_sha256",
     "abstract_word_count",
 )
+REQUIRED_PROJECT_KEYWORDS = (
+    "autonomous-driving",
+    "closed-loop-simulation",
+    "contract-validation",
+    "system-integration",
+    "trajectory-policies",
+)
+REQUIRED_PROJECT_CLASSIFIERS = (
+    "Intended Audience :: Science/Research",
+    "Operating System :: POSIX :: Linux",
+    "Topic :: Scientific/Engineering",
+)
+REQUIRED_PROJECT_URLS = (
+    "Homepage",
+    "Repository",
+    "Issues",
+    "Documentation",
+    "Paper",
+    "Citation",
+)
 PUBLIC_SCAN_PATHS = (
     "README.md",
     "CITATION.cff",
@@ -1792,6 +1812,7 @@ def _release_hygiene_failures(*, repo_root: Path, canonical_paper: Path) -> list
     root = repo_root.resolve()
     canonical = (root / canonical_paper).resolve() if not canonical_paper.is_absolute() else canonical_paper.resolve()
     failures = _duplicate_manuscript_pdf_failures(root=root, canonical_paper=canonical)
+    failures.extend(_package_metadata_failures(repo_root=root))
     failures.extend(_cli_documentation_failures(repo_root=root))
     for path in _iter_public_scan_files(root):
         try:
@@ -1807,6 +1828,47 @@ def _release_hygiene_failures(*, repo_root: Path, canonical_paper: Path) -> list
     for archive_path in _iter_public_scan_archives(root):
         failures.extend(_archive_hygiene_failures(archive_path, root=root))
     return failures
+
+
+def _package_metadata_failures(*, repo_root: Path) -> list[str]:
+    path = repo_root / "pyproject.toml"
+    if not path.exists():
+        return []
+    if not path.is_file():
+        return ["package_metadata_source_invalid:pyproject.toml"]
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    project = _toml_section_text(text, "project")
+    urls = _toml_section_text(text, "project.urls")
+    failures: list[str] = []
+    if not project.strip():
+        return ["package_metadata_project_section_missing:pyproject.toml"]
+    if "authors" not in project or "Alba Maria Tellez Fernandez" not in project:
+        failures.append("package_metadata_author_missing:pyproject.toml")
+    if 'readme = "README.md"' not in project:
+        failures.append("package_metadata_readme_missing:pyproject.toml")
+    if 'license = "BSD-3-Clause"' not in project:
+        failures.append("package_metadata_license_missing:pyproject.toml")
+    for keyword in REQUIRED_PROJECT_KEYWORDS:
+        if f'"{keyword}"' not in project:
+            failures.append(f"package_metadata_keyword_missing:pyproject.toml:{keyword}")
+    for classifier in REQUIRED_PROJECT_CLASSIFIERS:
+        if f'"{classifier}"' not in project:
+            failures.append(f"package_metadata_classifier_missing:pyproject.toml:{classifier}")
+    if not urls.strip():
+        failures.append("package_metadata_urls_missing:pyproject.toml")
+    else:
+        for key in REQUIRED_PROJECT_URLS:
+            if re.search(rf"(?m)^\s*{re.escape(key)}\s*=", urls) is None:
+                failures.append(f"package_metadata_url_missing:pyproject.toml:{key}")
+    return failures
+
+
+def _toml_section_text(text: str, section: str) -> str:
+    match = re.search(
+        rf"(?ms)^\[{re.escape(section)}\]\s*$\n?(.*?)(?=^\[|\Z)",
+        text,
+    )
+    return "" if match is None else match.group(1)
 
 
 def _cli_documentation_failures(*, repo_root: Path) -> list[str]:

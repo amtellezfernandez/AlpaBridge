@@ -1278,6 +1278,81 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         self.assertIn("cli_doc_missing_console_script:docs/cli.md:wod2sim-ready", failures)
         self.assertIn("cli_doc_missing_make_target:docs/cli.md:cvm-check", failures)
 
+    def test_package_metadata_accepts_publication_ready_project_fields(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "pyproject.toml").write_text(
+                "[project]\n"
+                'name = "wod2sim"\n'
+                'readme = "README.md"\n'
+                'license = "BSD-3-Clause"\n'
+                "authors = [\n"
+                '    { name = "Alba Maria Tellez Fernandez" },\n'
+                "]\n"
+                "keywords = [\n"
+                '    "autonomous-driving",\n'
+                '    "closed-loop-simulation",\n'
+                '    "contract-validation",\n'
+                '    "system-integration",\n'
+                '    "trajectory-policies",\n'
+                "]\n"
+                "classifiers = [\n"
+                '    "Intended Audience :: Science/Research",\n'
+                '    "Operating System :: POSIX :: Linux",\n'
+                '    "Topic :: Scientific/Engineering",\n'
+                "]\n"
+                "\n"
+                "[project.urls]\n"
+                'Homepage = "https://example.com"\n'
+                'Repository = "https://example.com/repo"\n'
+                'Issues = "https://example.com/issues"\n'
+                'Documentation = "https://example.com/docs"\n'
+                'Paper = "https://example.com/paper.pdf"\n'
+                'Citation = "https://example.com/CITATION.cff"\n',
+                encoding="utf-8",
+            )
+
+            failures = module._package_metadata_failures(repo_root=root)
+
+        self.assertEqual([], failures)
+
+    def test_package_metadata_reports_missing_publication_fields(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "pyproject.toml").write_text(
+                "[project]\n"
+                'name = "wod2sim"\n'
+                'readme = "README.md"\n'
+                "keywords = [\n"
+                '    "autonomous-driving",\n'
+                '    "closed-loop-simulation",\n'
+                '    "contract-validation",\n'
+                '    "trajectory-policies",\n'
+                "]\n"
+                "classifiers = [\n"
+                '    "Intended Audience :: Science/Research",\n'
+                '    "Operating System :: POSIX :: Linux",\n'
+                '    "Topic :: Scientific/Engineering",\n'
+                "]\n"
+                "\n"
+                "[project.urls]\n"
+                'Homepage = "https://example.com"\n'
+                'Repository = "https://example.com/repo"\n'
+                'Issues = "https://example.com/issues"\n'
+                'Documentation = "https://example.com/docs"\n',
+                encoding="utf-8",
+            )
+
+            failures = module._package_metadata_failures(repo_root=root)
+
+        self.assertIn("package_metadata_author_missing:pyproject.toml", failures)
+        self.assertIn("package_metadata_license_missing:pyproject.toml", failures)
+        self.assertIn("package_metadata_keyword_missing:pyproject.toml:system-integration", failures)
+        self.assertIn("package_metadata_url_missing:pyproject.toml:Paper", failures)
+        self.assertIn("package_metadata_url_missing:pyproject.toml:Citation", failures)
+
     def test_manifest_attribution_accepts_integration_blocker(self) -> None:
         module = _load_module()
         with tempfile.TemporaryDirectory() as tmp:
