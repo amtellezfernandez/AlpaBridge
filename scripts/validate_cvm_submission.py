@@ -170,6 +170,66 @@ REQUIRED_SUMMARY_ATTRIBUTION_FIELDS = (
     "diagnostic_not_policy_rows",
     "non_policy_attributed_rows",
 )
+CLAIM_MATRIX_SUMMARY_LINES: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("Configured rows", ("total_rows",)),
+    ("Attempted rows", ("attempted_runs",)),
+    ("Completed rows", ("completed_runs",)),
+    ("Closed-loop completed rows", ("closed_loop_completed_runs",)),
+    (
+        "Full-contract rows audit-valid",
+        (
+            "integration_effectiveness.full_contract_audit_valid_runs",
+            "integration_effectiveness.full_contract_completed_runs",
+        ),
+    ),
+    (
+        "Valid full-contract false-blocked rows",
+        (
+            "integration_effectiveness.valid_full_contract_false_blocked_runs",
+            "integration_effectiveness.valid_full_contract_false_block_denominator",
+        ),
+    ),
+    (
+        "Matched semantic metric pairs",
+        (
+            "integration_effectiveness.semantic_ablation_metric_pairs",
+            "integration_effectiveness.semantic_ablation_completed_pairs",
+        ),
+    ),
+    (
+        "Command-only rows rejected as non-claim-valid",
+        (
+            "integration_effectiveness.semantic_ablation_command_proxy_rejected_runs",
+            "integration_effectiveness.semantic_ablation_command_proxy_completed_runs",
+        ),
+    ),
+    (
+        "Contract-valid closed-loop rows",
+        ("failure_attribution.contract_valid_closed_loop_rows",),
+    ),
+    (
+        "Integration/evidence-invalid closed-loop rows",
+        ("failure_attribution.integration_or_evidence_invalid_closed_loop_rows",),
+    ),
+    (
+        "Policy-attributable behavior rows",
+        ("failure_attribution.policy_behavior_attributable_rows",),
+    ),
+    (
+        "Policy-attributable failure rows",
+        ("failure_attribution.policy_failure_attributable_rows",),
+    ),
+    (
+        "Non-policy-attributed rows",
+        ("failure_attribution.non_policy_attributed_rows",),
+    ),
+    (
+        "Claim-valid policy benchmark rows",
+        ("failure_attribution.claim_valid_policy_benchmark_rows",),
+    ),
+    ("Planned rows", ("planned_runs",)),
+    ("Blocked rows", ("blocked_runs",)),
+)
 REQUIRED_METADATA_FIELDS = (
     "title",
     "author",
@@ -365,6 +425,12 @@ def main() -> int:
             )
         )
     failures.extend(_frame_schema_failures(args.results / "frames.csv"))
+    failures.extend(
+        _claim_evidence_matrix_failures(
+            matrix_path=args.results.parent / "reports" / "claim_evidence_matrix.md",
+            summary_path=args.results / "summary.json",
+        )
+    )
     failures.extend(_manifest_attribution_failures(args.results.parent / "manifests" / "run_manifests"))
     failures.extend(
         _release_hygiene_failures(repo_root=args.repo_root, canonical_paper=args.paper)
@@ -714,6 +780,40 @@ def _summary_attribution_failures(path: Path) -> list[str]:
     if isinstance(total_rows, int) and non_policy + policy_behavior != total_rows:
         failures.append(f"summary_policy_attribution_partition_mismatch:{path}")
     return failures
+
+
+def _claim_evidence_matrix_failures(*, matrix_path: Path, summary_path: Path) -> list[str]:
+    if not matrix_path.is_file():
+        return [f"missing_claim_evidence_matrix:{matrix_path}"]
+    try:
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return [f"claim_evidence_summary_unreadable:{summary_path}"]
+    if not isinstance(summary, dict):
+        return [f"claim_evidence_summary_invalid:{summary_path}"]
+    text = matrix_path.read_text(encoding="utf-8", errors="ignore")
+    failures: list[str] = []
+    for label, value_paths in CLAIM_MATRIX_SUMMARY_LINES:
+        expected_values = [_claim_matrix_summary_value(summary, path) for path in value_paths]
+        if any(value is None for value in expected_values):
+            failures.append(f"claim_evidence_summary_field_missing:{summary_path}:{label}")
+            continue
+        expected_value = "/".join(str(value) for value in expected_values)
+        expected_line = f"- {label}: {expected_value}."
+        if expected_line not in text:
+            failures.append(f"claim_evidence_matrix_count_mismatch:{matrix_path}:{label}:{expected_value}")
+    if "`artifacts/cvm/results/summary.json`" not in text:
+        failures.append(f"claim_evidence_matrix_missing_summary_artifact:{matrix_path}")
+    return failures
+
+
+def _claim_matrix_summary_value(summary: dict[str, object], dotted_path: str) -> int | None:
+    value: object = summary
+    for part in dotted_path.split("."):
+        if not isinstance(value, dict) or part not in value:
+            return None
+        value = value[part]
+    return value if isinstance(value, int) else None
 
 
 def _generated_artifact_failures(

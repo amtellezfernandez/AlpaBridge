@@ -42,6 +42,8 @@ Additional release-specific checks:
   and evidence gates before policy behavior or policy failure can be assigned.
 - [x] README, paper source, run manifests, and aggregate summary are all
   validated for the integration-vs-policy attribution boundary.
+- [x] Claim-evidence-matrix aggregate counts are validated against
+  `artifacts/cvm/results/summary.json`.
 - [x] Every public run manifest carries validated `scene` metadata and
   `scenario_category` without claiming unsupported scenario-category coverage.
 - [x] `frames.csv` exposes the required public-safe frame-level schema without

@@ -298,6 +298,128 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             failures,
         )
 
+    def test_claim_evidence_matrix_accepts_summary_synced_counts(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            summary_path = root / "summary.json"
+            matrix_path = root / "claim_evidence_matrix.md"
+            summary = {
+                "total_rows": 145,
+                "attempted_runs": 109,
+                "completed_runs": 109,
+                "closed_loop_completed_runs": 54,
+                "planned_runs": 0,
+                "blocked_runs": 36,
+                "integration_effectiveness": {
+                    "full_contract_audit_valid_runs": 45,
+                    "full_contract_completed_runs": 45,
+                    "valid_full_contract_false_blocked_runs": 0,
+                    "valid_full_contract_false_block_denominator": 45,
+                    "semantic_ablation_metric_pairs": 9,
+                    "semantic_ablation_completed_pairs": 9,
+                    "semantic_ablation_command_proxy_rejected_runs": 9,
+                    "semantic_ablation_command_proxy_completed_runs": 9,
+                },
+                "failure_attribution": {
+                    "contract_valid_closed_loop_rows": 45,
+                    "integration_or_evidence_invalid_closed_loop_rows": 9,
+                    "policy_behavior_attributable_rows": 0,
+                    "policy_failure_attributable_rows": 0,
+                    "non_policy_attributed_rows": 145,
+                    "claim_valid_policy_benchmark_rows": 0,
+                },
+            }
+            summary_path.write_text(json.dumps(summary), encoding="utf-8")
+            matrix_path.write_text(
+                "\n".join(
+                    [
+                        "# Claim Evidence Matrix",
+                        "",
+                        "## Aggregate Status",
+                        "",
+                        "- Configured rows: 145.",
+                        "- Attempted rows: 109.",
+                        "- Completed rows: 109.",
+                        "- Closed-loop completed rows: 54.",
+                        "- Full-contract rows audit-valid: 45/45.",
+                        "- Valid full-contract false-blocked rows: 0/45.",
+                        "- Matched semantic metric pairs: 9/9.",
+                        "- Command-only rows rejected as non-claim-valid: 9/9.",
+                        "- Contract-valid closed-loop rows: 45.",
+                        "- Integration/evidence-invalid closed-loop rows: 9.",
+                        "- Policy-attributable behavior rows: 0.",
+                        "- Policy-attributable failure rows: 0.",
+                        "- Non-policy-attributed rows: 145.",
+                        "- Claim-valid policy benchmark rows: 0.",
+                        "- Planned rows: 0.",
+                        "- Blocked rows: 36.",
+                        "- Aggregate artifact: `artifacts/cvm/results/summary.json`.",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            failures = module._claim_evidence_matrix_failures(
+                matrix_path=matrix_path,
+                summary_path=summary_path,
+            )
+
+        self.assertEqual([], failures)
+
+    def test_claim_evidence_matrix_rejects_summary_drift(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            summary_path = root / "summary.json"
+            matrix_path = root / "claim_evidence_matrix.md"
+            summary = {
+                "total_rows": 2,
+                "attempted_runs": 2,
+                "completed_runs": 2,
+                "closed_loop_completed_runs": 1,
+                "planned_runs": 0,
+                "blocked_runs": 0,
+                "integration_effectiveness": {
+                    "full_contract_audit_valid_runs": 1,
+                    "full_contract_completed_runs": 1,
+                    "valid_full_contract_false_blocked_runs": 0,
+                    "valid_full_contract_false_block_denominator": 1,
+                    "semantic_ablation_metric_pairs": 0,
+                    "semantic_ablation_completed_pairs": 0,
+                    "semantic_ablation_command_proxy_rejected_runs": 0,
+                    "semantic_ablation_command_proxy_completed_runs": 0,
+                },
+                "failure_attribution": {
+                    "contract_valid_closed_loop_rows": 1,
+                    "integration_or_evidence_invalid_closed_loop_rows": 0,
+                    "policy_behavior_attributable_rows": 0,
+                    "policy_failure_attributable_rows": 0,
+                    "non_policy_attributed_rows": 2,
+                    "claim_valid_policy_benchmark_rows": 0,
+                },
+            }
+            summary_path.write_text(json.dumps(summary), encoding="utf-8")
+            matrix_path.write_text(
+                "- Configured rows: 3.\n"
+                "- Aggregate artifact: `artifacts/cvm/results/summary.json`.\n",
+                encoding="utf-8",
+            )
+
+            failures = module._claim_evidence_matrix_failures(
+                matrix_path=matrix_path,
+                summary_path=summary_path,
+            )
+
+        self.assertIn(
+            f"claim_evidence_matrix_count_mismatch:{matrix_path}:Configured rows:2",
+            failures,
+        )
+        self.assertIn(
+            f"claim_evidence_matrix_count_mismatch:{matrix_path}:Completed rows:2",
+            failures,
+        )
+
     def test_generated_artifact_hash_check_accepts_matching_tables_and_figures(self) -> None:
         module = _load_module()
         data_hash = "abc123"
