@@ -87,6 +87,7 @@ Additional release-specific checks:
   bundling restricted sensor frames or fabricating unavailable frame rows.
 
 Current status: complete with documented limitations for the CVM paper package.
-The dependency-light core rows and semantic ablation provide real closed-loop
-integration evidence. Direct-actor temporal ablation and learned-policy results
-remain excluded.
+The dependency-light public core is complete and semantic ablation provides
+real closed-loop integration evidence. Direct-actor temporal ablation,
+learned-policy results, restricted scene redistribution, and policy benchmark
+claims remain excluded optional gated work.

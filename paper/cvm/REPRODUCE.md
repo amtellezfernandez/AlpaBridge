@@ -1,9 +1,9 @@
 # Reproducing Current WOD2Sim Contract-Validation Matrix (CVM) Artifacts
 
-Current status: buildable WOD2Sim paper package with completed dependency-light
-core rows, completed semantic closed-loop ablation rows, secondary public
-synthetic lifecycle/fault conformance diagnostics, and explicit direct-actor
-blockers.
+Current status: buildable WOD2Sim paper package with a completed
+dependency-light public core, completed semantic closed-loop ablation rows,
+secondary public synthetic lifecycle/fault conformance diagnostics, and
+explicit optional gated direct-actor blockers.
 
 ## Quality Gates
 
@@ -24,7 +24,10 @@ uv run python scripts/run_cvm_matrix.py \
   --resume
 ```
 
-Execute supported local closed-loop rows:
+Execute supported local closed-loop rows. In the current public release this
+preserves the completed `constant_velocity` and `route_following` public-core
+rows and records direct-actor rows as optional gated blockers unless a
+scene-matched oracle proxy is configured:
 
 ```bash
 uv run python scripts/run_cvm_matrix.py \
@@ -79,6 +82,7 @@ the title, author block, PDF subject, or abstract text intentionally changes.
 ## Current Claim Boundary
 
 - Configured rows: 145.
+- Public-core rows completed: 36/36.
 - Attempted rows: 109.
 - Completed rows: 109.
 - Closed-loop completed rows: 54.
@@ -90,11 +94,13 @@ the title, author block, PDF subject, or abstract text intentionally changes.
 - Blocked rows: 36.
 - Claim-valid benchmark matrix: 0.
 
-The current aggregate supports completed full-contract integration checks,
-bounded semantic route-boundary confound evidence, and an evidence-gate
-false-block claim. Blocked rows remain denominator/context only. The aggregate
-does not support direct-actor temporal ablation, learned-policy result,
-scenario-category coverage, or policy-quality comparison.
+The current aggregate supports a completed dependency-light public core,
+completed full-contract integration checks, bounded semantic route-boundary
+confound evidence, and an evidence-gate false-block claim. Blocked rows remain
+optional gated extension denominator/context only. The aggregate does not
+support direct-actor temporal ablation, learned-policy result,
+scenario-category coverage, restricted scene redistribution, or policy-quality
+comparison.
 
 Failure attribution is explicit in `artifacts/cvm/results/summary.json` under
 `failure_attribution`. A behavior row is policy-attributable only after route,

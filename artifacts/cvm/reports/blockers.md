@@ -18,7 +18,7 @@
 
 ## Remaining Blockers
 
-- `direct_actor_planner` and temporal ablation rows remain blocked by
+- Optional gated `direct_actor_planner` and temporal ablation rows remain blocked by
   `direct_actor_oracle_proxy_missing`; the proxy must be scene-matched, and
   adapters reject oracle frames whose `scene_id` does not match the current
   prediction scene.
@@ -43,17 +43,19 @@
 - Planned rows: 0.
 - Blocked rows: 36, all `direct_actor_oracle_proxy_missing`.
 
-The release treats the first three completed closed-loop bullets as the
-integration-effectiveness evidence. The blocked rows are retained for
-denominator honesty and failure analysis only.
+The release treats the completed public-core and semantic-ablation bullets as
+the integration-effectiveness evidence. The blocked rows are optional gated
+extension work retained for denominator honesty and failure analysis only.
 
 ## Claim Boundary
 
-The paper may claim the completed dependency-light core execution, semantic
+The paper may claim the completed dependency-light public core, semantic
 route-boundary confound measurement, evidence-gate rejection of command-only
 route rows, and false-block denominator on valid full-contract rows. Public
 synthetic lifecycle/fault rows may be reported only as service-level
-conformance diagnostics. It must not claim a complete direct-actor temporal
-ablation, learned-policy performance, simulator-backed lifecycle/fault stress
-reliability, policy-quality superiority, or official Waymo benchmark
-compatibility.
+conformance diagnostics. Missing scene-matched actor proxies, learned
+checkpoints, and redistributable restricted scenes block optional extension or
+benchmark claims, not the public core. It must not claim a complete
+direct-actor temporal ablation, learned-policy performance, simulator-backed
+lifecycle/fault stress reliability, policy-quality superiority, or official
+Waymo benchmark compatibility.

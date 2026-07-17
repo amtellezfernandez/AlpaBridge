@@ -10,15 +10,15 @@ refresh used the locked `uv run python` environment.
 | `./scripts/build_cvm_paper.sh` | Passed through `make paper-verify`; rebuilt 5-page root `wod2sim.pdf`. |
 | `uv run python scripts/validate_cvm_submission.py` | Passed, including metadata-backed title/author/affiliation/abstract checks, output-PDF title/author/subject checks, IEEE A4 source-layout checks, parsed PDF A4 MediaBox checks, LaTeX log warnings, canonical-to-paper generated asset sync, generated-table row/source-field value sync, package metadata checks, CI workflow gate checks, community-template claim-boundary checks, public local-reference and image-alt checks, CLI command-documentation drift checks, README visual/graph explanation checks, evaluation-status checks, venue-style benchmark-label checks, unstable generated citation-slug hygiene checks, README attribution-count sync, paper-number macro value sync, claim-evidence-matrix count sync, contract-test audit coverage checks, embedded PDF font descriptors, manifest-level failure-attribution checks, summary-level attribution and scenario-coverage partition checks, generic credential-leak checks, and README/paper claim-boundary checks. |
 | `make paper-verify PYTHON='uv run python'` | Passed: rebuilt 5-page root `wod2sim.pdf` and ran submission validation. |
-| `make conformance PYTHON='uv run python'` | Passed through `make verify`: 308 passed, 14 skipped, 15 subtests passed. |
+| `make conformance PYTHON='uv run python'` | Passed through `make verify`: 309 passed, 14 skipped, 15 subtests passed. |
 | `make demo PYTHON='uv run python'` | Passed: synthetic demo valid with `valid_claim_evidence=false`. |
-| `make cvm-check PYTHON='uv run python'` | Passed: ruff clean, 308 passed, 14 skipped, 15 subtests passed, validation passed. |
-| `make cvm-eval PYTHON='uv run python'` | Expected exit 2: attempted 36 preserved core rows, completed 36, and reported 18 scene-matched direct-actor proxy blockers. |
-| `uv run python -m pytest -q` | Passed through `make verify`: 308 passed, 14 skipped, 15 subtests passed. |
-| `uv run python -m pytest --cov` | Passed through `make verify`: 308 passed, 14 skipped, total coverage 62.45% against the configured 33.0% minimum. |
+| `make cvm-check PYTHON='uv run python'` | Passed: ruff clean, 309 passed, 14 skipped, 15 subtests passed, validation passed. |
+| `make cvm-eval PYTHON='uv run python'` | Expected exit 2: attempted and completed 36 dependency-light public-core rows, and reported 18 optional direct-actor proxy blockers. |
+| `uv run python -m pytest -q` | Passed through `make verify`: 309 passed, 14 skipped, 15 subtests passed. |
+| `uv run python -m pytest --cov` | Passed through `make verify`: 309 passed, 14 skipped, total coverage 62.45% against the configured 33.0% minimum. |
 | `uv run python -m build` | Passed: built source distribution and wheel. |
 | `uv run pre-commit run --all-files` | Passed without modifying files. |
-| `qpdf --check wod2sim.pdf && pdfinfo wod2sim.pdf && pdffonts wod2sim.pdf` | Passed: 5 pages, portrait A4, 139638 bytes, embedded fonts. |
+| `qpdf --check wod2sim.pdf && pdfinfo wod2sim.pdf && pdffonts wod2sim.pdf` | Passed: 5 pages, portrait A4, 140007 bytes, embedded fonts. |
 | `git diff --check` | Run as final whitespace validation. |
 
 Targeted contract selections:
@@ -65,7 +65,7 @@ It rejects `paper_numbers.tex` macro drift from `summary.json`,
 It rejects generated table row drift from `summary.json`,
 `lifecycle_stress.csv`, and `fault_injection.csv`, including missing or
 non-integer source fields.
-It rejects missing policy-level core rows in `main_results.tex`, including
+It rejects missing public-core policy rows in `main_results.tex`, including
 latency-p95 and terminal service-crash columns, and preserves tracked public
 closed-loop metrics when ignored raw run directories are absent.
 It rejects package metadata that drops the author, README, BSD-3-Clause license

@@ -179,6 +179,50 @@ class AggregateCVMTests(unittest.TestCase):
         self.assertEqual(2, summary["diagnostic_not_policy_rows"])
         self.assertEqual(3, summary["non_policy_attributed_rows"])
 
+    def test_release_scope_separates_public_core_from_gated_extensions(self) -> None:
+        module = _load_module()
+        rows = [
+            {
+                **_row(),
+                "run_id": "core-constant",
+                "policy": "constant_velocity",
+                "status": "completed",
+                "attempted": "true",
+                "completed": "true",
+            },
+            {
+                **_row(),
+                "run_id": "core-route",
+                "policy": "route_following",
+                "status": "completed",
+                "attempted": "true",
+                "completed": "true",
+            },
+            {
+                **_row(),
+                "run_id": "core-direct",
+                "policy": "direct_actor_planner",
+                "status": "blocked",
+                "blocked": "true",
+                "failure_layer": "deployment",
+                "failure_code": "direct_actor_oracle_proxy_missing",
+            },
+        ]
+        evidence = [
+            {"run_id": "core-constant", "matrix": "core", "policy": "constant_velocity", "audit_valid": "true"},
+            {"run_id": "core-route", "matrix": "core", "policy": "route_following", "audit_valid": "true"},
+        ]
+
+        summary = module._release_scope_summary(rows, evidence)
+
+        self.assertEqual(2, summary["public_core_configured_rows"])
+        self.assertEqual(2, summary["public_core_completed_runs"])
+        self.assertEqual(2, summary["public_core_audit_valid_runs"])
+        self.assertEqual(0, summary["public_core_blocked_rows"])
+        self.assertEqual(1, summary["optional_gated_configured_rows"])
+        self.assertEqual(1, summary["optional_gated_blocked_rows"])
+        self.assertEqual(1, summary["direct_actor_blocked_rows"])
+
     def test_scenario_coverage_requires_authoritative_category_metadata(self) -> None:
         module = _load_module()
         evidence = [

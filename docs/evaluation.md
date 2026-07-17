@@ -98,6 +98,9 @@ The completed full-contract and semantic-ablation rollouts are the current
 integration-effectiveness evidence. Synthetic lifecycle/fault rows are secondary
 service-harness conformance diagnostics only, and blocked rows are retained as
 denominator/context rather than success metrics.
+The public release core is the dependency-light adapter path. Direct-actor,
+learned-checkpoint, restricted-scene, and complete-benchmark dependencies are
+optional gated extensions, not release-core dependencies.
 
 The release does not include a public checkpoint, a redistributable scene
 subset, verified scene-category coverage, direct-actor temporal ablation

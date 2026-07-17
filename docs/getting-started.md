@@ -8,7 +8,12 @@ does not install AlpaSim, download gated scenes, or ship policy checkpoints.
 - Python 3.10 or newer.
 - For live rollouts: x86_64 Linux, Docker, NVIDIA Container Toolkit, and a GPU.
 - A local [AlpaSim](https://github.com/NVlabs/alpasim) checkout with scene assets.
-- Optional for learned runs: a Token BC/DAgger checkpoint or a direct-planner actor proxy.
+- Optional gated extensions: a Token BC/DAgger checkpoint for learned runs or
+  a scene-matched actor proxy for direct-planner runs.
+
+The dependency-light public core uses `constant_velocity` and
+`route_following`; it does not require a learned checkpoint or direct-planner
+actor proxy.
 
 ## Install
 

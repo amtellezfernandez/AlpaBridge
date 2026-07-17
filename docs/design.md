@@ -23,15 +23,20 @@ WOD2Sim closes five integration gaps:
 | Deployment | Materializes commands, topology, runtime preconditions, hashes, and launch provenance. |
 | Evidence | Requires audits, manifests, support-bundle status, and retained denominators before claims. |
 
-The package exposes four AlpaSim models:
+The public core exposes the dependency-light models:
 
 - `constant_velocity`: a dependency-light straight-line baseline requiring no private artifact.
 - `route_following`: a dependency-light waypoint-following baseline requiring no private artifact.
+
+The package also exposes optional gated extension models:
+
 - `token_dagger_bc`: a learned token policy requiring a compatible checkpoint.
 - `direct_actor_planner`: a continuous candidate planner requiring a scene-matched actor proxy.
 
 All four use the same route/signal contract, sensor-freshness guard, trajectory
-resampling, launch tooling, and evidence pipeline.
+resampling, launch tooling, and evidence pipeline. Missing checkpoints, actor
+proxies, or restricted scene assets block only the optional extension or
+benchmark claim being attempted, not the dependency-light public core.
 
 ## Trajectory Resampling
 

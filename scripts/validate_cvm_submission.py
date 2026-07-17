@@ -79,7 +79,7 @@ REQUIRED_TABLES = (
 EXPECTED_TABLE_HEADERS = {
     "contract_map.tex": "Mismatch & Contract & Mechanism & Validation",
     "main_results.tex": (
-        "Policy & Rows & Done/att. & Audit & Progress & Coll./off & "
+        "Public core policy & Rows & Done/att. & Audit & Progress & Coll./off & "
         "Lat. p95 & Crash & Blocked"
     ),
     "ablations.tex": "Closed-loop integration check & Observed & Denom.",
@@ -170,7 +170,7 @@ BASELINE_REPORT_REQUIRED_TERMS = (
     "make cvm-check",
     "make paper-verify",
     "make verify",
-    "308 passed, 14 skipped, and 15 subtests passed",
+    "309 passed, 14 skipped, and 15 subtests passed",
     "62.45% against the configured 33.0% minimum",
 )
 CONTRACT_TEST_AUDIT_REQUIRED_TERMS = (
@@ -229,6 +229,8 @@ EVALUATION_STATUS_TERMS = (
     "integration-effectiveness evidence",
     "service-harness conformance diagnostics only",
     "denominator/context rather than success metrics",
+    "public release core is the dependency-light adapter path",
+    "optional gated extensions, not release-core dependencies",
     "redistributable scene subset",
     "verified scene-category coverage",
     "claim-ready closed-loop policy benchmark",
@@ -256,6 +258,13 @@ REQUIRED_SCENARIO_COVERAGE_FIELDS = (
 )
 CLAIM_MATRIX_SUMMARY_LINES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("Configured rows", ("total_rows",)),
+    (
+        "Public-core rows completed",
+        (
+            "release_scope.public_core_completed_runs",
+            "release_scope.public_core_configured_rows",
+        ),
+    ),
     ("Attempted rows", ("attempted_runs",)),
     ("Completed rows", ("completed_runs",)),
     ("Closed-loop completed rows", ("closed_loop_completed_runs",)),
@@ -435,6 +444,15 @@ PAPER_NUMBER_JSON_FIELDS: tuple[tuple[str, str], ...] = (
     ("CVMTemporalRows", "matrix_counts.temporal_ablation"),
     ("CVMLifecycleRows", "matrix_counts.lifecycle_stress"),
     ("CVMFaultRows", "matrix_counts.fault_injection"),
+    ("CVMPublicCoreRows", "release_scope.public_core_configured_rows"),
+    ("CVMPublicCoreCompletedRuns", "release_scope.public_core_completed_runs"),
+    ("CVMPublicCoreAttemptedRuns", "release_scope.public_core_attempted_runs"),
+    ("CVMPublicCoreAuditValidRuns", "release_scope.public_core_audit_valid_runs"),
+    ("CVMPublicCoreBlockedRows", "release_scope.public_core_blocked_rows"),
+    ("CVMOptionalGatedRows", "release_scope.optional_gated_configured_rows"),
+    ("CVMOptionalGatedBlockedRows", "release_scope.optional_gated_blocked_rows"),
+    ("CVMDirectActorRows", "release_scope.direct_actor_configured_rows"),
+    ("CVMDirectActorBlockedRows", "release_scope.direct_actor_blocked_rows"),
 )
 PAPER_NUMBER_FLOAT_FIELDS: tuple[tuple[str, str], ...] = (
     (
@@ -474,6 +492,12 @@ GENERATED_TABLE_JSON_FIELDS: tuple[str, ...] = (
     "integration_effectiveness.semantic_ablation_metric_pairs",
     "integration_effectiveness.semantic_ablation_command_proxy_completed_runs",
     "integration_effectiveness.semantic_ablation_command_proxy_rejected_runs",
+    "release_scope.public_core_configured_rows",
+    "release_scope.public_core_completed_runs",
+    "release_scope.public_core_blocked_rows",
+    "release_scope.optional_gated_configured_rows",
+    "release_scope.optional_gated_blocked_rows",
+    "release_scope.direct_actor_blocked_rows",
     "scenario_coverage.closed_loop_scene_count",
     "scenario_coverage.verified_required_category_count",
     "scenario_coverage.required_category_count",
@@ -1791,7 +1815,7 @@ def _expected_contract_map_rows() -> list[str]:
 
 
 def _expected_main_results_rows(summary: dict[str, object]) -> list[str]:
-    core_policy_results = summary.get("core_policy_results")
+    core_policy_results = summary.get("public_core_policy_results")
     if not isinstance(core_policy_results, list):
         return []
     return [

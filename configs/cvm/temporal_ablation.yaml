@@ -1,7 +1,10 @@
 schema: cvm_experiment_config_v1
 name: temporal_ablation
-description: Temporal-contract ablation comparing deterministic resampling to naive/disabled resampling.
+description: Optional gated temporal-contract ablation comparing deterministic resampling to naive/disabled resampling.
 scene_manifest: artifacts/cvm/manifests/scene_manifest.yaml
+release_scope:
+  optional_gated_extension: true
+  note: This matrix requires a scene-matched direct-actor oracle proxy and is not a public-core dependency.
 policies:
   - direct_actor_planner
 seeds: [17, 29, 43]

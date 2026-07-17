@@ -98,6 +98,17 @@ def _write_paper_number_fixture(root: Path, module) -> tuple[Path, Path, Path, P
             "non_policy_attributed_rows": 7,
             "synthetic_diagnostic_rows": 3,
         },
+        "release_scope": {
+            "public_core_configured_rows": 3,
+            "public_core_attempted_runs": 3,
+            "public_core_completed_runs": 3,
+            "public_core_audit_valid_runs": 3,
+            "public_core_blocked_rows": 0,
+            "optional_gated_configured_rows": 2,
+            "optional_gated_blocked_rows": 2,
+            "direct_actor_configured_rows": 2,
+            "direct_actor_blocked_rows": 2,
+        },
         "semantic_ablation_deltas": {
             "progress": {"mean_delta_full_minus_command_only": -0.25},
             "progress_rel": {"mean_delta_full_minus_command_only": 0.125},
@@ -111,6 +122,22 @@ def _write_paper_number_fixture(root: Path, module) -> tuple[Path, Path, Path, P
             "progress": {"mean": 0.4},
         },
         "core_policy_results": [
+            {
+                "policy": "constant_velocity",
+                "configured_rows": 4,
+                "attempted_runs": 3,
+                "completed_runs": 3,
+                "audit_valid_runs": 3,
+                "metric_rows": 3,
+                "blocked_runs": 1,
+                "progress_mean": 0.4,
+                "collision_any_mean": 0.75,
+                "offroad_mean": 0.0,
+                "action_latency_p95_ms": None,
+                "service_crash_rows": 0,
+            }
+        ],
+        "public_core_policy_results": [
             {
                 "policy": "constant_velocity",
                 "configured_rows": 4,
@@ -633,9 +660,12 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             "semantic-ablation rollouts are integration-effectiveness evidence. "
             "Synthetic lifecycle/fault rows are service-harness conformance "
             "diagnostics only, and blocked rows are retained as denominator/context "
-            "rather than success metrics. The release excludes a redistributable "
-            "scene subset, verified scene-category coverage, and a claim-ready "
-            "closed-loop policy benchmark.\n"
+            "rather than success metrics. The public release core is the "
+            "dependency-light adapter path. Direct-actor, learned-checkpoint, and "
+            "restricted-scene dependencies are optional gated extensions, not "
+            "release-core dependencies. The release excludes a redistributable scene "
+            "subset, verified scene-category coverage, and a claim-ready closed-loop "
+            "policy benchmark.\n"
         )
 
         failures = module._evaluation_status_failures(
@@ -924,7 +954,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
 
         self.assertIn(
             f"generated_table_header_mismatch:{main_results}:"
-            "Policy & Rows & Done/att. & Audit & Progress & Coll./off & "
+            "Public core policy & Rows & Done/att. & Audit & Progress & Coll./off & "
             "Lat. p95 & Crash & Blocked",
             failures,
         )
@@ -993,6 +1023,10 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
                     "non_policy_attributed_rows": 100,
                     "claim_valid_policy_benchmark_rows": 0,
                 },
+                "release_scope": {
+                    "public_core_completed_runs": 36,
+                    "public_core_configured_rows": 36,
+                },
             }
             summary_path.write_text(json.dumps(summary), encoding="utf-8")
             matrix_path.write_text(
@@ -1003,6 +1037,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
                         "## Aggregate Status",
                         "",
                         "- Configured rows: 145.",
+                        "- Public-core rows completed: 36/36.",
                         "- Attempted rows: 109.",
                         "- Completed rows: 109.",
                         "- Closed-loop completed rows: 54.",
@@ -1072,6 +1107,10 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
                     "policy_failure_attributable_rows": 0,
                     "non_policy_attributed_rows": 1,
                     "claim_valid_policy_benchmark_rows": 0,
+                },
+                "release_scope": {
+                    "public_core_completed_runs": 1,
+                    "public_core_configured_rows": 1,
                 },
             }
             summary_path.write_text(json.dumps(summary), encoding="utf-8")
@@ -1481,7 +1520,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
                 "| `uv run python -m pytest -q tests/test_validate_cvm_submission.py` | Passed. |\n"
                 "| `make paper-verify PYTHON='uv run python'` | Passed. |\n"
                 "| `make cvm-check PYTHON='uv run python'` | Passed with "
-                "308 passed, 14 skipped, and 15 subtests passed. |\n"
+                "309 passed, 14 skipped, and 15 subtests passed. |\n"
                 "| `make verify` | Passed with 62.45% against the configured 33.0% minimum. |\n",
                 encoding="utf-8",
             )

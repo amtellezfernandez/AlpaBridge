@@ -147,15 +147,24 @@ attributed to the policy.
 
 ## Scope
 
+The public release core is the dependency-light adapter path:
+
 - `constant_velocity` is a dependency-light straight-line baseline.
 - `route_following` is a dependency-light waypoint-following baseline.
+
+Optional gated extensions are exposed through the same contract surface, but
+they are not release-core dependencies:
+
 - `token_dagger_bc` loads a compatible learned-policy checkpoint.
 - `direct_actor_planner` evaluates continuous candidates using a scene-matched actor proxy.
 - All adapters share route propagation, sensor checks, launch tooling, and audits.
 
-This release contains no public checkpoint and makes no policy benchmark claim.
-Claim-valid audits require executed rollouts with route waypoints reaching every
-driver-log frame; command-proxy route fallback is diagnostic only.
+This release contains no public checkpoint, does not redistribute restricted
+scene assets, and makes no policy benchmark claim. Missing learned checkpoints,
+direct-actor proxies, and redistributable scene subsets block only optional
+extension or benchmark claims, not the public core. Claim-valid audits require
+executed rollouts with route waypoints reaching every driver-log frame;
+command-proxy route fallback is diagnostic only.
 
 ## Install
 
@@ -245,10 +254,10 @@ make paper-verify
 `make paper-verify` rebuilds the canonical [`wod2sim.pdf`](wod2sim.pdf) from
 the same generated tables and figures used by the repository reports, then runs
 the submission validator. The current aggregate remains `claim_valid=false`:
-dependency-light core rows and semantic ablations have executed, direct-actor
-rows remain explicitly blocked by a missing scene-matched proxy, and completed
-closed-loop rows are diagnostic integration-effectiveness evidence rather than
-policy-quality benchmark claims.
+the public core has completed `36/36` dependency-light rows, semantic ablations
+have executed, direct-actor rows remain optional gated extension blockers, and
+completed closed-loop rows are diagnostic integration-effectiveness evidence
+rather than policy-quality benchmark claims.
 The detailed test-to-contract traceability map is tracked in
 [`artifacts/cvm/reports/contract_test_audit.md`](artifacts/cvm/reports/contract_test_audit.md).
 

@@ -39,7 +39,7 @@ The contract-validation matrix (CVM) is referenced in the release targets below.
 | `make cvm-inventory` | Refresh the redacted repository and environment inventory. |
 | `make cvm-check` | Run lint, conformance, and CVM submission validation. |
 | `make cvm-demo` | Write the synthetic CVM demo under `artifacts/cvm/results/demo`. |
-| `make cvm-eval` | Expand the configured CVM core matrix, preserving completed and blocked rows. |
+| `make cvm-eval` | Expand the mixed CVM core matrix, preserving completed public-core rows and optional gated blockers. |
 | `make cvm-synthetic` | Execute dependency-light lifecycle-stress and fault-injection diagnostics. |
 | `make cvm-aggregate` | Regenerate aggregate CSV/JSON, LaTeX tables, and figures from CVM results. |
 | `make cvm-paper` | Build the paper source and copy the canonical root `wod2sim.pdf`. |

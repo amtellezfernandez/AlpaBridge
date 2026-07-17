@@ -9,16 +9,17 @@ not tracked; rerun the commands below to reproduce the release checks.
 
 | Command | Start UTC | End UTC | Duration | Exit | Result |
 |---|---|---|---:|---:|---|
-| `uv run python -m pytest -q tests/test_validate_cvm_submission.py` | 2026-07-17T22:56:53Z | 2026-07-17T22:56:54Z | 0.449s | 0 | 70 passed, including metadata, PDF, generated-artifact, public-hygiene, CVM acronym-definition, repository-inventory drift, baseline-report hygiene, and credential-hygiene validation fixtures. |
-| `make paper-verify PYTHON='uv run python'` | 2026-07-17T22:56:54Z | 2026-07-17T22:56:56Z | 1.739s | 0 | Rebuilt 5-page root `wod2sim.pdf` at 139638 bytes and ran submission validation. |
-| `make cvm-check PYTHON='uv run python'` | 2026-07-17T22:56:56Z | 2026-07-17T22:56:59Z | 3.497s | 0 | Ruff passed; conformance passed with 308 passed, 14 skipped, and 15 subtests passed; submission validation passed. |
+| `uv run python -m pytest -q tests/test_validate_cvm_submission.py` | 2026-07-17T22:56:53Z | 2026-07-17T22:56:54Z | 0.449s | 0 | 80 passed, including metadata, PDF, generated-artifact, public-hygiene, CVM acronym-definition, repository-inventory drift, baseline-report hygiene, and credential-hygiene validation fixtures. |
+| `make paper-verify PYTHON='uv run python'` | 2026-07-17T22:56:54Z | 2026-07-17T22:56:56Z | 1.739s | 0 | Rebuilt 5-page root `wod2sim.pdf` at 140007 bytes and ran submission validation. |
+| `make cvm-check PYTHON='uv run python'` | 2026-07-17T22:56:56Z | 2026-07-17T22:56:59Z | 3.497s | 0 | Ruff passed; conformance passed with 309 passed, 14 skipped, and 15 subtests passed; submission validation passed. |
 | `make verify` | 2026-07-17T22:56:59Z | 2026-07-17T22:57:42Z | 42.510s | 0 | Ruff, conformance, coverage, smoke install, package build, paper rebuild, and submission validation passed; coverage was 62.45% against the configured 33.0% minimum. |
 
 ## Important Warnings
 
-- `make cvm-eval` exits 2 because the configured core matrix still includes
+- `make cvm-eval` exits 2 because the mixed core matrix preserves optional
   direct actor-aware rows without the required scene-matched oracle actor
-  proxy. This is a recorded precondition blocker, not a test failure.
+  proxy. This is a recorded optional-extension precondition blocker, not a
+  public-core test failure.
 - The local validator uses `mutool` and LaTeX log/source checks, including a
   parsed MediaBox pass that rejects non-A4 page geometry and a font-descriptor
   pass that rejects unembedded paper fonts. CI installs Poppler and `qpdf` to
@@ -29,12 +30,12 @@ not tracked; rerun the commands below to reproduce the release checks.
 ## Current Interpretation
 
 The release status is complete with documented limitations for the CVM paper
-package. It supports dependency-light core integration evidence, semantic
+package. It supports a completed dependency-light public core, semantic
 route-boundary ablation evidence, false-block accounting for audit-valid rows,
 and secondary synthetic lifecycle/fault conformance diagnostics. It does not
-support a policy-quality benchmark, learned-policy result, direct-actor temporal
-ablation, simulator-backed lifecycle/fault stress trial, or official Waymo
-compatibility claim.
+support a policy-quality benchmark, learned-policy result, direct-actor
+temporal ablation, simulator-backed lifecycle/fault stress trial, or official
+Waymo compatibility claim.
 
 The validator now treats the integration-vs-policy boundary as a release gate:
 blocked, failed, planned, and diagnostic rows cannot be labeled

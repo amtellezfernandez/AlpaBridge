@@ -16,7 +16,7 @@ stable across machines that may or may not have torch installed.
 
 | Contract property | Evidence in the core tier |
 | --- | --- |
-| Public model registry is curated | Entry-point and installed-doctor tests require `constant_velocity`, `route_following`, `token_dagger_bc`, and `direct_actor_planner`. |
+| Public model registry is curated | Entry-point and installed-doctor tests expose `constant_velocity`, `route_following`, `token_dagger_bc`, and `direct_actor_planner`; only the first two are dependency-light public-core models. |
 | Route geometry reaches policy code | Signal tests require `route_source=alpasim_waypoints` when route waypoints are present. |
 | Command-proxy fallback is not claim-valid | Audit, batch-summary, and benchmark-summary tests invalidate command-proxy route evidence. |
 | Scene signal is behavior-neutral by default | Signal tests keep brightness/dynamics risk diagnostic-only unless structured hazards are present. |
@@ -34,3 +34,6 @@ and failure analysis as described in [Evaluation](evaluation.md).
 Torch-dependent token-policy tests remain part of the normal test suite when
 torch is installed, but they are intentionally excluded from core conformance so
 CI can prove the integration contract without private model artifacts.
+Direct-actor proxies, learned checkpoints, and restricted scene assets are
+optional gated extensions for live evaluation, not prerequisites for the core
+conformance tier.

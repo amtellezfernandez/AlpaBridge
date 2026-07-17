@@ -25,7 +25,7 @@ host-specific paths, runtime identifiers, and local simulator state.
 - Format: IEEE conference two-column template using `paper/cvm/IEEEtran.cls`.
 - Page size: A4 verified by `mutool info` mediabox `[ 0 0 595.276 841.89 ]`.
 - Page count: 5.
-- PDF size at audit: 139638 bytes.
+- PDF size at audit: 140007 bytes.
 - Root PDF is the only tracked manuscript PDF.
 
 ## Commands And Targets
@@ -50,6 +50,8 @@ host-specific paths, runtime identifiers, and local simulator state.
 ## Current Evidence Package
 
 - Configured CVM rows: 145.
+- Public-core rows completed: 36/36 across `constant_velocity` and
+  `route_following`.
 - Attempted rows: 109.
 - Completed rows: 109.
 - Closed-loop completed rows: 54.
@@ -79,10 +81,11 @@ host-specific paths, runtime identifiers, and local simulator state.
 
 ## Gated Or Missing Prerequisites
 
-- Direct actor-aware planner and temporal ablation require a scene-matched
-  oracle actor proxy; adapters reject oracle frames whose `scene_id` differs
-  from the current prediction scene.
-- Learned `token_dagger_bc` requires a legitimate local checkpoint hash.
+- Direct actor-aware planner and temporal ablation are optional gated
+  extensions requiring a scene-matched oracle actor proxy; adapters reject
+  oracle frames whose `scene_id` differs from the current prediction scene.
+- Learned `token_dagger_bc` is an optional gated extension requiring a
+  legitimate local checkpoint hash.
 - Scene categories are recorded but not authoritatively verified from public
   metadata; the generated coverage gate reports 0/6 verified required scenario
   categories and 6 unclassified closed-loop scenes, so scenario-category

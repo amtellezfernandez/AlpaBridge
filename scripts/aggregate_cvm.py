@@ -43,6 +43,8 @@ MANIFEST_MATCH_FIELDS = (
 )
 SYNTHETIC_MATRICES = {"lifecycle_stress", "fault_injection"}
 FULL_CONTRACT_ADAPTERS = {"full_contract", "full_temporal_contract"}
+PUBLIC_CORE_POLICIES = ("constant_velocity", "route_following")
+OPTIONAL_GATED_POLICIES = ("direct_actor_planner", "token_dagger_bc")
 REQUIRED_SCENARIO_CATEGORIES = (
     "straight",
     "intersection",
@@ -301,6 +303,7 @@ def _summary(
     scenario_coverage_summary = _scenario_coverage_summary(closed_loop_evidence)
     semantic_delta_summary = _semantic_ablation_delta_summary(semantic_pair_rows)
     failure_attribution_summary = _failure_attribution_summary(rows, closed_loop_evidence)
+    release_scope_summary = _release_scope_summary(rows, closed_loop_evidence)
     return {
         "schema": "cvm_aggregate_summary_v1",
         "created_at": created_at,
@@ -324,6 +327,12 @@ def _summary(
         ),
         "closed_loop_metrics": metric_summary,
         "core_policy_results": _core_policy_results(rows, closed_loop_evidence),
+        "public_core_policy_results": _core_policy_results(
+            rows,
+            closed_loop_evidence,
+            include_policies=set(PUBLIC_CORE_POLICIES),
+        ),
+        "release_scope": release_scope_summary,
         "integration_effectiveness": effectiveness_summary,
         "scenario_coverage": scenario_coverage_summary,
         "failure_attribution": failure_attribution_summary,
@@ -343,9 +352,13 @@ def _summary(
 def _core_policy_results(
     rows: list[dict[str, str]],
     closed_loop_evidence: list[dict[str, Any]],
+    *,
+    include_policies: set[str] | None = None,
 ) -> list[dict[str, Any]]:
     core_rows = [row for row in rows if row.get("matrix") == "core"]
     policies = list(dict.fromkeys(row.get("policy", "") for row in core_rows if row.get("policy")))
+    if include_policies is not None:
+        policies = [policy for policy in policies if policy in include_policies]
     results: list[dict[str, Any]] = []
     for policy in policies:
         policy_rows = [row for row in core_rows if row.get("policy") == policy]
@@ -372,6 +385,53 @@ def _core_policy_results(
             }
         )
     return results
+
+
+def _release_scope_summary(
+    rows: list[dict[str, str]],
+    closed_loop_evidence: list[dict[str, Any]],
+) -> dict[str, Any]:
+    public_core_rows = [
+        row
+        for row in rows
+        if row.get("matrix") == "core" and row.get("policy") in PUBLIC_CORE_POLICIES
+    ]
+    public_core_evidence = [
+        row
+        for row in closed_loop_evidence
+        if row.get("matrix") == "core" and row.get("policy") in PUBLIC_CORE_POLICIES
+    ]
+    optional_rows = [
+        row
+        for row in rows
+        if row.get("policy") in OPTIONAL_GATED_POLICIES
+        or row.get("failure_code") in {"direct_actor_oracle_proxy_missing", "token_checkpoint_missing"}
+    ]
+    direct_actor_rows = [row for row in rows if row.get("policy") == "direct_actor_planner"]
+    return {
+        "public_core_policy_names": list(PUBLIC_CORE_POLICIES),
+        "optional_gated_policy_names": list(OPTIONAL_GATED_POLICIES),
+        "public_core_configured_rows": len(public_core_rows),
+        "public_core_attempted_runs": sum(row.get("attempted") == "true" for row in public_core_rows),
+        "public_core_completed_runs": sum(row.get("completed") == "true" for row in public_core_rows),
+        "public_core_audit_valid_runs": sum(
+            row.get("audit_valid") == "true" for row in public_core_evidence
+        ),
+        "public_core_blocked_rows": sum(row.get("status") == "blocked" for row in public_core_rows),
+        "optional_gated_configured_rows": len(optional_rows),
+        "optional_gated_blocked_rows": sum(row.get("status") == "blocked" for row in optional_rows),
+        "direct_actor_configured_rows": len(direct_actor_rows),
+        "direct_actor_blocked_rows": sum(row.get("status") == "blocked" for row in direct_actor_rows),
+        "public_learned_checkpoint_bundled": False,
+        "restricted_scene_assets_bundled": False,
+        "scope_rule": (
+            "The public release core is the dependency-light contract adapter path "
+            "using constant_velocity and route_following. Direct actor-aware planning, "
+            "learned checkpoint execution, restricted scene redistribution, and a full "
+            "policy benchmark are optional gated extensions, not release-core "
+            "dependencies."
+        ),
+    }
 
 
 def _mean_metric(rows: list[dict[str, Any]], metric: str) -> float | None:
@@ -868,6 +928,12 @@ def _write_summary_csv(path: Path, summary: dict[str, Any]) -> None:
         "valid_full_contract_false_block_denominator",
         "semantic_ablation_completed_pairs",
         "semantic_ablation_metric_pairs",
+        "public_core_configured_rows",
+        "public_core_completed_runs",
+        "public_core_blocked_rows",
+        "optional_gated_configured_rows",
+        "optional_gated_blocked_rows",
+        "direct_actor_blocked_rows",
         "closed_loop_scene_count",
         "verified_required_category_count",
         "required_category_count",
@@ -890,6 +956,7 @@ def _write_summary_csv(path: Path, summary: dict[str, Any]) -> None:
     effectiveness = summary.get("integration_effectiveness", {})
     scenario_coverage = summary.get("scenario_coverage", {})
     attribution = summary.get("failure_attribution", {})
+    release_scope = summary.get("release_scope", {})
     row: dict[str, str] = {}
     for field in fields:
         if field in summary:
@@ -900,6 +967,8 @@ def _write_summary_csv(path: Path, summary: dict[str, Any]) -> None:
             row[field] = str(scenario_coverage[field])
         elif isinstance(attribution, dict) and field in attribution:
             row[field] = str(attribution[field])
+        elif isinstance(release_scope, dict) and field in release_scope:
+            row[field] = str(release_scope[field])
         else:
             row[field] = ""
     _write_csv(path, [row], fields)
@@ -921,7 +990,7 @@ def _write_fault_rollup(inputs: Path, output: Path) -> None:
 
 
 def _core_policy_table_rows(summary: dict[str, Any]) -> list[str]:
-    results = summary.get("core_policy_results")
+    results = summary.get("public_core_policy_results")
     if not isinstance(results, list):
         return []
     rows: list[str] = []
@@ -1049,6 +1118,18 @@ def _write_tables(output: Path, summary: dict[str, Any], rows: list[dict[str, st
     diagnostic_not_policy = _summary_int(attribution, "diagnostic_not_policy_rows")
     non_policy_attributed = _summary_int(attribution, "non_policy_attributed_rows")
     synthetic_diagnostic = _summary_int(attribution, "synthetic_diagnostic_rows")
+    release_scope = summary.get("release_scope", {})
+    public_core_configured = _summary_int(release_scope, "public_core_configured_rows")
+    public_core_completed = _summary_int(release_scope, "public_core_completed_runs")
+    public_core_attempted = _summary_int(release_scope, "public_core_attempted_runs")
+    public_core_audit_valid = _summary_int(release_scope, "public_core_audit_valid_runs")
+    public_core_blocked = _summary_int(release_scope, "public_core_blocked_rows")
+    optional_gated_configured = _summary_int(
+        release_scope, "optional_gated_configured_rows"
+    )
+    optional_gated_blocked = _summary_int(release_scope, "optional_gated_blocked_rows")
+    direct_actor_configured = _summary_int(release_scope, "direct_actor_configured_rows")
+    direct_actor_blocked = _summary_int(release_scope, "direct_actor_blocked_rows")
     (tables / "contract_map.tex").write_text(
         "% generated by contract-validation aggregate; data_hash="
         + data_hash
@@ -1071,7 +1152,7 @@ def _write_tables(output: Path, summary: dict[str, Any], rows: list[dict[str, st
         + "\n"
         + "\\begin{tabular}{lllllllll}\n"
         + "\\toprule\n"
-        + "Policy & Rows & Done/att. & Audit & Progress & Coll./off & Lat. p95 & Crash & Blocked \\\\\n"
+        + "Public core policy & Rows & Done/att. & Audit & Progress & Coll./off & Lat. p95 & Crash & Blocked \\\\\n"
         + "\\midrule\n"
         + "\n".join(core_policy_rows)
         + "\n"
@@ -1139,6 +1220,15 @@ def _write_tables(output: Path, summary: dict[str, Any], rows: list[dict[str, st
         + f"\\newcommand{{\\CVMDiagnosticNotPolicyRows}}{{{diagnostic_not_policy}}}\n"
         + f"\\newcommand{{\\CVMNonPolicyAttributedRows}}{{{non_policy_attributed}}}\n"
         + f"\\newcommand{{\\CVMSyntheticDiagnosticRows}}{{{synthetic_diagnostic}}}\n"
+        + f"\\newcommand{{\\CVMPublicCoreRows}}{{{public_core_configured}}}\n"
+        + f"\\newcommand{{\\CVMPublicCoreCompletedRuns}}{{{public_core_completed}}}\n"
+        + f"\\newcommand{{\\CVMPublicCoreAttemptedRuns}}{{{public_core_attempted}}}\n"
+        + f"\\newcommand{{\\CVMPublicCoreAuditValidRuns}}{{{public_core_audit_valid}}}\n"
+        + f"\\newcommand{{\\CVMPublicCoreBlockedRows}}{{{public_core_blocked}}}\n"
+        + f"\\newcommand{{\\CVMOptionalGatedRows}}{{{optional_gated_configured}}}\n"
+        + f"\\newcommand{{\\CVMOptionalGatedBlockedRows}}{{{optional_gated_blocked}}}\n"
+        + f"\\newcommand{{\\CVMDirectActorRows}}{{{direct_actor_configured}}}\n"
+        + f"\\newcommand{{\\CVMDirectActorBlockedRows}}{{{direct_actor_blocked}}}\n"
         + f"\\newcommand{{\\CVMSemanticAblationCompletedPairs}}{{{semantic_completed_pairs}}}\n"
         + f"\\newcommand{{\\CVMSemanticAblationMetricPairs}}{{{semantic_metric_pairs}}}\n"
         + f"\\newcommand{{\\CVMCommandProxyCompletedRuns}}{{{command_proxy_completed}}}\n"

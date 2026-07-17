@@ -1,7 +1,14 @@
 schema: cvm_experiment_config_v1
 name: core
-description: Full-contract closed-loop contract-validation matrix, blocked unless all runtime prerequisites are available.
+description: Full-contract closed-loop matrix with a completed dependency-light public core and optional gated direct-actor extension rows.
 scene_manifest: artifacts/cvm/manifests/scene_manifest.yaml
+release_scope:
+  public_core_policies:
+    - constant_velocity
+    - route_following
+  optional_gated_policies:
+    - direct_actor_planner
+  note: Direct actor-aware rows require a scene-matched oracle proxy and are not public-core dependencies.
 policies:
   - constant_velocity
   - route_following

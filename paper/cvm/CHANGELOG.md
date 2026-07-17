@@ -20,3 +20,6 @@
   execution and bounded semantic integration-effectiveness evidence, but not
   direct-actor temporal ablation, learned-policy result, or policy-quality
   comparison.
+- Split the public-core claim from optional gated extension prerequisites:
+  direct actor-aware rows, learned checkpoints, and restricted scene
+  redistribution are no longer presented as release-core dependencies.

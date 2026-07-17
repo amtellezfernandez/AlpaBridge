@@ -159,6 +159,58 @@
     "temporal_ablation": 18
   },
   "planned_runs": 0,
+  "public_core_policy_results": [
+    {
+      "action_latency_p95_ms": null,
+      "attempted_runs": 18,
+      "audit_valid_runs": 18,
+      "blocked_runs": 0,
+      "collision_any_mean": 0.833333,
+      "completed_runs": 18,
+      "configured_rows": 18,
+      "metric_rows": 18,
+      "offroad_mean": 0.0,
+      "policy": "constant_velocity",
+      "progress_mean": 0.435,
+      "service_crash_rows": 0
+    },
+    {
+      "action_latency_p95_ms": null,
+      "attempted_runs": 18,
+      "audit_valid_runs": 18,
+      "blocked_runs": 0,
+      "collision_any_mean": 0.833333,
+      "completed_runs": 18,
+      "configured_rows": 18,
+      "metric_rows": 18,
+      "offroad_mean": 0.0,
+      "policy": "route_following",
+      "progress_mean": 0.353333,
+      "service_crash_rows": 0
+    }
+  ],
+  "release_scope": {
+    "direct_actor_blocked_rows": 36,
+    "direct_actor_configured_rows": 36,
+    "optional_gated_blocked_rows": 36,
+    "optional_gated_configured_rows": 36,
+    "optional_gated_policy_names": [
+      "direct_actor_planner",
+      "token_dagger_bc"
+    ],
+    "public_core_attempted_runs": 36,
+    "public_core_audit_valid_runs": 36,
+    "public_core_blocked_rows": 0,
+    "public_core_completed_runs": 36,
+    "public_core_configured_rows": 36,
+    "public_core_policy_names": [
+      "constant_velocity",
+      "route_following"
+    ],
+    "public_learned_checkpoint_bundled": false,
+    "restricted_scene_assets_bundled": false,
+    "scope_rule": "The public release core is the dependency-light contract adapter path using constant_velocity and route_following. Direct actor-aware planning, learned checkpoint execution, restricted scene redistribution, and a full policy benchmark are optional gated extensions, not release-core dependencies."
+  },
   "scenario_coverage": {
     "closed_loop_scene_count": 6,
     "required_categories": [

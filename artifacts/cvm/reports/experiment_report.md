@@ -1,10 +1,11 @@
 # Contract-Validation Experiment Report
 
-Current status: the public aggregate contains completed dependency-light core
-rollouts, completed semantic closed-loop ablation pairs, secondary public
-synthetic lifecycle/fault conformance diagnostics, and explicit direct-actor blockers. Raw local
-rollout directories remain ignored; CSV/JSON aggregates, manifests, tables, and
-figures are the public contract-validation matrix (CVM) evidence.
+Current status: the public aggregate contains a complete dependency-light
+public core, completed semantic closed-loop ablation pairs, secondary public
+synthetic lifecycle/fault conformance diagnostics, and explicit optional gated
+direct-actor blockers. Raw local rollout directories remain ignored; CSV/JSON
+aggregates, manifests, tables, and figures are the public contract-validation
+matrix (CVM) evidence.
 
 ## Configured Matrices
 
@@ -19,6 +20,7 @@ figures are the public contract-validation matrix (CVM) evidence.
 
 ## Integration-Effectiveness Evidence
 
+- Dependency-light public core: 36/36 completed, 36/36 audit-valid, 0 blocked.
 - Full-contract rollouts: 45/45 audit-valid.
 - False-block observations on valid full-contract rows: 0/45.
 - Command-only route rows: 9/9 completed and 9/9 rejected as non-claim-valid.
@@ -29,8 +31,9 @@ figures are the public contract-validation matrix (CVM) evidence.
 These are route-boundary confound and evidence-gate measurements, not
 policy-superiority claims. The deltas show that removing route geometry changes
 measured behavior and that the evidence gate prevents command-only rows from
-being treated as valid policy evidence. The 36 blocked direct-actor/temporal rows
-are retained as denominator and blocker context, not as a success metric.
+being treated as valid policy evidence. The 36 blocked direct-actor/temporal
+rows are optional gated extension rows retained as denominator and blocker
+context, not public-core dependencies or success metrics.
 
 ## Failure Attribution
 
@@ -67,10 +70,10 @@ passes and the retained failure layer is policy.
 
 ## Remaining Blockers
 
-- `direct_actor_oracle_proxy_missing`: 36 rows remain blocked across core
-  direct-actor rows and the temporal-ablation matrix. The required proxy must
-  be scene-matched; adapters now reject oracle frames whose `scene_id` differs
-  from the current prediction scene.
+- `direct_actor_oracle_proxy_missing`: 36 optional gated rows remain blocked
+  across direct-actor rows in the mixed core matrix and the temporal-ablation
+  matrix. The required proxy must be scene-matched; adapters now reject oracle
+  frames whose `scene_id` differs from the current prediction scene.
 - The temporal full-vs-naive resampling scene ablation is therefore not claimed.
 - Learned `token_dagger_bc` remains outside this CVM because no legitimate
   release checkpoint hash is configured.
@@ -110,6 +113,7 @@ fabricated.
 ## Interpretation
 
 The current aggregate supports a bounded integration-effectiveness claim for
-route-boundary preservation and evidence-gate rejection. It does not support a
-complete direct-actor temporal ablation, learned-policy result, policy-quality
-comparison, or official Waymo benchmark claim.
+the completed dependency-light public core, route-boundary preservation, and
+evidence-gate rejection. It does not support a complete direct-actor temporal
+ablation, learned-policy result, policy-quality comparison, or official Waymo
+benchmark claim.
