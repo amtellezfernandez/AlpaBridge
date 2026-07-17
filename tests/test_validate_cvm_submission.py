@@ -1094,6 +1094,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             fixture = "spot" + "light_reflex"
             unsupported_claim = "we " + "outperform baselines"
             draft_label = "paper " + "draft"
+            generated_draft_url = "auto-" + "draft-214"
             weak_adapter_label = "adapter and evaluation " + "artifact"
             scaffold_label = "artifact " + "scaffold"
             venue_label = "venue-" + "specific row names"
@@ -1110,6 +1111,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
                         fixture,
                         unsupported_claim,
                         draft_label,
+                        generated_draft_url,
                         weak_adapter_label,
                         scaffold_label,
                         venue_label,
@@ -1135,6 +1137,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         self.assertIn("public_hygiene:legacy_smoke_fixture:README.md", failures)
         self.assertIn("public_hygiene:outperformance_claim:README.md", failures)
         self.assertIn("public_hygiene:paper_draft_label:README.md", failures)
+        self.assertIn("public_hygiene:generated_draft_url:README.md", failures)
         self.assertIn("public_hygiene:venue_coupled_process_label:README.md", failures)
         self.assertIn("public_hygiene:weak_adapter_artifact_label:README.md", failures)
         self.assertIn("public_hygiene:weak_artifact_scaffold_label:README.md", failures)

@@ -7,7 +7,7 @@ repository root to reproduce the checks.
 | Command | Result |
 |---|---|
 | `./scripts/build_cvm_paper.sh` | Passed; rebuilt 5-page root `wod2sim.pdf`. |
-| `./.venv/bin/python scripts/validate_cvm_submission.py` | Passed, including metadata-backed title/author/affiliation/abstract checks, output-PDF title/author/subject checks, IEEE A4 source-layout checks, parsed PDF A4 MediaBox checks, LaTeX log warnings, canonical-to-paper generated asset sync, generated-table row/source-field value sync, public local-reference and image-alt checks, README visual/graph explanation checks, prior-layout mapping hygiene checks, README attribution-count sync, paper-number macro value sync, claim-evidence-matrix count sync, embedded PDF font descriptors, manifest-level failure-attribution checks, summary-level attribution partition checks, and README/paper claim-boundary checks. |
+| `./.venv/bin/python scripts/validate_cvm_submission.py` | Passed, including metadata-backed title/author/affiliation/abstract checks, output-PDF title/author/subject checks, IEEE A4 source-layout checks, parsed PDF A4 MediaBox checks, LaTeX log warnings, canonical-to-paper generated asset sync, generated-table row/source-field value sync, public local-reference and image-alt checks, README visual/graph explanation checks, prior-layout mapping hygiene checks, unstable generated citation-slug hygiene checks, README attribution-count sync, paper-number macro value sync, claim-evidence-matrix count sync, embedded PDF font descriptors, manifest-level failure-attribution checks, summary-level attribution partition checks, and README/paper claim-boundary checks. |
 | `make paper-verify PYTHON=./.venv/bin/python` | Passed: rebuilt 5-page root `wod2sim.pdf` and ran submission validation. |
 | `make conformance PYTHON=./.venv/bin/python` | Passed: 274 passed, 14 skipped, 15 subtests passed. |
 | `make demo PYTHON=./.venv/bin/python` | Passed: synthetic demo valid with `valid_claim_evidence=false`. |
@@ -71,6 +71,7 @@ It rejects README visual sections that omit the adapter-boundary disclaimer,
 runtime graph explanations, or the statement that graphs do not evaluate
 policy quality.
 It rejects prior-layout mapping labels from public release text.
+It rejects unstable generated citation slugs from public release text.
 It rejects README failure-attribution count drift from
 `artifacts/cvm/results/summary.json`.
 It rejects aggregate-count drift between
