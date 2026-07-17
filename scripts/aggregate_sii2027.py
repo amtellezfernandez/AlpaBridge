@@ -24,7 +24,7 @@ def main() -> int:
 
     rows = sorted(rows, key=lambda row: (row.get("matrix", ""), row.get("run_id", "")))
     failures = [row for row in rows if row.get("status") != "completed"]
-    summary = _summary(rows=rows, failures=failures)
+    summary = _summary(rows=rows, failures=failures, created_at=_input_created_at(args.inputs))
 
     _write_csv(args.output / "runs.csv", rows, _fields(rows))
     _write_csv(args.output / "failures.csv", failures, _fields(rows))
@@ -53,7 +53,24 @@ def _duplicate_completed_run_ids(rows: list[dict[str, str]]) -> list[str]:
     return sorted(run_id for run_id, count in counts.items() if count > 1)
 
 
-def _summary(*, rows: list[dict[str, str]], failures: list[dict[str, str]]) -> dict[str, Any]:
+def _input_created_at(inputs: Path) -> str:
+    timestamps: list[str] = []
+    for path in sorted(inputs.rglob("summary.json")):
+        if path.parent == inputs:
+            continue
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            continue
+        created_at = payload.get("created_at")
+        if isinstance(created_at, str) and created_at:
+            timestamps.append(created_at)
+    return max(timestamps) if timestamps else datetime.fromtimestamp(0, timezone.utc).isoformat()
+
+
+def _summary(
+    *, rows: list[dict[str, str]], failures: list[dict[str, str]], created_at: str
+) -> dict[str, Any]:
     status_counts = Counter(row.get("status", "") for row in rows)
     matrix_counts = Counter(row.get("matrix", "") for row in rows)
     failure_code_counts = Counter(
@@ -66,7 +83,7 @@ def _summary(*, rows: list[dict[str, str]], failures: list[dict[str, str]]) -> d
     )
     return {
         "schema": "sii2027_aggregate_summary_v1",
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": created_at,
         "data_hash": _hash_rows(rows),
         "attempted_runs": sum(row.get("attempted") == "true" for row in rows),
         "completed_runs": sum(row.get("completed") == "true" for row in rows),

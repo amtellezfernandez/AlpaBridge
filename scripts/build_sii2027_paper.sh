@@ -6,6 +6,26 @@ PAPER_DIR="$ROOT/paper/sii2027"
 LOG_DIR="$ROOT/artifacts/sii2027/logs/paper_build"
 mkdir -p "$LOG_DIR"
 
+if [ -z "${SOURCE_DATE_EPOCH:-}" ]; then
+  SOURCE_DATE_EPOCH="$(
+    python3 - "$ROOT/artifacts/sii2027/results/summary.json" <<'PY' || true
+import datetime as _dt
+import json
+import sys
+
+path = sys.argv[1]
+try:
+    created_at = json.loads(open(path, encoding="utf-8").read()).get("created_at", "")
+    parsed = _dt.datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+    print(int(parsed.timestamp()))
+except Exception:
+    print("0")
+PY
+  )"
+fi
+export SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-0}"
+export FORCE_SOURCE_DATE="${FORCE_SOURCE_DATE:-1}"
+
 if [ ! -f "$PAPER_DIR/main.tex" ]; then
   echo "SII 2027 paper source is missing: paper/sii2027/main.tex" | tee "$LOG_DIR/build.log"
   exit 2

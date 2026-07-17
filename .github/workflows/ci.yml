@@ -120,15 +120,27 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Build paper
-        uses: xu-cheng/latex-action@v4
+      - name: Set up Python
+        uses: actions/setup-python@v6
         with:
-          root_file: paper.tex
-          working_directory: paper
+          python-version: "3.12"
 
-      - name: Stage root paper PDF
+      - name: Set up uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+
+      - name: Install paper dependencies
         run: |
-          cp paper/paper.pdf wod2sim.pdf
+          uv venv .venv
+          uv pip install --python .venv/bin/python -e ".[dev]"
+
+      - name: Install TeX packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y texlive-latex-base texlive-latex-extra texlive-fonts-recommended texlive-bibtex-extra
+
+      - name: Build canonical SII paper
+        run: |
+          PATH="$PWD/.venv/bin:$PATH" make sii2027-paper
           test -s wod2sim.pdf
 
       - name: Upload paper artifact

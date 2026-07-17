@@ -1,5 +1,5 @@
 # System environment
-captured_at_utc=2026-07-17T12:02:15Z
+captured_at_utc=2026-07-17T12:30:38Z
 
 ## uname -a
 Linux MARSO-PC-2778 6.18.33.2-microsoft-standard-WSL2 #1 SMP PREEMPT_DYNAMIC Thu Jun 18 21:54:43 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
@@ -119,7 +119,7 @@ Server:
   /etc/cdi
   /var/run/cdi
  Swarm: inactive
- Runtimes: runc io.containerd.runc.v2 nvidia
+ Runtimes: nvidia runc io.containerd.runc.v2
  Default Runtime: runc
  Init Binary: docker-init
  containerd version:
@@ -148,7 +148,7 @@ Server:
 
 
 ## nvidia-smi
-Fri Jul 17 14:02:17 2026
+Fri Jul 17 14:30:38 2026
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 590.70                 Driver Version: 592.27         CUDA Version: 13.1     |
 +-----------------------------------------+------------------------+----------------------+
@@ -157,7 +157,7 @@ Fri Jul 17 14:02:17 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  NVIDIA GeForce RTX 5080 ...    On  |   00000000:02:00.0  On |                  N/A |
-| N/A   50C    P8             15W /  105W |    1366MiB /  16303MiB |      1%      Default |
+| N/A   52C    P4             25W /  105W |    1928MiB /  16303MiB |      3%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 

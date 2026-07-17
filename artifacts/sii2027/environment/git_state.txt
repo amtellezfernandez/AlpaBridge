@@ -1,5 +1,5 @@
 # Git state
-captured_at_utc=2026-07-17T12:02:15Z
+captured_at_utc=2026-07-17T12:30:38Z
 
 ## pwd
 <repo>
@@ -8,6 +8,7 @@ captured_at_utc=2026-07-17T12:02:15Z
 <repo>
 
 ## git status --short
+ M .github/workflows/ci.yml
  M artifacts/sii2027/environment/git_state.txt
  M artifacts/sii2027/environment/python_packages.txt
  M artifacts/sii2027/environment/simulator_state.txt
@@ -15,152 +16,18 @@ captured_at_utc=2026-07-17T12:02:15Z
  M artifacts/sii2027/figures/evaluation_pipeline.pdf
  M artifacts/sii2027/figures/main_results.pdf
  M artifacts/sii2027/figures/system_architecture.pdf
- M artifacts/sii2027/logs/baseline/build-dist/wod2sim-0.1.0-py3-none-any.whl
- M artifacts/sii2027/logs/baseline/build-dist/wod2sim-0.1.0.tar.gz
  M artifacts/sii2027/logs/baseline/find_maxdepth3.log
  M artifacts/sii2027/logs/paper_build/pdflatex-1.log
  M artifacts/sii2027/logs/paper_build/pdflatex-2.log
  M artifacts/sii2027/logs/paper_build/pdflatex-3.log
- M artifacts/sii2027/manifests/run_manifests/core_constant_velocity_clipgt-01d503d4-449b-46fc-8d78-9085e70d3554_17_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_constant_velocity_clipgt-01d503d4-449b-46fc-8d78-9085e70d3554_29_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_constant_velocity_clipgt-01d503d4-449b-46fc-8d78-9085e70d3554_43_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_constant_velocity_clipgt-02e075b9-fd24-426b-971b-7cfcb2074cc9_17_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_constant_velocity_clipgt-02e075b9-fd24-426b-971b-7cfcb2074cc9_29_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_constant_velocity_clipgt-02e075b9-fd24-426b-971b-7cfcb2074cc9_43_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_constant_velocity_clipgt-048b974e-1546-488a-b8f9-d32bff77f5aa_17_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_constant_velocity_clipgt-048b974e-1546-488a-b8f9-d32bff77f5aa_29_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_constant_velocity_clipgt-048b974e-1546-488a-b8f9-d32bff77f5aa_43_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_constant_velocity_clipgt-0499fb41-122d-4180-83af-f954a9974d3b_17_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_constant_velocity_clipgt-0499fb41-122d-4180-83af-f954a9974d3b_29_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_constant_velocity_clipgt-0499fb41-122d-4180-83af-f954a9974d3b_43_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_constant_velocity_clipgt-05f35348-9de0-4f68-ac65-f31316dbb59e_17_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_constant_velocity_clipgt-05f35348-9de0-4f68-ac65-f31316dbb59e_29_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_constant_velocity_clipgt-05f35348-9de0-4f68-ac65-f31316dbb59e_43_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_constant_velocity_clipgt-07981e6a-22dd-4796-ad2f-1252037ecd28_17_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_constant_velocity_clipgt-07981e6a-22dd-4796-ad2f-1252037ecd28_29_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_constant_velocity_clipgt-07981e6a-22dd-4796-ad2f-1252037ecd28_43_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_direct_actor_planner_clipgt-01d503d4-449b-46fc-8d78-9085e70d3554_17_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_direct_actor_planner_clipgt-01d503d4-449b-46fc-8d78-9085e70d3554_29_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_direct_actor_planner_clipgt-01d503d4-449b-46fc-8d78-9085e70d3554_43_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_direct_actor_planner_clipgt-02e075b9-fd24-426b-971b-7cfcb2074cc9_17_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_direct_actor_planner_clipgt-02e075b9-fd24-426b-971b-7cfcb2074cc9_29_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_direct_actor_planner_clipgt-02e075b9-fd24-426b-971b-7cfcb2074cc9_43_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_direct_actor_planner_clipgt-048b974e-1546-488a-b8f9-d32bff77f5aa_17_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_direct_actor_planner_clipgt-048b974e-1546-488a-b8f9-d32bff77f5aa_29_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_direct_actor_planner_clipgt-048b974e-1546-488a-b8f9-d32bff77f5aa_43_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_direct_actor_planner_clipgt-0499fb41-122d-4180-83af-f954a9974d3b_17_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_direct_actor_planner_clipgt-0499fb41-122d-4180-83af-f954a9974d3b_29_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_direct_actor_planner_clipgt-0499fb41-122d-4180-83af-f954a9974d3b_43_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_direct_actor_planner_clipgt-05f35348-9de0-4f68-ac65-f31316dbb59e_17_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_direct_actor_planner_clipgt-05f35348-9de0-4f68-ac65-f31316dbb59e_29_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_direct_actor_planner_clipgt-05f35348-9de0-4f68-ac65-f31316dbb59e_43_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_direct_actor_planner_clipgt-07981e6a-22dd-4796-ad2f-1252037ecd28_17_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_direct_actor_planner_clipgt-07981e6a-22dd-4796-ad2f-1252037ecd28_29_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_direct_actor_planner_clipgt-07981e6a-22dd-4796-ad2f-1252037ecd28_43_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_route_following_clipgt-01d503d4-449b-46fc-8d78-9085e70d3554_17_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_route_following_clipgt-01d503d4-449b-46fc-8d78-9085e70d3554_29_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_route_following_clipgt-01d503d4-449b-46fc-8d78-9085e70d3554_43_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_route_following_clipgt-02e075b9-fd24-426b-971b-7cfcb2074cc9_17_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_route_following_clipgt-02e075b9-fd24-426b-971b-7cfcb2074cc9_29_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_route_following_clipgt-02e075b9-fd24-426b-971b-7cfcb2074cc9_43_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_route_following_clipgt-048b974e-1546-488a-b8f9-d32bff77f5aa_17_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_route_following_clipgt-048b974e-1546-488a-b8f9-d32bff77f5aa_29_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_route_following_clipgt-048b974e-1546-488a-b8f9-d32bff77f5aa_43_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_route_following_clipgt-0499fb41-122d-4180-83af-f954a9974d3b_17_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_route_following_clipgt-0499fb41-122d-4180-83af-f954a9974d3b_29_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_route_following_clipgt-0499fb41-122d-4180-83af-f954a9974d3b_43_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_route_following_clipgt-05f35348-9de0-4f68-ac65-f31316dbb59e_17_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_route_following_clipgt-05f35348-9de0-4f68-ac65-f31316dbb59e_29_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_route_following_clipgt-05f35348-9de0-4f68-ac65-f31316dbb59e_43_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_route_following_clipgt-07981e6a-22dd-4796-ad2f-1252037ecd28_17_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_route_following_clipgt-07981e6a-22dd-4796-ad2f-1252037ecd28_29_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/core_route_following_clipgt-07981e6a-22dd-4796-ad2f-1252037ecd28_43_full_contract.json
- M artifacts/sii2027/manifests/run_manifests/fault_injection_constant_velocity_17_deployment_docker_unavailable.json
- M artifacts/sii2027/manifests/run_manifests/fault_injection_constant_velocity_17_deployment_gpu_runtime_unavailable.json
- M artifacts/sii2027/manifests/run_manifests/fault_injection_constant_velocity_17_deployment_scene_artifact_missing.json
- M artifacts/sii2027/manifests/run_manifests/fault_injection_constant_velocity_17_evidence_hash_mismatch.json
- M artifacts/sii2027/manifests/run_manifests/fault_injection_constant_velocity_17_evidence_manifest_missing.json
- M artifacts/sii2027/manifests/run_manifests/fault_injection_constant_velocity_17_lifecycle_duplicate_close.json
- M artifacts/sii2027/manifests/run_manifests/fault_injection_constant_velocity_17_lifecycle_late_image.json
- M artifacts/sii2027/manifests/run_manifests/fault_injection_constant_velocity_17_lifecycle_late_route.json
- M artifacts/sii2027/manifests/run_manifests/fault_injection_constant_velocity_17_plugin_optional_backend_missing.json
- M artifacts/sii2027/manifests/run_manifests/fault_injection_constant_velocity_17_semantic_command_only.json
- M artifacts/sii2027/manifests/run_manifests/fault_injection_constant_velocity_17_semantic_road_center_reference.json
- M artifacts/sii2027/manifests/run_manifests/fault_injection_constant_velocity_17_semantic_route_missing.json
- M artifacts/sii2027/manifests/run_manifests/fault_injection_constant_velocity_17_temporal_invalid_sample_count.json
- M artifacts/sii2027/manifests/run_manifests/fault_injection_constant_velocity_17_temporal_nan_trajectory.json
- M artifacts/sii2027/manifests/run_manifests/fault_injection_constant_velocity_17_temporal_stale_observation.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_full_lifecycle_hardening_cycle01.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_full_lifecycle_hardening_cycle02.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_full_lifecycle_hardening_cycle03.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_full_lifecycle_hardening_cycle04.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_full_lifecycle_hardening_cycle05.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_full_lifecycle_hardening_cycle06.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_full_lifecycle_hardening_cycle07.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_full_lifecycle_hardening_cycle08.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_full_lifecycle_hardening_cycle09.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_full_lifecycle_hardening_cycle10.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_full_lifecycle_hardening_cycle11.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_full_lifecycle_hardening_cycle12.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_full_lifecycle_hardening_cycle13.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_full_lifecycle_hardening_cycle14.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_full_lifecycle_hardening_cycle15.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_full_lifecycle_hardening_cycle16.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_full_lifecycle_hardening_cycle17.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_full_lifecycle_hardening_cycle18.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_full_lifecycle_hardening_cycle19.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_full_lifecycle_hardening_cycle20.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_strict_or_pre_hardening_behavior_cycle01.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_strict_or_pre_hardening_behavior_cycle02.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_strict_or_pre_hardening_behavior_cycle03.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_strict_or_pre_hardening_behavior_cycle04.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_strict_or_pre_hardening_behavior_cycle05.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_strict_or_pre_hardening_behavior_cycle06.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_strict_or_pre_hardening_behavior_cycle07.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_strict_or_pre_hardening_behavior_cycle08.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_strict_or_pre_hardening_behavior_cycle09.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_strict_or_pre_hardening_behavior_cycle10.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_strict_or_pre_hardening_behavior_cycle11.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_strict_or_pre_hardening_behavior_cycle12.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_strict_or_pre_hardening_behavior_cycle13.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_strict_or_pre_hardening_behavior_cycle14.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_strict_or_pre_hardening_behavior_cycle15.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_strict_or_pre_hardening_behavior_cycle16.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_strict_or_pre_hardening_behavior_cycle17.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_strict_or_pre_hardening_behavior_cycle18.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_strict_or_pre_hardening_behavior_cycle19.json
- M artifacts/sii2027/manifests/run_manifests/lifecycle_stress_constant_velocity_17_strict_or_pre_hardening_behavior_cycle20.json
- M artifacts/sii2027/reports/claim_evidence_matrix.md
- M artifacts/sii2027/reports/submission_checklist.md
- M artifacts/sii2027/results/core/failures.csv
- M artifacts/sii2027/results/core/runs.csv
- M artifacts/sii2027/results/core/summary.csv
- M artifacts/sii2027/results/core/summary.json
- M artifacts/sii2027/results/failures.csv
- M artifacts/sii2027/results/fault_injection.csv
- M artifacts/sii2027/results/fault_injection/failures.csv
- M artifacts/sii2027/results/fault_injection/fault_injection.csv
- M artifacts/sii2027/results/fault_injection/runs.csv
- M artifacts/sii2027/results/fault_injection/summary.csv
- M artifacts/sii2027/results/fault_injection/summary.json
- M artifacts/sii2027/results/frames.csv
- M artifacts/sii2027/results/lifecycle_stress/failures.csv
- M artifacts/sii2027/results/lifecycle_stress/lifecycle_stress.csv
- M artifacts/sii2027/results/lifecycle_stress/runs.csv
- M artifacts/sii2027/results/lifecycle_stress/summary.csv
- M artifacts/sii2027/results/lifecycle_stress/summary.json
- M artifacts/sii2027/results/runs.csv
- M artifacts/sii2027/results/summary.csv
  M artifacts/sii2027/results/summary.json
  M paper/sii2027/figures/evaluation_pipeline.pdf
  M paper/sii2027/figures/main_results.pdf
  M paper/sii2027/figures/system_architecture.pdf
  M paper/sii2027/main.tex
- M paper/sii2027/paper.pdf
- M paper/sii2027/references.bib
  M scripts/aggregate_sii2027.py
  M scripts/build_sii2027_paper.sh
- M scripts/run_sii2027_matrix.py
+ M scripts/generate_sii2027_figures.py
  M scripts/sii2027_inventory.sh
  M wod2sim.pdf
 
@@ -168,6 +35,6 @@ captured_at_utc=2026-07-17T12:02:15Z
 This status is captured before committing regenerated artifacts; the publish state is the Git commit containing this file.
 
 ## git rev-parse HEAD
-6ea349f85400e5ea4614cedcb0d7da2323a0af7b
+063b6d7248ad7bbca855fef0581282138e7d285a
 
 ## git submodule status --recursive

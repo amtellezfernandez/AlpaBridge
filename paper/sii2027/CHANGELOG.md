@@ -3,7 +3,7 @@
 ## 2026-07-17
 
 - Created the SII 2027 paper workspace.
-- Added Phase A inventory and baseline reports under `artifacts/sii2027/reports/`.
+- Added public inventory and baseline reports under `artifacts/sii2027/reports/`.
 - Added SII configs, matrix expansion, aggregation, generated tables, and generated figures.
 - Added a buildable IEEEtran A4 draft in `main.tex` using the CTAN IEEEtran class copied
   into the paper directory because TeX Live did not provide `IEEEtran.cls`; only trailing

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import tempfile
 from pathlib import Path
@@ -34,23 +35,24 @@ def main() -> int:
 
 def _figure_pdf(output: Path, tikz_body: str) -> None:
     tex = (
-        "\\documentclass[a4paper]{article}\n"
-        "\\usepackage[margin=5mm]{geometry}\n"
+        "\\documentclass[tikz,border=2pt]{standalone}\n"
         "\\usepackage{tikz}\n"
         "\\usetikzlibrary{arrows.meta,positioning}\n"
-        "\\pagestyle{empty}\n"
         "\\begin{document}\n"
-        "\\begin{center}\n"
         + tikz_body
-        + "\n\\end{center}\n\\end{document}\n"
+        + "\n\\end{document}\n"
     )
     with tempfile.TemporaryDirectory() as tmp:
         tmpdir = Path(tmp)
         tex_path = tmpdir / "figure.tex"
         tex_path.write_text(tex, encoding="utf-8")
+        env = os.environ.copy()
+        env.setdefault("SOURCE_DATE_EPOCH", "0")
+        env.setdefault("FORCE_SOURCE_DATE", "1")
         result = subprocess.run(
             ["pdflatex", "-interaction=nonstopmode", "-halt-on-error", tex_path.name],
             cwd=tmpdir,
+            env=env,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,

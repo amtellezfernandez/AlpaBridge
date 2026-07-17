@@ -1,13 +1,14 @@
 # SII 2027 Repository Inventory
 
-Captured: 2026-07-17T11:18Z UTC
+Captured: 2026-07-17T12:30Z UTC
 
 ## Repository State
 
 - Repository root: `<repo>` (`/home/...` prefix redacted in generated artifacts)
-- Git SHA: `1c5d15e0050c486da334fc3551ace87435d1c06d`
-- Initial source state before SII artifact creation: clean `main...origin/main`
-- Current dirty state after Phase A artifact creation: untracked `artifacts/`
+- Git SHA at inventory refresh: `063b6d7248ad7bbca855fef0581282138e7d285a`
+- Initial source state before this cleanup pass: clean `main...origin/main`
+- Current dirty state at inventory refresh: tracked release-surface updates to CI,
+  paper artifacts, inventory logs, and reproducible-generation scripts
 - Git submodules: none reported by `git submodule status --recursive`
 - Raw command logs: `artifacts/sii2027/environment/git_state.txt` and `artifacts/sii2027/logs/baseline/search_*.log`
 
@@ -26,7 +27,7 @@ Captured: 2026-07-17T11:18Z UTC
 
 - Package config: `pyproject.toml`
 - Lockfile: `uv.lock`
-- Active test interpreter used for Phase A: `./.venv/bin/python`
+- Active test interpreter used for release checks: `./.venv/bin/python`
 - Default `python` command: unavailable in this shell; scripts should use `$(PYTHON)` or `./.venv/bin/python`.
 - Project dependencies: `numpy`, `PyYAML`
 - Optional extras: `dev`, `alpasim`, `viz`
@@ -48,12 +49,13 @@ Defined in the current top-level `Makefile`:
 - `verify`
 - `clean`
 
-SII targets added after Phase A:
+SII release targets:
 
 - `sii2027-inventory`
 - `sii2027-check`
 - `sii2027-demo`
 - `sii2027-eval`
+- `sii2027-synthetic`
 - `sii2027-aggregate`
 - `sii2027-paper`
 - `sii2027-validate`
@@ -80,6 +82,7 @@ Current test modules:
 - `tests/test_release_bootstrap_smoke.py`
 - `tests/test_reproduce_closed_loop.py`
 - `tests/test_run_alpasim_scene_batch.py`
+- `tests/test_run_sii2027_matrix.py`
 - `tests/test_support_bundle_command.py`
 - `tests/test_synthetic_contract_demo.py`
 - `tests/test_wod2sim_doctor.py`
@@ -107,7 +110,7 @@ Current scripts relevant to SII 2027:
 - `scripts/wod2sim_doctor.py`
 - `scripts/release_bootstrap_smoke.py`
 
-SII scripts added after Phase A:
+SII release scripts:
 
 - `scripts/sii2027_inventory.sh`
 - `scripts/run_sii2027_matrix.py`

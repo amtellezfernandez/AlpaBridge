@@ -5,6 +5,7 @@
 \usepackage{graphicx}
 \usepackage[hidelinks]{hyperref}
 \usepackage{microtype}
+\usepackage{placeins}
 
 \input{generated/paper_numbers.tex}
 
@@ -181,11 +182,12 @@ unexecuted closed-loop protocols from becoming results.
 \label{fig:pipeline}
 \end{figure}
 
+\FloatBarrier
 \section{Results}
 
 No SII closed-loop result is claim-valid in the current repository state.
 Table~\ref{tab:main-results} reports the aggregate configured status generated from
-`artifacts/sii2027/results/summary.json` and `runs.csv`.
+the retained summary and run-matrix artifacts.
 
 \begin{table}[t]
 \centering
@@ -270,25 +272,24 @@ rollouts exist.
 \appendix[WOD2Sim Repository Artifact Map]
 
 The repository and paper share one release surface. The canonical manuscript artifact is
-\texttt{wod2sim.pdf} at the repository root; \texttt{paper/sii2027/} contains the
-IEEE source, bibliography, generated tables, and copied figure inputs used to build that
-PDF. The legacy source under \texttt{paper/} remains in history but is not the release
-paper and is not built by the top-level \texttt{paper} target.
+the root-level PDF. The SII paper source, bibliography, generated tables, figure inputs,
+matrix configuration, row manifests, aggregate CSV and JSON files, and release reports
+are all kept in named repository directories and rebuilt by the top-level release
+targets. The legacy manuscript source remains only as history; it is not the release
+paper and is not built by the paper target.
 
-The implementation artifacts cited by this paper are repository-native. Semantic and
-temporal adapter code lives under \texttt{src/wod2sim/simulator/}; public launch,
-readiness, audit, support-bundle, and reproduction commands live in the CLI command
-package and thin \texttt{scripts/} wrappers. The SII configuration files in
-\texttt{configs/sii2027/} expand into immutable row manifests under
-\texttt{artifacts/sii2027/manifests/}. Aggregation reads matrix CSVs from
-\texttt{artifacts/sii2027/results/} and regenerates every paper number, table, and
-figure used in the build.
+The implementation artifacts cited by this paper are repository-native. Simulator
+adapters implement the semantic and temporal contracts; CLI commands and script wrappers
+materialize launch, readiness, audit, support-bundle, and reproduction steps; aggregation
+regenerates every number, table, and figure used in the build from the retained matrix
+artifacts.
 
 This appendix is a traceability map, not an additional result. The current root PDF,
 README, reports, and generated artifacts all preserve the same claim boundary: synthetic
 diagnostics are public service-harness evidence, while closed-loop scene rows are not
 claim-valid until executed, audited, and retained in the aggregate denominators.
 
+\IEEEtriggeratref{4}
 \bibliographystyle{ieeetr}
 \bibliography{references}
 

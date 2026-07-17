@@ -35,10 +35,10 @@ redact() {
 } | redact > "$OUT/environment/git_state.txt"
 
 {
-  echo "command=find . -maxdepth 3 -type f | sort"
+  echo "command=git ls-files | sort"
   echo "captured_at_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   echo
-  find . -maxdepth 3 -type f | sort
+  git ls-files | sort
 } | redact > "$OUT/logs/baseline/find_maxdepth3.log"
 
 {
