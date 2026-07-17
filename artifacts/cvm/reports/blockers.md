@@ -4,7 +4,7 @@
 
 - The root paper PDF is the only tracked manuscript PDF: `wod2sim.pdf`.
 - Public artifact vocabulary and paths use the contract-validation matrix
-  (CVM), not venue-specific row names.
+  (CVM).
 - The command-only route ablation is runtime-safe and explicit:
   `WOD2SIM_ROUTE_CONTRACT_MODE=command_only_route`.
 - AlpaSim video rendering is disabled for CVM rows with

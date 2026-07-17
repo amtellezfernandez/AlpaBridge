@@ -3,7 +3,7 @@
 ## 2026-07-17
 
 - Reframed the artifact vocabulary around the portable contract-validation
-  matrix (CVM) instead of venue-specific row names.
+  matrix (CVM).
 - Added runtime-safe command-only route ablation support for `route_following`
   through the explicit `WOD2SIM_ROUTE_CONTRACT_MODE=command_only_route` driver
   environment override.

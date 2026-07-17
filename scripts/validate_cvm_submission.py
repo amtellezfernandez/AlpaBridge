@@ -419,6 +419,7 @@ FORBIDDEN_TEXT_PATTERNS: tuple[tuple[str, Pattern[str]], ...] = (
     ("outperformance_claim", re.compile(r"\bwe\s+outperform\b", re.IGNORECASE)),
     ("sota_claim", re.compile(r"\bSOTA\b")),
     ("paper_draft_label", re.compile(r"\bpaper\s+draft\b", re.IGNORECASE)),
+    ("venue_coupled_process_label", re.compile(r"\bvenue[-\s]+specific\b", re.IGNORECASE)),
     ("weak_adapter_artifact_label", re.compile(r"\badapter\s+and\s+evaluation\s+artifact\b", re.IGNORECASE)),
     ("weak_artifact_scaffold_label", re.compile(r"\bartifact\s+scaffold\b", re.IGNORECASE)),
     (

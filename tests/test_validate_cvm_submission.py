@@ -956,6 +956,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             draft_label = "paper " + "draft"
             weak_adapter_label = "adapter and evaluation " + "artifact"
             scaffold_label = "artifact " + "scaffold"
+            venue_label = "venue-" + "specific row names"
             stale_event_name = "s" + "ii2027"
             third_party_secret = "hf_" + ("B" * 20)
             (root / "README.md").write_text(
@@ -968,6 +969,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
                         draft_label,
                         weak_adapter_label,
                         scaffold_label,
+                        venue_label,
                         stale_event_name,
                     ]
                 ),
@@ -987,6 +989,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         self.assertIn("public_hygiene:legacy_smoke_fixture:README.md", failures)
         self.assertIn("public_hygiene:outperformance_claim:README.md", failures)
         self.assertIn("public_hygiene:paper_draft_label:README.md", failures)
+        self.assertIn("public_hygiene:venue_coupled_process_label:README.md", failures)
         self.assertIn("public_hygiene:weak_adapter_artifact_label:README.md", failures)
         self.assertIn("public_hygiene:weak_artifact_scaffold_label:README.md", failures)
         self.assertIn("public_hygiene:stale_target_event_artifact_name:README.md", failures)
