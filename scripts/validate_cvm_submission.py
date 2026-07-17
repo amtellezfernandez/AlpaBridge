@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import re
 import subprocess
@@ -34,6 +35,24 @@ EXPECTED_ATTRIBUTION_BY_STATUS = {
     "completed": "diagnostic_rollout_pending_claim_gate",
     "planned": "planned_not_launched",
 }
+REQUIRED_FRAME_FIELDS = (
+    "run_id",
+    "frame_index",
+    "sim_timestamp",
+    "observation_timestamp",
+    "observation_age_ms",
+    "camera_count",
+    "route_source",
+    "route_waypoint_count",
+    "source_trajectory_samples",
+    "target_trajectory_samples",
+    "trajectory_valid",
+    "inference_latency_ms",
+    "end_to_end_action_latency_ms",
+    "late_message_count",
+    "lifecycle_warning_code",
+    "policy_reasoning_status_code",
+)
 EXPECTED_TITLE = (
     "WOD2Sim: Contract-Based System Integration of Dataset-Trained Driving Policies "
     "into Distributed Closed-Loop Simulation"
@@ -191,6 +210,7 @@ def main() -> int:
                 figure_dirs=(args.figures, args.source / "figures"),
             )
         )
+    failures.extend(_frame_schema_failures(args.results / "frames.csv"))
     failures.extend(_manifest_attribution_failures(args.results.parent / "manifests" / "run_manifests"))
     failures.extend(
         _release_hygiene_failures(repo_root=args.repo_root, canonical_paper=args.paper)
@@ -257,6 +277,23 @@ def _generated_artifact_failures(
             if expected_marker not in info:
                 failures.append(f"generated_figure_hash_mismatch:{path}")
     return failures
+
+
+def _frame_schema_failures(path: Path) -> list[str]:
+    if not path.is_file():
+        return [f"missing_frames_csv:{path}"]
+    with path.open(newline="", encoding="utf-8") as handle:
+        try:
+            header = next(csv.reader(handle))
+        except StopIteration:
+            return [f"empty_frames_csv:{path}"]
+    missing = [field for field in REQUIRED_FRAME_FIELDS if field not in header]
+    if missing:
+        return [f"frames_csv_missing_fields:{path}:{','.join(missing)}"]
+    unexpected_order = list(REQUIRED_FRAME_FIELDS)
+    if header[: len(unexpected_order)] != unexpected_order:
+        return [f"frames_csv_field_order_mismatch:{path}"]
+    return []
 
 
 def _manifest_attribution_failures(manifest_dir: Path) -> list[str]:
