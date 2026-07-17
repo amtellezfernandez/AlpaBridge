@@ -1,5 +1,7 @@
 # CLI
 
+The contract-validation matrix (CVM) is referenced in the release targets below.
+
 ## Setup And Execution
 
 | Command | Purpose |

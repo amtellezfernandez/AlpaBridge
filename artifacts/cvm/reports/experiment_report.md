@@ -4,7 +4,7 @@ Current status: the public aggregate contains completed dependency-light core
 rollouts, completed semantic closed-loop ablation pairs, public synthetic
 lifecycle/fault diagnostics, and explicit direct-actor blockers. Raw local
 rollout directories remain ignored; CSV/JSON aggregates, manifests, tables, and
-figures are the public evidence.
+figures are the public contract-validation matrix (CVM) evidence.
 
 ## Configured Matrices
 

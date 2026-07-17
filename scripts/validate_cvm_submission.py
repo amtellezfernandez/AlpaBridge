@@ -153,6 +153,8 @@ REQUIRED_SCENE_FIELDS = (
     "license_gating_status",
     "categories_verified",
 )
+CVM_DEFINITION_TERM = "contract-validation matrix (CVM)"
+CVM_ACRONYM_RE = re.compile(r"\bCVM\b")
 CONTRACT_TEST_AUDIT_REQUIRED_TERMS = (
     "# Contract Test Audit",
     "Semantic Contract",
@@ -2048,11 +2050,25 @@ def _release_hygiene_failures(*, repo_root: Path, canonical_paper: Path) -> list
         for label, pattern in FORBIDDEN_TEXT_PATTERNS:
             if pattern.search(text):
                 failures.append(f"public_hygiene:{label}:{rel_path}")
+        failures.extend(_cvm_acronym_definition_failures(path=path, text=text, root=root))
         failures.extend(_public_local_reference_failures(path=path, text=text, root=root))
         failures.extend(_public_image_alt_failures(path=path, text=text, root=root))
     for archive_path in _iter_public_scan_archives(root):
         failures.extend(_archive_hygiene_failures(archive_path, root=root))
     return failures
+
+
+def _cvm_acronym_definition_failures(*, path: Path, text: str, root: Path) -> list[str]:
+    try:
+        relative = path.relative_to(root)
+    except ValueError:
+        relative = path
+    is_public_prose = path.suffix.lower() == ".md" or relative.as_posix() == "paper/cvm/main.tex"
+    if not is_public_prose or not CVM_ACRONYM_RE.search(text):
+        return []
+    if _contains_claim_term(text, CVM_DEFINITION_TERM):
+        return []
+    return [f"public_hygiene:cvm_acronym_undefined:{relative}"]
 
 
 def _community_template_failures(*, repo_root: Path) -> list[str]:

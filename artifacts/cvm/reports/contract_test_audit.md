@@ -1,7 +1,8 @@
 # Contract Test Audit
 
-This report maps the public CVM contract-test surface to executable tests and
-explicit gaps. It is a traceability report, not a new result table. A row marked
+This report maps the public contract-validation matrix (CVM) contract-test
+surface to executable tests and explicit gaps. It is a traceability report, not
+a new result table. A row marked
 `Covered` means the stated behavior is exercised by the listed public tests or
 generated artifacts. A row marked `Partially covered` means unit or synthetic
 coverage exists, but simulator-backed or gated-asset evidence is still missing.

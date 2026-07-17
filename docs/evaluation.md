@@ -90,9 +90,10 @@ result.
 ## Current Status
 
 The release checks package, semantic, temporal, lifecycle, deployment, and
-evidence contracts. The CVM includes completed dependency-light closed-loop
-diagnostic rows on locally available gated scene assets, completed semantic
-route-boundary ablations, and public synthetic lifecycle/fault diagnostics.
+evidence contracts. The contract-validation matrix (CVM) includes completed
+dependency-light closed-loop diagnostic rows on locally available gated scene
+assets, completed semantic route-boundary ablations, and public synthetic
+lifecycle/fault diagnostics.
 Those rows are retained as integration evidence, not as a public policy
 benchmark.
 

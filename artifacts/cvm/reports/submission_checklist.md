@@ -1,5 +1,8 @@
 # Release Checklist
 
+The contract-validation matrix (CVM) is the release evidence surface referenced
+in this checklist.
+
 - [x] Paper is 4-6 A4 pages, or justified <=8-page paid version.
 - [x] PDF is <=6 MB.
 - [x] PDF MediaBox is parsed and validated as portrait A4.

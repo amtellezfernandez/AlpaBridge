@@ -1,6 +1,7 @@
 # Baseline And Final Audit Report
 
-This report records the command evidence for the CVM release surface.
+This report records the command evidence for the contract-validation matrix
+(CVM) release surface.
 Commands were run from the repository root. The original baseline used
 `./.venv/bin/python`; the latest refresh uses the locked `uv run python`
 environment that CI now exercises.
@@ -35,20 +36,20 @@ package.
 | Command | Exit | Result |
 |---|---:|---|
 | `make cvm-inventory PYTHON='uv run python'` | 0 | Refreshes ignored redacted environment/log snapshots under `artifacts/cvm`. |
-| `make cvm-check PYTHON='uv run python'` | 0 | Ruff passed; conformance suite passed with 300 passed, 14 skipped, and 15 subtests passed; paper validation passed with package metadata, CI workflow, community-template, policy-table, paper metadata, PDF metadata/page-size/font, source-layout, LaTeX-log, generated-copy, generated-table-value, local-reference, image-alt, command-documentation, README-visual, evaluation-status, README-count, paper-number, claim-matrix, contract-test audit, attribution-boundary, and generic credential-leak checks. |
+| `make cvm-check PYTHON='uv run python'` | 0 | Ruff passed; conformance suite passed with 302 passed, 14 skipped, and 15 subtests passed; paper validation passed with package metadata, CI workflow, community-template, policy-table, paper metadata, PDF metadata/page-size/font, source-layout, LaTeX-log, generated-copy, generated-table-value, local-reference, image-alt, command-documentation, README-visual, evaluation-status, README-count, paper-number, claim-matrix, contract-test audit, attribution-boundary, and generic credential-leak checks. |
 | `make demo PYTHON='uv run python'` | 0 | Synthetic demo artifact valid; `valid_claim_evidence=false`. |
 | `make cvm-eval PYTHON='uv run python'` | 2 | Expected blocked-status exit: 36 completed core rows preserved and 18 direct-actor rows blocked by `direct_actor_oracle_proxy_missing`. |
 | `make paper-verify PYTHON='uv run python'` | 0 | Rebuilt 5-page root `wod2sim.pdf` and ran submission validation. |
 | `uv run python scripts/validate_cvm_submission.py` | 0 | Submission validation passed, including package metadata checks, CI workflow gate checks, community-template claim-boundary checks, metadata-backed title/author/affiliation/abstract checks, output-PDF title/author/subject checks, IEEE A4 source-layout checks, parsed PDF A4 MediaBox checks, LaTeX log warnings, canonical-to-paper generated asset sync, generated-table row/source-field value sync, public local-reference and image-alt checks, CLI command-documentation drift checks, README visual/graph explanation checks, evaluation-status checks, venue-style benchmark-label checks, unstable generated citation-slug hygiene checks, README attribution-count sync, paper-number macro value sync, claim-evidence-matrix count sync, contract-test audit coverage checks, embedded PDF font descriptors, per-manifest `failure_attribution` consistency, summary-level attribution partition checks, generic credential-leak checks, and README/paper claim-boundary terms. |
-| `qpdf --check wod2sim.pdf && pdfinfo wod2sim.pdf && pdffonts wod2sim.pdf` | 0 | PDF syntax passed; `pdfinfo` reported 5 pages, portrait A4, and 139840 bytes; `pdffonts` reported embedded fonts. |
+| `qpdf --check wod2sim.pdf && pdfinfo wod2sim.pdf && pdffonts wod2sim.pdf` | 0 | PDF syntax passed; `pdfinfo` reported 5 pages, portrait A4, and 139638 bytes; `pdffonts` reported embedded fonts. |
 
 ## Latest Submission Gate Refresh
 
 | Command | End UTC | Exit | Result |
 |---|---|---:|---|
-| `uv run python -m pytest -q tests/test_validate_cvm_submission.py` | 2026-07-17T22:39:57Z | 0 | 64 passed, including package metadata, CI workflow, community-template, source metadata, output-PDF metadata, A4 MediaBox, embedded-font, layout-hack, LaTeX-log, generated-copy, generated-table-value, local-reference, image-alt, CLI command-documentation, README-visual, evaluation-status, venue-style benchmark-label hygiene, citation-slug hygiene, README-count, paper-number, claim-matrix, contract-test audit, and credential-hygiene validation fixtures. |
-| `make paper-verify PYTHON='uv run python'` | 2026-07-17T22:39:57Z | 0 | Rebuilt 5-page root `wod2sim.pdf`; submission validation passed with package metadata, CI workflow, community-template, source metadata, output-PDF metadata, source-layout, PDF A4 MediaBox, embedded-font, LaTeX-log, generated-copy, generated-table row/source-field, local-reference, image-alt, command-documentation, README-visual, evaluation-status, README-count, paper-number, claim-matrix, contract-test audit, and credential-hygiene enforcement. |
-| `make cvm-check PYTHON='uv run python'` | 2026-07-17T22:39:57Z | 0 | Ruff passed; conformance passed with 300 passed, 14 skipped, and 15 subtests passed; submission validation passed with package metadata, CI workflow, community-template, command-documentation, README-visual, evaluation-status, policy-table, contract-test audit, and credential-hygiene checks. |
+| `uv run python -m pytest -q tests/test_validate_cvm_submission.py` | 2026-07-17T22:48:16Z | 0 | 66 passed, including package metadata, CI workflow, community-template, source metadata, output-PDF metadata, A4 MediaBox, embedded-font, layout-hack, LaTeX-log, generated-copy, generated-table-value, local-reference, image-alt, CLI command-documentation, README-visual, evaluation-status, venue-style benchmark-label hygiene, citation-slug hygiene, README-count, paper-number, claim-matrix, contract-test audit, CVM acronym-definition, and credential-hygiene validation fixtures. |
+| `make paper-verify PYTHON='uv run python'` | 2026-07-17T22:48:18Z | 0 | Rebuilt 5-page root `wod2sim.pdf` at 139638 bytes; submission validation passed with package metadata, CI workflow, community-template, source metadata, output-PDF metadata, source-layout, PDF A4 MediaBox, embedded-font, LaTeX-log, generated-copy, generated-table row/source-field, local-reference, image-alt, command-documentation, README-visual, evaluation-status, README-count, paper-number, claim-matrix, contract-test audit, CVM acronym-definition, and credential-hygiene enforcement. |
+| `make cvm-check PYTHON='uv run python'` | 2026-07-17T22:48:22Z | 0 | Ruff passed; conformance passed with 302 passed, 14 skipped, and 15 subtests passed; submission validation passed with package metadata, CI workflow, community-template, command-documentation, README-visual, evaluation-status, policy-table, contract-test audit, CVM acronym-definition, and credential-hygiene checks. |
 
 ## Important Warnings
 

@@ -27,24 +27,24 @@ Email: amtellezfernandez@gmail.com}
 \maketitle
 
 \begin{abstract}
-Closed-loop simulation is useful only when a failure can be assigned to the policy
-being evaluated rather than to the integration layer that drives the simulator.
-Dataset-trained driving policies are usually built around logged observations, route
-geometry or route intent, and fixed-cadence trajectory predictions; a distributed
-simulator delivers asynchronous messages, expects actions on its own control clock,
-and depends on runtime preconditions that may be invisible in a benchmark table.
-WOD2Sim treats this mismatch as a system-integration problem instead of a format
-conversion problem. It defines a contract-validation layer for WOD-style policies
-running as AlpaSim external drivers: semantic contracts preserve route and scene
-meaning, temporal contracts resample trajectories on the simulator grid, lifecycle
-contracts keep driver sessions explicit and idempotent, deployment contracts
-materialize prerequisites, and evidence contracts decide when a rollout can support a
-policy claim. The reference implementation provides dependency-light policies,
-learned-policy entry points, actor-aware planner hooks, manifests, audits, and
-aggregation scripts behind one driver interface. The current public release reports
-contract-validity and failure-attribution evidence, not a claim-valid policy
-benchmark; rows that violate integration, precondition, or evidence contracts are
-retained as non-policy-attributed failures.
+Closed-loop simulation can evaluate a driving policy only after the simulator boundary
+has preserved the information and timing assumptions under which that policy was
+trained. Dataset-trained trajectory policies consume logged observations, route
+geometry or route intent, and fixed-cadence ego-relative forecasts; a distributed
+simulator delivers asynchronous sensor messages, expects actions on its own control
+clock, and depends on runtime assets whose absence can look like poor policy behavior.
+WOD2Sim frames this mismatch as contract-based system integration rather than file
+conversion. It defines a validation layer for WOD-style trajectory policies running as
+AlpaSim external drivers: semantic contracts preserve route and scene meaning,
+temporal contracts adapt trajectories to the simulator clock, lifecycle contracts make
+driver sessions explicit and idempotent, deployment contracts expose run preconditions,
+and evidence contracts decide whether a rollout can support a policy claim. The
+reference implementation provides dependency-light baselines, learned-policy and
+actor-aware planner entry points, manifests, audits, and aggregation scripts behind one
+interface. The key rule is separation between integration failure and policy failure: a
+row that violates an integration, deployment, or evidence contract is not reported as
+policy behavior or policy failure. The current release therefore presents a
+reproducible integration-validity package, not a public closed-loop policy benchmark.
 \end{abstract}
 
 \section{Introduction}
@@ -166,8 +166,9 @@ The implementation registers dependency-light baselines and learned-policy adapt
 points through AlpaSim model discovery. Constant-velocity and route-following baselines
 do not require learned checkpoints. Token BC/DAgger and direct actor-aware planning
 entry points are present, but their execution requires the relevant local checkpoint or
-scene-matched actor-proxy artifacts. The current CVM therefore treats missing
-direct-actor proxy state as a deployment blocker, not as a policy failure.
+scene-matched actor-proxy artifacts. The current contract-validation matrix (CVM)
+therefore treats missing direct-actor proxy state as a deployment blocker, not as a
+policy failure.
 
 \section{Implementation and Evaluation Method}
 

@@ -50,7 +50,8 @@ If you touch the paper:
 make paper
 ```
 
-If you touch CVM artifacts, public docs, claim wording, or paper validation:
+If you touch contract-validation matrix (CVM) artifacts, public docs, claim
+wording, or paper validation:
 
 ```bash
 make cvm-check

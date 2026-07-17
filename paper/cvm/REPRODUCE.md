@@ -1,4 +1,4 @@
-# Reproducing Current WOD2Sim CVM Artifacts
+# Reproducing Current WOD2Sim Contract-Validation Matrix (CVM) Artifacts
 
 Current status: buildable WOD2Sim paper package with completed dependency-light
 core rows, completed semantic closed-loop ablation rows, public synthetic

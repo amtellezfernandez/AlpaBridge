@@ -1353,6 +1353,39 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         self.assertIn("public_local_reference_missing:README.md:docs/assets/missing.svg", failures)
         self.assertIn("public_local_reference_outside_root:README.md:../outside.md", failures)
 
+    def test_release_hygiene_accepts_defined_cvm_acronym(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            readme = root / "README.md"
+            readme.write_text(
+                "The contract-validation matrix (CVM) keeps configured rows separate.\n",
+                encoding="utf-8",
+            )
+
+            failures = module._cvm_acronym_definition_failures(
+                path=readme,
+                text=readme.read_text(encoding="utf-8"),
+                root=root,
+            )
+
+        self.assertEqual([], failures)
+
+    def test_release_hygiene_reports_undefined_cvm_acronym(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            readme = root / "README.md"
+            readme.write_text("The CVM has configured rows.\n", encoding="utf-8")
+
+            failures = module._cvm_acronym_definition_failures(
+                path=readme,
+                text=readme.read_text(encoding="utf-8"),
+                root=root,
+            )
+
+        self.assertEqual(["public_hygiene:cvm_acronym_undefined:README.md"], failures)
+
     def test_release_hygiene_reports_sensitive_or_weak_public_text(self) -> None:
         module = _load_module()
         with tempfile.TemporaryDirectory() as tmp:

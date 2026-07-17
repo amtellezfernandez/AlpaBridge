@@ -13,8 +13,8 @@
 
 The canonical [paper PDF](../wod2sim.pdf), [paper source](../paper/cvm/),
 and [generated evidence package](../artifacts/cvm/) describe the contract-based
-integration boundary in detail. The CVM material is the WOD2Sim reproducibility
-package, not a separate project.
+integration boundary in detail. The contract-validation matrix (CVM) material is
+the WOD2Sim reproducibility package, not a separate project.
 For release traceability, see the generated-report surface under
 [`artifacts/cvm/reports`](../artifacts/cvm/reports/), especially the
 [`contract_test_audit.md`](../artifacts/cvm/reports/contract_test_audit.md)

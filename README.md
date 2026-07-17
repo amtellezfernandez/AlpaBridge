@@ -23,6 +23,9 @@ paper source lives in [`paper/cvm`](paper/cvm), while the generated evidence,
 manifests, tables, and figures live in [`artifacts/cvm`](artifacts/cvm).
 Those directories are the reproducibility package for WOD2Sim; they are not a
 separate project.
+In public text, the **contract-validation matrix (CVM)** is the neutral
+configured evidence matrix used to separate runnable rows, blockers,
+diagnostics, and claim-valid policy evidence.
 
 Here, **WOD-style** means a short-horizon trajectory-policy interface inspired
 by the Waymo Open Dataset end-to-end setting: logged observations, route intent,

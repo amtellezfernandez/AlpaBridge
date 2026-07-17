@@ -2,6 +2,8 @@
 
 This matrix gates paper claims. A claim is paper-supported only when the current
 status names concrete generated artifacts and the paper keeps the same boundary.
+The contract-validation matrix (CVM) is the configured evidence matrix
+summarized throughout this report.
 
 | Claim | Contract layer | Required evidence | Producing command | Test | Artifact | Current status | Paper location |
 |---|---|---|---|---|---|---|---|
