@@ -184,6 +184,39 @@ FORBIDDEN_TEXT_PATTERNS: tuple[tuple[str, Pattern[str]], ...] = (
     ("weak_adapter_artifact_label", re.compile(r"\badapter\s+and\s+evaluation\s+artifact\b", re.IGNORECASE)),
     ("weak_artifact_scaffold_label", re.compile(r"\bartifact\s+scaffold\b", re.IGNORECASE)),
     (
+        "old_internal_layout_reference",
+        re.compile(
+            r"\bold\s+"
+            + "internal"
+            + r"\b|\boriginal\s+"
+            + "internal"
+            + r"\b",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "legacy_deliverable_layout_reference",
+        re.compile(
+            r"\bdeliverable\s+"
+            + "layout"
+            + r"\b|\binternal\s+"
+            + "deliverable"
+            + r"\b",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "legacy_equivalence_map_reference",
+        re.compile(
+            r"\bequivalence\s+"
+            + "map"
+            + r"\b|\bneutral\s+"
+            + "CVM"
+            + r"\s+equivalence\b",
+            re.IGNORECASE,
+        ),
+    ),
+    (
         "venue_coupled_artifact_name",
         re.compile(
             r"\b"
