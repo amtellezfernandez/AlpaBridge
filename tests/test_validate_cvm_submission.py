@@ -488,6 +488,41 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             failures,
         )
 
+    def test_evaluation_status_accepts_diagnostic_and_benchmark_boundary(self) -> None:
+        module = _load_module()
+        evaluation = (
+            "The CVM includes completed dependency-light closed-loop diagnostic rows "
+            "on locally available gated scene assets, completed semantic "
+            "route-boundary ablations, and integration evidence, not as a public "
+            "policy benchmark. The release excludes a redistributable scene subset, "
+            "verified scene-category coverage, and a claim-ready closed-loop policy "
+            "benchmark.\n"
+        )
+
+        failures = module._evaluation_status_failures(
+            evaluation_text=evaluation,
+            evaluation_path=Path("docs/evaluation.md"),
+        )
+
+        self.assertEqual([], failures)
+
+    def test_evaluation_status_rejects_ambiguous_current_status(self) -> None:
+        module = _load_module()
+
+        failures = module._evaluation_status_failures(
+            evaluation_text="The release has no benchmark result.\n",
+            evaluation_path=Path("docs/evaluation.md"),
+        )
+
+        self.assertIn(
+            "evaluation_status_missing:docs/evaluation.md:completed dependency-light closed-loop diagnostic rows",
+            failures,
+        )
+        self.assertIn(
+            "evaluation_status_missing:docs/evaluation.md:not as a public policy benchmark",
+            failures,
+        )
+
     def test_summary_attribution_requires_policy_partition(self) -> None:
         module = _load_module()
         with tempfile.TemporaryDirectory() as tmp:

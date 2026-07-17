@@ -179,6 +179,16 @@ README_VISUAL_EXPLANATION_TERMS = (
     "service replica counts",
     "do not evaluate policy quality",
 )
+EVALUATION_STATUS_TERMS = (
+    "completed dependency-light closed-loop diagnostic rows",
+    "locally available gated scene assets",
+    "semantic route-boundary ablations",
+    "integration evidence",
+    "not as a public policy benchmark",
+    "redistributable scene subset",
+    "verified scene-category coverage",
+    "claim-ready closed-loop policy benchmark",
+)
 REQUIRED_SUMMARY_ATTRIBUTION_FIELDS = (
     "rule",
     "contract_valid_closed_loop_rows",
@@ -574,6 +584,18 @@ def main() -> int:
         _readme_visual_explanation_failures(
             readme_text=readme_text,
             readme_path=readme_path,
+        )
+    )
+    evaluation_path = args.repo_root / "docs" / "evaluation.md"
+    evaluation_text = (
+        evaluation_path.read_text(encoding="utf-8", errors="ignore")
+        if evaluation_path.is_file()
+        else ""
+    )
+    failures.extend(
+        _evaluation_status_failures(
+            evaluation_text=evaluation_text,
+            evaluation_path=evaluation_path,
         )
     )
 
@@ -1033,6 +1055,14 @@ def _readme_visual_explanation_failures(*, readme_text: str, readme_path: Path) 
     for term in README_VISUAL_EXPLANATION_TERMS:
         if not _contains_claim_term(readme_text, term):
             failures.append(f"readme_visual_explanation_missing:{readme_path}:{term}")
+    return failures
+
+
+def _evaluation_status_failures(*, evaluation_text: str, evaluation_path: Path) -> list[str]:
+    failures: list[str] = []
+    for term in EVALUATION_STATUS_TERMS:
+        if not _contains_claim_term(evaluation_text, term):
+            failures.append(f"evaluation_status_missing:{evaluation_path}:{term}")
     return failures
 
 

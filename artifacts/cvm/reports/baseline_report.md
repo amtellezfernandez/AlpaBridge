@@ -21,20 +21,20 @@ package.
 
 | Command | Start UTC | End UTC | Duration | Exit | Result |
 |---|---|---|---:|---:|---|
-| `./.venv/bin/python -m pytest -q tests -k "semantic or route"` | 2026-07-17T20:18:32Z | 2026-07-17T20:18:32Z | 0.24s | 0 | 10 passed, 278 deselected after release-validator hardening. |
-| `./.venv/bin/python -m pytest -q tests -k "temporal or resampl"` | 2026-07-17T20:18:32Z | 2026-07-17T20:18:32Z | 0.23s | 0 | 10 passed, 278 deselected, 15 subtests passed after release-validator hardening. |
-| `./.venv/bin/python -m pytest -q tests -k "lifecycle or session"` | 2026-07-17T20:18:32Z | 2026-07-17T20:18:32Z | 0.19s | 0 | 10 passed, 278 deselected after release-validator hardening. |
-| `./.venv/bin/python -m pytest -q tests -k "plugin or entry_point"` | 2026-07-17T20:18:32Z | 2026-07-17T20:18:32Z | 0.55s | 0 | 5 passed, 283 deselected after release-validator hardening. |
-| `./.venv/bin/python -m pytest -q tests -k "deployment or readiness or launch"` | 2026-07-17T20:18:32Z | 2026-07-17T20:18:32Z | 0.44s | 0 | 20 passed, 268 deselected after release-validator hardening. |
-| `./.venv/bin/python -m pytest -q tests -k "evidence or audit or benchmark"` | 2026-07-17T20:18:32Z | 2026-07-17T20:18:32Z | 0.36s | 0 | 21 passed, 267 deselected after release-validator hardening. |
-| `./.venv/bin/python -m pytest -q tests -k "fault"` | 2026-07-17T20:18:32Z | 2026-07-17T20:18:32Z | 0.25s | 0 | 5 passed, 283 deselected after release-validator hardening. |
+| `./.venv/bin/python -m pytest -q tests -k "semantic or route"` | 2026-07-17T20:31:58Z | 2026-07-17T20:31:58Z | 0.28s | 0 | 10 passed, 280 deselected after release-validator hardening. |
+| `./.venv/bin/python -m pytest -q tests -k "temporal or resampl"` | 2026-07-17T20:31:58Z | 2026-07-17T20:31:58Z | 0.25s | 0 | 10 passed, 280 deselected, 15 subtests passed after release-validator hardening. |
+| `./.venv/bin/python -m pytest -q tests -k "lifecycle or session"` | 2026-07-17T20:31:58Z | 2026-07-17T20:31:58Z | 0.20s | 0 | 10 passed, 280 deselected after release-validator hardening. |
+| `./.venv/bin/python -m pytest -q tests -k "plugin or entry_point"` | 2026-07-17T20:31:58Z | 2026-07-17T20:31:58Z | 0.53s | 0 | 5 passed, 285 deselected after release-validator hardening. |
+| `./.venv/bin/python -m pytest -q tests -k "deployment or readiness or launch"` | 2026-07-17T20:31:58Z | 2026-07-17T20:31:58Z | 0.45s | 0 | 20 passed, 270 deselected after release-validator hardening. |
+| `./.venv/bin/python -m pytest -q tests -k "evidence or audit or benchmark"` | 2026-07-17T20:31:58Z | 2026-07-17T20:31:58Z | 0.35s | 0 | 22 passed, 268 deselected after release-validator hardening. |
+| `./.venv/bin/python -m pytest -q tests -k "fault"` | 2026-07-17T20:31:58Z | 2026-07-17T20:31:58Z | 0.25s | 0 | 5 passed, 285 deselected after release-validator hardening. |
 
 ## Release Commands
 
 | Command | Exit | Result |
 |---|---:|---|
 | `make cvm-inventory PYTHON=./.venv/bin/python` | 0 | Refreshed ignored redacted environment/log snapshots under `artifacts/cvm`. |
-| `make cvm-check PYTHON=./.venv/bin/python` | 0 | Ruff passed; conformance suite passed with 274 passed, 14 skipped, and 15 subtests passed after metadata, PDF metadata/page-size/font, source-layout, LaTeX-log, generated-copy, generated-table-value, local-reference, image-alt, README-visual, README-count, paper-number, and claim-matrix validation hardening; paper validation passed. |
+| `make cvm-check PYTHON=./.venv/bin/python` | 0 | Ruff passed; conformance suite passed with 276 passed, 14 skipped, and 15 subtests passed after metadata, PDF metadata/page-size/font, source-layout, LaTeX-log, generated-copy, generated-table-value, local-reference, image-alt, README-visual, evaluation-status, README-count, paper-number, and claim-matrix validation hardening; paper validation passed. |
 | `make cvm-demo PYTHON=./.venv/bin/python` | 0 | Synthetic demo artifact valid; `valid_claim_evidence=false`. |
 | `make cvm-eval PYTHON=./.venv/bin/python` | 2 | Expected blocked-status exit: 36 completed core rows preserved, 18 direct-actor rows blocked by `direct_actor_oracle_proxy_missing`. |
 | `make cvm-aggregate PYTHON=./.venv/bin/python` | 0 | Regenerated aggregate tables and figures from retained CVM results. |
@@ -42,15 +42,15 @@ package.
 | `make cvm-validate PYTHON=./.venv/bin/python` | 0 | Submission validation passed. |
 | `make paper-verify PYTHON=./.venv/bin/python` | 0 | Rebuilt 5-page root `wod2sim.pdf` and ran submission validation. |
 | `make verify PYTHON=./.venv/bin/python` | 0 | Lint, conformance, coverage, bootstrap smoke, package build, paper rebuild, and submission validation all passed. |
-| `./.venv/bin/python scripts/validate_cvm_submission.py` | 0 | Submission validation passed, including metadata-backed title/author/affiliation/abstract checks, output-PDF title/author/subject checks, IEEE A4 source-layout checks, parsed PDF A4 MediaBox checks, LaTeX log warnings, canonical-to-paper generated asset sync, generated-table row/source-field value sync, public local-reference and image-alt checks, README visual/graph explanation checks, prior-layout mapping hygiene checks, unstable generated citation-slug hygiene checks, README attribution-count sync, paper-number macro value sync, claim-evidence-matrix count sync, embedded PDF font descriptors, per-manifest `failure_attribution` consistency, summary-level attribution partition checks, and README/paper claim-boundary terms. |
+| `./.venv/bin/python scripts/validate_cvm_submission.py` | 0 | Submission validation passed, including metadata-backed title/author/affiliation/abstract checks, output-PDF title/author/subject checks, IEEE A4 source-layout checks, parsed PDF A4 MediaBox checks, LaTeX log warnings, canonical-to-paper generated asset sync, generated-table row/source-field value sync, public local-reference and image-alt checks, README visual/graph explanation checks, evaluation-status checks, prior-layout mapping hygiene checks, unstable generated citation-slug hygiene checks, README attribution-count sync, paper-number macro value sync, claim-evidence-matrix count sync, embedded PDF font descriptors, per-manifest `failure_attribution` consistency, summary-level attribution partition checks, and README/paper claim-boundary terms. |
 
 ## Latest Submission Gate Refresh
 
 | Command | End UTC | Exit | Result |
 |---|---|---:|---|
-| `./.venv/bin/python -m pytest -q tests/test_validate_cvm_submission.py` | 2026-07-17T20:28:48Z | 0 | 44 passed, including source metadata, output-PDF metadata, A4 MediaBox, embedded-font, layout-hack, LaTeX-log, generated-copy, generated-table-value, local-reference, image-alt, README-visual, prior-layout hygiene, citation-slug hygiene, README-count, paper-number, and claim-matrix validation fixtures. |
-| `make paper-verify PYTHON=./.venv/bin/python` | 2026-07-17T20:28:48Z | 0 | Rebuilt 5-page root `wod2sim.pdf`; submission validation passed with source metadata, output-PDF metadata, source-layout, PDF A4 MediaBox, embedded-font, LaTeX-log, generated-copy, generated-table row/source-field, local-reference, image-alt, README-visual, prior-layout hygiene, README-count, paper-number, and claim-matrix enforcement. |
-| `make cvm-check PYTHON=./.venv/bin/python` | 2026-07-17T20:28:48Z | 0 | Ruff passed; conformance passed with 274 passed, 14 skipped, and 15 subtests passed; submission validation passed with README-visual and prior-layout hygiene checks. |
+| `./.venv/bin/python -m pytest -q tests/test_validate_cvm_submission.py` | 2026-07-17T20:33:28Z | 0 | 46 passed, including source metadata, output-PDF metadata, A4 MediaBox, embedded-font, layout-hack, LaTeX-log, generated-copy, generated-table-value, local-reference, image-alt, README-visual, evaluation-status, prior-layout hygiene, citation-slug hygiene, README-count, paper-number, and claim-matrix validation fixtures. |
+| `make paper-verify PYTHON=./.venv/bin/python` | 2026-07-17T20:33:28Z | 0 | Rebuilt 5-page root `wod2sim.pdf`; submission validation passed with source metadata, output-PDF metadata, source-layout, PDF A4 MediaBox, embedded-font, LaTeX-log, generated-copy, generated-table row/source-field, local-reference, image-alt, README-visual, evaluation-status, prior-layout hygiene, README-count, paper-number, and claim-matrix enforcement. |
+| `make cvm-check PYTHON=./.venv/bin/python` | 2026-07-17T20:33:28Z | 0 | Ruff passed; conformance passed with 276 passed, 14 skipped, and 15 subtests passed; submission validation passed with README-visual, evaluation-status, and prior-layout hygiene checks. |
 
 ## Important Warnings
 
@@ -100,6 +100,8 @@ non-empty alt text.
 It now requires the README visual overview to explain the adapter boundary,
 claim-validity disclaimer, runtime graphs, and that the graphs do not evaluate
 policy quality.
+It now requires the evaluation guide to state that completed local closed-loop
+rows are diagnostic integration evidence, not a public policy benchmark.
 It now rejects prior-layout mapping labels from public release text.
 It now rejects unstable generated citation slugs from public release text.
 It now validates the README failure-attribution count sentence against

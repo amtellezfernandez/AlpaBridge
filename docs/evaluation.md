@@ -89,5 +89,12 @@ or partial smoke runs from being mistaken for a NeurIPS-style benchmark result.
 ## Current Status
 
 The release checks package, semantic, temporal, lifecycle, deployment, and
-evidence contracts. It does not include a public checkpoint, public scene subset,
-or claim-ready closed-loop benchmark result.
+evidence contracts. The CVM includes completed dependency-light closed-loop
+diagnostic rows on locally available gated scene assets, completed semantic
+route-boundary ablations, and public synthetic lifecycle/fault diagnostics.
+Those rows are retained as integration evidence, not as a public policy
+benchmark.
+
+The release does not include a public checkpoint, a redistributable scene
+subset, verified scene-category coverage, direct-actor temporal ablation
+results, or a claim-ready closed-loop policy benchmark.

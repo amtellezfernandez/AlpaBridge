@@ -25,6 +25,8 @@
 - [x] Public Markdown/HTML images carry non-empty alt text.
 - [x] README visuals explain the adapter boundary, runtime graph meanings, and
   non-benchmark status.
+- [x] Evaluation docs distinguish completed local diagnostic closed-loop rows
+  from public policy benchmark evidence.
 - [x] Public release text excludes prior-layout mapping labels.
 - [x] Public release text excludes unstable generated citation slugs.
 - [x] Figures are generated and legible at final size.
