@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 from shutil import which
 
+from wod2sim.cli.commands.run_alpasim_local_external import PUBLIC_RELEASE_MODELS
 from wod2sim.cli.runtime_paths import package_path, repo_path, workspace_path
 
 DEFAULT_ALPASIM_ROOT = workspace_path("workspace", "alpasim")
@@ -16,7 +17,7 @@ ALPASIM_OVERRIDE_ROOT = package_path("alpasim_overrides")
 REPO_ROOT = repo_path()
 INSTALL_ROOT = REPO_ROOT or Path.cwd()
 UV_CACHE_DIR = workspace_path(".uv-cache")
-REQUIRED_MODELS = ("token_dagger_bc", "direct_actor_planner")
+REQUIRED_MODELS = PUBLIC_RELEASE_MODELS
 TORCH_PACKAGE = "torch==2.11.0+cu129"
 TORCH_INDEX_URL = "https://download.pytorch.org/whl/cu129"
 ALPASIM_CORE_DEPENDENCIES = (

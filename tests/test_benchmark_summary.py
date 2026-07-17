@@ -31,6 +31,8 @@ class BenchmarkSummaryTests(unittest.TestCase):
         self.assertEqual(2, summary["aggregate"]["scene_count"])
         self.assertEqual(42, summary["aggregate"]["total_frames"])
         self.assertEqual(0, summary["aggregate"]["sensor_failure_count"])
+        self.assertEqual(0, summary["aggregate"]["route_contract_failure_count"])
+        self.assertEqual({"alpasim_waypoints": 42}, summary["aggregate"]["route_source_counts"])
         self.assertEqual({"ok": 42}, summary["aggregate"]["result_counts"])
         self.assertEqual([_sha256(b"bundle\n")], summary["aggregate"]["support_bundle_hashes"])
         self.assertTrue(any("Plan-only runs" in item for item in summary["advice"]))
@@ -86,6 +88,35 @@ class BenchmarkSummaryTests(unittest.TestCase):
 
         self.assertEqual(0, returncode)
 
+    def test_strict_main_rejects_command_proxy_route_evidence(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.benchmark_summary")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            evidence = root / "evidence"
+            _write_valid_evidence(evidence)
+            audit_path = evidence / "run-audit.json"
+            audit = json.loads(audit_path.read_text(encoding="utf-8"))
+            audit["valid"] = False
+            audit["route_contract_ok"] = False
+            audit["route_contract_failure_count"] = 1
+            audit["route_source_counts"] = {"command_proxy": 1, "alpasim_waypoints": 41}
+            _write_json(audit_path, audit)
+
+            with patch.object(
+                sys,
+                "argv",
+                [
+                    "wod2sim-benchmark-summary",
+                    "--manifest",
+                    str(evidence / "closed-loop-reproduction-manifest.json"),
+                    "--strict",
+                    "--json",
+                ],
+            ):
+                returncode = module.main()
+
+        self.assertEqual(1, returncode)
+
 
 def _write_valid_evidence(evidence_dir: Path) -> None:
     evidence_dir.mkdir(parents=True, exist_ok=True)
@@ -115,6 +146,9 @@ def _write_valid_evidence(evidence_dir: Path) -> None:
             "frame_count": 42,
             "sensor_pipeline_ok": True,
             "sensor_failure_count": 0,
+            "route_contract_ok": True,
+            "route_contract_failure_count": 0,
+            "route_source_counts": {"alpasim_waypoints": 42},
             "result_counts": {"ok": 42},
             "sensor_status_counts": {"ok_camera_advanced": 42},
             "max_pose_camera_lag_us": 0,
@@ -135,6 +169,8 @@ def _write_valid_evidence(evidence_dir: Path) -> None:
                 "valid": True,
                 "sensor_pipeline_ok": True,
                 "sensor_failure_count": 0,
+                "route_contract_ok": True,
+                "route_contract_failure_count": 0,
                 "driver_log_kind": "selection",
             },
         },

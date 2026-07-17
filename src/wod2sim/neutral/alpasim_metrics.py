@@ -39,7 +39,7 @@ class AlpaSimEvidence:
     thresholds: dict[str, float]
     gates: dict[str, bool | None]
     sensor_realistic: bool
-    official_compass_score: bool
+    official_policy_benchmark_score: bool
     notes: list[str]
 
     def to_dict(self) -> dict[str, Any]:
@@ -71,8 +71,8 @@ def build_alpasim_evidence(path: str | Path, config: AlpaSimEvidenceConfig | Non
     metrics_path, metrics, run_count = load_alpasim_metrics(path)
     gates = _metric_gates(metrics, config)
     notes = [
-        "AlpaSim evidence is sensor-realistic closed-loop evidence, not an official COMPASS score.",
-        "Use this as a validation tier alongside the abstract COMPASS benchmark.",
+        "AlpaSim evidence is sensor-realistic closed-loop evidence, not an official policy benchmark score.",
+        "Use this as a validation tier alongside declared baselines, scenes, and claim evidence.",
     ]
     missing = [name for name, value in gates.items() if value is None]
     if missing:
@@ -85,7 +85,7 @@ def build_alpasim_evidence(path: str | Path, config: AlpaSimEvidenceConfig | Non
         thresholds=asdict(config.thresholds),
         gates=gates,
         sensor_realistic=True,
-        official_compass_score=False,
+        official_policy_benchmark_score=False,
         notes=notes,
     )
 
@@ -268,7 +268,7 @@ def _first_metric(metrics: dict[str, float], names: tuple[str, ...]) -> float | 
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Import AlpaSim aggregate metrics as COMPASS-side evidence.")
+    parser = argparse.ArgumentParser(description="Import AlpaSim aggregate metrics as WOD2Sim evidence.")
     parser.add_argument("path", help="AlpaSim run directory or metrics_results file path.")
     parser.add_argument("--output", help="Optional JSON output path.")
     args = parser.parse_args()

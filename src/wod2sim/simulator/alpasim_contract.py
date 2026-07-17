@@ -170,10 +170,15 @@ def resample_trajectory(
     if expected_points == trajectory_xy.shape[0]:
         return trajectory_xy
 
-    source_t = np.linspace(1.0 / trajectory_xy.shape[0], 1.0, trajectory_xy.shape[0])
-    target_t = np.linspace(1.0 / expected_points, 1.0, expected_points)
-    x = np.interp(target_t, source_t, trajectory_xy[:, 0])
-    y = np.interp(target_t, source_t, trajectory_xy[:, 1])
+    source_t = np.linspace(0.0, horizon_seconds, trajectory_xy.shape[0] + 1)
+    source_xy = np.vstack((np.zeros((1, 2), dtype=np.float32), trajectory_xy))
+    target_t = np.linspace(
+        horizon_seconds / expected_points,
+        horizon_seconds,
+        expected_points,
+    )
+    x = np.interp(target_t, source_t, source_xy[:, 0])
+    y = np.interp(target_t, source_t, source_xy[:, 1])
     return np.stack((x, y), axis=1).astype(np.float32)
 
 

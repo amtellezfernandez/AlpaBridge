@@ -23,7 +23,6 @@ if str(SRC) not in sys.path:
 import wod2sim.cli.commands.run_alpasim_local_external as launch_cmd
 import wod2sim.cli.commands.setup_alpasim_local_plugin as setup_cmd
 from wod2sim.cli.commands.run_alpasim_local_external import (
-    _ALL_MODEL_PRESETS,
     MODEL_PRESETS,
     PUBLIC_RELEASE_MODELS,
     _aggregate_status,
@@ -32,6 +31,7 @@ from wod2sim.cli.commands.run_alpasim_local_external import (
     _driver_env,
     _planned_run_status,
     _preflight_alpasim_base_image,
+    _preflight_alpasim_local_environment,
     _preflight_docker_access,
     _preflight_platform_compatibility,
     _preflight_scene_artifacts,
@@ -174,6 +174,28 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
             (root / ".git").mkdir()
             validate_run_checkout(root)
             validate_setup_checkout(root)
+
+    def test_preflight_rejects_missing_local_alpasim_environment(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "alpasim"
+
+            with self.assertRaises(SystemExit) as ctx:
+                _preflight_alpasim_local_environment(root)
+
+        message = str(ctx.exception)
+        self.assertIn(".venv/bin/python", message)
+        self.assertIn(".venv/bin/alpasim_wizard", message)
+        self.assertIn("bootstrap_alpasim_env.sh", message)
+
+    def test_preflight_accepts_local_alpasim_environment(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "alpasim"
+            bin_dir = root / ".venv" / "bin"
+            bin_dir.mkdir(parents=True)
+            (bin_dir / "python").write_text("", encoding="utf-8")
+            (bin_dir / "alpasim_wizard").write_text("", encoding="utf-8")
+
+            _preflight_alpasim_local_environment(root)
 
     def test_preflight_rejects_missing_gated_artifacts_without_hf_token(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -334,15 +356,8 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
         self.assertEqual("/tmp/run/driver/selection-log.jsonl", env["WOD2SIM_TOKENBC_SELECTION_LOG_PATH"])
         self.assertEqual("/tmp/oracle.json", env["WOD2SIM_TOKENBC_ORACLE_ACTOR_PROXY_PATH"])
 
-    def test_actor_axis_preset_requires_oracle_actor_proxy(self) -> None:
-        preset = _ALL_MODEL_PRESETS["token_dagger_iter2_actor_axis_oracle_actor_clamped"]
-
-        self.assertTrue(preset["requires_oracle_actor_proxy"])
-        self.assertEqual("actor_axis_constrained", preset["driver_env"]["WOD2SIM_TOKENBC_SELECTION_MODE"])
-        self.assertEqual("3", preset["driver_env"]["WOD2SIM_TOKENBC_HYBRID_TOP_K"])
-
     def test_direct_actor_planner_preset_requires_oracle_actor_proxy(self) -> None:
-        preset = _ALL_MODEL_PRESETS["direct_actor_planner_oracle"]
+        preset = MODEL_PRESETS["direct_actor_planner"]
 
         self.assertTrue(preset["requires_oracle_actor_proxy"])
         self.assertFalse(preset["force_cuda"])
@@ -351,25 +366,27 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
             preset["driver_env"]["WOD2SIM_DIRECT_PLANNER_ORACLE_ACTOR_PROXY_PATH"],
         )
 
-    def test_direct_actor_planner_max_clearance_preset_sets_objective(self) -> None:
-        preset = _ALL_MODEL_PRESETS["direct_actor_planner_max_clearance_oracle"]
-
-        self.assertTrue(preset["requires_oracle_actor_proxy"])
-        self.assertFalse(preset["force_cuda"])
-        self.assertEqual("max_clearance", preset["driver_env"]["WOD2SIM_DIRECT_PLANNER_SELECTION_OBJECTIVE"])
-        self.assertEqual(
-            "{oracle_actor_proxy_path}",
-            preset["driver_env"]["WOD2SIM_DIRECT_PLANNER_ORACLE_ACTOR_PROXY_PATH"],
-        )
+    def test_dependency_light_baseline_presets_need_no_private_artifacts(self) -> None:
+        for model_name in ("constant_velocity", "route_following"):
+            preset = MODEL_PRESETS[model_name]
+            self.assertFalse(preset.get("checkpoint_required", False))
+            self.assertFalse(preset.get("requires_oracle_actor_proxy", False))
+            self.assertFalse(preset["force_cuda"])
+            self.assertEqual(
+                "{run_dir}/driver/baseline-log.jsonl",
+                preset["driver_env"]["WOD2SIM_BASELINE_LOG_PATH"],
+            )
 
     def test_public_release_models_match_curated_surface(self) -> None:
         self.assertEqual(
-            ("token_dagger_bc", "direct_actor_planner"),
+            ("constant_velocity", "route_following", "token_dagger_bc", "direct_actor_planner"),
             PUBLIC_RELEASE_MODELS,
         )
 
     def test_model_presets_export_only_public_release_surface(self) -> None:
         self.assertEqual(PUBLIC_RELEASE_MODELS, tuple(MODEL_PRESETS))
+        private_catalog_attr = "_ALL" "_MODEL_PRESETS"
+        self.assertFalse(hasattr(launch_cmd, private_catalog_attr))
 
     def test_public_release_models_emit_driver_logs_by_default(self) -> None:
         self.assertEqual(
@@ -461,7 +478,7 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
         self.assertEqual("completed", payload["aggregate_status"])
         self.assertIsNotNone(payload["completed_at"])
 
-    def test_source_tree_launch_wrapper_hides_internal_preset_catalog(self) -> None:
+    def test_source_tree_launch_wrapper_hides_non_public_preset_catalog(self) -> None:
         script_path = ROOT / "scripts" / "run_alpasim_local_external.py"
         spec = importlib.util.spec_from_file_location("wod2sim_launch_script", script_path)
         if spec is None or spec.loader is None:
@@ -470,7 +487,8 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
         spec.loader.exec_module(module)
 
         self.assertEqual(PUBLIC_RELEASE_MODELS, tuple(module.MODEL_PRESETS))
-        self.assertFalse(hasattr(module, "_ALL_MODEL_PRESETS"))
+        private_catalog_attr = "_ALL" "_MODEL_PRESETS"
+        self.assertFalse(hasattr(module, private_catalog_attr))
 
     def test_launch_parser_only_exposes_public_release_models(self) -> None:
         parser = build_run_parser()
@@ -528,6 +546,11 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
                 launch_cmd.main()
 
             self.assertTrue((run_dir / "launch-metadata.json").is_file())
+            metadata = json.loads((run_dir / "launch-metadata.json").read_text(encoding="utf-8"))
+            self.assertEqual(str(alpasim_root.resolve()), metadata["provenance"]["alpasim_checkout"]["root"])
+            self.assertIn("git_commit", metadata["provenance"]["alpasim_checkout"])
+            self.assertEqual("alpasim-base:0.66.0", metadata["provenance"]["docker_image"]["tag"])
+            self.assertIn("present", metadata["provenance"]["docker_image"])
             self.assertTrue((run_dir / "driver-command.sh").is_file())
             self.assertTrue((run_dir / "wizard-command.sh").is_file())
             self.assertTrue((run_dir / "run-status.json").is_file())

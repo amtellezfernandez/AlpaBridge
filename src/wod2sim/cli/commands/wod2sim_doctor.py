@@ -9,6 +9,7 @@ from pathlib import Path
 
 from wod2sim.cli.commands.check_alpasim_readiness import (
     _preflight_alpasim_base_image,
+    _preflight_alpasim_local_environment,
     _preflight_docker_access,
     _preflight_nvidia_container_runtime,
     _preflight_platform_compatibility,
@@ -38,6 +39,7 @@ EXPECTED_CONSOLE_SCRIPTS = (
     "wod2sim-promote-batch-summary",
     "wod2sim-benchmark-summary",
     "wod2sim-batch-summary",
+    "wod2sim-benchmark-readiness",
     "wod2sim-evidence",
 )
 EXPECTED_WRAPPERS = {
@@ -54,6 +56,7 @@ EXPECTED_WRAPPERS = {
     "wod2sim-promote-batch-summary": "scripts/promote_batch_summary.py",
     "wod2sim-benchmark-summary": "scripts/benchmark_summary.py",
     "wod2sim-batch-summary": "scripts/batch_summary.py",
+    "wod2sim-benchmark-readiness": "scripts/benchmark_readiness.py",
 }
 PUBLIC_MODEL_CONFIGS = {
     model: Path(MODEL_PRESETS[model]["config_file"]).resolve()
@@ -105,6 +108,11 @@ def _parse_args() -> argparse.Namespace:
         "--skip-image",
         action="store_true",
         help="Skip checking for the local alpasim-base image when validating an AlpaSim root.",
+    )
+    parser.add_argument(
+        "--skip-local-env",
+        action="store_true",
+        help="Skip checking the local AlpaSim .venv and alpasim_wizard executable.",
     )
     parser.add_argument(
         "--skip-scene-artifacts",
@@ -188,6 +196,7 @@ def _build_environment_report(
     skip_docker: bool,
     skip_gpu_runtime: bool,
     skip_image: bool,
+    skip_local_env: bool,
     skip_scene_artifacts: bool,
 ) -> dict[str, object]:
     scene_ids = _scene_ids(scene_preset, explicit_scene_ids)
@@ -202,6 +211,15 @@ def _build_environment_report(
 
     status, error = _run_check(_validate_alpasim_checkout, alpasim_root)
     record("alpasim_checkout", status, error)
+
+    if skip_local_env:
+        statuses["local_alpasim_env"] = "skipped"
+    elif statuses["alpasim_checkout"] != "ok":
+        statuses["local_alpasim_env"] = "blocked"
+        errors["local_alpasim_env"] = "AlpaSim checkout validation failed; local environment check not run."
+    else:
+        status, error = _run_check(_preflight_alpasim_local_environment, alpasim_root)
+        record("local_alpasim_env", status, error)
 
     status, error = _run_check(_preflight_platform_compatibility)
     record("platform_compatibility", status, error)
@@ -259,6 +277,7 @@ def build_report(
     skip_docker: bool = False,
     skip_gpu_runtime: bool = False,
     skip_image: bool = False,
+    skip_local_env: bool = False,
     skip_scene_artifacts: bool = False,
     probe_default_environment: bool = False,
 ) -> dict[str, object]:
@@ -318,7 +337,7 @@ def build_report(
     checks = {
         "python_supported": sys.version_info >= (3, 10),
         "public_model_surface_curated": tuple(PUBLIC_RELEASE_MODELS)
-        == ("token_dagger_bc", "direct_actor_planner"),
+        == ("constant_velocity", "route_following", "token_dagger_bc", "direct_actor_planner"),
         "public_model_registry_curated": tuple(MODEL_PRESETS) == tuple(PUBLIC_RELEASE_MODELS),
         "scene_presets_present": not missing_scene_presets,
         "public_model_configs_present": not missing_model_configs,
@@ -349,6 +368,7 @@ def build_report(
             skip_docker=skip_docker,
             skip_gpu_runtime=skip_gpu_runtime,
             skip_image=skip_image,
+            skip_local_env=skip_local_env,
             skip_scene_artifacts=skip_scene_artifacts,
         )
 
@@ -459,6 +479,10 @@ def _print_human_report(report: dict[str, object], *, strict_installed: bool) ->
             print("    3. If the checkout is missing, run ./scripts/bootstrap_alpasim_checkout.sh")
             print("    4. Then rerun wod2sim-doctor --probe-default-environment")
             print("    5. After the checkout exists, run wod2sim-ready --alpasim-root /path/to/alpasim")
+        elif environment["statuses"].get("local_alpasim_env") == "failed":
+            print("    3. Bootstrap the local AlpaSim Python environment with ./scripts/bootstrap_alpasim_env.sh")
+            print("    4. Or set ALPASIM_ROOT and run ./.venv/bin/python scripts/setup_alpasim_local_plugin.py")
+            print("    5. Then rerun wod2sim-ready --alpasim-root /path/to/alpasim")
         elif environment["statuses"].get("scene_artifacts") == "failed":
             print("    3. If you only want host/runtime validation, rerun with --skip-scene-artifacts")
             print("    4. Or point doctor at a different cached preset with --scene-preset ...")
@@ -482,6 +506,7 @@ def main() -> int:
         skip_docker=args.skip_docker,
         skip_gpu_runtime=args.skip_gpu_runtime,
         skip_image=args.skip_image,
+        skip_local_env=args.skip_local_env,
         skip_scene_artifacts=args.skip_scene_artifacts,
         probe_default_environment=args.probe_default_environment,
     )

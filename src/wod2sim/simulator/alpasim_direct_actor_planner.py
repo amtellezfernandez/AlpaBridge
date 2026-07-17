@@ -717,6 +717,7 @@ def _compact_signal(signal: dict[str, Any]) -> dict[str, Any]:
     return {
         "structured_hazard_count": len(signal.get("structured_hazards", []) or []),
         "route_waypoint_count": len(signal.get("route_waypoints", []) or []),
+        "route_source": signal.get("route_source"),
         "visibility_risk": signal.get("visibility_risk"),
         "dynamics_risk": signal.get("dynamics_risk"),
         "oracle_actor_proxy_enabled": signal.get("oracle_actor_proxy_enabled", False),

@@ -17,6 +17,8 @@ class CheckAlpaSimReadinessTests(unittest.TestCase):
             "_scene_catalog_paths",
             return_value=[Path("/tmp/alpasim/data/scenes/sim_scenes.csv")],
         ), patch.object(check_alpasim_readiness, "_validate_alpasim_checkout") as validate, patch.object(
+            check_alpasim_readiness, "_preflight_alpasim_local_environment"
+        ) as local_env, patch.object(
             check_alpasim_readiness, "_preflight_docker_access"
         ) as docker, patch.object(
             check_alpasim_readiness, "_preflight_platform_compatibility"
@@ -36,6 +38,7 @@ class CheckAlpaSimReadinessTests(unittest.TestCase):
             check_alpasim_readiness.main()
 
         validate.assert_called_once_with(Path("/tmp/alpasim"))
+        local_env.assert_called_once_with(Path("/tmp/alpasim"))
         docker.assert_called_once_with()
         platform_check.assert_called_once_with()
         gpu_runtime.assert_called_once_with()
@@ -56,6 +59,8 @@ class CheckAlpaSimReadinessTests(unittest.TestCase):
             "_scene_catalog_paths",
             return_value=[Path("/tmp/alpasim/data/scenes/sim_scenes.csv")],
         ), patch.object(check_alpasim_readiness, "_validate_alpasim_checkout"), patch.object(
+            check_alpasim_readiness, "_preflight_alpasim_local_environment"
+        ) as local_env, patch.object(
             check_alpasim_readiness, "_preflight_docker_access"
         ), patch.object(
             check_alpasim_readiness, "_preflight_platform_compatibility"
@@ -70,13 +75,15 @@ class CheckAlpaSimReadinessTests(unittest.TestCase):
             new_callable=io.StringIO,
         ) as stdout, patch(
             "sys.argv",
-            ["check_alpasim_readiness.py", "--skip-image", "--skip-scene-artifacts"],
+            ["check_alpasim_readiness.py", "--skip-image", "--skip-local-env", "--skip-scene-artifacts"],
         ):
             check_alpasim_readiness.main()
 
+        local_env.assert_not_called()
         image.assert_not_called()
         artifacts.assert_not_called()
         output = stdout.getvalue()
         self.assertIn("gpu runtime: accessible", output)
         self.assertIn("image: skipped", output)
+        self.assertIn("local AlpaSim env: skipped", output)
         self.assertIn("scene artifacts: skipped", output)

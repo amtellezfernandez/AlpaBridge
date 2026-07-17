@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 import unittest
 from pathlib import Path
@@ -23,7 +24,12 @@ if str(SRC) not in sys.path:
 
 from tests.pyproject_helpers import load_string_tables
 from wod2sim.neutral.alpasim_metrics import build_alpasim_evidence, load_alpasim_metrics
-from wod2sim.simulator.alpasim_contract import DriveCommand
+from wod2sim.simulator.alpasim_contract import (
+    BaseTrajectoryModel,
+    DriveCommand,
+    ModelPrediction,
+    resample_trajectory,
+)
 from wod2sim.simulator.alpasim_direct_actor_planner import (
     DirectActorPlannerAlpaSimModel,
     DirectPlannerConfig,
@@ -41,15 +47,44 @@ from wod2sim.simulator.alpasim_token_bc import (
     _prediction_ego_pose_world,
     _prediction_timestamp_us,
 )
+from wod2sim.simulator.baseline_drivers import (
+    ConstantVelocityAlpaSimModel,
+    RouteFollowingAlpaSimModel,
+)
 from wod2sim.simulator.environment import scenario_at_tick
 from wod2sim.simulator.maneuver_candidates import evaluate_maneuver_candidates
 from wod2sim.simulator.perception import perceive_scene
 from wod2sim.simulator.world_model import update_world_state
 
 
+def _baseline_prediction_input(
+    *,
+    speed: float,
+    route_waypoints: list[dict[str, float]],
+) -> SimpleNamespace:
+    return SimpleNamespace(
+        camera_images={"front": [SimpleNamespace(image=np.full((4, 4, 3), 180, dtype=np.uint8), timestamp_us=1000)]},
+        command=DriveCommand.STRAIGHT,
+        speed=speed,
+        acceleration=0.0,
+        ego_pose_history=[object()],
+        scene_id="baseline-scene",
+        route_waypoints=route_waypoints,
+        alpasignal={"hazards": []},
+    )
+
+
 class AlpaSimIntegrationTests(unittest.TestCase):
     def test_pyproject_registers_alpasim_plugin_entrypoints(self) -> None:
         pyproject = load_string_tables("pyproject.toml")
+        self.assertEqual(
+            pyproject['project.entry-points."alpasim.models"']["constant_velocity"],
+            "wod2sim.simulator.baseline_drivers:ConstantVelocityAlpaSimModel",
+        )
+        self.assertEqual(
+            pyproject['project.entry-points."alpasim.models"']["route_following"],
+            "wod2sim.simulator.baseline_drivers:RouteFollowingAlpaSimModel",
+        )
         self.assertEqual(
             pyproject['project.entry-points."alpasim.models"']["token_dagger_bc"],
             "wod2sim.simulator.alpasim_token_bc:TokenBCAlpaSimModel",
@@ -90,20 +125,160 @@ class AlpaSimIntegrationTests(unittest.TestCase):
         self.assertIn('device: "cpu"', config)
         self.assertIn("trajectory_optimizer:", config)
 
-    def test_alpasim_token_dagger_configs_exist_and_default_to_cuda(self) -> None:
-        for name in (
-            "token_dagger_bc.yaml",
-            "token_dagger_srcdecay.yaml",
-            "token_dagger_bc_clamped.yaml",
-            "token_dagger_srcdecay_clamped.yaml",
-        ):
-            config_path = Path("src/wod2sim/simulator/alpasim_configs/driver") / name
-            config = config_path.read_text()
-            self.assertIn("model_type: token_dagger_bc", config)
-            self.assertIn('device: "cuda"', config)
-            if name.endswith("_clamped.yaml"):
-                self.assertNotIn("trajectory_mode:", config)
-                self.assertNotIn("max_lateral_offset_m:", config)
+    def test_alpasim_driver_configs_are_public_release_templates(self) -> None:
+        config_dir = Path("src/wod2sim/simulator/alpasim_configs/driver")
+        self.assertEqual(
+            [
+                "constant_velocity.yaml",
+                "direct_actor_planner.yaml",
+                "route_following.yaml",
+                "token_dagger_bc.yaml",
+            ],
+            sorted(path.name for path in config_dir.glob("*.yaml")),
+        )
+        constant_config = (config_dir / "constant_velocity.yaml").read_text()
+        route_config = (config_dir / "route_following.yaml").read_text()
+        self.assertIn("model_type: constant_velocity", constant_config)
+        self.assertIn('device: "cpu"', constant_config)
+        self.assertNotIn("horizon_seconds:", constant_config)
+        self.assertNotIn("baseline:", constant_config)
+        self.assertIn("model_type: route_following", route_config)
+        self.assertIn('device: "cpu"', route_config)
+        self.assertNotIn("horizon_seconds:", route_config)
+        self.assertNotIn("baseline:", route_config)
+        config = (config_dir / "token_dagger_bc.yaml").read_text()
+        self.assertIn("model_type: token_dagger_bc", config)
+        self.assertIn('checkpoint_path: "set-by-wod2sim-launch"', config)
+        self.assertIn('device: "cuda"', config)
+
+    def test_constant_velocity_baseline_is_dependency_light_and_auditable(self) -> None:
+        with TemporaryDirectory() as tmp:
+            log_path = Path(tmp) / "baseline-log.jsonl"
+            model = ConstantVelocityAlpaSimModel(
+                camera_ids=["front"],
+                context_length=1,
+                output_frequency_hz=4,
+                log_path=log_path,
+            )
+            prediction_input = _baseline_prediction_input(
+                speed=4.0,
+                route_waypoints=[
+                    {"x": 0.0, "y": 0.0, "z": 0.0},
+                    {"x": 30.0, "y": 0.0, "z": 0.0},
+                ],
+            )
+
+            output = model.predict(prediction_input)
+            log_row = json.loads(log_path.read_text(encoding="utf-8").splitlines()[0])
+
+        self.assertEqual(output.trajectory_xy.shape, (20, 2))
+        np.testing.assert_allclose(output.trajectory_xy[:, 1], np.zeros(20), atol=1e-6)
+        self.assertAlmostEqual(20.0, float(output.trajectory_xy[-1, 0]), places=5)
+        self.assertEqual("constant_velocity", log_row["baseline"])
+        self.assertEqual("alpasim_waypoints", log_row["route_source"])
+        self.assertEqual(2, log_row["route_waypoint_count"])
+
+    def test_baseline_models_implement_alpasim_command_encoder(self) -> None:
+        model = ConstantVelocityAlpaSimModel(camera_ids=["front"], context_length=1, output_frequency_hz=4)
+
+        self.assertEqual("left", model._encode_command(DriveCommand.LEFT))
+        self.assertEqual("straight", model._encode_command(DriveCommand.STRAIGHT))
+        self.assertEqual("right", model._encode_command(DriveCommand.RIGHT))
+        self.assertEqual("straight", model._encode_command(DriveCommand.UNKNOWN))
+
+    def test_route_following_baseline_tracks_supplied_route_geometry(self) -> None:
+        model = RouteFollowingAlpaSimModel(
+            camera_ids=["front"],
+            context_length=1,
+            output_frequency_hz=4,
+        )
+        prediction_input = _baseline_prediction_input(
+            speed=4.0,
+            route_waypoints=[
+                {"x": 0.0, "y": 0.0, "z": 0.0},
+                {"x": 0.0, "y": 20.0, "z": 0.0},
+                {"x": 20.0, "y": 20.0, "z": 0.0},
+            ],
+        )
+
+        output = model.predict(prediction_input)
+        reasoning = json.loads(output.reasoning_text)
+
+        self.assertEqual(output.trajectory_xy.shape, (20, 2))
+        self.assertEqual("route_following", reasoning["baseline"])
+        self.assertGreater(float(output.trajectory_xy[-1, 1]), 19.0)
+        self.assertLess(abs(float(output.trajectory_xy[-1, 0])), 1e-5)
+
+    def test_resample_trajectory_preserves_native_runtime_samples(self) -> None:
+        trajectory = np.stack(
+            (
+                np.linspace(0.5, 10.0, 20),
+                np.linspace(-1.0, 1.0, 20),
+            ),
+            axis=1,
+        ).astype(np.float32)
+
+        resampled = resample_trajectory(
+            trajectory,
+            output_frequency_hz=4,
+            horizon_seconds=5.0,
+        )
+
+        np.testing.assert_allclose(resampled, trajectory, atol=0.0)
+        self.assertEqual(np.float32, resampled.dtype)
+
+    def test_resample_trajectory_uses_origin_anchored_endpoint_interpolation(self) -> None:
+        source_t = np.linspace(1.0, 5.0, 5, dtype=np.float32)
+        trajectory = np.stack((2.0 * source_t, -0.5 * source_t), axis=1).astype(np.float32)
+        target_t = np.linspace(0.5, 5.0, 10, dtype=np.float32)
+        expected = np.stack((2.0 * target_t, -0.5 * target_t), axis=1).astype(np.float32)
+
+        resampled = resample_trajectory(
+            trajectory,
+            output_frequency_hz=2,
+            horizon_seconds=5.0,
+        )
+
+        np.testing.assert_allclose(resampled, expected, atol=1e-6)
+
+    def test_replay_identity_adapter_preserves_logged_trajectory_contract(self) -> None:
+        class ReplayIdentityAdapter(BaseTrajectoryModel):
+            camera_ids = ("front",)
+            output_frequency_hz = 4
+            horizon_seconds = 5.0
+
+            def __init__(self, logged_trajectory: np.ndarray) -> None:
+                self._logged_trajectory = logged_trajectory
+
+            def predict(self, prediction_input: object) -> ModelPrediction:
+                trajectory_xy = resample_trajectory(
+                    self._logged_trajectory,
+                    output_frequency_hz=self.output_frequency_hz,
+                    horizon_seconds=self.horizon_seconds,
+                )
+                return ModelPrediction(
+                    trajectory_xy=trajectory_xy,
+                    headings=self._compute_headings_from_trajectory(trajectory_xy),
+                    reasoning_text="replay_identity",
+                )
+
+        logged = np.stack(
+            (
+                np.linspace(0.25, 5.0, 20),
+                np.zeros(20),
+            ),
+            axis=1,
+        ).astype(np.float32)
+
+        prediction = ReplayIdentityAdapter(logged).predict(object())
+
+        np.testing.assert_allclose(prediction.trajectory_xy, logged, atol=1e-6)
+        np.testing.assert_allclose(
+            prediction.headings,
+            BaseTrajectoryModel._compute_headings_from_trajectory(logged),
+            atol=1e-6,
+        )
+        self.assertEqual("replay_identity", prediction.reasoning_text)
 
     def test_alpasim_signal_uses_structured_hazards(self) -> None:
         prediction_input = SimpleNamespace(
@@ -298,7 +473,7 @@ class AlpaSimIntegrationTests(unittest.TestCase):
         self.assertAlmostEqual(obstacle.length or 0.0, 5.2)
         self.assertAlmostEqual(obstacle.heading, 1.57, places=2)
 
-    def test_alpasim_signal_adds_caution_zone_for_low_visibility_braking(self) -> None:
+    def test_alpasim_signal_keeps_inferred_risk_diagnostic_only(self) -> None:
         prediction_input = SimpleNamespace(
             camera_images={"front": [SimpleNamespace(image=np.zeros((4, 4, 3), dtype=np.uint8))]},
             speed=0.2,
@@ -311,7 +486,7 @@ class AlpaSimIntegrationTests(unittest.TestCase):
 
         self.assertGreaterEqual(signal["visibility_risk"], 0.5)
         self.assertGreaterEqual(signal["dynamics_risk"], 0.5)
-        self.assertEqual(scenario.obstacles[0].label, "alpasim_signal_caution")
+        self.assertEqual(scenario.obstacles, [])
 
     def test_alpasim_signal_preserves_moving_hazards_as_actors(self) -> None:
         prediction_input = SimpleNamespace(
@@ -1566,7 +1741,7 @@ class AlpaSimIntegrationTests(unittest.TestCase):
         self.assertEqual(metrics["collision_at_fault"], 0.0)
         self.assertEqual(evidence["run_count"], 8)
         self.assertTrue(evidence["sensor_realistic"])
-        self.assertFalse(evidence["official_compass_score"])
+        self.assertFalse(evidence["official_policy_benchmark_score"])
         self.assertTrue(evidence["gates"]["collision_rate"])
         self.assertTrue(evidence["gates"]["route_deviation_m"])
 
@@ -1624,9 +1799,12 @@ class AlpaSimIntegrationTests(unittest.TestCase):
 
 
 def _skip_torch_dependent_tests_if_needed() -> None:
-    if torch is not None:
+    if os.getenv("WOD2SIM_CORE_CONFORMANCE") == "1":
+        reason = "Core conformance tier excludes learned-policy checkpoint validation"
+    elif torch is None:
+        reason = "Torch environment not available for learned policy validation"
+    else:
         return
-    reason = "Torch environment not available for learned policy validation"
     for name in dir(AlpaSimIntegrationTests):
         if name.startswith("test_token_bc_alpasim_adapter_"):
             setattr(AlpaSimIntegrationTests, name, unittest.skip(reason)(getattr(AlpaSimIntegrationTests, name)))

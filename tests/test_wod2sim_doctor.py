@@ -46,6 +46,16 @@ def _clean_wod2sim_dist(module) -> FakeDist:
     ]
     wod2sim_model_entry_points = [
         SimpleNamespace(
+            name="constant_velocity",
+            group="alpasim.models",
+            value="wod2sim.simulator.baseline_drivers:ConstantVelocityAlpaSimModel",
+        ),
+        SimpleNamespace(
+            name="route_following",
+            group="alpasim.models",
+            value="wod2sim.simulator.baseline_drivers:RouteFollowingAlpaSimModel",
+        ),
+        SimpleNamespace(
             name="token_dagger_bc",
             group="alpasim.models",
             value="wod2sim.simulator.alpasim_token_bc:TokenBCAlpaSimModel",
@@ -72,7 +82,7 @@ class WOD2SimDoctorTests(unittest.TestCase):
         self.assertTrue(report["valid"])
         self.assertEqual("wod2sim_doctor_v1", report["schema"])
         self.assertEqual(
-            ["token_dagger_bc", "direct_actor_planner"],
+            ["constant_velocity", "route_following", "token_dagger_bc", "direct_actor_planner"],
             report["public_models"],
         )
         self.assertTrue(report["checks"]["public_model_registry_curated"])
@@ -94,6 +104,8 @@ class WOD2SimDoctorTests(unittest.TestCase):
         with patch.object(module, "_scene_ids", return_value=["scene-1", "scene-2"]), patch.object(
             module, "_validate_alpasim_checkout"
         ), patch.object(
+            module, "_preflight_alpasim_local_environment"
+        ), patch.object(
             module, "_preflight_platform_compatibility"
         ), patch.object(
             module, "_preflight_docker_access"
@@ -109,6 +121,7 @@ class WOD2SimDoctorTests(unittest.TestCase):
         self.assertIsNotNone(report["environment"])
         self.assertTrue(report["environment"]["valid"])
         self.assertEqual("ok", report["environment"]["statuses"]["alpasim_checkout"])
+        self.assertEqual("ok", report["environment"]["statuses"]["local_alpasim_env"])
         self.assertEqual(["scene-1", "scene-2"], report["environment"]["scene_ids"])
 
     def test_build_report_can_probe_default_environment_without_explicit_root(self) -> None:
@@ -118,6 +131,8 @@ class WOD2SimDoctorTests(unittest.TestCase):
             module, "_scene_ids", return_value=["scene-1"]
         ), patch.object(
             module, "_validate_alpasim_checkout"
+        ), patch.object(
+            module, "_preflight_alpasim_local_environment"
         ), patch.object(
             module, "_preflight_platform_compatibility"
         ), patch.object(
@@ -135,11 +150,38 @@ class WOD2SimDoctorTests(unittest.TestCase):
         self.assertEqual("/tmp/default-alpasim", report["environment"]["alpasim_root"])
         self.assertTrue(report["environment"]["valid"])
 
+    def test_build_report_can_skip_local_alpasim_environment_probe(self) -> None:
+        module = _load_module()
+
+        with patch.object(module, "_scene_ids", return_value=["scene-1"]), patch.object(
+            module, "_validate_alpasim_checkout"
+        ), patch.object(
+            module,
+            "_preflight_alpasim_local_environment",
+            side_effect=AssertionError("local env should be skipped"),
+        ), patch.object(
+            module, "_preflight_platform_compatibility"
+        ), patch.object(
+            module, "_preflight_docker_access"
+        ), patch.object(
+            module, "_preflight_nvidia_container_runtime"
+        ), patch.object(
+            module, "_preflight_alpasim_base_image"
+        ), patch.object(
+            module, "_preflight_scene_artifacts"
+        ):
+            report = module.build_report(alpasim_root=Path("/tmp/alpasim"), skip_local_env=True)
+
+        self.assertTrue(report["environment"]["valid"])
+        self.assertEqual("skipped", report["environment"]["statuses"]["local_alpasim_env"])
+
     def test_build_report_surfaces_environment_failures(self) -> None:
         module = _load_module()
 
         with patch.object(module, "_scene_ids", return_value=["scene-1"]), patch.object(
             module, "_validate_alpasim_checkout", side_effect=SystemExit("missing checkout")
+        ), patch.object(
+            module, "_preflight_alpasim_local_environment"
         ), patch.object(
             module, "_preflight_platform_compatibility"
         ), patch.object(
@@ -154,6 +196,7 @@ class WOD2SimDoctorTests(unittest.TestCase):
 
         self.assertFalse(report["valid"])
         self.assertEqual("failed", report["environment"]["statuses"]["alpasim_checkout"])
+        self.assertEqual("blocked", report["environment"]["statuses"]["local_alpasim_env"])
         self.assertEqual("failed", report["environment"]["statuses"]["docker_access"])
         self.assertEqual("blocked", report["environment"]["statuses"]["scene_artifacts"])
         self.assertIn("missing checkout", report["environment"]["errors"]["alpasim_checkout"])
@@ -172,6 +215,7 @@ class WOD2SimDoctorTests(unittest.TestCase):
             "scene_ids": ["scene-1"],
             "statuses": {
                 "alpasim_checkout": "ok",
+                "local_alpasim_env": "ok",
                 "platform_compatibility": "ok",
                 "docker_access": "ok",
                 "base_image": "ok",
@@ -205,6 +249,7 @@ class WOD2SimDoctorTests(unittest.TestCase):
             "scene_ids": ["scene-1"],
             "statuses": {
                 "alpasim_checkout": "failed",
+                "local_alpasim_env": "blocked",
                 "platform_compatibility": "ok",
                 "docker_access": "ok",
                 "base_image": "ok",
@@ -225,6 +270,41 @@ class WOD2SimDoctorTests(unittest.TestCase):
         self.assertIn("bootstrap_alpasim_checkout.sh", rendered)
         self.assertIn("--probe-default-environment", rendered)
 
+    def test_human_report_suggests_alpasim_env_bootstrap_when_missing(self) -> None:
+        module = _load_module()
+        wod2sim_dist = _clean_wod2sim_dist(module)
+        with patch.object(module, "distribution", return_value=wod2sim_dist), patch.object(
+            module, "distributions", return_value=[wod2sim_dist]
+        ):
+            report = module.build_report()
+        report["environment"] = {
+            "valid": False,
+            "alpasim_root": "/tmp/alpasim",
+            "scene_preset": "fresh_3scene",
+            "scene_ids": ["scene-1"],
+            "statuses": {
+                "alpasim_checkout": "ok",
+                "local_alpasim_env": "failed",
+                "platform_compatibility": "ok",
+                "docker_access": "ok",
+                "base_image": "ok",
+                "gpu_runtime": "ok",
+                "scene_artifacts": "blocked",
+            },
+            "errors": {
+                "local_alpasim_env": "missing .venv",
+                "scene_artifacts": "blocked by missing local environment",
+            },
+        }
+        report["valid"] = False
+
+        with patch("sys.stdout", new_callable=StringIO) as stdout:
+            module._print_human_report(report, strict_installed=False)
+
+        rendered = stdout.getvalue()
+        self.assertIn("bootstrap_alpasim_env.sh", rendered)
+        self.assertIn("setup_alpasim_local_plugin.py", rendered)
+
     def test_build_report_flags_duplicate_model_provider_conflicts(self) -> None:
         module = _load_module()
 
@@ -233,6 +313,16 @@ class WOD2SimDoctorTests(unittest.TestCase):
             for name in module.EXPECTED_CONSOLE_SCRIPTS
         ]
         wod2sim_model_entry_points = [
+            SimpleNamespace(
+                name="constant_velocity",
+                group="alpasim.models",
+                value="wod2sim.simulator.baseline_drivers:ConstantVelocityAlpaSimModel",
+            ),
+            SimpleNamespace(
+                name="route_following",
+                group="alpasim.models",
+                value="wod2sim.simulator.baseline_drivers:RouteFollowingAlpaSimModel",
+            ),
             SimpleNamespace(
                 name="token_dagger_bc",
                 group="alpasim.models",
@@ -294,6 +384,16 @@ class WOD2SimDoctorTests(unittest.TestCase):
             "wod2sim",
             wod2sim_console_scripts
             + [
+                SimpleNamespace(
+                    name="constant_velocity",
+                    group="alpasim.models",
+                    value="wod2sim.simulator.baseline_drivers:ConstantVelocityAlpaSimModel",
+                ),
+                SimpleNamespace(
+                    name="route_following",
+                    group="alpasim.models",
+                    value="wod2sim.simulator.baseline_drivers:RouteFollowingAlpaSimModel",
+                ),
                 duplicated_token,
                 duplicated_token,
                 SimpleNamespace(

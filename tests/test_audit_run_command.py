@@ -52,6 +52,9 @@ class WOD2SimAuditRunTests(unittest.TestCase):
                                 "scene_id": "clipgt-1",
                                 "command": "straight",
                                 "result": "ok",
+                                "alpasim_signal": {
+                                    "route_waypoints": [{"x": 0.0, "y": 0.0}, {"x": 20.0, "y": 0.0}]
+                                },
                                 "sensor_freshness": {
                                     "status": "ok_initial",
                                     "pose_camera_lag_us": 0,
@@ -65,6 +68,9 @@ class WOD2SimAuditRunTests(unittest.TestCase):
                                 "command": "straight",
                                 "result": "sensor_failure",
                                 "sensor_error": "stale camera stream",
+                                "alpasim_signal": {
+                                    "route_waypoints": [{"x": 0.0, "y": 0.0}, {"x": 20.0, "y": 0.0}]
+                                },
                                 "sensor_freshness": {
                                     "status": "stale_camera_timestamp",
                                     "pose_camera_lag_us": 100,
@@ -86,6 +92,8 @@ class WOD2SimAuditRunTests(unittest.TestCase):
         self.assertEqual(2, report["frame_count"])
         self.assertFalse(report["sensor_pipeline_ok"])
         self.assertEqual(1, report["sensor_failure_count"])
+        self.assertTrue(report["route_contract_ok"])
+        self.assertEqual({"alpasim_waypoints": 2}, report["route_source_counts"])
         self.assertEqual(100, report["max_pose_camera_lag_us"])
         self.assertEqual("stale_camera_timestamp", report["first_sensor_failure"]["status"])
 
@@ -109,7 +117,10 @@ class WOD2SimAuditRunTests(unittest.TestCase):
                         "candidate_count": 9,
                         "reference_count": 2,
                         "result": "ok",
-                        "alpasim_signal": {"structured_hazards": [], "route_waypoints": []},
+                        "alpasim_signal": {
+                            "structured_hazards": [],
+                            "route_waypoints": [{"x": 0.0, "y": 0.0}, {"x": 20.0, "y": 0.0}],
+                        },
                         "sensor_freshness": {"status": "ok_initial", "pose_camera_lag_us": 0},
                     }
                 )
@@ -126,6 +137,39 @@ class WOD2SimAuditRunTests(unittest.TestCase):
             self.assertEqual(1, report["audit_export"]["frame_count"])
             self.assertTrue((audit_dir / "manifest.json").is_file())
             self.assertTrue((audit_dir / "frames.jsonl").is_file())
+
+    def test_build_report_rejects_command_proxy_route_fallback(self) -> None:
+        module = _load_module()
+        with TemporaryDirectory() as tmpdir:
+            run_dir = Path(tmpdir) / "run"
+            (run_dir / "driver").mkdir(parents=True)
+            (run_dir / "launch-metadata.json").write_text(
+                json.dumps({"model": "token_dagger_bc", "scene_preset": "fresh_3scene", "scene_ids": ["clipgt-1"]}),
+                encoding="utf-8",
+            )
+            (run_dir / "driver" / "selection-log.jsonl").write_text(
+                json.dumps(
+                    {
+                        "frame_index": 1,
+                        "scene_id": "clipgt-1",
+                        "command": "straight",
+                        "result": "ok",
+                        "alpasim_signal": {"structured_hazards": [], "route_waypoints": []},
+                        "sensor_freshness": {"status": "ok_initial", "pose_camera_lag_us": 0},
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            report = module.build_report(run_dir=run_dir)
+
+        self.assertFalse(report["valid"])
+        self.assertTrue(report["sensor_pipeline_ok"])
+        self.assertFalse(report["route_contract_ok"])
+        self.assertEqual(1, report["route_contract_failure_count"])
+        self.assertEqual({"command_proxy": 1}, report["route_source_counts"])
+        self.assertIn("command-proxy", " ".join(report["advice"]))
 
     def test_script_can_write_json_report(self) -> None:
         _load_script_module()
@@ -144,6 +188,9 @@ class WOD2SimAuditRunTests(unittest.TestCase):
                         "scene_id": "clipgt-1",
                         "command": "straight",
                         "result": "ok",
+                        "alpasim_signal": {
+                            "route_waypoints": [{"x": 0.0, "y": 0.0}, {"x": 20.0, "y": 0.0}]
+                        },
                         "sensor_freshness": {"status": "ok_initial", "pose_camera_lag_us": 0},
                     }
                 )

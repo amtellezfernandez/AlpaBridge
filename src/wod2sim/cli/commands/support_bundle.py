@@ -97,6 +97,8 @@ def build_report(*, run_dir: Path, output: Path | None = None) -> dict[str, Any]
             "valid": bool(run_audit.get("valid")),
             "sensor_pipeline_ok": bool(run_audit.get("sensor_pipeline_ok")),
             "sensor_failure_count": int(run_audit.get("sensor_failure_count", 0)),
+            "route_contract_ok": bool(run_audit.get("route_contract_ok")),
+            "route_contract_failure_count": int(run_audit.get("route_contract_failure_count", 0)),
             "driver_log_kind": run_audit.get("driver_log", {}).get("kind"),
         },
     }
@@ -141,6 +143,8 @@ def _print_human_report(report: dict[str, Any]) -> None:
     print(f"  run audit valid: {run_audit['valid']}")
     print(f"  sensor pipeline ok: {run_audit['sensor_pipeline_ok']}")
     print(f"  sensor failures: {run_audit['sensor_failure_count']}")
+    print(f"  route contract ok: {run_audit['route_contract_ok']}")
+    print(f"  route contract failures: {run_audit['route_contract_failure_count']}")
     print(f"  driver log: {run_audit['driver_log_kind'] or 'missing'}")
     if report["missing_files"]:
         print("  missing patterns:")

@@ -39,7 +39,7 @@ class RunAlpaSimSceneBatchTests(unittest.TestCase):
         module = _load_module()
         args = argparse.Namespace(
             mode="print",
-            model="token_dagger_iter2",
+            model="token_dagger_bc",
             scene_preset="front_camera_10scene_smoke",
             scene_id=[],
             topology="1gpu",
@@ -65,7 +65,7 @@ class RunAlpaSimSceneBatchTests(unittest.TestCase):
         args = argparse.Namespace(
             python="python",
             mode="both",
-            model="token_dagger_iter2_hybrid_clamped",
+            model="token_dagger_bc",
             scene_preset="front_camera_50scene_public2602",
             baseport=6000,
             port=6789,
@@ -106,7 +106,7 @@ class RunAlpaSimSceneBatchTests(unittest.TestCase):
         args = argparse.Namespace(
             python="python",
             mode="both",
-            model="token_dagger_iter2_axis_constrained_oracle_actor_clamped",
+            model="direct_actor_planner",
             scene_preset="front_camera_50scene_public2602",
             baseport=6000,
             port=6789,
