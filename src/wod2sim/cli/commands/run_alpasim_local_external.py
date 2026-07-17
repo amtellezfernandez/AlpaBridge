@@ -212,7 +212,7 @@ def main() -> None:
 
     scene_ids = _scene_ids(args.scene_preset, args.scene_id)
     scene_catalog_paths = _scene_catalog_paths(args.scene_preset, alpasim_root)
-    local_usdz_dir = _local_usdz_dir_from_wizard_args(args.wizard_arg)
+    local_usdz_dir = _local_usdz_dir_from_wizard_args(args.wizard_arg, base_dir=alpasim_root)
     _preflight_platform_compatibility()
     if args.mode != "print":
         _preflight_docker_access()
@@ -557,7 +557,9 @@ def _preflight_scene_artifacts(
         )
 
 
-def _local_usdz_dir_from_wizard_args(wizard_args: list[str]) -> Path | None:
+def _local_usdz_dir_from_wizard_args(
+    wizard_args: list[str], *, base_dir: Path | None = None
+) -> Path | None:
     for override in reversed(wizard_args):
         key, separator, value = str(override).strip().partition("=")
         if not separator:
@@ -567,7 +569,13 @@ def _local_usdz_dir_from_wizard_args(wizard_args: list[str]) -> Path | None:
         cleaned_value = value.strip().strip("'\"")
         if not cleaned_value:
             raise SystemExit("scenes.local_usdz_dir override is empty")
-        return Path(cleaned_value).expanduser().resolve()
+        candidate = Path(cleaned_value).expanduser()
+        if candidate.is_absolute():
+            return candidate.resolve()
+        cwd_candidate = candidate.resolve()
+        if cwd_candidate.exists() or base_dir is None:
+            return cwd_candidate
+        return (base_dir / candidate).resolve()
     return None
 
 

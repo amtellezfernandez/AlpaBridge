@@ -328,6 +328,19 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
 
         self.assertEqual(second.resolve(), local_usdz_dir)
 
+    def test_local_usdz_dir_from_wizard_args_can_resolve_from_alpasim_root(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            alpasim_root = Path(tmp) / "alpasim"
+            local_usdz_dir = alpasim_root / "data" / "nre-artifacts" / "local-usdzs"
+            local_usdz_dir.mkdir(parents=True)
+
+            resolved = _local_usdz_dir_from_wizard_args(
+                ["scenes.local_usdz_dir=data/nre-artifacts/local-usdzs"],
+                base_dir=alpasim_root,
+            )
+
+        self.assertEqual(local_usdz_dir.resolve(), resolved)
+
     def test_scene_catalog_paths_can_use_public_2602_catalog(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             alpasim_root = Path(tmp) / "alpasim"

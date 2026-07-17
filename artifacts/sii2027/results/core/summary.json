@@ -1,13 +1,21 @@
 {
   "attempted": 0,
   "blocked": 54,
+  "blocker_counts": {
+    "direct_actor_oracle_proxy_missing": 18,
+    "execution_not_requested": 36
+  },
   "blockers": [],
   "claim_valid": false,
   "completed": 0,
   "config": "configs/sii2027/core.yaml",
-  "created_at": "2026-07-17T12:00:07.760449+00:00",
+  "created_at": "2026-07-17T12:16:30.220990+00:00",
   "expected_runs": 54,
   "failed": 0,
+  "failure_code_counts": {
+    "direct_actor_oracle_proxy_missing": 18,
+    "execution_not_requested": 36
+  },
   "matrix": "core",
   "rows": 54,
   "schema": "sii2027_matrix_summary_v1"

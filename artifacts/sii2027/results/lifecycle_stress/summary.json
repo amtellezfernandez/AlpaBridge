@@ -1,13 +1,17 @@
 {
   "attempted": 40,
   "blocked": 0,
+  "blocker_counts": {},
   "blockers": [],
   "claim_valid": false,
   "completed": 40,
   "config": "configs/sii2027/lifecycle_stress.yaml",
-  "created_at": "2026-07-17T12:00:16.058500+00:00",
+  "created_at": "2026-07-17T12:16:30.278295+00:00",
   "expected_runs": 40,
   "failed": 0,
+  "failure_code_counts": {
+    "duplicate_close_unhandled": 20
+  },
   "matrix": "lifecycle_stress",
   "rows": 40,
   "schema": "sii2027_matrix_summary_v1"
