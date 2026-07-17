@@ -126,6 +126,11 @@ def _summarize_run(manifest_path: Path) -> dict[str, Any]:
     )
     support_bundle_path = _resolve_support_bundle_path(evidence_dir, support_report)
     support_bundle_sha256 = _sha256_if_file(support_bundle_path)
+    evidence_hashes = _validate_expected_evidence_hashes(
+        evidence_dir=evidence_dir,
+        manifest=manifest,
+        errors=errors,
+    )
 
     audit_summary = _audit_summary(audit)
     support_bundle_summary = _support_bundle_summary(
@@ -159,6 +164,7 @@ def _summarize_run(manifest_path: Path) -> dict[str, Any]:
         "provenance": _dict_or_empty(manifest.get("provenance")),
         "audit": audit_summary,
         "support_bundle": support_bundle_summary,
+        "evidence_hashes": evidence_hashes,
         "artifacts": {
             "manifest": MANIFEST_NAME if manifest_path.is_file() else None,
             "run_audit": RUN_AUDIT_NAME if (evidence_dir / RUN_AUDIT_NAME).is_file() else None,
@@ -282,6 +288,9 @@ def _aggregate_runs(runs: list[dict[str, Any]]) -> dict[str, Any]:
             1 for run in runs if run["support_bundle"]["valid"] is True
         ),
         "support_bundle_hashes": sorted(support_bundle_hashes),
+        "evidence_hash_mismatch_count": sum(
+            int(run["evidence_hashes"].get("mismatched", 0)) for run in runs
+        ),
         "provenance_commits": sorted(provenance_commits),
     }
 
@@ -387,6 +396,70 @@ def _resolve_support_bundle_path(evidence_dir: Path, support_report: dict[str, A
     if isinstance(raw_bundle_path, str) and raw_bundle_path:
         return Path(raw_bundle_path).expanduser().resolve()
     return local
+
+
+def _validate_expected_evidence_hashes(
+    *,
+    evidence_dir: Path,
+    manifest: dict[str, Any],
+    errors: list[str],
+) -> dict[str, Any]:
+    expected_hashes = manifest.get("expected_evidence_hashes")
+    summary = {
+        "checked": 0,
+        "matched": 0,
+        "mismatched": 0,
+        "missing": 0,
+        "invalid": 0,
+    }
+    if expected_hashes is None:
+        return summary
+    if not isinstance(expected_hashes, dict):
+        errors.append("invalid expected_evidence_hashes: expected object")
+        summary["invalid"] += 1
+        return summary
+
+    for raw_name, raw_expected in sorted(expected_hashes.items(), key=lambda item: str(item[0])):
+        name = str(raw_name)
+        expected = str(raw_expected).lower() if isinstance(raw_expected, str) else ""
+        summary["checked"] += 1
+        if not _looks_like_sha256(expected):
+            errors.append(f"invalid expected hash:{name}")
+            summary["invalid"] += 1
+            continue
+        path = _safe_evidence_path(evidence_dir=evidence_dir, relative_name=name)
+        if path is None:
+            errors.append(f"invalid evidence hash path:{name}")
+            summary["invalid"] += 1
+            continue
+        actual = _sha256_if_file(path)
+        if actual is None:
+            errors.append(f"missing hashed evidence:{name}")
+            summary["missing"] += 1
+            continue
+        if actual != expected:
+            errors.append(f"hash mismatch:{name}:expected={expected}:actual={actual}")
+            summary["mismatched"] += 1
+            continue
+        summary["matched"] += 1
+    return summary
+
+
+def _looks_like_sha256(value: str) -> bool:
+    return len(value) == 64 and all(char in "0123456789abcdef" for char in value)
+
+
+def _safe_evidence_path(*, evidence_dir: Path, relative_name: str) -> Path | None:
+    relative = Path(relative_name)
+    if relative.is_absolute() or not relative.parts or any(part == ".." for part in relative.parts):
+        return None
+    evidence_root = evidence_dir.resolve()
+    candidate = (evidence_root / relative).resolve()
+    try:
+        candidate.relative_to(evidence_root)
+    except ValueError:
+        return None
+    return candidate
 
 
 def _sha256_if_file(path: Path) -> str | None:

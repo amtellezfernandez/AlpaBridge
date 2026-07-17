@@ -1,5 +1,5 @@
 command=make sii2027-paper PYTHON=./.venv/bin/python
-start_utc=2026-07-17T11:31:23Z
+start_utc=2026-07-17T13:18:57Z
 
 ./scripts/build_sii2027_paper.sh
 This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex)
@@ -58,6 +58,7 @@ For additional information on amsmath, use the `?' option.
 (/usr/share/texlive/texmf-dist/tex/latex/microtype/microtype.sty
 (/usr/share/texlive/texmf-dist/tex/latex/microtype/microtype-pdftex.def)
 (/usr/share/texlive/texmf-dist/tex/latex/microtype/microtype.cfg))
+(/usr/share/texlive/texmf-dist/tex/latex/placeins/placeins.sty)
 (./generated/paper_numbers.tex)
 (/usr/share/texlive/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def)
 (./main.aux)
@@ -71,9 +72,9 @@ For additional information on amsmath, use the `?' option.
 (./generated/contract_map.tex
 (/usr/share/texlive/texmf-dist/tex/latex/microtype/mt-cmr.cfg)) [1{/var/lib/tex
 mf/fonts/map/pdftex/updmap/pdftex.map}{/usr/share/texlive/texmf-dist/fonts/enc/
-dvips/base/8r.enc}] [2 <./figures/system_architecture.pdf>]
-(./generated/main_results.tex) [3 <./figures/evaluation_pipeline.pdf> <./figure
-s/main_results.pdf>] (./main.bbl)
+dvips/base/8r.enc}] (./generated/main_results.tex)
+(./generated/fault_localization.tex) [2 <./figures/system_architecture.pdf> <./
+figures/evaluation_pipeline.pdf>] [3 <./figures/main_results.pdf>] (./main.bbl)
 
 ** Conference Paper **
 Before submitting the final camera ready copy, remember to:
@@ -86,11 +87,13 @@ Before submitting the final camera ready copy, remember to:
  process uses the appropriate paper size.
 
 [4] (./main.aux) )</usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm
-/cmr9.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr
-/share/texlive/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></usr/share/texlive
-/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/share/texlive/texmf-dist/fon
-ts/type1/urw/times/utmri8a.pfb>
-Output written on main.pdf (4 pages, 97225 bytes).
+/cmmi10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10
+.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></u
+sr/share/texlive/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/share/texliv
+e/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></usr/share/texlive/texmf-dist/f
+onts/type1/urw/times/utmr8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/
+times/utmri8a.pfb>
+Output written on main.pdf (4 pages, 121479 bytes).
 Transcript written on main.log.
 This is BibTeX, Version 0.99d (TeX Live 2023/Debian)
 The top-level auxiliary file: main.aux
@@ -152,6 +155,7 @@ For additional information on amsmath, use the `?' option.
 (/usr/share/texlive/texmf-dist/tex/latex/microtype/microtype.sty
 (/usr/share/texlive/texmf-dist/tex/latex/microtype/microtype-pdftex.def)
 (/usr/share/texlive/texmf-dist/tex/latex/microtype/microtype.cfg))
+(/usr/share/texlive/texmf-dist/tex/latex/placeins/placeins.sty)
 (./generated/paper_numbers.tex)
 (/usr/share/texlive/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def)
 (./main.aux)
@@ -165,9 +169,9 @@ For additional information on amsmath, use the `?' option.
 (./generated/contract_map.tex
 (/usr/share/texlive/texmf-dist/tex/latex/microtype/mt-cmr.cfg)) [1{/var/lib/tex
 mf/fonts/map/pdftex/updmap/pdftex.map}{/usr/share/texlive/texmf-dist/fonts/enc/
-dvips/base/8r.enc}] [2 <./figures/system_architecture.pdf>]
-(./generated/main_results.tex) [3 <./figures/evaluation_pipeline.pdf> <./figure
-s/main_results.pdf>] (./main.bbl)
+dvips/base/8r.enc}] (./generated/main_results.tex)
+(./generated/fault_localization.tex) [2 <./figures/system_architecture.pdf> <./
+figures/evaluation_pipeline.pdf>] [3 <./figures/main_results.pdf>] (./main.bbl)
 
 ** Conference Paper **
 Before submitting the final camera ready copy, remember to:
@@ -180,11 +184,13 @@ Before submitting the final camera ready copy, remember to:
  process uses the appropriate paper size.
 
 [4] (./main.aux) )</usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm
-/cmr9.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr
-/share/texlive/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></usr/share/texlive
-/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/share/texlive/texmf-dist/fon
-ts/type1/urw/times/utmri8a.pfb>
-Output written on main.pdf (4 pages, 97225 bytes).
+/cmmi10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10
+.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></u
+sr/share/texlive/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/share/texliv
+e/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></usr/share/texlive/texmf-dist/f
+onts/type1/urw/times/utmr8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/
+times/utmri8a.pfb>
+Output written on main.pdf (4 pages, 121479 bytes).
 Transcript written on main.log.
 This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex)
  restricted \write18 enabled.
@@ -242,6 +248,7 @@ For additional information on amsmath, use the `?' option.
 (/usr/share/texlive/texmf-dist/tex/latex/microtype/microtype.sty
 (/usr/share/texlive/texmf-dist/tex/latex/microtype/microtype-pdftex.def)
 (/usr/share/texlive/texmf-dist/tex/latex/microtype/microtype.cfg))
+(/usr/share/texlive/texmf-dist/tex/latex/placeins/placeins.sty)
 (./generated/paper_numbers.tex)
 (/usr/share/texlive/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def)
 (./main.aux)
@@ -255,9 +262,9 @@ For additional information on amsmath, use the `?' option.
 (./generated/contract_map.tex
 (/usr/share/texlive/texmf-dist/tex/latex/microtype/mt-cmr.cfg)) [1{/var/lib/tex
 mf/fonts/map/pdftex/updmap/pdftex.map}{/usr/share/texlive/texmf-dist/fonts/enc/
-dvips/base/8r.enc}] [2 <./figures/system_architecture.pdf>]
-(./generated/main_results.tex) [3 <./figures/evaluation_pipeline.pdf> <./figure
-s/main_results.pdf>] (./main.bbl)
+dvips/base/8r.enc}] (./generated/main_results.tex)
+(./generated/fault_localization.tex) [2 <./figures/system_architecture.pdf> <./
+figures/evaluation_pipeline.pdf>] [3 <./figures/main_results.pdf>] (./main.bbl)
 
 ** Conference Paper **
 Before submitting the final camera ready copy, remember to:
@@ -270,13 +277,15 @@ Before submitting the final camera ready copy, remember to:
  process uses the appropriate paper size.
 
 [4] (./main.aux) )</usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm
-/cmr9.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr
-/share/texlive/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></usr/share/texlive
-/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/share/texlive/texmf-dist/fon
-ts/type1/urw/times/utmri8a.pfb>
-Output written on main.pdf (4 pages, 97225 bytes).
+/cmmi10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10
+.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></u
+sr/share/texlive/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/share/texliv
+e/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></usr/share/texlive/texmf-dist/f
+onts/type1/urw/times/utmr8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/
+times/utmri8a.pfb>
+Output written on main.pdf (4 pages, 121479 bytes).
 Transcript written on main.log.
 
-end_utc=2026-07-17T11:31:24Z
-duration_seconds=1
+end_utc=2026-07-17T13:19:00Z
+duration_seconds=3
 exit_code=0

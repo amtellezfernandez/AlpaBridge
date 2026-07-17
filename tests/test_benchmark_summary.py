@@ -117,6 +117,30 @@ class BenchmarkSummaryTests(unittest.TestCase):
 
         self.assertEqual(1, returncode)
 
+    def test_hash_mismatch_is_detected(self) -> None:
+        module = importlib.import_module("wod2sim.cli.commands.benchmark_summary")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            evidence = root / "evidence"
+            _write_valid_evidence(evidence)
+            manifest_path = evidence / "closed-loop-reproduction-manifest.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["expected_evidence_hashes"] = {"support-bundle.tar.gz": "0" * 64}
+            _write_json(manifest_path, manifest)
+
+            summary = module.build_summary(evidence_dirs=[evidence])
+
+        self.assertFalse(summary["valid"])
+        self.assertFalse(summary["valid_claim_evidence"])
+        self.assertEqual(1, summary["aggregate"]["evidence_hash_mismatch_count"])
+        self.assertEqual(1, summary["runs"][0]["evidence_hashes"]["mismatched"])
+        self.assertTrue(
+            any(
+                error.startswith("hash mismatch:support-bundle.tar.gz")
+                for error in summary["runs"][0]["errors"]
+            )
+        )
+
 
 def _write_valid_evidence(evidence_dir: Path) -> None:
     evidence_dir.mkdir(parents=True, exist_ok=True)
@@ -133,6 +157,7 @@ def _write_valid_evidence(evidence_dir: Path) -> None:
             "run_dir": str(evidence_dir.parent / "run"),
             "requires_gated_or_user_assets": {"alpasim_scene_assets": True},
             "user_supplied_artifacts": {"checkpoint": None, "oracle_actor_proxy": None},
+            "expected_evidence_hashes": {"support-bundle.tar.gz": _sha256(b"bundle\n")},
             "provenance": {"git": {"commit": "abc123", "branch": "main", "dirty": False}},
         },
     )

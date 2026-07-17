@@ -20,7 +20,7 @@ bodies in `tests/`, and filtered test runs recorded in `artifacts/sii2027/report
 | Lifecycle | 8 | 8 | 0 | 0 | 0 |
 | Plugin/dependency boundary | 9 | 5 | 2 | 1 | 1 |
 | Deployment | 9 | 5 | 4 | 0 | 0 |
-| Evidence | 9 | 6 | 2 | 1 | 0 |
+| Evidence | 9 | 7 | 2 | 0 | 0 |
 | Fault injection | 15 | 15 | 0 | 0 | 0 |
 
 Overall status: the existing suite is useful for public release hardening, route
@@ -107,7 +107,7 @@ Skipped/gated note: learned-policy checkpoint tests are skipped from core confor
 | `test_proxy_route_rejects_claim_validity` | `supported` | `tests/test_benchmark_summary.py::test_strict_main_rejects_command_proxy_route_evidence`; audit and batch-summary route contract tests. |
 | `test_incomplete_rollout_rejects_claim_validity` | `supported` | `tests/test_batch_summary.py::test_strict_main_fails_for_incomplete_batch` |
 | `test_missing_manifest_field_rejects_claim_validity` | `partial` | Manifest planned-count fallback is tested; missing-field rejection is not comprehensively tested. |
-| `test_hash_mismatch_is_detected` | `missing` | Hashes are calculated in benchmark-summary tests, but no explicit mismatch-failure test was found. |
+| `test_hash_mismatch_is_detected` | `supported` | `tests/test_benchmark_summary.py::test_hash_mismatch_is_detected` verifies that a manifest-declared support-bundle hash mismatch invalidates the evidence input and prevents claim-valid summary acceptance. |
 | `test_failed_runs_are_retained_in_aggregation` | `supported` | Batch-summary and SII aggregation retain failed/blocked rows; current SII results preserve 55 completed synthetic rows and 90 blocked closed-loop rows. |
 | `test_aggregate_denominators_include_failures` | `supported` | Batch-summary tests and SII aggregate summary include failed/blocked denominators. |
 | `test_support_bundle_excludes_restricted_assets_and_secrets` | `supported` | `tests/test_support_bundle_command.py::test_build_report_creates_bundle_with_audit_outputs`; generated-artifact secret scan. |
