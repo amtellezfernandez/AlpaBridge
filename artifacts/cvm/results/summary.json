@@ -59,6 +59,44 @@
     }
   },
   "completed_runs": 109,
+  "core_policy_results": [
+    {
+      "attempted_runs": 18,
+      "audit_valid_runs": 18,
+      "blocked_runs": 0,
+      "collision_any_mean": 0.833333,
+      "completed_runs": 18,
+      "configured_rows": 18,
+      "metric_rows": 18,
+      "offroad_mean": 0.0,
+      "policy": "constant_velocity",
+      "progress_mean": 0.435
+    },
+    {
+      "attempted_runs": 0,
+      "audit_valid_runs": 0,
+      "blocked_runs": 18,
+      "collision_any_mean": null,
+      "completed_runs": 0,
+      "configured_rows": 18,
+      "metric_rows": 0,
+      "offroad_mean": null,
+      "policy": "direct_actor_planner",
+      "progress_mean": null
+    },
+    {
+      "attempted_runs": 18,
+      "audit_valid_runs": 18,
+      "blocked_runs": 0,
+      "collision_any_mean": 0.833333,
+      "completed_runs": 18,
+      "configured_rows": 18,
+      "metric_rows": 18,
+      "offroad_mean": 0.0,
+      "policy": "route_following",
+      "progress_mean": 0.353333
+    }
+  ],
   "created_at": "2026-07-17T18:30:42.795575+00:00",
   "data_hash": "eb4351d5729a4a9f56e828b2ab7ddddf08a206f33b8a417d5153c1e3aba229d5",
   "failed_runs": 0,

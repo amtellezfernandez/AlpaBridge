@@ -194,6 +194,40 @@ class AggregateCVMTests(unittest.TestCase):
         self.assertIn("end_to_end_action_latency_ms", header)
         self.assertIn("policy_reasoning_status_code", header)
 
+    def test_closed_loop_evidence_uses_public_fallback_without_raw_run_dir(self) -> None:
+        module = _load_module()
+        row = {
+            **_row(),
+            "run_id": "core_constant_velocity_scene-a_17_full_contract",
+            "status": "completed",
+            "attempted": "true",
+            "completed": "true",
+            "_source": "artifacts/cvm/results/core/runs.csv",
+        }
+        fallback = {
+            row["run_id"]: {
+                "run_id": row["run_id"],
+                "matrix": "core",
+                "policy": "constant_velocity",
+                "scene_id": "scene-a",
+                "seed": "17",
+                "adapter_config": "full_contract",
+                "audit_valid": "true",
+                "route_contract_ok": "true",
+                "sensor_pipeline_ok": "true",
+                "metrics_present": "true",
+                "progress": "0.4",
+                "collision_any": "0",
+                "offroad": "0",
+            }
+        }
+
+        evidence = module._closed_loop_evidence([row], fallback_rows=fallback)
+
+        self.assertEqual("true", evidence[0]["audit_valid"])
+        self.assertEqual("true", evidence[0]["metrics_present"])
+        self.assertEqual("0.4", evidence[0]["progress"])
+
 
 if __name__ == "__main__":
     unittest.main()

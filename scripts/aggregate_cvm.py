@@ -100,7 +100,10 @@ def main() -> int:
 
     rows = sorted(rows, key=lambda row: (row.get("matrix", ""), row.get("run_id", "")))
     failures = [row for row in rows if row.get("status") in {"failed", "blocked"}]
-    closed_loop_evidence = _closed_loop_evidence(rows)
+    closed_loop_evidence = _closed_loop_evidence(
+        rows,
+        fallback_rows=_load_existing_evidence(args.output / "closed_loop_metrics.csv"),
+    )
     semantic_pair_rows = _semantic_ablation_pair_rows(closed_loop_evidence)
     summary = _summary(
         rows=rows,
@@ -310,6 +313,7 @@ def _summary(
             item.get("metrics_present") == "true" for item in closed_loop_evidence
         ),
         "closed_loop_metrics": metric_summary,
+        "core_policy_results": _core_policy_results(rows, closed_loop_evidence),
         "integration_effectiveness": effectiveness_summary,
         "failure_attribution": failure_attribution_summary,
         "semantic_ablation_deltas": semantic_delta_summary,
@@ -323,6 +327,53 @@ def _summary(
         "failure_code_counts": dict(sorted(failure_code_counts.items())),
         "blocker_counts": dict(sorted(blocker_counts.items())),
     }
+
+
+def _core_policy_results(
+    rows: list[dict[str, str]],
+    closed_loop_evidence: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    core_rows = [row for row in rows if row.get("matrix") == "core"]
+    policies = list(dict.fromkeys(row.get("policy", "") for row in core_rows if row.get("policy")))
+    results: list[dict[str, Any]] = []
+    for policy in policies:
+        policy_rows = [row for row in core_rows if row.get("policy") == policy]
+        policy_evidence = [
+            row
+            for row in closed_loop_evidence
+            if row.get("matrix") == "core" and row.get("policy") == policy
+        ]
+        metric_rows = [row for row in policy_evidence if row.get("metrics_present") == "true"]
+        results.append(
+            {
+                "policy": policy,
+                "configured_rows": len(policy_rows),
+                "attempted_runs": sum(row.get("attempted") == "true" for row in policy_rows),
+                "completed_runs": sum(row.get("completed") == "true" for row in policy_rows),
+                "audit_valid_runs": sum(row.get("audit_valid") == "true" for row in policy_evidence),
+                "metric_rows": len(metric_rows),
+                "blocked_runs": sum(row.get("status") == "blocked" for row in policy_rows),
+                "progress_mean": _mean_metric(metric_rows, "progress"),
+                "collision_any_mean": _mean_metric(metric_rows, "collision_any"),
+                "offroad_mean": _mean_metric(metric_rows, "offroad"),
+            }
+        )
+    return results
+
+
+def _mean_metric(rows: list[dict[str, Any]], metric: str) -> float | None:
+    values: list[float] = []
+    for row in rows:
+        value = row.get(metric)
+        try:
+            parsed = float(str(value))
+        except (TypeError, ValueError):
+            continue
+        if math.isfinite(parsed):
+            values.append(parsed)
+    if not values:
+        return None
+    return round(sum(values) / len(values), 6)
 
 
 def _failure_attribution_summary(
@@ -394,7 +445,23 @@ def _hash_rows(rows: list[dict[str, str]]) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
-def _closed_loop_evidence(rows: list[dict[str, str]]) -> list[dict[str, Any]]:
+def _load_existing_evidence(path: Path) -> dict[str, dict[str, str]]:
+    if not path.is_file():
+        return {}
+    with path.open(newline="", encoding="utf-8") as handle:
+        return {
+            row.get("run_id", ""): row
+            for row in csv.DictReader(handle)
+            if row.get("run_id")
+        }
+
+
+def _closed_loop_evidence(
+    rows: list[dict[str, str]],
+    *,
+    fallback_rows: dict[str, dict[str, str]] | None = None,
+) -> list[dict[str, Any]]:
+    fallback_rows = fallback_rows or {}
     evidence_rows: list[dict[str, Any]] = []
     for row in rows:
         if row.get("status") != "completed" or row.get("matrix") in SYNTHETIC_MATRICES:
@@ -415,6 +482,12 @@ def _closed_loop_evidence(rows: list[dict[str, str]]) -> list[dict[str, Any]]:
             "metrics_present": "false",
             "metrics_path": "",
         }
+        if run_dir is None or not run_dir.is_dir():
+            fallback = fallback_rows.get(str(row.get("run_id", "")))
+            if _fallback_matches_row(fallback, row):
+                item.update(fallback or {})
+            evidence_rows.append(item)
+            continue
         if run_dir is not None and run_dir.is_dir():
             try:
                 audit = build_audit_report(run_dir=run_dir)
@@ -446,6 +519,18 @@ def _closed_loop_evidence(rows: list[dict[str, str]]) -> list[dict[str, Any]]:
                         item[metric] = f"{float(value):.6g}"
         evidence_rows.append(item)
     return evidence_rows
+
+
+def _fallback_matches_row(
+    fallback: dict[str, str] | None,
+    row: dict[str, str],
+) -> bool:
+    if fallback is None:
+        return False
+    for field in ("run_id", "matrix", "policy", "scene_id", "seed", "adapter_config"):
+        if fallback.get(field, "") != row.get(field, ""):
+            return False
+    return True
 
 
 def _run_dir_for(row: dict[str, str]) -> Path | None:
@@ -703,6 +788,41 @@ def _write_fault_rollup(inputs: Path, output: Path) -> None:
     _write_csv(output, rows, fields)
 
 
+def _core_policy_table_rows(summary: dict[str, Any]) -> list[str]:
+    results = summary.get("core_policy_results")
+    if not isinstance(results, list):
+        return []
+    rows: list[str] = []
+    for item in results:
+        if not isinstance(item, dict):
+            continue
+        completed = _summary_int(item, "completed_runs")
+        attempted = _summary_int(item, "attempted_runs")
+        audit_valid = _summary_int(item, "audit_valid_runs")
+        blocked = _summary_int(item, "blocked_runs")
+        rows.append(
+            f"{_latex_text(str(item.get('policy', '')))} & "
+            f"{_summary_int(item, 'configured_rows')} & "
+            f"{completed}/{attempted} & "
+            f"{audit_valid}/{completed} & "
+            f"{_format_table_metric(item.get('progress_mean'))} & "
+            f"{_format_table_metric(item.get('collision_any_mean'))}/"
+            f"{_format_table_metric(item.get('offroad_mean'))} & "
+            f"{blocked} \\\\"
+        )
+    return rows
+
+
+def _format_table_metric(value: object) -> str:
+    if not isinstance(value, (int, float)) or not math.isfinite(float(value)):
+        return "--"
+    return f"{float(value):.3f}"
+
+
+def _latex_text(value: str) -> str:
+    return value.replace("\\", r"\textbackslash{}").replace("_", r"\_")
+
+
 def _write_tables(output: Path, summary: dict[str, Any], rows: list[dict[str, str]]) -> None:
     tables = output.parent / "tables" if output.name == "results" else output / "tables"
     tables.mkdir(parents=True, exist_ok=True)
@@ -797,22 +917,16 @@ def _write_tables(output: Path, summary: dict[str, Any], rows: list[dict[str, st
         + "\\bottomrule\n\\end{tabular}\n",
         encoding="utf-8",
     )
+    core_policy_rows = _core_policy_table_rows(summary)
     (tables / "main_results.tex").write_text(
         "% generated by contract-validation aggregate; data_hash="
         + data_hash
         + "\n"
-        + "\\begin{tabular}{lrrr}\n"
-        + "\\toprule\nEvidence family & Denom. & Positive & Completed \\\\\n"
+        + "\\begin{tabular}{lllllll}\n"
+        + "\\toprule\nPolicy & Rows & Done/att. & Audit & Progress & Coll./off & Blocked \\\\\n"
         + "\\midrule\n"
-        + f"CVM configured rows & {summary['total_rows']} & -- & {summary['completed_runs']} \\\\\n"
-        + f"Full-contract rollouts & {full_contract_completed} & {full_contract_audit_valid} & {full_contract_completed} \\\\\n"
-        + f"Policy-attributable behavior & {summary['total_rows']} & {policy_behavior_attributable} & -- \\\\\n"
-        + f"Policy-attributable failures & {summary['total_rows']} & {policy_failure_attributable} & -- \\\\\n"
-        + f"Integration/precondition failures & {summary['total_rows']} & {integration_failure_attributable} & -- \\\\\n"
-        + f"False-block observations & {false_block_denominator} & {false_blocked} & -- \\\\\n"
-        + f"Semantic ablation pairs & {semantic_completed_pairs} & {semantic_metric_pairs} & -- \\\\\n"
-        + f"Planned/not launched & {summary['total_rows']} & {summary['planned_runs']} & 0 \\\\\n"
-        + f"Blocked & {summary['total_rows']} & {summary['blocked_runs']} & 0 \\\\\n"
+        + "\n".join(core_policy_rows)
+        + "\n"
         + "\\bottomrule\n\\end{tabular}\n",
         encoding="utf-8",
     )

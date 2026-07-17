@@ -1479,6 +1479,36 @@ def _generated_table_summary_field_failures(summary_path: Path, summary: dict[st
     for dotted_path in GENERATED_TABLE_JSON_FIELDS:
         if not isinstance(_json_path_value(summary, dotted_path), int):
             failures.append(f"generated_table_summary_field_missing:{summary_path}:{dotted_path}")
+    core_policy_results = summary.get("core_policy_results")
+    if not isinstance(core_policy_results, list) or not core_policy_results:
+        failures.append(f"generated_table_summary_field_missing:{summary_path}:core_policy_results")
+    else:
+        for index, item in enumerate(core_policy_results):
+            if not isinstance(item, dict):
+                failures.append(
+                    f"generated_table_summary_field_invalid:{summary_path}:core_policy_results:{index}"
+                )
+                continue
+            for field in (
+                "policy",
+                "configured_rows",
+                "attempted_runs",
+                "completed_runs",
+                "audit_valid_runs",
+                "blocked_runs",
+            ):
+                if field == "policy":
+                    if not isinstance(item.get(field), str) or not item.get(field):
+                        failures.append(
+                            f"generated_table_summary_field_missing:"
+                            f"{summary_path}:core_policy_results:{index}:{field}"
+                        )
+                    continue
+                if not isinstance(item.get(field), int):
+                    failures.append(
+                        f"generated_table_summary_field_missing:"
+                        f"{summary_path}:core_policy_results:{index}:{field}"
+                    )
     return failures
 
 
@@ -1493,65 +1523,40 @@ def _expected_contract_map_rows() -> list[str]:
 
 
 def _expected_main_results_rows(summary: dict[str, object]) -> list[str]:
+    core_policy_results = summary.get("core_policy_results")
+    if not isinstance(core_policy_results, list):
+        return []
     return [
-        _table_row(
-            "CVM configured rows",
-            _required_int(summary, "total_rows"),
-            "--",
-            _required_int(summary, "completed_runs"),
-        ),
-        _table_row(
-            "Full-contract rollouts",
-            _required_int(summary, "integration_effectiveness.full_contract_completed_runs"),
-            _required_int(summary, "integration_effectiveness.full_contract_audit_valid_runs"),
-            _required_int(summary, "integration_effectiveness.full_contract_completed_runs"),
-        ),
-        _table_row(
-            "Policy-attributable behavior",
-            _required_int(summary, "total_rows"),
-            _required_int(summary, "failure_attribution.policy_behavior_attributable_rows"),
-            "--",
-        ),
-        _table_row(
-            "Policy-attributable failures",
-            _required_int(summary, "total_rows"),
-            _required_int(summary, "failure_attribution.policy_failure_attributable_rows"),
-            "--",
-        ),
-        _table_row(
-            "Integration/precondition failures",
-            _required_int(summary, "total_rows"),
-            _required_int(summary, "failure_attribution.integration_failure_attributable_rows"),
-            "--",
-        ),
-        _table_row(
-            "False-block observations",
-            _required_int(
-                summary,
-                "integration_effectiveness.valid_full_contract_false_block_denominator",
-            ),
-            _required_int(summary, "integration_effectiveness.valid_full_contract_false_blocked_runs"),
-            "--",
-        ),
-        _table_row(
-            "Semantic ablation pairs",
-            _required_int(summary, "integration_effectiveness.semantic_ablation_completed_pairs"),
-            _required_int(summary, "integration_effectiveness.semantic_ablation_metric_pairs"),
-            "--",
-        ),
-        _table_row(
-            "Planned/not launched",
-            _required_int(summary, "total_rows"),
-            _required_int(summary, "planned_runs"),
-            0,
-        ),
-        _table_row(
-            "Blocked",
-            _required_int(summary, "total_rows"),
-            _required_int(summary, "blocked_runs"),
-            0,
-        ),
+        _expected_core_policy_row(item)
+        for item in core_policy_results
+        if isinstance(item, dict)
     ]
+
+
+def _expected_core_policy_row(item: dict[str, object]) -> str:
+    completed = item.get("completed_runs") if isinstance(item.get("completed_runs"), int) else 0
+    attempted = item.get("attempted_runs") if isinstance(item.get("attempted_runs"), int) else 0
+    audit_valid = item.get("audit_valid_runs") if isinstance(item.get("audit_valid_runs"), int) else 0
+    return _table_row(
+        _latex_table_text(str(item.get("policy", ""))),
+        item.get("configured_rows") if isinstance(item.get("configured_rows"), int) else 0,
+        f"{completed}/{attempted}",
+        f"{audit_valid}/{completed}",
+        _format_table_metric(item.get("progress_mean")),
+        f"{_format_table_metric(item.get('collision_any_mean'))}/"
+        f"{_format_table_metric(item.get('offroad_mean'))}",
+        item.get("blocked_runs") if isinstance(item.get("blocked_runs"), int) else 0,
+    )
+
+
+def _format_table_metric(value: object) -> str:
+    if not isinstance(value, (int, float)):
+        return "--"
+    return f"{float(value):.3f}"
+
+
+def _latex_table_text(value: str) -> str:
+    return value.replace("\\", r"\textbackslash{}").replace("_", r"\_")
 
 
 def _expected_ablations_rows(

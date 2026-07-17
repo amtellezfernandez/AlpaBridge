@@ -27,27 +27,25 @@ Email: amtellezfernandez@gmail.com}
 \maketitle
 
 \begin{abstract}
-Offline driving policies are usually evaluated as functions over logged observations,
-but closed-loop simulation integrates them as long-running services. At that boundary,
-route geometry can be replaced by a command, policy horizons can be sampled on the
-wrong clock, late session messages can corrupt state, and missing provenance can make
-a simulator or precondition fault look like policy failure. WOD2Sim treats this as
-contract-based system integration. It defines semantic, temporal, lifecycle,
-deployment, and evidence contracts for Waymo Open Dataset (WOD)-style trajectory
-policies behind an AlpaSim external-driver interface. The implementation preserves
-route and scene signals, resamples trajectories deterministically, isolates optional
-model backends, materializes launch provenance, and gates behavior attribution through
-auditable manifests. We evaluate the release with a \CVMTotalRows{}-row
-contract-validation matrix combining dependency-light closed-loop rollouts, semantic
-route ablations, lifecycle stress, and synthetic fault injection. Full-contract rows
-complete audit-valid in \CVMFullContractAuditValidRuns{}/\CVMFullContractCompletedRuns{}
-cases with \CVMValidFullContractFalseBlockedRuns{}/\CVMValidFullContractFalseBlockDenominator{}
-false blocks; command-only route ablations are rejected as non-claim-valid in
-\CVMCommandProxyRejectedRuns{}/\CVMCommandProxyCompletedRuns{} cases; and
-\CVMFaultLocalized{}/\CVMFaultTotal{} injected faults are localized. The public
-aggregate deliberately reports \CVMPolicyBehaviorAttributableRows{}
-policy-attributable behavior rows: the present evidence validates the integration
-boundary, not policy quality.
+Offline driving policies are usually designed around logged observations, whereas a
+closed-loop simulator integrates them as persistent external-driver services. The hard
+problem is therefore failure attribution, not file conversion: lost route geometry,
+mismatched sampling clocks, late session messages, or missing provenance can make an
+integration defect look like policy behavior. WOD2Sim addresses this boundary with five
+explicit contracts--semantic, temporal, lifecycle, deployment, and evidence--for
+Waymo Open Dataset (WOD)-style trajectory policies connected to AlpaSim. The reference
+implementation preserves route and scene signals, resamples policy trajectories onto
+the runtime clock, isolates optional model backends, materializes launch state, and
+requires an audit before any rollout outcome is treated as policy-attributable. The
+public release evaluates that gate with dependency-light closed-loop policies,
+route-semantics ablations, lifecycle stress, and synthetic fault injection. In the
+current evidence package, the constant-velocity and route-following core rows complete
+audit-valid, direct actor-aware rows remain deployment-blocked, command-only route
+ablations are rejected as non-claim-valid, and injected faults localize to their
+contract layer.
+These results support WOD2Sim as an integration-validation methodology for separating
+integration failure from policy failure; they do not yet establish policy quality or
+complete WOD benchmark coverage.
 \end{abstract}
 
 \section{Introduction}
@@ -214,12 +212,12 @@ becoming results.
 \section{Results}
 
 No complete policy benchmark is claim-valid in the current repository state.
-Table~\ref{tab:main-results} reports the generated CVM status and the integration
-effectiveness denominators that are currently available.
+Table~\ref{tab:main-results} reports the generated core policy status and the
+closed-loop diagnostic metrics currently available for dependency-light policies.
 
 \begin{table}[t]
 \centering
-\caption{Current CVM status. Rows are configured evidence rows; attribution rows keep integration/precondition failures separate from policy behavior and policy failure.}
+\caption{Core policy matrix status. Rows are configured core rows; Done/att. gives completed/attempted launches, Audit gives audit-valid completed rows, and direct actor rows remain deployment-blocked.}
 \label{tab:main-results}
 \resizebox{\columnwidth}{!}{\input{generated/main_results.tex}}
 \end{table}

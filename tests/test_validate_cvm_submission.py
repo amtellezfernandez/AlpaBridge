@@ -101,6 +101,20 @@ def _write_paper_number_fixture(root: Path, module) -> tuple[Path, Path, Path, P
             "offroad": {"mean": 0.0},
             "progress": {"mean": 0.4},
         },
+        "core_policy_results": [
+            {
+                "policy": "constant_velocity",
+                "configured_rows": 4,
+                "attempted_runs": 3,
+                "completed_runs": 3,
+                "audit_valid_runs": 3,
+                "metric_rows": 3,
+                "blocked_runs": 1,
+                "progress_mean": 0.4,
+                "collision_any_mean": 0.75,
+                "offroad_mean": 0.0,
+            }
+        ],
         "matrix_counts": {
             "core": 4,
             "semantic_ablation": 2,
@@ -739,8 +753,8 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             main_results = tables / "main_results.tex"
             main_results.write_text(
                 main_results.read_text(encoding="utf-8").replace(
-                    "CVM configured rows & 10 & -- & 7",
-                    "CVM configured rows & 10 & -- & 999",
+                    r"constant\_velocity & 4 & 3/3 & 3/3 & 0.400 & 0.750/0.000 & 1",
+                    r"constant\_velocity & 4 & 3/3 & 3/3 & 0.400 & 0.750/0.000 & 999",
                 ),
                 encoding="utf-8",
             )
@@ -753,7 +767,8 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             )
 
         self.assertIn(
-            f"generated_table_row_mismatch:{main_results}:CVM configured rows & 10 & -- & 7",
+            f"generated_table_row_mismatch:{main_results}:"
+            r"constant\_velocity & 4 & 3/3 & 3/3 & 0.400 & 0.750/0.000 & 1",
             failures,
         )
 
