@@ -1303,10 +1303,12 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             venue_label = "venue-" + "specific row names"
             stale_event_name = "s" + "ii2027"
             third_party_secret = "hf_" + ("B" * 20)
+            credential_assignment = "pass" + "word = \"" + "releaseSecret123" + "\""
             (root / "README.md").write_text(
                 "\n".join(
                     [
                         token,
+                        credential_assignment,
                         "/home/" + "amdev" + "/private",
                         fixture,
                         unsupported_claim,
@@ -1331,6 +1333,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             )
 
         self.assertIn("public_hygiene:huggingface_token:README.md", failures)
+        self.assertIn("public_hygiene:credential_assignment:README.md", failures)
         self.assertIn("public_hygiene:private_home_path:README.md", failures)
         self.assertIn("public_hygiene:legacy_smoke_fixture:README.md", failures)
         self.assertIn("public_hygiene:outperformance_claim:README.md", failures)

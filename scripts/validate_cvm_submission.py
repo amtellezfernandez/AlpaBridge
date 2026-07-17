@@ -570,8 +570,15 @@ ARCHIVE_TEXT_SUFFIXES = {
 }
 DETERMINISTIC_ARCHIVE_MTIME = 0
 FORBIDDEN_TEXT_PATTERNS: tuple[tuple[str, Pattern[str]], ...] = (
-    ("private_password", re.compile(re.escape("Marso" + "123"))),
     ("huggingface_token", re.compile(r"hf_[A-Za-z0-9]{20,}")),
+    (
+        "credential_assignment",
+        re.compile(
+            r"\b(?:password|passwd|api[_-]?key|secret|token)\s*[:=]\s*"
+            r"(['\"])[A-Za-z0-9][A-Za-z0-9._/+~-]{7,}\1",
+            re.IGNORECASE,
+        ),
+    ),
     ("private_home_path", re.compile(r"/home/(?!user\b|\.\.\.)([A-Za-z0-9_.-]+)")),
     ("private_host", re.compile(r"\bMARSO-PC\b")),
     ("legacy_smoke_fixture", re.compile(r"\b" + "spot" + r"light_reflex\b", re.IGNORECASE)),
