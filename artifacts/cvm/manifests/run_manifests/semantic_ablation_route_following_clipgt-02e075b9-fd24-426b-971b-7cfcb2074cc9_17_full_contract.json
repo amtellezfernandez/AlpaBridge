@@ -156,10 +156,23 @@
     "repository": {
       "dirty": false,
       "dirty_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "git_sha": "3f27e5746bbbf3b46a1317754e8e3da2effd1f17"
+      "git_sha": "d7e5e3ae17122e38cb2710638c97b566e41d946f"
     }
   },
   "run_id": "semantic_ablation_route_following_clipgt-02e075b9-fd24-426b-971b-7cfcb2074cc9_17_full_contract",
+  "scenario_category": "available_front_camera_26_02_unclassified",
+  "scene": {
+    "asset_availability": "local_usdz_present",
+    "categories_verified": false,
+    "category": "available_front_camera_26_02_unclassified",
+    "expected_interaction_feature": "unverified",
+    "expected_route_feature": "unverified",
+    "license_gating_status": "gated_asset_referenced_not_redistributed",
+    "scenario_category": "available_front_camera_26_02_unclassified",
+    "scene_id": "clipgt-02e075b9-fd24-426b-971b-7cfcb2074cc9",
+    "selection_rationale": "second locally cached public-2602 front-camera scene",
+    "source_manifest": "artifacts/cvm/manifests/scene_manifest.yaml"
+  },
   "scene_id": "clipgt-02e075b9-fd24-426b-971b-7cfcb2074cc9",
   "schema": "cvm_run_manifest_v1",
   "seed": "17",

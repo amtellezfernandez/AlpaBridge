@@ -48,6 +48,18 @@ are integration, precondition, evidence, or diagnostic rows; they are not policy
 failures. A policy failure can be assigned only after the same claim-valid gate
 passes.
 
+## Scene Metadata
+
+- Every run manifest records `scene_id`, `scenario_category`, asset
+  availability, selection rationale, route/interaction feature expectations,
+  and license-gating status.
+- The six local closed-loop scenes are marked
+  `available_front_camera_26_02_unclassified` because the public repository does
+  not expose authoritative straight/turn/lane-change/traffic/occlusion/merge
+  labels.
+- Synthetic lifecycle and fault rows are marked as public synthetic harness
+  scenes, not closed-loop scene rollouts.
+
 ## Remaining Blockers
 
 - `direct_actor_oracle_proxy_missing`: 36 rows remain blocked across core

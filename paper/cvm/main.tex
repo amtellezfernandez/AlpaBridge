@@ -194,7 +194,9 @@ Scene selection is intentionally conservative. Six scenes are selected from avai
 local 26.02 front-camera USDZ artifacts, but the repository does not currently provide
 authoritative metadata proving straight, intersection, lane-change, dense-traffic,
 occlusion, or merge categories. The manifest therefore records them as available but
-unclassified, and the paper does not claim scenario-category coverage.
+unclassified. Each run manifest carries this \texttt{scenario\_category}, asset
+availability, selection rationale, route/interaction feature expectations, and
+license-gating status; the paper does not claim scenario-category coverage.
 
 The evaluation runner expands matrices into rows, writes CSV and JSON summaries, and
 returns nonzero status when any row is not completed. Aggregation preserves failed and
@@ -397,7 +399,8 @@ proves that command materialization, audit generation, support-bundle constructi
 public plotting work without restricted assets. It does not prove closed-loop policy
 performance. Conversely, the matrix runner can create manifests for closed-loop scene
 rows before launch, preserving scene identifiers, policy names, replicate identifiers,
-configuration hashes, runtime seed metadata when available, and precondition states. That
+scenario categories, configuration hashes, runtime seed metadata when available, and
+precondition states. That
 makes a future rerun additive: once assets, actor proxies, ablation flags, and runtime
 dependencies exist, new completed rows can be aggregated beside the retained planned and
 blocked rows rather than replacing them.

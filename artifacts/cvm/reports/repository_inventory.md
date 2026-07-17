@@ -68,6 +68,10 @@ and artifact names are not part of the release surface.
   policy-attributable behavior status, policy-failure status, claim-valid
   benchmark status, failure layer/code, and the integration-vs-policy
   attribution rule.
+- Every public run manifest carries `scene` metadata and top-level
+  `scenario_category`. Local 26.02 front-camera rows are recorded as
+  `available_front_camera_26_02_unclassified`; synthetic harness rows are
+  recorded as public synthetic scenes.
 - `artifacts/cvm/results/frames.csv` carries the public frame-level schema for
   timing, route-source, trajectory, latency, lifecycle warning, and policy
   status fields. It is currently schema-only because raw frame-level restricted
@@ -77,6 +81,7 @@ and artifact names are not part of the release surface.
 
 - Direct actor-aware planner and temporal ablation require an oracle actor proxy.
 - Learned `token_dagger_bc` requires a legitimate local checkpoint hash.
-- Scene categories are not authoritatively verified from public metadata.
+- Scene categories are recorded but not authoritatively verified from public
+  metadata; scenario-category coverage is not claimed.
 - Raw local simulator run directories, logs, and environment snapshots are not
   tracked in the public release.

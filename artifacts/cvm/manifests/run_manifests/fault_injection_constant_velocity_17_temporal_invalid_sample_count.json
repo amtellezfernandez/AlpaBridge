@@ -37,8 +37,8 @@
   "provenance": {
     "alpasim": {
       "dirty": true,
-      "dirty_diff_sha256": "43009eefe6d778a2fb1c74d900bf508e01ae8c97188b6d836d9efe9be48ca5f1",
-      "git_sha": "3f27e5746bbbf3b46a1317754e8e3da2effd1f17",
+      "dirty_diff_sha256": "5d026e6c4f9c9f2ced7d10a17bcefc73127c320d040c169e96f6f154be2ff1ff",
+      "git_sha": "d7e5e3ae17122e38cb2710638c97b566e41d946f",
       "path": ".",
       "present": true,
       "status_paths": [
@@ -219,10 +219,23 @@
     "repository": {
       "dirty": false,
       "dirty_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "git_sha": "3f27e5746bbbf3b46a1317754e8e3da2effd1f17"
+      "git_sha": "d7e5e3ae17122e38cb2710638c97b566e41d946f"
     }
   },
   "run_id": "fault_injection_constant_velocity_17_temporal_invalid_sample_count",
+  "scenario_category": "synthetic_fault_harness",
+  "scene": {
+    "asset_availability": "public_synthetic",
+    "categories_verified": true,
+    "category": "synthetic_fault_harness",
+    "expected_interaction_feature": "not_applicable",
+    "expected_route_feature": "not_applicable",
+    "license_gating_status": "public_synthetic",
+    "scenario_category": "synthetic_fault_harness",
+    "scene_id": "synthetic_fault_harness",
+    "selection_rationale": "public deterministic service harness",
+    "source_manifest": ""
+  },
   "scene_id": "synthetic_fault_harness",
   "schema": "cvm_run_manifest_v1",
   "seed": "17",

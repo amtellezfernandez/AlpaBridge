@@ -13,14 +13,16 @@
   `route_following`.
 - Semantic ablation completed 18/18 closed-loop rows with 9 matched
   full/command-only pairs.
+- Run manifests now record scene metadata and `scenario_category`; local
+  closed-loop scenes remain explicitly unclassified.
 
 ## Remaining Blockers
 
 - `direct_actor_planner` and temporal ablation rows remain blocked by
   `direct_actor_oracle_proxy_missing`.
 - Scene categories remain unverified. Six local 26.02 front-camera scenes are
-  selected by availability, not authoritative straight/turn/lane-change/traffic
-  category labels.
+  selected by availability and recorded as unclassified, not authoritative
+  straight/turn/lane-change/traffic category labels.
 - Learned `token_dagger_bc` is excluded because no legitimate local checkpoint
   hash is established for release.
 - `pdfinfo`, `pdffonts`, `qpdf`, and `latexmk` are unavailable. Validation uses

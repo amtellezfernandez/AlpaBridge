@@ -98,3 +98,8 @@ Failure attribution is explicit in `artifacts/cvm/results/summary.json` under
 sensor, lifecycle, deployment, and evidence gates pass. Contract-invalid rows,
 blocked rows, planned rows, and synthetic diagnostics must be reported as
 integration/precondition/evidence states, not policy failures.
+
+Every public run manifest also carries `scene` metadata and top-level
+`scenario_category`. Current local closed-loop scenes are recorded as
+`available_front_camera_26_02_unclassified`; this records the coverage
+limitation rather than claiming authoritative scenario categories.

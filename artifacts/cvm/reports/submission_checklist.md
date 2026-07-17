@@ -28,6 +28,8 @@ Additional release-specific checks:
 - [x] Every public run manifest carries validated integration-vs-policy
   `failure_attribution`, including separate policy-behavior and policy-failure
   attribution fields.
+- [x] Every public run manifest carries validated `scene` metadata and
+  `scenario_category` without claiming unsupported scenario-category coverage.
 - [x] `frames.csv` exposes the required public-safe frame-level schema without
   bundling restricted sensor frames or fabricating unavailable frame rows.
 
