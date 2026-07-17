@@ -28,25 +28,6 @@ local simulator state.
 - PDF size at audit: 140856 bytes.
 - Root PDF is the only tracked manuscript PDF.
 
-## Neutral Release Equivalence
-
-The original internal planning vocabulary used venue-coupled names. The public
-release intentionally maps those requirements to neutral CVM paths:
-
-- `artifacts/cvm` contains the environment, logs, manifests, results, tables,
-  figures, and reports package.
-- `configs/cvm` contains the core, semantic-ablation, temporal-ablation,
-  lifecycle-stress, and fault-injection configurations.
-- `scripts/run_cvm_matrix.py`, `scripts/aggregate_cvm.py`,
-  `scripts/generate_cvm_figures.py`, `scripts/build_cvm_paper.sh`, and
-  `scripts/validate_cvm_submission.py` implement the matrix, aggregation,
-  figure generation, paper build, and submission validation flow.
-- `paper/cvm` contains the canonical manuscript source and reproduction notes.
-- `make cvm-*` targets are the public release commands.
-
-Venue-coupled artifact names are intentionally excluded from tracked public
-source so the package remains portable across submissions.
-
 ## Commands And Targets
 
 - Core checks: `make conformance`, `make cvm-check`, `./.venv/bin/python -m pytest -q`.
@@ -54,9 +35,6 @@ source so the package remains portable across submissions.
 - Matrix expansion/execution: `make cvm-eval`, `make cvm-synthetic`.
 - Regeneration: `make cvm-aggregate`, `make cvm-paper`, `make cvm-validate`.
 - Full release target: `make cvm-all`.
-
-The public vocabulary is intentionally neutral CVM naming. Venue-coupled script
-and artifact names are not part of the release surface.
 
 ## Implementation Surface
 

@@ -23,8 +23,6 @@ Additional release-specific checks:
 - [x] Paper source is under `paper/cvm`.
 - [x] Generated evidence package is under `artifacts/cvm`.
 - [x] Public artifact vocabulary uses CVM naming.
-- [x] Neutral CVM paths are documented as the public equivalents of the
-  original internal deliverable layout.
 - [x] Figures and generated tables carry the aggregate data hash.
 - [x] `make cvm-eval` preserves completed evidence when rerun without `--execute`.
 - [x] `pre-commit run --all-files` passes without modifying files.
