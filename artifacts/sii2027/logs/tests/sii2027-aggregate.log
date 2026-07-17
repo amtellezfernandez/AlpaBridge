@@ -1,9 +1,0 @@
-command=make sii2027-aggregate PYTHON=./.venv/bin/python
-start_utc=2026-07-17T11:31:22Z
-
-./.venv/bin/python scripts/aggregate_sii2027.py --inputs artifacts/sii2027/results --output artifacts/sii2027/results
-./.venv/bin/python scripts/generate_sii2027_figures.py --summary artifacts/sii2027/results/summary.json --runs artifacts/sii2027/results/runs.csv --output artifacts/sii2027
-
-end_utc=2026-07-17T11:31:23Z
-duration_seconds=1
-exit_code=0

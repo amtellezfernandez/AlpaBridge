@@ -1,0 +1,23 @@
+schema: cvm_experiment_config_v1
+name: semantic_ablation
+description: Route-semantics ablation comparing full route geometry to command-only routing.
+scene_manifest: artifacts/cvm/manifests/scene_manifest.yaml
+policies:
+  - route_following
+seeds: [17, 29, 43]
+adapter_configs:
+  - full_contract
+  - command_only_route
+execution:
+  mode: closed_loop_ablation
+  expected_runs: 18
+  alpasim_root: workspace/alpasim-clean
+  local_usdz_dir: workspace/alpasim-clean/data/nre-artifacts/local-usdzs-front-camera-15
+  scene_limit: 3
+  required_docker_image: alpasim-base:0.66.0
+  timeout_seconds: 900
+  wizard_args:
+    - eval.video.render_video=false
+claim_boundary:
+  ablated_behavior_default: false
+  categories_verified: false

@@ -1,0 +1,19 @@
+{
+  "attempted": 40,
+  "blocked": 0,
+  "blocker_counts": {},
+  "blockers": [],
+  "claim_valid": false,
+  "completed": 40,
+  "config": "configs/cvm/lifecycle_stress.yaml",
+  "created_at": "2026-07-17T17:07:34.664077+00:00",
+  "expected_runs": 40,
+  "failed": 0,
+  "failure_code_counts": {
+    "duplicate_close_unhandled": 20
+  },
+  "matrix": "lifecycle_stress",
+  "planned": 0,
+  "rows": 40,
+  "schema": "cvm_matrix_summary_v1"
+}

@@ -1,9 +1,0 @@
-command=./.venv/bin/python -m pytest -q tests -k temporal\ or\ resampl
-start_utc=2026-07-17T13:25:10Z
-
-..........                                                [100%]
-10 passed, 227 deselected, 15 subtests passed in 0.42s
-
-end_utc=2026-07-17T13:25:11Z
-duration_seconds=1
-exit_code=0

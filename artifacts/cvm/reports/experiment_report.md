@@ -1,0 +1,69 @@
+# Contract-Validation Experiment Report
+
+Current status: the public aggregate contains completed dependency-light core
+rollouts, completed semantic closed-loop ablation pairs, public synthetic
+lifecycle/fault diagnostics, and explicit direct-actor blockers. Raw local
+rollout directories remain ignored; CSV/JSON aggregates, manifests, tables, and
+figures are the public evidence.
+
+## Configured Matrices
+
+| Matrix | Rows | Attempted | Completed | Planned | Blocked | Claim-valid |
+|---|---:|---:|---:|---:|---:|---:|
+| Core closed loop | 54 | 36 | 36 | 0 | 18 | 0 |
+| Semantic ablation | 18 | 18 | 18 | 0 | 0 | 0 |
+| Temporal ablation | 18 | 0 | 0 | 0 | 18 | 0 |
+| Lifecycle stress | 40 | 40 | 40 | 0 | 0 | 0 |
+| Fault injection | 15 | 15 | 15 | 0 | 0 | 0 |
+| Total | 145 | 109 | 109 | 0 | 36 | 0 |
+
+## Integration-Effectiveness Evidence
+
+- Full-contract rollouts: 45/45 audit-valid.
+- False-block observations on valid full-contract rows: 0/45.
+- Command-only route rows: 9/9 completed and 9/9 rejected as non-claim-valid.
+- Matched semantic pairs: 9/9 metric-bearing pairs.
+- Mean full-contract minus command-only deltas: progress -0.243, relative
+  progress 0.007, collision-any 0.333, off-road 0.000, plan deviation 0.353.
+
+These are route-boundary confound and evidence-gate measurements, not
+policy-superiority claims. The deltas show that removing route geometry changes
+measured behavior and that the evidence gate prevents command-only rows from
+being treated as valid policy evidence.
+
+## Remaining Blockers
+
+- `direct_actor_oracle_proxy_missing`: 36 rows remain blocked across core
+  direct-actor rows and the temporal-ablation matrix.
+- The temporal full-vs-naive resampling scene ablation is therefore not claimed.
+- Learned `token_dagger_bc` remains outside this CVM because no legitimate
+  release checkpoint hash is configured.
+
+## Synthetic Diagnostics
+
+- Lifecycle stress: 20/20 full-hardening synthetic cycles survived; 0/20
+  strict/pre-hardening synthetic cycles survived duplicate-close/late-message
+  injection.
+- Fault injection: 15/15 configured public synthetic faults were detected and
+  localized to the expected contract layer/code.
+- These diagnostics are not closed-loop scene rollouts and remain
+  `claim_valid=false`.
+
+## Generated Artifacts
+
+- `artifacts/cvm/results/runs.csv`
+- `artifacts/cvm/results/failures.csv`
+- `artifacts/cvm/results/closed_loop_metrics.csv`
+- `artifacts/cvm/results/semantic_ablation_pairs.csv`
+- `artifacts/cvm/results/summary.json`
+- `artifacts/cvm/results/fault_injection.csv`
+- `artifacts/cvm/manifests/run_manifests/*.json`
+- `artifacts/cvm/tables/*.tex`
+- `artifacts/cvm/figures/*.pdf`
+
+## Interpretation
+
+The current aggregate supports a bounded integration-effectiveness claim for
+route-boundary preservation and evidence-gate rejection. It does not support a
+complete direct-actor temporal ablation, learned-policy result, policy-quality
+comparison, or official Waymo benchmark claim.

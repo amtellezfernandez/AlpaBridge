@@ -1,0 +1,26 @@
+schema: cvm_experiment_config_v1
+name: core
+description: Full-contract closed-loop contract-validation matrix, blocked unless all runtime prerequisites are available.
+scene_manifest: artifacts/cvm/manifests/scene_manifest.yaml
+policies:
+  - constant_velocity
+  - route_following
+  - direct_actor_planner
+seeds: [17, 29, 43]
+adapter_configs:
+  - full_contract
+execution:
+  mode: closed_loop
+  expected_runs: 54
+  alpasim_root: workspace/alpasim-clean
+  local_usdz_dir: workspace/alpasim-clean/data/nre-artifacts/local-usdzs-front-camera-15
+  scene_preset: front_camera_50scene_public2602
+  required_docker_image: alpasim-base:0.66.0
+  timeout_seconds: 900
+  wizard_args:
+    - eval.video.render_video=false
+  direct_actor_oracle_proxy: null
+  token_checkpoint: null
+claim_boundary:
+  benchmark_claim_requires_all_runs_completed: true
+  categories_verified: false

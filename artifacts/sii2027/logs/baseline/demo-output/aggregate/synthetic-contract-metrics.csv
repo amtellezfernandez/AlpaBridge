@@ -1,8 +1,0 @@
-metric,value
-benchmark_claim,false
-valid_claim_evidence,false
-frame_count,8
-sensor_pipeline_ok,true
-route_contract_ok,true
-route_command_lateral_rmse_m,1.312
-road_center_mean_abs_lateral_offset_m,4.508

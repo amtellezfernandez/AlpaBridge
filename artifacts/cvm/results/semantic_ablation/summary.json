@@ -1,0 +1,17 @@
+{
+  "attempted": 18,
+  "blocked": 0,
+  "blocker_counts": {},
+  "blockers": [],
+  "claim_valid": false,
+  "completed": 18,
+  "config": "configs/cvm/semantic_ablation.yaml",
+  "created_at": "2026-07-17T17:07:34.480086+00:00",
+  "expected_runs": 18,
+  "failed": 0,
+  "failure_code_counts": {},
+  "matrix": "semantic_ablation",
+  "planned": 0,
+  "rows": 18,
+  "schema": "cvm_matrix_summary_v1"
+}

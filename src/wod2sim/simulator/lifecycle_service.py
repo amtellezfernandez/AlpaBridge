@@ -32,7 +32,7 @@ class _SessionState:
 
 
 class SyntheticLifecycleService:
-    """Dependency-light lifecycle model for service-contract tests and SII diagnostics."""
+    """Dependency-light lifecycle model for service-contract tests and CVM diagnostics."""
 
     def __init__(self, *, hardened: bool) -> None:
         self._hardened = hardened

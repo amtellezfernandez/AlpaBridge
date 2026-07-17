@@ -138,9 +138,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y texlive-latex-base texlive-latex-extra texlive-fonts-recommended texlive-bibtex-extra
 
-      - name: Build canonical SII paper
+      - name: Build canonical CVM paper
         run: |
-          PATH="$PWD/.venv/bin:$PATH" make sii2027-paper
+          PATH="$PWD/.venv/bin:$PATH" make cvm-paper
           test -s wod2sim.pdf
 
       - name: Upload paper artifact

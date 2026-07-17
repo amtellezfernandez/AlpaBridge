@@ -880,6 +880,7 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
                         "current_route: Route | None = None",
                         "def route_waypoints_for_prediction(self) -> list[Vec3] | None:",
                         "route_waypoints=job.session.route_waypoints_for_prediction(),",
+                        "prediction_input.runtime_random_seed = job.session.seed",
                     ]
                 ),
                 "src/driver/src/alpasim_driver/models/base.py": "route_waypoints: list[Any] | None = None\n",

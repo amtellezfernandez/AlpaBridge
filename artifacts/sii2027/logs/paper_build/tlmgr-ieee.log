@@ -1,7 +1,0 @@
-(running on Debian, switching to user mode!)
-(see /usr/share/doc/texlive-base/README.tlmgr-on-Debian.md)
-
-tlmgr: Local TeX Live (2023) is older than remote repository (2026).
-Cross release updates are only supported with
-  update-tlmgr-latest(.sh/.exe) --update
-See https://tug.org/texlive/upgrade.html for details.

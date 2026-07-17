@@ -1,0 +1,31 @@
+schema: cvm_experiment_config_v1
+name: fault_injection
+description: Deterministic public synthetic fault-localization matrix.
+scene_manifest: artifacts/cvm/manifests/scene_manifest.yaml
+policies:
+  - constant_velocity
+seeds: [17]
+adapter_configs:
+  - synthetic_fault_injection
+execution:
+  mode: synthetic_fault_injection
+  expected_runs: 15
+faults:
+  - semantic.route_missing
+  - semantic.command_only
+  - semantic.road_center_reference
+  - temporal.stale_observation
+  - temporal.invalid_sample_count
+  - temporal.nan_trajectory
+  - lifecycle.duplicate_close
+  - lifecycle.late_image
+  - lifecycle.late_route
+  - plugin.optional_backend_missing
+  - deployment.docker_unavailable
+  - deployment.gpu_runtime_unavailable
+  - deployment.scene_artifact_missing
+  - evidence.manifest_missing
+  - evidence.hash_mismatch
+claim_boundary:
+  synthetic_service_harness: true
+  benchmark_claim: false

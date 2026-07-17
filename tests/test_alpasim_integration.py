@@ -70,6 +70,9 @@ def _baseline_prediction_input(
         acceleration=0.0,
         ego_pose_history=[object()],
         scene_id="baseline-scene",
+        session_uuid="session-abc",
+        runtime_random_seed=12345,
+        debug_scene_id="clipgt-baseline",
         route_waypoints=route_waypoints,
         alpasignal={"hazards": []},
     )
@@ -178,6 +181,9 @@ class AlpaSimIntegrationTests(unittest.TestCase):
         self.assertEqual("constant_velocity", log_row["baseline"])
         self.assertEqual("alpasim_waypoints", log_row["route_source"])
         self.assertEqual(2, log_row["route_waypoint_count"])
+        self.assertEqual("session-abc", log_row["session_uuid"])
+        self.assertEqual(12345, log_row["runtime_random_seed"])
+        self.assertEqual("clipgt-baseline", log_row["debug_scene_id"])
 
     def test_baseline_models_implement_alpasim_command_encoder(self) -> None:
         model = ConstantVelocityAlpaSimModel(camera_ids=["front"], context_length=1, output_frequency_hz=4)
@@ -209,6 +215,37 @@ class AlpaSimIntegrationTests(unittest.TestCase):
         self.assertEqual("route_following", reasoning["baseline"])
         self.assertGreater(float(output.trajectory_xy[-1, 1]), 19.0)
         self.assertLess(abs(float(output.trajectory_xy[-1, 0])), 1e-5)
+
+    def test_route_following_command_only_ablation_ignores_route_geometry(self) -> None:
+        model = RouteFollowingAlpaSimModel(
+            camera_ids=["front"],
+            context_length=1,
+            output_frequency_hz=4,
+        )
+        prediction_input = _baseline_prediction_input(
+            speed=4.0,
+            route_waypoints=[
+                {"x": 0.0, "y": 0.0, "z": 0.0},
+                {"x": 0.0, "y": 20.0, "z": 0.0},
+                {"x": 20.0, "y": 20.0, "z": 0.0},
+            ],
+        )
+        old_value = os.environ.get("WOD2SIM_ROUTE_CONTRACT_MODE")
+        os.environ["WOD2SIM_ROUTE_CONTRACT_MODE"] = "command_only_route"
+        try:
+            output = model.predict(prediction_input)
+        finally:
+            if old_value is None:
+                os.environ.pop("WOD2SIM_ROUTE_CONTRACT_MODE", None)
+            else:
+                os.environ["WOD2SIM_ROUTE_CONTRACT_MODE"] = old_value
+        reasoning = json.loads(output.reasoning_text)
+
+        self.assertEqual("command_only_route", reasoning["route_contract_mode"])
+        self.assertEqual("command_proxy", reasoning["route_source"])
+        self.assertEqual(0, reasoning["route_waypoint_count"])
+        self.assertLess(abs(float(output.trajectory_xy[-1, 1])), 1e-5)
+        self.assertGreater(float(output.trajectory_xy[-1, 0]), 19.0)
 
     @pytest.mark.temporal
     def test_resample_trajectory_preserves_native_runtime_samples(self) -> None:

@@ -1,9 +1,0 @@
-command=make sii2027-inventory PYTHON=./.venv/bin/python
-start_utc=2026-07-17T13:19:43Z
-
-./scripts/sii2027_inventory.sh
-Inventory refreshed under artifacts/sii2027
-
-end_utc=2026-07-17T13:19:44Z
-duration_seconds=1
-exit_code=0

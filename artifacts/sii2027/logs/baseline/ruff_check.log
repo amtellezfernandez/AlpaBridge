@@ -1,8 +1,0 @@
-command=./.venv/bin/python -m ruff check .
-start_utc=2026-07-17T11:16:01Z
-
-All checks passed!
-
-end_utc=2026-07-17T11:16:01Z
-duration_seconds=0
-exit_code=0

@@ -161,6 +161,32 @@ def prediction_scene_id(prediction_input: Any) -> str | None:
     return text or None
 
 
+def prediction_runtime_metadata(prediction_input: Any) -> dict[str, Any]:
+    metadata: dict[str, Any] = {}
+    for output_key, candidate_names in (
+        ("session_uuid", ("session_uuid", "session_id")),
+        ("runtime_random_seed", ("runtime_random_seed", "random_seed", "seed")),
+        ("debug_scene_id", ("debug_scene_id",)),
+    ):
+        value = _first_present_attr(prediction_input, candidate_names)
+        if value is not None:
+            metadata[output_key] = _json_scalar(value)
+
+    session_metadata = getattr(prediction_input, "session_metadata", None)
+    if session_metadata is not None:
+        for output_key, candidate_names in (
+            ("session_uuid", ("session_uuid", "session_id")),
+            ("runtime_random_seed", ("runtime_random_seed", "random_seed", "seed")),
+            ("debug_scene_id", ("debug_scene_id", "scene_id")),
+        ):
+            if output_key in metadata:
+                continue
+            value = _first_present_attr(session_metadata, candidate_names)
+            if value is not None:
+                metadata[output_key] = _json_scalar(value)
+    return metadata
+
+
 def resample_trajectory(
     trajectory_xy: np.ndarray,
     output_frequency_hz: int,
@@ -350,6 +376,22 @@ def _first_float_attr(obj: Any, names: tuple[str, ...]) -> float | None:
         except (TypeError, ValueError):
             continue
     return None
+
+
+def _first_present_attr(obj: Any, names: tuple[str, ...]) -> Any:
+    for name in names:
+        if hasattr(obj, name):
+            return getattr(obj, name)
+    return None
+
+
+def _json_scalar(value: Any) -> Any:
+    if isinstance(value, (str, int, float, bool)) or value is None:
+        return value
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return str(value)
 
 
 def _jsonable_pose_signature(

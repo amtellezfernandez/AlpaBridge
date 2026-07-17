@@ -1,5 +1,0 @@
-schema: wod2sim_synthetic_contract_demo_config_v1
-model: synthetic_constant_velocity_stub
-scene_preset: synthetic_contract_demo
-valid_claim_evidence: false
-benchmark_claim: false

@@ -4,14 +4,14 @@ CONFORMANCE_TESTS ?= tests/
 DEMO_OUTPUT ?= demo/wod2sim-contract-demo
 
 .PHONY: paper paper-verify lint conformance coverage test smoke build demo verify clean
-.PHONY: sii2027-inventory sii2027-check sii2027-demo sii2027-eval sii2027-synthetic sii2027-aggregate
-.PHONY: sii2027-paper sii2027-validate sii2027-all
+.PHONY: cvm-inventory cvm-check cvm-demo cvm-eval cvm-synthetic cvm-aggregate
+.PHONY: cvm-paper cvm-validate cvm-all
 
 paper:
-	$(MAKE) sii2027-paper PYTHON=$(PYTHON)
+	$(MAKE) cvm-paper PYTHON=$(PYTHON)
 
 paper-verify:
-	$(MAKE) sii2027-paper PYTHON=$(PYTHON)
+	$(MAKE) cvm-paper PYTHON=$(PYTHON)
 
 test:
 	$(PYTHON) -m pytest tests/
@@ -40,38 +40,38 @@ build:
 
 verify: lint conformance coverage smoke build paper-verify
 
-sii2027-inventory:
-	./scripts/sii2027_inventory.sh
+cvm-inventory:
+	./scripts/cvm_inventory.sh
 
-sii2027-check: lint conformance
-	$(PYTHON) scripts/validate_sii2027_submission.py
+cvm-check: lint conformance
+	$(PYTHON) scripts/validate_cvm_submission.py
 
-sii2027-demo:
-	$(PYTHON) scripts/run_synthetic_contract_demo.py --output artifacts/sii2027/results/demo --overwrite --json
+cvm-demo:
+	$(PYTHON) scripts/run_synthetic_contract_demo.py --output artifacts/cvm/results/demo --overwrite --json
 
-sii2027-eval:
-	$(PYTHON) scripts/run_sii2027_matrix.py --config configs/sii2027/core.yaml --output artifacts/sii2027/results/core --resume
+cvm-eval:
+	$(PYTHON) scripts/run_cvm_matrix.py --config configs/cvm/core.yaml --output artifacts/cvm/results/core --resume
 
-sii2027-synthetic:
-	$(PYTHON) scripts/run_sii2027_matrix.py --config configs/sii2027/lifecycle_stress.yaml --output artifacts/sii2027/results/lifecycle_stress --resume --execute
-	$(PYTHON) scripts/run_sii2027_matrix.py --config configs/sii2027/fault_injection.yaml --output artifacts/sii2027/results/fault_injection --resume --execute
+cvm-synthetic:
+	$(PYTHON) scripts/run_cvm_matrix.py --config configs/cvm/lifecycle_stress.yaml --output artifacts/cvm/results/lifecycle_stress --resume --execute
+	$(PYTHON) scripts/run_cvm_matrix.py --config configs/cvm/fault_injection.yaml --output artifacts/cvm/results/fault_injection --resume --execute
 
-sii2027-aggregate:
-	$(PYTHON) scripts/aggregate_sii2027.py --inputs artifacts/sii2027/results --output artifacts/sii2027/results
-	$(PYTHON) scripts/generate_sii2027_figures.py --summary artifacts/sii2027/results/summary.json --runs artifacts/sii2027/results/runs.csv --output artifacts/sii2027
+cvm-aggregate:
+	$(PYTHON) scripts/aggregate_cvm.py --inputs artifacts/cvm/results --output artifacts/cvm/results
+	$(PYTHON) scripts/generate_cvm_figures.py --summary artifacts/cvm/results/summary.json --runs artifacts/cvm/results/runs.csv --output artifacts/cvm
 
-sii2027-paper:
-	./scripts/build_sii2027_paper.sh
+cvm-paper:
+	./scripts/build_cvm_paper.sh
 
-sii2027-validate:
-	$(PYTHON) scripts/validate_sii2027_submission.py
+cvm-validate:
+	$(PYTHON) scripts/validate_cvm_submission.py
 
-sii2027-all: sii2027-inventory sii2027-check sii2027-demo sii2027-synthetic
-	$(MAKE) sii2027-eval PYTHON=$(PYTHON); status=$$?; \
+cvm-all: cvm-inventory cvm-check cvm-demo cvm-synthetic
+	$(MAKE) cvm-eval PYTHON=$(PYTHON); status=$$?; \
 	if [ "$$status" -ne 0 ] && [ "$$status" -ne 2 ]; then exit "$$status"; fi; \
-	$(MAKE) sii2027-aggregate PYTHON=$(PYTHON); \
-	$(MAKE) sii2027-paper PYTHON=$(PYTHON); \
-	$(MAKE) sii2027-validate PYTHON=$(PYTHON); \
+	$(MAKE) cvm-aggregate PYTHON=$(PYTHON); \
+	$(MAKE) cvm-paper PYTHON=$(PYTHON); \
+	$(MAKE) cvm-validate PYTHON=$(PYTHON); \
 	exit "$$status"
 
 clean:

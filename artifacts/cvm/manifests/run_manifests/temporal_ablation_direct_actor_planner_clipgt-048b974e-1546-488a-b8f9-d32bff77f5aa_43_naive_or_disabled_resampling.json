@@ -1,0 +1,64 @@
+{
+  "adapter_config": "naive_or_disabled_resampling",
+  "attempted": false,
+  "blocked": true,
+  "claim_valid": false,
+  "completed": false,
+  "config_path": "configs/cvm/temporal_ablation.yaml",
+  "config_sha256": "38e6ada350bc98527467deb9489bd622384023c8764a27ae51a2be9f5a5a8b39",
+  "created_at": "2026-07-17T17:07:34.599064+00:00",
+  "detail": "direct_actor_planner requires a recorded oracle actor-proxy JSON.",
+  "execution_mode": "closed_loop_ablation",
+  "failure_code": "direct_actor_oracle_proxy_missing",
+  "failure_layer": "deployment",
+  "matrix": "temporal_ablation",
+  "planned_launch": {
+    "baseport": 6000,
+    "command": null,
+    "cwd": ".",
+    "driver_env": {},
+    "local_usdz_dir": "data/nre-artifacts/local-usdzs-front-camera-15",
+    "logs": {
+      "stderr": "artifacts/cvm/logs/experiments/temporal_ablation/temporal_ablation_direct_actor_planner_clipgt-048b974e-1546-488a-b8f9-d32bff77f5aa_43_naive_or_disabled_resampling.stderr.log",
+      "stdout": "artifacts/cvm/logs/experiments/temporal_ablation/temporal_ablation_direct_actor_planner_clipgt-048b974e-1546-488a-b8f9-d32bff77f5aa_43_naive_or_disabled_resampling.stdout.log"
+    },
+    "missing_inputs": [
+      "direct_actor_oracle_proxy_missing"
+    ],
+    "mode": "both",
+    "port": 6789,
+    "readiness_command": [
+      ".venv/bin/python",
+      "-m",
+      "wod2sim.cli.commands.check_alpasim_readiness",
+      "--alpasim-root",
+      "workspace/alpasim-clean",
+      "--scene-preset",
+      "front_camera_50scene_public2602",
+      "--scene-id",
+      "clipgt-048b974e-1546-488a-b8f9-d32bff77f5aa",
+      "--local-usdz-dir",
+      "data/nre-artifacts/local-usdzs-front-camera-15"
+    ],
+    "run_dir": "artifacts/cvm/results/temporal_ablation/run_dirs/temporal_ablation_direct_actor_planner_clipgt-048b974e-1546-488a-b8f9-d32bff77f5aa_43_naive_or_disabled_resampling",
+    "run_status": "artifacts/cvm/results/temporal_ablation/run_dirs/temporal_ablation_direct_actor_planner_clipgt-048b974e-1546-488a-b8f9-d32bff77f5aa_43_naive_or_disabled_resampling/run-status.json",
+    "scene_preset": "front_camera_50scene_public2602",
+    "schema": "cvm_closed_loop_launch_plan_v1",
+    "supported": false,
+    "timeout_seconds": 900,
+    "topology": "1gpu",
+    "unsupported_reasons": [
+      {
+        "code": "temporal_ablation_runtime_flag_missing",
+        "detail": "The naive/disabled-resampling ablation is configured but no runtime-safe adapter flag currently switches the launcher into that ablated behavior.",
+        "layer": "temporal"
+      }
+    ]
+  },
+  "policy": "direct_actor_planner",
+  "run_id": "temporal_ablation_direct_actor_planner_clipgt-048b974e-1546-488a-b8f9-d32bff77f5aa_43_naive_or_disabled_resampling",
+  "scene_id": "clipgt-048b974e-1546-488a-b8f9-d32bff77f5aa",
+  "schema": "cvm_run_manifest_v1",
+  "seed": "43",
+  "status": "blocked"
+}

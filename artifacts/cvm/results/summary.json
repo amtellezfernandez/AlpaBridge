@@ -1,0 +1,143 @@
+{
+  "attempted_runs": 109,
+  "blocked_runs": 36,
+  "blocker_counts": {
+    "direct_actor_oracle_proxy_missing": 36
+  },
+  "claim_valid": false,
+  "closed_loop_audit_valid_runs": 45,
+  "closed_loop_completed_runs": 54,
+  "closed_loop_metric_rows": 54,
+  "closed_loop_metrics": {
+    "collision_any": {
+      "count": 54,
+      "max": 1.0,
+      "mean": 0.833333,
+      "min": 0.0
+    },
+    "collision_at_fault": {
+      "count": 54,
+      "max": 1.0,
+      "mean": 0.277778,
+      "min": 0.0
+    },
+    "dist_traveled_m": {
+      "count": 54,
+      "max": 550.02,
+      "mean": 84.045556,
+      "min": 11.56
+    },
+    "duration_frac_20s": {
+      "count": 54,
+      "max": 0.91,
+      "mean": 0.413333,
+      "min": 0.06
+    },
+    "offroad": {
+      "count": 54,
+      "max": 0.0,
+      "mean": 0.0,
+      "min": 0.0
+    },
+    "plan_deviation": {
+      "count": 54,
+      "max": 1.47,
+      "mean": 0.380556,
+      "min": 0.06
+    },
+    "progress": {
+      "count": 54,
+      "max": 0.92,
+      "mean": 0.392222,
+      "min": 0.16
+    },
+    "progress_rel": {
+      "count": 54,
+      "max": 0.95,
+      "mean": 0.778333,
+      "min": 0.43
+    }
+  },
+  "completed_runs": 109,
+  "created_at": "2026-07-17T17:07:34.728413+00:00",
+  "data_hash": "eb4351d5729a4a9f56e828b2ab7ddddf08a206f33b8a417d5153c1e3aba229d5",
+  "failed_runs": 0,
+  "failure_code_counts": {
+    "deployment.docker_unavailable": 1,
+    "deployment.gpu_runtime_unavailable": 1,
+    "deployment.scene_artifact_missing": 1,
+    "direct_actor_oracle_proxy_missing": 36,
+    "duplicate_close_unhandled": 20,
+    "evidence.hash_mismatch": 1,
+    "evidence.manifest_missing": 1,
+    "lifecycle.duplicate_close": 1,
+    "lifecycle.late_image": 1,
+    "lifecycle.late_route": 1,
+    "plugin.optional_backend_missing": 1,
+    "semantic.command_only": 1,
+    "semantic.road_center_reference": 1,
+    "semantic.route_missing": 1,
+    "temporal.invalid_sample_count": 1,
+    "temporal.nan_trajectory": 1,
+    "temporal.stale_observation": 1
+  },
+  "failure_rows": 36,
+  "integration_effectiveness": {
+    "full_contract_audit_valid_runs": 45,
+    "full_contract_completed_runs": 45,
+    "semantic_ablation_command_proxy_completed_runs": 9,
+    "semantic_ablation_command_proxy_rejected_runs": 9,
+    "semantic_ablation_completed_pairs": 9,
+    "semantic_ablation_metric_pairs": 9,
+    "valid_full_contract_false_block_denominator": 45,
+    "valid_full_contract_false_block_rate": 0.0,
+    "valid_full_contract_false_blocked_runs": 0
+  },
+  "matrix_counts": {
+    "core": 54,
+    "fault_injection": 15,
+    "lifecycle_stress": 40,
+    "semantic_ablation": 18,
+    "temporal_ablation": 18
+  },
+  "planned_runs": 0,
+  "schema": "cvm_aggregate_summary_v1",
+  "semantic_ablation_deltas": {
+    "collision_any": {
+      "count": 9,
+      "max_delta": 1.0,
+      "mean_delta_full_minus_command_only": 0.333333,
+      "min_delta": 0.0
+    },
+    "offroad": {
+      "count": 9,
+      "max_delta": 0.0,
+      "mean_delta_full_minus_command_only": 0.0,
+      "min_delta": 0.0
+    },
+    "plan_deviation": {
+      "count": 9,
+      "max_delta": 1.04,
+      "mean_delta_full_minus_command_only": 0.353333,
+      "min_delta": 0.0
+    },
+    "progress": {
+      "count": 9,
+      "max_delta": 0.0,
+      "mean_delta_full_minus_command_only": -0.243333,
+      "min_delta": -0.69
+    },
+    "progress_rel": {
+      "count": 9,
+      "max_delta": 0.04,
+      "mean_delta_full_minus_command_only": 0.006667,
+      "min_delta": -0.02
+    }
+  },
+  "status_counts": {
+    "blocked": 36,
+    "completed": 109
+  },
+  "synthetic_completed_runs": 55,
+  "total_rows": 145
+}

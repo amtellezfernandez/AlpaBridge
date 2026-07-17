@@ -1,0 +1,21 @@
+{
+  "adapter_config": "strict_or_pre_hardening_behavior",
+  "attempted": true,
+  "blocked": false,
+  "claim_valid": false,
+  "completed": true,
+  "config_path": "configs/cvm/lifecycle_stress.yaml",
+  "config_sha256": "755093975bf02d75568e30b3921ace9e4362ea7a975cbaa428f4b53956f8bab0",
+  "created_at": "2026-07-17T17:07:34.663227+00:00",
+  "detail": "Synthetic pre-hardening service stopped on duplicate close before late events.",
+  "execution_mode": "synthetic_lifecycle_harness",
+  "failure_code": "duplicate_close_unhandled",
+  "failure_layer": "lifecycle",
+  "matrix": "lifecycle_stress",
+  "policy": "constant_velocity",
+  "run_id": "lifecycle_stress_constant_velocity_17_strict_or_pre_hardening_behavior_cycle14",
+  "scene_id": "synthetic_lifecycle_harness",
+  "schema": "cvm_run_manifest_v1",
+  "seed": "17",
+  "status": "completed"
+}

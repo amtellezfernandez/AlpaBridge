@@ -1,0 +1,21 @@
+{
+  "adapter_config": "semantic.command_only",
+  "attempted": true,
+  "blocked": false,
+  "claim_valid": false,
+  "completed": true,
+  "config_path": "configs/cvm/fault_injection.yaml",
+  "config_sha256": "5d91f77413cbec4361d7bd817c0ba213b6c5d432e1d044e9fba5a2841e49d9e3",
+  "created_at": "2026-07-17T17:07:34.726123+00:00",
+  "detail": "Synthetic fault-injection harness detected the configured contract fault.",
+  "execution_mode": "synthetic_fault_injection",
+  "failure_code": "semantic.command_only",
+  "failure_layer": "semantic",
+  "matrix": "fault_injection",
+  "policy": "constant_velocity",
+  "run_id": "fault_injection_constant_velocity_17_semantic_command_only",
+  "scene_id": "synthetic_fault_harness",
+  "schema": "cvm_run_manifest_v1",
+  "seed": "17",
+  "status": "completed"
+}

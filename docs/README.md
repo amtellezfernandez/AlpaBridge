@@ -11,7 +11,7 @@
 | [CLI](cli.md) | Supported public commands. |
 | [Changelog](changelog.md) | Public release history. |
 
-The canonical [paper PDF](../wod2sim.pdf), [paper source](../paper/sii2027/),
-and [generated evidence package](../artifacts/sii2027/) describe the adapter
-contract in detail. The SII 2027 material is the WOD2Sim reproducibility
-package, not a separate project.
+The canonical [paper PDF](../wod2sim.pdf), [paper source](../paper/cvm/),
+and [generated evidence package](../artifacts/cvm/) describe the adapter
+contract in detail. The CVM material is the WOD2Sim reproducibility package,
+not a separate project.

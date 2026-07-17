@@ -19,10 +19,18 @@ paper/*.blg
 paper/*.log
 paper/*.out
 paper/*.pdf
-paper/sii2027/*.aux
-paper/sii2027/*.bbl
-paper/sii2027/*.blg
-paper/sii2027/*.log
-paper/sii2027/*.out
-paper/sii2027/main.pdf
-paper/sii2027/paper.pdf
+paper/cvm/*.aux
+paper/cvm/*.bbl
+paper/cvm/*.blg
+paper/cvm/*.log
+paper/cvm/*.out
+paper/cvm/main.pdf
+paper/cvm/paper.pdf
+
+# Raw local simulator executions contain host paths and gated media. Keep only
+# public-safe summaries, reports, generated tables, and figures in the release.
+artifacts/cvm/logs/
+artifacts/cvm/environment/
+artifacts/cvm/results/demo/
+artifacts/cvm/results/*/run_dirs/
+artifacts/cvm/results/core_probe/

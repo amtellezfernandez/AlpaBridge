@@ -1,9 +1,0 @@
-command=make sii2027-validate PYTHON=./.venv/bin/python
-start_utc=2026-07-17T13:19:00Z
-
-./.venv/bin/python scripts/validate_sii2027_submission.py
-sii2027 submission validation passed
-
-end_utc=2026-07-17T13:19:01Z
-duration_seconds=1
-exit_code=0

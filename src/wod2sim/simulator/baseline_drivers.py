@@ -16,6 +16,7 @@ from .alpasim_contract import (
     ModelPrediction,
     PredictionInput,
     SensorFreshnessGuard,
+    prediction_runtime_metadata,
     prediction_scene_id,
     resample_trajectory,
 )
@@ -26,6 +27,9 @@ from .alpasim_signal import extract_alpasim_signal, route_waypoints_from_input
 class BaselineDriverConfig:
     horizon_seconds: float = 5.0
     point_count: int = 20
+
+
+_ROUTE_CONTRACT_MODE_ENV = "WOD2SIM_ROUTE_CONTRACT_MODE"
 
 
 class _BaselineDriverModel(BaseTrajectoryModel):
@@ -106,6 +110,7 @@ class _BaselineDriverModel(BaseTrajectoryModel):
             self._append_log(
                 {
                     "scene_id": prediction_scene_id(prediction_input),
+                    **prediction_runtime_metadata(prediction_input),
                     "baseline": self._BASELINE_NAME,
                     "command": _input_command(prediction_input),
                     "speed_mps": round(speed_mps, 4),
@@ -115,13 +120,17 @@ class _BaselineDriverModel(BaseTrajectoryModel):
                 }
             )
             raise
-        alpasim_signal = extract_alpasim_signal(prediction_input)
-        trajectory = self._trajectory(prediction_input)
+        route_contract_mode = _route_contract_mode()
+        contract_input = _prediction_input_for_route_contract(prediction_input, route_contract_mode)
+        alpasim_signal = extract_alpasim_signal(contract_input)
+        trajectory = self._trajectory(contract_input)
         headings = self._compute_headings_from_trajectory(trajectory)
         payload = {
             "scene_id": prediction_scene_id(prediction_input),
+            **prediction_runtime_metadata(prediction_input),
             "adapter": "wod2sim.simulator.baseline_drivers",
             "baseline": self._BASELINE_NAME,
+            "route_contract_mode": route_contract_mode,
             "command": _input_command(prediction_input),
             "speed_mps": round(speed_mps, 4),
             "alpasim_signal": alpasim_signal,
@@ -207,6 +216,38 @@ def _route_points(prediction_input: PredictionInput) -> list[tuple[float, float]
             continue
         points.append(point)
     return points
+
+
+class _CommandOnlyRoutePredictionInput:
+    _ROUTE_ATTRS = {"route_waypoints", "route_path", "navigation_waypoints", "route"}
+
+    def __init__(self, source: PredictionInput) -> None:
+        self._source = source
+
+    def __getattr__(self, name: str) -> Any:
+        if name in self._ROUTE_ATTRS:
+            return []
+        return getattr(self._source, name)
+
+
+def _prediction_input_for_route_contract(
+    prediction_input: PredictionInput, route_contract_mode: str
+) -> PredictionInput:
+    if route_contract_mode == "command_only_route":
+        return _CommandOnlyRoutePredictionInput(prediction_input)  # type: ignore[return-value]
+    return prediction_input
+
+
+def _route_contract_mode() -> str:
+    raw_value = os.getenv(_ROUTE_CONTRACT_MODE_ENV, "full_contract").strip().lower()
+    if raw_value in {"", "full", "full_contract"}:
+        return "full_contract"
+    if raw_value in {"command_only", "command_only_route"}:
+        return "command_only_route"
+    raise ValueError(
+        f"{_ROUTE_CONTRACT_MODE_ENV} must be full_contract or command_only_route; "
+        f"got {raw_value!r}"
+    )
 
 
 def _sample_route(

@@ -34,13 +34,31 @@ index b619b7a..c401046 100644
  
  def async_log_call(func: Callable) -> Callable:
      """Helper to add logging for gRPC calls (sync or async)."""
-@@ -725,6 +736,7 @@ class EgoDriverService(EgodriverServiceServicer):
-                     speed=speed,
-                     acceleration=acceleration,
-                     ego_pose_history=job.session.poses,
-+                    route_waypoints=job.session.route_waypoints_for_prediction(),
-                 )
-             )
+@@ -725,13 +736,16 @@ class EgoDriverService(EgodriverServiceServicer):
+         inputs = []
+         for job in batch:
+             speed, acceleration = self._get_speed_and_acceleration(job.session)
+-            inputs.append(
+-                PredictionInput(
+-                    camera_images=self._prepare_camera_images(job.session),
+-                    command=job.command,
+-                    speed=speed,
+-                    acceleration=acceleration,
+-                    ego_pose_history=job.session.poses,
+-                )
+-            )
++            prediction_input = PredictionInput(
++                camera_images=self._prepare_camera_images(job.session),
++                command=job.command,
++                speed=speed,
++                acceleration=acceleration,
++                ego_pose_history=job.session.poses,
++                route_waypoints=job.session.route_waypoints_for_prediction(),
++            )
++            prediction_input.session_uuid = job.session.uuid
++            prediction_input.runtime_random_seed = job.session.seed
++            prediction_input.debug_scene_id = job.session.debug_scene_id
++            inputs.append(prediction_input)
          return self._model.predict_batch(inputs)
 diff --git a/src/driver/src/alpasim_driver/models/base.py b/src/driver/src/alpasim_driver/models/base.py
 index a03afd0..36209c0 100644

@@ -175,6 +175,13 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Extra raw Hydra override to append to the AlpaSim wizard command.",
     )
     parser.add_argument(
+        "--driver-env",
+        action="append",
+        default=[],
+        metavar="KEY=VALUE",
+        help="Extra environment variable for the external driver process.",
+    )
+    parser.add_argument(
         "--driver-warmup-seconds",
         type=float,
         default=10.0,
@@ -258,7 +265,12 @@ def main() -> None:
         alpasim_python=alpasim_python,
         driver_config_path=driver_config_path,
     )
-    driver_env = _driver_env(model_preset.get("driver_env", {}), run_dir=run_dir, oracle_actor_proxy=oracle_actor_proxy)
+    driver_env = _driver_env(
+        model_preset.get("driver_env", {}),
+        run_dir=run_dir,
+        oracle_actor_proxy=oracle_actor_proxy,
+    )
+    driver_env.update(_parse_driver_env(getattr(args, "driver_env", [])))
     wizard_cmd = _wizard_command(
         alpasim_wizard=alpasim_wizard,
         wizard_driver=Path(model_preset["config_file"]).stem,
@@ -1029,6 +1041,24 @@ def _driver_env(values: dict[str, str], *, run_dir: Path, oracle_actor_proxy: Pa
         "oracle_actor_proxy_path": "" if oracle_actor_proxy is None else str(oracle_actor_proxy),
     }
     return {str(key): str(value).format(**format_values) for key, value in values.items()}
+
+
+def _parse_driver_env(overrides: list[str]) -> dict[str, str]:
+    env: dict[str, str] = {}
+    for override in overrides:
+        key, separator, value = str(override).partition("=")
+        if not separator or not key:
+            raise SystemExit(f"--driver-env expects KEY=VALUE, got: {override!r}")
+        if not _valid_env_key(key):
+            raise SystemExit(f"--driver-env has invalid environment variable name: {key!r}")
+        env[key] = value
+    return env
+
+
+def _valid_env_key(key: str) -> bool:
+    if not key or key[0].isdigit():
+        return False
+    return all(character == "_" or character.isalnum() for character in key)
 
 
 def _merged_env(extra: dict[str, str] | None) -> dict[str, str]:

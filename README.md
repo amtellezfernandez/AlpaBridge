@@ -18,8 +18,8 @@ boundary: route geometry, policy-facing scene state, trajectory timing, and run
 provenance. It is an adapter and evaluation artifact, not a new driving policy.
 
 This repository has one canonical paper PDF: [`wod2sim.pdf`](wod2sim.pdf). The
-paper source lives in [`paper/sii2027`](paper/sii2027), while the generated
-evidence, manifests, tables, and figures live in [`artifacts/sii2027`](artifacts/sii2027).
+paper source lives in [`paper/cvm`](paper/cvm), while the generated evidence,
+manifests, tables, and figures live in [`artifacts/cvm`](artifacts/cvm).
 Those directories are the reproducibility package for WOD2Sim; they are not a
 separate project.
 
@@ -174,21 +174,26 @@ make verify
 checkpoints, Docker, GPU, or gated scenes. `make verify` runs lint, tests and
 coverage, a fresh-install smoke test, package builds, and a clean paper rebuild.
 
-## Paper And SII Artifacts
+## Paper And Contract-Validation Artifacts
 
 ```bash
-make sii2027-check
-make sii2027-synthetic
-make sii2027-aggregate
-make sii2027-paper
-make sii2027-validate
+make cvm-check
+make cvm-synthetic
+make cvm-aggregate
+make cvm-paper
+make cvm-validate
 ```
 
-`make sii2027-paper` rebuilds the canonical [`wod2sim.pdf`](wod2sim.pdf) from
+`make cvm-paper` rebuilds the canonical [`wod2sim.pdf`](wod2sim.pdf) from
 the same generated tables and figures used by the repository reports. The
-current aggregate remains `claim_valid=false`: public synthetic diagnostics run,
-but real closed-loop SII rows are still blocked until they are executed and
-audited.
+current aggregate remains `claim_valid=false`: dependency-light core rows and
+semantic ablations have executed, direct-actor rows remain explicitly blocked,
+and completed closed-loop rows are diagnostic integration evidence rather than
+policy-quality benchmark claims.
+
+The portable experiment vocabulary is the contract-validation matrix (CVM):
+configured rows, executed rows, blocked rows, and claim-valid evidence are
+reported separately.
 
 ## Ungated Demo
 

@@ -1,0 +1,21 @@
+{
+  "attempted": 0,
+  "blocked": 18,
+  "blocker_counts": {
+    "direct_actor_oracle_proxy_missing": 18
+  },
+  "blockers": [],
+  "claim_valid": false,
+  "completed": 0,
+  "config": "configs/cvm/temporal_ablation.yaml",
+  "created_at": "2026-07-17T17:07:34.599742+00:00",
+  "expected_runs": 18,
+  "failed": 0,
+  "failure_code_counts": {
+    "direct_actor_oracle_proxy_missing": 18
+  },
+  "matrix": "temporal_ablation",
+  "planned": 0,
+  "rows": 18,
+  "schema": "cvm_matrix_summary_v1"
+}

@@ -1,9 +1,0 @@
-command=./.venv/bin/python -m pytest -q tests -k semantic\ or\ route
-start_utc=2026-07-17T13:25:09Z
-
-........                                                                 [100%]
-8 passed, 229 deselected in 0.37s
-
-end_utc=2026-07-17T13:25:10Z
-duration_seconds=1
-exit_code=0
