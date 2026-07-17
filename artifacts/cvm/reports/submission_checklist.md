@@ -28,6 +28,7 @@
 - [x] Evaluation docs distinguish completed local diagnostic closed-loop rows
   from public policy benchmark evidence.
 - [x] Public release text excludes prior-layout mapping labels.
+- [x] Public release text excludes venue-style benchmark labels.
 - [x] Public release text excludes unstable generated citation slugs.
 - [x] Figures are generated and legible at final size.
 - [x] Abstract contains actual results, not placeholders.

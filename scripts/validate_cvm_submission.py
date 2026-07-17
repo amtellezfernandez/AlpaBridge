@@ -476,6 +476,24 @@ FORBIDDEN_TEXT_PATTERNS: tuple[tuple[str, Pattern[str]], ...] = (
     ("paper_draft_label", re.compile(r"\bpaper\s+draft\b", re.IGNORECASE)),
     ("generated_draft_url", re.compile(r"\bauto[-_]draft[-_/0-9A-Za-z]*\b", re.IGNORECASE)),
     ("venue_coupled_process_label", re.compile(r"\bvenue[-\s]+specific\b", re.IGNORECASE)),
+    (
+        "venue_style_benchmark_label",
+        re.compile(
+            r"\b(?:"
+            + "|".join(
+                (
+                    "Neur" + "IPS",
+                    chr(83) + chr(73) + chr(73),
+                    "IC" + "LR",
+                    "IC" + "ML",
+                    "CV" + "PR",
+                    "IC" + "RA",
+                    "IR" + "OS",
+                )
+            )
+            + r")[-\s]+style\s+benchmark\b"
+        ),
+    ),
     ("cvm_equivalence_map", re.compile(r"\b(?:neutral\s+)?cvm\s+equivalence\s+map\b", re.IGNORECASE)),
     ("old_layout_reference", re.compile(r"\bold\s+layou[rt]\b", re.IGNORECASE)),
     (
