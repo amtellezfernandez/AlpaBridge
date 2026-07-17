@@ -1,7 +1,7 @@
 # Evaluation
 
-WOD2Sim should be evaluated as an adapter contract before it is evaluated as a
-policy runtime.
+WOD2Sim should be evaluated as a contract-based integration boundary before it
+is evaluated as a policy runtime.
 
 `WOD-style` refers to the policy-interface shape used by logged driving tasks,
 not to an official Waymo challenge submission package. Reports should state the
@@ -16,13 +16,14 @@ metric. WOD2Sim uses this operational rule:
 | --- | --- |
 | Route, sensor, temporal, lifecycle, deployment, or evidence contract fails. | Integration/precondition/evidence failure; do not score as policy behavior or policy failure. |
 | Row executes and the route/sensor audit passes, but benchmark prerequisites are incomplete. | Contract-valid diagnostic rollout; inspectable, but not a public policy benchmark. |
-| Row executes, passes all audits, satisfies the benchmark gate, and is retained in the aggregate denominator. | Policy behavior may be analyzed and compared. |
+| Row executes, passes all audits, satisfies the benchmark gate, and is retained in the aggregate denominator. | Policy behavior may be analyzed and compared; policy failure additionally requires a retained policy-layer failure. |
 
 This boundary is the main evaluation object. It prevents a route adapter bug,
 stale observation, missing actor proxy, or incomplete manifest from being
 misreported as a bad driving policy. A collision, timeout, invalid trajectory,
 or degraded progress metric inside a contract-invalid row is an integration
-symptom until the claim-valid gate passes.
+symptom until the claim-valid gate passes. Passing that gate permits policy
+behavior attribution; it does not automatically make the event a policy failure.
 
 ## Contract Checks
 
@@ -43,7 +44,7 @@ for learned-policy validation.
 
 The [ungated demo](demo.md) exercises the same audit and support-bundle formats
 on synthetic local artifacts and reports route-loss and lane-offset diagnostics
-on public synthetic geometry. These diagnostics make the adapter contract
+on public synthetic geometry. These diagnostics make the integration boundary
 inspectable, but they are not an AlpaSim rollout or policy result.
 
 ## Policy Evaluation
@@ -87,6 +88,6 @@ or partial smoke runs from being mistaken for a NeurIPS-style benchmark result.
 
 ## Current Status
 
-The release checks package, adapter, launch, and evidence contracts. It does not
-include a public checkpoint, public scene subset, or claim-ready closed-loop
-benchmark result.
+The release checks package, semantic, temporal, lifecycle, deployment, and
+evidence contracts. It does not include a public checkpoint, public scene subset,
+or claim-ready closed-loop benchmark result.

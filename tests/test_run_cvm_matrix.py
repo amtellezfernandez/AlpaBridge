@@ -302,6 +302,16 @@ class RunCVMMatrixTests(unittest.TestCase):
     def test_policy_failure_attribution_requires_claim_valid_policy_layer(self) -> None:
         module = _load_module()
 
+        behavior_row = {
+            **_base_row(),
+            "status": "completed",
+            "attempted": "true",
+            "completed": "true",
+            "blocked": "false",
+            "failure_layer": "",
+            "failure_code": "",
+            "claim_valid": "true",
+        }
         policy_row = {
             **_base_row(),
             "status": "completed",
@@ -313,8 +323,12 @@ class RunCVMMatrixTests(unittest.TestCase):
             "claim_valid": "true",
         }
 
+        behavior_attribution = module._failure_attribution(behavior_row)
         attribution = module._failure_attribution(policy_row)
 
+        self.assertTrue(behavior_attribution["policy_behavior_attributable"])
+        self.assertFalse(behavior_attribution["policy_failure_attributable"])
+        self.assertEqual("policy_behavior_allowed", behavior_attribution["interpretation"])
         self.assertEqual("policy_attributable_behavior", attribution["category"])
         self.assertTrue(attribution["policy_behavior_attributable"])
         self.assertTrue(attribution["policy_failure_attributable"])

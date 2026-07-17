@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "wod2sim"
 version = "0.1.0"
-description = "Standalone code and paper release for adapting WOD-style driving policies to AlpaSim closed-loop execution"
+description = "Contract-based integration framework for WOD-style driving policies in AlpaSim closed-loop execution"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "BSD-3-Clause"

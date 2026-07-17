@@ -46,7 +46,7 @@ Behavior is policy-attributable only after route/sensor audit, lifecycle state,
 deployment preconditions, and evidence gates pass. Rows outside that boundary
 are integration, precondition, evidence, or diagnostic rows; they are not policy
 failures. A policy failure can be assigned only after the same claim-valid gate
-passes.
+passes and the retained failure layer is policy.
 
 ## Scene Metadata
 

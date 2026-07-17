@@ -73,7 +73,7 @@
     "policy_behavior_attributable_rows": 0,
     "policy_failure_attributable_rows": 0,
     "precondition_blocked_rows": 36,
-    "rule": "Closed-loop behavior or policy failure can be attributed to the policy only after the semantic route contract, sensor-freshness audit, lifecycle state, deployment preconditions, and evidence gate pass. Otherwise the row is an integration, precondition, evidence, or diagnostic record and cannot be counted as a policy failure.",
+    "rule": "Closed-loop behavior or policy failure can be attributed to the policy only after the semantic route contract, sensor-freshness audit, lifecycle state, deployment preconditions, and evidence gate pass. Otherwise the row is an integration, precondition, evidence, or diagnostic record and cannot be counted as a policy failure. Passing the gate permits policy-behavior attribution; policy failure also requires the retained failure layer to be policy.",
     "synthetic_diagnostic_rows": 55
   },
   "failure_code_counts": {

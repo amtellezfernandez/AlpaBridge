@@ -73,4 +73,5 @@ This repository currently publishes no policy benchmark result.
 If any route, sensor, temporal, lifecycle, deployment, or evidence gate fails,
 classify the row as an integration/precondition/evidence failure. Do not count
 that row as a policy failure, even if the rollout contains a collision,
-off-road event, timeout, or degraded progress metric.
+off-road event, timeout, or degraded progress metric. A policy failure requires
+both a claim-valid row and a retained policy-layer failure classification.

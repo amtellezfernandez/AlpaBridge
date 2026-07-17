@@ -33,4 +33,4 @@ and failure analysis as described in [Evaluation](evaluation.md).
 
 Torch-dependent token-policy tests remain part of the normal test suite when
 torch is installed, but they are intentionally excluded from core conformance so
-CI can prove the adapter contract without private model artifacts.
+CI can prove the integration contract without private model artifacts.

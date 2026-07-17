@@ -93,9 +93,11 @@ preconditions, and evidence audit all pass. If any of those gates fails, the row
 classified as an integration, precondition, or evidence failure. A missing actor proxy
 is therefore not a weak
 planner, a command-proxy route is not a bad route-conditioned policy, and an incomplete
-manifest is not a collision result. This rule is intentionally stricter than ordinary
-demo reporting because the scientific risk is misattributing adapter or runtime faults
-to the policy being integrated.
+manifest is not a collision result. Passing all gates permits policy-behavior
+attribution, not automatic policy-failure attribution; policy failure additionally
+requires the retained failure layer to be policy. This rule is intentionally stricter
+than ordinary demo reporting because the scientific risk is misattributing adapter or
+runtime faults to the policy being integrated.
 
 \section{Integration Problem and Requirements}
 
@@ -283,7 +285,8 @@ current release: \CVMPolicyBehaviorAttributableRows{} row(s) are policy-behavior
 attributable, \CVMPolicyFailureAttributableRows{} row(s) are policy-failure
 attributable, and \CVMNonPolicyAttributedRows{} row(s) remain non-policy-attributed.
 No blocked, contract-invalid, or diagnostic row can assign policy failure, even when
-its behavior metrics are degraded.
+its behavior metrics are degraded. A policy failure also requires the retained failure
+layer to be policy, not merely a degraded behavior metric.
 
 \section{Discussion, Limitations, and Related Work}
 

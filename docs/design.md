@@ -11,16 +11,17 @@ trajectory outputs. It is not a claim of official Waymo challenge compatibility,
 leaderboard submission support, or complete Waymo scene reconstruction inside
 AlpaSim.
 
-## Contract
+## Five Contracts
 
-WOD2Sim closes four gaps:
+WOD2Sim closes five integration gaps:
 
-| Boundary | WOD2Sim behavior |
+| Contract | WOD2Sim behavior |
 | --- | --- |
-| Route | Preserves route waypoints alongside the high-level command. |
-| Signal | Converts camera, ego-motion, route, and hazards into policy-facing state. |
-| Output | Resamples policy trajectories and computes runtime headings. |
+| Semantic | Preserves route waypoints, camera/ego-motion signals, and structured hazards as policy-facing state. |
+| Temporal | Resamples policy trajectories to the simulator runtime grid and recomputes headings. |
 | Lifecycle | Isolates plugin discovery and handles late/repeated session messages safely. |
+| Deployment | Materializes commands, topology, runtime preconditions, hashes, and launch provenance. |
+| Evidence | Requires audits, manifests, support-bundle status, and retained denominators before claims. |
 
 The package exposes four AlpaSim models:
 
@@ -29,7 +30,7 @@ The package exposes four AlpaSim models:
 - `token_dagger_bc`: a learned token policy requiring a compatible checkpoint.
 - `direct_actor_planner`: a continuous candidate planner requiring an actor proxy.
 
-Both use the same route/signal contract, sensor-freshness guard, trajectory
+All four use the same route/signal contract, sensor-freshness guard, trajectory
 resampling, launch tooling, and evidence pipeline.
 
 ## Trajectory Resampling
@@ -59,4 +60,5 @@ package; third-party source remains clearly separated.
 
 WOD2Sim is not a Waymo-to-AlpaSim scene converter, a simulator, or a new driving
 policy. It does not redistribute datasets, scenes, checkpoints, or AlpaSim
-binaries. Its contribution is the executable and auditable adapter contract.
+binaries. Its contribution is an executable and auditable system-integration
+contract.

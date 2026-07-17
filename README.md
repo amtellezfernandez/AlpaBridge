@@ -45,7 +45,9 @@ lifecycle state, deployment preconditions, and evidence audit pass.
   incomplete, the row is an integration/precondition/evidence failure, not a
   policy failure.
 - If the row is executed, audit-valid, and retained by the evidence gate, its
-  behavior metrics can be inspected without a known boundary violation.
+  behavior metrics can be inspected without a known boundary violation. A
+  policy failure still requires the retained failure layer to be `policy`;
+  degraded behavior alone is not enough.
 - This release still reports no claim-valid policy benchmark. The CVM reports
   contract-valid rollouts, integration-invalid rows, blockers, diagnostics, and
   policy benchmark claims separately.

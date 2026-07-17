@@ -1268,7 +1268,9 @@ def _failure_attribution(row: dict[str, str]) -> dict[str, Any]:
             "A behavior event, including a policy failure, is policy-attributable "
             "only after semantic, temporal, lifecycle, deployment, and evidence "
             "gates pass; otherwise the row remains an integration, precondition, "
-            "evidence, or diagnostic record and cannot be counted as a policy failure."
+            "evidence, or diagnostic record and cannot be counted as a policy failure. "
+            "Passing the gate permits policy-behavior attribution; policy failure "
+            "also requires the retained failure layer to be policy."
         ),
     }
 
