@@ -234,6 +234,28 @@ CLAIM_MATRIX_SUMMARY_LINES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("Planned rows", ("planned_runs",)),
     ("Blocked rows", ("blocked_runs",)),
 )
+README_SUMMARY_COUNT_SNIPPETS: tuple[tuple[str, str, str], ...] = (
+    (
+        "policy_behavior_attributable_rows",
+        "failure_attribution.policy_behavior_attributable_rows",
+        "policy-attributable behavior rows",
+    ),
+    (
+        "policy_failure_attributable_rows",
+        "failure_attribution.policy_failure_attributable_rows",
+        "policy-attributable failure rows",
+    ),
+    (
+        "integration_failure_attributable_rows",
+        "failure_attribution.integration_failure_attributable_rows",
+        "integration/precondition blocker rows",
+    ),
+    (
+        "diagnostic_not_policy_rows",
+        "failure_attribution.diagnostic_not_policy_rows",
+        "completed diagnostic rows",
+    ),
+)
 PAPER_NUMBER_JSON_FIELDS: tuple[tuple[str, str], ...] = (
     ("CVMTotalRows", "total_rows"),
     ("CVMPlannedRuns", "planned_runs"),
@@ -538,6 +560,13 @@ def main() -> int:
         failures.append("missing_or_invalid_summary_data_hash")
     else:
         failures.extend(_summary_attribution_failures(args.results / "summary.json"))
+        failures.extend(
+            _readme_summary_count_failures(
+                readme_text=readme_text,
+                readme_path=readme_path,
+                summary_path=args.results / "summary.json",
+            )
+        )
         failures.extend(
             _generated_artifact_failures(
                 data_hash=data_hash,
@@ -1013,6 +1042,31 @@ def _summary_attribution_failures(path: Path) -> list[str]:
         failures.append(f"summary_claim_valid_policy_behavior_mismatch:{path}")
     if isinstance(total_rows, int) and non_policy + policy_behavior != total_rows:
         failures.append(f"summary_policy_attribution_partition_mismatch:{path}")
+    return failures
+
+
+def _readme_summary_count_failures(
+    *,
+    readme_text: str,
+    readme_path: Path,
+    summary_path: Path,
+) -> list[str]:
+    try:
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return [f"readme_summary_unreadable:{summary_path}"]
+    if not isinstance(summary, dict):
+        return [f"readme_summary_invalid:{summary_path}"]
+
+    failures: list[str] = []
+    for label, dotted_path, suffix in README_SUMMARY_COUNT_SNIPPETS:
+        value = _json_path_value(summary, dotted_path)
+        if not isinstance(value, int):
+            failures.append(f"readme_summary_field_missing:{summary_path}:{dotted_path}")
+            continue
+        expected = f"`{value}` {suffix}"
+        if not _contains_claim_term(readme_text, expected):
+            failures.append(f"readme_summary_count_mismatch:{readme_path}:{label}:{expected}")
     return failures
 
 

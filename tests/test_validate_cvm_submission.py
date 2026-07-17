@@ -513,6 +513,54 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             failures,
         )
 
+    def test_readme_summary_count_check_accepts_synced_counts(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            summary_path, _paper_numbers_path, _lifecycle_path, _fault_path = (
+                _write_paper_number_fixture(root, module)
+            )
+            readme = (
+                "The generated aggregate makes the boundary numeric: current artifacts contain "
+                "`0` policy-attributable behavior rows, `0` policy-attributable failure rows, "
+                "`2` integration/precondition blocker rows, and `7` completed diagnostic rows "
+                "that remain non-policy-attributed.\n"
+            )
+
+            failures = module._readme_summary_count_failures(
+                readme_text=readme,
+                readme_path=Path("README.md"),
+                summary_path=summary_path,
+            )
+
+        self.assertEqual([], failures)
+
+    def test_readme_summary_count_check_rejects_drift(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            summary_path, _paper_numbers_path, _lifecycle_path, _fault_path = (
+                _write_paper_number_fixture(root, module)
+            )
+            readme = (
+                "`999` policy-attributable behavior rows, "
+                "`0` policy-attributable failure rows, "
+                "`2` integration/precondition blocker rows, and "
+                "`7` completed diagnostic rows.\n"
+            )
+
+            failures = module._readme_summary_count_failures(
+                readme_text=readme,
+                readme_path=Path("README.md"),
+                summary_path=summary_path,
+            )
+
+        self.assertIn(
+            "readme_summary_count_mismatch:README.md:"
+            "policy_behavior_attributable_rows:`0` policy-attributable behavior rows",
+            failures,
+        )
+
     def test_paper_number_macro_check_accepts_summary_and_csv_synced_macros(self) -> None:
         module = _load_module()
         with tempfile.TemporaryDirectory() as tmp:

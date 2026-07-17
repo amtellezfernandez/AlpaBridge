@@ -21,20 +21,20 @@ package.
 
 | Command | Start UTC | End UTC | Duration | Exit | Result |
 |---|---|---|---:|---:|---|
-| `./.venv/bin/python -m pytest -q tests -k "semantic or route"` | 2026-07-17T20:05:55Z | 2026-07-17T20:05:55Z | 0.38s | 0 | 10 passed, 273 deselected after release-validator hardening. |
-| `./.venv/bin/python -m pytest -q tests -k "temporal or resampl"` | 2026-07-17T20:05:55Z | 2026-07-17T20:05:55Z | 0.37s | 0 | 10 passed, 273 deselected, 15 subtests passed after release-validator hardening. |
-| `./.venv/bin/python -m pytest -q tests -k "lifecycle or session"` | 2026-07-17T20:05:55Z | 2026-07-17T20:05:55Z | 0.20s | 0 | 10 passed, 273 deselected after release-validator hardening. |
-| `./.venv/bin/python -m pytest -q tests -k "plugin or entry_point"` | 2026-07-17T20:05:55Z | 2026-07-17T20:05:55Z | 0.81s | 0 | 5 passed, 278 deselected after release-validator hardening. |
-| `./.venv/bin/python -m pytest -q tests -k "deployment or readiness or launch"` | 2026-07-17T20:05:55Z | 2026-07-17T20:05:55Z | 0.78s | 0 | 20 passed, 263 deselected after release-validator hardening. |
-| `./.venv/bin/python -m pytest -q tests -k "evidence or audit or benchmark"` | 2026-07-17T20:05:55Z | 2026-07-17T20:05:55Z | 0.60s | 0 | 21 passed, 262 deselected after release-validator hardening. |
-| `./.venv/bin/python -m pytest -q tests -k "fault"` | 2026-07-17T20:05:55Z | 2026-07-17T20:05:55Z | 0.33s | 0 | 5 passed, 278 deselected after release-validator hardening. |
+| `./.venv/bin/python -m pytest -q tests -k "semantic or route"` | 2026-07-17T20:10:44Z | 2026-07-17T20:10:44Z | 0.19s | 0 | 10 passed, 275 deselected after release-validator hardening. |
+| `./.venv/bin/python -m pytest -q tests -k "temporal or resampl"` | 2026-07-17T20:10:44Z | 2026-07-17T20:10:44Z | 0.21s | 0 | 10 passed, 275 deselected, 15 subtests passed after release-validator hardening. |
+| `./.venv/bin/python -m pytest -q tests -k "lifecycle or session"` | 2026-07-17T20:10:44Z | 2026-07-17T20:10:44Z | 0.21s | 0 | 10 passed, 275 deselected after release-validator hardening. |
+| `./.venv/bin/python -m pytest -q tests -k "plugin or entry_point"` | 2026-07-17T20:10:44Z | 2026-07-17T20:10:44Z | 0.55s | 0 | 5 passed, 280 deselected after release-validator hardening. |
+| `./.venv/bin/python -m pytest -q tests -k "deployment or readiness or launch"` | 2026-07-17T20:10:44Z | 2026-07-17T20:10:44Z | 0.49s | 0 | 20 passed, 265 deselected after release-validator hardening. |
+| `./.venv/bin/python -m pytest -q tests -k "evidence or audit or benchmark"` | 2026-07-17T20:10:44Z | 2026-07-17T20:10:44Z | 0.36s | 0 | 21 passed, 264 deselected after release-validator hardening. |
+| `./.venv/bin/python -m pytest -q tests -k "fault"` | 2026-07-17T20:10:44Z | 2026-07-17T20:10:44Z | 0.19s | 0 | 5 passed, 280 deselected after release-validator hardening. |
 
 ## Release Commands
 
 | Command | Exit | Result |
 |---|---:|---|
 | `make cvm-inventory PYTHON=./.venv/bin/python` | 0 | Refreshed ignored redacted environment/log snapshots under `artifacts/cvm`. |
-| `make cvm-check PYTHON=./.venv/bin/python` | 0 | Ruff passed; conformance suite passed with 269 passed, 14 skipped, and 15 subtests passed after metadata, PDF metadata/page-size/font, source-layout, LaTeX-log, generated-copy, generated-table-value, local-reference, paper-number, and claim-matrix validation hardening; paper validation passed. |
+| `make cvm-check PYTHON=./.venv/bin/python` | 0 | Ruff passed; conformance suite passed with 271 passed, 14 skipped, and 15 subtests passed after metadata, PDF metadata/page-size/font, source-layout, LaTeX-log, generated-copy, generated-table-value, local-reference, README-count, paper-number, and claim-matrix validation hardening; paper validation passed. |
 | `make cvm-demo PYTHON=./.venv/bin/python` | 0 | Synthetic demo artifact valid; `valid_claim_evidence=false`. |
 | `make cvm-eval PYTHON=./.venv/bin/python` | 2 | Expected blocked-status exit: 36 completed core rows preserved, 18 direct-actor rows blocked by `direct_actor_oracle_proxy_missing`. |
 | `make cvm-aggregate PYTHON=./.venv/bin/python` | 0 | Regenerated aggregate tables and figures from retained CVM results. |
@@ -42,15 +42,15 @@ package.
 | `make cvm-validate PYTHON=./.venv/bin/python` | 0 | Submission validation passed. |
 | `make paper-verify PYTHON=./.venv/bin/python` | 0 | Rebuilt 5-page root `wod2sim.pdf` and ran submission validation. |
 | `make verify PYTHON=./.venv/bin/python` | 0 | Lint, conformance, coverage, bootstrap smoke, package build, paper rebuild, and submission validation all passed. |
-| `./.venv/bin/python scripts/validate_cvm_submission.py` | 0 | Submission validation passed, including metadata-backed title/author/affiliation/abstract checks, output-PDF title/author/subject checks, IEEE A4 source-layout checks, parsed PDF A4 MediaBox checks, LaTeX log warnings, canonical-to-paper generated asset sync, generated-table row/source-field value sync, public local-reference checks, paper-number macro value sync, claim-evidence-matrix count sync, embedded PDF font descriptors, per-manifest `failure_attribution` consistency, summary-level attribution partition checks, and README/paper claim-boundary terms. |
+| `./.venv/bin/python scripts/validate_cvm_submission.py` | 0 | Submission validation passed, including metadata-backed title/author/affiliation/abstract checks, output-PDF title/author/subject checks, IEEE A4 source-layout checks, parsed PDF A4 MediaBox checks, LaTeX log warnings, canonical-to-paper generated asset sync, generated-table row/source-field value sync, public local-reference checks, README attribution-count sync, paper-number macro value sync, claim-evidence-matrix count sync, embedded PDF font descriptors, per-manifest `failure_attribution` consistency, summary-level attribution partition checks, and README/paper claim-boundary terms. |
 
 ## Latest Submission Gate Refresh
 
 | Command | End UTC | Exit | Result |
 |---|---|---:|---|
-| `./.venv/bin/python -m pytest -q tests/test_validate_cvm_submission.py` | 2026-07-17T20:07:43Z | 0 | 39 passed, including source metadata, output-PDF metadata, A4 MediaBox, embedded-font, layout-hack, LaTeX-log, generated-copy, generated-table-value, local-reference, paper-number, and claim-matrix validation fixtures. |
-| `make paper-verify PYTHON=./.venv/bin/python` | 2026-07-17T20:07:43Z | 0 | Rebuilt 5-page root `wod2sim.pdf`; submission validation passed with source metadata, output-PDF metadata, source-layout, PDF A4 MediaBox, embedded-font, LaTeX-log, generated-copy, generated-table row/source-field, local-reference, paper-number, and claim-matrix enforcement. |
-| `make cvm-check PYTHON=./.venv/bin/python` | 2026-07-17T20:07:43Z | 0 | Ruff passed; conformance passed with 269 passed, 14 skipped, and 15 subtests passed; submission validation passed. |
+| `./.venv/bin/python -m pytest -q tests/test_validate_cvm_submission.py` | 2026-07-17T20:11:52Z | 0 | 41 passed, including source metadata, output-PDF metadata, A4 MediaBox, embedded-font, layout-hack, LaTeX-log, generated-copy, generated-table-value, local-reference, README-count, paper-number, and claim-matrix validation fixtures. |
+| `make paper-verify PYTHON=./.venv/bin/python` | 2026-07-17T20:11:52Z | 0 | Rebuilt 5-page root `wod2sim.pdf`; submission validation passed with source metadata, output-PDF metadata, source-layout, PDF A4 MediaBox, embedded-font, LaTeX-log, generated-copy, generated-table row/source-field, local-reference, README-count, paper-number, and claim-matrix enforcement. |
+| `make cvm-check PYTHON=./.venv/bin/python` | 2026-07-17T20:11:52Z | 0 | Ruff passed; conformance passed with 271 passed, 14 skipped, and 15 subtests passed; submission validation passed. |
 
 ## Important Warnings
 
@@ -95,3 +95,5 @@ It now also validates the generated table row values against the current
 so a table cannot drift while keeping a matching artifact hash.
 It now rejects missing or repository-escaping local links and image references
 from public Markdown/HTML files, while allowing external URLs.
+It now validates the README failure-attribution count sentence against
+`artifacts/cvm/results/summary.json`.
