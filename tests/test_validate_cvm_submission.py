@@ -206,6 +206,37 @@ def _write_generated_table_fixture(root: Path, module) -> tuple[Path, Path, Path
     return tables, summary_path, lifecycle_path, fault_path
 
 
+def _write_summary_timestamp_fixture(root: Path) -> tuple[Path, Path]:
+    results = root / "results"
+    manifest_dir = root / "manifests" / "run_manifests"
+    manifest_dir.mkdir(parents=True)
+    matrix_dir = results / "core"
+    matrix_dir.mkdir(parents=True)
+    (matrix_dir / "runs.csv").write_text(
+        "run_id,matrix\n"
+        "core_constant_velocity_scene-a_17_full_contract,core\n"
+        "core_route_following_scene-a_17_full_contract,core\n",
+        encoding="utf-8",
+    )
+    (manifest_dir / "core_constant_velocity_scene-a_17_full_contract.json").write_text(
+        json.dumps({"created_at": "2026-07-17T12:00:00+00:00"}),
+        encoding="utf-8",
+    )
+    (manifest_dir / "core_route_following_scene-a_17_full_contract.json").write_text(
+        json.dumps({"created_at": "2026-07-17T12:30:00+00:00"}),
+        encoding="utf-8",
+    )
+    (matrix_dir / "summary.json").write_text(
+        json.dumps({"matrix": "core", "created_at": "2026-07-17T12:30:00+00:00"}),
+        encoding="utf-8",
+    )
+    (results / "summary.json").write_text(
+        json.dumps({"created_at": "2026-07-17T12:30:00+00:00"}),
+        encoding="utf-8",
+    )
+    return results, manifest_dir
+
+
 class ValidateCVMSubmissionTests(unittest.TestCase):
     def test_source_text_accepts_release_abstract_length(self) -> None:
         module = _load_module()
@@ -502,6 +533,49 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         )
         self.assertIn(
             "claim_boundary_source_missing:main.tex:\\CVMPolicyFailureAttributableRows{}",
+            failures,
+        )
+
+    def test_summary_timestamp_validation_accepts_manifest_derived_timestamps(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            results, manifest_dir = _write_summary_timestamp_fixture(Path(tmp))
+
+            failures = module._summary_timestamp_failures(
+                results_dir=results,
+                manifest_dir=manifest_dir,
+            )
+
+        self.assertEqual([], failures)
+
+    def test_summary_timestamp_validation_rejects_wall_clock_drift(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            results, manifest_dir = _write_summary_timestamp_fixture(Path(tmp))
+            (results / "core" / "summary.json").write_text(
+                json.dumps({"matrix": "core", "created_at": "2026-07-17T13:00:00+00:00"}),
+                encoding="utf-8",
+            )
+            (results / "summary.json").write_text(
+                json.dumps({"created_at": "2026-07-17T13:15:00+00:00"}),
+                encoding="utf-8",
+            )
+
+            failures = module._summary_timestamp_failures(
+                results_dir=results,
+                manifest_dir=manifest_dir,
+            )
+
+        self.assertIn(
+            "matrix_summary_created_at_mismatch:"
+            f"{results / 'core' / 'summary.json'}:"
+            "2026-07-17T13:00:00+00:00:2026-07-17T12:30:00+00:00",
+            failures,
+        )
+        self.assertIn(
+            "aggregate_summary_created_at_mismatch:"
+            f"{results / 'summary.json'}:"
+            "2026-07-17T13:15:00+00:00:2026-07-17T13:00:00+00:00",
             failures,
         )
 

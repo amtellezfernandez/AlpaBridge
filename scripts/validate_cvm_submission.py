@@ -729,6 +729,12 @@ def main() -> int:
     else:
         failures.extend(_summary_attribution_failures(args.results / "summary.json"))
         failures.extend(
+            _summary_timestamp_failures(
+                results_dir=args.results,
+                manifest_dir=args.results.parent / "manifests" / "run_manifests",
+            )
+        )
+        failures.extend(
             _readme_summary_count_failures(
                 readme_text=readme_text,
                 readme_path=readme_path,
@@ -1227,6 +1233,96 @@ def _summary_attribution_failures(path: Path) -> list[str]:
     if isinstance(total_rows, int) and non_policy + policy_behavior != total_rows:
         failures.append(f"summary_policy_attribution_partition_mismatch:{path}")
     return failures
+
+
+def _summary_timestamp_failures(*, results_dir: Path, manifest_dir: Path) -> list[str]:
+    matrix_summaries = _matrix_summary_paths(results_dir)
+    failures: list[str] = []
+    matrix_created_at: list[str] = []
+    for summary_path in matrix_summaries:
+        payload, load_failure = _load_json_object(summary_path, "matrix_summary")
+        if load_failure:
+            failures.append(load_failure)
+            continue
+        matrix_name = str(payload.get("matrix", summary_path.parent.name))
+        run_ids = _matrix_run_ids(results_dir=results_dir, matrix_name=matrix_name)
+        expected = _max_manifest_created_at(manifest_dir=manifest_dir, run_ids=run_ids)
+        actual = payload.get("created_at")
+        if not isinstance(actual, str) or not actual:
+            failures.append(f"matrix_summary_created_at_missing:{summary_path}")
+            continue
+        if expected is None:
+            failures.append(f"matrix_summary_manifest_timestamp_missing:{summary_path}:{matrix_name}")
+            continue
+        if actual != expected:
+            failures.append(
+                f"matrix_summary_created_at_mismatch:{summary_path}:{actual}:{expected}"
+            )
+        matrix_created_at.append(actual)
+
+    aggregate_path = results_dir / "summary.json"
+    aggregate, load_failure = _load_json_object(aggregate_path, "aggregate_summary")
+    if load_failure:
+        failures.append(load_failure)
+        return failures
+    actual_aggregate = aggregate.get("created_at")
+    expected_aggregate = max(matrix_created_at) if matrix_created_at else None
+    if not isinstance(actual_aggregate, str) or not actual_aggregate:
+        failures.append(f"aggregate_summary_created_at_missing:{aggregate_path}")
+    elif expected_aggregate is None:
+        failures.append(f"aggregate_summary_matrix_timestamp_missing:{aggregate_path}")
+    elif actual_aggregate != expected_aggregate:
+        failures.append(
+            f"aggregate_summary_created_at_mismatch:{aggregate_path}:"
+            f"{actual_aggregate}:{expected_aggregate}"
+        )
+    return failures
+
+
+def _matrix_summary_paths(results_dir: Path) -> list[Path]:
+    paths: list[Path] = []
+    for path in sorted(results_dir.glob("*/summary.json")):
+        if path.parent == results_dir:
+            continue
+        paths.append(path)
+    return paths
+
+
+def _matrix_run_ids(*, results_dir: Path, matrix_name: str) -> list[str]:
+    runs_path = results_dir / matrix_name / "runs.csv"
+    if not runs_path.is_file():
+        return []
+    with runs_path.open(newline="", encoding="utf-8") as handle:
+        return [
+            str(row.get("run_id", ""))
+            for row in csv.DictReader(handle)
+            if str(row.get("run_id", "")).strip()
+        ]
+
+
+def _max_manifest_created_at(*, manifest_dir: Path, run_ids: list[str]) -> str | None:
+    timestamps: list[str] = []
+    for run_id in run_ids:
+        manifest_path = manifest_dir / f"{run_id}.json"
+        payload, _load_failure = _load_json_object(manifest_path, "run_manifest")
+        if not payload:
+            continue
+        created_at = payload.get("created_at")
+        if isinstance(created_at, str) and created_at:
+            timestamps.append(created_at)
+    return max(timestamps) if timestamps else None
+
+
+def _load_json_object(path: Path, label: str) -> tuple[dict[str, object], str | None]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return {}, f"{label}_missing:{path}"
+    except json.JSONDecodeError:
+        return {}, f"{label}_invalid_json:{path}"
+    if not isinstance(payload, dict):
+        return {}, f"{label}_invalid_type:{path}"
+    return payload, None
 
 
 def _readme_summary_count_failures(

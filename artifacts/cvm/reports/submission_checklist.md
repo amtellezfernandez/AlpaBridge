@@ -57,6 +57,9 @@ Additional release-specific checks:
   `lifecycle_stress.csv`, and `fault_injection.csv` source fields.
 - [x] `paper_numbers.tex` macros are validated against `summary.json`,
   `lifecycle_stress.csv`, and `fault_injection.csv`.
+- [x] Matrix and aggregate `created_at` timestamps are validated against
+  run-manifest evidence timestamps so paper rebuilds do not drift on wall-clock
+  time alone.
 - [x] `make cvm-eval` preserves completed evidence when rerun without `--execute`.
 - [x] `pre-commit run --all-files` passes without modifying files.
 - [x] Every public run manifest carries validated integration-vs-policy
