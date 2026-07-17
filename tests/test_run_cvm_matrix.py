@@ -198,6 +198,7 @@ class RunCVMMatrixTests(unittest.TestCase):
             ],
             paths,
         )
+        self.assertEqual(["Dockerfile"], module._git_status_paths("M Dockerfile\n"))
 
     def test_failure_attribution_never_treats_unvalidated_rows_as_policy_failure(self) -> None:
         module = _load_module()

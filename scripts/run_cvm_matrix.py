@@ -1217,7 +1217,7 @@ def _git_checkout_state(path: Path) -> dict[str, Any]:
             "status_paths": [],
         }
     git_sha = _git_output(["-C", str(resolved), "rev-parse", "HEAD"]).strip()
-    status = _git_output(["-C", str(resolved), "status", "--short"]).strip()
+    status = _git_output(["-C", str(resolved), "status", "--short"]).rstrip()
     diff = _git_output(["-C", str(resolved), "diff", "--binary"])
     return {
         "path": _path_arg(path),
@@ -1232,7 +1232,12 @@ def _git_checkout_state(path: Path) -> dict[str, Any]:
 def _git_status_paths(status: str) -> list[str]:
     paths: list[str] = []
     for line in status.splitlines():
-        value = line[3:].strip() if len(line) > 3 else ""
+        if len(line) > 2 and line[2] == " ":
+            value = line[3:].strip()
+        elif len(line) > 1 and line[1] == " ":
+            value = line[2:].strip()
+        else:
+            value = line.strip()
         if " -> " in value:
             value = value.split(" -> ", 1)[1]
         if value:
