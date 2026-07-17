@@ -51,6 +51,117 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         self.assertIn("abstract_word_count_out_of_range:main.tex:2", failures)
         self.assertIn("source_pdfsubject_marked_draft:main.tex", failures)
 
+    def test_claim_boundary_text_requires_policy_integration_separation(self) -> None:
+        module = _load_module()
+        readme = (
+            "## Failure Attribution Boundary\n"
+            "integration failure and policy failure are separated before policy behavior. "
+            "Rows are not policy failure until claim-valid. "
+            "Integration/precondition/evidence failure is retained separately.\n"
+        )
+        source = (
+            "\\subsection{Failure Attribution Rule}\n"
+            "A row is classified as an integration, precondition, or evidence failure. "
+            "Passing gates permits policy-behavior attribution, not automatic "
+            "policy-failure attribution. "
+            "\\CVMPolicyBehaviorAttributableRows{} "
+            "\\CVMPolicyFailureAttributableRows{} "
+            "\\CVMIntegrationFailureAttributableRows{}\n"
+        )
+
+        failures = module._claim_boundary_text_failures(
+            readme_text=readme,
+            readme_path=Path("README.md"),
+            source_text=source,
+            source_path=Path("main.tex"),
+        )
+
+        self.assertEqual([], failures)
+
+    def test_claim_boundary_text_rejects_missing_policy_integration_terms(self) -> None:
+        module = _load_module()
+
+        failures = module._claim_boundary_text_failures(
+            readme_text="WOD2Sim docs\n",
+            readme_path=Path("README.md"),
+            source_text="\\begin{abstract}WOD2Sim\\end{abstract}\n",
+            source_path=Path("main.tex"),
+        )
+
+        self.assertIn(
+            "claim_boundary_readme_missing:README.md:Failure Attribution Boundary",
+            failures,
+        )
+        self.assertIn(
+            "claim_boundary_source_missing:main.tex:Failure Attribution Rule",
+            failures,
+        )
+        self.assertIn(
+            "claim_boundary_source_missing:main.tex:\\CVMPolicyFailureAttributableRows{}",
+            failures,
+        )
+
+    def test_summary_attribution_requires_policy_partition(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "summary.json"
+            path.write_text(
+                json.dumps(
+                    {
+                        "total_rows": 3,
+                        "failure_attribution": {
+                            "rule": (
+                                "policy failure after semantic temporal lifecycle "
+                                "deployment evidence gates"
+                            ),
+                            "contract_valid_closed_loop_rows": 1,
+                            "integration_or_evidence_invalid_closed_loop_rows": 1,
+                            "precondition_blocked_rows": 1,
+                            "claim_valid_policy_benchmark_rows": 1,
+                            "policy_behavior_attributable_rows": 1,
+                            "policy_failure_attributable_rows": 0,
+                            "integration_failure_attributable_rows": 1,
+                            "diagnostic_not_policy_rows": 1,
+                            "non_policy_attributed_rows": 2,
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            failures = module._summary_attribution_failures(path)
+
+        self.assertEqual([], failures)
+
+    def test_summary_attribution_rejects_policy_failure_without_behavior(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "summary.json"
+            path.write_text(
+                json.dumps(
+                    {
+                        "total_rows": 3,
+                        "failure_attribution": {
+                            "rule": "policy failure",
+                            "claim_valid_policy_benchmark_rows": 0,
+                            "policy_behavior_attributable_rows": 0,
+                            "policy_failure_attributable_rows": 1,
+                            "non_policy_attributed_rows": 1,
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            failures = module._summary_attribution_failures(path)
+
+        self.assertIn(f"summary_policy_failure_exceeds_behavior:{path}", failures)
+        self.assertIn(f"summary_policy_attribution_partition_mismatch:{path}", failures)
+        self.assertIn(
+            f"summary_attribution_field_missing:{path}:integration_failure_attributable_rows",
+            failures,
+        )
+
     def test_generated_artifact_hash_check_accepts_matching_tables_and_figures(self) -> None:
         module = _load_module()
         data_hash = "abc123"

@@ -87,6 +87,36 @@ REQUIRED_SCENE_FIELDS = (
     "license_gating_status",
     "categories_verified",
 )
+CLAIM_BOUNDARY_README_TERMS = (
+    "Failure Attribution Boundary",
+    "integration failure",
+    "policy failure",
+    "policy behavior",
+    "not policy failure",
+    "claim-valid",
+    "Integration/precondition/evidence failure",
+)
+CLAIM_BOUNDARY_SOURCE_TERMS = (
+    "Failure Attribution Rule",
+    "integration, precondition, or evidence failure",
+    "policy-behavior attribution",
+    "policy-failure attribution",
+    "\\CVMPolicyBehaviorAttributableRows{}",
+    "\\CVMPolicyFailureAttributableRows{}",
+    "\\CVMIntegrationFailureAttributableRows{}",
+)
+REQUIRED_SUMMARY_ATTRIBUTION_FIELDS = (
+    "rule",
+    "contract_valid_closed_loop_rows",
+    "integration_or_evidence_invalid_closed_loop_rows",
+    "precondition_blocked_rows",
+    "claim_valid_policy_benchmark_rows",
+    "policy_behavior_attributable_rows",
+    "policy_failure_attributable_rows",
+    "integration_failure_attributable_rows",
+    "diagnostic_not_policy_rows",
+    "non_policy_attributed_rows",
+)
 EXPECTED_TITLE = (
     "WOD2Sim: Contract-Based System Integration of Dataset-Trained Driving Policies "
     "into Distributed Closed-Loop Simulation"
@@ -220,6 +250,20 @@ def main() -> int:
     if "Independent Researcher" not in source_text:
         failures.append("source_affiliation_missing")
     failures.extend(_source_text_failures(source_text=source_text, path=main_tex))
+    readme_path = args.repo_root / "README.md"
+    readme_text = (
+        readme_path.read_text(encoding="utf-8", errors="ignore")
+        if readme_path.is_file()
+        else ""
+    )
+    failures.extend(
+        _claim_boundary_text_failures(
+            readme_text=readme_text,
+            readme_path=readme_path,
+            source_text=source_text,
+            source_path=main_tex,
+        )
+    )
 
     for path in sorted(args.source.rglob("*.tex")) + sorted(args.source.rglob("*.bib")):
         text = path.read_text(encoding="utf-8", errors="ignore")
@@ -245,6 +289,7 @@ def main() -> int:
     if data_hash is None:
         failures.append("missing_or_invalid_summary_data_hash")
     else:
+        failures.extend(_summary_attribution_failures(args.results / "summary.json"))
         failures.extend(
             _generated_artifact_failures(
                 data_hash=data_hash,
@@ -307,6 +352,31 @@ def _source_text_failures(*, source_text: str, path: Path) -> list[str]:
     return failures
 
 
+def _claim_boundary_text_failures(
+    *,
+    readme_text: str,
+    readme_path: Path,
+    source_text: str,
+    source_path: Path,
+) -> list[str]:
+    failures: list[str] = []
+    for term in CLAIM_BOUNDARY_README_TERMS:
+        if not _contains_claim_term(readme_text, term):
+            failures.append(f"claim_boundary_readme_missing:{readme_path}:{term}")
+    for term in CLAIM_BOUNDARY_SOURCE_TERMS:
+        if not _contains_claim_term(source_text, term):
+            failures.append(f"claim_boundary_source_missing:{source_path}:{term}")
+    return failures
+
+
+def _contains_claim_term(text: str, term: str) -> bool:
+    normalized_text = re.sub(r"\s+", " ", text)
+    normalized_term = re.sub(r"\s+", " ", term)
+    if "\\" in term:
+        return normalized_term in normalized_text
+    return normalized_term.lower() in normalized_text.lower()
+
+
 def _abstract_word_count(source_text: str) -> int | None:
     match = re.search(r"\\begin\{abstract\}(.*?)\\end\{abstract\}", source_text, re.DOTALL)
     if match is None:
@@ -317,6 +387,36 @@ def _abstract_word_count(source_text: str) -> int | None:
     abstract = re.sub(r"\\[A-Za-z]+\*?(?:\[[^\]]*\])?\{([^{}]*)\}", r" \1 ", abstract)
     abstract = re.sub(r"\\[A-Za-z]+\*?(?:\[[^\]]*\])?", " ", abstract)
     return len(re.findall(r"[A-Za-z0-9]+(?:[-'][A-Za-z0-9]+)?", abstract))
+
+
+def _summary_attribution_failures(path: Path) -> list[str]:
+    failures: list[str] = []
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return [f"summary_attribution_unreadable:{path}"]
+    total_rows = payload.get("total_rows")
+    attribution = payload.get("failure_attribution")
+    if not isinstance(attribution, dict):
+        return [f"summary_attribution_missing:{path}"]
+    for field in REQUIRED_SUMMARY_ATTRIBUTION_FIELDS:
+        if field not in attribution:
+            failures.append(f"summary_attribution_field_missing:{path}:{field}")
+    rule = str(attribution.get("rule", ""))
+    for term in ("policy failure", "semantic", "temporal", "lifecycle", "deployment", "evidence"):
+        if term not in rule:
+            failures.append(f"summary_attribution_rule_missing:{path}:{term}")
+    policy_behavior = _summary_int(attribution, "policy_behavior_attributable_rows")
+    policy_failure = _summary_int(attribution, "policy_failure_attributable_rows")
+    claim_valid_policy = _summary_int(attribution, "claim_valid_policy_benchmark_rows")
+    non_policy = _summary_int(attribution, "non_policy_attributed_rows")
+    if policy_failure > policy_behavior:
+        failures.append(f"summary_policy_failure_exceeds_behavior:{path}")
+    if claim_valid_policy != policy_behavior:
+        failures.append(f"summary_claim_valid_policy_behavior_mismatch:{path}")
+    if isinstance(total_rows, int) and non_policy + policy_behavior != total_rows:
+        failures.append(f"summary_policy_attribution_partition_mismatch:{path}")
+    return failures
 
 
 def _generated_artifact_failures(
@@ -624,6 +724,13 @@ def _archive_hygiene_failures(path: Path, *, root: Path) -> list[str]:
     except tarfile.TarError:
         failures.append(f"invalid_public_archive:{rel_path}")
     return failures
+
+
+def _summary_int(summary: object, key: str) -> int:
+    if not isinstance(summary, dict):
+        return 0
+    value = summary.get(key)
+    return int(value) if isinstance(value, int) else 0
 
 
 if __name__ == "__main__":

@@ -46,8 +46,9 @@ pairs; command-only route rows are rejected as non-claim-valid, and route loss c
 progress by \CVMSemanticProgressDeltaMean{}. The aggregate has
 \CVMPolicyBehaviorAttributableRows{} policy-attributable behavior rows:
 \CVMBlockedRuns{} rows remain precondition blockers and \CVMSyntheticRuns{} synthetic
-rows remain diagnostics. The result is an audited boundary that prevents integration
-faults from being reported as policy behavior or policy failure.
+rows remain diagnostics. The result is an auditable policy-vs-integration attribution
+boundary that prevents integration faults from being reported as policy behavior or
+policy failure.
 \end{abstract}
 
 \section{Introduction}
@@ -97,7 +98,8 @@ manifest is not a collision result. Passing all gates permits policy-behavior
 attribution, not automatic policy-failure attribution; policy failure additionally
 requires the retained failure layer to be policy. This rule is intentionally stricter
 than ordinary demo reporting because the scientific risk is misattributing adapter or
-runtime faults to the policy being integrated.
+runtime faults to the policy being integrated. WOD2Sim therefore evaluates integration
+validity first and policy quality only after the row is claim-valid.
 
 \section{Integration Problem and Requirements}
 
@@ -218,7 +220,7 @@ effectiveness denominators that are currently available.
 
 \begin{table}[t]
 \centering
-\caption{Current CVM status. Rows are configured evidence rows; effectiveness rows require completed and audited closed-loop execution.}
+\caption{Current CVM status. Rows are configured evidence rows; attribution rows keep integration/precondition failures separate from policy behavior and policy failure.}
 \label{tab:main-results}
 \resizebox{\columnwidth}{!}{\input{generated/main_results.tex}}
 \end{table}
@@ -278,6 +280,7 @@ The same aggregate also reports failure attribution. It contains
 \CVMContractValidClosedLoopRows{} contract-valid closed-loop row(s),
 \CVMIntegrationInvalidClosedLoopRows{} completed closed-loop row(s) rejected as
 integration/evidence-invalid, \CVMBlockedRuns{} precondition-blocked row(s),
+\CVMIntegrationFailureAttributableRows{} integration-failure-attributable row(s),
 \CVMSyntheticDiagnosticRows{} synthetic diagnostic row(s), and
 \CVMClaimValidPolicyBenchmarkRows{} claim-valid policy benchmark row(s). These counts
 are the operational separation between integration failure and policy failure in the

@@ -52,6 +52,14 @@ lifecycle state, deployment preconditions, and evidence audit pass.
   contract-valid rollouts, integration-invalid rows, blockers, diagnostics, and
   policy benchmark claims separately.
 
+Public reports use this decision order:
+
+| Row state | Allowed attribution |
+| --- | --- |
+| Missing route geometry, stale sensors, invalid timing, lifecycle error, missing asset, or incomplete evidence | Integration/precondition/evidence failure; never policy failure. |
+| Executed and audit-valid, but benchmark prerequisites are still incomplete | Contract-valid diagnostic rollout; behavior is inspectable but not a public policy benchmark. |
+| Executed, audit-valid, retained by the benchmark gate, and failure layer is `policy` | Policy failure may be assigned. |
+
 The generated aggregate makes the boundary numeric: current artifacts contain
 `0` policy-attributable behavior rows, `0` policy-attributable failure rows,
 `36` integration/precondition blocker rows, and `109` completed diagnostic rows
