@@ -25,12 +25,12 @@ local simulator state.
 - Format: IEEE conference two-column template using `paper/cvm/IEEEtran.cls`.
 - Page size: A4 verified by `mutool info` mediabox `[ 0 0 595.276 841.89 ]`.
 - Page count: 5.
-- PDF size at audit: 139964 bytes.
+- PDF size at audit: 139553 bytes.
 - Root PDF is the only tracked manuscript PDF.
 
 ## Commands And Targets
 
-- Core checks: `make conformance`, `make cvm-check`, `./.venv/bin/python -m pytest -q`.
+- Core checks: `make conformance`, `make cvm-check`, `uv run python -m pytest -q`.
 - Demo: `make demo` and `make cvm-demo`.
 - Matrix expansion/execution: `make cvm-eval`, `make cvm-synthetic`.
 - Regeneration: `make cvm-aggregate`, `make cvm-paper`, `make cvm-validate`.

@@ -7,7 +7,7 @@ lifecycle/fault diagnostics, and explicit direct-actor blockers.
 ## Quality Gates
 
 ```bash
-make cvm-check PYTHON=./.venv/bin/python
+make cvm-check PYTHON='uv run python'
 ```
 
 This runs lint, dependency-light conformance tests, and paper validation.
@@ -17,7 +17,7 @@ This runs lint, dependency-light conformance tests, and paper validation.
 Record core launch plans without launching:
 
 ```bash
-./.venv/bin/python scripts/run_cvm_matrix.py \
+uv run python scripts/run_cvm_matrix.py \
   --config configs/cvm/core.yaml \
   --output artifacts/cvm/results/core \
   --resume
@@ -26,7 +26,7 @@ Record core launch plans without launching:
 Execute supported local closed-loop rows:
 
 ```bash
-./.venv/bin/python scripts/run_cvm_matrix.py \
+uv run python scripts/run_cvm_matrix.py \
   --config configs/cvm/core.yaml \
   --output artifacts/cvm/results/core \
   --resume \
@@ -36,7 +36,7 @@ Execute supported local closed-loop rows:
 Execute the completed semantic route-boundary CVM:
 
 ```bash
-./.venv/bin/python scripts/run_cvm_matrix.py \
+uv run python scripts/run_cvm_matrix.py \
   --config configs/cvm/semantic_ablation.yaml \
   --output artifacts/cvm/results/semantic_ablation \
   --resume \
@@ -55,7 +55,7 @@ external-driver input exposes it.
 ## Public Synthetic Diagnostics
 
 ```bash
-make cvm-synthetic PYTHON=./.venv/bin/python
+make cvm-synthetic PYTHON='uv run python'
 ```
 
 These rows are service-harness diagnostics only; they are not closed-loop scene
@@ -64,8 +64,8 @@ rollouts and remain `claim_valid=false`.
 ## Aggregate, Figures, And Paper
 
 ```bash
-make cvm-aggregate PYTHON=./.venv/bin/python
-make paper-verify PYTHON=./.venv/bin/python
+make cvm-aggregate PYTHON='uv run python'
+make paper-verify PYTHON='uv run python'
 ```
 
 The output PDF is the repository-root `wod2sim.pdf`. `paper-verify` rebuilds
