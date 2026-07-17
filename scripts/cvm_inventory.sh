@@ -76,19 +76,26 @@ redact() {
   if command -v nvidia-smi >/dev/null 2>&1; then nvidia-smi 2>&1; else echo "nvidia-smi unavailable"; fi
 } | redact > "$OUT/environment/system.txt"
 
-PYTHON_BIN="${PYTHON:-./.venv/bin/python}"
+if [ -n "${PYTHON:-}" ]; then
+  PYTHON_CMD_TEXT="$PYTHON"
+elif command -v uv >/dev/null 2>&1; then
+  PYTHON_CMD_TEXT="uv run python"
+else
+  PYTHON_CMD_TEXT="python3"
+fi
+read -r -a PYTHON_CMD <<< "$PYTHON_CMD_TEXT"
 {
   echo "# Python environment"
   echo "captured_at_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   echo
-  echo "## $PYTHON_BIN --version"
-  "$PYTHON_BIN" --version 2>&1 || true
+  echo "## $PYTHON_CMD_TEXT --version"
+  "${PYTHON_CMD[@]}" --version 2>&1 || true
   echo
-  echo "## $PYTHON_BIN -m pip --version"
-  "$PYTHON_BIN" -m pip --version 2>&1 || true
+  echo "## $PYTHON_CMD_TEXT -m pip --version"
+  "${PYTHON_CMD[@]}" -m pip --version 2>&1 || true
   echo
-  echo "## $PYTHON_BIN -m pip list --format=freeze"
-  "$PYTHON_BIN" -m pip list --format=freeze 2>&1 || true
+  echo "## $PYTHON_CMD_TEXT -m pip list --format=freeze"
+  "${PYTHON_CMD[@]}" -m pip list --format=freeze 2>&1 || true
 } | redact > "$OUT/environment/python_packages.txt"
 
 {

@@ -27,26 +27,24 @@ Email: amtellezfernandez@gmail.com}
 \maketitle
 
 \begin{abstract}
-Closed-loop simulation can make a dataset-trained driving policy appear worse than it
-is when the integration boundary silently changes the policy's inputs, timing, or
-runtime state. A WOD-style trajectory policy expects logged observations, route intent
-or route geometry, and short-horizon ego-relative predictions. An AlpaSim external
-driver instead receives asynchronous simulator messages, must answer on the simulator
-clock, and must leave enough provenance to explain the run afterward. Treating that
-boundary as format conversion risks reporting missing route geometry, stale
-observations, invalid resampling, duplicate lifecycle events, or incomplete manifests
-as policy behavior.
-
-WOD2Sim addresses the boundary as a system-integration problem. It defines five
-contracts for WOD-style policies in AlpaSim: semantic preservation of route and scene
-signals, temporal adaptation to the runtime grid, lifecycle handling for persistent
-driver sessions, deployment materialization of preconditions, and evidence validity
-for scientific claims. The reference implementation exposes dependency-light
-baselines, learned-policy entry points, and actor-aware planner entry points through a
-single external-driver interface. The current public artifact is not a closed-loop
-policy benchmark. It is a reproducible validation layer that separates integration
-failures from policy failures and permits policy-behavior claims only after the
-contract gates pass.
+Closed-loop simulation is useful only when a failure can be assigned to the policy
+being evaluated rather than to the integration layer that drives the simulator.
+Dataset-trained driving policies are usually built around logged observations, route
+geometry or route intent, and fixed-cadence trajectory predictions; a distributed
+simulator delivers asynchronous messages, expects actions on its own control clock,
+and depends on runtime preconditions that may be invisible in a benchmark table.
+WOD2Sim treats this mismatch as a system-integration problem instead of a format
+conversion problem. It defines a contract-validation layer for WOD-style policies
+running as AlpaSim external drivers: semantic contracts preserve route and scene
+meaning, temporal contracts resample trajectories on the simulator grid, lifecycle
+contracts keep driver sessions explicit and idempotent, deployment contracts
+materialize prerequisites, and evidence contracts decide when a rollout can support a
+policy claim. The reference implementation provides dependency-light policies,
+learned-policy entry points, actor-aware planner hooks, manifests, audits, and
+aggregation scripts behind one driver interface. The current public release reports
+contract-validity and failure-attribution evidence, not a claim-valid policy
+benchmark; rows that violate integration, precondition, or evidence contracts are
+retained as non-policy-attributed failures.
 \end{abstract}
 
 \section{Introduction}
