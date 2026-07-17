@@ -122,29 +122,53 @@ def _pipeline_tikz() -> str:
 
 
 def _results_tikz(summary: dict[str, object]) -> str:
-    total = int(summary.get("total_rows", 0))
-    completed = int(summary.get("completed_runs", 0))
-    planned = int(summary.get("planned_runs", 0))
-    blocked = int(summary.get("blocked_runs", 0))
-    total_bar = max(total, 1)
-    completed_w = 70 * completed / total_bar
-    planned_w = 70 * planned / total_bar
-    blocked_w = 70 * blocked / total_bar
+    effectiveness = summary.get("integration_effectiveness", {})
+    if not isinstance(effectiveness, dict):
+        effectiveness = {}
+    full_completed = int(effectiveness.get("full_contract_completed_runs", 0))
+    audit_valid = int(effectiveness.get("full_contract_audit_valid_runs", 0))
+    false_block_denom = int(
+        effectiveness.get("valid_full_contract_false_block_denominator", 0)
+    )
+    false_blocked = int(effectiveness.get("valid_full_contract_false_blocked_runs", 0))
+    valid_accepted = max(false_block_denom - false_blocked, 0)
+    semantic_pairs = int(effectiveness.get("semantic_ablation_completed_pairs", 0))
+    semantic_metric_pairs = int(effectiveness.get("semantic_ablation_metric_pairs", 0))
+    command_completed = int(
+        effectiveness.get("semantic_ablation_command_proxy_completed_runs", 0)
+    )
+    command_rejected = int(
+        effectiveness.get("semantic_ablation_command_proxy_rejected_runs", 0)
+    )
+    checks = [
+        ("Full-contract audit", audit_valid, full_completed, "green!25"),
+        ("Valid rows accepted", valid_accepted, false_block_denom, "green!25"),
+        ("Semantic pairs", semantic_metric_pairs, semantic_pairs, "blue!18"),
+        ("Invalid route rejected", command_rejected, command_completed, "orange!22"),
+    ]
+    max_total = max((total for _, _, total, _ in checks), default=1)
+    lines = []
+    for idx, (label, observed, total, color) in enumerate(checks):
+        y = -0.9 * idx
+        width = 70 * observed / max(max_total, 1)
+        total_width = 70 * total / max(max_total, 1)
+        x_label = width / 10 + 0.4
+        lines.append(
+            rf"\node[label] at (0,{y:.1f}) {{{label}}};"
+            "\n"
+            rf"\node[bar, fill=gray!12, minimum width={total_width:.1f}mm] at (2mm,{y:.1f}) {{}};"
+            "\n"
+            rf"\node[bar, fill={color}, minimum width={width:.1f}mm] at (2mm,{y:.1f}) {{}};"
+            "\n"
+            rf"\node[anchor=west, font=\small] at ({x_label:.2f},{y:.1f}) {{{observed}/{total}}};"
+        )
     return rf"""
 \begin{{tikzpicture}}[
   label/.style={{font=\small, anchor=east}},
   bar/.style={{draw, minimum height=7mm, anchor=west}},
 ]
-\node[label] at (0,0) {{Completed}};
-\node[bar, fill=green!25, minimum width={completed_w:.1f}mm] at (2mm,0) {{}};
-\node[anchor=west, font=\small] at ({completed_w/10 + 0.4:.2f},0) {{{completed}/{total}}};
-\node[label] at (0,-0.9) {{Planned}};
-\node[bar, fill=yellow!30, minimum width={planned_w:.1f}mm] at (2mm,-0.9) {{}};
-\node[anchor=west, font=\small] at ({planned_w/10 + 0.4:.2f},-0.9) {{{planned}/{total}}};
-\node[label] at (0,-1.8) {{Blocked}};
-\node[bar, fill=red!20, minimum width={blocked_w:.1f}mm] at (2mm,-1.8) {{}};
-\node[anchor=west, font=\small] at ({blocked_w/10 + 0.4:.2f},-1.8) {{{blocked}/{total}}};
-\node[font=\small, align=center] at (3.8,-2.7) {{Configured CVM status; blocked rows keep true blockers visible.}};
+{chr(10).join(lines)}
+\node[font=\small, align=center] at (3.9,-3.7) {{Completed closed-loop integration checks.}};
 \end{{tikzpicture}}
 """
 

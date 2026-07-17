@@ -1,8 +1,9 @@
 # Reproducing Current WOD2Sim Contract-Validation Matrix (CVM) Artifacts
 
 Current status: buildable WOD2Sim paper package with completed dependency-light
-core rows, completed semantic closed-loop ablation rows, public synthetic
-lifecycle/fault diagnostics, and explicit direct-actor blockers.
+core rows, completed semantic closed-loop ablation rows, secondary public
+synthetic lifecycle/fault conformance diagnostics, and explicit direct-actor
+blockers.
 
 ## Quality Gates
 
@@ -52,14 +53,15 @@ manifests and run IDs, but it is not yet forwarded as a deterministic AlpaSim
 runtime seed override. Runtime seed metadata is logged when the patched
 external-driver input exposes it.
 
-## Public Synthetic Diagnostics
+## Secondary Public Synthetic Diagnostics
 
 ```bash
 make cvm-synthetic PYTHON='uv run python'
 ```
 
 These rows are service-harness diagnostics only; they are not closed-loop scene
-rollouts and remain `claim_valid=false`.
+rollouts, are not effectiveness metrics for simulator-backed integration, and
+remain `claim_valid=false`.
 
 ## Aggregate, Figures, And Paper
 
@@ -88,10 +90,11 @@ the title, author block, PDF subject, or abstract text intentionally changes.
 - Blocked rows: 36.
 - Claim-valid benchmark matrix: 0.
 
-The current aggregate supports dependency-light core execution, a bounded
-semantic integration-effectiveness claim, and an evidence-gate claim. It does
-not support direct-actor temporal ablation, learned-policy result, or
-policy-quality comparison.
+The current aggregate supports completed full-contract integration checks,
+bounded semantic route-boundary confound evidence, and an evidence-gate
+false-block claim. Blocked rows remain denominator/context only. The aggregate
+does not support direct-actor temporal ablation, learned-policy result,
+scenario-category coverage, or policy-quality comparison.
 
 Failure attribution is explicit in `artifacts/cvm/results/summary.json` under
 `failure_attribution`. A behavior row is policy-attributable only after route,

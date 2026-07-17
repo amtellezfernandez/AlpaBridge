@@ -207,7 +207,7 @@ def _write_generated_table_fixture(root: Path, module) -> tuple[Path, Path, Path
 
     write_table("contract_map.tex", module._expected_contract_map_rows())
     write_table("main_results.tex", module._expected_main_results_rows(summary))
-    write_table("ablations.tex", module._expected_ablations_rows(summary, lifecycle_counts))
+    write_table("ablations.tex", module._expected_ablations_rows(summary))
     write_table(
         "fault_localization.tex",
         module._expected_fault_localization_rows(lifecycle_counts, fault_counts),
@@ -629,10 +629,13 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         evaluation = (
             "The CVM includes completed dependency-light closed-loop diagnostic rows "
             "on locally available gated scene assets, completed semantic "
-            "route-boundary ablations, and integration evidence, not as a public "
-            "policy benchmark. The release excludes a redistributable scene subset, "
-            "verified scene-category coverage, and a claim-ready closed-loop policy "
-            "benchmark.\n"
+            "route-boundary ablations. The completed full-contract and "
+            "semantic-ablation rollouts are integration-effectiveness evidence. "
+            "Synthetic lifecycle/fault rows are service-harness conformance "
+            "diagnostics only, and blocked rows are retained as denominator/context "
+            "rather than success metrics. The release excludes a redistributable "
+            "scene subset, verified scene-category coverage, and a claim-ready "
+            "closed-loop policy benchmark.\n"
         )
 
         failures = module._evaluation_status_failures(
@@ -655,7 +658,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             failures,
         )
         self.assertIn(
-            "evaluation_status_missing:docs/evaluation.md:not as a public policy benchmark",
+            "evaluation_status_missing:docs/evaluation.md:service-harness conformance diagnostics only",
             failures,
         )
 

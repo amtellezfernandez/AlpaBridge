@@ -94,8 +94,10 @@ evidence contracts. The contract-validation matrix (CVM) includes completed
 dependency-light closed-loop diagnostic rows on locally available gated scene
 assets, completed semantic route-boundary ablations, and public synthetic
 lifecycle/fault diagnostics.
-Those rows are retained as integration evidence, not as a public policy
-benchmark.
+The completed full-contract and semantic-ablation rollouts are the current
+integration-effectiveness evidence. Synthetic lifecycle/fault rows are secondary
+service-harness conformance diagnostics only, and blocked rows are retained as
+denominator/context rather than success metrics.
 
 The release does not include a public checkpoint, a redistributable scene
 subset, verified scene-category coverage, direct-actor temporal ablation

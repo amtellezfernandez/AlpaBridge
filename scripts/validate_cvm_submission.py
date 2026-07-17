@@ -82,7 +82,7 @@ EXPECTED_TABLE_HEADERS = {
         "Policy & Rows & Done/att. & Audit & Progress & Coll./off & "
         "Lat. p95 & Crash & Blocked"
     ),
-    "ablations.tex": "Integration-effectiveness check & Positive & Total",
+    "ablations.tex": "Closed-loop integration check & Observed & Denom.",
     "fault_localization.tex": "Synthetic diagnostic & Count & Total",
 }
 REQUIRED_FIGURES = (
@@ -226,8 +226,9 @@ EVALUATION_STATUS_TERMS = (
     "completed dependency-light closed-loop diagnostic rows",
     "locally available gated scene assets",
     "semantic route-boundary ablations",
-    "integration evidence",
-    "not as a public policy benchmark",
+    "integration-effectiveness evidence",
+    "service-harness conformance diagnostics only",
+    "denominator/context rather than success metrics",
     "redistributable scene subset",
     "verified scene-category coverage",
     "claim-ready closed-loop policy benchmark",
@@ -1720,7 +1721,7 @@ def _generated_table_value_failures(
     table_expectations = {
         "contract_map.tex": _expected_contract_map_rows(),
         "main_results.tex": _expected_main_results_rows(summary),
-        "ablations.tex": _expected_ablations_rows(summary, lifecycle_counts),
+        "ablations.tex": _expected_ablations_rows(summary),
         "fault_localization.tex": _expected_fault_localization_rows(
             lifecycle_counts,
             fault_counts,
@@ -1828,10 +1829,15 @@ def _latex_table_text(value: str) -> str:
     return value.replace("\\", r"\textbackslash{}").replace("_", r"\_")
 
 
-def _expected_ablations_rows(
-    summary: dict[str, object],
-    lifecycle_counts: dict[str, str],
-) -> list[str]:
+def _expected_ablations_rows(summary: dict[str, object]) -> list[str]:
+    false_block_denominator = _required_int(
+        summary,
+        "integration_effectiveness.valid_full_contract_false_block_denominator",
+    )
+    false_blocked = _required_int(
+        summary, "integration_effectiveness.valid_full_contract_false_blocked_runs"
+    )
+    valid_full_contract_accepted = max(false_block_denominator - false_blocked, 0)
     return [
         _table_row(
             "Full-contract audit-valid rollouts",
@@ -1839,12 +1845,9 @@ def _expected_ablations_rows(
             _required_int(summary, "integration_effectiveness.full_contract_completed_runs"),
         ),
         _table_row(
-            "False-blocked valid rollouts",
-            _required_int(summary, "integration_effectiveness.valid_full_contract_false_blocked_runs"),
-            _required_int(
-                summary,
-                "integration_effectiveness.valid_full_contract_false_block_denominator",
-            ),
+            "Valid full-contract rows accepted",
+            valid_full_contract_accepted,
+            false_block_denominator,
         ),
         _table_row(
             "Semantic ablation metric pairs",
@@ -1863,14 +1866,14 @@ def _expected_ablations_rows(
             ),
         ),
         _table_row(
-            "Full lifecycle hardening",
-            lifecycle_counts.get("CVMLifecycleFullSurvived", "0"),
-            lifecycle_counts.get("CVMLifecycleFullTotal", "0"),
+            "Policy-behavior diagnostic rows",
+            _required_int(summary, "failure_attribution.policy_behavior_attributable_rows"),
+            _required_int(summary, "closed_loop_completed_runs"),
         ),
         _table_row(
-            "Strict/pre-hardening behavior",
-            lifecycle_counts.get("CVMLifecycleStrictSurvived", "0"),
-            lifecycle_counts.get("CVMLifecycleStrictTotal", "0"),
+            "Verified scenario categories",
+            _required_int(summary, "scenario_coverage.verified_required_category_count"),
+            _required_int(summary, "scenario_coverage.required_category_count"),
         ),
     ]
 

@@ -31,9 +31,10 @@ not tracked; rerun the commands below to reproduce the release checks.
 The release status is complete with documented limitations for the CVM paper
 package. It supports dependency-light core integration evidence, semantic
 route-boundary ablation evidence, false-block accounting for audit-valid rows,
-and synthetic lifecycle/fault diagnostics. It does not support a policy-quality
-benchmark, learned-policy result, direct-actor temporal ablation, or official
-Waymo compatibility claim.
+and secondary synthetic lifecycle/fault conformance diagnostics. It does not
+support a policy-quality benchmark, learned-policy result, direct-actor temporal
+ablation, simulator-backed lifecycle/fault stress trial, or official Waymo
+compatibility claim.
 
 The validator now treats the integration-vs-policy boundary as a release gate:
 blocked, failed, planned, and diagnostic rows cannot be labeled

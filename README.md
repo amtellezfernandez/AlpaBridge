@@ -67,6 +67,12 @@ The generated aggregate makes the boundary numeric: current artifacts contain
 `45` policy-attributable behavior rows, `0` policy-attributable failure rows,
 `36` integration/precondition blocker rows, and `64` completed non-policy diagnostic rows
 that remain non-policy-attributed.
+The success evidence is the completed side of that partition: `45/45`
+full-contract closed-loop rollouts are audit-valid, `0/45` valid
+full-contract rows are false-blocked by the evidence gate, and `9/9`
+command-proxy ablation rows are rejected as non-claim-valid route evidence.
+The `36` blocked rows stay in the denominator as remaining unsupported
+direct-actor/temporal-ablation work.
 
 ## Scenario Coverage Boundary
 
@@ -241,8 +247,8 @@ the same generated tables and figures used by the repository reports, then runs
 the submission validator. The current aggregate remains `claim_valid=false`:
 dependency-light core rows and semantic ablations have executed, direct-actor
 rows remain explicitly blocked by a missing scene-matched proxy, and completed
-closed-loop rows are diagnostic integration evidence rather than policy-quality
-benchmark claims.
+closed-loop rows are diagnostic integration-effectiveness evidence rather than
+policy-quality benchmark claims.
 The detailed test-to-contract traceability map is tracked in
 [`artifacts/cvm/reports/contract_test_audit.md`](artifacts/cvm/reports/contract_test_audit.md).
 
@@ -256,8 +262,9 @@ The demo writes a synthetic run directory under `demo/wod2sim-contract-demo`
 with a driver log, route audit, aggregate JSON, support bundle, and SVG rollout
 view. It uses public synthetic geometry and a constant-velocity stub only:
 `valid_claim_evidence` stays false, no AlpaSim scene is executed, and no policy
-quality metric is reported. The aggregate JSON includes synthetic diagnostics
-for command-proxy route loss and road-center/ego-route offset. See
+quality metric is reported. The aggregate JSON includes synthetic conformance
+diagnostics for command-proxy route loss and road-center/ego-route offset; those
+demo checks are not used as closed-loop evaluation metrics. See
 [the demo guide](docs/demo.md).
 
 ## Citation

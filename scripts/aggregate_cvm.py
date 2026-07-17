@@ -1004,6 +1004,7 @@ def _write_tables(output: Path, summary: dict[str, Any], rows: list[dict[str, st
     false_block_denominator = _summary_int(
         effectiveness, "valid_full_contract_false_block_denominator"
     )
+    valid_full_contract_accepted = max(false_block_denominator - false_blocked, 0)
     semantic_completed_pairs = _summary_int(
         effectiveness, "semantic_ablation_completed_pairs"
     )
@@ -1082,14 +1083,14 @@ def _write_tables(output: Path, summary: dict[str, Any], rows: list[dict[str, st
         + data_hash
         + "\n"
         + "\\begin{tabular}{lrr}\n"
-        + "\\toprule\nIntegration-effectiveness check & Positive & Total \\\\\n"
+        + "\\toprule\nClosed-loop integration check & Observed & Denom. \\\\\n"
         + "\\midrule\n"
         + f"Full-contract audit-valid rollouts & {full_contract_audit_valid} & {full_contract_completed} \\\\\n"
-        + f"False-blocked valid rollouts & {false_blocked} & {false_block_denominator} \\\\\n"
+        + f"Valid full-contract rows accepted & {valid_full_contract_accepted} & {false_block_denominator} \\\\\n"
         + f"Semantic ablation metric pairs & {semantic_metric_pairs} & {semantic_completed_pairs} \\\\\n"
         + f"Command-proxy rows rejected & {command_proxy_rejected} & {command_proxy_completed} \\\\\n"
-        + f"Full lifecycle hardening & {lifecycle_full_survived} & {lifecycle_full_total} \\\\\n"
-        + f"Strict/pre-hardening behavior & {lifecycle_strict_survived} & {lifecycle_strict_total} \\\\\n"
+        + f"Policy-behavior diagnostic rows & {policy_behavior_attributable} & {summary['closed_loop_completed_runs']} \\\\\n"
+        + f"Verified scenario categories & {verified_required_category_count} & {required_category_count} \\\\\n"
         + "\\bottomrule\n\\end{tabular}\n",
         encoding="utf-8",
     )

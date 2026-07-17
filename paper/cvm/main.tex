@@ -35,16 +35,16 @@ AlpaSim external drivers: semantic route and scene preservation, temporal trajec
 adaptation, explicit service lifecycle handling, deployment provenance, and evidence
 validity. The reference implementation provides dependency-light baselines,
 learned-policy and actor-aware planner entry points, manifests, audits, and aggregation
-scripts behind one interface. In the current contract-validation matrix, 45 completed
-full-contract closed-loop rollouts across six locally cached but category-unverified
-scenes pass route and sensor audits, so their behavior is policy-attributable
-diagnostic evidence, not a public benchmark claim. A matched semantic ablation produces
-9/9 metric-bearing full-vs-command-proxy pairs, and all 9 command-proxy rows are
-rejected as non-claim-valid, preventing route-loss confounds from being counted as
-policy evidence. The aggregate also retains 36 direct-actor or temporal rows blocked by
-a missing scene-matched oracle proxy and 55 public synthetic diagnostics. No row is
-policy-failure-attributable and no scenario-category coverage or policy benchmark claim
-is made.
+scripts behind one interface. In the current contract-validation matrix, 54 completed
+closed-loop rollouts include 45 full-contract rows that pass route and sensor audits,
+so their behavior is policy-attributable diagnostic evidence, not a public benchmark
+claim. A matched semantic ablation produces 9/9 metric-bearing
+full-vs-command-proxy pairs, and all 9 command-proxy rows are rejected as
+non-claim-valid, preventing route-loss confounds from being counted as policy
+evidence. The evidence gate false-blocks 0/45 valid full-contract rows and retains 36
+direct-actor or temporal rows as deployment blockers because a scene-matched oracle
+proxy is missing. No row is policy-failure-attributable and no scenario-category
+coverage or policy benchmark claim is made.
 \end{abstract}
 
 \section{Introduction}
@@ -197,11 +197,11 @@ The evaluation runner expands matrices into rows, writes CSV and JSON summaries,
 returns nonzero status when any row is not completed. Aggregation preserves failed and
 blocked rows, separates planned rows from blockers, rejects duplicate completed run
 identifiers, writes LaTeX tables with data hashes, and generates vector figures. In the
-current environment, public synthetic lifecycle and fault-injection harness rows execute,
-and any completed closed-loop rows are audited for route-source and sensor-freshness
-validity before they are counted as diagnostic rollout evidence. The resulting rows
-document the exact experiment denominator while preventing unexecuted protocols from
-becoming results.
+current environment, completed closed-loop rows are audited for route-source and
+sensor-freshness validity before they are counted as diagnostic rollout evidence.
+Public synthetic lifecycle and fault-injection harness rows are retained separately as
+service-level conformance diagnostics. The resulting rows document the exact experiment
+denominator while preventing unexecuted protocols from becoming results.
 
 \begin{figure}[t]
 \centering
@@ -255,32 +255,25 @@ boundary, not evidence of autonomous-driving scenario-category coverage.
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{figures/main_results.pdf}
-\caption{Configured CVM status. The denominator is \CVMTotalRows{} configured rows; planned rows, if any, are not launched, and blocked rows name true precondition or ablation-support gaps.}
+\caption{Completed closed-loop integration checks. Bars report audit-valid full-contract rows, accepted valid rows, matched semantic metric pairs, and rejected command-proxy route rows; unavailable rows remain reported as blockers in the aggregate.}
 \label{fig:main-results}
 \end{figure}
 
 \begin{table}[t]
 \centering
-\caption{Public synthetic diagnostics. These rows exercise service-level harnesses only; they are not closed-loop scene rollouts.}
-\label{tab:synthetic-diagnostics}
-\resizebox{\columnwidth}{!}{\input{generated/fault_localization.tex}}
+\caption{Closed-loop integration-effectiveness checks generated from retained rollout and audit artifacts. Synthetic lifecycle and fault rows are excluded from this table.}
+\label{tab:integration-checks}
+\resizebox{\columnwidth}{!}{\input{generated/ablations.tex}}
 \end{table}
 
-The public synthetic diagnostics in Table~\ref{tab:synthetic-diagnostics} show that the
-hardened lifecycle harness survives \CVMLifecycleFullSurvived{}/\CVMLifecycleFullTotal{}
-cycles, while the strict/pre-hardening comparison survives
-\CVMLifecycleStrictSurvived{}/\CVMLifecycleStrictTotal{} cycles. The fault harness
-detects \CVMFaultDetected{}/\CVMFaultTotal{} configured injections and localizes
-\CVMFaultLocalized{}/\CVMFaultTotal{} to the expected contract layer/code. These are
-diagnostic harness results, not policy-performance or real-scene reliability metrics.
-
-The current effectiveness result is therefore bounded. Completed full-contract rollouts
-measure whether valid integrations pass the audit without false blocking, while matched
-semantic-ablation rows measure a real route-loss confound and show that the evidence
-gate prevents command-only route rows from becoming claim-valid policy evidence. The
-synthetic lifecycle and fault counts are retained as diagnostics only and are not used
-as evidence that the integration method is faster, safer, or more correct than a
-functional non-contract wrapper.
+Table~\ref{tab:integration-checks} is the primary effectiveness evidence. Completed
+full-contract rollouts measure whether valid integrations pass the audit without false
+blocking, matched semantic-ablation rows measure a route-loss confound in real
+closed-loop runs, and command-proxy rows test whether the evidence gate rejects invalid
+route evidence. The generated synthetic lifecycle and fault-localization artifacts are
+retained as service-level conformance diagnostics only; they are not used as evidence
+that WOD2Sim is faster, safer, or more correct than a functional non-contract wrapper in
+real simulator stress trials.
 
 The same aggregate also reports failure attribution. It contains
 \CVMContractValidClosedLoopRows{} contract-valid closed-loop row(s),
@@ -322,17 +315,21 @@ The limitations are material. WOD2Sim is not an official Waymo challenge interfa
 not reconstruct complete WOD worlds, and does not redistribute restricted scene assets.
 The current CVM package has no completed claim-valid benchmark matrix, no validated
 scene-category coverage (\CVMVerifiedRequiredScenarioCategoryCount{}/
-\CVMRequiredScenarioCategoryCount{} required categories verified), and no scene-matched
-direct-actor proxy for direct actor-aware planning. Its lifecycle and fault-injection
-evidence comes from public synthetic harnesses, not simulator-backed stress trials.
+\CVMRequiredScenarioCategoryCount{} required categories verified), no scene-matched
+direct-actor proxy for direct actor-aware planning, and no simulator-backed lifecycle or
+fault-injection stress trial. Its lifecycle and fault-injection evidence comes from
+public synthetic harnesses, so those counts are conformance checks rather than
+evaluation metrics.
 Learned token policies remain outside the public baseline unless a legitimate local
 checkpoint and hash are provided.
 
 These limitations also explain why the paper does not compare policy quality. A
 framework paper can report reliability, validity, and diagnostic coverage only after the
-corresponding rows are executed and audited. Until then, the strongest supported claim is
-that the repository materializes and blocks incomplete evidence rather than allowing it
-to appear as a benchmark.
+corresponding rows are executed and audited. The supported success claim is narrower:
+45 full-contract closed-loop rows executed, passed the route/sensor audit, and were not
+falsely blocked by the evidence gate; 9 matched command-proxy ablations executed and
+were rejected as non-claim-valid route evidence. The 36 blocked rows remain visible as
+remaining work, not as the primary result.
 
 \section{Conclusion}
 
@@ -340,11 +337,12 @@ Integrating a dataset-trained trajectory policy into distributed closed-loop sim
 requires more than input/output conversion. WOD2Sim formulates the boundary as five
 contracts: semantic, temporal, lifecycle, deployment, and evidence. The current
 repository implements the contract-oriented release surface and a reproducible CVM
-evidence pipeline. The generated CVM aggregate separates completed/audit-valid rollout
-evidence, planned rows, true blockers, and synthetic diagnostics, but it still reports
-no full claim-valid benchmark. That separation is the useful integration outcome: it
-prevents route, timing, lifecycle, deployment, and evidence failures from being
-misreported as policy failures until the complete audited matrices exist.
+evidence pipeline. The generated CVM aggregate separates 45 audit-valid full-contract
+rollouts, 9 integration-invalid closed-loop ablations, 36 true blockers, and secondary
+synthetic conformance diagnostics, but it still reports no full claim-valid benchmark.
+That separation is the useful integration outcome: it prevents route, timing,
+lifecycle, deployment, and evidence failures from being misreported as policy failures
+until the complete audited matrices exist.
 
 \appendix[WOD2Sim Repository Evidence Map]
 
@@ -384,8 +382,9 @@ The three paper figures serve different audit roles. The architecture figure ide
 where semantic, temporal, lifecycle, deployment, and evidence failures cross the
 external-driver boundary. The evaluation-pipeline figure shows how readiness, launch
 manifests, rollout status, audit, aggregation, and paper assets are chained. The results
-figure is deliberately a denominator plot: it shows configured, completed, planned, and
-blocked rows rather than decorating an unavailable benchmark result.
+figure shows completed closed-loop integration checks; configured, planned, and blocked
+denominators remain auditable in the generated tables and reports rather than being
+presented as successes.
 
 The release package also records what is absent. Gated scenes, private credentials,
 learned checkpoints, and proprietary container layers are not bundled. When they are
