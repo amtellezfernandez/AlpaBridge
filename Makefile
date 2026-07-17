@@ -12,6 +12,7 @@ paper:
 
 paper-verify:
 	$(MAKE) cvm-paper PYTHON=$(PYTHON)
+	$(MAKE) cvm-validate PYTHON=$(PYTHON)
 
 test:
 	$(PYTHON) -m pytest tests/
