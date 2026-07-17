@@ -1419,6 +1419,83 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             failures,
         )
 
+    def test_release_hygiene_reports_public_archive_temp_path_markers(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            archive_path = root / "artifacts" / "cvm" / "results" / "public" / "support-bundle.tar.gz"
+            archive_path.parent.mkdir(parents=True)
+            payload = json.dumps({"audit_dir": "<bundle_tmp>/demo/audit"}).encode()
+            with tarfile.open(archive_path, "w:gz") as archive:
+                info = tarfile.TarInfo("demo/run-audit.json")
+                info.mtime = module.DETERMINISTIC_ARCHIVE_MTIME
+                info.size = len(payload)
+                archive.addfile(info, io.BytesIO(payload))
+
+            failures = module._release_hygiene_failures(
+                repo_root=root,
+                canonical_paper=root / "wod2sim.pdf",
+            )
+
+        self.assertIn(
+            "public_hygiene_archive:bundle_tmp_path:"
+            "artifacts/cvm/results/public/support-bundle.tar.gz:demo/run-audit.json",
+            failures,
+        )
+
+    def test_release_hygiene_reports_nondeterministic_public_archive_metadata(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            archive_path = root / "artifacts" / "cvm" / "results" / "public" / "support-bundle.tar.gz"
+            archive_path.parent.mkdir(parents=True)
+            payload = b"{}\n"
+            with tarfile.open(archive_path, "w:gz") as archive:
+                info = tarfile.TarInfo("demo/run-audit.json")
+                info.mtime = module.DETERMINISTIC_ARCHIVE_MTIME + 10
+                info.uid = 1000
+                info.gid = 1000
+                info.uname = "local-user"
+                info.gname = "local-group"
+                info.size = len(payload)
+                archive.addfile(info, io.BytesIO(payload))
+
+            failures = module._release_hygiene_failures(
+                repo_root=root,
+                canonical_paper=root / "wod2sim.pdf",
+            )
+
+        base = "artifacts/cvm/results/public/support-bundle.tar.gz:demo/run-audit.json"
+        self.assertIn(f"public_archive_nondeterministic_metadata:{base}:mtime", failures)
+        self.assertIn(f"public_archive_nondeterministic_metadata:{base}:uid", failures)
+        self.assertIn(f"public_archive_nondeterministic_metadata:{base}:gid", failures)
+        self.assertIn(f"public_archive_nondeterministic_metadata:{base}:uname", failures)
+        self.assertIn(f"public_archive_nondeterministic_metadata:{base}:gname", failures)
+
+    def test_release_hygiene_reports_unsafe_public_archive_member_paths(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            archive_path = root / "artifacts" / "cvm" / "results" / "public" / "support-bundle.tar.gz"
+            archive_path.parent.mkdir(parents=True)
+            payload = b"{}\n"
+            with tarfile.open(archive_path, "w:gz") as archive:
+                info = tarfile.TarInfo("demo/../run-audit.json")
+                info.mtime = module.DETERMINISTIC_ARCHIVE_MTIME
+                info.size = len(payload)
+                archive.addfile(info, io.BytesIO(payload))
+
+            failures = module._release_hygiene_failures(
+                repo_root=root,
+                canonical_paper=root / "wod2sim.pdf",
+            )
+
+        self.assertIn(
+            "public_archive_unsafe_member_path:"
+            "artifacts/cvm/results/public/support-bundle.tar.gz:demo/../run-audit.json",
+            failures,
+        )
+
     def test_cli_documentation_accepts_documented_scripts_and_make_targets(self) -> None:
         module = _load_module()
         with tempfile.TemporaryDirectory() as tmp:

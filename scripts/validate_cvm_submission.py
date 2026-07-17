@@ -561,6 +561,7 @@ ARCHIVE_TEXT_SUFFIXES = {
     ".yml",
     ".log",
 }
+DETERMINISTIC_ARCHIVE_MTIME = 0
 FORBIDDEN_TEXT_PATTERNS: tuple[tuple[str, Pattern[str]], ...] = (
     ("private_password", re.compile(re.escape("Marso" + "123"))),
     ("huggingface_token", re.compile(r"hf_[A-Za-z0-9]{20,}")),
@@ -2261,6 +2262,12 @@ def _archive_hygiene_failures(path: Path, *, root: Path) -> list[str]:
     try:
         with tarfile.open(path, "r:gz") as archive:
             for member in archive.getmembers():
+                failures.extend(
+                    _archive_member_metadata_failures(
+                        member=member,
+                        archive_path=rel_path,
+                    )
+                )
                 if not member.isfile() or Path(member.name).suffix.lower() not in ARCHIVE_TEXT_SUFFIXES:
                     continue
                 handle = archive.extractfile(member)
@@ -2270,11 +2277,31 @@ def _archive_hygiene_failures(path: Path, *, root: Path) -> list[str]:
                     text = handle.read().decode("utf-8")
                 except UnicodeDecodeError:
                     continue
+                if "<bundle_tmp>" in text:
+                    failures.append(f"public_hygiene_archive:bundle_tmp_path:{rel_path}:{member.name}")
                 for label, pattern in FORBIDDEN_TEXT_PATTERNS:
                     if pattern.search(text):
                         failures.append(f"public_hygiene_archive:{label}:{rel_path}:{member.name}")
     except tarfile.TarError:
         failures.append(f"invalid_public_archive:{rel_path}")
+    return failures
+
+
+def _archive_member_metadata_failures(*, member: tarfile.TarInfo, archive_path: Path) -> list[str]:
+    failures: list[str] = []
+    member_path = Path(member.name)
+    if member_path.is_absolute() or ".." in member_path.parts:
+        failures.append(f"public_archive_unsafe_member_path:{archive_path}:{member.name}")
+    if member.mtime != DETERMINISTIC_ARCHIVE_MTIME:
+        failures.append(f"public_archive_nondeterministic_metadata:{archive_path}:{member.name}:mtime")
+    if member.uid != 0:
+        failures.append(f"public_archive_nondeterministic_metadata:{archive_path}:{member.name}:uid")
+    if member.gid != 0:
+        failures.append(f"public_archive_nondeterministic_metadata:{archive_path}:{member.name}:gid")
+    if member.uname:
+        failures.append(f"public_archive_nondeterministic_metadata:{archive_path}:{member.name}:uname")
+    if member.gname:
+        failures.append(f"public_archive_nondeterministic_metadata:{archive_path}:{member.name}:gname")
     return failures
 
 
