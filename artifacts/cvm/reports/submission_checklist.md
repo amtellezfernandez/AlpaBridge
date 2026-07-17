@@ -23,6 +23,8 @@ Additional release-specific checks:
 - [x] Paper source is under `paper/cvm`.
 - [x] Generated evidence package is under `artifacts/cvm`.
 - [x] Public artifact vocabulary uses CVM naming.
+- [x] Neutral CVM paths are documented as the public equivalents of the
+  original internal deliverable layout.
 - [x] Figures and generated tables carry the aggregate data hash.
 - [x] `make cvm-eval` preserves completed evidence when rerun without `--execute`.
 - [x] `pre-commit run --all-files` passes without modifying files.
@@ -31,6 +33,8 @@ Additional release-specific checks:
   attribution fields.
 - [x] Failure attribution requires semantic, temporal, lifecycle, deployment,
   and evidence gates before policy behavior or policy failure can be assigned.
+- [x] README, paper source, run manifests, and aggregate summary are all
+  validated for the integration-vs-policy attribution boundary.
 - [x] Every public run manifest carries validated `scene` metadata and
   `scenario_category` without claiming unsupported scenario-category coverage.
 - [x] `frames.csv` exposes the required public-safe frame-level schema without

@@ -25,8 +25,27 @@ local simulator state.
 - Format: IEEE conference two-column template using `paper/cvm/IEEEtran.cls`.
 - Page size: A4 verified by `mutool info` mediabox `[ 0 0 595.276 841.89 ]`.
 - Page count: 5.
-- PDF size at audit: 139538 bytes.
+- PDF size at audit: 140856 bytes.
 - Root PDF is the only tracked manuscript PDF.
+
+## Neutral Release Equivalence
+
+The original internal planning vocabulary used venue-coupled names. The public
+release intentionally maps those requirements to neutral CVM paths:
+
+- `artifacts/cvm` contains the environment, logs, manifests, results, tables,
+  figures, and reports package.
+- `configs/cvm` contains the core, semantic-ablation, temporal-ablation,
+  lifecycle-stress, and fault-injection configurations.
+- `scripts/run_cvm_matrix.py`, `scripts/aggregate_cvm.py`,
+  `scripts/generate_cvm_figures.py`, `scripts/build_cvm_paper.sh`, and
+  `scripts/validate_cvm_submission.py` implement the matrix, aggregation,
+  figure generation, paper build, and submission validation flow.
+- `paper/cvm` contains the canonical manuscript source and reproduction notes.
+- `make cvm-*` targets are the public release commands.
+
+Venue-coupled artifact names are intentionally excluded from tracked public
+source so the package remains portable across submissions.
 
 ## Commands And Targets
 
