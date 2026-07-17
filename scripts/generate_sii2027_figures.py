@@ -18,26 +18,31 @@ def main() -> int:
     figures = args.output / "figures"
     figures.mkdir(parents=True, exist_ok=True)
     summary = json.loads(args.summary.read_text(encoding="utf-8"))
+    data_hash = str(summary.get("data_hash", "missing-data-hash"))
     _figure_pdf(
         figures / "system_architecture.pdf",
         _architecture_tikz(),
+        data_hash=data_hash,
     )
     _figure_pdf(
         figures / "evaluation_pipeline.pdf",
         _pipeline_tikz(),
+        data_hash=data_hash,
     )
     _figure_pdf(
         figures / "main_results.pdf",
         _results_tikz(summary),
+        data_hash=data_hash,
     )
     return 0
 
 
-def _figure_pdf(output: Path, tikz_body: str) -> None:
+def _figure_pdf(output: Path, tikz_body: str, *, data_hash: str) -> None:
     tex = (
         "\\documentclass[tikz,border=2pt]{standalone}\n"
         "\\usepackage{tikz}\n"
         "\\usetikzlibrary{arrows.meta,positioning}\n"
+        f"\\pdfinfo{{/Subject (SII 2027 figure data_hash={data_hash})}}\n"
         "\\begin{document}\n"
         + tikz_body
         + "\n\\end{document}\n"

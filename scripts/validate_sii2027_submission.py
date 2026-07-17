@@ -1,11 +1,24 @@
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import subprocess
 from pathlib import Path
 
 PLACEHOLDERS = ("TODO", "TBD", "FIXME", "RESULTS_PENDING", "[N]", "[M]")
+REQUIRED_TABLES = (
+    "contract_map.tex",
+    "main_results.tex",
+    "ablations.tex",
+    "fault_localization.tex",
+    "paper_numbers.tex",
+)
+REQUIRED_FIGURES = (
+    "system_architecture.pdf",
+    "evaluation_pipeline.pdf",
+    "main_results.pdf",
+)
 EXPECTED_TITLE = (
     "WOD2Sim: Contract-Based System Integration of Dataset-Trained Driving Policies "
     "into Distributed Closed-Loop Simulation"
@@ -17,6 +30,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Validate the SII 2027 paper artifact.")
     parser.add_argument("--paper", default=Path("wod2sim.pdf"), type=Path)
     parser.add_argument("--source", default=Path("paper/sii2027"), type=Path)
+    parser.add_argument("--results", default=Path("artifacts/sii2027/results"), type=Path)
+    parser.add_argument("--tables", default=Path("artifacts/sii2027/tables"), type=Path)
+    parser.add_argument("--figures", default=Path("artifacts/sii2027/figures"), type=Path)
     parser.add_argument("--max-pages", default=6, type=int)
     parser.add_argument("--allow-eight-pages", action="store_true")
     args = parser.parse_args()
@@ -74,6 +90,18 @@ def main() -> int:
     else:
         failures.append("missing_latex_log")
 
+    data_hash = _load_summary_data_hash(args.results / "summary.json")
+    if data_hash is None:
+        failures.append("missing_or_invalid_summary_data_hash")
+    else:
+        failures.extend(
+            _generated_artifact_failures(
+                data_hash=data_hash,
+                table_dirs=(args.tables, args.source / "generated"),
+                figure_dirs=(args.figures, args.source / "figures"),
+            )
+        )
+
     if failures:
         for failure in failures:
             print(failure)
@@ -98,6 +126,43 @@ def _mutool_info(path: Path) -> str:
 def _extract_pages(info: str) -> int | None:
     match = re.search(r"Pages:\s+(\d+)", info)
     return None if match is None else int(match.group(1))
+
+
+def _load_summary_data_hash(path: Path) -> str | None:
+    if not path.is_file():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+    data_hash = payload.get("data_hash")
+    return data_hash if isinstance(data_hash, str) and data_hash else None
+
+
+def _generated_artifact_failures(
+    *, data_hash: str, table_dirs: tuple[Path, ...], figure_dirs: tuple[Path, ...]
+) -> list[str]:
+    failures: list[str] = []
+    expected_marker = f"data_hash={data_hash}"
+    for table_dir in table_dirs:
+        for name in REQUIRED_TABLES:
+            path = table_dir / name
+            if not path.is_file():
+                failures.append(f"missing_generated_table:{path}")
+                continue
+            first_line = path.read_text(encoding="utf-8", errors="ignore").splitlines()[:1]
+            if not first_line or expected_marker not in first_line[0]:
+                failures.append(f"generated_table_hash_mismatch:{path}")
+    for figure_dir in figure_dirs:
+        for name in REQUIRED_FIGURES:
+            path = figure_dir / name
+            if not path.is_file():
+                failures.append(f"missing_generated_figure:{path}")
+                continue
+            info = _mutool_info(path)
+            if expected_marker not in info:
+                failures.append(f"generated_figure_hash_mismatch:{path}")
+    return failures
 
 
 if __name__ == "__main__":
