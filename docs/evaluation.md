@@ -84,7 +84,8 @@ batch summaries only, route-waypoint-backed audited frames, behavior/runtime
 metrics, and three baseline families: replay or constant velocity, route
 following, and `token_dagger_bc`. It returns nonzero until those conditions are
 met. This is intentional: the command prevents demo artifacts, command plans,
-or partial smoke runs from being mistaken for a NeurIPS-style benchmark result.
+or partial smoke runs from being mistaken for a claim-ready public benchmark
+result.
 
 ## Current Status
 
