@@ -23,6 +23,33 @@ def _load_module():
 
 
 class ValidateCVMSubmissionTests(unittest.TestCase):
+    def test_source_text_accepts_release_abstract_length(self) -> None:
+        module = _load_module()
+        body = " ".join(f"word{index}" for index in range(module.ABSTRACT_MIN_WORDS))
+        source = (
+            "\\hypersetup{pdfsubject={WOD2Sim contract-validation paper}}\n"
+            "\\begin{abstract}\n"
+            + body
+            + " \\CVMTotalRows{}\n"
+            "\\end{abstract}\n"
+        )
+
+        failures = module._source_text_failures(source_text=source, path=Path("main.tex"))
+
+        self.assertEqual([], failures)
+
+    def test_source_text_rejects_abstract_length_and_draft_metadata(self) -> None:
+        module = _load_module()
+        source = (
+            "\\hypersetup{pdfsubject={WOD2Sim contract-validation paper draft}}\n"
+            "\\begin{abstract}\nshort abstract\n\\end{abstract}\n"
+        )
+
+        failures = module._source_text_failures(source_text=source, path=Path("main.tex"))
+
+        self.assertIn("abstract_word_count_out_of_range:main.tex:2", failures)
+        self.assertIn("source_pdfsubject_marked_draft:main.tex", failures)
+
     def test_generated_artifact_hash_check_accepts_matching_tables_and_figures(self) -> None:
         module = _load_module()
         data_hash = "abc123"
@@ -206,8 +233,10 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
                             "failure_code": "direct_actor_oracle_proxy_missing",
                             "rule": (
                                 "A behavior event, including a policy failure, is "
-                                "policy-attributable only after semantic and evidence "
-                                "gates pass."
+                                "policy-attributable only after semantic, temporal, "
+                                "lifecycle, deployment, and evidence gates pass; "
+                                "otherwise the row remains an integration record and "
+                                "cannot be counted as a policy failure."
                             ),
                         },
                     }

@@ -368,7 +368,7 @@ def _failure_attribution_summary(
             "only after the semantic route contract, sensor-freshness audit, "
             "lifecycle state, deployment preconditions, and evidence gate pass. "
             "Otherwise the row is an integration, precondition, evidence, or "
-            "diagnostic record."
+            "diagnostic record and cannot be counted as a policy failure."
         ),
         "contract_valid_closed_loop_rows": len(contract_valid_closed_loop),
         "integration_or_evidence_invalid_closed_loop_rows": len(integration_invalid_closed_loop),

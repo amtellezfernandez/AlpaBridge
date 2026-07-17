@@ -32,16 +32,17 @@ Waymo-to-AlpaSim scene conversion.
 ## Failure Attribution Boundary
 
 WOD2Sim's central release rule is separation between integration failure and
-policy failure. A closed-loop event can be interpreted as policy behavior only
-after the semantic route contract, temporal adapter, lifecycle state, deployment
-preconditions, and evidence audit pass.
+policy failure. A closed-loop event can be interpreted as policy behavior or
+policy failure only after the semantic route contract, temporal adapter,
+lifecycle state, deployment preconditions, and evidence audit pass.
 
 - The default attribution for an incomplete, blocked, ablated, or unaudited row
   is **not policy failure**. It remains an integration, precondition, runtime,
   or evidence row until the evidence gate explicitly makes it claim-valid.
 - If route geometry is reduced to a command, sensors are stale, trajectory timing
   is malformed, lifecycle state is invalid, assets are missing, or evidence is
-  incomplete, the row is an integration/precondition/evidence failure.
+  incomplete, the row is an integration/precondition/evidence failure, not a
+  policy failure.
 - If the row is executed, audit-valid, and retained by the evidence gate, its
   behavior metrics can be inspected without a known boundary violation.
 - This release still reports no claim-valid policy benchmark. The CVM reports

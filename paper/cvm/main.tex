@@ -20,7 +20,7 @@ Email: amtellezfernandez@gmail.com}
 \hypersetup{
   pdftitle={WOD2Sim: Contract-Based System Integration of Dataset-Trained Driving Policies into Distributed Closed-Loop Simulation},
   pdfauthor={Alba Maria Tellez Fernandez},
-  pdfsubject={WOD2Sim contract-validation paper draft}
+  pdfsubject={WOD2Sim contract-validation paper}
 }
 
 \begin{document}
@@ -29,34 +29,25 @@ Email: amtellezfernandez@gmail.com}
 \begin{abstract}
 Offline driving-policy interfaces hide system failures that appear when the same policy is
 run as a persistent service in a distributed closed-loop simulator. WOD2Sim treats that
-transition as a contract-based integration problem rather than as format translation.
-It defines semantic, temporal, lifecycle, deployment, and evidence contracts for running
-Waymo Open Dataset (WOD)-style trajectory policies through an AlpaSim external-driver
-boundary. The reference implementation preserves route geometry, adapts policy horizons
-to the simulator clock, isolates optional model backends, records launch provenance, and
-separates claim-valid evidence from diagnostic traces. Its failure-attribution rule is
-conservative: behavior is policy-attributable only after semantic, temporal, lifecycle,
-deployment, and evidence contracts pass; otherwise the row is an integration,
-precondition, or evidence failure. The public repository is available at
-\url{https://github.com/amtellezfernandez/WOD2Sim}. Current artifacts configure a
-\CVMTotalRows{}-row contract-validation matrix (CVM) across core, ablation, lifecycle,
-and fault-injection rows. The aggregate records \CVMFullContractAuditValidRuns{}/
-\CVMFullContractCompletedRuns{} completed full-contract rollout(s) as audit-valid and
-\CVMValidFullContractFalseBlockedRuns{}/
-\CVMValidFullContractFalseBlockDenominator{} false-block observations among valid
-full-contract rows. Matched semantic-confound evidence covers
+transition as contract-based system integration, not format translation. It defines
+semantic, temporal, lifecycle, deployment, and evidence contracts for Waymo Open Dataset
+(WOD)-style trajectory policies behind an AlpaSim external-driver boundary. The implementation
+preserves route geometry, adapts trajectory horizons to the simulator clock, isolates
+optional model backends, records launch provenance, and gates behavior attribution.
+Current artifacts configure a \CVMTotalRows{}-row contract-validation matrix over three
+policies, six locally cached but unclassified scenes, three replicate identifiers,
+lifecycle stress rows, and \CVMFaultTotal{} synthetic fault injections. The aggregate
+reports \CVMFullContractAuditValidRuns{}/\CVMFullContractCompletedRuns{} completed
+full-contract rollouts as audit-valid and
+\CVMValidFullContractFalseBlockedRuns{}/\CVMValidFullContractFalseBlockDenominator{}
+false blocks among valid full-contract rows. Matched semantic-confound evidence covers
 \CVMSemanticAblationMetricPairs{}/\CVMSemanticAblationCompletedPairs{} metric-bearing
-pairs; route loss changes progress by \CVMSemanticProgressDeltaMean{} and collision-any
-by \CVMSemanticCollisionAnyDeltaMean{} (full minus command-only), while all command-only
-rows are rejected as non-claim-valid. Public synthetic diagnostics execute
-\CVMSyntheticRuns{} rows, but they are
-reported only as diagnostics, not as policy-performance or integration-effectiveness
-claims. Planned rows (\CVMPlannedRuns{}) are separated from true precondition blockers
-(\CVMBlockedRuns{}), so unlaunched protocols, missing actor proxies, unsupported
-ablations, and incomplete evidence cannot be reported as policy behavior or policy
-failure. The attribution counters report \CVMPolicyBehaviorAttributableRows{}
-policy-behavior row(s), \CVMPolicyFailureAttributableRows{} policy-failure row(s), and
-\CVMNonPolicyAttributedRows{} non-policy-attributed row(s).
+pairs; command-only route rows are rejected as non-claim-valid, and route loss changes
+progress by \CVMSemanticProgressDeltaMean{}. The aggregate has
+\CVMPolicyBehaviorAttributableRows{} policy-attributable behavior rows:
+\CVMBlockedRuns{} rows remain precondition blockers and \CVMSyntheticRuns{} synthetic
+rows remain diagnostics. The result is an audited boundary that prevents integration
+faults from being reported as policy behavior or policy failure.
 \end{abstract}
 
 \section{Introduction}
@@ -95,11 +86,12 @@ artifacts.
 
 \subsection{Failure Attribution Rule}
 
-WOD2Sim uses an explicit attribution rule before reporting any behavior metric. A
-rollout event may be interpreted as policy behavior only when the semantic route
-contract, temporal adapter, lifecycle state, deployment preconditions, and evidence
-audit all pass. If any of those gates fails, the row is classified as an integration,
-precondition, or evidence failure. A missing actor proxy is therefore not a weak
+WOD2Sim uses an explicit attribution rule before reporting any behavior or failure
+metric. A rollout event may be interpreted as policy behavior or policy failure only
+when the semantic route contract, temporal adapter, lifecycle state, deployment
+preconditions, and evidence audit all pass. If any of those gates fails, the row is
+classified as an integration, precondition, or evidence failure. A missing actor proxy
+is therefore not a weak
 planner, a command-proxy route is not a bad route-conditioned policy, and an incomplete
 manifest is not a collision result. This rule is intentionally stricter than ordinary
 demo reporting because the scientific risk is misattributing adapter or runtime faults
@@ -290,6 +282,8 @@ are the operational separation between integration failure and policy failure in
 current release: \CVMPolicyBehaviorAttributableRows{} row(s) are policy-behavior
 attributable, \CVMPolicyFailureAttributableRows{} row(s) are policy-failure
 attributable, and \CVMNonPolicyAttributedRows{} row(s) remain non-policy-attributed.
+No blocked, contract-invalid, or diagnostic row can assign policy failure, even when
+its behavior metrics are degraded.
 
 \section{Discussion, Limitations, and Related Work}
 

@@ -14,13 +14,15 @@ metric. WOD2Sim uses this operational rule:
 
 | Row state | Attribution |
 | --- | --- |
-| Route, sensor, temporal, lifecycle, deployment, or evidence contract fails. | Integration/precondition/evidence failure; do not score as policy behavior. |
+| Route, sensor, temporal, lifecycle, deployment, or evidence contract fails. | Integration/precondition/evidence failure; do not score as policy behavior or policy failure. |
 | Row executes and the route/sensor audit passes, but benchmark prerequisites are incomplete. | Contract-valid diagnostic rollout; inspectable, but not a public policy benchmark. |
 | Row executes, passes all audits, satisfies the benchmark gate, and is retained in the aggregate denominator. | Policy behavior may be analyzed and compared. |
 
 This boundary is the main evaluation object. It prevents a route adapter bug,
 stale observation, missing actor proxy, or incomplete manifest from being
-misreported as a bad driving policy.
+misreported as a bad driving policy. A collision, timeout, invalid trajectory,
+or degraded progress metric inside a contract-invalid row is an integration
+symptom until the claim-valid gate passes.
 
 ## Contract Checks
 

@@ -10,6 +10,8 @@ from pathlib import Path
 from typing import Pattern
 
 PLACEHOLDERS = ("TODO", "TBD", "FIXME", "RESULTS_PENDING", "[N]", "[M]")
+ABSTRACT_MIN_WORDS = 160
+ABSTRACT_MAX_WORDS = 210
 REQUIRED_TABLES = (
     "contract_map.tex",
     "main_results.tex",
@@ -210,6 +212,7 @@ def main() -> int:
         failures.append("source_author_missing")
     if "Independent Researcher" not in source_text:
         failures.append("source_affiliation_missing")
+    failures.extend(_source_text_failures(source_text=source_text, path=main_tex))
 
     for path in sorted(args.source.rglob("*.tex")) + sorted(args.source.rglob("*.bib")):
         text = path.read_text(encoding="utf-8", errors="ignore")
@@ -283,6 +286,30 @@ def _load_summary_data_hash(path: Path) -> str | None:
         return None
     data_hash = payload.get("data_hash")
     return data_hash if isinstance(data_hash, str) and data_hash else None
+
+
+def _source_text_failures(*, source_text: str, path: Path) -> list[str]:
+    failures: list[str] = []
+    abstract_words = _abstract_word_count(source_text)
+    if abstract_words is None:
+        failures.append(f"missing_abstract:{path}")
+    elif abstract_words < ABSTRACT_MIN_WORDS or abstract_words > ABSTRACT_MAX_WORDS:
+        failures.append(f"abstract_word_count_out_of_range:{path}:{abstract_words}")
+    if re.search(r"pdfsubject\s*=\s*\{[^}]*\bdraft\b", source_text, re.IGNORECASE):
+        failures.append(f"source_pdfsubject_marked_draft:{path}")
+    return failures
+
+
+def _abstract_word_count(source_text: str) -> int | None:
+    match = re.search(r"\\begin\{abstract\}(.*?)\\end\{abstract\}", source_text, re.DOTALL)
+    if match is None:
+        return None
+    abstract = re.sub(r"%.*", "", match.group(1))
+    abstract = abstract.replace(r"\_", "_")
+    abstract = re.sub(r"\\[A-Za-z]+\*?(?:\[[^\]]*\])?\{\}", " number ", abstract)
+    abstract = re.sub(r"\\[A-Za-z]+\*?(?:\[[^\]]*\])?\{([^{}]*)\}", r" \1 ", abstract)
+    abstract = re.sub(r"\\[A-Za-z]+\*?(?:\[[^\]]*\])?", " ", abstract)
+    return len(re.findall(r"[A-Za-z0-9]+(?:[-'][A-Za-z0-9]+)?", abstract))
 
 
 def _generated_artifact_failures(
@@ -454,7 +481,16 @@ def _single_manifest_attribution_failures(
     if str(attribution.get("failure_code", "")) != str(payload.get("failure_code", "")):
         failures.append(f"failure_attribution_code_mismatch:{path}:{run_id}")
     rule = str(attribution.get("rule", ""))
-    if "policy-attributable" not in rule or "policy failure" not in rule or "evidence" not in rule:
+    required_rule_terms = (
+        "policy-attributable",
+        "policy failure",
+        "semantic",
+        "temporal",
+        "lifecycle",
+        "deployment",
+        "evidence",
+    )
+    if not all(term in rule for term in required_rule_terms):
         failures.append(f"failure_attribution_rule_missing:{path}:{run_id}")
     return failures
 
