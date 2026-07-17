@@ -10,6 +10,8 @@
 - [x] Author names and affiliation are retained for single-blind review.
 - [x] Title, author, affiliation, PDF subject, and abstract hash match
   `paper/cvm/metadata.json`.
+- [x] Generated PDF title, author, and subject metadata match
+  `paper/cvm/metadata.json`.
 - [x] All citations resolve in the final LaTeX build.
 - [x] LaTeX log has no unresolved references/citations, multiply defined
   labels, or overfull/underfull `\hbox` warnings.

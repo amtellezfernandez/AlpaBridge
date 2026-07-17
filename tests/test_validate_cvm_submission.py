@@ -219,6 +219,58 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             failures,
         )
 
+    def test_pdf_metadata_text_accepts_utf16_hex_info_metadata(self) -> None:
+        module = _load_module()
+
+        def pdf_hex(value: str) -> str:
+            return "<" + value.encode("utf-16").hex().upper() + ">"
+
+        metadata = {
+            "title": "Contract Title",
+            "author": "Researcher Name",
+            "pdf_subject": "Contract metadata paper",
+        }
+        paper_info = (
+            "Info object (1 0 R):\n"
+            f"<</Author{pdf_hex('Researcher Name')}"
+            f"/Title{pdf_hex('Contract Title')}"
+            f"/Subject{pdf_hex('Contract metadata paper')}>>\n"
+        )
+
+        failures = module._pdf_metadata_text_failures(
+            metadata=metadata,
+            metadata_path=Path("metadata.json"),
+            paper_info=paper_info,
+            paper_path=Path("paper.pdf"),
+        )
+
+        self.assertEqual([], failures)
+
+    def test_pdf_metadata_text_rejects_output_metadata_mismatch(self) -> None:
+        module = _load_module()
+        metadata = {
+            "title": "Contract Title",
+            "author": "Researcher Name",
+            "pdf_subject": "Contract metadata paper",
+        }
+        paper_info = (
+            "Info object (1 0 R):\n"
+            "<</Author(Researcher Name)/Title(Wrong Title)/Creator(LaTeX)>>\n"
+        )
+
+        failures = module._pdf_metadata_text_failures(
+            metadata=metadata,
+            metadata_path=Path("metadata.json"),
+            paper_info=paper_info,
+            paper_path=Path("paper.pdf"),
+        )
+
+        self.assertIn(
+            "pdf_metadata_field_mismatch:paper.pdf:metadata.json:Title",
+            failures,
+        )
+        self.assertIn("pdf_metadata_field_missing:paper.pdf:Subject", failures)
+
     def test_claim_boundary_text_requires_policy_integration_separation(self) -> None:
         module = _load_module()
         readme = (

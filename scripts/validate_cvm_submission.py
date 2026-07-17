@@ -345,24 +345,25 @@ def main() -> int:
     args = parser.parse_args()
 
     failures: list[str] = []
+    paper_info = ""
     if not args.paper.is_file():
         failures.append(f"missing_pdf:{args.paper}")
     else:
         size = args.paper.stat().st_size
         if size > 6 * 1024 * 1024:
             failures.append(f"pdf_too_large:{size}")
-        info = _mutool_info(args.paper)
-        pages = _extract_pages(info)
+        paper_info = _mutool_info(args.paper)
+        pages = _extract_pages(paper_info)
         if pages is None:
             failures.append("page_count_unavailable")
         else:
             max_pages = 8 if args.allow_eight_pages else args.max_pages
             if pages < 4 or pages > max_pages:
                 failures.append(f"page_count_out_of_range:{pages}")
-        failures.extend(_pdf_a4_page_size_failures(info=info, path=args.paper))
-        if not re.search(r"/Title(?:<[^>]+>|\([^)]+\))", info):
+        failures.extend(_pdf_a4_page_size_failures(info=paper_info, path=args.paper))
+        if not re.search(r"/Title(?:<[^>]+>|\([^)]+\))", paper_info):
             failures.append("pdf_title_metadata_missing")
-        if not re.search(r"/Author(?:<[^>]+>|\([^)]+\))", info):
+        if not re.search(r"/Author(?:<[^>]+>|\([^)]+\))", paper_info):
             failures.append("pdf_author_metadata_missing")
         failures.extend(_pdf_font_embedding_failures(args.paper))
 
@@ -377,6 +378,14 @@ def main() -> int:
             metadata_path=metadata_path,
             source_text=source_text,
             source_path=main_tex,
+        )
+    )
+    failures.extend(
+        _pdf_metadata_text_failures(
+            metadata=metadata,
+            metadata_path=metadata_path,
+            paper_info=paper_info,
+            paper_path=args.paper,
         )
     )
     failures.extend(_source_text_failures(source_text=source_text, path=main_tex))
@@ -626,6 +635,62 @@ def _paper_metadata_text_failures(
         )
     )
     return failures
+
+
+def _pdf_metadata_text_failures(
+    *,
+    metadata: dict[str, object],
+    metadata_path: Path,
+    paper_info: str,
+    paper_path: Path,
+) -> list[str]:
+    if not metadata or not paper_info:
+        return []
+    failures: list[str] = []
+    expected = {
+        "Title": str(metadata.get("title", "")),
+        "Author": str(metadata.get("author", "")),
+        "Subject": str(metadata.get("pdf_subject", "")),
+    }
+    for key, expected_value in expected.items():
+        actual_value = _pdf_info_text_value(paper_info, key)
+        if actual_value is None:
+            failures.append(f"pdf_metadata_field_missing:{paper_path}:{key}")
+            continue
+        if actual_value != expected_value:
+            failures.append(f"pdf_metadata_field_mismatch:{paper_path}:{metadata_path}:{key}")
+    return failures
+
+
+def _pdf_info_text_value(info: str, key: str) -> str | None:
+    match = re.search(
+        rf"/{re.escape(key)}(?P<value><[0-9A-Fa-f\s]*>|\((?:\\.|[^\\)])*\))",
+        info,
+        re.DOTALL,
+    )
+    if match is None:
+        return None
+    return _decode_pdf_string(match.group("value"))
+
+
+def _decode_pdf_string(value: str) -> str:
+    if value.startswith("<") and value.endswith(">"):
+        hex_text = re.sub(r"\s+", "", value[1:-1])
+        try:
+            raw = bytes.fromhex(hex_text)
+        except ValueError:
+            return ""
+        for encoding in ("utf-16", "utf-16-be", "utf-8", "latin-1"):
+            try:
+                return raw.decode(encoding).strip("\ufeff")
+            except UnicodeDecodeError:
+                continue
+        return ""
+    if value.startswith("(") and value.endswith(")"):
+        literal = value[1:-1]
+        literal = literal.replace(r"\(", "(").replace(r"\)", ")").replace(r"\\", "\\")
+        return literal
+    return value
 
 
 def _paper_abstract_metadata_failures(
