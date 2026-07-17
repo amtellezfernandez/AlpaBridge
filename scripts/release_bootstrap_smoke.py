@@ -136,8 +136,7 @@ def _bootstrap_install_steps(*, checkout_root: Path, venv_root: Path, installer:
     venv_python = venv_root / "bin" / "python"
     if installer == "uv":
         return [
-            ("uv_venv", ["uv", "venv", str(venv_root)]),
-            ("editable_install", ["uv", "pip", "install", "--python", str(venv_python), "-e", ".[dev]"]),
+            ("uv_sync", ["uv", "sync", "--extra", "dev"]),
         ]
     return [
         ("stdlib_venv", [sys.executable, "-m", "venv", str(venv_root)]),
@@ -156,7 +155,7 @@ def run_release_bootstrap_smoke(*, source_root: Path, keep_temp: bool, installer
     temp_dir = tempfile.mkdtemp(prefix="wod2sim-bootstrap-")
     temp_root = Path(temp_dir)
     checkout_root = _copy_checkout(source_root, temp_root)
-    venv_root = temp_root / "venv"
+    venv_root = checkout_root / ".venv" if installer_backend == "uv" else temp_root / "venv"
     venv_python = venv_root / "bin" / "python"
     venv_bin = venv_root / "bin"
     doctor_json = checkout_root / "bootstrap-doctor.json"

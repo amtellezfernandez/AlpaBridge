@@ -38,20 +38,7 @@ class ReleaseBootstrapSmokeTests(unittest.TestCase):
             installer="uv",
         )
 
-        self.assertEqual("uv_venv", steps[0][0])
-        self.assertEqual(["uv", "venv", "/tmp/bootstrap-venv"], steps[0][1])
-        self.assertEqual(
-            [
-                "uv",
-                "pip",
-                "install",
-                "--python",
-                "/tmp/bootstrap-venv/bin/python",
-                "-e",
-                ".[dev]",
-            ],
-            steps[1][1],
-        )
+        self.assertEqual([("uv_sync", ["uv", "sync", "--extra", "dev"])], steps)
 
     def test_bootstrap_install_steps_for_stdlib_venv_backend(self) -> None:
         module = _load_module()
