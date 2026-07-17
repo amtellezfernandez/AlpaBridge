@@ -5,12 +5,52 @@
   "completed": false,
   "config_path": "configs/sii2027/semantic_ablation.yaml",
   "config_sha256": "beb9b22afc03ad27f9344cced121b56ab2a6268160b4e5cb34d292c79d92cdb9",
-  "created_at": "2026-07-17T11:40:01.044055+00:00",
-  "detail": "Matrix was expanded and recorded; pass --execute for real rollout launch.",
+  "created_at": "2026-07-17T12:15:22.562857+00:00",
+  "detail": "The command-only route ablation is configured but no runtime-safe adapter flag currently switches the launcher into that ablated behavior.",
   "execution_mode": "closed_loop_ablation",
-  "failure_code": "execution_not_requested",
-  "failure_layer": "deployment",
+  "failure_code": "semantic_ablation_runtime_flag_missing",
+  "failure_layer": "semantic",
   "matrix": "semantic_ablation",
+  "planned_launch": {
+    "baseport": 6000,
+    "command": null,
+    "cwd": ".",
+    "local_usdz_dir": "data/nre-artifacts/local-usdzs-front-camera-15",
+    "logs": {
+      "stderr": "artifacts/sii2027/logs/experiments/semantic_ablation/semantic_ablation_route_following_clipgt-048b974e-1546-488a-b8f9-d32bff77f5aa_17_command_only_route.stderr.log",
+      "stdout": "artifacts/sii2027/logs/experiments/semantic_ablation/semantic_ablation_route_following_clipgt-048b974e-1546-488a-b8f9-d32bff77f5aa_17_command_only_route.stdout.log"
+    },
+    "missing_inputs": [],
+    "mode": "both",
+    "port": 6789,
+    "readiness_command": [
+      ".venv/bin/python",
+      "-m",
+      "wod2sim.cli.commands.check_alpasim_readiness",
+      "--alpasim-root",
+      "workspace/alpasim-clean",
+      "--scene-preset",
+      "front_camera_50scene_public2602",
+      "--scene-id",
+      "clipgt-048b974e-1546-488a-b8f9-d32bff77f5aa",
+      "--local-usdz-dir",
+      "data/nre-artifacts/local-usdzs-front-camera-15"
+    ],
+    "run_dir": "artifacts/sii2027/results/semantic_ablation/run_dirs/semantic_ablation_route_following_clipgt-048b974e-1546-488a-b8f9-d32bff77f5aa_17_command_only_route",
+    "run_status": "artifacts/sii2027/results/semantic_ablation/run_dirs/semantic_ablation_route_following_clipgt-048b974e-1546-488a-b8f9-d32bff77f5aa_17_command_only_route/run-status.json",
+    "scene_preset": "front_camera_50scene_public2602",
+    "schema": "sii2027_closed_loop_launch_plan_v1",
+    "supported": false,
+    "timeout_seconds": 900,
+    "topology": "1gpu",
+    "unsupported_reasons": [
+      {
+        "code": "semantic_ablation_runtime_flag_missing",
+        "detail": "The command-only route ablation is configured but no runtime-safe adapter flag currently switches the launcher into that ablated behavior.",
+        "layer": "semantic"
+      }
+    ]
+  },
   "policy": "route_following",
   "run_id": "semantic_ablation_route_following_clipgt-048b974e-1546-488a-b8f9-d32bff77f5aa_17_command_only_route",
   "scene_id": "clipgt-048b974e-1546-488a-b8f9-d32bff77f5aa",

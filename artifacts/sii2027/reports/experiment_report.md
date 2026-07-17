@@ -16,11 +16,22 @@ matrices remain blocked before launch.
 
 ## Current Blocked Reasons
 
-- `execution_not_requested`: rows were expanded and recorded without `--execute`.
+- `execution_not_requested`: full-contract-capable rows were expanded and recorded
+  with exact readiness/launch plans, but not launched because `--execute` was not
+  requested.
 - `direct_actor_oracle_proxy_missing`: `direct_actor_planner` rows require a recorded oracle actor-proxy JSON.
+- `semantic_ablation_runtime_flag_missing`: command-only semantic ablation rows
+  are configured, but no runtime-safe adapter flag currently switches the launcher
+  into that ablated behavior.
 
-Current blocked counts: 54 `execution_not_requested` rows and 36
-`direct_actor_oracle_proxy_missing` rows.
+Current blocked counts: 45 `execution_not_requested` rows, 36
+`direct_actor_oracle_proxy_missing` rows, and 9
+`semantic_ablation_runtime_flag_missing` rows.
+
+The configured local 26.02 USDZ cache passed readiness for a selected SII scene
+with Docker, GPU runtime, image, local AlpaSim environment, and scene-artifact
+checks. The release blocker is therefore execution/oracle/ablation support, not
+the selected local-cache preflight.
 
 ## Synthetic Diagnostics
 
@@ -38,6 +49,8 @@ Current blocked counts: 54 `execution_not_requested` rows and 36
 - `artifacts/sii2027/results/summary.json`
 - `artifacts/sii2027/results/summary.csv`
 - `artifacts/sii2027/results/fault_injection.csv`
+- `artifacts/sii2027/manifests/run_manifests/*.json` with per-row readiness and
+  launch plans
 - `artifacts/sii2027/tables/contract_map.tex`
 - `artifacts/sii2027/tables/main_results.tex`
 - `artifacts/sii2027/tables/ablations.tex`

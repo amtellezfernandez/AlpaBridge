@@ -6,6 +6,8 @@ import hashlib
 import itertools
 import json
 import subprocess
+import sys
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -42,6 +44,7 @@ FAULT_SERVICE_SURVIVAL = {
     "deployment.gpu_runtime_unavailable": "false",
     "deployment.scene_artifact_missing": "false",
 }
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def main() -> int:
@@ -53,6 +56,14 @@ def main() -> int:
         "--execute",
         action="store_true",
         help="Launch real closed-loop runs when all preconditions are satisfied. Not enabled by Make targets.",
+    )
+    parser.add_argument(
+        "--python",
+        default=sys.executable,
+        help=(
+            "Python executable to record/use in generated closed-loop launch commands. "
+            "Paths inside this repository are stored relative to the repository root."
+        ),
     )
     args = parser.parse_args()
 
@@ -86,6 +97,15 @@ def main() -> int:
                 )
             elif mode in {"synthetic_fault_injection", "synthetic_lifecycle_harness"}:
                 next_rows.append(_execute_synthetic_row(config, row))
+            elif mode.startswith("closed_loop"):
+                next_rows.append(
+                    _execute_closed_loop_row(
+                        config,
+                        row,
+                        output=output,
+                        python_executable=args.python,
+                    )
+                )
             else:
                 next_rows.append(
                     _blocked_row(
@@ -107,6 +127,8 @@ def main() -> int:
             row=row,
             config=config,
             config_path=args.config,
+            python_executable=args.python,
+            output=output,
         )
     exit_code = 0 if all(row["status"] == "completed" for row in rows) else 2
 
@@ -352,7 +374,41 @@ def _row_precondition_blocker(
             "code": "token_checkpoint_missing",
             "detail": "token_dagger_bc requires a legitimate local checkpoint hash.",
         }
-    return None
+    return _adapter_execution_blocker(config, row)
+
+
+def _adapter_execution_blocker(
+    config: dict[str, Any], row: dict[str, str]
+) -> dict[str, str] | None:
+    mode = _execution_mode(config)
+    if not mode.startswith("closed_loop"):
+        return None
+    adapter = row["adapter_config"]
+    if adapter in {"full_contract", "full_temporal_contract"}:
+        return None
+    if adapter == "command_only_route":
+        return {
+            "layer": "semantic",
+            "code": "semantic_ablation_runtime_flag_missing",
+            "detail": (
+                "The command-only route ablation is configured but no runtime-safe "
+                "adapter flag currently switches the launcher into that ablated behavior."
+            ),
+        }
+    if adapter == "naive_or_disabled_resampling":
+        return {
+            "layer": "temporal",
+            "code": "temporal_ablation_runtime_flag_missing",
+            "detail": (
+                "The naive/disabled-resampling ablation is configured but no runtime-safe "
+                "adapter flag currently switches the launcher into that ablated behavior."
+            ),
+        }
+    return {
+        "layer": "deployment",
+        "code": "adapter_config_not_executable",
+        "detail": f"No SII 2027 closed-loop launch mapping exists for adapter_config={adapter}.",
+    }
 
 
 def _docker_image_missing(image: str) -> bool:
@@ -394,6 +450,147 @@ def _execute_synthetic_row(config: dict[str, Any], row: dict[str, str]) -> dict[
     if mode == "synthetic_lifecycle_harness":
         return _execute_lifecycle_row(config, row)
     raise SystemExit(f"Unsupported synthetic execution mode: {mode}")
+
+
+def _execute_closed_loop_row(
+    config: dict[str, Any],
+    row: dict[str, str],
+    *,
+    output: Path,
+    python_executable: str,
+) -> dict[str, str]:
+    plan = _closed_loop_launch_plan(
+        config=config,
+        row=row,
+        output=output,
+        python_executable=python_executable,
+    )
+    if plan is None or not plan["supported"]:
+        reason = _unsupported_launch_reason(plan)
+        return _blocked_row(row, reason)
+
+    stdout_path = _repo_path(plan["logs"]["stdout"])
+    stderr_path = _repo_path(plan["logs"]["stderr"])
+    stdout_path.parent.mkdir(parents=True, exist_ok=True)
+    stderr_path.parent.mkdir(parents=True, exist_ok=True)
+
+    execution = config.get("execution") if isinstance(config.get("execution"), dict) else {}
+    timeout_seconds = int(execution.get("timeout_seconds", 900))
+    started_at = datetime.now(timezone.utc).isoformat()
+    try:
+        with stdout_path.open("w", encoding="utf-8") as stdout, stderr_path.open(
+            "w", encoding="utf-8"
+        ) as stderr:
+            result = subprocess.run(
+                plan["command"],
+                cwd=REPO_ROOT,
+                stdout=stdout,
+                stderr=stderr,
+                text=True,
+                timeout=timeout_seconds + 60,
+                check=False,
+            )
+    except subprocess.TimeoutExpired:
+        return _failed_row(
+            row,
+            layer="runtime",
+            code="closed_loop_launch_timeout",
+            detail=(
+                f"Closed-loop launch exceeded timeout_seconds={timeout_seconds}; "
+                f"stdout={plan['logs']['stdout']}; stderr={plan['logs']['stderr']}."
+            ),
+            started_at=started_at,
+        )
+
+    if result.returncode != 0:
+        return _failed_row(
+            row,
+            layer="runtime",
+            code="closed_loop_launch_failed",
+            detail=(
+                f"Closed-loop launch exited {result.returncode}; "
+                f"stdout={plan['logs']['stdout']}; stderr={plan['logs']['stderr']}."
+            ),
+            started_at=started_at,
+        )
+
+    run_status = _load_json_dict(_repo_path(plan["run_status"]))
+    aggregate_status = str(run_status.get("aggregate_status", "missing"))
+    if aggregate_status != "completed":
+        return _failed_row(
+            row,
+            layer="evidence",
+            code="closed_loop_artifacts_incomplete",
+            detail=(
+                "Closed-loop launcher returned zero, but aggregate evidence is not complete "
+                f"(aggregate_status={aggregate_status})."
+            ),
+            started_at=started_at,
+        )
+
+    row = dict(row)
+    row.update(
+        {
+            "status": "completed",
+            "attempted": "true",
+            "completed": "true",
+            "blocked": "false",
+            "failure_layer": "",
+            "failure_code": "",
+            "detail": "Closed-loop launch completed; claim validity remains gated by audit aggregation.",
+            "claim_valid": "false",
+        }
+    )
+    return row
+
+
+def _failed_row(
+    row: dict[str, str], *, layer: str, code: str, detail: str, started_at: str
+) -> dict[str, str]:
+    failed = dict(row)
+    failed.update(
+        {
+            "status": "failed",
+            "attempted": "true",
+            "completed": "false",
+            "blocked": "false",
+            "failure_layer": layer,
+            "failure_code": code,
+            "detail": f"{detail} started_at={started_at}",
+            "claim_valid": "false",
+        }
+    )
+    return failed
+
+
+def _unsupported_launch_reason(plan: dict[str, Any] | None) -> dict[str, str]:
+    if plan is None:
+        return {
+            "layer": "deployment",
+            "code": "closed_loop_launch_plan_missing",
+            "detail": "No closed-loop launch plan could be built for this row.",
+        }
+    missing_inputs = plan.get("missing_inputs") or []
+    if missing_inputs:
+        return {
+            "layer": "deployment",
+            "code": str(missing_inputs[0]),
+            "detail": f"Missing launch input(s): {', '.join(str(item) for item in missing_inputs)}.",
+        }
+    unsupported = plan.get("unsupported_reasons") or []
+    if unsupported:
+        first = unsupported[0]
+        if isinstance(first, dict):
+            return {
+                "layer": str(first.get("layer", "deployment")),
+                "code": str(first.get("code", "closed_loop_launch_unsupported")),
+                "detail": str(first.get("detail", "Closed-loop launch is unsupported for this row.")),
+            }
+    return {
+        "layer": "deployment",
+        "code": "closed_loop_launch_unsupported",
+        "detail": "Closed-loop launch is unsupported for this row.",
+    }
 
 
 def _execute_fault_row(row: dict[str, str]) -> dict[str, str]:
@@ -458,6 +655,204 @@ def _execute_lifecycle_row(config: dict[str, Any], row: dict[str, str]) -> dict[
     return row
 
 
+def _closed_loop_launch_plan(
+    *,
+    config: dict[str, Any],
+    row: dict[str, str],
+    output: Path,
+    python_executable: str,
+) -> dict[str, Any] | None:
+    mode = _execution_mode(config)
+    if not mode.startswith("closed_loop"):
+        return None
+
+    execution = config.get("execution") if isinstance(config.get("execution"), dict) else {}
+    alpasim_root = _path_arg(Path(str(execution.get("alpasim_root", ""))))
+    scene_preset = _closed_loop_scene_preset(config)
+    timeout_seconds = int(execution.get("timeout_seconds", 900))
+    topology = str(execution.get("topology", "1gpu"))
+    driver_warmup_seconds = str(execution.get("driver_warmup_seconds", 10.0))
+    baseport = str(execution.get("baseport", 6000))
+    port = str(execution.get("port", 6789))
+    run_dir = _run_output_dir(output, row)
+    stdout_path, stderr_path = _experiment_log_paths(output, row)
+    local_usdz_value = _local_usdz_wizard_value(execution)
+
+    missing_inputs: list[str] = []
+    unsupported_reasons: list[dict[str, str]] = []
+    if not alpasim_root:
+        missing_inputs.append("alpasim_root_missing")
+    if not scene_preset:
+        missing_inputs.append("scene_preset_missing")
+    if not local_usdz_value:
+        missing_inputs.append("local_usdz_dir_missing")
+
+    adapter_blocker = _adapter_execution_blocker(config, row)
+    if adapter_blocker is not None:
+        unsupported_reasons.append(adapter_blocker)
+
+    policy = row["policy"]
+    if policy == "direct_actor_planner" and not execution.get("direct_actor_oracle_proxy"):
+        missing_inputs.append("direct_actor_oracle_proxy_missing")
+    if policy == "token_dagger_bc" and not execution.get("token_checkpoint"):
+        missing_inputs.append("token_checkpoint_missing")
+
+    command: list[str] | None = None
+    if not missing_inputs and not unsupported_reasons:
+        command = [
+            _python_arg(python_executable),
+            "-m",
+            "wod2sim.cli.commands.run_alpasim_local_external",
+            "--mode",
+            "both",
+            "--model",
+            policy,
+            "--scene-preset",
+            scene_preset,
+            "--scene-id",
+            row["scene_id"],
+            "--run-dir",
+            _path_arg(run_dir),
+            "--allow-existing-run-dir",
+            "--baseport",
+            baseport,
+            "--port",
+            port,
+            "--timeout",
+            str(timeout_seconds),
+            "--topology",
+            topology,
+            "--driver-warmup-seconds",
+            driver_warmup_seconds,
+            "--alpasim-root",
+            alpasim_root,
+            "--wizard-arg",
+            f"scenes.local_usdz_dir={local_usdz_value}",
+        ]
+        checkpoint = execution.get("token_checkpoint")
+        if policy == "token_dagger_bc" and checkpoint:
+            command.extend(["--checkpoint", _path_arg(Path(str(checkpoint)))])
+        oracle_actor_proxy = execution.get("direct_actor_oracle_proxy")
+        if policy == "direct_actor_planner" and oracle_actor_proxy:
+            command.extend(["--oracle-actor-proxy", _path_arg(Path(str(oracle_actor_proxy)))])
+
+    readiness_command = [
+        _python_arg(python_executable),
+        "-m",
+        "wod2sim.cli.commands.check_alpasim_readiness",
+        "--alpasim-root",
+        alpasim_root,
+    ]
+    if scene_preset:
+        readiness_command.extend(["--scene-preset", scene_preset])
+    readiness_command.extend(["--scene-id", row["scene_id"]])
+    if local_usdz_value:
+        readiness_command.extend(["--local-usdz-dir", local_usdz_value])
+
+    return {
+        "schema": "sii2027_closed_loop_launch_plan_v1",
+        "supported": command is not None,
+        "cwd": ".",
+        "command": command,
+        "readiness_command": readiness_command,
+        "run_dir": _path_arg(run_dir),
+        "run_status": _path_arg(run_dir / "run-status.json"),
+        "logs": {
+            "stdout": _path_arg(stdout_path),
+            "stderr": _path_arg(stderr_path),
+        },
+        "mode": "both",
+        "scene_preset": scene_preset,
+        "local_usdz_dir": local_usdz_value,
+        "timeout_seconds": timeout_seconds,
+        "topology": topology,
+        "baseport": int(baseport),
+        "port": int(port),
+        "missing_inputs": missing_inputs,
+        "unsupported_reasons": unsupported_reasons,
+    }
+
+
+def _closed_loop_scene_preset(config: dict[str, Any]) -> str:
+    execution = config.get("execution") if isinstance(config.get("execution"), dict) else {}
+    scene_preset = str(execution.get("scene_preset", "")).strip()
+    if scene_preset:
+        return scene_preset
+    manifest_path = Path(str(config.get("scene_manifest", "")))
+    if not manifest_path.is_file():
+        return ""
+    manifest = _load_yaml(manifest_path)
+    source = manifest.get("source") if isinstance(manifest.get("source"), dict) else {}
+    return str(source.get("preset", "")).strip()
+
+
+def _local_usdz_wizard_value(execution: dict[str, Any]) -> str:
+    raw_local_usdz_dir = str(execution.get("local_usdz_dir", "")).strip()
+    raw_alpasim_root = str(execution.get("alpasim_root", "")).strip()
+    if not raw_local_usdz_dir:
+        return ""
+    local_path = Path(raw_local_usdz_dir)
+    alpasim_root = Path(raw_alpasim_root) if raw_alpasim_root else None
+    if alpasim_root is not None:
+        local_resolved = _resolve_repo_path(local_path)
+        root_resolved = _resolve_repo_path(alpasim_root)
+        try:
+            return local_resolved.relative_to(root_resolved).as_posix()
+        except ValueError:
+            pass
+    return _path_arg(local_path)
+
+
+def _run_output_dir(output: Path, row: dict[str, str]) -> Path:
+    return output / "run_dirs" / _safe_filename(row["run_id"])
+
+
+def _experiment_log_paths(output: Path, row: dict[str, str]) -> tuple[Path, Path]:
+    safe = _safe_filename(row["run_id"])
+    if output.parent.name == "results" and output.parent.parent.name == "sii2027":
+        log_dir = output.parent.parent / "logs" / "experiments" / row["matrix"]
+    else:
+        log_dir = output / "logs"
+    return log_dir / f"{safe}.stdout.log", log_dir / f"{safe}.stderr.log"
+
+
+def _python_arg(value: str) -> str:
+    if "/" not in value and "\\" not in value:
+        return value
+    return _path_arg(Path(value).expanduser())
+
+
+def _path_arg(path: Path) -> str:
+    if not path.is_absolute():
+        return path.as_posix()
+    absolute_repo = REPO_ROOT.absolute()
+    absolute_path = path.absolute()
+    try:
+        return absolute_path.relative_to(absolute_repo).as_posix()
+    except ValueError:
+        return str(path)
+
+
+def _resolve_repo_path(path: Path) -> Path:
+    if path.is_absolute():
+        return path.resolve()
+    return (REPO_ROOT / path).resolve()
+
+
+def _repo_path(value: str) -> Path:
+    path = Path(value)
+    if path.is_absolute():
+        return path
+    return REPO_ROOT / path
+
+
+def _load_json_dict(path: Path) -> dict[str, Any]:
+    if not path.is_file():
+        return {}
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    return payload if isinstance(payload, dict) else {}
+
+
 def _run_manifest_dir(output: Path) -> Path:
     if output.parent.name == "results" and output.parent.parent.name == "sii2027":
         return output.parent.parent / "manifests" / "run_manifests"
@@ -470,8 +865,16 @@ def _write_run_manifest(
     row: dict[str, str],
     config: dict[str, Any],
     config_path: Path,
+    python_executable: str,
+    output: Path,
 ) -> None:
     directory.mkdir(parents=True, exist_ok=True)
+    launch_plan = _closed_loop_launch_plan(
+        config=config,
+        row=row,
+        output=output,
+        python_executable=python_executable,
+    )
     manifest = {
         "schema": "sii2027_run_manifest_v1",
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -492,6 +895,8 @@ def _write_run_manifest(
         "config_path": str(config_path),
         "config_sha256": _sha256_path(config_path),
     }
+    if launch_plan is not None:
+        manifest["planned_launch"] = launch_plan
     path = directory / f"{_safe_filename(row['run_id'])}.json"
     path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
@@ -511,6 +916,12 @@ def _summary(
     blockers: list[dict[str, str]],
     config_path: Path,
 ) -> dict[str, Any]:
+    failure_code_counts = Counter(row.get("failure_code", "") for row in rows if row.get("failure_code"))
+    blocker_counts = Counter(
+        row.get("failure_code", "")
+        for row in rows
+        if row.get("status") == "blocked" and row.get("failure_code")
+    )
     return {
         "schema": "sii2027_matrix_summary_v1",
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -524,6 +935,8 @@ def _summary(
         "blocked": sum(row["blocked"] == "true" for row in rows),
         "claim_valid": False,
         "blockers": blockers,
+        "failure_code_counts": dict(sorted(failure_code_counts.items())),
+        "blocker_counts": dict(sorted(blocker_counts.items())),
     }
 
 

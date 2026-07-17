@@ -56,6 +56,14 @@ def _duplicate_completed_run_ids(rows: list[dict[str, str]]) -> list[str]:
 def _summary(*, rows: list[dict[str, str]], failures: list[dict[str, str]]) -> dict[str, Any]:
     status_counts = Counter(row.get("status", "") for row in rows)
     matrix_counts = Counter(row.get("matrix", "") for row in rows)
+    failure_code_counts = Counter(
+        row.get("failure_code", "") for row in rows if row.get("failure_code")
+    )
+    blocker_counts = Counter(
+        row.get("failure_code", "")
+        for row in rows
+        if row.get("status") == "blocked" and row.get("failure_code")
+    )
     return {
         "schema": "sii2027_aggregate_summary_v1",
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -69,6 +77,8 @@ def _summary(*, rows: list[dict[str, str]], failures: list[dict[str, str]]) -> d
         "claim_valid": False,
         "status_counts": dict(sorted(status_counts.items())),
         "matrix_counts": dict(sorted(matrix_counts.items())),
+        "failure_code_counts": dict(sorted(failure_code_counts.items())),
+        "blocker_counts": dict(sorted(blocker_counts.items())),
     }
 
 

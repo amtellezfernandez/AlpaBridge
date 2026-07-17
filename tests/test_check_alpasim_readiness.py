@@ -47,9 +47,11 @@ class CheckAlpaSimReadinessTests(unittest.TestCase):
             alpasim_root=Path("/tmp/alpasim"),
             scene_ids=["scene-1", "scene-2"],
             scene_catalog_paths=[Path("/tmp/alpasim/data/scenes/sim_scenes.csv")],
+            local_usdz_dir=None,
         )
         self.assertIn("AlpaSim readiness: OK", stdout.getvalue())
         self.assertIn("scene catalogs: /tmp/alpasim/data/scenes/sim_scenes.csv", stdout.getvalue())
+        self.assertIn("local USDZ dir: default", stdout.getvalue())
 
     def test_readiness_script_can_skip_optional_checks(self) -> None:
         with patch.object(check_alpasim_readiness, "_resolve_alpasim_root", return_value=Path("/tmp/alpasim")), patch.object(
@@ -87,3 +89,47 @@ class CheckAlpaSimReadinessTests(unittest.TestCase):
         self.assertIn("image: skipped", output)
         self.assertIn("local AlpaSim env: skipped", output)
         self.assertIn("scene artifacts: skipped", output)
+
+    def test_readiness_script_accepts_explicit_local_usdz_dir(self) -> None:
+        with patch.object(
+            check_alpasim_readiness, "_resolve_alpasim_root", return_value=Path("/tmp/alpasim")
+        ), patch.object(
+            check_alpasim_readiness, "_scene_ids", return_value=["scene-1"]
+        ), patch.object(
+            check_alpasim_readiness,
+            "_scene_catalog_paths",
+            return_value=[Path("/tmp/alpasim/data/scenes/sim_scenes.csv")],
+        ), patch.object(
+            check_alpasim_readiness, "_validate_alpasim_checkout"
+        ), patch.object(
+            check_alpasim_readiness, "_preflight_alpasim_local_environment"
+        ), patch.object(
+            check_alpasim_readiness, "_preflight_docker_access"
+        ), patch.object(
+            check_alpasim_readiness, "_preflight_platform_compatibility"
+        ), patch.object(
+            check_alpasim_readiness, "_preflight_nvidia_container_runtime"
+        ), patch.object(
+            check_alpasim_readiness, "_preflight_alpasim_base_image"
+        ), patch.object(
+            check_alpasim_readiness, "_preflight_scene_artifacts"
+        ) as artifacts, patch(
+            "sys.stdout",
+            new_callable=io.StringIO,
+        ) as stdout, patch(
+            "sys.argv",
+            [
+                "check_alpasim_readiness.py",
+                "--local-usdz-dir",
+                "data/nre-artifacts/local-usdzs",
+            ],
+        ):
+            check_alpasim_readiness.main()
+
+        artifacts.assert_called_once_with(
+            alpasim_root=Path("/tmp/alpasim"),
+            scene_ids=["scene-1"],
+            scene_catalog_paths=[Path("/tmp/alpasim/data/scenes/sim_scenes.csv")],
+            local_usdz_dir=Path("/tmp/alpasim/data/nre-artifacts/local-usdzs"),
+        )
+        self.assertIn("/tmp/alpasim/data/nre-artifacts/local-usdzs", stdout.getvalue())
