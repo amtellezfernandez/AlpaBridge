@@ -41,11 +41,14 @@ def _parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def build_report(*, run_dir: Path, output: Path | None = None) -> dict[str, Any]:
+def build_report(
+    *, run_dir: Path, output: Path | None = None, public_root: Path | None = None
+) -> dict[str, Any]:
     run_dir = run_dir.resolve()
     if not run_dir.is_dir():
         raise FileNotFoundError(f"Run dir not found: {run_dir}")
     bundle_path = _resolve_output_path(run_dir, output)
+    redaction_root = public_root.resolve() if public_root is not None else None
 
     with tempfile.TemporaryDirectory(prefix="wod2sim-support-bundle-") as tmpdir:
         staging_root = Path(tmpdir) / f"{run_dir.name}_support_bundle"
@@ -54,6 +57,8 @@ def build_report(*, run_dir: Path, output: Path | None = None) -> dict[str, Any]
 
         audit_dir = staging_root / "audit"
         run_audit = build_run_audit_report(run_dir=run_dir, audit_dir=audit_dir)
+        if redaction_root is not None:
+            run_audit = _redact_paths(run_audit, root=redaction_root)
         run_audit_path = staging_root / "run-audit.json"
         run_audit_path.write_text(json.dumps(run_audit, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
@@ -66,8 +71,12 @@ def build_report(*, run_dir: Path, output: Path | None = None) -> dict[str, Any]
             "run_audit_path": str(run_audit_path.relative_to(staging_root)),
             "audit_dir": str(audit_dir.relative_to(staging_root)),
         }
+        if redaction_root is not None:
+            manifest = _redact_paths(manifest, root=redaction_root)
         manifest_path = staging_root / "support-bundle-manifest.json"
         manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        if redaction_root is not None:
+            _sanitize_json_files(staging_root, root=redaction_root)
 
         bundle_path.parent.mkdir(parents=True, exist_ok=True)
         archive_base = bundle_path.with_suffix("")
@@ -102,6 +111,8 @@ def build_report(*, run_dir: Path, output: Path | None = None) -> dict[str, Any]
             "driver_log_kind": run_audit.get("driver_log", {}).get("kind"),
         },
     }
+    if redaction_root is not None:
+        report = _redact_paths(report, root=redaction_root)
     return report
 
 
@@ -130,6 +141,29 @@ def _copy_run_artifacts(run_dir: Path, staging_root: Path) -> tuple[list[str], l
             shutil.copy2(source, destination)
             copied.append(str(relative))
     return copied, missing
+
+
+def _sanitize_json_files(root_dir: Path, *, root: Path) -> None:
+    for path in sorted(root_dir.rglob("*.json")):
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        path.write_text(
+            json.dumps(_redact_paths(payload, root=root), indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+
+
+def _redact_paths(value: Any, *, root: Path) -> Any:
+    if isinstance(value, dict):
+        return {key: _redact_paths(item, root=root) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_redact_paths(item, root=root) for item in value]
+    if isinstance(value, str):
+        text = value.replace(str(root), "<repo>")
+        home = str(Path.home())
+        if home != str(root):
+            text = text.replace(home, "~")
+        return text
+    return value
 
 
 def _print_human_report(report: dict[str, Any]) -> None:

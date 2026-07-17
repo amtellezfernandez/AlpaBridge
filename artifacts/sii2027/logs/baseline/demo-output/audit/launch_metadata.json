@@ -2,7 +2,7 @@
   "benchmark_claim": false,
   "claim_boundary": "This generated run directory is a public format/conformance demo only. It is not an executed AlpaSim rollout and cannot support policy claims.",
   "gated_assets_used": false,
-  "generated_at": "2026-07-17T11:16:01+00:00",
+  "generated_at": "2026-07-17T12:53:29+00:00",
   "model": "constant_velocity",
   "model_label": "synthetic_constant_velocity_stub",
   "policy_quality_metrics": null,
@@ -14,7 +14,7 @@
   },
   "public_assets_only": true,
   "route_contract_expected": "route_source=alpasim_waypoints on every driver-log frame",
-  "run_dir": "<repo>/artifacts/sii2027/logs/baseline/demo-output",
+  "run_dir": "artifacts/sii2027/logs/baseline/demo-output",
   "scene_ids": [
     "synthetic-route-001"
   ],

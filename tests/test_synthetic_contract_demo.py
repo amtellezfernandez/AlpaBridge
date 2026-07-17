@@ -75,9 +75,20 @@ class WOD2SimSyntheticContractDemoTests(unittest.TestCase):
 
             with tarfile.open(output / "support-bundle.tar.gz", "r:gz") as archive:
                 names = set(archive.getnames())
+                bundle_text = "\n".join(
+                    archive.extractfile(name).read().decode("utf-8")
+                    for name in sorted(names)
+                    if name.endswith(".json")
+                )
             self.assertIn("demo-run_support_bundle/run-audit.json", names)
             self.assertIn("demo-run_support_bundle/aggregate/synthetic-contract-metrics.json", names)
             self.assertIn("demo-run_support_bundle/driver/baseline-log.jsonl", names)
+            public_json = "\n".join(
+                path.read_text(encoding="utf-8")
+                for path in sorted(output.rglob("*.json"))
+            )
+            self.assertNotIn(str(ROOT), public_json)
+            self.assertNotIn(str(ROOT), bundle_text)
 
     def test_script_prints_json_summary(self) -> None:
         with TemporaryDirectory() as tmpdir:

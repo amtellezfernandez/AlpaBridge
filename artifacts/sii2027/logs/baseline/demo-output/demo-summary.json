@@ -18,7 +18,7 @@
     "road_center_mean_abs_lateral_offset_m": 4.508,
     "route_command_lateral_rmse_m": 1.312
   },
-  "output_dir": "<repo>/artifacts/sii2027/logs/baseline/demo-output",
+  "output_dir": "artifacts/sii2027/logs/baseline/demo-output",
   "public_assets_only": true,
   "run_audit": {
     "frame_count": 8,

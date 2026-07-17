@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import importlib.util
+import io
+import json
+import tarfile
 import tempfile
 import unittest
 from pathlib import Path
@@ -69,6 +72,95 @@ class ValidateSII2027SubmissionTests(unittest.TestCase):
         self.assertIn(f"generated_table_hash_mismatch:{tables / module.REQUIRED_TABLES[0]}", failures)
         self.assertIn(
             f"generated_figure_hash_mismatch:{figures / module.REQUIRED_FIGURES[0]}",
+            failures,
+        )
+
+    def test_release_hygiene_accepts_clean_public_surface(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "README.md").write_text("WOD2Sim release notes\n", encoding="utf-8")
+            (root / "wod2sim.pdf").write_bytes(b"%PDF-1.5\n")
+            (root / "paper" / "sii2027").mkdir(parents=True)
+            (root / "paper" / "sii2027" / "main.tex").write_text(
+                "Contract-based integration paper\n",
+                encoding="utf-8",
+            )
+
+            failures = module._release_hygiene_failures(
+                repo_root=root,
+                canonical_paper=root / "wod2sim.pdf",
+            )
+
+        self.assertEqual([], failures)
+
+    def test_release_hygiene_reports_sensitive_or_weak_public_text(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            token = "hf_" + ("A" * 20)
+            fixture = "spot" + "light_reflex"
+            unsupported_claim = "we " + "outperform baselines"
+            (root / "README.md").write_text(
+                "\n".join(
+                    [
+                        token,
+                        "/home/" + "amdev" + "/private",
+                        fixture,
+                        unsupported_claim,
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            (root / "wod2sim.pdf").write_bytes(b"%PDF-1.5\n")
+
+            failures = module._release_hygiene_failures(
+                repo_root=root,
+                canonical_paper=root / "wod2sim.pdf",
+            )
+
+        self.assertIn("public_hygiene:huggingface_token:README.md", failures)
+        self.assertIn("public_hygiene:private_home_path:README.md", failures)
+        self.assertIn("public_hygiene:spotlight_fixture:README.md", failures)
+        self.assertIn("public_hygiene:outperformance_claim:README.md", failures)
+
+    def test_release_hygiene_reports_duplicate_manuscript_pdfs(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "README.md").write_text("WOD2Sim release notes\n", encoding="utf-8")
+            (root / "wod2sim.pdf").write_bytes(b"%PDF-1.5\n")
+            duplicate = root / "paper" / "sii2027" / "paper.pdf"
+            duplicate.parent.mkdir(parents=True)
+            duplicate.write_bytes(b"%PDF-1.5\n")
+
+            failures = module._release_hygiene_failures(
+                repo_root=root,
+                canonical_paper=root / "wod2sim.pdf",
+            )
+
+        self.assertIn("duplicate_manuscript_pdf:paper/sii2027/paper.pdf", failures)
+
+    def test_release_hygiene_reports_public_archive_text_leaks(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            archive_path = root / "artifacts" / "sii2027" / "results" / "demo" / "support-bundle.tar.gz"
+            archive_path.parent.mkdir(parents=True)
+            payload = json.dumps({"path": "/home/" + "amdev" + "/private"}).encode()
+            with tarfile.open(archive_path, "w:gz") as archive:
+                info = tarfile.TarInfo("demo/run-audit.json")
+                info.size = len(payload)
+                archive.addfile(info, io.BytesIO(payload))
+
+            failures = module._release_hygiene_failures(
+                repo_root=root,
+                canonical_paper=root / "wod2sim.pdf",
+            )
+
+        self.assertIn(
+            "public_hygiene_archive:private_home_path:"
+            "artifacts/sii2027/results/demo/support-bundle.tar.gz:demo/run-audit.json",
             failures,
         )
 

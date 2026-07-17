@@ -81,6 +81,8 @@ def generate_demo(*, output: Path, overwrite: bool = False) -> dict[str, Any]:
     _write_text(run_dir / "synthetic-rollout.svg", _rollout_svg())
 
     audit_report = build_audit_report(run_dir=run_dir, audit_dir=run_dir / "audit")
+    audit_report = _redact_paths(audit_report)
+    _sanitize_json_files(run_dir / "audit")
     _write_json(run_dir / "run-audit.json", audit_report)
 
     metrics = _metrics(audit_report)
@@ -90,6 +92,7 @@ def generate_demo(*, output: Path, overwrite: bool = False) -> dict[str, Any]:
     support_report = build_support_bundle_report(
         run_dir=run_dir,
         output=run_dir / "support-bundle.tar.gz",
+        public_root=ROOT,
     )
     _write_json(run_dir / "support-bundle-report.json", support_report)
 
@@ -99,7 +102,7 @@ def generate_demo(*, output: Path, overwrite: bool = False) -> dict[str, Any]:
         "benchmark_claim": False,
         "valid_claim_evidence": False,
         "public_assets_only": True,
-        "output_dir": str(run_dir),
+        "output_dir": _public_path(run_dir),
         "scene_ids": [SCENE_ID],
         "claim_boundary": (
             "Synthetic contract demo only. It exercises audit and packaging formats "
@@ -162,7 +165,7 @@ def _launch_metadata(run_dir: Path, generated_at: str) -> dict[str, Any]:
         "scene_preset": "synthetic_contract_demo",
         "scene_ids": [SCENE_ID],
         "generated_at": generated_at,
-        "run_dir": str(run_dir),
+        "run_dir": _public_path(run_dir),
         "valid_claim_evidence": False,
         "benchmark_claim": False,
         "public_assets_only": True,
@@ -432,6 +435,34 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
 def _write_text(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
+
+
+def _sanitize_json_files(root_dir: Path) -> None:
+    for path in sorted(root_dir.rglob("*.json")):
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        _write_json(path, _redact_paths(payload))
+
+
+def _redact_paths(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {key: _redact_paths(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_redact_paths(item) for item in value]
+    if isinstance(value, str):
+        text = value.replace(str(ROOT), "<repo>")
+        home = str(Path.home())
+        if home != str(ROOT):
+            text = text.replace(home, "~")
+        return text
+    return value
+
+
+def _public_path(path: Path) -> str:
+    resolved = path.resolve()
+    try:
+        return resolved.relative_to(ROOT).as_posix()
+    except ValueError:
+        return str(resolved)
 
 
 def _print_human(summary: dict[str, Any]) -> None:

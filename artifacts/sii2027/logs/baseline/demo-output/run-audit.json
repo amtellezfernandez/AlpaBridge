@@ -47,7 +47,7 @@
   "run_dir": "<repo>/artifacts/sii2027/logs/baseline/demo-output",
   "run_status": {
     "aggregate_status": "synthetic_contract_artifacts_written",
-    "completed_at": "2026-07-17T11:16:01+00:00",
+    "completed_at": "2026-07-17T12:53:29+00:00",
     "driver_returncode": 0,
     "phase": "synthetic_contract_demo",
     "present": true,

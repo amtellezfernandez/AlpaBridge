@@ -4,7 +4,9 @@ import argparse
 import json
 import re
 import subprocess
+import tarfile
 from pathlib import Path
+from typing import Pattern
 
 PLACEHOLDERS = ("TODO", "TBD", "FIXME", "RESULTS_PENDING", "[N]", "[M]")
 REQUIRED_TABLES = (
@@ -24,6 +26,61 @@ EXPECTED_TITLE = (
     "into Distributed Closed-Loop Simulation"
 )
 EXPECTED_AUTHOR = "Alba Maria Tellez Fernandez"
+PUBLIC_SCAN_PATHS = (
+    "README.md",
+    "docs",
+    "paper",
+    "scripts",
+    "artifacts/sii2027",
+    ".github",
+    "Makefile",
+    "pyproject.toml",
+    "src",
+    "tests",
+    "configs",
+)
+TEXT_SKIP_SUFFIXES = {
+    ".pdf",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".gz",
+    ".zip",
+    ".tar",
+    ".pyc",
+}
+ARCHIVE_TEXT_SUFFIXES = {
+    ".json",
+    ".jsonl",
+    ".csv",
+    ".txt",
+    ".md",
+    ".sh",
+    ".yaml",
+    ".yml",
+    ".log",
+}
+FORBIDDEN_TEXT_PATTERNS: tuple[tuple[str, Pattern[str]], ...] = (
+    ("private_password", re.compile(re.escape("Marso" + "123"))),
+    ("huggingface_token", re.compile(r"hf_[A-Za-z0-9]{20,}")),
+    ("private_home_path", re.compile(r"/home/(?!user\b|\.\.\.)([A-Za-z0-9_.-]+)")),
+    ("private_host", re.compile(r"\bMARSO-PC\b")),
+    ("spotlight_fixture", re.compile(r"\b" + "spot" + r"light_reflex\b", re.IGNORECASE)),
+    ("spotlight_claim", re.compile(r"\b" + "Spot" + r"light\b")),
+    ("claim_valid_true_text", re.compile(r"\bclaim_valid\s*=\s*true\b")),
+    ("valid_claim_evidence_true_text", re.compile(r"\bvalid_claim_evidence:\s*true\b")),
+    ("state_of_the_art_claim", re.compile(r"\bstate[\s-]+of[\s-]+the[\s-]+art\b", re.IGNORECASE)),
+    ("significant_improvement_claim", re.compile(r"\bsignificant\s+improvement\b", re.IGNORECASE)),
+    ("outperformance_claim", re.compile(r"\bwe\s+outperform\b", re.IGNORECASE)),
+    ("sota_claim", re.compile(r"\bSOTA\b")),
+)
+DUPLICATE_MANUSCRIPT_PDFS = (
+    "paper.pdf",
+    "paper/paper.pdf",
+    "paper/sii2027/paper.pdf",
+    "paper/sii2027/main.pdf",
+)
 
 
 def main() -> int:
@@ -33,6 +90,7 @@ def main() -> int:
     parser.add_argument("--results", default=Path("artifacts/sii2027/results"), type=Path)
     parser.add_argument("--tables", default=Path("artifacts/sii2027/tables"), type=Path)
     parser.add_argument("--figures", default=Path("artifacts/sii2027/figures"), type=Path)
+    parser.add_argument("--repo-root", default=Path("."), type=Path)
     parser.add_argument("--max-pages", default=6, type=int)
     parser.add_argument("--allow-eight-pages", action="store_true")
     args = parser.parse_args()
@@ -101,6 +159,9 @@ def main() -> int:
                 figure_dirs=(args.figures, args.source / "figures"),
             )
         )
+    failures.extend(
+        _release_hygiene_failures(repo_root=args.repo_root, canonical_paper=args.paper)
+    )
 
     if failures:
         for failure in failures:
@@ -162,6 +223,88 @@ def _generated_artifact_failures(
             info = _mutool_info(path)
             if expected_marker not in info:
                 failures.append(f"generated_figure_hash_mismatch:{path}")
+    return failures
+
+
+def _release_hygiene_failures(*, repo_root: Path, canonical_paper: Path) -> list[str]:
+    root = repo_root.resolve()
+    canonical = (root / canonical_paper).resolve() if not canonical_paper.is_absolute() else canonical_paper.resolve()
+    failures = _duplicate_manuscript_pdf_failures(root=root, canonical_paper=canonical)
+    for path in _iter_public_scan_files(root):
+        try:
+            text = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
+        rel_path = path.relative_to(root)
+        for label, pattern in FORBIDDEN_TEXT_PATTERNS:
+            if pattern.search(text):
+                failures.append(f"public_hygiene:{label}:{rel_path}")
+    for archive_path in _iter_public_scan_archives(root):
+        failures.extend(_archive_hygiene_failures(archive_path, root=root))
+    return failures
+
+
+def _duplicate_manuscript_pdf_failures(*, root: Path, canonical_paper: Path) -> list[str]:
+    failures: list[str] = []
+    for name in DUPLICATE_MANUSCRIPT_PDFS:
+        path = (root / name).resolve()
+        if path.is_file() and path != canonical_paper:
+            failures.append(f"duplicate_manuscript_pdf:{path.relative_to(root)}")
+    return failures
+
+
+def _iter_public_scan_files(root: Path) -> list[Path]:
+    files: list[Path] = []
+    for item in PUBLIC_SCAN_PATHS:
+        path = root / item
+        if not path.exists():
+            continue
+        if path.is_file():
+            if path.suffix.lower() not in TEXT_SKIP_SUFFIXES:
+                files.append(path)
+            continue
+        files.extend(
+            candidate
+            for candidate in sorted(path.rglob("*"))
+            if candidate.is_file() and candidate.suffix.lower() not in TEXT_SKIP_SUFFIXES
+        )
+    return sorted(set(files))
+
+
+def _iter_public_scan_archives(root: Path) -> list[Path]:
+    archives: list[Path] = []
+    for item in PUBLIC_SCAN_PATHS:
+        path = root / item
+        if not path.exists():
+            continue
+        if path.is_file():
+            if path.name.endswith(".tar.gz"):
+                archives.append(path)
+            continue
+        archives.extend(sorted(path.rglob("*.tar.gz")))
+    return sorted(set(archives))
+
+
+def _archive_hygiene_failures(path: Path, *, root: Path) -> list[str]:
+    failures: list[str] = []
+    rel_path = path.relative_to(root)
+    try:
+        with tarfile.open(path, "r:gz") as archive:
+            for member in archive.getmembers():
+                if not member.isfile() or Path(member.name).suffix.lower() not in ARCHIVE_TEXT_SUFFIXES:
+                    continue
+                handle = archive.extractfile(member)
+                if handle is None:
+                    continue
+                try:
+                    text = handle.read().decode("utf-8")
+                except UnicodeDecodeError:
+                    continue
+                for label, pattern in FORBIDDEN_TEXT_PATTERNS:
+                    if pattern.search(text):
+                        failures.append(f"public_hygiene_archive:{label}:{rel_path}:{member.name}")
+    except tarfile.TarError:
+        failures.append(f"invalid_public_archive:{rel_path}")
     return failures
 
 
