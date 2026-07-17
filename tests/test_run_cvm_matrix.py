@@ -176,6 +176,26 @@ class RunCVMMatrixTests(unittest.TestCase):
         self.assertEqual(5.0, payload["contract_expectations"]["source_horizon_seconds"])
         self.assertEqual(4, payload["contract_expectations"]["target_runtime_frequency_hz"])
 
+    def test_matrix_summary_timestamp_comes_from_row_manifests(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest_dir = Path(tmp) / "manifests"
+            manifest_dir.mkdir()
+            first = _base_row()
+            second = {**_base_row(), "run_id": "core_route_following_clipgt-scene_29_full_contract"}
+            (manifest_dir / f"{first['run_id']}.json").write_text(
+                json.dumps({"created_at": "2026-07-17T12:00:00+00:00"}),
+                encoding="utf-8",
+            )
+            (manifest_dir / f"{second['run_id']}.json").write_text(
+                json.dumps({"created_at": "2026-07-17T12:30:00+00:00"}),
+                encoding="utf-8",
+            )
+
+            created_at = module._summary_created_at(manifest_dir, [first, second])
+
+        self.assertEqual("2026-07-17T12:30:00+00:00", created_at)
+
     def test_scene_metadata_uses_configured_scene_manifest(self) -> None:
         module = _load_module()
         with tempfile.TemporaryDirectory() as tmp:
