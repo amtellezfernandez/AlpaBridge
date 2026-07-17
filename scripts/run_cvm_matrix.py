@@ -1192,7 +1192,7 @@ def _manifest_provenance(
     return {
         "repository": repository_state or _repository_state(),
         "python": _python_state(python_executable),
-        "alpasim": _git_checkout_state(Path(str(execution.get("alpasim_root", "")))),
+        "alpasim": _alpasim_checkout_state(execution),
         "patches": _patch_hashes(),
         "docker_image": _docker_image_state(required_image),
         "gpu_runtime": _gpu_runtime_state(),
@@ -1300,26 +1300,30 @@ def _source_state_pathspec() -> list[str]:
     ]
 
 
+def _alpasim_checkout_state(execution: dict[str, Any]) -> dict[str, Any]:
+    raw_alpasim_root = str(execution.get("alpasim_root", "")).strip()
+    if not raw_alpasim_root:
+        return _missing_git_checkout_state("")
+    return _git_checkout_state(Path(raw_alpasim_root))
+
+
+def _missing_git_checkout_state(path: str) -> dict[str, Any]:
+    return {
+        "path": path,
+        "present": False,
+        "git_sha": "",
+        "dirty": None,
+        "dirty_diff_sha256": "",
+        "status_paths": [],
+    }
+
+
 def _git_checkout_state(path: Path) -> dict[str, Any]:
     if not str(path):
-        return {
-            "path": "",
-            "present": False,
-            "git_sha": "",
-            "dirty": None,
-            "dirty_diff_sha256": "",
-            "status_paths": [],
-        }
+        return _missing_git_checkout_state("")
     resolved = _resolve_repo_path(path)
     if not resolved.exists():
-        return {
-            "path": _path_arg(path),
-            "present": False,
-            "git_sha": "",
-            "dirty": None,
-            "dirty_diff_sha256": "",
-            "status_paths": [],
-        }
+        return _missing_git_checkout_state(_path_arg(path))
     git_sha = _git_output(["-C", str(resolved), "rev-parse", "HEAD"]).strip()
     status = _git_output(["-C", str(resolved), "status", "--short"]).rstrip()
     diff = _git_output(["-C", str(resolved), "diff", "--binary"])

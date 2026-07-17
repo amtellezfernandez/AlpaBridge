@@ -108,6 +108,16 @@ class RunCVMMatrixTests(unittest.TestCase):
             plan["driver_env"],
         )
 
+    def test_alpasim_state_is_absent_without_configured_root(self) -> None:
+        module = _load_module()
+
+        state = module._alpasim_checkout_state({"mode": "synthetic_harness"})
+
+        self.assertEqual("", state["path"])
+        self.assertFalse(state["present"])
+        self.assertIsNone(state["dirty"])
+        self.assertEqual([], state["status_paths"])
+
     def test_execution_not_requested_is_planned_not_blocked(self) -> None:
         module = _load_module()
 
