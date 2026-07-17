@@ -434,6 +434,11 @@ REQUIRED_PROJECT_URLS = (
     "Paper",
     "Citation",
 )
+REQUIRED_INSTALL_DOC_TOKENS = (
+    "uv sync --extra dev",
+    "uv run wod2sim-doctor --strict-installed --json",
+    "uv.lock",
+)
 REQUIRED_CI_WORKFLOW_TOKENS = (
     "actions/checkout@",
     "actions/setup-python@",
@@ -1986,6 +1991,7 @@ def _release_hygiene_failures(*, repo_root: Path, canonical_paper: Path) -> list
     canonical = (root / canonical_paper).resolve() if not canonical_paper.is_absolute() else canonical_paper.resolve()
     failures = _duplicate_manuscript_pdf_failures(root=root, canonical_paper=canonical)
     failures.extend(_package_metadata_failures(repo_root=root))
+    failures.extend(_install_reproducibility_failures(repo_root=root))
     failures.extend(_ci_workflow_failures(repo_root=root))
     failures.extend(_cli_documentation_failures(repo_root=root))
     failures.extend(_community_template_failures(repo_root=root))
@@ -2071,6 +2077,30 @@ def _package_metadata_failures(*, repo_root: Path) -> list[str]:
         for key in REQUIRED_PROJECT_URLS:
             if re.search(rf"(?m)^\s*{re.escape(key)}\s*=", urls) is None:
                 failures.append(f"package_metadata_url_missing:pyproject.toml:{key}")
+    return failures
+
+
+def _install_reproducibility_failures(*, repo_root: Path) -> list[str]:
+    root = repo_root.resolve()
+    if not (root / "pyproject.toml").exists():
+        return []
+    failures: list[str] = []
+    lock_path = root / "uv.lock"
+    if not lock_path.is_file():
+        failures.append("install_lock_missing:uv.lock")
+    else:
+        lock_text = lock_path.read_text(encoding="utf-8", errors="ignore")
+        if 'name = "wod2sim"' not in lock_text or 'source = { editable = "." }' not in lock_text:
+            failures.append("install_lock_project_missing:uv.lock")
+    for relative_path in ("README.md", "docs/getting-started.md"):
+        path = root / relative_path
+        if not path.is_file():
+            failures.append(f"install_doc_missing:{relative_path}")
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        for token in REQUIRED_INSTALL_DOC_TOKENS:
+            if token not in text:
+                failures.append(f"install_doc_token_missing:{relative_path}:{token}")
     return failures
 
 

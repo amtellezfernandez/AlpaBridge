@@ -1624,6 +1624,59 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         self.assertIn("package_metadata_url_missing:pyproject.toml:Paper", failures)
         self.assertIn("package_metadata_url_missing:pyproject.toml:Citation", failures)
 
+    def test_install_reproducibility_accepts_locked_uv_setup(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "docs").mkdir()
+            (root / "pyproject.toml").write_text("[project]\nname = \"wod2sim\"\n", encoding="utf-8")
+            (root / "uv.lock").write_text(
+                "[[package]]\n"
+                'name = "wod2sim"\n'
+                'source = { editable = "." }\n',
+                encoding="utf-8",
+            )
+            install_text = (
+                "```bash\n"
+                "uv sync --extra dev\n"
+                "uv run wod2sim-doctor --strict-installed --json\n"
+                "```\n"
+                "The tracked uv.lock dependency snapshot is used.\n"
+            )
+            (root / "README.md").write_text(install_text, encoding="utf-8")
+            (root / "docs" / "getting-started.md").write_text(install_text, encoding="utf-8")
+
+            failures = module._install_reproducibility_failures(repo_root=root)
+
+        self.assertEqual([], failures)
+
+    def test_install_reproducibility_reports_unlocked_or_stale_setup(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "docs").mkdir()
+            (root / "pyproject.toml").write_text("[project]\nname = \"wod2sim\"\n", encoding="utf-8")
+            (root / "uv.lock").write_text(
+                "[[package]]\n"
+                'name = "other-project"\n',
+                encoding="utf-8",
+            )
+            (root / "README.md").write_text(
+                "uv venv .venv\nuv pip install --python .venv/bin/python -e \".[dev]\"\n",
+                encoding="utf-8",
+            )
+
+            failures = module._install_reproducibility_failures(repo_root=root)
+
+        self.assertIn("install_lock_project_missing:uv.lock", failures)
+        self.assertIn("install_doc_token_missing:README.md:uv sync --extra dev", failures)
+        self.assertIn(
+            "install_doc_token_missing:README.md:uv run wod2sim-doctor --strict-installed --json",
+            failures,
+        )
+        self.assertIn("install_doc_token_missing:README.md:uv.lock", failures)
+        self.assertIn("install_doc_missing:docs/getting-started.md", failures)
+
     def test_ci_workflow_accepts_release_gate_surface(self) -> None:
         module = _load_module()
         with tempfile.TemporaryDirectory() as tmp:
