@@ -25,8 +25,9 @@
   straight/turn/lane-change/traffic category labels.
 - Learned `token_dagger_bc` is excluded because no legitimate local checkpoint
   hash is established for release.
-- `pdfinfo`, `pdffonts`, `qpdf`, and `latexmk` are unavailable. Validation uses
-  `mutool` plus source/log checks.
+- Local validation uses `mutool` plus source/log checks and now enforces that
+  every discovered paper font has an embedded font file. CI additionally
+  installs Poppler and `qpdf` to run `pdfinfo`, `pdffonts`, and `qpdf --check`.
 
 ## Current Aggregate
 

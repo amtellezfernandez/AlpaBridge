@@ -214,6 +214,64 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             failures,
         )
 
+    def test_pdf_font_embedding_accepts_embedded_font_descriptor(self) -> None:
+        module = _load_module()
+        path = Path("paper.pdf")
+        font_info = "Fonts (1):\n\t1\t(1 0 R):\tType1 'ABCDEF+Nimbus' (10 0 R)\n"
+
+        def show(_path: Path, object_id: str) -> str:
+            return {
+                "10": "<< /Type /Font /FontDescriptor 11 0 R >>",
+                "11": "<< /Type /FontDescriptor /FontFile 12 0 R >>",
+            }[object_id]
+
+        with (
+            patch.object(module, "_mutool_info_fonts", return_value=font_info),
+            patch.object(module, "_mutool_show", side_effect=show),
+        ):
+            failures = module._pdf_font_embedding_failures(path)
+
+        self.assertEqual([], failures)
+
+    def test_pdf_font_embedding_accepts_descendant_font_descriptor(self) -> None:
+        module = _load_module()
+        path = Path("paper.pdf")
+        font_info = "Fonts (1):\n\t1\t(1 0 R):\tType0 'ABCDEF+CIDFont' (10 0 R)\n"
+
+        def show(_path: Path, object_id: str) -> str:
+            return {
+                "10": "<< /Type /Font /DescendantFonts [ 20 0 R ] >>",
+                "20": "<< /Type /Font /FontDescriptor 21 0 R >>",
+                "21": "<< /Type /FontDescriptor /FontFile2 22 0 R >>",
+            }[object_id]
+
+        with (
+            patch.object(module, "_mutool_info_fonts", return_value=font_info),
+            patch.object(module, "_mutool_show", side_effect=show),
+        ):
+            failures = module._pdf_font_embedding_failures(path)
+
+        self.assertEqual([], failures)
+
+    def test_pdf_font_embedding_rejects_unembedded_font_descriptor(self) -> None:
+        module = _load_module()
+        path = Path("paper.pdf")
+        font_info = "Fonts (1):\n\t1\t(1 0 R):\tType1 'ABCDEF+Nimbus' (10 0 R)\n"
+
+        def show(_path: Path, object_id: str) -> str:
+            return {
+                "10": "<< /Type /Font /FontDescriptor 11 0 R >>",
+                "11": "<< /Type /FontDescriptor /FontName /ABCDEF+Nimbus >>",
+            }[object_id]
+
+        with (
+            patch.object(module, "_mutool_info_fonts", return_value=font_info),
+            patch.object(module, "_mutool_show", side_effect=show),
+        ):
+            failures = module._pdf_font_embedding_failures(path)
+
+        self.assertEqual(["font_not_embedded:paper.pdf:ABCDEF+Nimbus:11"], failures)
+
     def test_release_hygiene_accepts_clean_public_surface(self) -> None:
         module = _load_module()
         with tempfile.TemporaryDirectory() as tmp:

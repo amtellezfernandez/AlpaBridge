@@ -138,12 +138,26 @@ jobs:
       - name: Install TeX packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y texlive-latex-base texlive-latex-extra texlive-fonts-recommended texlive-bibtex-extra mupdf-tools
+          sudo apt-get install -y \
+            texlive-latex-base \
+            texlive-latex-extra \
+            texlive-fonts-recommended \
+            texlive-bibtex-extra \
+            mupdf-tools \
+            poppler-utils \
+            qpdf
 
       - name: Build and validate canonical CVM paper
         run: |
           PATH="$PWD/.venv/bin:$PATH" make paper-verify
           test -s wod2sim.pdf
+          qpdf --check wod2sim.pdf
+          pdfinfo wod2sim.pdf
+          pdffonts wod2sim.pdf
+          pdffonts wod2sim.pdf | awk '
+            NR > 2 && $(NF-4) != "yes" { print "unembedded font: " $0; bad=1 }
+            END { exit bad }
+          '
 
       - name: Upload paper artifact
         uses: actions/upload-artifact@v7

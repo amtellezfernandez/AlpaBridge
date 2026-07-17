@@ -2,6 +2,7 @@
 
 - [x] Paper is 4-6 A4 pages, or justified <=8-page paid version.
 - [x] PDF is <=6 MB.
+- [x] PDF fonts are embedded according to the `mutool` descriptor validation.
 - [x] IEEE conference template is unmodified.
 - [x] Author names and affiliation are retained for single-blind review.
 - [x] All citations resolve in the final LaTeX build.

@@ -156,6 +156,11 @@ TEXT_SKIP_SUFFIXES = {
     ".tar",
     ".pyc",
 }
+FONT_REF_RE = re.compile(r":\s+[^\n']*'([^']+)'\s+\((\d+)\s+0\s+R\)")
+FONT_DESCRIPTOR_RE = re.compile(r"/FontDescriptor\s+(\d+)\s+0\s+R")
+DESCENDANT_FONT_RE = re.compile(r"/DescendantFonts\s*\[\s*((?:\d+\s+0\s+R\s*)+)\]")
+OBJECT_REF_RE = re.compile(r"(\d+)\s+0\s+R")
+EMBEDDED_FONT_FILE_RE = re.compile(r"/FontFile(?:2|3)?\b")
 ARCHIVE_TEXT_SUFFIXES = {
     ".json",
     ".jsonl",
@@ -273,6 +278,7 @@ def main() -> int:
             failures.append("pdf_title_metadata_missing")
         if not re.search(r"/Author(?:<[^>]+>|\([^)]+\))", info):
             failures.append("pdf_author_metadata_missing")
+        failures.extend(_pdf_font_embedding_failures(args.paper))
 
     main_tex = args.source / "main.tex"
     source_text = main_tex.read_text(encoding="utf-8", errors="ignore") if main_tex.is_file() else ""
@@ -357,6 +363,32 @@ def _mutool_info(path: Path) -> str:
     return result.stdout
 
 
+def _mutool_info_fonts(path: Path) -> str:
+    result = subprocess.run(
+        ["mutool", "info", "-F", str(path)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        return ""
+    return result.stdout
+
+
+def _mutool_show(path: Path, object_id: str) -> str:
+    result = subprocess.run(
+        ["mutool", "show", str(path), object_id],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        return ""
+    return result.stdout
+
+
 def _extract_pages(info: str) -> int | None:
     match = re.search(r"Pages:\s+(\d+)", info)
     return None if match is None else int(match.group(1))
@@ -383,6 +415,71 @@ def _source_text_failures(*, source_text: str, path: Path) -> list[str]:
     if re.search(r"pdfsubject\s*=\s*\{[^}]*\bdraft\b", source_text, re.IGNORECASE):
         failures.append(f"source_pdfsubject_marked_draft:{path}")
     return failures
+
+
+def _pdf_font_embedding_failures(path: Path) -> list[str]:
+    font_info = _mutool_info_fonts(path)
+    if not font_info:
+        return [f"font_list_unavailable:{path}"]
+    fonts = _extract_pdf_fonts(font_info)
+    if not fonts:
+        return [f"font_list_empty:{path}"]
+    failures: list[str] = []
+    for font_name, object_id in fonts:
+        status, failure_object = _embedded_font_status(path, object_id, visited=set())
+        if status == "ok":
+            continue
+        failures.append(f"{status}:{path}:{font_name}:{failure_object}")
+    return failures
+
+
+def _extract_pdf_fonts(font_info: str) -> list[tuple[str, str]]:
+    fonts: list[tuple[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for match in FONT_REF_RE.finditer(font_info):
+        font = (match.group(1), match.group(2))
+        if font in seen:
+            continue
+        seen.add(font)
+        fonts.append(font)
+    return fonts
+
+
+def _embedded_font_status(
+    path: Path,
+    object_id: str,
+    *,
+    visited: set[str],
+) -> tuple[str, str]:
+    if object_id in visited:
+        return ("font_descriptor_missing", object_id)
+    visited.add(object_id)
+    font_object = _mutool_show(path, object_id)
+    if not font_object:
+        return ("font_object_unavailable", object_id)
+    if EMBEDDED_FONT_FILE_RE.search(font_object):
+        return ("ok", object_id)
+    descriptor_ids = FONT_DESCRIPTOR_RE.findall(font_object)
+    if descriptor_ids:
+        for descriptor_id in descriptor_ids:
+            descriptor = _mutool_show(path, descriptor_id)
+            if not descriptor:
+                return ("font_descriptor_unavailable", descriptor_id)
+            if EMBEDDED_FONT_FILE_RE.search(descriptor):
+                return ("ok", descriptor_id)
+        return ("font_not_embedded", descriptor_ids[0])
+    for descendant_group in DESCENDANT_FONT_RE.findall(font_object):
+        for descendant_id in OBJECT_REF_RE.findall(descendant_group):
+            status, failure_object = _embedded_font_status(
+                path,
+                descendant_id,
+                visited=visited,
+            )
+            if status == "ok":
+                return ("ok", failure_object)
+            if status != "font_descriptor_missing":
+                return (status, failure_object)
+    return ("font_descriptor_missing", object_id)
 
 
 def _claim_boundary_text_failures(
