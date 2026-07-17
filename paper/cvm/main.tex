@@ -37,13 +37,17 @@ Waymo Open Dataset (WOD)-style trajectory policies connected to AlpaSim. The ref
 implementation preserves route and scene signals, resamples policy trajectories onto
 the runtime clock, isolates optional model backends, materializes launch state, and
 requires an audit before any rollout outcome is treated as policy-attributable. The
-public release evaluates that gate with dependency-light closed-loop policies,
-route-semantics ablations, lifecycle stress, and synthetic fault injection. In the
-current evidence package, the constant-velocity and route-following core rows complete
-audit-valid, direct actor-aware rows remain deployment-blocked, command-only route
-ablations are rejected as non-claim-valid, and injected faults localize to their
-contract layer.
-These results support WOD2Sim as an integration-validation methodology for separating
+public release evaluates that gate with \CVMCoreRows{} core policy-scene-seed rows,
+\CVMSemanticRows{} route-semantics ablation rows, \CVMLifecycleRows{} lifecycle-stress
+rows, and \CVMFaultRows{} injected faults. In the current evidence package,
+full-contract closed-loop rows complete audit-valid in
+\CVMFullContractAuditValidRuns{}/\CVMFullContractCompletedRuns{} cases, command-only
+route ablations are rejected as non-claim-valid in
+\CVMCommandProxyRejectedRuns{}/\CVMCommandProxyCompletedRuns{} cases, and
+\CVMFaultLocalized{}/\CVMFaultTotal{} injected faults localize to their contract
+layer. Direct actor-aware rows remain deployment-blocked, so the public aggregate
+reports \CVMPolicyBehaviorAttributableRows{} policy-attributable behavior rows. These
+results support WOD2Sim as an integration-validation methodology for separating
 integration failure from policy failure; they do not yet establish policy quality or
 complete WOD benchmark coverage.
 \end{abstract}
