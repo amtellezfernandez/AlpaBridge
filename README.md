@@ -209,7 +209,8 @@ make verify
 
 `make conformance` runs the dependency-light core contract tier without torch,
 checkpoints, Docker, GPU, or gated scenes. `make verify` runs lint, tests and
-coverage, a fresh-install smoke test, package builds, and a clean paper rebuild.
+coverage, a fresh-install smoke test, package builds, and a clean paper rebuild
+plus submission validation.
 
 ## Paper And Contract-Validation Artifacts
 
@@ -217,16 +218,15 @@ coverage, a fresh-install smoke test, package builds, and a clean paper rebuild.
 make cvm-check
 make cvm-synthetic
 make cvm-aggregate
-make cvm-paper
-make cvm-validate
+make paper-verify
 ```
 
-`make cvm-paper` rebuilds the canonical [`wod2sim.pdf`](wod2sim.pdf) from
-the same generated tables and figures used by the repository reports. The
-current aggregate remains `claim_valid=false`: dependency-light core rows and
-semantic ablations have executed, direct-actor rows remain explicitly blocked,
-and completed closed-loop rows are diagnostic integration evidence rather than
-policy-quality benchmark claims.
+`make paper-verify` rebuilds the canonical [`wod2sim.pdf`](wod2sim.pdf) from
+the same generated tables and figures used by the repository reports, then runs
+the submission validator. The current aggregate remains `claim_valid=false`:
+dependency-light core rows and semantic ablations have executed, direct-actor
+rows remain explicitly blocked, and completed closed-loop rows are diagnostic
+integration evidence rather than policy-quality benchmark claims.
 
 The portable experiment vocabulary is the contract-validation matrix (CVM):
 configured rows, executed rows, blocked rows, and claim-valid evidence are

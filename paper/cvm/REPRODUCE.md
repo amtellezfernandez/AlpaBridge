@@ -65,13 +65,12 @@ rollouts and remain `claim_valid=false`.
 
 ```bash
 make cvm-aggregate PYTHON=./.venv/bin/python
-make cvm-paper PYTHON=./.venv/bin/python
-make cvm-validate PYTHON=./.venv/bin/python
+make paper-verify PYTHON=./.venv/bin/python
 ```
 
-The output PDF is the repository-root `wod2sim.pdf`. The `paper/cvm/`
-directory contains the source and generated TeX inputs, not a second tracked
-paper PDF.
+The output PDF is the repository-root `wod2sim.pdf`. `paper-verify` rebuilds
+that PDF and runs the submission validator. The `paper/cvm/` directory contains
+the source and generated TeX inputs, not a second tracked paper PDF.
 
 ## Current Claim Boundary
 

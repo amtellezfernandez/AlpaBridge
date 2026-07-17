@@ -40,6 +40,8 @@ package.
 | `make cvm-aggregate PYTHON=./.venv/bin/python` | 0 | Regenerated aggregate tables and figures from retained CVM results. |
 | `make cvm-paper PYTHON=./.venv/bin/python` | 0 | Rebuilt 5-page root `wod2sim.pdf`. |
 | `make cvm-validate PYTHON=./.venv/bin/python` | 0 | Submission validation passed. |
+| `make paper-verify PYTHON=./.venv/bin/python` | 0 | Rebuilt 5-page root `wod2sim.pdf` and ran submission validation. |
+| `make verify PYTHON=./.venv/bin/python` | 0 | Lint, conformance, coverage, bootstrap smoke, package build, paper rebuild, and submission validation all passed. |
 | `./.venv/bin/python scripts/validate_cvm_submission.py` | 0 | Submission validation passed, including abstract length, release metadata, per-manifest `failure_attribution` consistency, summary-level attribution partition checks, and README/paper claim-boundary terms. |
 
 ## Important Warnings

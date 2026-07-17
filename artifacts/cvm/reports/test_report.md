@@ -8,9 +8,11 @@ repository root to reproduce the checks.
 |---|---|
 | `./scripts/build_cvm_paper.sh` | Passed; rebuilt 5-page root `wod2sim.pdf`. |
 | `./.venv/bin/python scripts/validate_cvm_submission.py` | Passed, including abstract length, manifest-level failure-attribution checks, summary-level attribution partition checks, and README/paper claim-boundary checks. |
+| `make paper-verify PYTHON=./.venv/bin/python` | Passed: rebuilt 5-page root `wod2sim.pdf` and ran submission validation. |
 | `make conformance PYTHON=./.venv/bin/python` | Passed: 247 passed, 14 skipped, 15 subtests passed. |
 | `make demo PYTHON=./.venv/bin/python` | Passed: synthetic demo valid with `valid_claim_evidence=false`. |
 | `make cvm-check PYTHON=./.venv/bin/python` | Passed: ruff clean, 247 passed, 14 skipped, 15 subtests passed, validation passed. |
+| `make verify PYTHON=./.venv/bin/python` | Passed: lint, conformance, coverage, bootstrap smoke, package build, paper rebuild, and submission validation completed successfully. |
 | `make cvm-eval PYTHON=./.venv/bin/python` | Expected exit 2: preserves 36 completed core rows and reports 18 direct-actor proxy blockers. |
 | `./.venv/bin/python -m pytest -q` | Passed: 247 passed, 14 skipped, 15 subtests passed. |
 | `./.venv/bin/python -m build` | Passed: built source distribution and wheel. |
