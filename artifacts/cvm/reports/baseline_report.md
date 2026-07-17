@@ -40,7 +40,7 @@ artifact.
 | `make cvm-aggregate PYTHON=./.venv/bin/python` | 0 | Regenerated aggregate tables and figures from retained CVM results. |
 | `make cvm-paper PYTHON=./.venv/bin/python` | 0 | Rebuilt 5-page root `wod2sim.pdf`. |
 | `make cvm-validate PYTHON=./.venv/bin/python` | 0 | Submission validation passed. |
-| `./.venv/bin/python scripts/validate_cvm_submission.py` | 0 | Submission validation passed, including abstract length, draft-metadata, and per-manifest `failure_attribution` consistency. |
+| `./.venv/bin/python scripts/validate_cvm_submission.py` | 0 | Submission validation passed, including abstract length, release metadata, and per-manifest `failure_attribution` consistency. |
 
 ## Important Warnings
 
@@ -55,7 +55,7 @@ artifact.
 ## Current Interpretation
 
 The release status is complete with documented limitations for the CVM paper
-draft. It supports dependency-light core integration evidence, semantic
+artifact. It supports dependency-light core integration evidence, semantic
 route-boundary ablation evidence, false-block accounting for audit-valid rows,
 and synthetic lifecycle/fault diagnostics. It does not support a policy-quality
 benchmark, learned-policy result, direct-actor temporal ablation, or official

@@ -40,8 +40,9 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
 
     def test_source_text_rejects_abstract_length_and_draft_metadata(self) -> None:
         module = _load_module()
+        draft_subject = "paper " + "draft"
         source = (
-            "\\hypersetup{pdfsubject={WOD2Sim contract-validation paper draft}}\n"
+            f"\\hypersetup{{pdfsubject={{WOD2Sim contract-validation {draft_subject}}}}}\n"
             "\\begin{abstract}\nshort abstract\n\\end{abstract}\n"
         )
 
@@ -128,6 +129,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             token = "hf_" + ("A" * 20)
             fixture = "spot" + "light_reflex"
             unsupported_claim = "we " + "outperform baselines"
+            draft_label = "paper " + "draft"
             (root / "README.md").write_text(
                 "\n".join(
                     [
@@ -135,6 +137,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
                         "/home/" + "amdev" + "/private",
                         fixture,
                         unsupported_claim,
+                        draft_label,
                     ]
                 ),
                 encoding="utf-8",
@@ -150,6 +153,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         self.assertIn("public_hygiene:private_home_path:README.md", failures)
         self.assertIn("public_hygiene:legacy_smoke_fixture:README.md", failures)
         self.assertIn("public_hygiene:outperformance_claim:README.md", failures)
+        self.assertIn("public_hygiene:paper_draft_label:README.md", failures)
 
     def test_release_hygiene_reports_duplicate_manuscript_pdfs(self) -> None:
         module = _load_module()

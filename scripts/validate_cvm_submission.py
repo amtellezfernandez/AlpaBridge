@@ -146,6 +146,7 @@ FORBIDDEN_TEXT_PATTERNS: tuple[tuple[str, Pattern[str]], ...] = (
     ("significant_improvement_claim", re.compile(r"\bsignificant\s+improvement\b", re.IGNORECASE)),
     ("outperformance_claim", re.compile(r"\bwe\s+outperform\b", re.IGNORECASE)),
     ("sota_claim", re.compile(r"\bSOTA\b")),
+    ("paper_draft_label", re.compile(r"\bpaper\s+draft\b", re.IGNORECASE)),
     (
         "venue_coupled_artifact_name",
         re.compile(

@@ -1,6 +1,6 @@
 # Reproducing Current WOD2Sim CVM Artifacts
 
-Current status: buildable WOD2Sim paper draft with completed dependency-light
+Current status: buildable WOD2Sim paper artifact with completed dependency-light
 core rows, completed semantic closed-loop ablation rows, public synthetic
 lifecycle/fault diagnostics, and explicit direct-actor blockers.
 

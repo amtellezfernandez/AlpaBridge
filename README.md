@@ -238,7 +238,7 @@ for command-proxy route loss and road-center/ego-route offset. See
 ## Citation
 
 Use [`CITATION.cff`](CITATION.cff) for software metadata and
-[`wod2sim.pdf`](wod2sim.pdf) for the WOD2Sim paper draft.
+[`wod2sim.pdf`](wod2sim.pdf) for the WOD2Sim paper.
 
 ## License And Disclaimer
 

@@ -36,7 +36,7 @@ Additional release-specific checks:
 - [x] `frames.csv` exposes the required public-safe frame-level schema without
   bundling restricted sensor frames or fabricating unavailable frame rows.
 
-Current status: complete with documented limitations for the CVM paper draft.
+Current status: complete with documented limitations for the CVM paper artifact.
 The dependency-light core rows and semantic ablation provide real closed-loop
 integration evidence. Direct-actor temporal ablation and learned-policy results
 remain excluded.
