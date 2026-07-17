@@ -17,16 +17,17 @@ bodies in `tests/`, and filtered test runs recorded in `artifacts/sii2027/report
 |---|---:|---:|---:|---:|---:|
 | Semantic | 8 | 5 | 3 | 0 | 0 |
 | Temporal | 10 | 10 | 0 | 0 | 0 |
-| Lifecycle | 8 | 0 | 2 | 6 | 0 |
+| Lifecycle | 8 | 8 | 0 | 0 | 0 |
 | Plugin/dependency boundary | 9 | 5 | 2 | 1 | 1 |
 | Deployment | 9 | 5 | 4 | 0 | 0 |
 | Evidence | 9 | 6 | 2 | 1 | 0 |
 | Fault injection | 15 | 15 | 0 | 0 | 0 |
 
 Overall status: the existing suite is useful for public release hardening, route
-semantics, deployment planning, and evidence gating, but Phase D is not complete.
-The SII paper can cite conformance tests and public synthetic diagnostics. It cannot
-claim closed-loop lifecycle stress or simulator-backed fault-localization coverage.
+semantics, temporal adaptation, lifecycle service behavior, deployment planning, and
+evidence gating, but Phase D is not complete across all contract areas. The SII paper
+can cite conformance tests and public synthetic diagnostics. It cannot claim closed-loop
+lifecycle stress or simulator-backed fault-localization coverage.
 
 ## D1 Semantic Contract
 
@@ -60,14 +61,14 @@ claim closed-loop lifecycle stress or simulator-backed fault-localization covera
 
 | Required behavior | Current status | Current evidence |
 |---|---|---|
-| `test_duplicate_close_is_idempotent` | `missing` | The setup patch contains an idempotent-close log message, but no executable unit test was found. |
-| `test_late_image_after_close_does_not_crash` | `missing` | Patch text exists; no runtime test was found. |
-| `test_late_egomotion_after_close_does_not_crash` | `missing` | Patch text exists; no runtime test was found. |
-| `test_late_route_after_close_does_not_crash` | `missing` | Patch text exists; no runtime test was found. |
-| `test_unknown_session_event_is_structured_and_counted` | `partial` | Late/unknown-session messages are present in patch materialization, but structured counters are not asserted by tests. |
-| `test_session_cleanup_prevents_state_leak` | `missing` | No session state-leak regression test found. |
-| `test_interleaved_sessions_remain_isolated` | `missing` | No interleaved-session isolation test found. |
-| `test_repeated_start_stop_cycles_are_stable` | `partial` | The SII synthetic lifecycle matrix executed 40 rows: 20/20 hardened cycles survived and 0/20 strict/pre-hardening cycles survived. This is not an AlpaSim service unit test. |
+| `test_duplicate_close_is_idempotent` | `supported` | `tests/test_lifecycle_contract.py::test_duplicate_close_is_idempotent` verifies structured warning output and survival for duplicate close. |
+| `test_late_image_after_close_does_not_crash` | `supported` | `tests/test_lifecycle_contract.py::test_late_image_after_close_does_not_crash` |
+| `test_late_egomotion_after_close_does_not_crash` | `supported` | `tests/test_lifecycle_contract.py::test_late_egomotion_after_close_does_not_crash` |
+| `test_late_route_after_close_does_not_crash` | `supported` | `tests/test_lifecycle_contract.py::test_late_route_after_close_does_not_crash` |
+| `test_unknown_session_event_is_structured_and_counted` | `supported` | `tests/test_lifecycle_contract.py::test_unknown_session_event_is_structured_and_counted` asserts event fields and warning counters. |
+| `test_session_cleanup_prevents_state_leak` | `supported` | `tests/test_lifecycle_contract.py::test_session_cleanup_prevents_state_leak` |
+| `test_interleaved_sessions_remain_isolated` | `supported` | `tests/test_lifecycle_contract.py::test_interleaved_sessions_remain_isolated` |
+| `test_repeated_start_stop_cycles_are_stable` | `supported` | `tests/test_lifecycle_contract.py::test_repeated_start_stop_cycles_are_stable`; SII synthetic lifecycle matrix also executes 40 rows: 20/20 hardened cycles survived and 0/20 strict/pre-hardening cycles survived. This remains public synthetic service-harness evidence, not simulator-backed lifecycle evidence. |
 
 ## D4 Plugin And Dependency Boundary
 

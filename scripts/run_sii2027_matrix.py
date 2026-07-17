@@ -14,6 +14,8 @@ from typing import Any
 
 import yaml
 
+from wod2sim.simulator.lifecycle_service import run_synthetic_lifecycle_cycle
+
 RUN_FIELDS = [
     "run_id",
     "matrix",
@@ -624,11 +626,16 @@ def _execute_lifecycle_row(config: dict[str, Any], row: dict[str, str]) -> dict[
     execution = config.get("execution") if isinstance(config.get("execution"), dict) else {}
     schedule = [str(item) for item in execution.get("fault_schedule", [])]
     hardened = row["adapter_config"] == "full_lifecycle_hardening"
-    service_survived = hardened
-    observed_code = "late_events_classified" if hardened else "duplicate_close_unhandled"
+    evidence = run_synthetic_lifecycle_cycle(
+        hardened=hardened,
+        schedule=schedule,
+        session_id=row["run_id"],
+    )
+    service_survived = bool(evidence["service_survived"])
+    observed_code = str(evidence["observed_code"])
     detail = (
         "Synthetic lifecycle service classified duplicate-close and late-message events."
-        if hardened
+        if service_survived
         else "Synthetic pre-hardening service stopped on duplicate close before late events."
     )
     row = dict(row)
@@ -638,8 +645,8 @@ def _execute_lifecycle_row(config: dict[str, Any], row: dict[str, str]) -> dict[
             "attempted": "true",
             "completed": "true",
             "blocked": "false",
-            "failure_layer": "" if hardened else "lifecycle",
-            "failure_code": "" if hardened else observed_code,
+            "failure_layer": "" if service_survived else "lifecycle",
+            "failure_code": "" if service_survived else observed_code,
             "detail": detail,
             "claim_valid": "false",
             "expected_layer": "lifecycle",
@@ -647,9 +654,9 @@ def _execute_lifecycle_row(config: dict[str, Any], row: dict[str, str]) -> dict[
             "expected_code": "late_events_classified",
             "observed_code": observed_code,
             "detected": "true",
-            "correctly_localized": "true" if hardened else "false",
+            "correctly_localized": "true" if evidence["correctly_localized"] else "false",
             "service_survived": "true" if service_survived else "false",
-            "late_message_count": str(len(schedule)),
+            "late_message_count": str(evidence["late_message_count"]),
         }
     )
     return row
