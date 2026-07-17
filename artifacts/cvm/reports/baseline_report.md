@@ -13,21 +13,21 @@ package.
 | `./.venv/bin/python -m ruff check .` | 2026-07-17T17:34:13Z | 2026-07-17T17:34:13Z | 0.107s | 0 | All checks passed. |
 | `./.venv/bin/python -m build` | 2026-07-17T17:34:13Z | 2026-07-17T17:34:20Z | 7.283s | 0 | Built `wod2sim-0.1.0.tar.gz` and wheel. |
 | `./.venv/bin/pre-commit run --all-files` | 2026-07-17T17:38:18Z | 2026-07-17T17:38:18Z | 0.325s | 0 | Ruff pre-commit hook passed without modifying files. |
-| `./.venv/bin/python -m pytest -q` | 2026-07-17T17:34:21Z | 2026-07-17T17:34:23Z | 2.513s | 0 | 227 passed, 14 skipped, 15 subtests passed. |
-| `make conformance PYTHON=./.venv/bin/python` | 2026-07-17T17:34:23Z | 2026-07-17T17:34:25Z | 1.810s | 0 | 227 passed, 14 skipped, 15 subtests passed. |
-| `make demo PYTHON=./.venv/bin/python` | 2026-07-17T17:34:25Z | 2026-07-17T17:34:26Z | 0.230s | 0 | Synthetic demo valid; `valid_claim_evidence=false`. |
+| `./.venv/bin/python -m pytest -q` | 2026-07-17T18:52:54Z | 2026-07-17T18:52:58Z | 3.646s | 0 | 243 passed, 14 skipped, 15 subtests passed. |
+| `make conformance PYTHON=./.venv/bin/python` | 2026-07-17T18:52:43Z | 2026-07-17T18:52:47Z | 3.417s | 0 | 243 passed, 14 skipped, 15 subtests passed. |
+| `make demo PYTHON=./.venv/bin/python` | 2026-07-17T18:52:47Z | 2026-07-17T18:52:47Z | 0.252s | 0 | Synthetic demo valid; `valid_claim_evidence=false`. |
 
 ## Targeted Contract Tests
 
 | Command | Start UTC | End UTC | Duration | Exit | Result |
 |---|---|---|---:|---:|---|
-| `./.venv/bin/python -m pytest -q tests -k "semantic or route"` | 2026-07-17T17:34:26Z | 2026-07-17T17:34:26Z | 0.601s | 0 | 9 passed, 232 deselected. |
-| `./.venv/bin/python -m pytest -q tests -k "temporal or resampl"` | 2026-07-17T17:34:26Z | 2026-07-17T17:34:27Z | 0.694s | 0 | 10 passed, 231 deselected, 15 subtests passed. |
-| `./.venv/bin/python -m pytest -q tests -k "lifecycle or session"` | 2026-07-17T17:34:27Z | 2026-07-17T17:34:27Z | 0.546s | 0 | 10 passed, 231 deselected. |
-| `./.venv/bin/python -m pytest -q tests -k "plugin or entry_point"` | 2026-07-17T17:34:27Z | 2026-07-17T17:34:28Z | 1.032s | 0 | 5 passed, 236 deselected. |
-| `./.venv/bin/python -m pytest -q tests -k "deployment or readiness or launch"` | 2026-07-17T17:34:28Z | 2026-07-17T17:34:29Z | 0.687s | 0 | 20 passed, 221 deselected. |
-| `./.venv/bin/python -m pytest -q tests -k "evidence or audit or benchmark"` | 2026-07-17T17:34:29Z | 2026-07-17T17:34:30Z | 0.822s | 0 | 19 passed, 222 deselected. |
-| `./.venv/bin/python -m pytest -q tests -k "fault"` | 2026-07-17T17:34:30Z | 2026-07-17T17:34:31Z | 0.635s | 0 | 5 passed, 236 deselected. |
+| `./.venv/bin/python -m pytest -q tests -k "semantic or route"` | 2026-07-17T18:52:58Z | 2026-07-17T18:52:59Z | 0.783s | 0 | 10 passed, 247 deselected. |
+| `./.venv/bin/python -m pytest -q tests -k "temporal or resampl"` | 2026-07-17T18:52:59Z | 2026-07-17T18:53:00Z | 0.809s | 0 | 10 passed, 247 deselected, 15 subtests passed. |
+| `./.venv/bin/python -m pytest -q tests -k "lifecycle or session"` | 2026-07-17T18:53:00Z | 2026-07-17T18:53:00Z | 0.775s | 0 | 10 passed, 247 deselected. |
+| `./.venv/bin/python -m pytest -q tests -k "plugin or entry_point"` | 2026-07-17T18:53:00Z | 2026-07-17T18:53:02Z | 1.368s | 0 | 5 passed, 252 deselected. |
+| `./.venv/bin/python -m pytest -q tests -k "deployment or readiness or launch"` | 2026-07-17T18:53:02Z | 2026-07-17T18:53:03Z | 1.424s | 0 | 20 passed, 237 deselected. |
+| `./.venv/bin/python -m pytest -q tests -k "evidence or audit or benchmark"` | 2026-07-17T18:53:03Z | 2026-07-17T18:53:04Z | 0.869s | 0 | 19 passed, 238 deselected. |
+| `./.venv/bin/python -m pytest -q tests -k "fault"` | 2026-07-17T18:53:04Z | 2026-07-17T18:53:05Z | 0.549s | 0 | 5 passed, 252 deselected. |
 
 ## Release Commands
 
