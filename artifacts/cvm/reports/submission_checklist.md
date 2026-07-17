@@ -2,6 +2,7 @@
 
 - [x] Paper is 4-6 A4 pages, or justified <=8-page paid version.
 - [x] PDF is <=6 MB.
+- [x] PDF MediaBox is parsed and validated as portrait A4.
 - [x] PDF fonts are embedded according to the `mutool` descriptor validation.
 - [x] IEEE conference template is unmodified.
 - [x] Paper source has no manual margin, page-style, font-scaling, or negative

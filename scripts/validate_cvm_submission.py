@@ -13,6 +13,9 @@ from typing import Pattern
 PLACEHOLDERS = ("TODO", "TBD", "FIXME", "RESULTS_PENDING", "[N]", "[M]")
 ABSTRACT_MIN_WORDS = 160
 ABSTRACT_MAX_WORDS = 210
+A4_WIDTH_PT = 595.276
+A4_HEIGHT_PT = 841.89
+PAGE_SIZE_TOLERANCE_PT = 1.0
 IEEE_A4_DOCUMENTCLASS_RE = re.compile(
     r"\\documentclass\s*\[\s*conference\s*,\s*a4paper\s*\]\s*\{IEEEtran\}"
 )
@@ -356,8 +359,7 @@ def main() -> int:
             max_pages = 8 if args.allow_eight_pages else args.max_pages
             if pages < 4 or pages > max_pages:
                 failures.append(f"page_count_out_of_range:{pages}")
-        if "[ 0 0 595" not in info and "[0 0 595" not in info:
-            failures.append("page_size_not_verified_as_a4")
+        failures.extend(_pdf_a4_page_size_failures(info=info, path=args.paper))
         if not re.search(r"/Title(?:<[^>]+>|\([^)]+\))", info):
             failures.append("pdf_title_metadata_missing")
         if not re.search(r"/Author(?:<[^>]+>|\([^)]+\))", info):
@@ -486,6 +488,39 @@ def _mutool_show(path: Path, object_id: str) -> str:
 def _extract_pages(info: str) -> int | None:
     match = re.search(r"Pages:\s+(\d+)", info)
     return None if match is None else int(match.group(1))
+
+
+def _pdf_a4_page_size_failures(*, info: str, path: Path) -> list[str]:
+    mediaboxes = _extract_mediaboxes(info)
+    if not mediaboxes:
+        return [f"page_size_unavailable:{path}"]
+    failures: list[str] = []
+    for index, (x0, y0, x1, y1) in enumerate(mediaboxes, start=1):
+        width = abs(x1 - x0)
+        height = abs(y1 - y0)
+        if not (
+            _within_tolerance(width, A4_WIDTH_PT)
+            and _within_tolerance(height, A4_HEIGHT_PT)
+        ):
+            failures.append(f"page_size_not_a4:{path}:{index}:{width:.3f}x{height:.3f}")
+    return failures
+
+
+def _extract_mediaboxes(info: str) -> list[tuple[float, float, float, float]]:
+    mediaboxes: list[tuple[float, float, float, float]] = []
+    for line in info.splitlines():
+        if "[" not in line or "]" not in line:
+            continue
+        values = re.findall(r"-?\d+(?:\.\d+)?", line[line.find("[") : line.rfind("]") + 1])
+        if len(values) != 4:
+            continue
+        x0, y0, x1, y1 = (float(value) for value in values)
+        mediaboxes.append((x0, y0, x1, y1))
+    return mediaboxes
+
+
+def _within_tolerance(actual: float, expected: float) -> bool:
+    return abs(actual - expected) <= PAGE_SIZE_TOLERANCE_PT
 
 
 def _load_summary_data_hash(path: Path) -> str | None:

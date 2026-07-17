@@ -114,6 +114,38 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         self.assertIn("latex_log_warning:Citation `", failures)
         self.assertIn("latex_log_warning:Overfull \\hbox", failures)
 
+    def test_pdf_a4_page_size_accepts_portrait_a4_mediabox(self) -> None:
+        module = _load_module()
+        info = (
+            "Pages: 5\n"
+            "Mediaboxes (1):\n"
+            "\t1\t(59 0 R):\t[ 0 0 595.276 841.89 ]\n"
+        )
+
+        failures = module._pdf_a4_page_size_failures(info=info, path=Path("paper.pdf"))
+
+        self.assertEqual([], failures)
+
+    def test_pdf_a4_page_size_rejects_letter_or_missing_mediabox(self) -> None:
+        module = _load_module()
+        letter_info = (
+            "Pages: 1\n"
+            "Mediaboxes (1):\n"
+            "\t1\t(59 0 R):\t[ 0 0 612 792 ]\n"
+        )
+
+        letter_failures = module._pdf_a4_page_size_failures(
+            info=letter_info,
+            path=Path("paper.pdf"),
+        )
+        missing_failures = module._pdf_a4_page_size_failures(
+            info="Pages: 1\n",
+            path=Path("paper.pdf"),
+        )
+
+        self.assertEqual(["page_size_not_a4:paper.pdf:1:612.000x792.000"], letter_failures)
+        self.assertEqual(["page_size_unavailable:paper.pdf"], missing_failures)
+
     def test_paper_metadata_text_accepts_matching_source(self) -> None:
         module = _load_module()
         abstract = " ".join(f"word{index}" for index in range(module.ABSTRACT_MIN_WORDS))
