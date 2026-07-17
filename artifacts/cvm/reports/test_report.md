@@ -7,10 +7,10 @@ repository root to reproduce the checks.
 | Command | Result |
 |---|---|
 | `./scripts/build_cvm_paper.sh` | Passed; rebuilt 5-page root `wod2sim.pdf`. |
-| `./.venv/bin/python scripts/validate_cvm_submission.py` | Passed, including manifest-level failure-attribution checks. |
-| `make cvm-check PYTHON=./.venv/bin/python` | Passed: ruff clean, 240 passed, 14 skipped, 15 subtests passed, validation passed. |
+| `./.venv/bin/python scripts/validate_cvm_submission.py` | Passed, including abstract length and manifest-level failure-attribution checks. |
+| `make cvm-check PYTHON=./.venv/bin/python` | Passed: ruff clean, 243 passed, 14 skipped, 15 subtests passed, validation passed. |
 | `make cvm-eval PYTHON=./.venv/bin/python` | Expected exit 2: preserves 36 completed core rows and reports 18 direct-actor proxy blockers. |
-| `./.venv/bin/python -m pytest -q` | Passed: 240 passed, 14 skipped, 15 subtests passed. |
+| `./.venv/bin/python -m pytest -q` | Passed: 243 passed, 14 skipped, 15 subtests passed. |
 | `./.venv/bin/python -m build` | Passed: built source distribution and wheel. |
 | `./.venv/bin/pre-commit run --all-files` | Passed without modifying files. |
 | `git diff --check` | Run as final whitespace validation. |
@@ -32,6 +32,9 @@ passing tests support contract behavior and artifact hygiene, while policy
 quality and official benchmark claims require separate completed evidence.
 The submission validator now fails if a CVM run manifest omits or contradicts
 the integration-vs-policy `failure_attribution` record.
+It requires the attribution rule to name semantic, temporal, lifecycle,
+deployment, and evidence gates before any policy-behavior or policy-failure
+claim.
 It also validates the public `frames.csv` schema so frame-level timing, route,
 trajectory, latency, lifecycle-warning, and policy-status fields cannot
 silently disappear from regenerated artifacts.

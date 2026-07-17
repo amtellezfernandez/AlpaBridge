@@ -59,7 +59,7 @@
     }
   },
   "completed_runs": 109,
-  "created_at": "2026-07-17T18:06:34.224920+00:00",
+  "created_at": "2026-07-17T18:30:42.795575+00:00",
   "data_hash": "eb4351d5729a4a9f56e828b2ab7ddddf08a206f33b8a417d5153c1e3aba229d5",
   "failed_runs": 0,
   "failure_attribution": {
@@ -73,7 +73,7 @@
     "policy_behavior_attributable_rows": 0,
     "policy_failure_attributable_rows": 0,
     "precondition_blocked_rows": 36,
-    "rule": "Closed-loop behavior or policy failure can be attributed to the policy only after the semantic route contract, sensor-freshness audit, lifecycle state, deployment preconditions, and evidence gate pass. Otherwise the row is an integration, precondition, evidence, or diagnostic record.",
+    "rule": "Closed-loop behavior or policy failure can be attributed to the policy only after the semantic route contract, sensor-freshness audit, lifecycle state, deployment preconditions, and evidence gate pass. Otherwise the row is an integration, precondition, evidence, or diagnostic record and cannot be counted as a policy failure.",
     "synthetic_diagnostic_rows": 55
   },
   "failure_code_counts": {

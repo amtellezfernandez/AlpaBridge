@@ -28,7 +28,7 @@
     "policy_attributable": false,
     "policy_behavior_attributable": false,
     "policy_failure_attributable": false,
-    "rule": "A behavior event, including a policy failure, is policy-attributable only after semantic, temporal, lifecycle, deployment, and evidence gates pass; otherwise the row remains an integration, precondition, evidence, or diagnostic record."
+    "rule": "A behavior event, including a policy failure, is policy-attributable only after semantic, temporal, lifecycle, deployment, and evidence gates pass; otherwise the row remains an integration, precondition, evidence, or diagnostic record and cannot be counted as a policy failure."
   },
   "failure_code": "direct_actor_oracle_proxy_missing",
   "failure_layer": "deployment",
@@ -127,7 +127,7 @@
     "repository": {
       "dirty": false,
       "dirty_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "git_sha": "d7e5e3ae17122e38cb2710638c97b566e41d946f"
+      "git_sha": "7074484e330614caf3852b4300385c2113595dad"
     }
   },
   "run_id": "temporal_ablation_direct_actor_planner_clipgt-02e075b9-fd24-426b-971b-7cfcb2074cc9_29_full_temporal_contract",

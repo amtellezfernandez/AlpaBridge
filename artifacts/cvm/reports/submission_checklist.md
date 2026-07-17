@@ -12,6 +12,7 @@
 - [x] No private paths, tokens, or credentials are present in the public scan.
 - [x] Figures are generated and legible at final size.
 - [x] Abstract contains actual results, not placeholders.
+- [x] Abstract length is validated against the release 160-210 word range.
 - [x] Limitations match actual coverage.
 - [x] Reproduction commands were tested with neutral CVM targets.
 - [x] Git diff was inspected.
@@ -28,6 +29,8 @@ Additional release-specific checks:
 - [x] Every public run manifest carries validated integration-vs-policy
   `failure_attribution`, including separate policy-behavior and policy-failure
   attribution fields.
+- [x] Failure attribution requires semantic, temporal, lifecycle, deployment,
+  and evidence gates before policy behavior or policy failure can be assigned.
 - [x] Every public run manifest carries validated `scene` metadata and
   `scenario_category` without claiming unsupported scenario-category coverage.
 - [x] `frames.csv` exposes the required public-safe frame-level schema without
