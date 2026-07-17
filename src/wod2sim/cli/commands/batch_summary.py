@@ -612,7 +612,7 @@ def _claim_boundary(
         )
     return (
         "This is diagnostic public-safe evidence, not a claim-valid stage summary: "
-        f"{completed_scene_count}/{planned_scene_count} planned scene(s) completed cleanly. "
+        f"{completed_scene_count}/{planned_scene_count} planned scene(s) reached completed state. "
         "It records incomplete or failed closed-loop work and intentionally excludes raw scene "
         "assets and videos."
     )

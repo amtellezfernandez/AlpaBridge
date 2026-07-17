@@ -29,6 +29,7 @@ from wod2sim.cli.commands.run_alpasim_local_external import (
     _complete_run_status,
     _driver_command,
     _driver_env,
+    _local_usdz_dir_from_wizard_args,
     _planned_run_status,
     _preflight_alpasim_base_image,
     _preflight_alpasim_local_environment,
@@ -229,6 +230,103 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
             (all_usdzs_dir / "uuid-1.usdz").write_text("stub", encoding="utf-8")
             with patch.dict(os.environ, {}, clear=True):
                 _preflight_scene_artifacts(alpasim_root=root, scene_ids=["scene-1"])
+
+    def test_preflight_accepts_explicit_local_usdz_dir_without_hf_token(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "alpasim"
+            scenes_dir = root / "data" / "scenes"
+            local_usdz_dir = Path(tmp) / "local-usdzs"
+            scenes_dir.mkdir(parents=True)
+            local_usdz_dir.mkdir()
+            (scenes_dir / "sim_scenes.csv").write_text(
+                "uuid,scene_id,nre_version_string,path,last_modified,artifact_repository,hf_revision\n"
+                "uuid-1,scene-1,26.1.112,ignored,ignored,huggingface,26.02\n",
+                encoding="utf-8",
+            )
+            (local_usdz_dir / "uuid-1.usdz").write_text("stub", encoding="utf-8")
+
+            with patch.dict(os.environ, {}, clear=True):
+                _preflight_scene_artifacts(
+                    alpasim_root=root,
+                    scene_ids=["scene-1"],
+                    local_usdz_dir=local_usdz_dir,
+                )
+
+    def test_preflight_accepts_manifest_remapped_local_usdz_uuid(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "alpasim"
+            scenes_dir = root / "data" / "scenes"
+            local_usdz_dir = Path(tmp) / "local-usdzs"
+            scenes_dir.mkdir(parents=True)
+            local_usdz_dir.mkdir()
+            (scenes_dir / "sim_scenes.csv").write_text(
+                "uuid,scene_id,nre_version_string,path,last_modified,artifact_repository,hf_revision\n"
+                "catalog-uuid,scene-1,26.1.112,ignored,ignored,huggingface,26.02\n",
+                encoding="utf-8",
+            )
+            (local_usdz_dir / "local-uuid.usdz").write_text("stub", encoding="utf-8")
+            (local_usdz_dir / "wod2sim-local-usdz-cache-manifest.json").write_text(
+                json.dumps(
+                    {
+                        "schema": "wod2sim_local_usdz_cache_manifest_v1",
+                        "scenes": [
+                            {
+                                "scene_id": "scene-1",
+                                "uuid": "local-uuid",
+                                "catalog_uuid": "catalog-uuid",
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with patch.dict(os.environ, {}, clear=True):
+                _preflight_scene_artifacts(
+                    alpasim_root=root,
+                    scene_ids=["scene-1"],
+                    local_usdz_dir=local_usdz_dir,
+                )
+
+    def test_preflight_rejects_incomplete_explicit_local_usdz_dir(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "alpasim"
+            scenes_dir = root / "data" / "scenes"
+            local_usdz_dir = Path(tmp) / "local-usdzs"
+            scenes_dir.mkdir(parents=True)
+            local_usdz_dir.mkdir()
+            (scenes_dir / "sim_scenes.csv").write_text(
+                "uuid,scene_id,nre_version_string,path,last_modified,artifact_repository,hf_revision\n"
+                "uuid-1,scene-1,26.1.112,ignored,ignored,huggingface,26.02\n",
+                encoding="utf-8",
+            )
+
+            with patch.dict(os.environ, {}, clear=True):
+                with self.assertRaises(SystemExit) as ctx:
+                    _preflight_scene_artifacts(
+                        alpasim_root=root,
+                        scene_ids=["scene-1"],
+                        local_usdz_dir=local_usdz_dir,
+                    )
+
+        message = str(ctx.exception)
+        self.assertIn("scenes.local_usdz_dir", message)
+        self.assertIn("scene-1:uuid-1", message)
+
+    def test_local_usdz_dir_from_wizard_args_uses_last_override(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            first = Path(tmp) / "first"
+            second = Path(tmp) / "second"
+
+            local_usdz_dir = _local_usdz_dir_from_wizard_args(
+                [
+                    f"scenes.local_usdz_dir={first}",
+                    "eval.video.render_video=false",
+                    f"+scenes.local_usdz_dir='{second}'",
+                ]
+            )
+
+        self.assertEqual(second.resolve(), local_usdz_dir)
 
     def test_scene_catalog_paths_can_use_public_2602_catalog(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

@@ -22,6 +22,7 @@ DEFAULT_RUNS_ROOT = workspace_path("runs")
 SCENE_PRESET_ROOT = package_path("simulator", "alpasim_scene_presets")
 CONFIG_ROOT = package_path("simulator", "alpasim_configs", "driver")
 RUN_STATUS_FILENAME = "run-status.json"
+LOCAL_USDZ_CACHE_MANIFEST = "wod2sim-local-usdz-cache-manifest.json"
 
 PUBLIC_RELEASE_MODELS = (
     "constant_velocity",
@@ -211,6 +212,7 @@ def main() -> None:
 
     scene_ids = _scene_ids(args.scene_preset, args.scene_id)
     scene_catalog_paths = _scene_catalog_paths(args.scene_preset, alpasim_root)
+    local_usdz_dir = _local_usdz_dir_from_wizard_args(args.wizard_arg)
     _preflight_platform_compatibility()
     if args.mode != "print":
         _preflight_docker_access()
@@ -220,6 +222,7 @@ def main() -> None:
             alpasim_root=alpasim_root,
             scene_ids=scene_ids,
             scene_catalog_paths=scene_catalog_paths,
+            local_usdz_dir=local_usdz_dir,
         )
     run_dir = _resolve_run_dir(args)
     _prepare_run_dir(run_dir, allow_existing=args.allow_existing_run_dir)
@@ -282,6 +285,7 @@ def main() -> None:
         "topology": args.topology,
         "wizard_dry_run": args.wizard_dry_run,
         "wizard_args": args.wizard_arg,
+        "local_usdz_dir": str(local_usdz_dir) if local_usdz_dir is not None else None,
         "driver_config_template": str(model_preset["config_file"]),
         "driver_config_path": str(driver_config_path),
         "wizard_driver": Path(model_preset["config_file"]).stem,
@@ -488,6 +492,7 @@ def _preflight_scene_artifacts(
     alpasim_root: Path,
     scene_ids: list[str],
     scene_catalog_paths: list[Path] | None = None,
+    local_usdz_dir: Path | None = None,
 ) -> None:
     catalog_paths = scene_catalog_paths or [alpasim_root / "data" / "scenes" / "sim_scenes.csv"]
     scene_rows: dict[str, dict[str, str]] = {}
@@ -513,6 +518,14 @@ def _preflight_scene_artifacts(
             "Scene IDs not found in AlpaSim scene catalogs "
             f"{', '.join(str(path) for path in catalog_paths)}: {', '.join(missing_catalog)}"
         )
+
+    if local_usdz_dir is not None:
+        _preflight_local_usdz_dir(
+            local_usdz_dir=local_usdz_dir,
+            scene_ids=scene_ids,
+            scene_rows=scene_rows,
+        )
+        return
 
     if os.getenv("HF_TOKEN", "").strip():
         return
@@ -542,6 +555,107 @@ def _preflight_scene_artifacts(
             "or authenticate to the gated Hugging Face dataset before launching "
             "external-driver runs."
         )
+
+
+def _local_usdz_dir_from_wizard_args(wizard_args: list[str]) -> Path | None:
+    for override in reversed(wizard_args):
+        key, separator, value = str(override).strip().partition("=")
+        if not separator:
+            continue
+        if key.lstrip("+") != "scenes.local_usdz_dir":
+            continue
+        cleaned_value = value.strip().strip("'\"")
+        if not cleaned_value:
+            raise SystemExit("scenes.local_usdz_dir override is empty")
+        return Path(cleaned_value).expanduser().resolve()
+    return None
+
+
+def _preflight_local_usdz_dir(
+    *,
+    local_usdz_dir: Path,
+    scene_ids: list[str],
+    scene_rows: dict[str, dict[str, str]],
+) -> None:
+    if not local_usdz_dir.is_dir():
+        raise SystemExit(f"Configured scenes.local_usdz_dir does not exist: {local_usdz_dir}")
+
+    local_scene_paths = _local_usdz_scene_paths(local_usdz_dir)
+    missing_artifacts: list[str] = []
+    for scene_id in scene_ids:
+        row = scene_rows[scene_id]
+        repository = str(row.get("artifact_repository", "")).strip().lower()
+        artifact_uuid = str(row.get("uuid", "")).strip()
+        if repository != "huggingface" or not artifact_uuid:
+            continue
+        if scene_id in local_scene_paths:
+            continue
+        artifact_path = local_usdz_dir / f"{artifact_uuid}.usdz"
+        if not artifact_path.is_file():
+            missing_artifacts.append(f"{scene_id}:{artifact_uuid}")
+
+    if not missing_artifacts:
+        return
+
+    preview = ", ".join(missing_artifacts[:5])
+    remainder = len(missing_artifacts) - min(len(missing_artifacts), 5)
+    suffix = "" if remainder <= 0 else f", ... (+{remainder} more)"
+    raise SystemExit(
+        "Missing required local AlpaSim USDZ artifacts under explicit "
+        f"scenes.local_usdz_dir={local_usdz_dir}. "
+        f"First missing scene/artifact pairs: {preview}{suffix}. "
+        "Rebuild the local cache with ./scripts/build_alpasim_local_usdz_cache.py "
+        "or point scenes.local_usdz_dir at a complete cache."
+    )
+
+
+def _local_usdz_scene_paths(local_usdz_dir: Path) -> dict[str, Path]:
+    scene_paths: dict[str, Path] = {}
+
+    manifest_path = local_usdz_dir / LOCAL_USDZ_CACHE_MANIFEST
+    if manifest_path.is_file():
+        try:
+            payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise SystemExit(f"Invalid local USDZ cache manifest: {manifest_path}: {exc}") from exc
+        scenes = payload.get("scenes", [])
+        if isinstance(scenes, list):
+            for item in scenes:
+                if not isinstance(item, dict):
+                    continue
+                scene_id = str(item.get("scene_id", "")).strip()
+                artifact_path = _local_usdz_artifact_path(local_usdz_dir, item)
+                if scene_id and artifact_path is not None:
+                    scene_paths[scene_id] = artifact_path
+
+    local_scenes_csv = local_usdz_dir / "sim_scenes.csv"
+    if local_scenes_csv.is_file():
+        with local_scenes_csv.open(newline="", encoding="utf-8") as handle:
+            for row in csv.DictReader(handle):
+                scene_id = str(row.get("scene_id", "")).strip()
+                artifact_path = _local_usdz_artifact_path(local_usdz_dir, row)
+                if scene_id and artifact_path is not None:
+                    scene_paths[scene_id] = artifact_path
+
+    return scene_paths
+
+
+def _local_usdz_artifact_path(local_usdz_dir: Path, row: dict[str, Any]) -> Path | None:
+    raw_path = str(row.get("path", "")).strip()
+    if raw_path:
+        artifact_path = Path(raw_path)
+        if not artifact_path.is_absolute():
+            artifact_path = local_usdz_dir / artifact_path
+        if artifact_path.is_file():
+            return artifact_path
+
+    artifact_uuid = str(row.get("uuid", "")).strip()
+    if artifact_uuid:
+        artifact_path = local_usdz_dir / f"{artifact_uuid}.usdz"
+        if artifact_path.is_file():
+            return artifact_path
+
+    return None
 
 
 def _preflight_docker_access() -> None:

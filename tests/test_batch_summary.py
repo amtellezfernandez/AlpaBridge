@@ -66,7 +66,7 @@ class BatchSummaryTests(unittest.TestCase):
         self.assertEqual(1, returncode)
         self.assertFalse(payload["clean_closed_loop_batch"])
         self.assertIn("not a claim-valid stage summary", payload["claim_boundary"])
-        self.assertIn("1/2 planned scene(s) completed cleanly", payload["claim_boundary"])
+        self.assertIn("1/2 planned scene(s) reached completed state", payload["claim_boundary"])
         self.assertEqual(1, payload["aggregate"]["failed_scene_count"])
 
     def test_manifest_scene_ids_provide_planned_count_fallback(self) -> None:
@@ -118,6 +118,9 @@ class BatchSummaryTests(unittest.TestCase):
 
         self.assertTrue(summary["valid"])
         self.assertFalse(summary["clean_closed_loop_batch"])
+        self.assertIn("not a claim-valid stage summary", summary["claim_boundary"])
+        self.assertIn("2/2 planned scene(s) reached completed state", summary["claim_boundary"])
+        self.assertNotIn("completed cleanly", summary["claim_boundary"])
         self.assertEqual(1, summary["aggregate"]["audit_invalid_scene_count"])
         self.assertEqual(1, summary["aggregate"]["route_contract_failure_scene_count"])
         self.assertEqual(
