@@ -8,29 +8,30 @@ repository root to reproduce the checks. The latest refresh used the locked
 | Command | Result |
 |---|---|
 | `./scripts/build_cvm_paper.sh` | Passed through `make paper-verify`; rebuilt 5-page root `wod2sim.pdf`. |
-| `uv run python scripts/validate_cvm_submission.py` | Passed, including metadata-backed title/author/affiliation/abstract checks, output-PDF title/author/subject checks, IEEE A4 source-layout checks, parsed PDF A4 MediaBox checks, LaTeX log warnings, canonical-to-paper generated asset sync, generated-table row/source-field value sync, package metadata checks, CI workflow gate checks, community-template claim-boundary checks, public local-reference and image-alt checks, CLI command-documentation drift checks, README visual/graph explanation checks, evaluation-status checks, venue-style benchmark-label checks, unstable generated citation-slug hygiene checks, README attribution-count sync, paper-number macro value sync, claim-evidence-matrix count sync, embedded PDF font descriptors, manifest-level failure-attribution checks, summary-level attribution partition checks, generic credential-leak checks, and README/paper claim-boundary checks. |
+| `uv run python scripts/validate_cvm_submission.py` | Passed, including metadata-backed title/author/affiliation/abstract checks, output-PDF title/author/subject checks, IEEE A4 source-layout checks, parsed PDF A4 MediaBox checks, LaTeX log warnings, canonical-to-paper generated asset sync, generated-table row/source-field value sync, package metadata checks, CI workflow gate checks, community-template claim-boundary checks, public local-reference and image-alt checks, CLI command-documentation drift checks, README visual/graph explanation checks, evaluation-status checks, venue-style benchmark-label checks, unstable generated citation-slug hygiene checks, README attribution-count sync, paper-number macro value sync, claim-evidence-matrix count sync, contract-test audit coverage checks, embedded PDF font descriptors, manifest-level failure-attribution checks, summary-level attribution partition checks, generic credential-leak checks, and README/paper claim-boundary checks. |
 | `make paper-verify PYTHON='uv run python'` | Passed: rebuilt 5-page root `wod2sim.pdf` and ran submission validation. |
-| `make conformance PYTHON='uv run python'` | Passed through `make cvm-check`: 298 passed, 14 skipped, 15 subtests passed. |
+| `make conformance PYTHON='uv run python'` | Passed through `make verify`: 300 passed, 14 skipped, 15 subtests passed. |
 | `make demo PYTHON='uv run python'` | Passed: synthetic demo valid with `valid_claim_evidence=false`. |
-| `make cvm-check PYTHON='uv run python'` | Passed: ruff clean, 298 passed, 14 skipped, 15 subtests passed, validation passed. |
+| `make cvm-check PYTHON='uv run python'` | Passed: ruff clean, 300 passed, 14 skipped, 15 subtests passed, validation passed. |
 | `make cvm-eval PYTHON='uv run python'` | Expected exit 2: attempted 36 preserved core rows, completed 36, and reported 18 scene-matched direct-actor proxy blockers. |
-| `uv run python -m pytest -q` | Passed: 298 passed, 14 skipped, 15 subtests passed. |
+| `uv run python -m pytest -q` | Passed through `make verify`: 300 passed, 14 skipped, 15 subtests passed. |
+| `uv run python -m pytest --cov` | Passed through `make verify`: 300 passed, 14 skipped, total coverage 62.45% against the configured 33.0% minimum. |
 | `uv run python -m build` | Passed: built source distribution and wheel. |
 | `uv run pre-commit run --all-files` | Passed without modifying files. |
-| `qpdf --check wod2sim.pdf && pdfinfo wod2sim.pdf && pdffonts wod2sim.pdf` | Passed: 5 pages, portrait A4, 139553 bytes, embedded fonts. |
+| `qpdf --check wod2sim.pdf && pdfinfo wod2sim.pdf && pdffonts wod2sim.pdf` | Passed: 5 pages, portrait A4, 139840 bytes, embedded fonts. |
 | `git diff --check` | Run as final whitespace validation. |
 
 Targeted contract selections:
 
 | Selection | Result |
 |---|---|
-| `tests -k "semantic or route"` | 10 passed, 302 deselected. |
-| `tests -k "temporal or resampl"` | 10 passed, 302 deselected, 15 subtests passed. |
-| `tests -k "lifecycle or session"` | 10 passed, 302 deselected. |
-| `tests -k "plugin or entry_point"` | 5 passed, 307 deselected. |
-| `tests -k "deployment or readiness or launch"` | 20 passed, 292 deselected. |
-| `tests -k "evidence or audit or benchmark"` | 23 passed, 289 deselected. |
-| `tests -k "fault"` | 5 passed, 307 deselected. |
+| `tests -k "semantic or route"` | 10 passed, 304 deselected. |
+| `tests -k "temporal or resampl"` | 10 passed, 304 deselected, 15 subtests passed. |
+| `tests -k "lifecycle or session"` | 10 passed, 304 deselected. |
+| `tests -k "plugin or entry_point"` | 5 passed, 309 deselected. |
+| `tests -k "deployment or readiness or launch"` | 20 passed, 294 deselected. |
+| `tests -k "evidence or audit or benchmark"` | 25 passed, 289 deselected. |
+| `tests -k "fault"` | 5 passed, 309 deselected. |
 
 The release claim boundary is intentionally narrower than the test suite:
 passing tests support contract behavior and artifact hygiene, while policy

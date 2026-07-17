@@ -25,7 +25,7 @@ local simulator state.
 - Format: IEEE conference two-column template using `paper/cvm/IEEEtran.cls`.
 - Page size: A4 verified by `mutool info` mediabox `[ 0 0 595.276 841.89 ]`.
 - Page count: 5.
-- PDF size at audit: 139553 bytes.
+- PDF size at audit: 139840 bytes.
 - Root PDF is the only tracked manuscript PDF.
 
 ## Commands And Targets
@@ -44,7 +44,8 @@ local simulator state.
 - Simulator adapters and contracts: `src/wod2sim/simulator`.
 - Audit and evidence tools: `src/wod2sim/audit`, `src/wod2sim/neutral`.
 - AlpaSim patches/overrides: `src/wod2sim/alpasim_overrides`.
-- Test directory: `tests` with 24 top-level test files.
+- Test directory: `tests` with 24 top-level test files and 300 passing
+  dependency-light conformance tests in the latest release gate.
 
 ## Current Evidence Package
 
