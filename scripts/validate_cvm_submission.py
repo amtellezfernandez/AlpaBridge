@@ -76,6 +76,15 @@ REQUIRED_TABLES = (
     "fault_localization.tex",
     "paper_numbers.tex",
 )
+EXPECTED_TABLE_HEADERS = {
+    "contract_map.tex": "Mismatch & Contract & Mechanism & Validation",
+    "main_results.tex": (
+        "Policy & Rows & Done/att. & Audit & Progress & Coll./off & "
+        "Lat. p95 & Crash & Blocked"
+    ),
+    "ablations.tex": "Integration-effectiveness check & Positive & Total",
+    "fault_localization.tex": "Synthetic diagnostic & Count & Total",
+}
 REQUIRED_FIGURES = (
     "system_architecture.pdf",
     "evaluation_pipeline.pdf",
@@ -1470,6 +1479,14 @@ def _generated_table_value_failures(
     }
     for name, expected_rows in table_expectations.items():
         path = tables / name
+        expected_header = EXPECTED_TABLE_HEADERS.get(name)
+        if expected_header is not None:
+            failures.extend(
+                _table_expected_header_failures(
+                    path=path,
+                    expected_header=expected_header,
+                )
+            )
         failures.extend(_table_expected_row_failures(path=path, expected_rows=expected_rows))
     return failures
 
@@ -1649,6 +1666,18 @@ def _table_expected_row_failures(*, path: Path, expected_rows: list[str]) -> lis
         if _normalize_table_row(row) not in normalized_rows:
             failures.append(f"generated_table_row_mismatch:{path}:{row}")
     return failures
+
+
+def _table_expected_header_failures(*, path: Path, expected_header: str) -> list[str]:
+    if not path.is_file():
+        return [f"generated_table_missing_for_header_check:{path}"]
+    normalized_rows = {
+        _normalize_table_row(line)
+        for line in path.read_text(encoding="utf-8", errors="ignore").splitlines()
+    }
+    if _normalize_table_row(expected_header) not in normalized_rows:
+        return [f"generated_table_header_mismatch:{path}:{expected_header}"]
+    return []
 
 
 def _normalize_table_row(row: str) -> str:

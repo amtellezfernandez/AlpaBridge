@@ -27,29 +27,25 @@ Email: amtellezfernandez@gmail.com}
 \maketitle
 
 \begin{abstract}
-Offline driving policies are usually designed around logged observations, whereas a
-closed-loop simulator integrates them as persistent external-driver services. The hard
-problem is therefore failure attribution, not file conversion: lost route geometry,
-mismatched sampling clocks, late session messages, or missing provenance can make an
-integration defect look like policy behavior. WOD2Sim addresses this boundary with five
-explicit contracts--semantic, temporal, lifecycle, deployment, and evidence--for
-Waymo Open Dataset (WOD)-style trajectory policies connected to AlpaSim. The reference
-implementation preserves route and scene signals, resamples policy trajectories onto
-the runtime clock, isolates optional model backends, materializes launch state, and
-requires an audit before any rollout outcome is treated as policy-attributable. The
-public release evaluates that gate with \CVMCoreRows{} core policy-scene-seed rows,
-\CVMSemanticRows{} route-semantics ablation rows, \CVMLifecycleRows{} lifecycle-stress
-rows, and \CVMFaultRows{} injected faults. In the current evidence package,
-full-contract closed-loop rows complete audit-valid in
-\CVMFullContractAuditValidRuns{}/\CVMFullContractCompletedRuns{} cases, command-only
-route ablations are rejected as non-claim-valid in
-\CVMCommandProxyRejectedRuns{}/\CVMCommandProxyCompletedRuns{} cases, and
-\CVMFaultLocalized{}/\CVMFaultTotal{} injected faults localize to their contract
-layer. Direct actor-aware rows remain deployment-blocked, so the public aggregate
-reports \CVMPolicyBehaviorAttributableRows{} policy-attributable behavior rows. These
-results support WOD2Sim as an integration-validation methodology for separating
-integration failure from policy failure; they do not yet establish policy quality or
-complete WOD benchmark coverage.
+Dataset-trained driving policies are often evaluated as functions over logged
+observations, but a closed-loop simulator must integrate them as long-lived
+external-driver services. A format adapter is therefore insufficient: lost route
+geometry, mismatched trajectory clocks, stale session state, missing runtime
+preconditions, or incomplete provenance can make an integration defect look like a
+policy failure. WOD2Sim addresses this attribution problem with five contracts for
+Waymo Open Dataset (WOD)-style trajectory policies in AlpaSim: semantic preservation,
+temporal resampling, service lifecycle, deployment materialization, and evidence
+validity. The reference implementation carries route and scene signals into policy
+inputs, resamples predicted trajectories onto the simulator clock, isolates optional
+model backends, records launch state, and rejects rollouts that cannot support a
+policy-attributable claim. We evaluate the release with a contract-validation matrix
+covering three policy adapters, six gated scene artifacts, route-semantics ablations,
+lifecycle stress, and injected contract faults. Completed full-contract diagnostic
+rollouts pass audit in \CVMFullContractAuditValidRuns{}/\CVMFullContractCompletedRuns{}
+cases, command-only route ablations are rejected as non-claim-valid in
+\CVMCommandProxyRejectedRuns{}/\CVMCommandProxyCompletedRuns{} cases, and direct
+actor-aware rows remain deployment-blocked by a missing public proxy. WOD2Sim therefore
+measures whether an integration is claim-valid before interpreting policy quality.
 \end{abstract}
 
 \section{Introduction}
