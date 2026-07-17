@@ -153,6 +153,20 @@ REQUIRED_SCENE_FIELDS = (
     "license_gating_status",
     "categories_verified",
 )
+CONTRACT_TEST_AUDIT_REQUIRED_TERMS = (
+    "# Contract Test Audit",
+    "Semantic Contract",
+    "Temporal Contract",
+    "Lifecycle Contract",
+    "Deployment And Plugin-Dependency Contract",
+    "Evidence Contract",
+    "Fault-Injection Diagnostics",
+    "Explicit Gaps Kept Out Of Policy Claims",
+    "Covered",
+    "Partially covered",
+    "Gap",
+    "policy claims",
+)
 CLAIM_BOUNDARY_README_TERMS = (
     "Failure Attribution Boundary",
     "integration failure",
@@ -794,6 +808,12 @@ def main() -> int:
             summary_path=args.results / "summary.json",
         )
     )
+    failures.extend(
+        _contract_test_audit_failures(
+            audit_path=args.results.parent / "reports" / "contract_test_audit.md",
+            tests_dir=args.repo_root / "tests",
+        )
+    )
     failures.extend(_manifest_attribution_failures(args.results.parent / "manifests" / "run_manifests"))
     failures.extend(
         _release_hygiene_failures(repo_root=args.repo_root, canonical_paper=args.paper)
@@ -1387,6 +1407,21 @@ def _claim_evidence_matrix_failures(*, matrix_path: Path, summary_path: Path) ->
             failures.append(f"claim_evidence_matrix_count_mismatch:{matrix_path}:{label}:{expected_value}")
     if "`artifacts/cvm/results/summary.json`" not in text:
         failures.append(f"claim_evidence_matrix_missing_summary_artifact:{matrix_path}")
+    return failures
+
+
+def _contract_test_audit_failures(*, audit_path: Path, tests_dir: Path) -> list[str]:
+    if not audit_path.is_file():
+        return [f"missing_contract_test_audit:{audit_path}"]
+    text = audit_path.read_text(encoding="utf-8", errors="ignore")
+    failures: list[str] = []
+    for term in CONTRACT_TEST_AUDIT_REQUIRED_TERMS:
+        if not _contains_claim_term(text, term):
+            failures.append(f"contract_test_audit_missing:{audit_path}:{term}")
+    for match in re.finditer(r"`(tests/[^`]+\.py)`", text):
+        referenced = tests_dir.parent / match.group(1)
+        if not referenced.is_file():
+            failures.append(f"contract_test_audit_missing_test_file:{audit_path}:{match.group(1)}")
     return failures
 
 

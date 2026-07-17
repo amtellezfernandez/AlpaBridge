@@ -93,3 +93,8 @@ It rejects README failure-attribution count drift from
 It rejects aggregate-count drift between
 `artifacts/cvm/reports/claim_evidence_matrix.md` and
 `artifacts/cvm/results/summary.json`.
+It rejects a missing or incomplete
+`artifacts/cvm/reports/contract_test_audit.md`; that audit must name semantic,
+temporal, lifecycle, deployment/plugin-dependency, evidence, and
+fault-injection coverage, explicit gaps kept out of policy claims, and only
+existing test files.
