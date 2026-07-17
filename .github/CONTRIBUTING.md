@@ -50,6 +50,13 @@ If you touch the paper:
 make paper
 ```
 
+If you touch CVM artifacts, public docs, claim wording, or paper validation:
+
+```bash
+make cvm-check
+make paper-verify
+```
+
 For the full public verification path:
 
 ```bash
@@ -70,17 +77,32 @@ make clean
 
 ## Scope
 
-Keep this repo focused on the WOD-to-AlpaSim bridge surface:
+Keep this repo focused on the WOD2Sim contract-validation integration surface:
 
 - simulator adapters
 - launch/setup/readiness tooling
 - patched-upstream AlpaSim integration files
-- public-facing tests and docs
+- evidence, audit, and claim-valid release artifacts
+- public-facing tests, docs, and paper source
 
 Keep the public CLI surface aligned with the release README:
 
+- `constant_velocity`
+- `route_following`
 - `token_dagger_bc`
 - `direct_actor_planner`
 
 Avoid reintroducing unrelated research command surfaces unless they are required
-for the bridge release itself.
+for the public contract-validation release itself.
+
+## Claim Boundary
+
+Do not report an integration failure as a policy failure. A behavior row becomes
+policy-attributable only after route, temporal, lifecycle, deployment, and
+evidence checks pass and the aggregate marks it claim-valid. If a change touches
+run summaries, paper text, plots, or README numbers, keep the integration failure
+versus policy failure distinction explicit.
+
+Do not commit restricted assets, private checkpoints, raw gated scene media,
+tokens, credentials, private host paths, or support bundles that contain them.
+Reference gated prerequisites by identifier or hash only.

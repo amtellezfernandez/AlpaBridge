@@ -23,5 +23,13 @@ labels: bug
 
 ## Actual Behavior
 
+## Claim Boundary
+
+- Is this an integration failure, policy failure, deployment/precondition failure, or evidence/audit failure?
+- If you believe it is a policy failure, what claim-valid audit or run manifest supports that attribution?
+
 ## Logs or Artifacts
 
+Do not paste tokens, credentials, restricted assets, private checkpoints, raw
+gated scene media, or private paths. Redact support bundles before attaching
+them publicly.

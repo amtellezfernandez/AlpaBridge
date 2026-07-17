@@ -7,14 +7,14 @@ repository root to reproduce the checks.
 | Command | Result |
 |---|---|
 | `./scripts/build_cvm_paper.sh` | Passed; rebuilt 5-page root `wod2sim.pdf`. |
-| `./.venv/bin/python scripts/validate_cvm_submission.py` | Passed, including metadata-backed title/author/affiliation/abstract checks, output-PDF title/author/subject checks, IEEE A4 source-layout checks, parsed PDF A4 MediaBox checks, LaTeX log warnings, canonical-to-paper generated asset sync, generated-table row/source-field value sync, package metadata checks, CI workflow gate checks, public local-reference and image-alt checks, CLI command-documentation drift checks, README visual/graph explanation checks, evaluation-status checks, process-translation hygiene checks, venue-style benchmark-label checks, unstable generated citation-slug hygiene checks, README attribution-count sync, paper-number macro value sync, claim-evidence-matrix count sync, embedded PDF font descriptors, manifest-level failure-attribution checks, summary-level attribution partition checks, and README/paper claim-boundary checks. |
+| `./.venv/bin/python scripts/validate_cvm_submission.py` | Passed, including metadata-backed title/author/affiliation/abstract checks, output-PDF title/author/subject checks, IEEE A4 source-layout checks, parsed PDF A4 MediaBox checks, LaTeX log warnings, canonical-to-paper generated asset sync, generated-table row/source-field value sync, package metadata checks, CI workflow gate checks, community-template claim-boundary checks, public local-reference and image-alt checks, CLI command-documentation drift checks, README visual/graph explanation checks, evaluation-status checks, venue-style benchmark-label checks, unstable generated citation-slug hygiene checks, README attribution-count sync, paper-number macro value sync, claim-evidence-matrix count sync, embedded PDF font descriptors, manifest-level failure-attribution checks, summary-level attribution partition checks, and README/paper claim-boundary checks. |
 | `make paper-verify PYTHON=./.venv/bin/python` | Passed: rebuilt 5-page root `wod2sim.pdf` and ran submission validation. |
-| `make conformance PYTHON=./.venv/bin/python` | Passed: 282 passed, 14 skipped, 15 subtests passed. |
+| `make conformance PYTHON=./.venv/bin/python` | Passed: 284 passed, 14 skipped, 15 subtests passed. |
 | `make demo PYTHON=./.venv/bin/python` | Passed: synthetic demo valid with `valid_claim_evidence=false`. |
-| `make cvm-check PYTHON=./.venv/bin/python` | Passed: ruff clean, 282 passed, 14 skipped, 15 subtests passed, validation passed. |
+| `make cvm-check PYTHON=./.venv/bin/python` | Passed: ruff clean, 284 passed, 14 skipped, 15 subtests passed, validation passed. |
 | `make verify PYTHON=./.venv/bin/python` | Passed: lint, conformance, coverage, bootstrap smoke, package build, paper rebuild, and submission validation completed successfully. |
 | `make cvm-eval PYTHON=./.venv/bin/python` | Expected exit 2: preserves 36 completed core rows and reports 18 direct-actor proxy blockers. |
-| `./.venv/bin/python -m pytest -q` | Passed: 282 passed, 14 skipped, 15 subtests passed. |
+| `./.venv/bin/python -m pytest -q` | Passed: 284 passed, 14 skipped, 15 subtests passed. |
 | `./.venv/bin/python -m build` | Passed: built source distribution and wheel. |
 | `./.venv/bin/pre-commit run --all-files` | Passed without modifying files. |
 | `git diff --check` | Run as final whitespace validation. |
@@ -80,7 +80,8 @@ runtime graph explanations, or the statement that graphs do not evaluate
 policy quality.
 It rejects evaluation-guide status text that omits completed local diagnostic
 closed-loop rows or misstates them as public policy benchmark evidence.
-It rejects process-translation labels from public release text.
+It rejects GitHub contribution, pull-request, issue, and security templates
+that drop the claim boundary or restricted-asset hygiene.
 It rejects venue-style benchmark labels from public release text.
 It rejects unstable generated citation slugs from public release text.
 It rejects README failure-attribution count drift from
