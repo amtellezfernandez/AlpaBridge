@@ -5,6 +5,8 @@
 - [x] PDF fonts are embedded according to the `mutool` descriptor validation.
 - [x] IEEE conference template is unmodified.
 - [x] Author names and affiliation are retained for single-blind review.
+- [x] Title, author, affiliation, PDF subject, and abstract hash match
+  `paper/cvm/metadata.json`.
 - [x] All citations resolve in the final LaTeX build.
 - [x] Every numerical paper claim maps to a generated artifact.
 - [x] Failed, planned, and blocked runs are included in denominators.

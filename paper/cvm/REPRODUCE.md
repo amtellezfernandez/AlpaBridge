@@ -71,6 +71,8 @@ make paper-verify PYTHON=./.venv/bin/python
 The output PDF is the repository-root `wod2sim.pdf`. `paper-verify` rebuilds
 that PDF and runs the submission validator. The `paper/cvm/` directory contains
 the source and generated TeX inputs, not a second tracked paper PDF.
+The validator also checks `paper/cvm/metadata.json`; update that file whenever
+the title, author block, PDF subject, or abstract text intentionally changes.
 
 ## Current Claim Boundary
 

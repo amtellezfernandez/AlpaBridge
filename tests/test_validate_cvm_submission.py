@@ -51,6 +51,79 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         self.assertIn("abstract_word_count_out_of_range:main.tex:2", failures)
         self.assertIn("source_pdfsubject_marked_draft:main.tex", failures)
 
+    def test_paper_metadata_text_accepts_matching_source(self) -> None:
+        module = _load_module()
+        abstract = " ".join(f"word{index}" for index in range(module.ABSTRACT_MIN_WORDS))
+        source = (
+            "\\title{Contract Title}\n"
+            "\\IEEEauthorblockN{Researcher Name}\n"
+            "Independent Researcher\n"
+            "\\hypersetup{\n"
+            "  pdftitle={Contract Title},\n"
+            "  pdfauthor={Researcher Name},\n"
+            "  pdfsubject={Contract metadata paper}\n"
+            "}\n"
+            "\\begin{abstract}\n"
+            + abstract
+            + "\n\\end{abstract}\n"
+        )
+        metadata = {
+            "title": "Contract Title",
+            "author": "Researcher Name",
+            "affiliation": "Independent Researcher",
+            "pdf_subject": "Contract metadata paper",
+            "abstract_source_sha256": module._sha256_text(
+                module._normalize_latex_source(abstract)
+            ),
+            "abstract_word_count": module.ABSTRACT_MIN_WORDS,
+        }
+
+        failures = module._paper_metadata_text_failures(
+            metadata=metadata,
+            metadata_path=Path("metadata.json"),
+            source_text=source,
+            source_path=Path("main.tex"),
+        )
+
+        self.assertEqual([], failures)
+
+    def test_paper_metadata_text_rejects_title_and_abstract_mismatch(self) -> None:
+        module = _load_module()
+        abstract = " ".join(f"word{index}" for index in range(module.ABSTRACT_MIN_WORDS))
+        source = (
+            "\\title{Contract Title}\n"
+            "\\IEEEauthorblockN{Researcher Name}\n"
+            "Independent Researcher\n"
+            "\\hypersetup{pdftitle={Contract Title}, pdfauthor={Researcher Name}, "
+            "pdfsubject={Contract metadata paper}}\n"
+            "\\begin{abstract}\n"
+            + abstract
+            + "\n\\end{abstract}\n"
+        )
+        metadata = {
+            "title": "Different Title",
+            "author": "Researcher Name",
+            "affiliation": "Independent Researcher",
+            "pdf_subject": "Contract metadata paper",
+            "abstract_source_sha256": "0" * 64,
+            "abstract_word_count": module.ABSTRACT_MIN_WORDS + 1,
+        }
+
+        failures = module._paper_metadata_text_failures(
+            metadata=metadata,
+            metadata_path=Path("metadata.json"),
+            source_text=source,
+            source_path=Path("main.tex"),
+        )
+
+        self.assertIn("metadata_title_mismatch:main.tex:metadata.json", failures)
+        self.assertIn("metadata_pdf_title_mismatch:main.tex:metadata.json", failures)
+        self.assertIn("metadata_abstract_hash_mismatch:main.tex:metadata.json", failures)
+        self.assertIn(
+            "metadata_abstract_word_count_mismatch:main.tex:metadata.json:160:161",
+            failures,
+        )
+
     def test_claim_boundary_text_requires_policy_integration_separation(self) -> None:
         module = _load_module()
         readme = (

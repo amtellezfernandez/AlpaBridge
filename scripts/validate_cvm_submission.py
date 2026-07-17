@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import re
 import subprocess
@@ -117,11 +118,14 @@ REQUIRED_SUMMARY_ATTRIBUTION_FIELDS = (
     "diagnostic_not_policy_rows",
     "non_policy_attributed_rows",
 )
-EXPECTED_TITLE = (
-    "WOD2Sim: Contract-Based System Integration of Dataset-Trained Driving Policies "
-    "into Distributed Closed-Loop Simulation"
+REQUIRED_METADATA_FIELDS = (
+    "title",
+    "author",
+    "affiliation",
+    "pdf_subject",
+    "abstract_source_sha256",
+    "abstract_word_count",
 )
-EXPECTED_AUTHOR = "Alba Maria Tellez Fernandez"
 PUBLIC_SCAN_PATHS = (
     "README.md",
     "CITATION.cff",
@@ -252,6 +256,7 @@ def main() -> int:
     parser.add_argument("--results", default=Path("artifacts/cvm/results"), type=Path)
     parser.add_argument("--tables", default=Path("artifacts/cvm/tables"), type=Path)
     parser.add_argument("--figures", default=Path("artifacts/cvm/figures"), type=Path)
+    parser.add_argument("--metadata", default=None, type=Path)
     parser.add_argument("--repo-root", default=Path("."), type=Path)
     parser.add_argument("--max-pages", default=6, type=int)
     parser.add_argument("--allow-eight-pages", action="store_true")
@@ -281,13 +286,18 @@ def main() -> int:
         failures.extend(_pdf_font_embedding_failures(args.paper))
 
     main_tex = args.source / "main.tex"
+    metadata_path = args.metadata if args.metadata is not None else args.source / "metadata.json"
+    metadata, metadata_failures = _load_paper_metadata(metadata_path)
+    failures.extend(metadata_failures)
     source_text = main_tex.read_text(encoding="utf-8", errors="ignore") if main_tex.is_file() else ""
-    if EXPECTED_TITLE not in source_text:
-        failures.append("source_title_mismatch")
-    if EXPECTED_AUTHOR not in source_text:
-        failures.append("source_author_missing")
-    if "Independent Researcher" not in source_text:
-        failures.append("source_affiliation_missing")
+    failures.extend(
+        _paper_metadata_text_failures(
+            metadata=metadata,
+            metadata_path=metadata_path,
+            source_text=source_text,
+            source_path=main_tex,
+        )
+    )
     failures.extend(_source_text_failures(source_text=source_text, path=main_tex))
     readme_path = args.repo_root / "README.md"
     readme_text = (
@@ -405,6 +415,26 @@ def _load_summary_data_hash(path: Path) -> str | None:
     return data_hash if isinstance(data_hash, str) and data_hash else None
 
 
+def _load_paper_metadata(path: Path) -> tuple[dict[str, object], list[str]]:
+    if not path.is_file():
+        return {}, [f"missing_paper_metadata:{path}"]
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {}, [f"invalid_paper_metadata_json:{path}"]
+    if not isinstance(payload, dict):
+        return {}, [f"invalid_paper_metadata_type:{path}"]
+    failures: list[str] = []
+    for field in REQUIRED_METADATA_FIELDS:
+        value = payload.get(field)
+        if field == "abstract_word_count":
+            if not isinstance(value, int):
+                failures.append(f"paper_metadata_field_missing:{path}:{field}")
+        elif not isinstance(value, str) or not value.strip():
+            failures.append(f"paper_metadata_field_missing:{path}:{field}")
+    return payload, failures
+
+
 def _source_text_failures(*, source_text: str, path: Path) -> list[str]:
     failures: list[str] = []
     abstract_words = _abstract_word_count(source_text)
@@ -415,6 +445,101 @@ def _source_text_failures(*, source_text: str, path: Path) -> list[str]:
     if re.search(r"pdfsubject\s*=\s*\{[^}]*\bdraft\b", source_text, re.IGNORECASE):
         failures.append(f"source_pdfsubject_marked_draft:{path}")
     return failures
+
+
+def _paper_metadata_text_failures(
+    *,
+    metadata: dict[str, object],
+    metadata_path: Path,
+    source_text: str,
+    source_path: Path,
+) -> list[str]:
+    if not metadata:
+        return []
+    failures: list[str] = []
+    expected_title = str(metadata.get("title", ""))
+    expected_author = str(metadata.get("author", ""))
+    expected_affiliation = str(metadata.get("affiliation", ""))
+    expected_pdf_subject = str(metadata.get("pdf_subject", ""))
+    title = _latex_command_value(source_text, "title")
+    pdf_title = _hypersetup_value(source_text, "pdftitle")
+    pdf_author = _hypersetup_value(source_text, "pdfauthor")
+    pdf_subject = _hypersetup_value(source_text, "pdfsubject")
+    author = _latex_command_value(source_text, "IEEEauthorblockN")
+    if title != expected_title:
+        failures.append(f"metadata_title_mismatch:{source_path}:{metadata_path}")
+    if pdf_title != expected_title:
+        failures.append(f"metadata_pdf_title_mismatch:{source_path}:{metadata_path}")
+    if author != expected_author:
+        failures.append(f"metadata_author_mismatch:{source_path}:{metadata_path}")
+    if pdf_author != expected_author:
+        failures.append(f"metadata_pdf_author_mismatch:{source_path}:{metadata_path}")
+    if expected_affiliation not in source_text:
+        failures.append(f"metadata_affiliation_missing:{source_path}:{metadata_path}")
+    if pdf_subject != expected_pdf_subject:
+        failures.append(f"metadata_pdf_subject_mismatch:{source_path}:{metadata_path}")
+    failures.extend(
+        _paper_abstract_metadata_failures(
+            metadata=metadata,
+            metadata_path=metadata_path,
+            source_text=source_text,
+            source_path=source_path,
+        )
+    )
+    return failures
+
+
+def _paper_abstract_metadata_failures(
+    *,
+    metadata: dict[str, object],
+    metadata_path: Path,
+    source_text: str,
+    source_path: Path,
+) -> list[str]:
+    abstract = _abstract_body(source_text)
+    if abstract is None:
+        return [f"metadata_abstract_missing:{source_path}:{metadata_path}"]
+    actual_hash = _sha256_text(_normalize_latex_source(abstract))
+    expected_hash = str(metadata.get("abstract_source_sha256", ""))
+    failures: list[str] = []
+    if actual_hash != expected_hash:
+        failures.append(f"metadata_abstract_hash_mismatch:{source_path}:{metadata_path}")
+    actual_words = _abstract_word_count(source_text)
+    expected_words = metadata.get("abstract_word_count")
+    if actual_words != expected_words:
+        failures.append(
+            f"metadata_abstract_word_count_mismatch:{source_path}:{metadata_path}:"
+            f"{actual_words}:{expected_words}"
+        )
+    return failures
+
+
+def _latex_command_value(source_text: str, command: str) -> str:
+    match = re.search(rf"\\{re.escape(command)}\{{([^{{}}]*)\}}", source_text, re.DOTALL)
+    if match is None:
+        return ""
+    return _normalize_latex_source(match.group(1))
+
+
+def _hypersetup_value(source_text: str, key: str) -> str:
+    match = re.search(rf"{re.escape(key)}\s*=\s*\{{([^{{}}]*)\}}", source_text, re.DOTALL)
+    if match is None:
+        return ""
+    return _normalize_latex_source(match.group(1))
+
+
+def _abstract_body(source_text: str) -> str | None:
+    match = re.search(r"\\begin\{abstract\}(.*?)\\end\{abstract\}", source_text, re.DOTALL)
+    return None if match is None else match.group(1)
+
+
+def _normalize_latex_source(text: str) -> str:
+    text = re.sub(r"(?m)%.*$", "", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def _sha256_text(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
 def _pdf_font_embedding_failures(path: Path) -> list[str]:
@@ -508,10 +633,10 @@ def _contains_claim_term(text: str, term: str) -> bool:
 
 
 def _abstract_word_count(source_text: str) -> int | None:
-    match = re.search(r"\\begin\{abstract\}(.*?)\\end\{abstract\}", source_text, re.DOTALL)
-    if match is None:
+    abstract = _abstract_body(source_text)
+    if abstract is None:
         return None
-    abstract = re.sub(r"%.*", "", match.group(1))
+    abstract = re.sub(r"%.*", "", abstract)
     abstract = abstract.replace(r"\_", "_")
     abstract = re.sub(r"\\[A-Za-z]+\*?(?:\[[^\]]*\])?\{\}", " number ", abstract)
     abstract = re.sub(r"\\[A-Za-z]+\*?(?:\[[^\]]*\])?\{([^{}]*)\}", r" \1 ", abstract)
