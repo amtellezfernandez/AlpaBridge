@@ -74,6 +74,17 @@ REQUIRED_FRAME_FIELDS = (
     "lifecycle_warning_code",
     "policy_reasoning_status_code",
 )
+REQUIRED_SCENE_FIELDS = (
+    "scene_id",
+    "category",
+    "scenario_category",
+    "selection_rationale",
+    "asset_availability",
+    "expected_route_feature",
+    "expected_interaction_feature",
+    "license_gating_status",
+    "categories_verified",
+)
 EXPECTED_TITLE = (
     "WOD2Sim: Contract-Based System Integration of Dataset-Trained Driving Policies "
     "into Distributed Closed-Loop Simulation"
@@ -343,6 +354,38 @@ def _manifest_attribution_failures(manifest_dir: Path) -> list[str]:
                 run_id=run_id,
             )
         )
+        failures.extend(_single_manifest_scene_failures(payload=payload, path=path, run_id=run_id))
+    return failures
+
+
+def _single_manifest_scene_failures(
+    *,
+    payload: dict[str, object],
+    path: Path,
+    run_id: str,
+) -> list[str]:
+    failures: list[str] = []
+    scene = payload.get("scene")
+    if not isinstance(scene, dict):
+        return [f"missing_scene_metadata:{path}:{run_id}"]
+    for field in REQUIRED_SCENE_FIELDS:
+        if field not in scene:
+            failures.append(f"missing_scene_metadata_field:{path}:{run_id}:{field}")
+    scene_id = str(payload.get("scene_id", ""))
+    if str(scene.get("scene_id", "")) != scene_id:
+        failures.append(f"scene_metadata_id_mismatch:{path}:{run_id}")
+    category = str(scene.get("category", ""))
+    scenario_category = str(scene.get("scenario_category", ""))
+    if not category:
+        failures.append(f"scene_metadata_empty_category:{path}:{run_id}")
+    if scenario_category != category:
+        failures.append(f"scenario_category_mismatch:{path}:{run_id}")
+    if str(payload.get("scenario_category", "")) != scenario_category:
+        failures.append(f"manifest_scenario_category_mismatch:{path}:{run_id}")
+    if not str(scene.get("license_gating_status", "")):
+        failures.append(f"scene_metadata_missing_license_status:{path}:{run_id}")
+    if not isinstance(scene.get("categories_verified"), bool):
+        failures.append(f"scene_metadata_categories_verified_not_bool:{path}:{run_id}")
     return failures
 
 

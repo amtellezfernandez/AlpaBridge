@@ -42,6 +42,15 @@ RUN_FIELDS = [
     "service_survived",
     "late_message_count",
 ]
+SCENE_METADATA_FIELDS = (
+    "scene_id",
+    "category",
+    "selection_rationale",
+    "asset_availability",
+    "expected_route_feature",
+    "expected_interaction_feature",
+    "license_gating_status",
+)
 
 FAULT_SERVICE_SURVIVAL = {
     "deployment.docker_unavailable": "false",
@@ -390,6 +399,78 @@ def _scenes(config: dict[str, Any]) -> list[str]:
     if not scene_ids:
         raise SystemExit(f"Scene manifest has no scene IDs: {manifest_path}")
     return scene_ids
+
+
+def _scene_metadata(config: dict[str, Any], row: dict[str, str]) -> dict[str, str | bool]:
+    scene_id = row.get("scene_id", "")
+    execution = config.get("execution") if isinstance(config.get("execution"), dict) else {}
+    mode = str(execution.get("mode", ""))
+    if scene_id.startswith("synthetic_") or mode.startswith("synthetic_"):
+        return {
+            "scene_id": scene_id,
+            "category": scene_id or "synthetic_harness",
+            "scenario_category": scene_id or "synthetic_harness",
+            "selection_rationale": "public deterministic service harness",
+            "asset_availability": "public_synthetic",
+            "expected_route_feature": "not_applicable",
+            "expected_interaction_feature": "not_applicable",
+            "license_gating_status": "public_synthetic",
+            "categories_verified": True,
+            "source_manifest": "",
+        }
+
+    manifest_path = Path(str(config.get("scene_manifest", "")))
+    if not manifest_path.is_file():
+        source_manifest = str(manifest_path) if str(manifest_path) != "." else ""
+        return {
+            "scene_id": scene_id,
+            "category": "scene_metadata_unavailable",
+            "scenario_category": "scene_metadata_unavailable",
+            "selection_rationale": "scene manifest not configured or unavailable",
+            "asset_availability": "unknown",
+            "expected_route_feature": "unknown",
+            "expected_interaction_feature": "unknown",
+            "license_gating_status": "unknown",
+            "categories_verified": False,
+            "source_manifest": source_manifest,
+        }
+
+    manifest = _load_yaml(manifest_path)
+    scenes = manifest.get("scenes", [])
+    if isinstance(scenes, list):
+        for item in scenes:
+            if not isinstance(item, dict):
+                continue
+            if str(item.get("scene_id", "")).strip() != scene_id:
+                continue
+            metadata = {
+                field: str(item.get(field, "")).strip()
+                for field in SCENE_METADATA_FIELDS
+            }
+            category = metadata.get("category") or "unclassified"
+            metadata["category"] = category
+            metadata["scenario_category"] = category
+            metadata["source_manifest"] = str(manifest_path)
+            source = manifest.get("source", {})
+            metadata["categories_verified"] = (
+                bool(source.get("categories_verified", False))
+                if isinstance(source, dict)
+                else False
+            )
+            return metadata
+
+    return {
+        "scene_id": scene_id,
+        "category": "scene_not_listed_in_manifest",
+        "scenario_category": "scene_not_listed_in_manifest",
+        "selection_rationale": "row scene ID was not present in the configured scene manifest",
+        "asset_availability": "unknown",
+        "expected_route_feature": "unknown",
+        "expected_interaction_feature": "unknown",
+        "license_gating_status": "unknown",
+        "categories_verified": False,
+        "source_manifest": str(manifest_path),
+    }
 
 
 def _global_precondition_blockers(config: dict[str, Any]) -> list[dict[str, str]]:
@@ -1042,12 +1123,15 @@ def _write_run_manifest(
     created_at = existing_manifest.get("created_at")
     if not isinstance(created_at, str) or not created_at:
         created_at = datetime.now(timezone.utc).isoformat()
+    scene = _scene_metadata(config, row)
     manifest = {
         "schema": "cvm_run_manifest_v1",
         "created_at": created_at,
         "run_id": row["run_id"],
         "matrix": row["matrix"],
         "scene_id": row["scene_id"],
+        "scenario_category": scene["scenario_category"],
+        "scene": scene,
         "seed": row["seed"],
         "policy": row["policy"],
         "adapter_config": row["adapter_config"],
