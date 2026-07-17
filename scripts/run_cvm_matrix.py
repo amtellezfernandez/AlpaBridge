@@ -78,13 +78,28 @@ def main() -> int:
     output.mkdir(parents=True, exist_ok=True)
 
     rows = _expand_rows(config)
+    existing_rows = _load_existing_rows(output) if args.resume else {}
+    preserved_manifest_run_ids: set[str] = set()
     global_blockers = _global_precondition_blockers(config)
     if global_blockers:
-        rows = [_blocked_row(row, global_blockers[0]) for row in rows]
+        next_rows = []
+        for row in rows:
+            preserved = _resume_preserved_row(existing_rows, row, execute=args.execute)
+            if preserved is not None:
+                next_rows.append(preserved)
+                preserved_manifest_run_ids.add(row["run_id"])
+            else:
+                next_rows.append(_blocked_row(row, global_blockers[0]))
+        rows = next_rows
     else:
         next_rows = []
         mode = _execution_mode(config)
         for row in rows:
+            preserved = _resume_preserved_row(existing_rows, row, execute=args.execute)
+            if preserved is not None:
+                next_rows.append(preserved)
+                preserved_manifest_run_ids.add(row["run_id"])
+                continue
             row_blocker = _row_precondition_blocker(config, row, execute=args.execute)
             if row_blocker is not None:
                 next_rows.append(_blocked_row(row, row_blocker))
@@ -117,6 +132,10 @@ def main() -> int:
                 )
         rows = next_rows
     for row in rows:
+        if row["run_id"] in preserved_manifest_run_ids:
+            manifest_path = _run_manifest_dir(output) / f"{_safe_filename(row['run_id'])}.json"
+            if manifest_path.is_file():
+                continue
         _write_run_manifest(
             _run_manifest_dir(output),
             row=row,
@@ -182,6 +201,43 @@ def main() -> int:
         )
     )
     return exit_code
+
+
+def _load_existing_rows(output: Path) -> dict[str, dict[str, str]]:
+    path = output / "runs.csv"
+    if not path.is_file():
+        return {}
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = {
+            row.get("run_id", ""): row
+            for row in csv.DictReader(handle)
+            if row.get("run_id")
+        }
+    return rows
+
+
+def _resume_preserved_row(
+    existing_rows: dict[str, dict[str, str]],
+    row: dict[str, str],
+    *,
+    execute: bool,
+) -> dict[str, str] | None:
+    existing = existing_rows.get(row["run_id"])
+    if existing is None:
+        return None
+    status = existing.get("status", "")
+    if status == "completed" and existing.get("completed") == "true":
+        return _normalized_existing_row(existing, row)
+    if not execute and status in {"failed", "blocked"}:
+        return _normalized_existing_row(existing, row)
+    return None
+
+
+def _normalized_existing_row(existing: dict[str, str], row: dict[str, str]) -> dict[str, str]:
+    normalized = {field: existing.get(field, row.get(field, "")) for field in RUN_FIELDS}
+    for field in ("run_id", "matrix", "policy", "scene_id", "seed", "adapter_config"):
+        normalized[field] = row[field]
+    return normalized
 
 
 def _load_yaml(path: Path) -> dict[str, Any]:
