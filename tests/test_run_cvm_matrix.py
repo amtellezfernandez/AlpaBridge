@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import importlib.util
 import json
 import tempfile
@@ -142,6 +143,36 @@ class RunCVMMatrixTests(unittest.TestCase):
         self.assertIn("planned_launch", payload)
         self.assertTrue(payload["planned_launch"]["supported"])
         self.assertIn("--scene-id", payload["planned_launch"]["command"])
+
+    def test_resume_without_execute_preserves_completed_rows(self) -> None:
+        module = _load_module()
+        row = _base_row()
+        existing = dict(row)
+        existing.update(
+            {
+                "status": "completed",
+                "attempted": "true",
+                "completed": "true",
+                "blocked": "false",
+                "failure_layer": "",
+                "failure_code": "",
+                "detail": "existing completed evidence",
+            }
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp)
+            with (output / "runs.csv").open("w", newline="", encoding="utf-8") as handle:
+                writer = csv.DictWriter(handle, fieldnames=module.RUN_FIELDS)
+                writer.writeheader()
+                writer.writerow(existing)
+
+            rows = module._load_existing_rows(output)
+            preserved = module._resume_preserved_row(rows, row, execute=False)
+
+        self.assertIsNotNone(preserved)
+        self.assertEqual("completed", preserved["status"])
+        self.assertEqual("true", preserved["completed"])
+        self.assertEqual("existing completed evidence", preserved["detail"])
 
 
 if __name__ == "__main__":
