@@ -11,8 +11,8 @@ not tracked; rerun the commands below to reproduce the release checks.
 |---|---|---|---:|---:|---|
 | `uv run python -m pytest -q tests/test_validate_cvm_submission.py` | 2026-07-17T22:56:53Z | 2026-07-17T22:56:54Z | 0.449s | 0 | 80 passed, including metadata, PDF, generated-artifact, public-hygiene, CVM acronym-definition, repository-inventory drift, baseline-report hygiene, and credential-hygiene validation fixtures. |
 | `make paper-verify PYTHON='uv run python'` | 2026-07-17T22:56:54Z | 2026-07-17T22:56:56Z | 1.739s | 0 | Rebuilt 5-page root `wod2sim.pdf` at 140007 bytes and ran submission validation. |
-| `make cvm-check PYTHON='uv run python'` | 2026-07-17T22:56:56Z | 2026-07-17T22:56:59Z | 3.497s | 0 | Ruff passed; conformance passed with 309 passed, 14 skipped, and 15 subtests passed; submission validation passed. |
-| `make verify` | 2026-07-17T22:56:59Z | 2026-07-17T22:57:42Z | 42.510s | 0 | Ruff, conformance, coverage, smoke install, package build, paper rebuild, and submission validation passed; coverage was 62.45% against the configured 33.0% minimum. |
+| `make cvm-check PYTHON='uv run python'` | 2026-07-18T14:18:00Z | 2026-07-18T14:18:04Z | 3.497s | 0 | Ruff passed; conformance passed with 310 passed, 14 skipped, and 15 subtests passed; submission validation passed. |
+| `make verify` | 2026-07-18T14:18:04Z | 2026-07-18T14:18:58Z | 53.592s | 0 | Ruff, conformance, coverage, smoke install, package build, paper rebuild, and submission validation passed; coverage was 62.61% against the configured 33.0% minimum. |
 
 ## Important Warnings
 

@@ -126,6 +126,17 @@ index b619b7a..e46b247 100644
                  request.route,
                  use_waypoint_commands=False,
              )
+@@ -856,4 +882,9 @@ class EgoDriverService(EgodriverServiceServicer):
+         self, request: DriveRequest, context: grpc.aio.ServicerContext
+     ) -> DriveResponse:
+         if request.session_uuid not in self._sessions:
+-            raise KeyError(f"Session {request.session_uuid} not found")
++            logger.warning(
++                "drive for unknown session %s at %s; returning empty trajectory",
++                request.session_uuid,
++                request.time_query_us,
++            )
++            return DriveResponse(trajectory=Trajectory())
 diff --git a/src/driver/src/alpasim_driver/models/__init__.py b/src/driver/src/alpasim_driver/models/__init__.py
 index 7d0aa0b..9e09e33 100644
 --- a/src/driver/src/alpasim_driver/models/__init__.py

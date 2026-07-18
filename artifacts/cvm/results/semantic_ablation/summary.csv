@@ -1,2 +1,2 @@
 matrix,expected_runs,rows,planned,attempted,completed,failed,blocked,claim_valid
-semantic_ablation,18,18,0,18,18,0,0,False
+semantic_ablation,6,6,0,6,6,0,0,False

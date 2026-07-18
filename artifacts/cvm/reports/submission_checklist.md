@@ -25,7 +25,7 @@ in this checklist.
   labels, or overfull/underfull `\hbox` warnings.
 - [x] Every numerical paper claim maps to a generated artifact.
 - [x] Failed, planned, and blocked runs are included in denominators.
-- [x] Scene/policy/replicate counts are stated exactly.
+- [x] Scene/policy/execution counts are stated exactly.
 - [x] No restricted assets are included.
 - [x] No private paths, tokens, or credentials are present in the public scan.
 - [x] Public Markdown/HTML local links and image references resolve inside the

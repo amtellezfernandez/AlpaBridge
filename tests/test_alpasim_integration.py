@@ -1818,6 +1818,56 @@ class AlpaSimIntegrationTests(unittest.TestCase):
 
         self.assertIn("latest ego pose timestamp", str(ctx.exception))
 
+    def test_baseline_driver_resets_sensor_freshness_between_sessions(self) -> None:
+        model = ConstantVelocityAlpaSimModel(camera_ids=["front"], context_length=1, output_frequency_hz=4)
+        previous_session = SimpleNamespace(
+            camera_images={"front": [SimpleNamespace(timestamp_us=1000, image=np.full((4, 4, 3), 180, dtype=np.uint8))]},
+            command=DriveCommand.STRAIGHT,
+            speed=6.0,
+            acceleration=0.0,
+            ego_pose_history=[SimpleNamespace(timestamp_us=1000, x=0.0, y=0.0, yaw=0.0)],
+            route_waypoints=[
+                {"x": 0.0, "y": 0.0, "z": 0.0},
+                {"x": 20.0, "y": 0.0, "z": 0.0},
+            ],
+            alpasignal={"hazards": []},
+            session_uuid="session-a",
+        )
+        next_frame_same_session = SimpleNamespace(
+            camera_images={"front": [SimpleNamespace(timestamp_us=1100, image=np.full((4, 4, 3), 181, dtype=np.uint8))]},
+            command=DriveCommand.STRAIGHT,
+            speed=6.0,
+            acceleration=0.0,
+            ego_pose_history=[SimpleNamespace(timestamp_us=1100, x=1.0, y=0.0, yaw=0.0)],
+            route_waypoints=[
+                {"x": 0.0, "y": 0.0, "z": 0.0},
+                {"x": 20.0, "y": 0.0, "z": 0.0},
+            ],
+            alpasignal={"hazards": []},
+            session_uuid="session-a",
+        )
+        first_frame_new_session = SimpleNamespace(
+            camera_images={"front": [SimpleNamespace(timestamp_us=1000, image=np.full((4, 4, 3), 182, dtype=np.uint8))]},
+            command=DriveCommand.STRAIGHT,
+            speed=6.0,
+            acceleration=0.0,
+            ego_pose_history=[SimpleNamespace(timestamp_us=1000, x=0.2, y=0.0, yaw=0.0)],
+            route_waypoints=[
+                {"x": 0.0, "y": 0.0, "z": 0.0},
+                {"x": 20.0, "y": 0.0, "z": 0.0},
+            ],
+            alpasignal={"hazards": []},
+            session_uuid="session-b",
+        )
+
+        model.predict(previous_session)
+        model.predict(next_frame_same_session)
+        prediction = model.predict(first_frame_new_session)
+
+        reasoning = json.loads(prediction.reasoning_text or "{}")
+        self.assertEqual("session-b", reasoning["session_uuid"])
+        self.assertEqual("ok_initial", reasoning["sensor_freshness"]["status"])
+
     def test_direct_actor_planner_log_includes_sensor_freshness(self) -> None:
         with TemporaryDirectory() as tmp:
             log_path = Path(tmp) / "direct-planner-log.jsonl"

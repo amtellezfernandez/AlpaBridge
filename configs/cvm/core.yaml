@@ -1,6 +1,6 @@
 schema: cvm_experiment_config_v1
 name: core
-description: Full-contract closed-loop matrix with a completed dependency-light public core and optional gated direct-actor extension rows.
+description: Full-contract closed-loop matrix with one unique execution per policy and scene.
 scene_manifest: artifacts/cvm/manifests/scene_manifest.yaml
 release_scope:
   public_core_policies:
@@ -13,12 +13,14 @@ policies:
   - constant_velocity
   - route_following
   - direct_actor_planner
-seeds: [17, 29, 43]
+# AlpaSim does not expose a runtime seed override through this launcher. Keep one
+# execution identifier so provenance labels cannot be mistaken for replicates.
+seeds: [17]
 adapter_configs:
   - full_contract
 execution:
   mode: closed_loop
-  expected_runs: 54
+  expected_runs: 18
   alpasim_root: workspace/alpasim-clean
   local_usdz_dir: workspace/alpasim-clean/data/nre-artifacts/local-usdzs-front-camera-15
   scene_preset: front_camera_50scene_public2602

@@ -25,7 +25,7 @@ host-specific paths, runtime identifiers, and local simulator state.
 - Format: IEEE conference two-column template using `paper/cvm/IEEEtran.cls`.
 - Page size: A4 verified by `mutool info` mediabox `[ 0 0 595.276 841.89 ]`.
 - Page count: 5.
-- PDF size at audit: 140007 bytes.
+- PDF size at audit: 122838 bytes.
 - Root PDF is the only tracked manuscript PDF.
 
 ## Commands And Targets
@@ -49,22 +49,22 @@ host-specific paths, runtime identifiers, and local simulator state.
 
 ## Current Evidence Package
 
-- Configured CVM rows: 145.
-- Public-core rows completed: 36/36 across `constant_velocity` and
+- Configured CVM rows: 97.
+- Public-core rows completed: 12/12 across `constant_velocity` and
   `route_following`.
-- Attempted rows: 109.
-- Completed rows: 109.
-- Closed-loop completed rows: 54.
-- Full-contract audit-valid rows: 45/45.
-- Command-only route rows rejected as non-claim-valid: 9/9.
+- Attempted rows: 73.
+- Completed rows: 73.
+- Closed-loop completed rows: 18.
+- Full-contract audit-valid rows: 15/15.
+- Command-only route rows rejected as non-claim-valid: 3/3.
 - Synthetic diagnostic rows: 55.
-- Blocked rows: 36, all `direct_actor_oracle_proxy_missing`.
+- Blocked rows: 24, all `direct_actor_oracle_proxy_missing`.
 - Claim-valid policy benchmark rows: 0.
-- Policy-attributable behavior rows: 45.
+- Policy-attributable behavior rows: 15.
 - Policy-attributable failure rows: 0.
-- Completed non-policy diagnostic rows: 64.
-- Non-policy-attributed rows: 100.
-- Aggregate data hash: `eb4351d5729a4a9f56e828b2ab7ddddf08a206f33b8a417d5153c1e3aba229d5`.
+- Completed non-policy diagnostic rows: 58.
+- Non-policy-attributed rows: 82.
+- Aggregate data hash: `7fd33c72c2f87a54a2ea856d6bbd3204ba94d276ee950d3333637b678c5425e8`.
 - Every public run manifest carries pre-audit `failure_attribution`, including
   policy-failure status, claim-valid benchmark status, failure layer/code, and
   the integration-vs-policy attribution rule. Aggregate `summary.json` upgrades

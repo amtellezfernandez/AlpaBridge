@@ -7,13 +7,14 @@ release_scope:
   note: This matrix requires a scene-matched direct-actor oracle proxy and is not a public-core dependency.
 policies:
   - direct_actor_planner
-seeds: [17, 29, 43]
+# The configured value is an execution identifier, not an AlpaSim seed.
+seeds: [17]
 adapter_configs:
   - full_temporal_contract
   - naive_or_disabled_resampling
 execution:
   mode: closed_loop_ablation
-  expected_runs: 18
+  expected_runs: 6
   alpasim_root: workspace/alpasim-clean
   local_usdz_dir: workspace/alpasim-clean/data/nre-artifacts/local-usdzs-front-camera-15
   scene_limit: 3

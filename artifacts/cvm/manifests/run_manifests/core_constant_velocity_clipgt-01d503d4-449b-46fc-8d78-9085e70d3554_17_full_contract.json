@@ -5,7 +5,7 @@
   "claim_valid": false,
   "completed": true,
   "config_path": "configs/cvm/core.yaml",
-  "config_sha256": "c74349cec01cc3c4cb21de60699125b8d7119a7f8d351085198aeb684ea3ccff",
+  "config_sha256": "f7505f80c8e4ecd02ce53c2ff960031a947ba791be0da10731db52fdc74488df",
   "contract_expectations": {
     "claim_valid_requires_route_waypoints": true,
     "evidence_gate": "claim_valid_false_until_audit_aggregation",
@@ -15,7 +15,7 @@
     "target_runtime_samples": 20
   },
   "created_at": "2026-07-17T17:07:34.278529+00:00",
-  "detail": "Closed-loop launch already completed; reused by --resume.",
+  "detail": "Closed-loop launch completed; claim validity remains gated by audit aggregation.",
   "execution_mode": "closed_loop",
   "failure_attribution": {
     "category": "diagnostic_rollout_pending_claim_gate",
@@ -28,7 +28,7 @@
     "policy_attributable": false,
     "policy_behavior_attributable": false,
     "policy_failure_attributable": false,
-    "rule": "A behavior event, including a policy failure, is policy-attributable only after semantic, temporal, lifecycle, deployment, and evidence gates pass; otherwise the row remains an integration, precondition, evidence, or diagnostic record and cannot be counted as a policy failure."
+    "rule": "A behavior event, including a policy failure, is policy-attributable only after semantic, temporal, lifecycle, deployment, and evidence gates pass; otherwise the row remains an integration, precondition, evidence, or diagnostic record and cannot be counted as a policy failure. Passing the gate permits policy-behavior attribution; policy failure also requires the retained failure layer to be policy."
   },
   "failure_code": "",
   "failure_layer": "",
@@ -103,7 +103,7 @@
   "provenance": {
     "alpasim": {
       "dirty": true,
-      "dirty_diff_sha256": "af8b7b3ec4affaecbb23b6766007d59dc36ebc6a746e4caf5cba392bb86fef37",
+      "dirty_diff_sha256": "69ec8a093ef0bc2b6a5dfa76dd0c9c9327e0eda76ef0c6faca343f0ae2b5126d",
       "git_sha": "049f70fbfe8207e1efd4831a6c3e78a38703d473",
       "path": "workspace/alpasim-clean",
       "present": true,
@@ -113,6 +113,7 @@
         "src/driver/src/alpasim_driver/main.py",
         "src/driver/src/alpasim_driver/models/__init__.py",
         "src/driver/src/alpasim_driver/models/base.py",
+        "src/driver/src/alpasim_driver/tests/test_service_flow.py",
         "src/wizard/alpasim_wizard/deployment/docker_compose.py",
         "Dockerfile.amd64",
         "__init__.py",
@@ -126,7 +127,7 @@
     },
     "config": {
       "path": "configs/cvm/core.yaml",
-      "sha256": "c74349cec01cc3c4cb21de60699125b8d7119a7f8d351085198aeb684ea3ccff"
+      "sha256": "f7505f80c8e4ecd02ce53c2ff960031a947ba791be0da10731db52fdc74488df"
     },
     "docker_image": {
       "available": true,
@@ -143,7 +144,7 @@
     "patches": {
       "src/wod2sim/alpasim_overrides/Dockerfile.amd64": "088de1456fb80df5c88f22bb710df29a66992b1ce157033aea6b4ef61d6e0714",
       "src/wod2sim/alpasim_overrides/__init__.py": "59efd2872774597c1995ea2d6d92aafc626390182175f0a94ca5f9ba4af02890",
-      "src/wod2sim/alpasim_overrides/local_checkout.patch": "a010e65459ad9c92045f36711236628e483663a56598198719e59d1e74d34617",
+      "src/wod2sim/alpasim_overrides/local_checkout.patch": "b6b240423a202916e7b90443a1d2293b01aca26b1de1c8271f7b1722011f7876",
       "src/wod2sim/alpasim_overrides/route_waypoints.patch": "b4ee8ecc4aab297426ab5ddfc79507b62b07cd64ceb543bacba985b536bfeb9d",
       "src/wod2sim/alpasim_overrides/src/driver/src/alpasim_driver/models/__init__.py": "c27efe9481527156b9280f7dd6788f6926d92a7156b74942b01f14d173db2537",
       "src/wod2sim/alpasim_overrides/src/wizard/alpasim_wizard/deployment/docker_compose.py": "d3210f973f53cbbdc0ca9634686cdee46d8113e88e5a7b242ee5d775b0bc0191",
@@ -154,9 +155,9 @@
       "version": "Python 3.12.12"
     },
     "repository": {
-      "dirty": false,
-      "dirty_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "git_sha": "7074484e330614caf3852b4300385c2113595dad"
+      "dirty": true,
+      "dirty_diff_sha256": "91ff2f5b777cbef612d43cc79e2d3d75270ac53635565935dfbab2a54db4ffd2",
+      "git_sha": "ba6ea465e31cca5053e3d38b639d7189f0707b0a"
     }
   },
   "run_id": "core_constant_velocity_clipgt-01d503d4-449b-46fc-8d78-9085e70d3554_17_full_contract",
@@ -179,8 +180,8 @@
   "status": "completed",
   "terminal_status": "completed",
   "timestamps": {
-    "ended_at": "2026-07-17T15:49:33",
+    "ended_at": "2026-07-18T13:46:59",
     "source": "run_status",
-    "started_at": "2026-07-17T15:39:59"
+    "started_at": "2026-07-18T13:41:02"
   }
 }

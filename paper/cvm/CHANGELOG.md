@@ -9,10 +9,10 @@
   environment override.
 - Disabled AlpaSim video rendering for CVM closed-loop rows to keep evidence
   collection focused on metrics and audits.
-- Executed 18/18 semantic ablation rows across three scenes, three replicate
-  identifiers, and paired full/command-only route configurations.
-- Executed 36/36 dependency-light core rows across six scenes, three replicate
-  identifiers, and two public baselines.
+- Executed 6/6 semantic ablation rows across three scenes with paired
+  full/command-only route configurations.
+- Executed 12/12 dependency-light core rows across six scenes and two public
+  baselines.
 - Added `semantic_ablation_pairs.csv`, semantic delta summaries, false-block
   counts, and CVM-prefixed paper macros generated from aggregate JSON/CSV.
 - Rebuilt the root `wod2sim.pdf` as the only tracked manuscript PDF.
