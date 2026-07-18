@@ -9,7 +9,7 @@
 
 \input{generated/paper_numbers.tex}
 
-\title{WOD2Sim: Contract-Based System Integration of Dataset-Trained Driving Policies into Distributed Closed-Loop Simulation}
+\title{WOD2Sim: Contract-Validated Integration of WOD-Style Trajectory Policies into Distributed Closed-Loop Simulation}
 
 \author{
 \IEEEauthorblockN{Alba Maria Tellez Fernandez}
@@ -18,7 +18,7 @@ Email: amtellezfernandez@gmail.com}
 }
 
 \hypersetup{
-  pdftitle={WOD2Sim: Contract-Based System Integration of Dataset-Trained Driving Policies into Distributed Closed-Loop Simulation},
+  pdftitle={WOD2Sim: Contract-Validated Integration of WOD-Style Trajectory Policies into Distributed Closed-Loop Simulation},
   pdfauthor={Alba Maria Tellez Fernandez},
   pdfsubject={WOD2Sim contract-validation paper}
 }
@@ -27,25 +27,28 @@ Email: amtellezfernandez@gmail.com}
 \maketitle
 
 \begin{abstract}
-Closed-loop simulation can evaluate a dataset-trained driving policy only if the
-simulator boundary preserves the policy's meaning, timing, runtime state, and evidence.
-WOD2Sim treats that boundary as a contract-based system-integration problem rather than
-as file conversion. It defines five contracts for WOD-style trajectory policies running
-as AlpaSim external drivers: semantic route and scene preservation, temporal trajectory
-adaptation, explicit service lifecycle handling, deployment provenance, and evidence
-validity. The resulting framework provides dependency-light baselines, optional learned
-and actor-aware entry points, manifests, audits, and aggregate reports behind one
-reproducible interface. The strongest current evidence is integration-validity
-evidence, not benchmark superiority. The dependency-light public core executes on all
-configured rows, matched semantic route ablations show that removing route geometry
-changes measured rollout behavior, and the evidence gate rejects those command-proxy
-rows as non-claim-valid so the confound is not misreported as policy quality. Valid
-full-contract rows are retained without false blocking, while missing actor proxies,
-learned checkpoints, restricted scene redistribution, and scenario labels remain
-explicitly reported as blocked or out of scope. The paper therefore makes a narrower
-but technically useful claim: explicit contracts can separate integration failure from
-policy failure before any public policy benchmark is declared. No policy-failure or
-scenario-coverage claim is made.
+Closed-loop simulation improves autonomous-driving development only when the integration
+boundary preserves the policy inputs, timing, lifecycle state, and evidence needed to
+interpret a rollout. WOD2Sim treats WOD-style trajectory-policy execution in AlpaSim as
+a system-integration effectiveness problem rather than a benchmark-score problem. It
+defines five contracts for external-driver integration: semantic route and scene
+preservation, temporal trajectory adaptation, explicit service lifecycle handling,
+deployment provenance, and evidence validity. The implementation provides
+dependency-light baselines, optional learned and actor-aware entry points, launch
+manifests, audits, aggregate reports, and generated paper artifacts behind one
+reproducible interface. In the current contract-validation matrix, the public
+dependency-light core completes all \CVMPublicCoreCompletedRuns{}/\CVMPublicCoreRows{}
+configured closed-loop rows, \CVMFullContractAuditValidRuns{}/
+\CVMFullContractCompletedRuns{} full-contract rollouts pass route and sensor audits,
+and \CVMValidFullContractFalseBlockedRuns{}/
+\CVMValidFullContractFalseBlockDenominator{} valid full-contract rows are falsely
+blocked. Matched semantic ablations complete \CVMSemanticAblationMetricPairs{}/
+\CVMSemanticAblationCompletedPairs{} metric-bearing pairs, and all
+\CVMCommandProxyRejectedRuns{}/\CVMCommandProxyCompletedRuns{} command-proxy route rows
+are rejected as non-claim-valid. The result is a bounded integration claim: explicit
+contracts make valid integrations executable and prevent integration-invalid rows from
+being misreported as policy failures. The paper does not claim policy-benchmark
+quality, learned-policy superiority, or scenario-category coverage.
 \end{abstract}
 
 \section{Introduction}
@@ -68,14 +71,17 @@ scientific claims.
 
 WOD2Sim addresses this problem as system integration. It provides a reference boundary
 for running heterogeneous trajectory policies through AlpaSim's external-driver
-interface while making each boundary assumption inspectable. The central claim is not
+interface while making each boundary assumption inspectable. The effectiveness gain is
+not a higher driving score; it is earlier and auditable attribution of integration
+defects before they are misread as policy behavior. The central claim is therefore not
 that WOD2Sim is a new driving policy or an official WOD benchmark implementation. The
 claim is that dataset-trained policies require explicit semantic, temporal, lifecycle,
 deployment, and evidence contracts before closed-loop results can be interpreted.
 
-This paper asks two questions: which contract mismatches prevent dataset-trained
-policies from operating as reliable simulator services, and can explicit contract
-validation distinguish integration and runtime failures from policy behavior failures?
+This paper asks two integration-effectiveness questions: which contract mismatches
+prevent dataset-trained policies from operating as reliable simulator services, and can
+explicit contract validation distinguish integration and runtime failures from policy
+behavior failures?
 The current repository deliberately separates the public release core from gated
 extensions. The core release exercises dependency-light adapters, route-preservation
 audits, evidence gates, and semantic ablations without requiring learned checkpoints,
@@ -216,8 +222,10 @@ denominator while preventing unexecuted protocols from becoming results.
 \FloatBarrier
 \section{Results}
 
-No complete policy benchmark is claim-valid in the current repository state.
-Table~\ref{tab:main-results} reports the generated core policy status and the
+The primary result is integration effectiveness, not policy ranking. WOD2Sim executes
+the dependency-light public core, audits valid full-contract rollouts without false
+blocking, and rejects route-invalid ablations before they can be treated as policy
+evidence. Table~\ref{tab:main-results} reports the generated core policy status and the
 closed-loop diagnostic metrics currently available for dependency-light policies.
 
 \begin{table}[t]
@@ -281,7 +289,9 @@ measures what the contracts buy on executed closed-loop rows. Completed full-con
 rollouts test whether a valid integration survives the audit without false blocking,
 matched semantic-ablation rows expose a real route-loss confound in closed-loop runs,
 and command-proxy rows test whether the evidence gate rejects invalid route evidence
-instead of letting it masquerade as policy behavior. The generated synthetic lifecycle
+instead of letting it masquerade as policy behavior. These checks answer the integration
+question directly: the contracts make runnable integrations auditable, and they keep
+boundary violations out of policy-attribution claims. The generated synthetic lifecycle
 and fault-localization artifacts remain service-level conformance diagnostics only; they
 are not used as evidence that WOD2Sim is faster, safer, or more correct than a
 functional non-contract wrapper in real simulator stress trials.
@@ -350,6 +360,16 @@ audit and were not falsely blocked by the evidence gate, and
 executed and were rejected as non-claim-valid route evidence. The
 \CVMOptionalGatedBlockedRows{} blocked optional-extension rows remain visible as
 remaining work, not as the primary result.
+
+\section{Future Work}
+
+Future work will complete the optional benchmark path rather than weakening the current
+integration claim. The next steps are to generate scene-matched direct-actor oracle
+proxies, add a redistributable scene subset with authoritative scenario categories,
+package legitimate learned checkpoints, execute the temporal and direct-actor matrices,
+and compare time-to-diagnosis against a functional non-contract wrapper. Those additions
+would support learned-policy, scenario-coverage, and benchmark claims only after their
+rows pass the same contract and evidence gates used here.
 
 \section{Conclusion}
 
