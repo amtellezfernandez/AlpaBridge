@@ -24,8 +24,8 @@ host-specific paths, runtime identifiers, and local simulator state.
 
 - Format: IEEE conference two-column template using `paper/cvm/IEEEtran.cls`.
 - Page size: A4 verified by `mutool info` mediabox `[ 0 0 595.276 841.89 ]`.
-- Page count: 5.
-- PDF size at audit: 122838 bytes.
+- Page count: 6.
+- PDF size at audit: 125548 bytes.
 - Root PDF is the only tracked manuscript PDF.
 
 ## Commands And Targets
@@ -44,7 +44,7 @@ host-specific paths, runtime identifiers, and local simulator state.
 - Simulator adapters and contracts: `src/wod2sim/simulator`.
 - Audit and evidence tools: `src/wod2sim/audit`, `src/wod2sim/neutral`.
 - AlpaSim patches/overrides: `src/wod2sim/alpasim_overrides`.
-- Test directory: `tests` with 23 top-level test files. Runtime pass/skip
+- Test directory: `tests` with 24 top-level test files. Runtime pass/skip
   counts are recorded in [`test_report.md`](test_report.md).
 
 ## Current Evidence Package
@@ -60,11 +60,11 @@ host-specific paths, runtime identifiers, and local simulator state.
 - Synthetic diagnostic rows: 55.
 - Blocked rows: 33, all `direct_actor_oracle_proxy_missing`.
 - Claim-valid policy benchmark rows: 0.
-- Policy-attributable behavior rows: 26.
+- Policy-attributable behavior rows: 42.
 - Policy-attributable failure rows: 0.
-- Completed non-policy diagnostic rows: 71.
-- Non-policy-attributed rows: 95.
-- Aggregate data hash: `941193196ed9a9bee8205bb2737b7c5e7906dd9937a7809c09afa7a1fb6881ef`.
+- Completed non-policy diagnostic rows: 73.
+- Non-policy-attributed rows: 106.
+- Aggregate data hash: `582f451b74d52db721b8e2b5dc906ba8b7e352e9caee4607ebbeb581efac7af9`.
 - Every public run manifest carries pre-audit `failure_attribution`, including
   policy-failure status, claim-valid benchmark status, failure layer/code, and
   the integration-vs-policy attribution rule. Aggregate `summary.json` upgrades

@@ -8,6 +8,7 @@
 | [Evaluation](evaluation.md) | Metrics, baselines, and claim requirements. |
 | [Conformance](conformance.md) | Dependency-light core contract checks. |
 | [Demo](demo.md) | Ungated synthetic evidence demo and claim boundary. |
+| [AlpaSim E2E Challenge compatibility](challenge-compatibility.md) | External-driver compatibility path; not a benchmark claim. |
 | [CLI](cli.md) | Supported public commands. |
 | [Changelog](changelog.md) | Public release history. |
 
