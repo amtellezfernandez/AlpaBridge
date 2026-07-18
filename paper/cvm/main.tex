@@ -191,9 +191,10 @@ ablation, temporal ablation, lifecycle stress, and fault-injection matrices. The
 matrix is configured for three policies and six locally cached front-camera scenes. The
 current launcher does not expose a simulator seed override, so each policy/scene pair is
 counted as one closed-loop execution and the configured identifier is retained only as
-provenance metadata. The semantic and temporal ablations each configure paired route or
-resampling variants on three scenes. Lifecycle stress configures repeated service-harness
-cycles, and the fault matrix enumerates semantic, temporal, lifecycle,
+provenance metadata. The semantic ablation configures paired full-route and
+command-only route variants on fifteen locally cached scenes, while the temporal
+ablation remains a gated direct-actor resampling matrix. Lifecycle stress configures
+repeated service-harness cycles, and the fault matrix enumerates semantic, temporal, lifecycle,
 deployment/plugin-dependency, and evidence injections.
 
 Scene selection is intentionally conservative. \CVMClosedLoopSceneCount{} scenes are
@@ -261,7 +262,11 @@ pairs. Across those pairs, full-contract minus command-only route means are
 progress, \CVMSemanticCollisionAnyDeltaMean{} collision-any, \CVMSemanticOffroadDeltaMean{}
 off-road, and \CVMSemanticPlanDeviationDeltaMean{} plan deviation. These deltas show
 that losing route geometry changes measured rollout behavior, but they are not a
-policy-quality comparison. They are an effectiveness comparison at the semantic
+policy-quality comparison. The aggregate also keeps one completed full-contract
+semantic row outside policy attribution because its audit found a late command-proxy
+route fallback despite successful rollout completion; that is an integration-boundary
+finding, not a policy failure. The semantic rows are therefore an effectiveness
+comparison at the semantic
 integration boundary: a functional command-only wrapper completes
 \CVMNaiveWrapperMetricRuns{}/\CVMCommandProxyCompletedRuns{} metric-bearing rows that a
 non-contract path could incorrectly accept as policy evidence, whereas WOD2Sim rejects

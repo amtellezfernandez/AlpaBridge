@@ -24,6 +24,7 @@ execution:
   alpasim_root: workspace/alpasim-clean
   local_usdz_dir: workspace/alpasim-clean/data/nre-artifacts/local-usdzs-front-camera-15
   scene_preset: front_camera_50scene_public2602
+  scene_limit: 6
   required_docker_image: alpasim-base:0.66.0
   timeout_seconds: 900
   wizard_args:

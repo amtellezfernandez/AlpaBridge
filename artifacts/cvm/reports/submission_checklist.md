@@ -82,7 +82,7 @@ Additional release-specific checks:
 - [x] Every public run manifest carries validated `scene` metadata and
   `scenario_category` without claiming unsupported scenario-category coverage.
 - [x] Aggregate scenario coverage reports 0/6 verified required categories and
-  6 unclassified closed-loop scenes, so no unsupported coverage claim is made.
+  15 unclassified closed-loop scenes, so no unsupported coverage claim is made.
 - [x] `frames.csv` exposes the required public-safe frame-level schema without
   bundling restricted sensor frames or fabricating unavailable frame rows.
 

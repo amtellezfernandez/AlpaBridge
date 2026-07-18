@@ -170,7 +170,7 @@ BASELINE_REPORT_REQUIRED_TERMS = (
     "make cvm-check",
     "make paper-verify",
     "make verify",
-    "310 passed, 14 skipped, and 15 subtests passed",
+    "311 passed, 14 skipped, and 15 subtests passed",
     "62.61% against the configured 33.0% minimum",
 )
 CONTRACT_TEST_AUDIT_REQUIRED_TERMS = (

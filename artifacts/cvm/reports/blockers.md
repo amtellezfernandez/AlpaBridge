@@ -11,7 +11,7 @@
   `eval.video.render_video=false`.
 - Core dependency-light rows completed: 12/12 across `constant_velocity` and
   `route_following`.
-- Semantic ablation completed 6/6 closed-loop rows with 3 matched
+- Semantic ablation completed 30/30 closed-loop rows with 15 matched
   full/command-only pairs.
 - Run manifests now record scene metadata and `scenario_category`; local
   closed-loop scenes remain explicitly unclassified.
@@ -22,7 +22,7 @@
   `direct_actor_oracle_proxy_missing`; the proxy must be scene-matched, and
   adapters reject oracle frames whose `scene_id` does not match the current
   prediction scene.
-- Scene categories remain unverified. Six local 26.02 front-camera scenes are
+- Scene categories remain unverified. Fifteen local 26.02 front-camera scenes are
   selected by availability and recorded as unclassified, not authoritative
   straight/turn/lane-change/traffic category labels.
 - Learned `token_dagger_bc` is excluded because no legitimate local checkpoint
@@ -33,19 +33,22 @@
 
 ## Current Aggregate
 
-- Configured rows: 103.
-- Attempted rows: 79.
-- Completed rows: 79.
-- Closed-loop completed rows: 24.
-- Full-contract audit-valid rows: 18/18.
-- False-blocked valid full-contract rows: 0/18.
-- Command-only rows rejected as non-claim-valid: 6/6.
+- Configured rows: 121.
+- Attempted rows: 97.
+- Completed rows: 97.
+- Closed-loop completed rows: 42.
+- Full-contract audit-valid rows: 26/27.
+- False-blocked valid full-contract rows: 0/26.
+- Command-only rows rejected as non-claim-valid: 15/15.
 - Planned rows: 0.
 - Blocked rows: 24, all `direct_actor_oracle_proxy_missing`.
 
 The release treats the completed public-core and semantic-ablation bullets as
 the integration-effectiveness evidence. The blocked rows are optional gated
 extension work retained for denominator honesty and failure analysis only.
+One completed full-contract semantic row is not audit-valid because 12/199
+frames fell back to `command_proxy`; it is retained as integration evidence and
+excluded from policy attribution rather than treated as a policy failure.
 
 ## Claim Boundary
 

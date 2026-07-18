@@ -49,22 +49,22 @@ host-specific paths, runtime identifiers, and local simulator state.
 
 ## Current Evidence Package
 
-- Configured CVM rows: 103.
+- Configured CVM rows: 121.
 - Public-core rows completed: 12/12 across `constant_velocity` and
   `route_following`.
-- Attempted rows: 79.
-- Completed rows: 79.
-- Closed-loop completed rows: 24.
-- Full-contract audit-valid rows: 18/18.
-- Command-only route rows rejected as non-claim-valid: 6/6.
+- Attempted rows: 97.
+- Completed rows: 97.
+- Closed-loop completed rows: 42.
+- Full-contract audit-valid rows: 26/27.
+- Command-only route rows rejected as non-claim-valid: 15/15.
 - Synthetic diagnostic rows: 55.
 - Blocked rows: 24, all `direct_actor_oracle_proxy_missing`.
 - Claim-valid policy benchmark rows: 0.
-- Policy-attributable behavior rows: 15.
+- Policy-attributable behavior rows: 26.
 - Policy-attributable failure rows: 0.
-- Completed non-policy diagnostic rows: 58.
-- Non-policy-attributed rows: 82.
-- Aggregate data hash: `7fd33c72c2f87a54a2ea856d6bbd3204ba94d276ee950d3333637b678c5425e8`.
+- Completed non-policy diagnostic rows: 71.
+- Non-policy-attributed rows: 95.
+- Aggregate data hash: `941193196ed9a9bee8205bb2737b7c5e7906dd9937a7809c09afa7a1fb6881ef`.
 - Every public run manifest carries pre-audit `failure_attribution`, including
   policy-failure status, claim-valid benchmark status, failure layer/code, and
   the integration-vs-policy attribution rule. Aggregate `summary.json` upgrades
@@ -88,7 +88,7 @@ host-specific paths, runtime identifiers, and local simulator state.
   legitimate local checkpoint hash.
 - Scene categories are recorded but not authoritatively verified from public
   metadata; the generated coverage gate reports 0/6 verified required scenario
-  categories and 6 unclassified closed-loop scenes, so scenario-category
+  categories and 15 unclassified closed-loop scenes, so scenario-category
   coverage is not claimed.
 - Raw local simulator run directories, logs, and environment snapshots are not
   tracked in the public release.

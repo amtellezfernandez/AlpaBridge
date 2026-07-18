@@ -11,10 +11,10 @@ adapter_configs:
   - command_only_route
 execution:
   mode: closed_loop_ablation
-  expected_runs: 12
+  expected_runs: 30
   alpasim_root: workspace/alpasim-clean
   local_usdz_dir: workspace/alpasim-clean/data/nre-artifacts/local-usdzs-front-camera-15
-  scene_limit: 6
+  scene_limit: 15
   required_docker_image: alpasim-base:0.66.0
   timeout_seconds: 900
   wizard_args:

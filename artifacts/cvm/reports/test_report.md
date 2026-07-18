@@ -7,18 +7,18 @@ refresh used the locked `uv run python` environment.
 
 | Command | Result |
 |---|---|
-| `./scripts/build_cvm_paper.sh` | Passed through `make paper-verify`; rebuilt 5-page root `wod2sim.pdf`. |
+| `./scripts/build_cvm_paper.sh` | Passed through `make paper-verify`; rebuilt 6-page root `wod2sim.pdf`. |
 | `uv run python scripts/validate_cvm_submission.py` | Passed, including metadata-backed title/author/affiliation/abstract checks, output-PDF title/author/subject checks, IEEE A4 source-layout checks, parsed PDF A4 MediaBox checks, LaTeX log warnings, canonical-to-paper generated asset sync, generated-table row/source-field value sync, package metadata checks, CI workflow gate checks, community-template claim-boundary checks, public local-reference and image-alt checks, CLI command-documentation drift checks, README visual/graph explanation checks, evaluation-status checks, venue-style benchmark-label checks, unstable generated citation-slug hygiene checks, README attribution-count sync, paper-number macro value sync, claim-evidence-matrix count sync, contract-test audit coverage checks, embedded PDF font descriptors, manifest-level failure-attribution checks, summary-level attribution and scenario-coverage partition checks, generic credential-leak checks, and README/paper claim-boundary checks. |
-| `make paper-verify PYTHON='uv run python'` | Passed: rebuilt 5-page root `wod2sim.pdf` and ran submission validation. |
-| `make conformance PYTHON='uv run python'` | Passed through `make verify`: 310 passed, 14 skipped, 15 subtests passed. |
+| `make paper-verify PYTHON='uv run python'` | Passed: rebuilt 6-page root `wod2sim.pdf` and ran submission validation. |
+| `make conformance PYTHON='uv run python'` | Passed through `make verify`: 311 passed, 14 skipped, 15 subtests passed. |
 | `make demo PYTHON='uv run python'` | Passed: synthetic demo valid with `valid_claim_evidence=false`. |
-| `make cvm-check PYTHON='uv run python'` | Passed: ruff clean, 310 passed, 14 skipped, 15 subtests passed, validation passed. |
-| `make cvm-eval PYTHON='uv run python'` | Expected exit 2: attempted and completed 12 dependency-light public-core rows, completed 6 semantic-ablation rows, and reported 24 optional direct-actor proxy blockers across the mixed core and temporal-ablation matrices. |
-| `uv run python -m pytest -q` | Passed through `make verify`: 310 passed, 14 skipped, 15 subtests passed. |
-| `uv run python -m pytest --cov` | Passed through `make verify`: 310 passed, 14 skipped, total coverage 62.61% against the configured 33.0% minimum. |
+| `make cvm-check PYTHON='uv run python'` | Passed: ruff clean, 311 passed, 14 skipped, 15 subtests passed, validation passed. |
+| `make cvm-eval PYTHON='uv run python'` | Expected exit 2: attempted and completed 12 dependency-light public-core rows, completed 30 semantic-ablation rows, and reported 24 optional direct-actor proxy blockers across the mixed core and temporal-ablation matrices. |
+| `uv run python -m pytest -q` | Passed through `make verify`: 311 passed, 14 skipped, 15 subtests passed. |
+| `uv run python -m pytest --cov` | Passed through `make verify`: 311 passed, 14 skipped, total coverage 62.61% against the configured 33.0% minimum. |
 | `uv run python -m build` | Passed: built source distribution and wheel. |
 | `uv run pre-commit run --all-files` | Passed without modifying files. |
-| `qpdf --check wod2sim.pdf && pdfinfo wod2sim.pdf && pdffonts wod2sim.pdf` | Passed: 5 pages, portrait A4, 140007 bytes, embedded fonts. |
+| `qpdf --check wod2sim.pdf && pdfinfo wod2sim.pdf && pdffonts wod2sim.pdf` | Passed: 6 pages, portrait A4, 125386 bytes, embedded fonts. |
 | `git diff --check` | Run as final whitespace validation. |
 
 Targeted contract selections:

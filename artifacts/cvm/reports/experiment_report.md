@@ -12,25 +12,25 @@ matrix (CVM) evidence.
 | Matrix | Rows | Attempted | Completed | Planned | Blocked | Claim-valid |
 |---|---:|---:|---:|---:|---:|---:|
 | Core closed loop | 18 | 12 | 12 | 0 | 6 | 0 |
-| Semantic ablation | 12 | 12 | 12 | 0 | 0 | 0 |
+| Semantic ablation | 30 | 30 | 30 | 0 | 0 | 0 |
 | Temporal ablation | 18 | 0 | 0 | 0 | 18 | 0 |
 | Lifecycle stress | 40 | 40 | 40 | 0 | 0 | 0 |
 | Fault injection | 15 | 15 | 15 | 0 | 0 | 0 |
-| Total | 103 | 79 | 79 | 0 | 24 | 0 |
+| Total | 121 | 97 | 97 | 0 | 24 | 0 |
 
 ## Integration-Effectiveness Evidence
 
 - Dependency-light public core: 12/12 completed, 12/12 audit-valid, 0 blocked.
-- Full-contract rollouts: 18/18 audit-valid.
-- False-block observations on valid full-contract rows: 0/18.
-- Command-only route rows: 6/6 completed and 6/6 rejected as non-claim-valid.
-- Functional command-only route wrapper baseline: 6/6 rows completed with
+- Full-contract rollouts: 26/27 audit-valid.
+- False-block observations on valid full-contract rows: 0/26.
+- Command-only route rows: 15/15 completed and 15/15 rejected as non-claim-valid.
+- Functional command-only route wrapper baseline: 15/15 rows completed with
   metrics that a non-contract path could accept as policy evidence.
-- Contract-gated route evidence: 6/6 invalid command-only rows rejected,
-  improving attribution on 6 route-invalid rows.
-- Matched semantic pairs: 6/6 metric-bearing pairs.
-- Mean full-contract minus command-only deltas: progress -0.082, relative
-  progress -0.018, collision-any 0.000, off-road 0.000, plan deviation 0.035.
+- Contract-gated route evidence: 15/15 invalid command-only rows rejected,
+  improving attribution on 15 route-invalid rows.
+- Matched semantic pairs: 15/15 metric-bearing pairs.
+- Mean full-contract minus command-only deltas: progress -0.049, relative
+  progress -0.021, collision-any 0.067, off-road 0.000, plan deviation 0.016.
 
 These are route-boundary confound, naive-wrapper comparison, and evidence-gate
 measurements, not policy-superiority claims. The deltas show that removing route
@@ -41,17 +41,22 @@ those same route-invalid rows out of policy-attribution claims. The 24 blocked
 direct-actor/temporal rows are optional gated extension rows retained as
 denominator and blocker context, not public-core dependencies or success
 metrics.
+The non-audit-valid full-contract row is also retained rather than hidden:
+`semantic_ablation_route_following_clipgt-0fd06bc3-1899-4b45-9278-c5c018b3968d_17_full_contract`
+completed with metrics and a valid sensor pipeline, but 12/199 audited frames
+fell back to `command_proxy`, so the route contract correctly keeps that row
+outside policy attribution.
 
 ## Failure Attribution
 
-- Contract-valid closed-loop rows: 18.
-- Integration/evidence-invalid closed-loop rows: 6.
+- Contract-valid closed-loop rows: 26.
+- Integration/evidence-invalid closed-loop rows: 16.
 - Precondition-blocked rows: 24.
 - Synthetic diagnostic rows: 55.
-- Policy-attributable behavior rows: 18.
+- Policy-attributable behavior rows: 26.
 - Policy-attributable failure rows: 0.
-- Completed non-policy diagnostic rows: 61.
-- Non-policy-attributed rows: 85.
+- Completed non-policy diagnostic rows: 71.
+- Non-policy-attributed rows: 95.
 - Claim-valid policy benchmark rows: 0.
 
 Behavior is policy-attributable only after route/sensor audit, lifecycle state,
@@ -65,12 +70,12 @@ passes and the retained failure layer is policy.
 - Every run manifest records `scene_id`, `scenario_category`, asset
   availability, selection rationale, route/interaction feature expectations,
   and license-gating status.
-- The six local closed-loop scenes are marked
+- The 15 local closed-loop scenes are marked
   `available_front_camera_26_02_unclassified` because the public repository does
   not expose authoritative straight/turn/lane-change/traffic/occlusion/merge
   labels.
 - The generated coverage gate reports 0/6 verified required scenario categories
-  and 6 unclassified closed-loop scenes; scenario-category coverage is not
+  and 15 unclassified closed-loop scenes; scenario-category coverage is not
   claimed.
 - Synthetic lifecycle and fault rows are marked as public synthetic harness
   scenes, not closed-loop scene rollouts.

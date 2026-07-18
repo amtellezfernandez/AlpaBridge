@@ -1538,7 +1538,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
                 "| `uv run python -m pytest -q tests/test_validate_cvm_submission.py` | Passed. |\n"
                 "| `make paper-verify PYTHON='uv run python'` | Passed. |\n"
                 "| `make cvm-check PYTHON='uv run python'` | Passed with "
-                "310 passed, 14 skipped, and 15 subtests passed. |\n"
+                "311 passed, 14 skipped, and 15 subtests passed. |\n"
                 "| `make verify` | Passed with 62.61% against the configured 33.0% minimum. |\n",
                 encoding="utf-8",
             )

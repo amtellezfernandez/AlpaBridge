@@ -1,64 +1,64 @@
 {
-  "attempted_runs": 79,
+  "attempted_runs": 97,
   "blocked_runs": 24,
   "blocker_counts": {
     "direct_actor_oracle_proxy_missing": 24
   },
   "claim_valid": false,
-  "closed_loop_audit_valid_runs": 18,
-  "closed_loop_completed_runs": 24,
-  "closed_loop_metric_rows": 24,
+  "closed_loop_audit_valid_runs": 26,
+  "closed_loop_completed_runs": 42,
+  "closed_loop_metric_rows": 42,
   "closed_loop_metrics": {
     "collision_any": {
-      "count": 24,
+      "count": 42,
       "max": 1.0,
-      "mean": 0.833333,
+      "mean": 0.738095,
       "min": 0.0
     },
     "collision_at_fault": {
-      "count": 24,
+      "count": 42,
       "max": 1.0,
-      "mean": 0.333333,
+      "mean": 0.190476,
       "min": 0.0
     },
     "dist_traveled_m": {
-      "count": 24,
+      "count": 42,
       "max": 550.02,
-      "mean": 100.8125,
-      "min": 11.56
+      "mean": 102.438571,
+      "min": 1.54
     },
     "duration_frac_20s": {
-      "count": 24,
+      "count": 42,
       "max": 0.91,
-      "mean": 0.404167,
+      "mean": 0.500714,
       "min": 0.06
     },
     "offroad": {
-      "count": 24,
+      "count": 42,
       "max": 0.0,
       "mean": 0.0,
       "min": 0.0
     },
     "plan_deviation": {
-      "count": 24,
+      "count": 42,
       "max": 1.47,
-      "mean": 0.439167,
-      "min": 0.06
+      "mean": 0.322143,
+      "min": 0.01
     },
     "progress": {
-      "count": 24,
-      "max": 0.92,
-      "mean": 0.394167,
-      "min": 0.16
+      "count": 42,
+      "max": 1.0,
+      "mean": 0.470476,
+      "min": 0.05
     },
     "progress_rel": {
-      "count": 24,
+      "count": 42,
       "max": 0.95,
-      "mean": 0.775833,
-      "min": 0.43
+      "mean": 0.755952,
+      "min": 0.06
     }
   },
-  "completed_runs": 79,
+  "completed_runs": 97,
   "core_policy_results": [
     {
       "action_latency_p95_ms": null,
@@ -103,18 +103,18 @@
       "service_crash_rows": 0
     }
   ],
-  "created_at": "2026-07-18T14:40:03.623703+00:00",
-  "data_hash": "7db98d2efebb442b6f6d8a57019513dd1b6d1319ed30c5ffdcdc94d96e589aa9",
+  "created_at": "2026-07-18T15:50:31.451833+00:00",
+  "data_hash": "941193196ed9a9bee8205bb2737b7c5e7906dd9937a7809c09afa7a1fb6881ef",
   "failed_runs": 0,
   "failure_attribution": {
     "claim_valid_policy_benchmark_rows": 0,
-    "contract_valid_closed_loop_rows": 18,
-    "diagnostic_not_policy_rows": 61,
+    "contract_valid_closed_loop_rows": 26,
+    "diagnostic_not_policy_rows": 71,
     "integration_failure_attributable_rows": 24,
-    "integration_or_evidence_invalid_closed_loop_rows": 6,
-    "non_policy_attributed_rows": 85,
+    "integration_or_evidence_invalid_closed_loop_rows": 16,
+    "non_policy_attributed_rows": 95,
     "planned_not_launched_rows": 0,
-    "policy_behavior_attributable_rows": 18,
+    "policy_behavior_attributable_rows": 26,
     "policy_failure_attributable_rows": 0,
     "precondition_blocked_rows": 24,
     "rule": "Closed-loop behavior can be attributed to the policy only after the semantic route contract, temporal adapter, sensor-freshness audit, lifecycle state, deployment preconditions, and evidence gate pass. Public policy benchmark claims require the stricter benchmark gate. Rows outside the integration gate remain integration, precondition, evidence, or diagnostic records and cannot be counted as policy failures. A policy failure also requires the retained failure layer to be policy.",
@@ -141,23 +141,23 @@
   },
   "failure_rows": 24,
   "integration_effectiveness": {
-    "attribution_improvement_invalid_rows": 6,
-    "contract_invalid_evidence_rejected_runs": 6,
-    "contract_invalid_evidence_rejection_denominator": 6,
+    "attribution_improvement_invalid_rows": 15,
+    "contract_invalid_evidence_rejected_runs": 15,
+    "contract_invalid_evidence_rejection_denominator": 15,
     "contract_invalid_evidence_rejection_rate": 1.0,
-    "full_contract_audit_valid_runs": 18,
-    "full_contract_completed_runs": 18,
-    "functional_naive_wrapper_completed_runs": 6,
-    "functional_naive_wrapper_invalid_acceptance_denominator": 6,
-    "functional_naive_wrapper_invalid_evidence_accepted_runs": 6,
-    "functional_naive_wrapper_metric_runs": 6,
+    "full_contract_audit_valid_runs": 26,
+    "full_contract_completed_runs": 27,
+    "functional_naive_wrapper_completed_runs": 15,
+    "functional_naive_wrapper_invalid_acceptance_denominator": 15,
+    "functional_naive_wrapper_invalid_evidence_accepted_runs": 15,
+    "functional_naive_wrapper_metric_runs": 15,
     "rule": "Integration-effectiveness is measured on executed closed-loop rows: valid full-contract rollouts should pass audit without false blocking, and runnable command-only route wrappers should be rejected as invalid policy evidence when they drop route geometry.",
-    "semantic_ablation_command_proxy_completed_runs": 6,
-    "semantic_ablation_command_proxy_metric_runs": 6,
-    "semantic_ablation_command_proxy_rejected_runs": 6,
-    "semantic_ablation_completed_pairs": 6,
-    "semantic_ablation_metric_pairs": 6,
-    "valid_full_contract_false_block_denominator": 18,
+    "semantic_ablation_command_proxy_completed_runs": 15,
+    "semantic_ablation_command_proxy_metric_runs": 15,
+    "semantic_ablation_command_proxy_rejected_runs": 15,
+    "semantic_ablation_completed_pairs": 15,
+    "semantic_ablation_metric_pairs": 15,
+    "valid_full_contract_false_block_denominator": 26,
     "valid_full_contract_false_block_rate": 0.0,
     "valid_full_contract_false_blocked_runs": 0
   },
@@ -165,7 +165,7 @@
     "core": 18,
     "fault_injection": 15,
     "lifecycle_stress": 40,
-    "semantic_ablation": 12,
+    "semantic_ablation": 30,
     "temporal_ablation": 18
   },
   "planned_runs": 0,
@@ -222,7 +222,7 @@
     "scope_rule": "The public release core is the dependency-light contract adapter path using constant_velocity and route_following. Direct actor-aware planning, learned checkpoint execution, restricted scene redistribution, and a full policy benchmark are optional gated extensions, not release-core dependencies."
   },
   "scenario_coverage": {
-    "closed_loop_scene_count": 6,
+    "closed_loop_scene_count": 15,
     "required_categories": [
       "straight",
       "intersection",
@@ -235,7 +235,7 @@
     "rule": "Scenario-category coverage can be claimed only when authoritative metadata verifies each required category for the retained closed-loop scene set. Availability-selected unclassified scenes count as integration instances, not as coverage evidence.",
     "scenario_category_coverage_claimed": false,
     "scenario_category_coverage_claimed_int": 0,
-    "unclassified_closed_loop_scene_count": 6,
+    "unclassified_closed_loop_scene_count": 15,
     "verified_categories": [],
     "verified_category_count": 0,
     "verified_required_categories": [],
@@ -244,40 +244,40 @@
   "schema": "cvm_aggregate_summary_v1",
   "semantic_ablation_deltas": {
     "collision_any": {
-      "count": 6,
+      "count": 15,
       "max_delta": 1.0,
-      "mean_delta_full_minus_command_only": 0.0,
+      "mean_delta_full_minus_command_only": 0.066667,
       "min_delta": -1.0
     },
     "offroad": {
-      "count": 6,
+      "count": 15,
       "max_delta": 0.0,
       "mean_delta_full_minus_command_only": 0.0,
       "min_delta": 0.0
     },
     "plan_deviation": {
-      "count": 6,
+      "count": 15,
       "max_delta": 1.04,
-      "mean_delta_full_minus_command_only": 0.035,
+      "mean_delta_full_minus_command_only": 0.016,
       "min_delta": -1.15
     },
     "progress": {
-      "count": 6,
+      "count": 15,
       "max_delta": 0.66,
-      "mean_delta_full_minus_command_only": -0.081667,
+      "mean_delta_full_minus_command_only": -0.048667,
       "min_delta": -0.69
     },
     "progress_rel": {
-      "count": 6,
+      "count": 15,
       "max_delta": 0.04,
-      "mean_delta_full_minus_command_only": -0.018333,
-      "min_delta": -0.1
+      "mean_delta_full_minus_command_only": -0.021333,
+      "min_delta": -0.21
     }
   },
   "status_counts": {
     "blocked": 24,
-    "completed": 79
+    "completed": 97
   },
   "synthetic_completed_runs": 55,
-  "total_rows": 103
+  "total_rows": 121
 }
