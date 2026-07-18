@@ -349,6 +349,16 @@ complementary because it gates whether the simulator/policy boundary itself pres
 the assumptions needed to interpret a rollout. WOD2Sim uses AlpaSim as the case study
 because its external-driver boundary makes these contracts explicit.
 
+To test whether the contract layer remains portable beyond the repository's local
+evaluation scripts, WOD2Sim also includes an AlpaSim E2E-style external-driver
+compatibility harness. This path is not reported as a challenge submission or
+leaderboard result. It is an external integration-validation target: the evaluator owns
+the simulator stack, scenes, and metrics, while WOD2Sim records whether route, sensor,
+temporal, lifecycle, deployment, and evidence assumptions still hold behind that
+managed boundary. A successful run would support interface portability; a failed run
+would localize the breakage to a contract layer before any returned metric is treated
+as policy behavior.
+
 The limitations are material. WOD2Sim is not an official Waymo challenge interface,
 does not reconstruct complete WOD worlds, and does not redistribute restricted scene
 assets. The current CVM package has no completed claim-valid benchmark matrix, no
@@ -386,9 +396,11 @@ Future work will complete the optional benchmark path rather than weakening the 
 integration claim. The next steps are to generate scene-matched direct-actor oracle
 proxies, add a redistributable scene subset with authoritative scenario categories,
 package legitimate learned checkpoints, execute the temporal and direct-actor matrices,
-and compare time-to-diagnosis against a functional non-contract wrapper. Those additions
-would support learned-policy, scenario-coverage, and benchmark claims only after their
-rows pass the same contract and evidence gates used here.
+run the external-evaluator compatibility harness against a local or official
+challenge-style evaluation, retain the returned metrics with provenance, and compare
+time-to-diagnosis against a functional non-contract wrapper. Those additions would
+support learned-policy, scenario-coverage, portability, and benchmark claims only after
+their rows pass the same contract and evidence gates used here.
 
 \section{Conclusion}
 
