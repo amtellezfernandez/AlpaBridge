@@ -64,15 +64,15 @@ Public reports use this decision order:
 | Executed, audit-valid, retained by the benchmark gate, and failure layer is `policy` | Policy failure may be assigned. |
 
 The generated aggregate makes the boundary numeric: current artifacts contain
-`15` policy-attributable behavior rows, `0` policy-attributable failure rows,
-`24` integration/precondition blocker rows, and `58` completed non-policy diagnostic rows
+`18` policy-attributable behavior rows, `0` policy-attributable failure rows,
+`24` integration/precondition blocker rows, and `61` completed non-policy diagnostic rows
 that remain non-policy-attributed.
-The success evidence is the completed side of that partition: `15/15`
-full-contract closed-loop rollouts are audit-valid, `0/15` valid
+The success evidence is the completed side of that partition: `18/18`
+full-contract closed-loop rollouts are audit-valid, `0/18` valid
 full-contract rows are false-blocked by the evidence gate, and the semantic
-baseline is comparative: `3/3` runnable command-only route rows produce
+baseline is comparative: `6/6` runnable command-only route rows produce
 metric-bearing evidence that a naive wrapper could accept, while WOD2Sim rejects
-`3/3` as non-claim-valid route evidence.
+`6/6` as non-claim-valid route evidence.
 The `24` blocked rows stay in the denominator as remaining unsupported
 direct-actor/temporal-ablation work.
 

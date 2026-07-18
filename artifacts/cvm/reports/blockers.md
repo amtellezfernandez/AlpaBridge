@@ -33,13 +33,13 @@
 
 ## Current Aggregate
 
-- Configured rows: 97.
-- Attempted rows: 73.
-- Completed rows: 73.
-- Closed-loop completed rows: 18.
-- Full-contract audit-valid rows: 15/15.
-- False-blocked valid full-contract rows: 0/15.
-- Command-only rows rejected as non-claim-valid: 3/3.
+- Configured rows: 103.
+- Attempted rows: 79.
+- Completed rows: 79.
+- Closed-loop completed rows: 24.
+- Full-contract audit-valid rows: 18/18.
+- False-blocked valid full-contract rows: 0/18.
+- Command-only rows rejected as non-claim-valid: 6/6.
 - Planned rows: 0.
 - Blocked rows: 24, all `direct_actor_oracle_proxy_missing`.
 

@@ -12,25 +12,25 @@ matrix (CVM) evidence.
 | Matrix | Rows | Attempted | Completed | Planned | Blocked | Claim-valid |
 |---|---:|---:|---:|---:|---:|---:|
 | Core closed loop | 18 | 12 | 12 | 0 | 6 | 0 |
-| Semantic ablation | 6 | 6 | 6 | 0 | 0 | 0 |
+| Semantic ablation | 12 | 12 | 12 | 0 | 0 | 0 |
 | Temporal ablation | 18 | 0 | 0 | 0 | 18 | 0 |
 | Lifecycle stress | 40 | 40 | 40 | 0 | 0 | 0 |
 | Fault injection | 15 | 15 | 15 | 0 | 0 | 0 |
-| Total | 97 | 73 | 73 | 0 | 24 | 0 |
+| Total | 103 | 79 | 79 | 0 | 24 | 0 |
 
 ## Integration-Effectiveness Evidence
 
 - Dependency-light public core: 12/12 completed, 12/12 audit-valid, 0 blocked.
-- Full-contract rollouts: 15/15 audit-valid.
-- False-block observations on valid full-contract rows: 0/15.
-- Command-only route rows: 3/3 completed and 3/3 rejected as non-claim-valid.
-- Functional command-only route wrapper baseline: 3/3 rows completed with
+- Full-contract rollouts: 18/18 audit-valid.
+- False-block observations on valid full-contract rows: 0/18.
+- Command-only route rows: 6/6 completed and 6/6 rejected as non-claim-valid.
+- Functional command-only route wrapper baseline: 6/6 rows completed with
   metrics that a non-contract path could accept as policy evidence.
-- Contract-gated route evidence: 3/3 invalid command-only rows rejected,
-  improving attribution on 3 route-invalid rows.
-- Matched semantic pairs: 3/3 metric-bearing pairs.
-- Mean full-contract minus command-only deltas: progress -0.243, relative
-  progress 0.007, collision-any 0.333, off-road 0.000, plan deviation 0.353.
+- Contract-gated route evidence: 6/6 invalid command-only rows rejected,
+  improving attribution on 6 route-invalid rows.
+- Matched semantic pairs: 6/6 metric-bearing pairs.
+- Mean full-contract minus command-only deltas: progress -0.082, relative
+  progress -0.018, collision-any 0.000, off-road 0.000, plan deviation 0.035.
 
 These are route-boundary confound, naive-wrapper comparison, and evidence-gate
 measurements, not policy-superiority claims. The deltas show that removing route
@@ -44,14 +44,14 @@ metrics.
 
 ## Failure Attribution
 
-- Contract-valid closed-loop rows: 15.
-- Integration/evidence-invalid closed-loop rows: 3.
+- Contract-valid closed-loop rows: 18.
+- Integration/evidence-invalid closed-loop rows: 6.
 - Precondition-blocked rows: 24.
 - Synthetic diagnostic rows: 55.
-- Policy-attributable behavior rows: 15.
+- Policy-attributable behavior rows: 18.
 - Policy-attributable failure rows: 0.
-- Completed non-policy diagnostic rows: 58.
-- Non-policy-attributed rows: 82.
+- Completed non-policy diagnostic rows: 61.
+- Non-policy-attributed rows: 85.
 - Claim-valid policy benchmark rows: 0.
 
 Behavior is policy-attributable only after route/sensor audit, lifecycle state,
