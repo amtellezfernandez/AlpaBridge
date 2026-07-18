@@ -204,6 +204,30 @@ reports `valid_claim_evidence: false`.
 Live rollouts require x86_64 Linux, Docker, NVIDIA Container Toolkit, a GPU, an
 AlpaSim checkout, and local scene assets.
 
+### WSL GPU Preflight
+
+Dry planning, tests, paper builds, and synthetic diagnostics do not require a
+GPU. Live AlpaSim rollouts do. On Windows/WSL2, verify that WSL can see the
+NVIDIA adapter before running `--execute`:
+
+```bash
+nvidia-smi -L
+docker run --rm --gpus all alpasim-base:0.66.0 nvidia-smi -L
+```
+
+If Windows PowerShell sees the GPU but WSL reports `GPU access blocked by the
+operating system` or `WSL environment detected but no adapters were found`,
+reset the WSL VM from Windows PowerShell and retry:
+
+```powershell
+wsl --shutdown
+wsl -d Ubuntu -- bash -lc "nvidia-smi -L"
+```
+
+If the retry still fails, repair the Windows-side NVIDIA CUDA/WSL driver and
+reboot Windows before launching WOD2Sim. Installing a Linux NVIDIA kernel driver
+inside WSL is not the fix; WSL receives GPU access from the Windows driver.
+
 ```bash
 wod2sim-reproduce \
   --execute \
