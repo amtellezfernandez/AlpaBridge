@@ -723,9 +723,24 @@ def _integration_effectiveness_summary(evidence_rows: list[dict[str, Any]]) -> d
         for row in command_proxy_rows
         if row.get("route_contract_ok") == "false" or row.get("audit_valid") == "false"
     ]
+    command_proxy_metric_rows = [
+        row for row in command_proxy_rows if row.get("metrics_present") == "true"
+    ]
     false_block_denominator = len(full_contract_audit_valid)
     false_blocked = 0
+    invalid_rejection_denominator = len(command_proxy_rows)
+    invalid_rejection_rate = (
+        None
+        if invalid_rejection_denominator == 0
+        else round(len(command_proxy_rejected) / invalid_rejection_denominator, 6)
+    )
     return {
+        "rule": (
+            "Integration-effectiveness is measured on executed closed-loop rows: "
+            "valid full-contract rollouts should pass audit without false blocking, "
+            "and runnable command-only route wrappers should be rejected as invalid "
+            "policy evidence when they drop route geometry."
+        ),
         "full_contract_completed_runs": len(full_contract_rows),
         "full_contract_audit_valid_runs": len(full_contract_audit_valid),
         "valid_full_contract_false_blocked_runs": false_blocked,
@@ -736,7 +751,23 @@ def _integration_effectiveness_summary(evidence_rows: list[dict[str, Any]]) -> d
         "semantic_ablation_completed_pairs": semantic_pairs["completed_pairs"],
         "semantic_ablation_metric_pairs": semantic_pairs["metric_pairs"],
         "semantic_ablation_command_proxy_completed_runs": len(command_proxy_rows),
+        "semantic_ablation_command_proxy_metric_runs": len(command_proxy_metric_rows),
         "semantic_ablation_command_proxy_rejected_runs": len(command_proxy_rejected),
+        "functional_naive_wrapper_completed_runs": len(command_proxy_rows),
+        "functional_naive_wrapper_metric_runs": len(command_proxy_metric_rows),
+        "functional_naive_wrapper_invalid_evidence_accepted_runs": len(
+            command_proxy_metric_rows
+        ),
+        "functional_naive_wrapper_invalid_acceptance_denominator": len(
+            command_proxy_metric_rows
+        ),
+        "contract_invalid_evidence_rejected_runs": len(command_proxy_rejected),
+        "contract_invalid_evidence_rejection_denominator": invalid_rejection_denominator,
+        "contract_invalid_evidence_rejection_rate": invalid_rejection_rate,
+        "attribution_improvement_invalid_rows": min(
+            len(command_proxy_metric_rows),
+            len(command_proxy_rejected),
+        ),
     }
 
 
@@ -928,6 +959,14 @@ def _write_summary_csv(path: Path, summary: dict[str, Any]) -> None:
         "valid_full_contract_false_block_denominator",
         "semantic_ablation_completed_pairs",
         "semantic_ablation_metric_pairs",
+        "semantic_ablation_command_proxy_metric_runs",
+        "functional_naive_wrapper_completed_runs",
+        "functional_naive_wrapper_metric_runs",
+        "functional_naive_wrapper_invalid_evidence_accepted_runs",
+        "functional_naive_wrapper_invalid_acceptance_denominator",
+        "contract_invalid_evidence_rejected_runs",
+        "contract_invalid_evidence_rejection_denominator",
+        "attribution_improvement_invalid_rows",
         "public_core_configured_rows",
         "public_core_completed_runs",
         "public_core_blocked_rows",
@@ -1084,6 +1123,21 @@ def _write_tables(output: Path, summary: dict[str, Any], rows: list[dict[str, st
     command_proxy_rejected = _summary_int(
         effectiveness, "semantic_ablation_command_proxy_rejected_runs"
     )
+    naive_metric_runs = _summary_int(
+        effectiveness, "functional_naive_wrapper_metric_runs"
+    )
+    naive_invalid_accepted = _summary_int(
+        effectiveness, "functional_naive_wrapper_invalid_evidence_accepted_runs"
+    )
+    contract_invalid_rejected = _summary_int(
+        effectiveness, "contract_invalid_evidence_rejected_runs"
+    )
+    contract_invalid_denominator = _summary_int(
+        effectiveness, "contract_invalid_evidence_rejection_denominator"
+    )
+    attribution_improvement_invalid = _summary_int(
+        effectiveness, "attribution_improvement_invalid_rows"
+    )
     attribution = summary.get("failure_attribution", {})
     scenario_coverage = summary.get("scenario_coverage", {})
     closed_loop_scene_count = _summary_int(scenario_coverage, "closed_loop_scene_count")
@@ -1169,7 +1223,10 @@ def _write_tables(output: Path, summary: dict[str, Any], rows: list[dict[str, st
         + f"Full-contract audit-valid rollouts & {full_contract_audit_valid} & {full_contract_completed} \\\\\n"
         + f"Valid full-contract rows accepted & {valid_full_contract_accepted} & {false_block_denominator} \\\\\n"
         + f"Semantic ablation metric pairs & {semantic_metric_pairs} & {semantic_completed_pairs} \\\\\n"
-        + f"Command-proxy rows rejected & {command_proxy_rejected} & {command_proxy_completed} \\\\\n"
+        + f"Naive command-only route rows with metrics & {naive_metric_runs} & {command_proxy_completed} \\\\\n"
+        + f"Naive invalid route evidence accepted & {naive_invalid_accepted} & {naive_metric_runs} \\\\\n"
+        + f"Contract invalid route evidence rejected & {contract_invalid_rejected} & {contract_invalid_denominator} \\\\\n"
+        + f"Invalid-row attribution improvement & {attribution_improvement_invalid} & {contract_invalid_denominator} \\\\\n"
         + f"Policy-behavior diagnostic rows & {policy_behavior_attributable} & {summary['closed_loop_completed_runs']} \\\\\n"
         + f"Verified scenario categories & {verified_required_category_count} & {required_category_count} \\\\\n"
         + "\\bottomrule\n\\end{tabular}\n",
@@ -1233,6 +1290,11 @@ def _write_tables(output: Path, summary: dict[str, Any], rows: list[dict[str, st
         + f"\\newcommand{{\\CVMSemanticAblationMetricPairs}}{{{semantic_metric_pairs}}}\n"
         + f"\\newcommand{{\\CVMCommandProxyCompletedRuns}}{{{command_proxy_completed}}}\n"
         + f"\\newcommand{{\\CVMCommandProxyRejectedRuns}}{{{command_proxy_rejected}}}\n"
+        + f"\\newcommand{{\\CVMNaiveWrapperMetricRuns}}{{{naive_metric_runs}}}\n"
+        + f"\\newcommand{{\\CVMNaiveInvalidAcceptedRuns}}{{{naive_invalid_accepted}}}\n"
+        + f"\\newcommand{{\\CVMContractInvalidRejectedRuns}}{{{contract_invalid_rejected}}}\n"
+        + f"\\newcommand{{\\CVMContractInvalidRejectionDenominator}}{{{contract_invalid_denominator}}}\n"
+        + f"\\newcommand{{\\CVMAttributionImprovementInvalidRows}}{{{attribution_improvement_invalid}}}\n"
         + "\\newcommand{\\CVMSemanticProgressDeltaMean}{"
         + _paper_semantic_delta(summary, "progress")
         + "}\n"

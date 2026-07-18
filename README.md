@@ -69,8 +69,10 @@ The generated aggregate makes the boundary numeric: current artifacts contain
 that remain non-policy-attributed.
 The success evidence is the completed side of that partition: `15/15`
 full-contract closed-loop rollouts are audit-valid, `0/15` valid
-full-contract rows are false-blocked by the evidence gate, and `3/3`
-command-proxy ablation rows are rejected as non-claim-valid route evidence.
+full-contract rows are false-blocked by the evidence gate, and the semantic
+baseline is comparative: `3/3` runnable command-only route rows produce
+metric-bearing evidence that a naive wrapper could accept, while WOD2Sim rejects
+`3/3` as non-claim-valid route evidence.
 The `24` blocked rows stay in the denominator as remaining unsupported
 direct-actor/temporal-ablation work.
 
@@ -257,9 +259,11 @@ make paper-verify
 the same generated tables and figures used by the repository reports, then runs
 the submission validator. The current aggregate remains `claim_valid=false`:
 the public core has completed `12/12` dependency-light rows, semantic ablations
-have executed, direct-actor rows remain optional gated extension blockers, and
-completed closed-loop rows are diagnostic integration-effectiveness evidence
-rather than policy-quality benchmark claims.
+have executed, the command-only route baseline demonstrates the separation
+between integration-invalid evidence and policy evidence, direct-actor rows
+remain optional gated extension blockers, and completed closed-loop rows are
+diagnostic integration-effectiveness evidence rather than policy-quality
+benchmark claims.
 Missing restricted scenes, learned checkpoints, and scene-matched actor proxies
 remain explicit release limitations rather than hidden infrastructure
 assumptions.

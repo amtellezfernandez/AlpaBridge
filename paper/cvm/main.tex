@@ -42,13 +42,16 @@ configured closed-loop rows, \CVMFullContractAuditValidRuns{}/
 \CVMFullContractCompletedRuns{} full-contract rollouts pass route and sensor audits,
 and \CVMValidFullContractFalseBlockedRuns{}/
 \CVMValidFullContractFalseBlockDenominator{} valid full-contract rows are falsely
-blocked. Matched semantic ablations complete \CVMSemanticAblationMetricPairs{}/
-\CVMSemanticAblationCompletedPairs{} metric-bearing pairs, and all
-\CVMCommandProxyRejectedRuns{}/\CVMCommandProxyCompletedRuns{} command-proxy route rows
-are rejected as non-claim-valid. The result is a bounded integration claim: explicit
-contracts make valid integrations executable and prevent integration-invalid rows from
-being misreported as policy failures. The paper does not claim policy-benchmark
-quality, learned-policy superiority, or scenario-category coverage.
+blocked. Against a runnable command-only route wrapper, matched semantic ablations
+complete \CVMSemanticAblationMetricPairs{}/\CVMSemanticAblationCompletedPairs{}
+metric-bearing pairs: the naive wrapper would leave \CVMNaiveInvalidAcceptedRuns{}/
+\CVMNaiveWrapperMetricRuns{} invalid route rows as metric-bearing evidence, while the
+contract gate rejects \CVMContractInvalidRejectedRuns{}/
+\CVMContractInvalidRejectionDenominator{} as non-claim-valid. The result is a bounded
+integration claim: explicit contracts make valid integrations executable and prevent
+integration-invalid rows from being misreported as policy failures. The paper does not
+claim policy-benchmark quality, learned-policy superiority, or scenario-category
+coverage.
 \end{abstract}
 
 \section{Introduction}
@@ -258,8 +261,13 @@ pairs. Across those pairs, full-contract minus command-only route means are
 progress, \CVMSemanticCollisionAnyDeltaMean{} collision-any, \CVMSemanticOffroadDeltaMean{}
 off-road, and \CVMSemanticPlanDeviationDeltaMean{} plan deviation. These deltas show
 that losing route geometry changes measured rollout behavior, but they are not a
-policy-quality comparison: all \CVMCommandProxyCompletedRuns{} command-only rows are
-rejected by the audit because they use command-proxy route evidence. The aggregate keeps
+policy-quality comparison. They are an effectiveness comparison at the semantic
+integration boundary: a functional command-only wrapper completes
+\CVMNaiveWrapperMetricRuns{}/\CVMCommandProxyCompletedRuns{} metric-bearing rows that a
+non-contract path could incorrectly accept as policy evidence, whereas WOD2Sim rejects
+\CVMContractInvalidRejectedRuns{}/\CVMContractInvalidRejectionDenominator{} of those
+invalid route rows and improves attribution on \CVMAttributionImprovementInvalidRows{}
+rows. The aggregate keeps
 \CVMPlannedRuns{} rows as planned/not launched and \CVMBlockedRuns{} rows as true
 precondition or unsupported-ablation blockers.
 
@@ -288,13 +296,15 @@ Table~\ref{tab:integration-checks} is the primary effectiveness evidence because
 measures what the contracts buy on executed closed-loop rows. Completed full-contract
 rollouts test whether a valid integration survives the audit without false blocking,
 matched semantic-ablation rows expose a real route-loss confound in closed-loop runs,
-and command-proxy rows test whether the evidence gate rejects invalid route evidence
-instead of letting it masquerade as policy behavior. These checks answer the integration
-question directly: the contracts make runnable integrations auditable, and they keep
-boundary violations out of policy-attribution claims. The generated synthetic lifecycle
-and fault-localization artifacts remain service-level conformance diagnostics only; they
-are not used as evidence that WOD2Sim is faster, safer, or more correct than a
-functional non-contract wrapper in real simulator stress trials.
+and the command-only baseline tests whether a runnable non-contract wrapper would leave
+invalid route metrics in the evidence stream. The contract gate changes that outcome by
+rejecting the same route-invalid rows as non-claim-valid. These checks answer the
+integration question directly for the semantic boundary: the contracts make runnable
+integrations auditable, and they keep boundary violations out of policy-attribution
+claims. The generated synthetic lifecycle and fault-localization artifacts remain
+service-level conformance diagnostics only; they are not used as evidence that WOD2Sim
+is faster, safer, or more correct than a functional non-contract wrapper in real
+simulator stress trials.
 
 The same aggregate also reports failure attribution. It contains
 \CVMContractValidClosedLoopRows{} contract-valid closed-loop row(s),
@@ -356,8 +366,10 @@ corresponding rows are executed and audited. The supported success claim is narr
 \CVMPublicCoreCompletedRuns{}/\CVMPublicCoreRows{} public-core rows executed,
 \CVMFullContractAuditValidRuns{} full-contract closed-loop rows passed the route/sensor
 audit and were not falsely blocked by the evidence gate, and
-\CVMCommandProxyRejectedRuns{}/\CVMCommandProxyCompletedRuns{} command-proxy route rows
-executed and were rejected as non-claim-valid route evidence. The
+\CVMNaiveWrapperMetricRuns{} runnable command-only route rows produced metrics that a
+naive wrapper could accept, while \CVMContractInvalidRejectedRuns{}/
+\CVMContractInvalidRejectionDenominator{} were rejected as non-claim-valid route
+evidence by the contract gate. The
 \CVMOptionalGatedBlockedRows{} blocked optional-extension rows remain visible as
 remaining work, not as the primary result.
 

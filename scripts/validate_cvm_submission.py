@@ -297,6 +297,20 @@ CLAIM_MATRIX_SUMMARY_LINES: tuple[tuple[str, tuple[str, ...]], ...] = (
         ),
     ),
     (
+        "Functional naive-wrapper invalid rows accepted",
+        (
+            "integration_effectiveness.functional_naive_wrapper_invalid_evidence_accepted_runs",
+            "integration_effectiveness.functional_naive_wrapper_invalid_acceptance_denominator",
+        ),
+    ),
+    (
+        "Contract-invalid route evidence rejected",
+        (
+            "integration_effectiveness.contract_invalid_evidence_rejected_runs",
+            "integration_effectiveness.contract_invalid_evidence_rejection_denominator",
+        ),
+    ),
+    (
         "Closed-loop unique scenes",
         ("scenario_coverage.closed_loop_scene_count",),
     ),
@@ -436,6 +450,26 @@ PAPER_NUMBER_JSON_FIELDS: tuple[tuple[str, str], ...] = (
         "CVMCommandProxyRejectedRuns",
         "integration_effectiveness.semantic_ablation_command_proxy_rejected_runs",
     ),
+    (
+        "CVMNaiveWrapperMetricRuns",
+        "integration_effectiveness.functional_naive_wrapper_metric_runs",
+    ),
+    (
+        "CVMNaiveInvalidAcceptedRuns",
+        "integration_effectiveness.functional_naive_wrapper_invalid_evidence_accepted_runs",
+    ),
+    (
+        "CVMContractInvalidRejectedRuns",
+        "integration_effectiveness.contract_invalid_evidence_rejected_runs",
+    ),
+    (
+        "CVMContractInvalidRejectionDenominator",
+        "integration_effectiveness.contract_invalid_evidence_rejection_denominator",
+    ),
+    (
+        "CVMAttributionImprovementInvalidRows",
+        "integration_effectiveness.attribution_improvement_invalid_rows",
+    ),
     ("CVMFailedRuns", "failed_runs"),
     ("CVMBlockedRuns", "blocked_runs"),
     ("CVMSyntheticRuns", "synthetic_completed_runs"),
@@ -492,6 +526,12 @@ GENERATED_TABLE_JSON_FIELDS: tuple[str, ...] = (
     "integration_effectiveness.semantic_ablation_metric_pairs",
     "integration_effectiveness.semantic_ablation_command_proxy_completed_runs",
     "integration_effectiveness.semantic_ablation_command_proxy_rejected_runs",
+    "integration_effectiveness.functional_naive_wrapper_metric_runs",
+    "integration_effectiveness.functional_naive_wrapper_invalid_evidence_accepted_runs",
+    "integration_effectiveness.functional_naive_wrapper_invalid_acceptance_denominator",
+    "integration_effectiveness.contract_invalid_evidence_rejected_runs",
+    "integration_effectiveness.contract_invalid_evidence_rejection_denominator",
+    "integration_effectiveness.attribution_improvement_invalid_rows",
     "release_scope.public_core_configured_rows",
     "release_scope.public_core_completed_runs",
     "release_scope.public_core_blocked_rows",
@@ -1879,14 +1919,44 @@ def _expected_ablations_rows(summary: dict[str, object]) -> list[str]:
             _required_int(summary, "integration_effectiveness.semantic_ablation_completed_pairs"),
         ),
         _table_row(
-            "Command-proxy rows rejected",
-            _required_int(
-                summary,
-                "integration_effectiveness.semantic_ablation_command_proxy_rejected_runs",
-            ),
+            "Naive command-only route rows with metrics",
+            _required_int(summary, "integration_effectiveness.functional_naive_wrapper_metric_runs"),
             _required_int(
                 summary,
                 "integration_effectiveness.semantic_ablation_command_proxy_completed_runs",
+            ),
+        ),
+        _table_row(
+            "Naive invalid route evidence accepted",
+            _required_int(
+                summary,
+                "integration_effectiveness.functional_naive_wrapper_invalid_evidence_accepted_runs",
+            ),
+            _required_int(
+                summary,
+                "integration_effectiveness.functional_naive_wrapper_invalid_acceptance_denominator",
+            ),
+        ),
+        _table_row(
+            "Contract invalid route evidence rejected",
+            _required_int(
+                summary,
+                "integration_effectiveness.contract_invalid_evidence_rejected_runs",
+            ),
+            _required_int(
+                summary,
+                "integration_effectiveness.contract_invalid_evidence_rejection_denominator",
+            ),
+        ),
+        _table_row(
+            "Invalid-row attribution improvement",
+            _required_int(
+                summary,
+                "integration_effectiveness.attribution_improvement_invalid_rows",
+            ),
+            _required_int(
+                summary,
+                "integration_effectiveness.contract_invalid_evidence_rejection_denominator",
             ),
         ),
         _table_row(

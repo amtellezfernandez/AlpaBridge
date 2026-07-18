@@ -179,6 +179,50 @@ class AggregateCVMTests(unittest.TestCase):
         self.assertEqual(2, summary["diagnostic_not_policy_rows"])
         self.assertEqual(3, summary["non_policy_attributed_rows"])
 
+    def test_integration_effectiveness_counts_functional_naive_route_wrapper(self) -> None:
+        module = _load_module()
+        evidence = [
+            {
+                "run_id": "semantic_route_following_scene-a_17_full_contract",
+                "matrix": "semantic_ablation",
+                "policy": "route_following",
+                "scene_id": "scene-a",
+                "seed": "17",
+                "adapter_config": "full_contract",
+                "audit_valid": "true",
+                "route_contract_ok": "true",
+                "metrics_present": "true",
+                "progress": "0.25",
+            },
+            {
+                "run_id": "semantic_route_following_scene-a_17_command_only_route",
+                "matrix": "semantic_ablation",
+                "policy": "route_following",
+                "scene_id": "scene-a",
+                "seed": "17",
+                "adapter_config": "command_only_route",
+                "audit_valid": "false",
+                "route_contract_ok": "false",
+                "metrics_present": "true",
+                "progress": "0.10",
+            },
+        ]
+
+        summary = module._integration_effectiveness_summary(evidence)
+
+        self.assertEqual(1, summary["full_contract_completed_runs"])
+        self.assertEqual(1, summary["full_contract_audit_valid_runs"])
+        self.assertEqual(0, summary["valid_full_contract_false_blocked_runs"])
+        self.assertEqual(1, summary["semantic_ablation_metric_pairs"])
+        self.assertEqual(1, summary["functional_naive_wrapper_metric_runs"])
+        self.assertEqual(
+            1,
+            summary["functional_naive_wrapper_invalid_evidence_accepted_runs"],
+        )
+        self.assertEqual(1, summary["contract_invalid_evidence_rejected_runs"])
+        self.assertEqual(1.0, summary["contract_invalid_evidence_rejection_rate"])
+        self.assertEqual(1, summary["attribution_improvement_invalid_rows"])
+
     def test_release_scope_separates_public_core_from_gated_extensions(self) -> None:
         module = _load_module()
         rows = [

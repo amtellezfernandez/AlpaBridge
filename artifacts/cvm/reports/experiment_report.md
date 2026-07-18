@@ -24,16 +24,23 @@ matrix (CVM) evidence.
 - Full-contract rollouts: 15/15 audit-valid.
 - False-block observations on valid full-contract rows: 0/15.
 - Command-only route rows: 3/3 completed and 3/3 rejected as non-claim-valid.
+- Functional command-only route wrapper baseline: 3/3 rows completed with
+  metrics that a non-contract path could accept as policy evidence.
+- Contract-gated route evidence: 3/3 invalid command-only rows rejected,
+  improving attribution on 3 route-invalid rows.
 - Matched semantic pairs: 3/3 metric-bearing pairs.
 - Mean full-contract minus command-only deltas: progress -0.243, relative
   progress 0.007, collision-any 0.333, off-road 0.000, plan deviation 0.353.
 
-These are route-boundary confound and evidence-gate measurements, not
-policy-superiority claims. The deltas show that removing route geometry changes
-measured behavior and that the evidence gate prevents command-only rows from
-being treated as valid policy evidence. The 24 blocked direct-actor/temporal
-rows are optional gated extension rows retained as denominator and blocker
-context, not public-core dependencies or success metrics.
+These are route-boundary confound, naive-wrapper comparison, and evidence-gate
+measurements, not policy-superiority claims. The deltas show that removing route
+geometry changes measured behavior. The baseline comparison shows the
+integration-effectiveness effect supported by the current release: a runnable
+command-only wrapper produces metric-bearing rows, while the contract gate keeps
+those same route-invalid rows out of policy-attribution claims. The 24 blocked
+direct-actor/temporal rows are optional gated extension rows retained as
+denominator and blocker context, not public-core dependencies or success
+metrics.
 
 ## Failure Attribution
 
@@ -113,7 +120,8 @@ fabricated.
 ## Interpretation
 
 The current aggregate supports a bounded integration-effectiveness claim for
-the completed dependency-light public core, route-boundary preservation, and
-evidence-gate rejection. It does not support a complete direct-actor temporal
-ablation, learned-policy result, policy-quality comparison, or official Waymo
+the completed dependency-light public core, route-boundary preservation, a
+functional command-only route baseline comparison, and evidence-gate rejection.
+It does not support a complete direct-actor temporal ablation, learned-policy
+result, policy-quality comparison, timing-effort comparison, or official Waymo
 benchmark claim.
