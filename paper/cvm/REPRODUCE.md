@@ -51,7 +51,7 @@ The command-only route arm is explicit and non-default:
 `WOD2SIM_ROUTE_CONTRACT_MODE=command_only_route`. AlpaSim video rendering is
 disabled in CVM configs with `eval.video.render_video=false`.
 
-The `seed` column is a configured replicate identifier. It is recorded in
+The `seed` column is a configured execution identifier. It is recorded in
 manifests and run IDs, but it is not yet forwarded as a deterministic AlpaSim
 runtime seed override. Runtime seed metadata is logged when the patched
 external-driver input exposes it.
@@ -81,26 +81,26 @@ the title, author block, PDF subject, or abstract text intentionally changes.
 
 ## Current Claim Boundary
 
-- Configured rows: 145.
-- Public-core rows completed: 36/36.
-- Attempted rows: 109.
-- Completed rows: 109.
-- Closed-loop completed rows: 54.
-- Full-contract rows audit-valid: 45/45.
-- Valid full-contract false-blocked rows: 0/45.
-- Matched semantic metric pairs: 9/9.
-- Command-only rows rejected as non-claim-valid: 9/9.
+- Configured rows: 97.
+- Public-core rows completed: 12/12.
+- Attempted rows: 73.
+- Completed rows: 73.
+- Closed-loop completed rows: 18.
+- Full-contract rows audit-valid: 15/15.
+- Valid full-contract false-blocked rows: 0/15.
+- Matched semantic metric pairs: 3/3.
+- Command-only rows rejected as non-claim-valid: 3/3.
 - Planned rows: 0.
-- Blocked rows: 36.
+- Blocked rows: 24.
 - Claim-valid benchmark matrix: 0.
 
 The current aggregate supports a completed dependency-light public core,
-completed full-contract integration checks, bounded semantic route-boundary
-confound evidence, and an evidence-gate false-block claim. Blocked rows remain
-optional gated extension denominator/context only. The aggregate does not
-support direct-actor temporal ablation, learned-policy result,
-scenario-category coverage, restricted scene redistribution, or policy-quality
-comparison.
+completed full-contract integration checks, and bounded semantic
+route-boundary confound evidence. It does not support a complete public
+benchmark. Blocked rows remain optional gated extension denominator/context
+only. The aggregate does not support direct-actor temporal ablation,
+learned-policy result, scenario-category coverage, restricted scene
+redistribution, or policy-quality comparison.
 
 Failure attribution is explicit in `artifacts/cvm/results/summary.json` under
 `failure_attribution`. A behavior row is policy-attributable only after route,

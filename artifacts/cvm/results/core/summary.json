@@ -1,21 +1,21 @@
 {
-  "attempted": 36,
-  "blocked": 18,
+  "attempted": 12,
+  "blocked": 6,
   "blocker_counts": {
-    "direct_actor_oracle_proxy_missing": 18
+    "direct_actor_oracle_proxy_missing": 6
   },
   "blockers": [],
   "claim_valid": false,
-  "completed": 36,
+  "completed": 12,
   "config": "configs/cvm/core.yaml",
-  "created_at": "2026-07-17T17:07:34.301320+00:00",
-  "expected_runs": 54,
+  "created_at": "2026-07-17T17:07:34.300268+00:00",
+  "expected_runs": 18,
   "failed": 0,
   "failure_code_counts": {
-    "direct_actor_oracle_proxy_missing": 18
+    "direct_actor_oracle_proxy_missing": 6
   },
   "matrix": "core",
   "planned": 0,
-  "rows": 54,
+  "rows": 18,
   "schema": "cvm_matrix_summary_v1"
 }

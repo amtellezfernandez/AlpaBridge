@@ -9,9 +9,9 @@
   `WOD2SIM_ROUTE_CONTRACT_MODE=command_only_route`.
 - AlpaSim video rendering is disabled for CVM rows with
   `eval.video.render_video=false`.
-- Core dependency-light rows completed: 36/36 across `constant_velocity` and
+- Core dependency-light rows completed: 12/12 across `constant_velocity` and
   `route_following`.
-- Semantic ablation completed 18/18 closed-loop rows with 9 matched
+- Semantic ablation completed 6/6 closed-loop rows with 3 matched
   full/command-only pairs.
 - Run manifests now record scene metadata and `scenario_category`; local
   closed-loop scenes remain explicitly unclassified.
@@ -33,15 +33,15 @@
 
 ## Current Aggregate
 
-- Configured rows: 145.
-- Attempted rows: 109.
-- Completed rows: 109.
-- Closed-loop completed rows: 54.
-- Full-contract audit-valid rows: 45/45.
-- False-blocked valid full-contract rows: 0/45.
-- Command-only rows rejected as non-claim-valid: 9/9.
+- Configured rows: 97.
+- Attempted rows: 73.
+- Completed rows: 73.
+- Closed-loop completed rows: 18.
+- Full-contract audit-valid rows: 15/15.
+- False-blocked valid full-contract rows: 0/15.
+- Command-only rows rejected as non-claim-valid: 3/3.
 - Planned rows: 0.
-- Blocked rows: 36, all `direct_actor_oracle_proxy_missing`.
+- Blocked rows: 24, all `direct_actor_oracle_proxy_missing`.
 
 The release treats the completed public-core and semantic-ablation bullets as
 the integration-effectiveness evidence. The blocked rows are optional gated

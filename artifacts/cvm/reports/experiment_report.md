@@ -11,40 +11,40 @@ matrix (CVM) evidence.
 
 | Matrix | Rows | Attempted | Completed | Planned | Blocked | Claim-valid |
 |---|---:|---:|---:|---:|---:|---:|
-| Core closed loop | 54 | 36 | 36 | 0 | 18 | 0 |
-| Semantic ablation | 18 | 18 | 18 | 0 | 0 | 0 |
+| Core closed loop | 18 | 12 | 12 | 0 | 6 | 0 |
+| Semantic ablation | 6 | 6 | 6 | 0 | 0 | 0 |
 | Temporal ablation | 18 | 0 | 0 | 0 | 18 | 0 |
 | Lifecycle stress | 40 | 40 | 40 | 0 | 0 | 0 |
 | Fault injection | 15 | 15 | 15 | 0 | 0 | 0 |
-| Total | 145 | 109 | 109 | 0 | 36 | 0 |
+| Total | 97 | 73 | 73 | 0 | 24 | 0 |
 
 ## Integration-Effectiveness Evidence
 
-- Dependency-light public core: 36/36 completed, 36/36 audit-valid, 0 blocked.
-- Full-contract rollouts: 45/45 audit-valid.
-- False-block observations on valid full-contract rows: 0/45.
-- Command-only route rows: 9/9 completed and 9/9 rejected as non-claim-valid.
-- Matched semantic pairs: 9/9 metric-bearing pairs.
+- Dependency-light public core: 12/12 completed, 12/12 audit-valid, 0 blocked.
+- Full-contract rollouts: 15/15 audit-valid.
+- False-block observations on valid full-contract rows: 0/15.
+- Command-only route rows: 3/3 completed and 3/3 rejected as non-claim-valid.
+- Matched semantic pairs: 3/3 metric-bearing pairs.
 - Mean full-contract minus command-only deltas: progress -0.243, relative
   progress 0.007, collision-any 0.333, off-road 0.000, plan deviation 0.353.
 
 These are route-boundary confound and evidence-gate measurements, not
 policy-superiority claims. The deltas show that removing route geometry changes
 measured behavior and that the evidence gate prevents command-only rows from
-being treated as valid policy evidence. The 36 blocked direct-actor/temporal
+being treated as valid policy evidence. The 24 blocked direct-actor/temporal
 rows are optional gated extension rows retained as denominator and blocker
 context, not public-core dependencies or success metrics.
 
 ## Failure Attribution
 
-- Contract-valid closed-loop rows: 45.
-- Integration/evidence-invalid closed-loop rows: 9.
-- Precondition-blocked rows: 36.
+- Contract-valid closed-loop rows: 15.
+- Integration/evidence-invalid closed-loop rows: 3.
+- Precondition-blocked rows: 24.
 - Synthetic diagnostic rows: 55.
-- Policy-attributable behavior rows: 45.
+- Policy-attributable behavior rows: 15.
 - Policy-attributable failure rows: 0.
-- Completed non-policy diagnostic rows: 64.
-- Non-policy-attributed rows: 100.
+- Completed non-policy diagnostic rows: 58.
+- Non-policy-attributed rows: 82.
 - Claim-valid policy benchmark rows: 0.
 
 Behavior is policy-attributable only after route/sensor audit, lifecycle state,
@@ -70,7 +70,7 @@ passes and the retained failure layer is policy.
 
 ## Remaining Blockers
 
-- `direct_actor_oracle_proxy_missing`: 36 optional gated rows remain blocked
+- `direct_actor_oracle_proxy_missing`: 24 optional gated rows remain blocked
   across direct-actor rows in the mixed core matrix and the temporal-ablation
   matrix. The required proxy must be scene-matched; adapters now reject oracle
   frames whose `scene_id` differs from the current prediction scene.

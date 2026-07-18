@@ -4,13 +4,14 @@ description: Route-semantics ablation comparing full route geometry to command-o
 scene_manifest: artifacts/cvm/manifests/scene_manifest.yaml
 policies:
   - route_following
-seeds: [17, 29, 43]
+# The configured value is an execution identifier, not an AlpaSim seed.
+seeds: [17]
 adapter_configs:
   - full_contract
   - command_only_route
 execution:
   mode: closed_loop_ablation
-  expected_runs: 18
+  expected_runs: 6
   alpasim_root: workspace/alpasim-clean
   local_usdz_dir: workspace/alpasim-clean/data/nre-artifacts/local-usdzs-front-camera-15
   scene_limit: 3

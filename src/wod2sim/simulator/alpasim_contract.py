@@ -59,12 +59,21 @@ class SensorFreshnessGuard:
 
     def __init__(self, model_name: str) -> None:
         self._model_name = model_name
+        self._last_session_uuid: str | None = None
         self._last_camera_timestamp_us: int | None = None
         self._last_camera_fingerprint: int | None = None
         self._last_pose_signature: tuple[float, float, float] | None = None
         self._last_diagnostics: dict[str, Any] | None = None
 
     def validate(self, prediction_input: Any) -> dict[str, Any]:
+        session_uuid = _prediction_session_uuid(prediction_input)
+        if (
+            session_uuid is not None
+            and self._last_session_uuid is not None
+            and session_uuid != self._last_session_uuid
+        ):
+            self._reset_session_state()
+        self._last_session_uuid = session_uuid
         camera_timestamp_us = _latest_camera_timestamp_us(prediction_input)
         camera_fingerprint = _latest_camera_fingerprint(prediction_input)
         pose_signature = _current_pose_signature(prediction_input)
@@ -152,6 +161,12 @@ class SensorFreshnessGuard:
         self._last_camera_timestamp_us = camera_timestamp_us
         self._last_camera_fingerprint = camera_fingerprint
 
+    def _reset_session_state(self) -> None:
+        self._last_camera_timestamp_us = None
+        self._last_camera_fingerprint = None
+        self._last_pose_signature = None
+        self._last_diagnostics = None
+
 
 def prediction_scene_id(prediction_input: Any) -> str | None:
     value = getattr(prediction_input, "scene_id", None)
@@ -185,6 +200,14 @@ def prediction_runtime_metadata(prediction_input: Any) -> dict[str, Any]:
             if value is not None:
                 metadata[output_key] = _json_scalar(value)
     return metadata
+
+
+def _prediction_session_uuid(prediction_input: Any) -> str | None:
+    session_uuid = prediction_runtime_metadata(prediction_input).get("session_uuid")
+    if session_uuid is None:
+        return None
+    text = str(session_uuid).strip()
+    return text or None
 
 
 def resample_trajectory(

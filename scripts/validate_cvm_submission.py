@@ -170,8 +170,8 @@ BASELINE_REPORT_REQUIRED_TERMS = (
     "make cvm-check",
     "make paper-verify",
     "make verify",
-    "309 passed, 14 skipped, and 15 subtests passed",
-    "62.45% against the configured 33.0% minimum",
+    "310 passed, 14 skipped, and 15 subtests passed",
+    "62.61% against the configured 33.0% minimum",
 )
 CONTRACT_TEST_AUDIT_REQUIRED_TERMS = (
     "# Contract Test Audit",
@@ -2229,7 +2229,6 @@ def _repository_inventory_failures(*, repo_root: Path) -> list[str]:
     if re.search(r"\b\d+\s+passing\s+dependency-light\s+conformance\s+tests\b", normalized):
         failures.append(f"repository_inventory_stale_pass_count:{path.relative_to(root)}")
     return failures
-
 
 def _cvm_acronym_definition_failures(*, path: Path, text: str, root: Path) -> list[str]:
     try:

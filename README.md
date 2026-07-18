@@ -64,14 +64,14 @@ Public reports use this decision order:
 | Executed, audit-valid, retained by the benchmark gate, and failure layer is `policy` | Policy failure may be assigned. |
 
 The generated aggregate makes the boundary numeric: current artifacts contain
-`45` policy-attributable behavior rows, `0` policy-attributable failure rows,
-`36` integration/precondition blocker rows, and `64` completed non-policy diagnostic rows
+`15` policy-attributable behavior rows, `0` policy-attributable failure rows,
+`24` integration/precondition blocker rows, and `58` completed non-policy diagnostic rows
 that remain non-policy-attributed.
-The success evidence is the completed side of that partition: `45/45`
-full-contract closed-loop rollouts are audit-valid, `0/45` valid
-full-contract rows are false-blocked by the evidence gate, and `9/9`
+The success evidence is the completed side of that partition: `15/15`
+full-contract closed-loop rollouts are audit-valid, `0/15` valid
+full-contract rows are false-blocked by the evidence gate, and `3/3`
 command-proxy ablation rows are rejected as non-claim-valid route evidence.
-The `36` blocked rows stay in the denominator as remaining unsupported
+The `24` blocked rows stay in the denominator as remaining unsupported
 direct-actor/temporal-ablation work.
 
 ## Scenario Coverage Boundary
@@ -160,11 +160,13 @@ they are not release-core dependencies:
 - All adapters share route propagation, sensor checks, launch tooling, and audits.
 
 This release contains no public checkpoint, does not redistribute restricted
-scene assets, and makes no policy benchmark claim. Missing learned checkpoints,
-direct-actor proxies, and redistributable scene subsets block only optional
-extension or benchmark claims, not the public core. Claim-valid audits require
-executed rollouts with route waypoints reaching every driver-log frame;
-command-proxy route fallback is diagnostic only.
+scene assets, and does not provide a complete public benchmark. Missing learned
+checkpoints, scene-matched direct-actor proxies, and redistributable scene
+subsets block learned-policy, actor-aware, and benchmark claims. They do not
+block the dependency-light public core, which is the narrower executable
+release surface. Claim-valid audits require executed rollouts with route
+waypoints reaching every driver-log frame; command-proxy route fallback is
+diagnostic only.
 
 ## Install
 
@@ -254,10 +256,13 @@ make paper-verify
 `make paper-verify` rebuilds the canonical [`wod2sim.pdf`](wod2sim.pdf) from
 the same generated tables and figures used by the repository reports, then runs
 the submission validator. The current aggregate remains `claim_valid=false`:
-the public core has completed `36/36` dependency-light rows, semantic ablations
+the public core has completed `12/12` dependency-light rows, semantic ablations
 have executed, direct-actor rows remain optional gated extension blockers, and
 completed closed-loop rows are diagnostic integration-effectiveness evidence
 rather than policy-quality benchmark claims.
+Missing restricted scenes, learned checkpoints, and scene-matched actor proxies
+remain explicit release limitations rather than hidden infrastructure
+assumptions.
 The detailed test-to-contract traceability map is tracked in
 [`artifacts/cvm/reports/contract_test_audit.md`](artifacts/cvm/reports/contract_test_audit.md).
 

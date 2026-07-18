@@ -99,7 +99,13 @@ def main() -> int:
     if global_blockers:
         next_rows = []
         for row in rows:
-            preserved = _resume_preserved_row(existing_rows, row, execute=args.execute)
+            preserved = _resume_preserved_row(
+                existing_rows,
+                row,
+                execute=args.execute,
+                execution_mode=_execution_mode(config),
+                output=output,
+            )
             if preserved is not None:
                 next_rows.append(preserved)
                 preserved_manifest_run_ids.add(row["run_id"])
@@ -110,7 +116,13 @@ def main() -> int:
         next_rows = []
         mode = _execution_mode(config)
         for row in rows:
-            preserved = _resume_preserved_row(existing_rows, row, execute=args.execute)
+            preserved = _resume_preserved_row(
+                existing_rows,
+                row,
+                execute=args.execute,
+                execution_mode=mode,
+                output=output,
+            )
             if preserved is not None:
                 next_rows.append(preserved)
                 preserved_manifest_run_ids.add(row["run_id"])
@@ -244,12 +256,23 @@ def _resume_preserved_row(
     row: dict[str, str],
     *,
     execute: bool,
+    execution_mode: str = "",
+    output: Path | None = None,
 ) -> dict[str, str] | None:
     existing = existing_rows.get(row["run_id"])
     if existing is None:
         return None
     status = existing.get("status", "")
     if status == "completed" and existing.get("completed") == "true":
+        if execution_mode.startswith("closed_loop"):
+            if output is None:
+                return None
+            run_status = _load_json_dict(_run_output_dir(output, row) / "run-status.json")
+            if not (
+                run_status.get("state") == "completed"
+                and run_status.get("aggregate_status") == "completed"
+            ):
+                return None
         return _normalized_existing_row(existing, row)
     if not execute and status in {"failed", "blocked"}:
         return _normalized_existing_row(existing, row)
