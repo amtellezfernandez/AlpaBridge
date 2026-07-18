@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 import math
 import os
 import signal
 import threading
+import time
 from concurrent import futures
 from dataclasses import dataclass, field
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
@@ -40,6 +43,54 @@ class ChallengeSessionState:
     command: Any = DriveCommand.STRAIGHT
 
 
+class ChallengeTelemetry:
+    def __init__(self, path: str | Path | None) -> None:
+        self._path = Path(path).expanduser() if path else None
+        self._rows: list[dict[str, Any]] = []
+        self._lock = threading.Lock()
+
+    def record(self, row: dict[str, Any]) -> None:
+        payload = {
+            "schema": "wod2sim_challenge_telemetry_v1",
+            "created_ns": time.time_ns(),
+            **row,
+        }
+        with self._lock:
+            self._rows.append(payload)
+            if self._path is None:
+                return
+            self._path.parent.mkdir(parents=True, exist_ok=True)
+            with self._path.open("a", encoding="utf-8") as handle:
+                handle.write(json.dumps(payload, sort_keys=True) + "\n")
+
+    def summary(self) -> dict[str, Any]:
+        with self._lock:
+            rows = list(self._rows)
+        drive_rows = [row for row in rows if row.get("event") == "drive"]
+        latencies = [float(row["latency_ms"]) for row in drive_rows if row.get("latency_ms") is not None]
+        missed = [row for row in drive_rows if row.get("latency_target_met") is False]
+        route_sources = sorted(
+            {
+                str(row.get("route_source"))
+                for row in drive_rows
+                if row.get("route_source") not in (None, "")
+            }
+        )
+        return {
+            "schema": "wod2sim_challenge_telemetry_summary_v1",
+            "event_count": len(rows),
+            "drive_count": len(drive_rows),
+            "latency_ms": {
+                "p50": _percentile(latencies, 50.0),
+                "p95": _percentile(latencies, 95.0),
+                "max": max(latencies) if latencies else None,
+            },
+            "latency_target_missed": len(missed),
+            "route_sources": route_sources,
+            "telemetry_path": str(self._path) if self._path is not None else None,
+        }
+
+
 class WOD2SimChallengeAdapter:
     """Reuse WOD2Sim policy contracts behind an AlpaSim E2E-style driver service."""
 
@@ -50,14 +101,18 @@ class WOD2SimChallengeAdapter:
         camera_ids: tuple[str, ...] = ("CAM_F0", "camera_front_wide_120fov"),
         output_frequency_hz: int = 10,
         horizon_seconds: float = 5.0,
+        telemetry_path: str | Path | None = None,
+        latency_target_ms: float = 100.0,
     ) -> None:
         self.model_name = _normalize_model_name(model_name)
         self.camera_candidates = tuple(camera_ids)
         self.model_camera_id = "front"
         self.output_frequency_hz = int(output_frequency_hz)
         self.horizon_seconds = float(horizon_seconds)
+        self.latency_target_ms = float(latency_target_ms)
         self._lock = threading.RLock()
         self._sessions: dict[str, ChallengeSessionState] = {}
+        self._telemetry = ChallengeTelemetry(telemetry_path)
         self._model = self._build_model()
 
     def start_session(self, request: Any) -> None:
@@ -70,10 +125,19 @@ class WOD2SimChallengeAdapter:
                 random_seed=int(getattr(request, "random_seed", 0) or 0),
                 debug_scene_id=str(debug_scene_id) if debug_scene_id else None,
             )
+        self._telemetry.record(
+            {
+                "event": "start_session",
+                "session_uuid": session_uuid,
+                "random_seed": int(getattr(request, "random_seed", 0) or 0),
+                "debug_scene_id": str(debug_scene_id) if debug_scene_id else None,
+            }
+        )
 
     def close_session(self, session_uuid: str) -> None:
         with self._lock:
             self._sessions.pop(str(session_uuid), None)
+        self._telemetry.record({"event": "close_session", "session_uuid": str(session_uuid)})
 
     def submit_image_observation(self, request: Any) -> None:
         session = self._session(str(request.session_uuid))
@@ -87,6 +151,14 @@ class WOD2SimChallengeAdapter:
             frames = session.camera_images.setdefault(camera_id, [])
             frames.append(frame)
             del frames[:-1]
+        self._telemetry.record(
+            {
+                "event": "image",
+                "session_uuid": session.session_uuid,
+                "camera_id": camera_id,
+                "timestamp_us": frame.timestamp_us,
+            }
+        )
 
     def submit_egomotion_observation(self, request: Any) -> None:
         session = self._session(str(request.session_uuid))
@@ -101,6 +173,14 @@ class WOD2SimChallengeAdapter:
                     timestamp_us = int(getattr(poses[index], "timestamp_us", 0) or 0)
                     session.dynamic_states.append((timestamp_us, state))
             session.dynamic_states = session.dynamic_states[-32:]
+        self._telemetry.record(
+            {
+                "event": "egomotion",
+                "session_uuid": session.session_uuid,
+                "pose_count": len(poses),
+                "dynamic_state_count": len(dynamic_states),
+            }
+        )
 
     def submit_route(self, request: Any) -> None:
         session = self._session(str(request.session_uuid))
@@ -109,10 +189,52 @@ class WOD2SimChallengeAdapter:
         with self._lock:
             session.route_waypoints = waypoints
             session.command = _command_from_waypoints(waypoints)
+        self._telemetry.record(
+            {
+                "event": "route",
+                "session_uuid": session.session_uuid,
+                "route_waypoint_count": len(waypoints),
+                "route_source": "alpasim_waypoints" if len(waypoints) >= 2 else "command_proxy",
+            }
+        )
 
     def predict(self, session_uuid: str, *, time_now_us: int) -> ModelPrediction:
         prediction_input = self.prediction_input(session_uuid, time_now_us=time_now_us)
         return self._model.predict(prediction_input)
+
+    def drive_once_to_proto(self, session_uuid: str, *, time_now_us: int, common_pb2: Any) -> Any:
+        start_ns = time.perf_counter_ns()
+        prediction_input = self.prediction_input(session_uuid, time_now_us=time_now_us)
+        prediction = self._model.predict(prediction_input)
+        trajectory = prediction_to_proto_trajectory(
+            prediction,
+            current_pose=self.latest_pose(session_uuid),
+            time_now_us=int(time_now_us),
+            common_pb2=common_pb2,
+            horizon_seconds=self.horizon_seconds,
+        )
+        latency_ms = (time.perf_counter_ns() - start_ns) / 1_000_000.0
+        reasoning = _json_object(prediction.reasoning_text)
+        signal = reasoning.get("alpasim_signal", {}) if isinstance(reasoning.get("alpasim_signal"), dict) else {}
+        self._telemetry.record(
+            {
+                "event": "drive",
+                "session_uuid": session_uuid,
+                "model": self.model_name,
+                "time_now_us": int(time_now_us),
+                "latency_ms": round(latency_ms, 6),
+                "latency_target_ms": self.latency_target_ms,
+                "latency_target_met": latency_ms <= self.latency_target_ms,
+                "route_source": signal.get("route_source"),
+                "route_waypoint_count": signal.get("route_waypoint_count"),
+                "camera_count": signal.get("camera_count"),
+                "trajectory_points": len(getattr(trajectory, "poses", []) or []),
+            }
+        )
+        return trajectory
+
+    def telemetry_summary(self) -> dict[str, Any]:
+        return self._telemetry.summary()
 
     def prediction_input(self, session_uuid: str, *, time_now_us: int) -> SimpleNamespace:
         session = self._session(session_uuid)
@@ -216,6 +338,74 @@ def _normalize_model_name(model_name: str) -> str:
     return value
 
 
+def run_self_test(
+    *,
+    model_name: str = "route_following",
+    iterations: int = 32,
+    latency_target_ms: float = 100.0,
+) -> dict[str, Any]:
+    adapter = WOD2SimChallengeAdapter(
+        model_name=model_name,
+        latency_target_ms=latency_target_ms,
+        telemetry_path=None,
+    )
+    session_uuid = "wod2sim-self-test"
+    adapter.start_session(
+        SimpleNamespace(
+            session_uuid=session_uuid,
+            random_seed=17,
+            debug_info=SimpleNamespace(scene_id="challenge-self-test"),
+        )
+    )
+    adapter.submit_image_observation(
+        SimpleNamespace(
+            session_uuid=session_uuid,
+            camera_image=SimpleNamespace(logical_id="CAM_F0", frame_end_us=1_000_000, image_bytes=b"\x80"),
+        )
+    )
+    adapter.submit_egomotion_observation(
+        SimpleNamespace(
+            session_uuid=session_uuid,
+            trajectory=SimpleNamespace(
+                poses=[
+                    _self_test_pose(900_000, x=0.0, y=0.0, yaw=0.0),
+                    _self_test_pose(1_000_000, x=0.5, y=0.0, yaw=0.0),
+                ]
+            ),
+            dynamic_states=[],
+        )
+    )
+    adapter.submit_route(
+        SimpleNamespace(
+            session_uuid=session_uuid,
+            route=SimpleNamespace(
+                waypoints=[
+                    SimpleNamespace(x=0.0, y=0.0, z=0.0),
+                    SimpleNamespace(x=30.0, y=5.0, z=0.0),
+                    SimpleNamespace(x=60.0, y=5.0, z=0.0),
+                ]
+            ),
+        )
+    )
+    count = max(1, int(iterations))
+    for index in range(count):
+        adapter.drive_once_to_proto(
+            session_uuid,
+            time_now_us=1_000_000 + index * 100_000,
+            common_pb2=_SelfTestCommonPb2,
+        )
+    summary = adapter.telemetry_summary()
+    summary.update(
+        {
+            "model": adapter.model_name,
+            "claim": "dependency_light_challenge_adapter_self_test",
+            "benchmark_result": False,
+            "latency_target_ms": latency_target_ms,
+        }
+    )
+    return summary
+
+
 def _route_waypoints_from_proto(route: Any) -> list[dict[str, float]]:
     waypoints: list[dict[str, float]] = []
     for waypoint in list(getattr(route, "waypoints", []) or []):
@@ -308,6 +498,60 @@ def _quat_from_yaw(yaw: float, common_pb2: Any) -> Any:
     return common_pb2.Quat(w=math.cos(half), x=0.0, y=0.0, z=math.sin(half))
 
 
+def _json_object(raw: Any) -> dict[str, Any]:
+    if not isinstance(raw, str) or not raw.strip():
+        return {}
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError:
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _percentile(values: list[float], percentile: float) -> float | None:
+    if not values:
+        return None
+    ordered = sorted(values)
+    if len(ordered) == 1:
+        return ordered[0]
+    rank = max(0.0, min(100.0, percentile)) / 100.0 * (len(ordered) - 1)
+    lower = int(math.floor(rank))
+    upper = int(math.ceil(rank))
+    if lower == upper:
+        return ordered[lower]
+    alpha = rank - lower
+    return ordered[lower] * (1.0 - alpha) + ordered[upper] * alpha
+
+
+class _SelfTestCommonPb2:
+    class Vec3(SimpleNamespace):
+        pass
+
+    class Quat(SimpleNamespace):
+        pass
+
+    class Pose(SimpleNamespace):
+        pass
+
+    class PoseAtTime(SimpleNamespace):
+        pass
+
+    class Trajectory:
+        def __init__(self) -> None:
+            self.poses: list[Any] = []
+
+
+def _self_test_pose(timestamp_us: int, *, x: float, y: float, yaw: float) -> Any:
+    half = yaw * 0.5
+    return SimpleNamespace(
+        timestamp_us=timestamp_us,
+        pose=SimpleNamespace(
+            vec=SimpleNamespace(x=x, y=y, z=0.0),
+            quat=SimpleNamespace(w=math.cos(half), x=0.0, y=0.0, z=math.sin(half)),
+        ),
+    )
+
+
 def _load_grpc_modules() -> tuple[Any, Any, Any, Any]:
     try:
         import grpc
@@ -362,13 +606,10 @@ def _build_service_class(
 
         def drive(self, request: Any, context: Any) -> Any:
             try:
-                prediction = self._adapter.predict(request.session_uuid, time_now_us=int(request.time_now_us))
-                trajectory = prediction_to_proto_trajectory(
-                    prediction,
-                    current_pose=self._adapter.latest_pose(request.session_uuid),
+                trajectory = self._adapter.drive_once_to_proto(
+                    request.session_uuid,
                     time_now_us=int(request.time_now_us),
                     common_pb2=common_pb2,
-                    horizon_seconds=self._adapter.horizon_seconds,
                 )
             except KeyError as exc:
                 context.abort(grpc.StatusCode.NOT_FOUND, str(exc))
@@ -400,14 +641,35 @@ def main() -> None:
     parser.add_argument("--host", default=os.getenv("ALPASIM_DRIVER_HOST", "0.0.0.0"))
     parser.add_argument("--port", type=int, default=int(os.getenv("ALPASIM_DRIVER_PORT", "6789")))
     parser.add_argument("--workers", type=int, default=int(os.getenv("ALPASIM_DRIVER_GRPC_WORKERS", "8")))
+    parser.add_argument("--telemetry-path", default=os.getenv("WOD2SIM_CHALLENGE_TELEMETRY_PATH", "/tmp/wod2sim/challenge-driver.jsonl"))
+    parser.add_argument("--latency-target-ms", type=float, default=float(os.getenv("WOD2SIM_CHALLENGE_LATENCY_TARGET_MS", "100.0")))
+    parser.add_argument("--self-test", action="store_true", help="Run a dependency-light adapter self-test without alpasim_grpc.")
+    parser.add_argument("--self-test-iterations", type=int, default=32)
     args = parser.parse_args()
 
     logging.basicConfig(
         level=os.environ.get("ALPASIM_DRIVER_LOG_LEVEL", "INFO"),
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
+    if args.self_test:
+        print(
+            json.dumps(
+                run_self_test(
+                    model_name=args.model,
+                    iterations=args.self_test_iterations,
+                    latency_target_ms=args.latency_target_ms,
+                ),
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return
     grpc, api_version_message, common_pb2, egodriver_pb2, egodriver_pb2_grpc = _load_grpc_modules()
-    adapter = WOD2SimChallengeAdapter(model_name=args.model)
+    adapter = WOD2SimChallengeAdapter(
+        model_name=args.model,
+        telemetry_path=args.telemetry_path,
+        latency_target_ms=args.latency_target_ms,
+    )
     service_cls = _build_service_class(
         grpc=grpc,
         api_version_message=api_version_message,

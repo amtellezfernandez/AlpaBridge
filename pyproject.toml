@@ -75,6 +75,7 @@ wod2sim-benchmark-summary = "wod2sim.cli.commands.benchmark_summary:main"
 wod2sim-batch-summary = "wod2sim.cli.commands.batch_summary:main"
 wod2sim-benchmark-readiness = "wod2sim.cli.commands.benchmark_readiness:main"
 wod2sim-evidence = "wod2sim.neutral.alpasim_metrics:main"
+wod2sim-challenge-driver = "wod2sim.challenge.e2e_driver:main"
 
 [project.urls]
 Homepage = "https://github.com/amtellezfernandez/WOD2Sim"

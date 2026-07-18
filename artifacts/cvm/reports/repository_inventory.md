@@ -19,6 +19,7 @@ host-specific paths, runtime identifiers, and local simulator state.
 - Figure generator: `scripts/generate_cvm_figures.py`.
 - Paper build script: `scripts/build_cvm_paper.sh`.
 - Submission validator: `scripts/validate_cvm_submission.py`.
+- External evaluator harness: `integrations/alpasim_e2e_challenge`.
 
 ## Paper Artifact
 
@@ -41,7 +42,9 @@ host-specific paths, runtime identifiers, and local simulator state.
 - Python package: `wod2sim`, configured in `pyproject.toml`.
 - Public entry points: `constant_velocity`, `route_following`,
   `token_dagger_bc`, and `direct_actor_planner`.
+- External challenge entry point: `wod2sim-challenge-driver`.
 - Simulator adapters and contracts: `src/wod2sim/simulator`.
+- AlpaSim E2E challenge compatibility adapter: `src/wod2sim/challenge`.
 - Audit and evidence tools: `src/wod2sim/audit`, `src/wod2sim/neutral`.
 - AlpaSim patches/overrides: `src/wod2sim/alpasim_overrides`.
 - Test directory: `tests` with 24 top-level test files. Runtime pass/skip

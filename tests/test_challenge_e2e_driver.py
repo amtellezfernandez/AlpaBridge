@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import json
 import math
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from types import SimpleNamespace
 
 import numpy as np
@@ -8,6 +11,7 @@ import numpy as np
 from wod2sim.challenge.e2e_driver import (
     WOD2SimChallengeAdapter,
     prediction_to_proto_trajectory,
+    run_self_test,
 )
 from wod2sim.simulator.alpasim_contract import ModelPrediction
 
@@ -106,6 +110,63 @@ def test_challenge_adapter_maps_challenge_camera_id_to_internal_contract_key() -
     assert sorted(prediction_input.camera_images) == ["front"]
     assert prediction_input.camera_images["front"][0].timestamp_us == 2_000_000
     assert prediction.trajectory_xy.shape == (50, 2)
+
+
+def test_challenge_adapter_writes_drive_telemetry() -> None:
+    with TemporaryDirectory() as tmp:
+        telemetry_path = Path(tmp) / "telemetry.jsonl"
+        adapter = WOD2SimChallengeAdapter(
+            model_name="route_following",
+            camera_ids=("CAM_F0",),
+            telemetry_path=telemetry_path,
+        )
+        adapter.start_session(SimpleNamespace(session_uuid="session-telemetry", random_seed=11))
+        adapter.submit_image_observation(
+            SimpleNamespace(
+                session_uuid="session-telemetry",
+                camera_image=SimpleNamespace(logical_id="CAM_F0", frame_end_us=1_000_000, image_bytes=b"\x80"),
+            )
+        )
+        adapter.submit_route(
+            SimpleNamespace(
+                session_uuid="session-telemetry",
+                route=SimpleNamespace(
+                    waypoints=[
+                        SimpleNamespace(x=0.0, y=0.0, z=0.0),
+                        SimpleNamespace(x=40.0, y=4.0, z=0.0),
+                    ]
+                ),
+            )
+        )
+
+        trajectory = adapter.drive_once_to_proto(
+            "session-telemetry",
+            time_now_us=1_000_000,
+            common_pb2=_FakeCommonPb2,
+        )
+        rows = [
+            json.loads(line)
+            for line in telemetry_path.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+        summary = adapter.telemetry_summary()
+
+    drive_rows = [row for row in rows if row["event"] == "drive"]
+    assert len(trajectory.poses) == 50
+    assert len(drive_rows) == 1
+    assert drive_rows[0]["route_source"] == "alpasim_waypoints"
+    assert drive_rows[0]["latency_target_ms"] == 100.0
+    assert summary["drive_count"] == 1
+    assert summary["latency_ms"]["p95"] is not None
+
+
+def test_challenge_self_test_reports_non_benchmark_latency_summary() -> None:
+    summary = run_self_test(model_name="route_following", iterations=3)
+
+    assert summary["benchmark_result"] is False
+    assert summary["drive_count"] == 3
+    assert summary["latency_ms"]["p95"] is not None
+    assert summary["route_sources"] == ["alpasim_waypoints"]
 
 
 def test_challenge_adapter_rejects_unknown_session() -> None:

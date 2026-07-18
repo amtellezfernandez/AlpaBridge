@@ -32,7 +32,7 @@ gRPC service requires the AlpaSim gRPC package from the AlpaSim challenge
 checkout:
 
 ```bash
-python -m wod2sim.challenge.e2e_driver --model route_following
+wod2sim-challenge-driver --model route_following
 ```
 
 ## Intended Use
@@ -45,6 +45,35 @@ driver interface:
 - Route geometry reaching policy code instead of being reduced to a command.
 - Read-only container root with writes restricted to `/tmp` or `/run`.
 - No outbound network or mounted scene data inside the driver image.
+
+## Container Harness
+
+The runnable harness lives in:
+
+```text
+integrations/alpasim_e2e_challenge/
+```
+
+Build it from the WOD2Sim repo root while pointing to an AlpaSim challenge
+checkout:
+
+```bash
+ALPASIM_ROOT=/path/to/alpasim \
+  bash integrations/alpasim_e2e_challenge/build_image.sh
+```
+
+Run the adapter self-test inside the image:
+
+```bash
+docker run --rm alpasim-e2e-wod2sim:latest \
+  wod2sim-challenge-driver --self-test
+```
+
+Start a local challenge-style driver container:
+
+```bash
+bash integrations/alpasim_e2e_challenge/run_local_container.sh
+```
 
 ## Non-Claim
 

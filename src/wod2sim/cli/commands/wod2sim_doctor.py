@@ -41,6 +41,7 @@ EXPECTED_CONSOLE_SCRIPTS = (
     "wod2sim-batch-summary",
     "wod2sim-benchmark-readiness",
     "wod2sim-evidence",
+    "wod2sim-challenge-driver",
 )
 EXPECTED_WRAPPERS = {
     "wod2sim-doctor": "scripts/wod2sim_doctor.py",
@@ -57,6 +58,7 @@ EXPECTED_WRAPPERS = {
     "wod2sim-benchmark-summary": "scripts/benchmark_summary.py",
     "wod2sim-batch-summary": "scripts/batch_summary.py",
     "wod2sim-benchmark-readiness": "scripts/benchmark_readiness.py",
+    "wod2sim-challenge-driver": "scripts/challenge_e2e_driver.py",
 }
 PUBLIC_MODEL_CONFIGS = {
     model: Path(MODEL_PRESETS[model]["config_file"]).resolve()

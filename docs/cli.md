@@ -26,6 +26,7 @@ The contract-validation matrix (CVM) is referenced in the release targets below.
 | `wod2sim-benchmark-readiness` | Gate public benchmark claims against clean batch summaries. |
 | `wod2sim-promote-batch-summary` | Copy a validated local summary to an explicit destination. |
 | `wod2sim-evidence` | Inspect AlpaSim runtime metrics. |
+| `wod2sim-challenge-driver` | Serve or self-test the AlpaSim E2E-style external-driver compatibility adapter. |
 
 ## Quality And Release Targets
 
