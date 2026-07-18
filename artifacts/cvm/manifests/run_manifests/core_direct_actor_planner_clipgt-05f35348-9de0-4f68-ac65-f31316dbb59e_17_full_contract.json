@@ -5,7 +5,7 @@
   "claim_valid": false,
   "completed": false,
   "config_path": "configs/cvm/core.yaml",
-  "config_sha256": "f7505f80c8e4ecd02ce53c2ff960031a947ba791be0da10731db52fdc74488df",
+  "config_sha256": "73d15603170d33f8fe04961fcde2bd36cf14bd043b27f2dda42e83b7b61bcd95",
   "contract_expectations": {
     "claim_valid_requires_route_waypoints": true,
     "evidence_gate": "claim_valid_false_until_audit_aggregation",
@@ -98,7 +98,7 @@
     },
     "config": {
       "path": "configs/cvm/core.yaml",
-      "sha256": "f7505f80c8e4ecd02ce53c2ff960031a947ba791be0da10731db52fdc74488df"
+      "sha256": "73d15603170d33f8fe04961fcde2bd36cf14bd043b27f2dda42e83b7b61bcd95"
     },
     "docker_image": {
       "available": true,
@@ -127,8 +127,8 @@
     },
     "repository": {
       "dirty": true,
-      "dirty_diff_sha256": "91ff2f5b777cbef612d43cc79e2d3d75270ac53635565935dfbab2a54db4ffd2",
-      "git_sha": "ba6ea465e31cca5053e3d38b639d7189f0707b0a"
+      "dirty_diff_sha256": "28586952e7a807eb26d70d392779dc9138713acdc6cd19843f44d02dca7d4059",
+      "git_sha": "326cde606d06417658d32c8af1c4c731340f580f"
     }
   },
   "run_id": "core_direct_actor_planner_clipgt-05f35348-9de0-4f68-ac65-f31316dbb59e_17_full_contract",
