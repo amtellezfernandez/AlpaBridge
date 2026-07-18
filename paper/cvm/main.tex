@@ -188,7 +188,7 @@ policy failure.
 
 The CVM package uses deterministic configuration files for core, semantic
 ablation, temporal ablation, lifecycle stress, and fault-injection matrices. The core
-matrix is configured for three policies and six locally cached front-camera scenes. The
+matrix is configured for three policies and fifteen locally cached front-camera scenes. The
 current launcher does not expose a simulator seed override, so each policy/scene pair is
 counted as one closed-loop execution and the configured identifier is retained only as
 provenance metadata. The semantic ablation configures paired full-route and
@@ -262,10 +262,10 @@ pairs. Across those pairs, full-contract minus command-only route means are
 progress, \CVMSemanticCollisionAnyDeltaMean{} collision-any, \CVMSemanticOffroadDeltaMean{}
 off-road, and \CVMSemanticPlanDeviationDeltaMean{} plan deviation. These deltas show
 that losing route geometry changes measured rollout behavior, but they are not a
-policy-quality comparison. The aggregate also keeps one completed full-contract
-semantic row outside policy attribution because its audit found a late command-proxy
-route fallback despite successful rollout completion; that is an integration-boundary
-finding, not a policy failure. The semantic rows are therefore an effectiveness
+policy-quality comparison. The aggregate also keeps three completed full-contract
+rows from the same scene outside policy attribution because their audits found late
+command-proxy route fallback despite successful rollout completion; that is an
+integration-boundary finding, not a policy failure. The semantic rows are therefore an effectiveness
 comparison at the semantic
 integration boundary: a functional command-only wrapper completes
 \CVMNaiveWrapperMetricRuns{}/\CVMCommandProxyCompletedRuns{} metric-bearing rows that a
