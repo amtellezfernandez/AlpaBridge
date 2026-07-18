@@ -287,7 +287,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         body = " ".join(f"word{index}" for index in range(module.ABSTRACT_MIN_WORDS))
         source = (
             "\\documentclass[conference,a4paper]{IEEEtran}\n"
-            "\\hypersetup{pdfsubject={WOD2Sim contract-validation paper}}\n"
+            "\\hypersetup{pdfsubject={WOD2Sim contract-based system-integration paper}}\n"
             "\\begin{abstract}\n"
             + body
             + " \\CVMTotalRows{}\n"
@@ -303,7 +303,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         draft_subject = "paper " + "draft"
         source = (
             "\\documentclass[conference,a4paper]{IEEEtran}\n"
-            f"\\hypersetup{{pdfsubject={{WOD2Sim contract-validation {draft_subject}}}}}\n"
+            f"\\hypersetup{{pdfsubject={{WOD2Sim contract-based system-integration {draft_subject}}}}}\n"
             "\\begin{abstract}\nshort abstract\n\\end{abstract}\n"
         )
 

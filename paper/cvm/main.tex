@@ -9,7 +9,7 @@
 
 \input{generated/paper_numbers.tex}
 
-\title{WOD2Sim: Contract-Validated Integration of WOD-Style Trajectory Policies into Distributed Closed-Loop Simulation}
+\title{WOD2Sim: Contract-Based System Integration of Dataset-Trained Driving Policies into Distributed Closed-Loop Simulation}
 
 \author{
 \IEEEauthorblockN{Alba Maria Tellez Fernandez}
@@ -18,40 +18,42 @@ Email: amtellezfernandez@gmail.com}
 }
 
 \hypersetup{
-  pdftitle={WOD2Sim: Contract-Validated Integration of WOD-Style Trajectory Policies into Distributed Closed-Loop Simulation},
+  pdftitle={WOD2Sim: Contract-Based System Integration of Dataset-Trained Driving Policies into Distributed Closed-Loop Simulation},
   pdfauthor={Alba Maria Tellez Fernandez},
-  pdfsubject={WOD2Sim contract-validation paper}
+  pdfsubject={WOD2Sim contract-based system-integration paper}
 }
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-Closed-loop simulation improves autonomous-driving development only when the integration
-boundary preserves the policy inputs, timing, lifecycle state, and evidence needed to
-interpret a rollout. WOD2Sim treats WOD-style trajectory-policy execution in AlpaSim as
-a system-integration effectiveness problem rather than a benchmark-score problem. It
-defines five contracts for external-driver integration: semantic route and scene
-preservation, temporal trajectory adaptation, explicit service lifecycle handling,
+Offline driving policies are usually trained around logged observations, route context,
+and short-horizon trajectory targets, while distributed closed-loop simulators require
+persistent services, runtime clocks, deployment provenance, and auditable evidence.
+WOD2Sim treats this mismatch as a contract-based system-integration problem rather than
+as a new driving-policy benchmark. It defines five contracts for executing
+dataset-trained trajectory policies as AlpaSim external drivers: semantic route and
+scene preservation, temporal trajectory adaptation, explicit lifecycle handling,
 deployment provenance, and evidence validity. The implementation provides
-dependency-light baselines, optional learned and actor-aware entry points, launch
-manifests, audits, aggregate reports, and generated paper artifacts behind one
-reproducible interface. In the current contract-validation matrix, the public
-dependency-light core completes all \CVMPublicCoreCompletedRuns{}/\CVMPublicCoreRows{}
-configured closed-loop rows, \CVMFullContractAuditValidRuns{}/
-\CVMFullContractCompletedRuns{} full-contract rollouts pass route and sensor audits,
-and \CVMValidFullContractFalseBlockedRuns{}/
-\CVMValidFullContractFalseBlockDenominator{} valid full-contract rows are falsely
-blocked. Against a runnable command-only route wrapper, matched semantic ablations
-complete \CVMSemanticAblationMetricPairs{}/\CVMSemanticAblationCompletedPairs{}
-metric-bearing pairs: the naive wrapper would leave \CVMNaiveInvalidAcceptedRuns{}/
-\CVMNaiveWrapperMetricRuns{} invalid route rows as metric-bearing evidence, while the
-contract gate rejects \CVMContractInvalidRejectedRuns{}/
-\CVMContractInvalidRejectionDenominator{} as non-claim-valid. The result is a bounded
-integration claim: explicit contracts make valid integrations executable and prevent
-integration-invalid rows from being misreported as policy failures. The paper does not
-claim policy-benchmark quality, learned-policy superiority, or scenario-category
-coverage.
+dependency-light baselines, optional learned and actor-aware entry points, deterministic
+launch manifests, route/sensor audits, aggregate reports, and generated paper artifacts.
+In the current contract-validation matrix, the public dependency-light core completes
+\CVMPublicCoreCompletedRuns{}/\CVMPublicCoreRows{} closed-loop rows over
+\CVMClosedLoopSceneCount{} local scenes, and
+\CVMFullContractAuditValidRuns{}/\CVMFullContractCompletedRuns{} completed
+full-contract rollouts pass route and sensor audits. The evidence gate falsely blocks
+\CVMValidFullContractFalseBlockedRuns{}/
+\CVMValidFullContractFalseBlockDenominator{} valid full-contract rows. Against a
+runnable command-only route wrapper, matched semantic ablations complete
+\CVMSemanticAblationMetricPairs{}/\CVMSemanticAblationCompletedPairs{}
+metric-bearing pairs: a non-contract path could accept
+\CVMNaiveInvalidAcceptedRuns{}/\CVMNaiveWrapperMetricRuns{} invalid route rows as
+policy evidence, while WOD2Sim rejects
+\CVMContractInvalidRejectedRuns{}/\CVMContractInvalidRejectionDenominator{} as
+non-claim-valid. These results support a bounded conclusion: explicit integration
+contracts make valid rollouts executable and prevent integration-invalid evidence from
+being misreported as policy behavior. The paper does not claim learned-policy
+superiority, scenario-category coverage, or public benchmark validity.
 \end{abstract}
 
 \section{Introduction}

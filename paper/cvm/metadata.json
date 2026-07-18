@@ -1,8 +1,8 @@
 {
-  "title": "WOD2Sim: Contract-Validated Integration of WOD-Style Trajectory Policies into Distributed Closed-Loop Simulation",
+  "title": "WOD2Sim: Contract-Based System Integration of Dataset-Trained Driving Policies into Distributed Closed-Loop Simulation",
   "author": "Alba Maria Tellez Fernandez",
   "affiliation": "Independent Researcher",
-  "pdf_subject": "WOD2Sim contract-validation paper",
-  "abstract_source_sha256": "290fc072b8ef9f8ee3d14cee3da7aaa77cd374d53f8d51969a24c87697da7251",
-  "abstract_word_count": 195
+  "pdf_subject": "WOD2Sim contract-based system-integration paper",
+  "abstract_source_sha256": "284c162b18c1bf5f740063cc7d26e986b80f6a71566d0a62f763091c3f24d003",
+  "abstract_word_count": 207
 }
