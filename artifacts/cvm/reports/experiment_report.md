@@ -11,18 +11,18 @@ matrix (CVM) evidence.
 
 | Matrix | Rows | Attempted | Completed | Planned | Blocked | Claim-valid |
 |---|---:|---:|---:|---:|---:|---:|
-| Core closed loop | 18 | 12 | 12 | 0 | 6 | 0 |
+| Core closed loop | 45 | 30 | 30 | 0 | 15 | 0 |
 | Semantic ablation | 30 | 30 | 30 | 0 | 0 | 0 |
 | Temporal ablation | 18 | 0 | 0 | 0 | 18 | 0 |
 | Lifecycle stress | 40 | 40 | 40 | 0 | 0 | 0 |
 | Fault injection | 15 | 15 | 15 | 0 | 0 | 0 |
-| Total | 121 | 97 | 97 | 0 | 24 | 0 |
+| Total | 148 | 115 | 115 | 0 | 33 | 0 |
 
 ## Integration-Effectiveness Evidence
 
-- Dependency-light public core: 12/12 completed, 12/12 audit-valid, 0 blocked.
-- Full-contract rollouts: 26/27 audit-valid.
-- False-block observations on valid full-contract rows: 0/26.
+- Dependency-light public core: 30/30 completed, 28/30 audit-valid, 0 blocked.
+- Full-contract rollouts: 42/45 audit-valid.
+- False-block observations on valid full-contract rows: 0/42.
 - Command-only route rows: 15/15 completed and 15/15 rejected as non-claim-valid.
 - Functional command-only route wrapper baseline: 15/15 rows completed with
   metrics that a non-contract path could accept as policy evidence.
@@ -37,26 +37,26 @@ measurements, not policy-superiority claims. The deltas show that removing route
 geometry changes measured behavior. The baseline comparison shows the
 integration-effectiveness effect supported by the current release: a runnable
 command-only wrapper produces metric-bearing rows, while the contract gate keeps
-those same route-invalid rows out of policy-attribution claims. The 24 blocked
+those same route-invalid rows out of policy-attribution claims. The 33 blocked
 direct-actor/temporal rows are optional gated extension rows retained as
 denominator and blocker context, not public-core dependencies or success
 metrics.
-The non-audit-valid full-contract row is also retained rather than hidden:
-`semantic_ablation_route_following_clipgt-0fd06bc3-1899-4b45-9278-c5c018b3968d_17_full_contract`
-completed with metrics and a valid sensor pipeline, but 12/199 audited frames
-fell back to `command_proxy`, so the route contract correctly keeps that row
-outside policy attribution.
+The three non-audit-valid full-contract rows are also retained rather than
+hidden. They all use scene
+`clipgt-0fd06bc3-1899-4b45-9278-c5c018b3968d`, completed with metrics and a
+valid sensor pipeline, but 12/199 audited frames fell back to `command_proxy`,
+so the route contract correctly keeps those rows outside policy attribution.
 
 ## Failure Attribution
 
-- Contract-valid closed-loop rows: 26.
-- Integration/evidence-invalid closed-loop rows: 16.
-- Precondition-blocked rows: 24.
+- Contract-valid closed-loop rows: 42.
+- Integration/evidence-invalid closed-loop rows: 18.
+- Precondition-blocked rows: 33.
 - Synthetic diagnostic rows: 55.
-- Policy-attributable behavior rows: 26.
+- Policy-attributable behavior rows: 42.
 - Policy-attributable failure rows: 0.
-- Completed non-policy diagnostic rows: 71.
-- Non-policy-attributed rows: 95.
+- Completed non-policy diagnostic rows: 73.
+- Non-policy-attributed rows: 106.
 - Claim-valid policy benchmark rows: 0.
 
 Behavior is policy-attributable only after route/sensor audit, lifecycle state,
@@ -82,7 +82,7 @@ passes and the retained failure layer is policy.
 
 ## Remaining Blockers
 
-- `direct_actor_oracle_proxy_missing`: 24 optional gated rows remain blocked
+- `direct_actor_oracle_proxy_missing`: 33 optional gated rows remain blocked
   across direct-actor rows in the mixed core matrix and the temporal-ablation
   matrix. The required proxy must be scene-matched; adapters now reject oracle
   frames whose `scene_id` differs from the current prediction scene.

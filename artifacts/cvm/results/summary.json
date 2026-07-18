@@ -1,87 +1,87 @@
 {
-  "attempted_runs": 97,
-  "blocked_runs": 24,
+  "attempted_runs": 115,
+  "blocked_runs": 33,
   "blocker_counts": {
-    "direct_actor_oracle_proxy_missing": 24
+    "direct_actor_oracle_proxy_missing": 33
   },
   "claim_valid": false,
-  "closed_loop_audit_valid_runs": 26,
-  "closed_loop_completed_runs": 42,
-  "closed_loop_metric_rows": 42,
+  "closed_loop_audit_valid_runs": 42,
+  "closed_loop_completed_runs": 60,
+  "closed_loop_metric_rows": 60,
   "closed_loop_metrics": {
     "collision_any": {
-      "count": 42,
+      "count": 60,
       "max": 1.0,
-      "mean": 0.738095,
+      "mean": 0.7,
       "min": 0.0
     },
     "collision_at_fault": {
-      "count": 42,
+      "count": 60,
       "max": 1.0,
-      "mean": 0.190476,
+      "mean": 0.133333,
       "min": 0.0
     },
     "dist_traveled_m": {
-      "count": 42,
+      "count": 60,
       "max": 550.02,
-      "mean": 102.438571,
+      "mean": 103.089,
       "min": 1.54
     },
     "duration_frac_20s": {
-      "count": 42,
+      "count": 60,
       "max": 0.91,
-      "mean": 0.500714,
+      "mean": 0.539333,
       "min": 0.06
     },
     "offroad": {
-      "count": 42,
+      "count": 60,
       "max": 0.0,
       "mean": 0.0,
       "min": 0.0
     },
     "plan_deviation": {
-      "count": 42,
+      "count": 60,
       "max": 1.47,
-      "mean": 0.322143,
+      "mean": 0.275333,
       "min": 0.01
     },
     "progress": {
-      "count": 42,
+      "count": 60,
       "max": 1.0,
-      "mean": 0.470476,
+      "mean": 0.501,
       "min": 0.05
     },
     "progress_rel": {
-      "count": 42,
+      "count": 60,
       "max": 0.95,
-      "mean": 0.755952,
+      "mean": 0.748,
       "min": 0.06
     }
   },
-  "completed_runs": 97,
+  "completed_runs": 115,
   "core_policy_results": [
     {
       "action_latency_p95_ms": null,
-      "attempted_runs": 6,
-      "audit_valid_runs": 6,
+      "attempted_runs": 15,
+      "audit_valid_runs": 14,
       "blocked_runs": 0,
-      "collision_any_mean": 0.833333,
-      "completed_runs": 6,
-      "configured_rows": 6,
-      "metric_rows": 6,
+      "collision_any_mean": 0.666667,
+      "completed_runs": 15,
+      "configured_rows": 15,
+      "metric_rows": 15,
       "offroad_mean": 0.0,
       "policy": "constant_velocity",
-      "progress_mean": 0.435,
+      "progress_mean": 0.525333,
       "service_crash_rows": 0
     },
     {
       "action_latency_p95_ms": null,
       "attempted_runs": 0,
       "audit_valid_runs": 0,
-      "blocked_runs": 6,
+      "blocked_runs": 15,
       "collision_any_mean": null,
       "completed_runs": 0,
-      "configured_rows": 6,
+      "configured_rows": 15,
       "metric_rows": 0,
       "offroad_mean": null,
       "policy": "direct_actor_planner",
@@ -90,33 +90,33 @@
     },
     {
       "action_latency_p95_ms": null,
-      "attempted_runs": 6,
-      "audit_valid_runs": 6,
+      "attempted_runs": 15,
+      "audit_valid_runs": 14,
       "blocked_runs": 0,
-      "collision_any_mean": 0.833333,
-      "completed_runs": 6,
-      "configured_rows": 6,
-      "metric_rows": 6,
+      "collision_any_mean": 0.733333,
+      "completed_runs": 15,
+      "configured_rows": 15,
+      "metric_rows": 15,
       "offroad_mean": 0.0,
       "policy": "route_following",
-      "progress_mean": 0.353333,
+      "progress_mean": 0.476667,
       "service_crash_rows": 0
     }
   ],
-  "created_at": "2026-07-18T15:50:31.451833+00:00",
-  "data_hash": "941193196ed9a9bee8205bb2737b7c5e7906dd9937a7809c09afa7a1fb6881ef",
+  "created_at": "2026-07-18T21:18:19.088449+00:00",
+  "data_hash": "582f451b74d52db721b8e2b5dc906ba8b7e352e9caee4607ebbeb581efac7af9",
   "failed_runs": 0,
   "failure_attribution": {
     "claim_valid_policy_benchmark_rows": 0,
-    "contract_valid_closed_loop_rows": 26,
-    "diagnostic_not_policy_rows": 71,
-    "integration_failure_attributable_rows": 24,
-    "integration_or_evidence_invalid_closed_loop_rows": 16,
-    "non_policy_attributed_rows": 95,
+    "contract_valid_closed_loop_rows": 42,
+    "diagnostic_not_policy_rows": 73,
+    "integration_failure_attributable_rows": 33,
+    "integration_or_evidence_invalid_closed_loop_rows": 18,
+    "non_policy_attributed_rows": 106,
     "planned_not_launched_rows": 0,
-    "policy_behavior_attributable_rows": 26,
+    "policy_behavior_attributable_rows": 42,
     "policy_failure_attributable_rows": 0,
-    "precondition_blocked_rows": 24,
+    "precondition_blocked_rows": 33,
     "rule": "Closed-loop behavior can be attributed to the policy only after the semantic route contract, temporal adapter, sensor-freshness audit, lifecycle state, deployment preconditions, and evidence gate pass. Public policy benchmark claims require the stricter benchmark gate. Rows outside the integration gate remain integration, precondition, evidence, or diagnostic records and cannot be counted as policy failures. A policy failure also requires the retained failure layer to be policy.",
     "synthetic_diagnostic_rows": 55
   },
@@ -124,7 +124,7 @@
     "deployment.docker_unavailable": 1,
     "deployment.gpu_runtime_unavailable": 1,
     "deployment.scene_artifact_missing": 1,
-    "direct_actor_oracle_proxy_missing": 24,
+    "direct_actor_oracle_proxy_missing": 33,
     "duplicate_close_unhandled": 20,
     "evidence.hash_mismatch": 1,
     "evidence.manifest_missing": 1,
@@ -139,14 +139,14 @@
     "temporal.nan_trajectory": 1,
     "temporal.stale_observation": 1
   },
-  "failure_rows": 24,
+  "failure_rows": 33,
   "integration_effectiveness": {
     "attribution_improvement_invalid_rows": 15,
     "contract_invalid_evidence_rejected_runs": 15,
     "contract_invalid_evidence_rejection_denominator": 15,
     "contract_invalid_evidence_rejection_rate": 1.0,
-    "full_contract_audit_valid_runs": 26,
-    "full_contract_completed_runs": 27,
+    "full_contract_audit_valid_runs": 42,
+    "full_contract_completed_runs": 45,
     "functional_naive_wrapper_completed_runs": 15,
     "functional_naive_wrapper_invalid_acceptance_denominator": 15,
     "functional_naive_wrapper_invalid_evidence_accepted_runs": 15,
@@ -157,12 +157,12 @@
     "semantic_ablation_command_proxy_rejected_runs": 15,
     "semantic_ablation_completed_pairs": 15,
     "semantic_ablation_metric_pairs": 15,
-    "valid_full_contract_false_block_denominator": 26,
+    "valid_full_contract_false_block_denominator": 42,
     "valid_full_contract_false_block_rate": 0.0,
     "valid_full_contract_false_blocked_runs": 0
   },
   "matrix_counts": {
-    "core": 18,
+    "core": 45,
     "fault_injection": 15,
     "lifecycle_stress": 40,
     "semantic_ablation": 30,
@@ -172,47 +172,47 @@
   "public_core_policy_results": [
     {
       "action_latency_p95_ms": null,
-      "attempted_runs": 6,
-      "audit_valid_runs": 6,
+      "attempted_runs": 15,
+      "audit_valid_runs": 14,
       "blocked_runs": 0,
-      "collision_any_mean": 0.833333,
-      "completed_runs": 6,
-      "configured_rows": 6,
-      "metric_rows": 6,
+      "collision_any_mean": 0.666667,
+      "completed_runs": 15,
+      "configured_rows": 15,
+      "metric_rows": 15,
       "offroad_mean": 0.0,
       "policy": "constant_velocity",
-      "progress_mean": 0.435,
+      "progress_mean": 0.525333,
       "service_crash_rows": 0
     },
     {
       "action_latency_p95_ms": null,
-      "attempted_runs": 6,
-      "audit_valid_runs": 6,
+      "attempted_runs": 15,
+      "audit_valid_runs": 14,
       "blocked_runs": 0,
-      "collision_any_mean": 0.833333,
-      "completed_runs": 6,
-      "configured_rows": 6,
-      "metric_rows": 6,
+      "collision_any_mean": 0.733333,
+      "completed_runs": 15,
+      "configured_rows": 15,
+      "metric_rows": 15,
       "offroad_mean": 0.0,
       "policy": "route_following",
-      "progress_mean": 0.353333,
+      "progress_mean": 0.476667,
       "service_crash_rows": 0
     }
   ],
   "release_scope": {
-    "direct_actor_blocked_rows": 24,
-    "direct_actor_configured_rows": 24,
-    "optional_gated_blocked_rows": 24,
-    "optional_gated_configured_rows": 24,
+    "direct_actor_blocked_rows": 33,
+    "direct_actor_configured_rows": 33,
+    "optional_gated_blocked_rows": 33,
+    "optional_gated_configured_rows": 33,
     "optional_gated_policy_names": [
       "direct_actor_planner",
       "token_dagger_bc"
     ],
-    "public_core_attempted_runs": 12,
-    "public_core_audit_valid_runs": 12,
+    "public_core_attempted_runs": 30,
+    "public_core_audit_valid_runs": 28,
     "public_core_blocked_rows": 0,
-    "public_core_completed_runs": 12,
-    "public_core_configured_rows": 12,
+    "public_core_completed_runs": 30,
+    "public_core_configured_rows": 30,
     "public_core_policy_names": [
       "constant_velocity",
       "route_following"
@@ -275,9 +275,9 @@
     }
   },
   "status_counts": {
-    "blocked": 24,
-    "completed": 97
+    "blocked": 33,
+    "completed": 115
   },
   "synthetic_completed_runs": 55,
-  "total_rows": 121
+  "total_rows": 148
 }

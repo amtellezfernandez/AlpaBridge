@@ -64,20 +64,21 @@ Public reports use this decision order:
 | Executed, audit-valid, retained by the benchmark gate, and failure layer is `policy` | Policy failure may be assigned. |
 
 The generated aggregate makes the boundary numeric: current artifacts contain
-`26` policy-attributable behavior rows, `0` policy-attributable failure rows,
-`24` integration/precondition blocker rows, and `71` completed non-policy diagnostic rows
+`42` policy-attributable behavior rows, `0` policy-attributable failure rows,
+`33` integration/precondition blocker rows, and `73` completed non-policy diagnostic rows
 that remain non-policy-attributed.
-The success evidence is the completed side of that partition: `26/27`
-full-contract closed-loop rollouts are audit-valid, `0/26` valid
+The success evidence is the completed side of that partition: `42/45`
+full-contract closed-loop rollouts are audit-valid, `0/42` valid
 full-contract rows are false-blocked by the evidence gate, and the semantic
 baseline is comparative: `15/15` runnable command-only route rows produce
 metric-bearing evidence that a naive wrapper could accept, while WOD2Sim rejects
 `15/15` as non-claim-valid route evidence.
-The `24` blocked rows stay in the denominator as remaining unsupported
+The `33` blocked rows stay in the denominator as remaining unsupported
 direct-actor/temporal-ablation work.
-The one completed full-contract row outside the `26/27` audit-valid count is
-also kept out of policy attribution because its audit found late command-proxy
-route fallback, despite successful rollout completion.
+The three completed full-contract rows outside the `42/45` audit-valid count
+all come from the same scene and are kept out of policy attribution because the
+audit found late command-proxy route fallback, despite successful rollout
+completion.
 
 ## Scenario Coverage Boundary
 
@@ -285,12 +286,13 @@ make paper-verify
 `make paper-verify` rebuilds the canonical [`wod2sim.pdf`](wod2sim.pdf) from
 the same generated tables and figures used by the repository reports, then runs
 the submission validator. The current aggregate remains `claim_valid=false`:
-the public core has completed `12/12` dependency-light rows, semantic ablations
-have completed `15/15` matched metric-bearing scene pairs, the command-only
-route baseline demonstrates the separation between integration-invalid evidence
-and policy evidence, direct-actor rows remain optional gated extension blockers,
-and completed closed-loop rows are diagnostic integration-effectiveness
-evidence rather than policy-quality benchmark claims.
+the public core has completed `30/30` dependency-light rows over 15 scenes,
+semantic ablations have completed `15/15` matched metric-bearing scene pairs,
+the command-only route baseline demonstrates the separation between
+integration-invalid evidence and policy evidence, direct-actor rows remain
+optional gated extension blockers, and completed closed-loop rows are
+diagnostic integration-effectiveness evidence rather than policy-quality
+benchmark claims.
 Missing restricted scenes, learned checkpoints, and scene-matched actor proxies
 remain explicit release limitations rather than hidden infrastructure
 assumptions.

@@ -9,7 +9,7 @@
   `WOD2SIM_ROUTE_CONTRACT_MODE=command_only_route`.
 - AlpaSim video rendering is disabled for CVM rows with
   `eval.video.render_video=false`.
-- Core dependency-light rows completed: 12/12 across `constant_velocity` and
+- Core dependency-light rows completed: 30/30 across `constant_velocity` and
   `route_following`.
 - Semantic ablation completed 30/30 closed-loop rows with 15 matched
   full/command-only pairs.
@@ -33,22 +33,24 @@
 
 ## Current Aggregate
 
-- Configured rows: 121.
-- Attempted rows: 97.
-- Completed rows: 97.
-- Closed-loop completed rows: 42.
-- Full-contract audit-valid rows: 26/27.
-- False-blocked valid full-contract rows: 0/26.
+- Configured rows: 148.
+- Attempted rows: 115.
+- Completed rows: 115.
+- Closed-loop completed rows: 60.
+- Full-contract audit-valid rows: 42/45.
+- False-blocked valid full-contract rows: 0/42.
 - Command-only rows rejected as non-claim-valid: 15/15.
 - Planned rows: 0.
-- Blocked rows: 24, all `direct_actor_oracle_proxy_missing`.
+- Blocked rows: 33, all `direct_actor_oracle_proxy_missing`.
 
 The release treats the completed public-core and semantic-ablation bullets as
 the integration-effectiveness evidence. The blocked rows are optional gated
 extension work retained for denominator honesty and failure analysis only.
-One completed full-contract semantic row is not audit-valid because 12/199
-frames fell back to `command_proxy`; it is retained as integration evidence and
-excluded from policy attribution rather than treated as a policy failure.
+Three completed full-contract rows on scene
+`clipgt-0fd06bc3-1899-4b45-9278-c5c018b3968d` are not audit-valid because
+12/199 frames fell back to `command_proxy`; they are retained as integration
+evidence and excluded from policy attribution rather than treated as policy
+failures.
 
 ## Claim Boundary
 

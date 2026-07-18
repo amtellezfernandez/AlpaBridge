@@ -49,16 +49,16 @@ host-specific paths, runtime identifiers, and local simulator state.
 
 ## Current Evidence Package
 
-- Configured CVM rows: 121.
-- Public-core rows completed: 12/12 across `constant_velocity` and
+- Configured CVM rows: 148.
+- Public-core rows completed: 30/30 across `constant_velocity` and
   `route_following`.
-- Attempted rows: 97.
-- Completed rows: 97.
-- Closed-loop completed rows: 42.
-- Full-contract audit-valid rows: 26/27.
+- Attempted rows: 115.
+- Completed rows: 115.
+- Closed-loop completed rows: 60.
+- Full-contract audit-valid rows: 42/45.
 - Command-only route rows rejected as non-claim-valid: 15/15.
 - Synthetic diagnostic rows: 55.
-- Blocked rows: 24, all `direct_actor_oracle_proxy_missing`.
+- Blocked rows: 33, all `direct_actor_oracle_proxy_missing`.
 - Claim-valid policy benchmark rows: 0.
 - Policy-attributable behavior rows: 26.
 - Policy-attributable failure rows: 0.
