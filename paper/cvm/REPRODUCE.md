@@ -93,7 +93,7 @@ the title, author block, PDF subject, or abstract text intentionally changes.
 - Planned rows: 0.
 - Blocked rows: 33.
 - Claim-valid benchmark matrix: 0.
-- External compatibility smoke: 1/1 rollout, 197 driver RPCs, 396 image
+- External interface conformance: 1/1 rollout, 197 driver RPCs, 396 image
   events, and 197/197 latency-target hits.
 
 The current aggregate supports a completed dependency-light public core,
