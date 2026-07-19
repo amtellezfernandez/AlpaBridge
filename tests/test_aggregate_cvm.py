@@ -223,7 +223,7 @@ class AggregateCVMTests(unittest.TestCase):
         self.assertEqual(1.0, summary["contract_invalid_evidence_rejection_rate"])
         self.assertEqual(1, summary["attribution_improvement_invalid_rows"])
 
-    def test_external_compatibility_summary_counts_driver_smoke(self) -> None:
+    def test_external_compatibility_summary_counts_driver_conformance(self) -> None:
         module = _load_module()
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

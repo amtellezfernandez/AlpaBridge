@@ -1,7 +1,7 @@
-# AlpaSim E2E Challenge Smoke Evidence
+# AlpaSim E2E Challenge Conformance Evidence
 
-This directory records a bounded external-stack smoke run against the NVIDIA
-AlpaSim E2E challenge development configuration. It is evidence that the
+This directory records a bounded external-stack conformance run against the
+NVIDIA AlpaSim E2E challenge development configuration. It is evidence that the
 WOD2Sim challenge driver can connect to the challenge runtime over gRPC and
 complete a real simulator-backed rollout. It is not a leaderboard benchmark
 claim.

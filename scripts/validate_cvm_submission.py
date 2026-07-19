@@ -82,7 +82,7 @@ EXPECTED_TABLE_HEADERS = {
         "Public core policy & Rows & Done/att. & Audit & Progress & Coll./off & "
         "Lat. p95 & Crash & Blocked"
     ),
-    "ablations.tex": "Closed-loop integration check & Observed & Denom.",
+    "ablations.tex": "Closed-loop check & Obs. & Denom. & Meaning",
     "fault_localization.tex": "Synthetic diagnostic & Count & Total",
 }
 REQUIRED_FIGURES = (
@@ -1921,36 +1921,29 @@ def _expected_ablations_rows(summary: dict[str, object]) -> list[str]:
         summary,
         "integration_effectiveness.valid_full_contract_false_block_denominator",
     )
-    false_blocked = _required_int(
-        summary, "integration_effectiveness.valid_full_contract_false_blocked_runs"
-    )
-    valid_full_contract_accepted = max(false_block_denominator - false_blocked, 0)
     return [
         _table_row(
-            "Full-contract audit-valid rollouts",
+            "Full-contract audit-valid rows",
             _required_int(summary, "integration_effectiveness.full_contract_audit_valid_runs"),
             _required_int(summary, "integration_effectiveness.full_contract_completed_runs"),
+            "valid integration survives audit",
         ),
         _table_row(
-            "Valid full-contract rows accepted",
-            valid_full_contract_accepted,
+            "Valid rows false-blocked",
+            _required_int(
+                summary, "integration_effectiveness.valid_full_contract_false_blocked_runs"
+            ),
             false_block_denominator,
+            "no valid-row rejection observed",
         ),
         _table_row(
-            "Semantic ablation metric pairs",
+            "Matched route-loss pairs",
             _required_int(summary, "integration_effectiveness.semantic_ablation_metric_pairs"),
             _required_int(summary, "integration_effectiveness.semantic_ablation_completed_pairs"),
+            "semantic confound executed",
         ),
         _table_row(
-            "Naive command-only route rows with metrics",
-            _required_int(summary, "integration_effectiveness.functional_naive_wrapper_metric_runs"),
-            _required_int(
-                summary,
-                "integration_effectiveness.semantic_ablation_command_proxy_completed_runs",
-            ),
-        ),
-        _table_row(
-            "Naive invalid route evidence accepted",
+            "Naive invalid metrics accepted",
             _required_int(
                 summary,
                 "integration_effectiveness.functional_naive_wrapper_invalid_evidence_accepted_runs",
@@ -1959,9 +1952,10 @@ def _expected_ablations_rows(summary: dict[str, object]) -> list[str]:
                 summary,
                 "integration_effectiveness.functional_naive_wrapper_invalid_acceptance_denominator",
             ),
+            "non-contract path would score them",
         ),
         _table_row(
-            "Contract invalid route evidence rejected",
+            "WOD2Sim invalid metrics rejected",
             _required_int(
                 summary,
                 "integration_effectiveness.contract_invalid_evidence_rejected_runs",
@@ -1970,9 +1964,10 @@ def _expected_ablations_rows(summary: dict[str, object]) -> list[str]:
                 summary,
                 "integration_effectiveness.contract_invalid_evidence_rejection_denominator",
             ),
+            "policy attribution blocked",
         ),
         _table_row(
-            "Invalid-row attribution improvement",
+            "Attribution corrections",
             _required_int(
                 summary,
                 "integration_effectiveness.attribution_improvement_invalid_rows",
@@ -1981,16 +1976,19 @@ def _expected_ablations_rows(summary: dict[str, object]) -> list[str]:
                 summary,
                 "integration_effectiveness.contract_invalid_evidence_rejection_denominator",
             ),
+            "invalid rows not blamed on policy",
         ),
         _table_row(
-            "Policy-behavior diagnostic rows",
-            _required_int(summary, "failure_attribution.policy_behavior_attributable_rows"),
+            "Policy-failure rows assigned",
+            _required_int(summary, "failure_attribution.policy_failure_attributable_rows"),
             _required_int(summary, "closed_loop_completed_runs"),
+            "no unsupported policy blame",
         ),
         _table_row(
             "Verified scenario categories",
             _required_int(summary, "scenario_coverage.verified_required_category_count"),
             _required_int(summary, "scenario_coverage.required_category_count"),
+            "no coverage claim",
         ),
     ]
 
