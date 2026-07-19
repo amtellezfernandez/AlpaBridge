@@ -19,4 +19,6 @@ the WOD2Sim reproducibility package, not a separate project.
 For release traceability, see the generated-report surface under
 [`artifacts/cvm/reports`](../artifacts/cvm/reports/), especially the
 [`contract_test_audit.md`](../artifacts/cvm/reports/contract_test_audit.md)
-mapping from contract requirements to tests and explicit gaps.
+mapping from contract requirements to tests and explicit gaps, and
+[`release_decision.md`](../artifacts/cvm/reports/release_decision.md) for the
+current claim-ready versus not-claim-ready boundary.
