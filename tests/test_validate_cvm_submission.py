@@ -297,7 +297,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         body = " ".join(f"word{index}" for index in range(module.ABSTRACT_MIN_WORDS))
         source = (
             "\\documentclass[conference,a4paper]{IEEEtran}\n"
-            "\\hypersetup{pdfsubject={WOD2Sim contract-based system-integration paper}}\n"
+            "\\hypersetup{pdfsubject={WOD2Sim integration-failure attribution paper}}\n"
             "\\begin{abstract}\n"
             + body
             + " \\CVMTotalRows{}\n"

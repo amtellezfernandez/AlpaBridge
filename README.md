@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <strong>Run WOD-style trajectory policies as auditable AlpaSim external drivers.</strong><br>
+  <strong>Separate integration failures from policy failures in closed-loop driving simulation.</strong><br>
   <a href="wod2sim.pdf">Paper</a> |
   <a href="docs/README.md">Documentation</a> |
   <a href="CITATION.cff">Citation</a>
@@ -15,8 +15,9 @@
 
 WOD2Sim preserves the policy information lost at the dataset-to-simulator
 boundary: route geometry, policy-facing scene state, trajectory timing, and run
-provenance. It is a contract-validation integration framework, not a new
-driving policy.
+provenance. Its purpose is to prevent boundary violations from being reported
+as policy failures. It is a contract-validation integration framework, not a
+new driving policy.
 
 This repository has one canonical paper PDF: [`wod2sim.pdf`](wod2sim.pdf). The
 paper source lives in [`paper/cvm`](paper/cvm), while the generated evidence,
