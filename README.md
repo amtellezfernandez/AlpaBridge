@@ -102,13 +102,11 @@ scenario-category coverage.
 <table>
   <tr>
     <td width="50%">
-      <a href="https://waymo.com/intl/jp/open/data/motion/">
-        <img src="https://lh3.googleusercontent.com/fUoUF5eid46CnlfsfbRSIVrU0u7oDnn5zzgxXE6ihD2OVNucq_lzIXUWtXlHYEekIx_r6FsMSV3ta6wICLeoYxRv-S56-9d7SuE=e365-s420" alt="Waymo Open Motion Dataset scenario visualization with multi-agent tracks and map geometry" width="100%">
-      </a>
+      <img src="docs/assets/readme/wod-style-input-boundary.svg" alt="Illustrative WOD-style input boundary with route geometry, scene signal, and trajectory target" width="100%">
       <br>
       <strong>Input side.</strong> WOD-style policies consume logged agent
-      tracks, route context, and vector map geometry. The image links to the
-      official Waymo Motion page and is not copied into this repository.
+      tracks, route context, and vector map geometry. This local illustration
+      is not copied from or derived from restricted dataset assets.
     </td>
     <td width="50%">
       <img src="docs/assets/readme/alpasim-rollout-diagnostic.svg" alt="Synthetic AlpaSim rollout diagnostic view with route map, audit panel, and camera stream diagnostic tile" width="100%">

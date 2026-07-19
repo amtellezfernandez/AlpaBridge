@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" role="img" aria-labelledby="title desc">
+  <title id="title">WOD-style policy input boundary</title>
+  <desc id="desc">Illustrative logged-scene interface with agent tracks, route geometry, and ego trajectory target.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e9f7ef"/>
+      <stop offset="0.52" stop-color="#f7fbf4"/>
+      <stop offset="1" stop-color="#dbeafe"/>
+    </linearGradient>
+    <linearGradient id="route" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#f97316"/>
+      <stop offset="1" stop-color="#0f766e"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#0f172a" flood-opacity="0.16"/>
+    </filter>
+  </defs>
+  <rect width="960" height="560" rx="42" fill="url(#bg)"/>
+  <g opacity="0.28" stroke="#0f766e" stroke-width="2">
+    <path d="M60 455 C170 400 260 412 360 355 S555 252 690 288 848 290 914 210" fill="none"/>
+    <path d="M42 165 C152 120 260 142 366 190 S548 268 675 230 833 143 922 168" fill="none"/>
+    <path d="M125 80 L850 465" stroke-dasharray="10 16"/>
+    <path d="M110 500 L810 82" stroke-dasharray="8 14"/>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="68" y="64" width="824" height="432" rx="34" fill="#fffffb" stroke="#d1d5db"/>
+  </g>
+  <rect x="103" y="99" width="512" height="362" rx="26" fill="#f8fafc" stroke="#cbd5e1"/>
+  <path d="M116 342 C210 300 270 312 344 252 415 195 499 190 597 128" fill="none" stroke="#94a3b8" stroke-width="44" stroke-linecap="round"/>
+  <path d="M128 360 C225 318 286 328 358 270 433 211 511 205 610 145" fill="none" stroke="#e5e7eb" stroke-width="24" stroke-linecap="round"/>
+  <path d="M142 356 C230 323 292 326 365 274 443 218 522 211 598 166" fill="none" stroke="url(#route)" stroke-width="7" stroke-linecap="round" stroke-dasharray="16 10"/>
+  <g fill="#0f172a">
+    <rect x="241" y="303" width="48" height="22" rx="7" transform="rotate(-16 265 314)"/>
+    <rect x="399" y="233" width="48" height="22" rx="7" transform="rotate(-34 423 244)"/>
+    <rect x="510" y="177" width="48" height="22" rx="7" transform="rotate(-25 534 188)"/>
+  </g>
+  <g fill="#2563eb">
+    <circle cx="170" cy="385" r="11"/>
+    <circle cx="210" cy="371" r="9"/>
+    <circle cx="254" cy="352" r="8"/>
+    <circle cx="302" cy="322" r="7"/>
+  </g>
+  <g fill="#f97316">
+    <circle cx="142" cy="356" r="8"/>
+    <circle cx="252" cy="316" r="8"/>
+    <circle cx="365" cy="274" r="8"/>
+    <circle cx="488" cy="209" r="8"/>
+    <circle cx="598" cy="166" r="8"/>
+  </g>
+  <rect x="650" y="99" width="206" height="86" rx="20" fill="#ecfdf5" stroke="#99f6e4"/>
+  <text x="676" y="130" fill="#0f766e" font-family="Georgia, 'Times New Roman', serif" font-size="22" font-weight="700">Route Geometry</text>
+  <text x="676" y="158" fill="#334155" font-family="Verdana, sans-serif" font-size="15">Polyline waypoints, not only</text>
+  <text x="676" y="178" fill="#334155" font-family="Verdana, sans-serif" font-size="15">a high-level command.</text>
+  <rect x="650" y="211" width="206" height="92" rx="20" fill="#fff7ed" stroke="#fed7aa"/>
+  <text x="676" y="242" fill="#c2410c" font-family="Georgia, 'Times New Roman', serif" font-size="22" font-weight="700">Scene Signal</text>
+  <text x="676" y="270" fill="#334155" font-family="Verdana, sans-serif" font-size="15">Logged agents, ego motion,</text>
+  <text x="676" y="290" fill="#334155" font-family="Verdana, sans-serif" font-size="15">camera-derived context.</text>
+  <rect x="650" y="329" width="206" height="92" rx="20" fill="#eff6ff" stroke="#bfdbfe"/>
+  <text x="676" y="360" fill="#1d4ed8" font-family="Georgia, 'Times New Roman', serif" font-size="22" font-weight="700">Trajectory Target</text>
+  <text x="676" y="388" fill="#334155" font-family="Verdana, sans-serif" font-size="15">Short-horizon ego-relative</text>
+  <text x="676" y="408" fill="#334155" font-family="Verdana, sans-serif" font-size="15">waypoints for the driver.</text>
+  <text x="104" y="529" fill="#334155" font-family="Verdana, sans-serif" font-size="16">Illustrative public diagram. No restricted Waymo or AlpaSim scene asset is embedded.</text>
+</svg>
