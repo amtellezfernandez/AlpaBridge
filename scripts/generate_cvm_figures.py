@@ -127,13 +127,16 @@ def _results_tikz(summary: dict[str, object]) -> str:
         effectiveness = {}
     full_completed = int(effectiveness.get("full_contract_completed_runs", 0))
     audit_valid = int(effectiveness.get("full_contract_audit_valid_runs", 0))
-    false_block_denom = int(
-        effectiveness.get("valid_full_contract_false_block_denominator", 0)
-    )
-    false_blocked = int(effectiveness.get("valid_full_contract_false_blocked_runs", 0))
-    valid_accepted = max(false_block_denom - false_blocked, 0)
     semantic_pairs = int(effectiveness.get("semantic_ablation_completed_pairs", 0))
-    semantic_metric_pairs = int(effectiveness.get("semantic_ablation_metric_pairs", 0))
+    semantic_eligible_pairs = int(
+        effectiveness.get("semantic_ablation_comparison_eligible_pairs", 0)
+    )
+    status_only_denominator = int(
+        effectiveness.get("status_only_baseline_acceptance_denominator", 0)
+    )
+    status_only_accepted = int(
+        effectiveness.get("status_only_baseline_accepted_runs", 0)
+    )
     command_completed = int(
         effectiveness.get("semantic_ablation_command_proxy_completed_runs", 0)
     )
@@ -142,8 +145,13 @@ def _results_tikz(summary: dict[str, object]) -> str:
     )
     checks = [
         ("Full-contract audit", audit_valid, full_completed, "green!25"),
-        ("Valid rows accepted", valid_accepted, false_block_denom, "green!25"),
-        ("Semantic pairs", semantic_metric_pairs, semantic_pairs, "blue!18"),
+        ("Eligible route-loss pairs", semantic_eligible_pairs, semantic_pairs, "blue!18"),
+        (
+            "Status-only baseline",
+            status_only_accepted,
+            status_only_denominator,
+            "gray!25",
+        ),
         ("Invalid route rejected", command_rejected, command_completed, "orange!22"),
     ]
     max_total = max((total for _, _, total, _ in checks), default=1)

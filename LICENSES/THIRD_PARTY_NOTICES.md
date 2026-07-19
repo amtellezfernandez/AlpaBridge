@@ -29,3 +29,14 @@ repository are described in
 
 AlpaSim itself is **not** bundled in this repository; the runtime expects a
 separate AlpaSim checkout as described in the README.
+
+## IEEE conference LaTeX class
+
+[`paper/cvm/ieeeconf.cls`](../paper/cvm/ieeeconf.cls) is the unmodified
+conference class distributed through the IEEE PaperPlaza support package linked
+by the target conference's author instructions. It is copyright 1993-2002 by Gerry Murray,
+Silvano Balemi, Jon Dixon, Peter Nuechter, Juergen von Hagen, and Michael Shell.
+
+The class is distributed under the Perl Artistic License. A full copy of that
+license is included at [`Artistic-1.0.txt`](Artistic-1.0.txt). The contribution,
+copyright, warranty, and license notices are retained in the class file.

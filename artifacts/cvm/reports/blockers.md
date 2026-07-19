@@ -38,7 +38,8 @@
 - Completed rows: 115.
 - Closed-loop completed rows: 60.
 - Full-contract audit-valid rows: 42/45.
-- False-blocked valid full-contract rows: 0/42.
+- Comparison-eligible semantic pairs: 14/15.
+- Status-only baseline accepted rows: 15/15.
 - Command-only rows rejected as non-claim-valid: 15/15.
 - Planned rows: 0.
 - Blocked rows: 33, all `direct_actor_oracle_proxy_missing`.
@@ -55,8 +56,8 @@ failures.
 ## Claim Boundary
 
 The paper may claim the completed dependency-light public core, semantic
-route-boundary confound measurement, evidence-gate rejection of command-only
-route rows, and false-block denominator on valid full-contract rows. Public
+route-boundary diagnostic, and evidence-gate rejection of command-only route
+rows that a defined status-only baseline accepts. Public
 synthetic lifecycle/fault rows may be reported only as service-level
 conformance diagnostics. Missing scene-matched actor proxies, learned
 checkpoints, and redistributable restricted scenes block optional extension or

@@ -5,6 +5,7 @@ import csv
 import hashlib
 import json
 import math
+import statistics
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
@@ -466,6 +467,12 @@ def _core_policy_results(
                 "attempted_runs": sum(row.get("attempted") == "true" for row in policy_rows),
                 "completed_runs": sum(row.get("completed") == "true" for row in policy_rows),
                 "audit_valid_runs": sum(row.get("audit_valid") == "true" for row in policy_evidence),
+                "route_valid_runs": sum(
+                    row.get("route_contract_ok") == "true" for row in policy_evidence
+                ),
+                "sensor_valid_runs": sum(
+                    row.get("sensor_pipeline_ok") == "true" for row in policy_evidence
+                ),
                 "metric_rows": len(metric_rows),
                 "blocked_runs": sum(row.get("status") == "blocked" for row in policy_rows),
                 "progress_mean": _mean_metric(metric_rows, "progress"),
@@ -817,8 +824,6 @@ def _integration_effectiveness_summary(evidence_rows: list[dict[str, Any]]) -> d
     command_proxy_metric_rows = [
         row for row in command_proxy_rows if row.get("metrics_present") == "true"
     ]
-    false_block_denominator = len(full_contract_audit_valid)
-    false_blocked = 0
     invalid_rejection_denominator = len(command_proxy_rows)
     invalid_rejection_rate = (
         None
@@ -828,36 +833,28 @@ def _integration_effectiveness_summary(evidence_rows: list[dict[str, Any]]) -> d
     return {
         "rule": (
             "Integration-effectiveness is measured on executed closed-loop rows: "
-            "valid full-contract rollouts should pass audit without false blocking, "
-            "and runnable command-only route wrappers should be rejected as invalid "
-            "policy evidence when they drop route geometry."
+            "completed full-contract rollouts are audited, and completed metric-bearing "
+            "command-only rows are compared with a defined status-only acceptance "
+            "baseline before route-invalid evidence is rejected."
         ),
         "full_contract_completed_runs": len(full_contract_rows),
         "full_contract_audit_valid_runs": len(full_contract_audit_valid),
-        "valid_full_contract_false_blocked_runs": false_blocked,
-        "valid_full_contract_false_block_denominator": false_block_denominator,
-        "valid_full_contract_false_block_rate": None
-        if false_block_denominator == 0
-        else round(false_blocked / false_block_denominator, 6),
         "semantic_ablation_completed_pairs": semantic_pairs["completed_pairs"],
-        "semantic_ablation_metric_pairs": semantic_pairs["metric_pairs"],
+        "semantic_ablation_comparison_eligible_pairs": semantic_pairs[
+            "comparison_eligible_pairs"
+        ],
         "semantic_ablation_command_proxy_completed_runs": len(command_proxy_rows),
         "semantic_ablation_command_proxy_metric_runs": len(command_proxy_metric_rows),
         "semantic_ablation_command_proxy_rejected_runs": len(command_proxy_rejected),
-        "functional_naive_wrapper_completed_runs": len(command_proxy_rows),
-        "functional_naive_wrapper_metric_runs": len(command_proxy_metric_rows),
-        "functional_naive_wrapper_invalid_evidence_accepted_runs": len(
-            command_proxy_metric_rows
-        ),
-        "functional_naive_wrapper_invalid_acceptance_denominator": len(
-            command_proxy_metric_rows
-        ),
+        "status_only_baseline_accepted_runs": len(command_proxy_metric_rows),
+        "status_only_baseline_acceptance_denominator": len(command_proxy_rows),
         "contract_invalid_evidence_rejected_runs": len(command_proxy_rejected),
         "contract_invalid_evidence_rejection_denominator": invalid_rejection_denominator,
         "contract_invalid_evidence_rejection_rate": invalid_rejection_rate,
-        "attribution_improvement_invalid_rows": min(
-            len(command_proxy_metric_rows),
-            len(command_proxy_rejected),
+        "status_only_accepted_contract_rejected_runs": sum(
+            row.get("metrics_present") == "true"
+            and (row.get("route_contract_ok") == "false" or row.get("audit_valid") == "false")
+            for row in command_proxy_rows
         ),
     }
 
@@ -921,19 +918,33 @@ def _semantic_ablation_pairs(evidence_rows: list[dict[str, Any]]) -> dict[str, i
         )
         grouped.setdefault(key, {})[str(row.get("adapter_config", ""))] = row
     completed_pairs = 0
-    metric_pairs = 0
+    comparison_eligible_pairs = 0
     for adapters in grouped.values():
         full = adapters.get("full_contract")
         command_only = adapters.get("command_only_route")
         if full is None or command_only is None:
             continue
         completed_pairs += 1
-        if (
-            full.get("metrics_present") == "true"
-            and command_only.get("metrics_present") == "true"
-        ):
-            metric_pairs += 1
-    return {"completed_pairs": completed_pairs, "metric_pairs": metric_pairs}
+        if _semantic_pair_comparison_eligible(full, command_only):
+            comparison_eligible_pairs += 1
+    return {
+        "completed_pairs": completed_pairs,
+        "comparison_eligible_pairs": comparison_eligible_pairs,
+    }
+
+
+def _semantic_pair_comparison_eligible(
+    full: dict[str, Any],
+    command_only: dict[str, Any],
+) -> bool:
+    return (
+        full.get("metrics_present") == "true"
+        and command_only.get("metrics_present") == "true"
+        and full.get("audit_valid") == "true"
+        and full.get("route_contract_ok") == "true"
+        and command_only.get("audit_valid") == "false"
+        and command_only.get("route_contract_ok") == "false"
+    )
 
 
 def _semantic_ablation_pair_rows(evidence_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -955,6 +966,7 @@ def _semantic_ablation_pair_rows(evidence_rows: list[dict[str, Any]]) -> list[di
         command_only = adapters.get("command_only_route")
         if full is None or command_only is None:
             continue
+        comparison_eligible = _semantic_pair_comparison_eligible(full, command_only)
         row: dict[str, Any] = {
             "policy": key[0],
             "scene_id": key[1],
@@ -969,6 +981,7 @@ def _semantic_ablation_pair_rows(evidence_rows: list[dict[str, Any]]) -> list[di
             if full.get("metrics_present") == "true"
             and command_only.get("metrics_present") == "true"
             else "false",
+            "comparison_eligible": "true" if comparison_eligible else "false",
         }
         for metric in SEMANTIC_PAIR_METRICS:
             full_value = _metric_float(full, metric)
@@ -994,6 +1007,8 @@ def _semantic_ablation_delta_summary(
         values: list[float] = []
         key = f"delta_{metric}"
         for row in pair_rows:
+            if row.get("comparison_eligible") != "true":
+                continue
             try:
                 value = float(str(row.get(key, "")))
             except ValueError:
@@ -1004,8 +1019,12 @@ def _semantic_ablation_delta_summary(
             summary[metric] = {
                 "count": len(values),
                 "mean_delta_full_minus_command_only": round(sum(values) / len(values), 6),
+                "median_delta": round(statistics.median(values), 6),
                 "min_delta": round(min(values), 6),
                 "max_delta": round(max(values), 6),
+                "positive_count": sum(value > 0 for value in values),
+                "negative_count": sum(value < 0 for value in values),
+                "zero_count": sum(value == 0 for value in values),
             }
     return summary
 
@@ -1046,18 +1065,14 @@ def _write_summary_csv(path: Path, summary: dict[str, Any]) -> None:
         "closed_loop_audit_valid_runs",
         "closed_loop_metric_rows",
         "full_contract_audit_valid_runs",
-        "valid_full_contract_false_blocked_runs",
-        "valid_full_contract_false_block_denominator",
         "semantic_ablation_completed_pairs",
-        "semantic_ablation_metric_pairs",
+        "semantic_ablation_comparison_eligible_pairs",
         "semantic_ablation_command_proxy_metric_runs",
-        "functional_naive_wrapper_completed_runs",
-        "functional_naive_wrapper_metric_runs",
-        "functional_naive_wrapper_invalid_evidence_accepted_runs",
-        "functional_naive_wrapper_invalid_acceptance_denominator",
+        "status_only_baseline_accepted_runs",
+        "status_only_baseline_acceptance_denominator",
         "contract_invalid_evidence_rejected_runs",
         "contract_invalid_evidence_rejection_denominator",
-        "attribution_improvement_invalid_rows",
+        "status_only_accepted_contract_rejected_runs",
         "public_core_configured_rows",
         "public_core_completed_runs",
         "public_core_blocked_rows",
@@ -1130,16 +1145,16 @@ def _core_policy_table_rows(summary: dict[str, Any]) -> list[str]:
         completed = _summary_int(item, "completed_runs")
         attempted = _summary_int(item, "attempted_runs")
         audit_valid = _summary_int(item, "audit_valid_runs")
+        route_valid = _summary_int(item, "route_valid_runs")
+        sensor_valid = _summary_int(item, "sensor_valid_runs")
         blocked = _summary_int(item, "blocked_runs")
         rows.append(
             f"{_latex_text(str(item.get('policy', '')))} & "
             f"{_summary_int(item, 'configured_rows')} & "
             f"{completed}/{attempted} & "
             f"{audit_valid}/{completed} & "
-            f"{_format_table_metric(item.get('progress_mean'))} & "
-            f"{_format_table_metric(item.get('collision_any_mean'))}/"
-            f"{_format_table_metric(item.get('offroad_mean'))} & "
-            f"{_format_table_metric(item.get('action_latency_p95_ms'))} & "
+            f"{route_valid}/{completed} & "
+            f"{sensor_valid}/{completed} & "
             f"{_summary_int(item, 'service_crash_rows')} & "
             f"{blocked} \\\\"
         )
@@ -1197,27 +1212,23 @@ def _write_tables(output: Path, summary: dict[str, Any], rows: list[dict[str, st
     full_contract_audit_valid = _summary_int(
         effectiveness, "full_contract_audit_valid_runs"
     )
-    false_blocked = _summary_int(
-        effectiveness, "valid_full_contract_false_blocked_runs"
-    )
-    false_block_denominator = _summary_int(
-        effectiveness, "valid_full_contract_false_block_denominator"
-    )
     semantic_completed_pairs = _summary_int(
         effectiveness, "semantic_ablation_completed_pairs"
     )
-    semantic_metric_pairs = _summary_int(effectiveness, "semantic_ablation_metric_pairs")
+    semantic_eligible_pairs = _summary_int(
+        effectiveness, "semantic_ablation_comparison_eligible_pairs"
+    )
     command_proxy_completed = _summary_int(
         effectiveness, "semantic_ablation_command_proxy_completed_runs"
     )
     command_proxy_rejected = _summary_int(
         effectiveness, "semantic_ablation_command_proxy_rejected_runs"
     )
-    naive_metric_runs = _summary_int(
-        effectiveness, "functional_naive_wrapper_metric_runs"
+    status_only_accepted = _summary_int(
+        effectiveness, "status_only_baseline_accepted_runs"
     )
-    naive_invalid_accepted = _summary_int(
-        effectiveness, "functional_naive_wrapper_invalid_evidence_accepted_runs"
+    status_only_denominator = _summary_int(
+        effectiveness, "status_only_baseline_acceptance_denominator"
     )
     contract_invalid_rejected = _summary_int(
         effectiveness, "contract_invalid_evidence_rejected_runs"
@@ -1225,8 +1236,8 @@ def _write_tables(output: Path, summary: dict[str, Any], rows: list[dict[str, st
     contract_invalid_denominator = _summary_int(
         effectiveness, "contract_invalid_evidence_rejection_denominator"
     )
-    attribution_improvement_invalid = _summary_int(
-        effectiveness, "attribution_improvement_invalid_rows"
+    status_only_accepted_contract_rejected = _summary_int(
+        effectiveness, "status_only_accepted_contract_rejected_runs"
     )
     attribution = summary.get("failure_attribution", {})
     scenario_coverage = summary.get("scenario_coverage", {})
@@ -1295,9 +1306,9 @@ def _write_tables(output: Path, summary: dict[str, Any], rows: list[dict[str, st
         "% generated by contract-validation aggregate; data_hash="
         + data_hash
         + "\n"
-        + "\\begin{tabular}{lllllllll}\n"
+        + "\\begin{tabular}{llllllll}\n"
         + "\\toprule\n"
-        + "Public core policy & Rows & Done/att. & Audit & Progress & Coll./off & Lat. p95 & Crash & Blocked \\\\\n"
+        + "Public core policy & Rows & Done/att. & Audit & Route & Sensor & Crash & Blocked \\\\\n"
         + "\\midrule\n"
         + "\n".join(core_policy_rows)
         + "\n"
@@ -1311,14 +1322,11 @@ def _write_tables(output: Path, summary: dict[str, Any], rows: list[dict[str, st
         + "\\begin{tabular}{lrrl}\n"
         + "\\toprule\nClosed-loop check & Obs. & Denom. & Meaning \\\\\n"
         + "\\midrule\n"
-        + f"Full-contract audit-valid rows & {full_contract_audit_valid} & {full_contract_completed} & valid integration survives audit \\\\\n"
-        + f"Valid rows false-blocked & {false_blocked} & {false_block_denominator} & no valid-row rejection observed \\\\\n"
-        + f"Matched route-loss pairs & {semantic_metric_pairs} & {semantic_completed_pairs} & semantic confound executed \\\\\n"
-        + f"Naive invalid metrics accepted & {naive_invalid_accepted} & {naive_metric_runs} & non-contract path would score them \\\\\n"
-        + f"WOD2Sim invalid metrics rejected & {contract_invalid_rejected} & {contract_invalid_denominator} & policy attribution blocked \\\\\n"
-        + f"Attribution corrections & {attribution_improvement_invalid} & {contract_invalid_denominator} & invalid rows not blamed on policy \\\\\n"
-        + f"Policy-failure rows assigned & {policy_failure_attributable} & {summary['closed_loop_completed_runs']} & no unsupported policy blame \\\\\n"
-        + f"Verified scenario categories & {verified_required_category_count} & {required_category_count} & no coverage claim \\\\\n"
+        + f"Full-contract audit-valid & {full_contract_audit_valid} & {full_contract_completed} & audit passed \\\\\n"
+        + f"Comparison-eligible pairs & {semantic_eligible_pairs} & {semantic_completed_pairs} & valid/invalid arms \\\\\n"
+        + f"Status-only baseline accepted & {status_only_accepted} & {status_only_denominator} & completion + metrics \\\\\n"
+        + f"Invalid route rows rejected & {contract_invalid_rejected} & {contract_invalid_denominator} & route gate \\\\\n"
+        + f"Verified scenario categories & {verified_required_category_count} & {required_category_count} & coverage withheld \\\\\n"
         + "\\bottomrule\n\\end{tabular}\n",
         encoding="utf-8",
     )
@@ -1351,8 +1359,6 @@ def _write_tables(output: Path, summary: dict[str, Any], rows: list[dict[str, st
         + f"\\newcommand{{\\CVMClosedLoopMetricRows}}{{{summary['closed_loop_metric_rows']}}}\n"
         + f"\\newcommand{{\\CVMFullContractCompletedRuns}}{{{full_contract_completed}}}\n"
         + f"\\newcommand{{\\CVMFullContractAuditValidRuns}}{{{full_contract_audit_valid}}}\n"
-        + f"\\newcommand{{\\CVMValidFullContractFalseBlockedRuns}}{{{false_blocked}}}\n"
-        + f"\\newcommand{{\\CVMValidFullContractFalseBlockDenominator}}{{{false_block_denominator}}}\n"
         + f"\\newcommand{{\\CVMClosedLoopSceneCount}}{{{closed_loop_scene_count}}}\n"
         + f"\\newcommand{{\\CVMRequiredScenarioCategoryCount}}{{{required_category_count}}}\n"
         + f"\\newcommand{{\\CVMVerifiedRequiredScenarioCategoryCount}}{{{verified_required_category_count}}}\n"
@@ -1377,14 +1383,14 @@ def _write_tables(output: Path, summary: dict[str, Any], rows: list[dict[str, st
         + f"\\newcommand{{\\CVMDirectActorRows}}{{{direct_actor_configured}}}\n"
         + f"\\newcommand{{\\CVMDirectActorBlockedRows}}{{{direct_actor_blocked}}}\n"
         + f"\\newcommand{{\\CVMSemanticAblationCompletedPairs}}{{{semantic_completed_pairs}}}\n"
-        + f"\\newcommand{{\\CVMSemanticAblationMetricPairs}}{{{semantic_metric_pairs}}}\n"
+        + f"\\newcommand{{\\CVMSemanticAblationEligiblePairs}}{{{semantic_eligible_pairs}}}\n"
         + f"\\newcommand{{\\CVMCommandProxyCompletedRuns}}{{{command_proxy_completed}}}\n"
         + f"\\newcommand{{\\CVMCommandProxyRejectedRuns}}{{{command_proxy_rejected}}}\n"
-        + f"\\newcommand{{\\CVMNaiveWrapperMetricRuns}}{{{naive_metric_runs}}}\n"
-        + f"\\newcommand{{\\CVMNaiveInvalidAcceptedRuns}}{{{naive_invalid_accepted}}}\n"
+        + f"\\newcommand{{\\CVMStatusOnlyAcceptedRuns}}{{{status_only_accepted}}}\n"
+        + f"\\newcommand{{\\CVMStatusOnlyAcceptanceDenominator}}{{{status_only_denominator}}}\n"
         + f"\\newcommand{{\\CVMContractInvalidRejectedRuns}}{{{contract_invalid_rejected}}}\n"
         + f"\\newcommand{{\\CVMContractInvalidRejectionDenominator}}{{{contract_invalid_denominator}}}\n"
-        + f"\\newcommand{{\\CVMAttributionImprovementInvalidRows}}{{{attribution_improvement_invalid}}}\n"
+        + f"\\newcommand{{\\CVMStatusOnlyAcceptedContractRejectedRuns}}{{{status_only_accepted_contract_rejected}}}\n"
         + "\\newcommand{\\CVMSemanticProgressDeltaMean}{"
         + _paper_semantic_delta(summary, "progress")
         + "}\n"

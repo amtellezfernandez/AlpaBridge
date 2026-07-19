@@ -11,11 +11,12 @@ benchmark release.
   behavior and policy-failure attribution.
 - The dependency-light public core executes as auditable AlpaSim external
   drivers.
-- The semantic route-loss invalidation experiment is claim-ready: a runnable
-  command-only route wrapper produces metric-bearing rows, and WOD2Sim rejects
-  those rows as non-claim-valid route evidence.
-- Valid full-contract rows are retained without observed false blocking in the
-  current aggregate.
+- The semantic route-loss invalidation experiment is claim-ready at the
+  attribution boundary: 15/15 command-only rows satisfy a defined status-only
+  acceptance baseline, and WOD2Sim rejects the same rows as non-claim-valid
+  route evidence.
+- Only 14/15 semantic pairs are comparison-eligible; their score deltas are
+  descriptive and do not support a systematic policy-effect claim.
 - The paper PDF, generated tables, figures, aggregate summaries, manifests, and
   public reports are reproducible through the CVM release targets.
 

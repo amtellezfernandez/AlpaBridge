@@ -19,7 +19,7 @@ artifacts.
 | Structured hazard aliases, static geometry, dynamic actor motion, headings, and behavior fields are preserved where available. | `tests/test_alpasim_integration.py`: `test_alpasim_signal_uses_structured_hazards`, `test_alpasim_signal_preserves_static_hazard_shape_metadata`, `test_alpasim_signal_preserves_moving_hazards_as_actors`, `test_alpasim_signal_preserves_moving_hazard_shape_metadata`, `test_alpasim_signal_preserves_explicit_moving_behavior`, `test_alpasim_signal_preserves_explicit_heading_for_elongated_vehicle`. | Covered. |
 | Visibility-risk diagnostics do not fabricate obstacles. | `tests/test_alpasim_integration.py`: `test_alpasim_signal_keeps_inferred_risk_diagnostic_only`. | Covered. |
 | Missing route or command-only fallback carries an explicit reason code. | `tests/test_run_cvm_matrix.py`: `test_command_only_manifest_records_proxy_route_expectation`; `artifacts/cvm/results/semantic_ablation_pairs.csv`. | Covered for command-only route fallback; missing-route simulator evidence remains outside current public rows. |
-| Functional command-only route wrapper baseline is compared against contract-gated route evidence. | `artifacts/cvm/results/summary.json`; `artifacts/cvm/tables/ablations.tex`; `tests/test_aggregate_cvm.py`: `test_integration_effectiveness_counts_functional_naive_route_wrapper`. | Covered for the semantic route boundary: command-only rows are runnable and metric-bearing, but rejected as non-claim-valid route evidence. Not a full non-contract lifecycle/timing comparison. |
+| A defined status-only acceptance baseline is compared against contract-gated route evidence. | `artifacts/cvm/results/summary.json`; `artifacts/cvm/tables/ablations.tex`; `tests/test_aggregate_cvm.py`: `test_integration_effectiveness_counts_status_only_route_baseline`. | Covered for the semantic route boundary: command-only rows are completed and metric-bearing, but rejected as non-claim-valid route evidence. The baseline is a rule, not a separate implementation or full non-contract lifecycle/timing comparison. |
 
 ## Temporal Contract
 
@@ -70,7 +70,7 @@ artifacts.
 |---|---|---|
 | Semantic, temporal, lifecycle, deployment/plugin, and evidence injections carry expected layer/code records. | `configs/cvm/fault_injection.yaml`; `artifacts/cvm/results/fault_injection.csv`; `tests/test_run_cvm_matrix.py`. | Covered as public synthetic diagnostics. |
 | Fault detection and localization accuracy are aggregated with denominators. | `artifacts/cvm/results/fault_injection/fault_injection.csv`; `artifacts/cvm/tables/fault_localization.tex`; `tests/test_validate_cvm_submission.py`: `test_generated_table_value_check_accepts_summary_synced_tables`. | Covered as public synthetic diagnostics: 15/15 detected and 15/15 localized. |
-| Mutation-style or third-party-authored fault precision is evaluated. | No current generated artifact. | Gap: current fault injection remains framework-authored diagnostics. The paper does not claim external mutation-testing precision or false-positive rate beyond valid full-contract false-block evidence. |
+| Mutation-style or third-party-authored fault precision is evaluated. | No current generated artifact. | Gap: current fault injection remains framework-authored diagnostics. The paper does not claim external mutation-testing precision or a false-positive rate. |
 
 ## Explicit Gaps Kept Out Of Policy Claims
 
@@ -79,6 +79,6 @@ artifacts.
 - Learned token policy behavior is not benchmarked without a legitimate local checkpoint hash.
 - Scenario-category coverage is not claimed because current local scene metadata is unclassified; the aggregate reports 0/6 verified required categories and 15 unclassified closed-loop scenes.
 - The strict lifecycle comparison is a synthetic diagnostic, not evidence against a functional non-contract lifecycle wrapper.
-- The functional non-contract comparison is currently limited to command-only route semantics.
+- The non-contract reference is a defined status-only acceptance rule, not a separate wrapper implementation or external competitor.
 - Fault injection is framework-authored synthetic diagnostics, not external mutation-testing precision.
 - The public release contains 0 claim-valid policy benchmark rows and 0 policy-failure-attributable rows.

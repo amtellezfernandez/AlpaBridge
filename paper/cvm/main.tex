@@ -1,20 +1,22 @@
-\documentclass[conference,a4paper]{IEEEtran}
+\documentclass[a4paper,10pt,conference]{ieeeconf}
+
+\IEEEoverridecommandlockouts
+\overrideIEEEmargins
 
 \usepackage{amsmath}
+\usepackage{balance}
 \usepackage{booktabs}
 \usepackage{graphicx}
 \usepackage[hidelinks]{hyperref}
 \usepackage{microtype}
-\usepackage{placeins}
 
 \input{generated/paper_numbers.tex}
 
-\title{WOD2Sim: Separating Integration Failures from Policy Failures in Closed-Loop Driving Simulation}
+\title{\LARGE \bf WOD2Sim: Separating Integration Failures from Policy Failures in Closed-Loop Driving Simulation}
 
-\author{
-\IEEEauthorblockN{Alba Maria Tellez Fernandez}
-\IEEEauthorblockA{Independent Researcher\\
-Email: amtellezfernandez@gmail.com}
+\author{Alba Maria Tellez Fernandez%
+\thanks{Alba Maria Tellez Fernandez is an Independent Researcher.
+Email: amtellezfernandez@gmail.com.}%
 }
 
 \hypersetup{
@@ -25,488 +27,375 @@ Email: amtellezfernandez@gmail.com}
 
 \begin{document}
 \maketitle
+\thispagestyle{empty}
+\pagestyle{empty}
 
 \begin{abstract}
-Closed-loop driving evaluation has an attribution problem: degraded rollout metrics can
-be mistaken for policy failures when the simulator boundary silently drops
-decision-relevant route geometry, changes timing assumptions, or leaves incomplete
-evidence. WOD2Sim addresses this problem as a contract-auditing layer for WOD-style
-trajectory policies executed as AlpaSim external drivers. It defines semantic,
-temporal, lifecycle, deployment, and evidence contracts that decide whether a rollout
-can be interpreted as policy behavior or must remain an integration/precondition
-failure. The public contract-validation matrix completes
-\CVMPublicCoreCompletedRuns{}/\CVMPublicCoreRows{} dependency-light closed-loop rows
-over \CVMClosedLoopSceneCount{} local scenes and observes
-\CVMValidFullContractFalseBlockedRuns{}/
-\CVMValidFullContractFalseBlockDenominator{} false blocks among audit-valid
-full-contract rows. Its central invalidation experiment runs a functional
-command-only route wrapper: the wrapper produces \CVMNaiveWrapperMetricRuns{}
-metric-bearing rows that a conventional non-contract path could score, while WOD2Sim
-rejects \CVMContractInvalidRejectedRuns{}/
-\CVMContractInvalidRejectionDenominator{} as route-invalid, non-claim-valid evidence.
-The result is not a new driving policy, official benchmark, or scenario-coverage
-claim. It is a bounded demonstration that explicit integration contracts can separate
-boundary violations from policy behavior before closed-loop metrics are interpreted.
+Closed-loop driving evaluation can misattribute degraded rollout metrics to policy
+quality when the simulator boundary drops route geometry, changes timing assumptions,
+or produces incomplete evidence. WOD2Sim is a contract-auditing layer between Waymo
+Open Dataset (WOD)-style trajectory-policy interfaces and AlpaSim external
+drivers. It validates semantic, temporal, lifecycle, deployment, and evidence
+contracts before a rollout is admitted as policy-behavior evidence. We evaluate the
+public dependency-light path on \CVMClosedLoopSceneCount{} locally available scenes.
+All \CVMPublicCoreCompletedRuns{}/\CVMPublicCoreRows{} constant-velocity and
+route-following rows complete, of which \CVMPublicCoreAuditValidRuns{} pass route and
+sensor audits. Across all matrices, \CVMFullContractAuditValidRuns{}/
+\CVMFullContractCompletedRuns{} completed full-contract rollouts are audit-valid. In
+a paired route-loss diagnostic, all \CVMStatusOnlyAcceptedRuns{}/
+\CVMStatusOnlyAcceptanceDenominator{} command-only rows complete with metrics and pass
+a defined status-only baseline, while the contract gate rejects
+\CVMContractInvalidRejectedRuns{}/\CVMContractInvalidRejectionDenominator{} because
+route geometry is absent. Only \CVMSemanticAblationEligiblePairs{}/
+\CVMSemanticAblationCompletedPairs{} pairs are comparison-eligible; their score
+deltas are descriptive because each scene has one execution and the simulator seed is
+uncontrolled. No learned policy or scenario coverage is evaluated. The contribution
+is an auditable failure-attribution method and evidence pipeline, not a policy
+benchmark or performance result.
 \end{abstract}
 
 \section{Introduction}
 
-Dataset-trained driving policies and closed-loop simulators expose different failure
-surfaces. A WOD-style policy consumes logged observations, route intent or route
-geometry, and a short-horizon ego-relative trajectory target. A closed-loop external
-driver must instead remain alive as a service, accept incremental sensor and route
-messages, return controls on the simulator clock, and leave an evidence trail that
-distinguishes policy behavior from integration failure.
+Dataset-trained trajectory policies and closed-loop simulators expose different
+failure surfaces. A policy designed around the Waymo Open Dataset (WOD)
+interface~\cite{sun2020scalability} may assume logged observations, local route
+geometry, and a fixed trajectory horizon. A simulator service must also accept
+incremental messages, meet the runtime clock, remain alive across session events, and
+retain enough evidence to explain a result. AlpaSim exposes this difference through
+its external-driver boundary~\cite{alpasim2025}.
 
-This distinction matters because a wrapper can make integration failures look like
-policy failures. For example, reducing route geometry to a high-level command can remove
-the local polyline used by a route-conditioned trajectory policy. A later collision,
-route drift, or invalid trajectory may then be attributed to policy quality even though
-the decision-relevant input was lost at the simulator boundary. Similar confounds arise
-from mismatched trajectory sampling grids, stale observations, duplicate close messages,
-optional backend imports, missing scene assets, and audit artifacts that cannot support
-scientific claims.
+A wrapper can therefore make an integration defect look like poor driving. Replacing a
+local route polyline with a left/straight/right command removes decision-relevant input,
+yet the rollout may still terminate with collision and progress metrics. Timing-grid
+mismatches, stale observations, optional import failures, missing assets, and incomplete
+manifests create similar confounds. A completed process is not sufficient evidence that
+a score characterizes policy behavior.
 
-WOD2Sim addresses this problem as system integration. It provides a reference boundary
-for running heterogeneous trajectory policies through AlpaSim's external-driver
-interface while making each boundary assumption inspectable. The effectiveness gain is
-not a higher driving score; it is earlier and auditable attribution of integration
-defects before they are misread as policy behavior. The central claim is therefore not
-that WOD2Sim is a new driving policy or an official WOD benchmark implementation. The
-claim is that dataset-trained policies require explicit semantic, temporal, lifecycle,
-deployment, and evidence contracts before closed-loop results can be interpreted.
-
-This paper asks two integration-effectiveness questions: which contract mismatches
-prevent dataset-trained policies from operating as reliable simulator services, and can
-explicit contract validation distinguish integration and runtime failures from policy
-behavior failures?
-The current repository deliberately separates the public release core from gated
-extensions. The core release exercises dependency-light adapters, route-preservation
-audits, evidence gates, and semantic ablations without requiring learned checkpoints,
-actor proxies, or redistributed restricted scenes. Direct actor-aware rows,
-learned-checkpoint execution, and complete benchmark publication remain gated extension
-work. The evidence package keeps those blockers traceable without making them
-dependencies of the core integration claim.
+WOD2Sim treats this as a system-integration and attribution problem. Its contribution is
+threefold:
+\begin{itemize}
+  \item five explicit contracts define when a simulator rollout may be interpreted as
+  policy behavior;
+  \item an adapter, audit, and artifact pipeline localizes violations and preserves
+  completed, blocked, and invalid rows;
+  \item a bounded closed-loop evaluation compares a defined status-only acceptance
+  baseline with contract-gated attribution while keeping unavailable benchmark work
+  outside the claim.
+\end{itemize}
+The design targets WOD-style trajectory interfaces, but the present evaluation uses
+only dependency-light constant-velocity and route-following policies. It does not
+evaluate a learned policy.
 
 \subsection{Failure Attribution Rule}
 
-WOD2Sim uses an explicit attribution rule before reporting any behavior or failure
-metric. A rollout event may be interpreted as policy behavior or policy failure only
-when the semantic route contract, temporal adapter, lifecycle state, deployment
-preconditions, and evidence audit all pass. If any of those gates fails, the row is
-classified as an integration, precondition, or evidence failure. A missing actor proxy
-is therefore not a weak
-planner, a command-proxy route is not a bad route-conditioned policy, and an incomplete
-manifest is not a collision result. Passing all gates permits policy-behavior
-attribution, not automatic policy-failure attribution; policy failure additionally
-requires the retained failure layer to be policy. This rule is intentionally stricter
-than ordinary demo reporting because the scientific risk is misattributing adapter or
-runtime faults to the policy being integrated. WOD2Sim therefore evaluates integration
-validity first and policy quality only after the row is claim-valid.
+A rollout permits policy-behavior attribution only if its semantic, temporal,
+lifecycle, deployment, and evidence contracts pass. A policy-failure attribution
+additionally requires a retained failure layer identifying the policy. Otherwise the
+row is an integration, precondition, or evidence failure. Thus a missing actor proxy is
+not a weak planner, a command-proxy route is not a poor route-conditioned policy, and an
+incomplete audit is not a collision result. This rule permits policy behavior to be
+examined after validation; it does not declare every degraded metric a policy failure.
 
-\section{Integration Problem and Requirements}
+\section{Contract-Gated Integration}
 
-The offline-policy contract and the external-driver contract differ along five layers.
-Table~\ref{tab:contract-map} summarizes the recurring mismatches and the WOD2Sim
-mechanisms used to expose them.
+Table~\ref{tab:contract-map} maps the five recurring boundary mismatches to enforcement
+mechanisms. The \emph{semantic contract} preserves route geometry, ego state, camera
+availability, and actor fields at prediction time. A high-level route command may be
+diagnostic context, but it cannot substitute for a local polyline. The \emph{temporal
+contract} validates horizons and timestamps, anchors interpolation at the current ego
+pose, deterministically resamples a finite $N\times2$ trajectory, and recomputes
+headings on the runtime grid.
 
 \begin{table}[t]
 \centering
-\caption{Contract map for integrating WOD-style trajectory policies into distributed closed-loop simulation.}
+\caption{Contracts enforced at the policy/simulator boundary.}
 \label{tab:contract-map}
 \resizebox{\columnwidth}{!}{\input{generated/contract_map.tex}}
 \end{table}
 
-\subsection{Semantic Contract}
+The \emph{lifecycle contract} makes start, active, close, cleanup, duplicate close, and
+late events explicit. Recoverable warnings are distinguished from fatal service errors.
+The \emph{deployment contract} records launch commands, scene and policy identifiers,
+timeout, endpoint, repository state, image identity, and gated inputs. The
+\emph{evidence contract} requires unique run identifiers, immutable manifests, terminal
+status, route and sensor audits, failed-run retention, and hashes linking generated
+paper assets to aggregate rows.
 
-The semantic contract preserves decision-relevant meaning across the dataset-policy and
-simulator boundary. Route geometry must reach prediction time as route geometry; a
-left/straight/right command remains useful context but cannot replace a local polyline.
-The policy-facing route must follow the ego travel lane rather than an unrelated road
-center. Ego history, speed, acceleration, camera availability, static hazards, and
-dynamic actors must retain consistent geometry and motion fields where those fields are
-available. Visibility diagnostics must not fabricate obstacles, and command-proxy route
-fallbacks must be labeled diagnostic rather than claim-valid.
-
-\subsection{Temporal Contract}
-
-The temporal contract aligns policy outputs with the runtime clock. Source and target
-horizons are explicit, timestamps are monotonic, and the current ego origin anchors
-interpolation. Matching grids preserve the trajectory, while mismatched grids are
-resampled deterministically and headings are recomputed on runtime points. Non-finite,
-malformed, or structurally invalid trajectories must be rejected or handled safely.
-
-\subsection{Lifecycle Contract}
-
-The lifecycle contract turns a policy into a persistent service. Session creation,
-active state, close, cleanup, and duplicate close are explicit. Late image, egomotion,
-route, and close events are counted and traced instead of crashing the service. Session
-state must not leak across repeated or interleaved sessions, and fatal errors must be
-distinguished from recoverable lifecycle warnings.
-
-\subsection{Deployment and Evidence Contracts}
-
-The deployment contract materializes the run: driver and wizard commands, topology,
-ports, scene identifiers, timeout, policy configuration, external-driver address,
-simulator Git state, patch state, Docker image identity, GPU state, and checkpoint hashes
-where applicable. The evidence contract defines when a rollout can support a paper
-claim: unique run identifiers, immutable manifests, terminal status, route-source and
-sensor-freshness validity, conformance checks, audits, support-bundle status, failed-run
-retention, and hashes tying generated numbers to artifacts.
-
-\section{WOD2Sim Architecture}
-
-Figure~\ref{fig:architecture} shows the system boundary. WOD2Sim sits between an
-offline or dataset-trained trajectory policy and the distributed AlpaSim runtime. The
-adapter reconstructs policy-facing state, preserves route geometry, resamples outputs,
-and isolates model discovery from unrelated optional backends. The runtime side records
-deployment state and evidence artifacts before any claim is accepted.
+Figure~\ref{fig:architecture} shows the boundary. WOD2Sim reconstructs policy-facing
+state, preserves route geometry, resamples outputs, and isolates optional model
+discovery. On the runtime side it records deployment and evidence state before a row can
+be attributed to policy behavior. Constant-velocity and route-following models form the
+public core. Learned-checkpoint and direct actor-aware entry points remain gated when
+their checkpoints or scene-matched actor proxies are unavailable.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{figures/system_architecture.pdf}
-\caption{WOD2Sim localizes integration failures at contract boundaries between a WOD-style policy and a distributed AlpaSim runtime.}
+\caption{Contract gates localize semantic, temporal, lifecycle, deployment, and
+evidence failures around the external-driver boundary.}
 \label{fig:architecture}
 \end{figure}
 
-The implementation registers dependency-light baselines and optional gated adapter entry
-points through AlpaSim model discovery. Constant-velocity and route-following baselines
-are the public core because they require no learned checkpoint, no oracle actor proxy,
-and no bundled private artifact. Token BC/DAgger and direct actor-aware planning entry
-points are present for users with legitimate local checkpoints or scene-matched
-actor-proxy artifacts, but those paths are extension surfaces. The current
-contract-validation matrix (CVM) therefore treats missing direct-actor proxy state as an
-optional-extension deployment blocker, not as missing public core functionality or a
-policy failure.
+\section{Implementation and Evidence Pipeline}
 
-\section{Implementation and Evaluation Method}
+\subsection{Policy-Facing Adapter}
 
-The CVM package uses deterministic configuration files for core, semantic
-ablation, temporal ablation, lifecycle stress, and fault-injection matrices. The core
-matrix is configured for three policies and fifteen locally cached front-camera scenes. The
-current launcher does not expose a simulator seed override, so each policy/scene pair is
-counted as one closed-loop execution and the configured identifier is retained only as
-provenance metadata. The semantic ablation configures paired full-route and
-command-only route variants on fifteen locally cached scenes, while the temporal
-ablation remains a gated direct-actor resampling matrix. Lifecycle stress configures
-repeated service-harness cycles, and the fault matrix enumerates semantic, temporal, lifecycle,
-deployment/plugin-dependency, and evidence injections.
+The external driver maintains isolated state for each simulator session. Image,
+egomotion, route, and close messages update that state; prediction reads one
+consistent snapshot rather than reconstructing inputs from process-global variables.
+The route converter carries simulator waypoints into the policy input and records their
+source. When the explicit command-only diagnostic is selected, it labels the fallback
+as \texttt{command\_proxy}; the audit can then reject the row even if the service and
+simulator finish normally. Static hazards remain geometry-bearing objects, while
+dynamic hazards retain position, motion, heading, and shape fields when the external
+interface supplies them. Visibility-risk signals remain diagnostics and do not create
+synthetic obstacles.
 
-Scene selection is intentionally conservative. \CVMClosedLoopSceneCount{} scenes are
-selected from available local 26.02 front-camera USDZ artifacts, but the repository
-does not currently provide authoritative metadata proving straight, intersection,
-lane-change, dense-traffic, occlusion, or merge categories. The manifest therefore
-records \CVMUnclassifiedClosedLoopSceneCount{} closed-loop scene(s) as available but
-unclassified. Each run manifest carries this \texttt{scenario\_category}, asset
-availability, selection rationale, route/interaction feature expectations, and
-license-gating status; the paper does not claim scenario-category coverage.
+The temporal adapter maps a source trajectory to runtime times
+$t_k=k/f_{\mathrm{run}}$ over the requested horizon. The current ego origin is prepended
+before interpolation, source timestamps must be finite and strictly increasing, and the
+output must be a finite $N\times2$ array. Matching grids preserve samples; mismatched
+grids use deterministic interpolation, after which headings are recomputed from
+successive runtime points. Invalid horizons, frequencies, grids, or trajectories fail
+the temporal contract rather than reaching vehicle control. These behaviors are
+covered by dependency-light tests, but the scene-level temporal comparison remains
+blocked and is not reported as a result.
 
-The evaluation runner expands matrices into rows, writes CSV and JSON summaries, and
-returns nonzero status when any row is not completed. Aggregation preserves failed and
-blocked rows, separates planned rows from blockers, rejects duplicate completed run
-identifiers, writes LaTeX tables with data hashes, and generates vector figures. In the
-current environment, completed closed-loop rows are audited for route-source and
-sensor-freshness validity before they are counted as diagnostic rollout evidence.
-Public synthetic lifecycle and fault-injection harness rows are retained separately as
-service-level conformance diagnostics. The resulting rows document the exact experiment
-denominator while preventing unexecuted protocols from becoming results.
+\subsection{Artifact Lineage}
+
+Figure~\ref{fig:pipeline} shows the evidence path. Before launch, the matrix runner
+expands a configuration row and materializes its command, environment, scene identity,
+policy identity, adapter mode, prerequisite state, and expected route source. A
+readiness check distinguishes an executable row from a missing checkpoint, actor
+proxy, asset, or runtime dependency. Terminal state is then recorded as completed,
+failed, blocked, or planned; non-completed rows are retained rather than removed from
+the denominator.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{figures/evaluation_pipeline.pdf}
-\caption{The contract-validation pipeline separates setup, readiness, manifest materialization, rollout, audit, aggregation, and paper-asset generation.}
+\caption{Manifests and audits precede aggregation, so blocked or invalid rows remain
+visible and cannot silently become paper results.}
 \label{fig:pipeline}
 \end{figure}
 
-\FloatBarrier
+For completed simulator rows, the audit reconstructs route-source and sensor-freshness
+status from retained telemetry and loads behavior metrics without using them to decide
+route validity. Aggregation rejects duplicate completed run identifiers, preserves
+failure codes, forms paired rows by policy, scene, and execution identifier, and writes
+CSV, JSON, LaTeX tables, and vector figures. Generated paper assets carry the aggregate
+data hash, and the submission validator compares their values with the JSON source.
+This lineage prevents manual table edits from changing a paper result independently of
+the row evidence. Restricted sensor frames and licensed scenes are not redistributed;
+the public package retains manifests, aggregate metrics, audit fields, and a stable
+frame schema. Consequently, artifact lineage is public, but complete replay still
+depends on legitimately acquired external scenes and runtime software.
+
+\section{Evaluation Method}
+
+The contract-validation matrix (CVM) contains \CVMTotalRows{} configured rows:
+\CVMCoreRows{} core, \CVMSemanticRows{} semantic-ablation, \CVMTemporalRows{}
+temporal-ablation, \CVMLifecycleRows{} lifecycle, and \CVMFaultRows{}
+fault-injection rows. It completes \CVMCompletedRuns{} rows, including
+\CVMClosedLoopCompletedRuns{} simulator rollouts; \CVMBlockedRuns{} optional-extension
+rows remain blocked. Lifecycle and fault rows use public service harnesses and are
+conformance diagnostics, not simulator-backed effectiveness results.
+
+The public core executes two dependency-light policies over
+\CVMClosedLoopSceneCount{} locally cached front-camera scenes. The semantic matrix pairs
+full-route and command-only variants of route following on the same scenes. The launcher
+does not expose a simulator seed override, so each policy/scene arm has one execution;
+the configured seed is provenance metadata rather than proof of deterministic replay.
+No authoritative metadata verifies straight, intersection, lane-change, dense-traffic,
+occlusion, or merge labels: \CVMUnclassifiedClosedLoopSceneCount{} scenes remain
+unclassified and \CVMVerifiedRequiredScenarioCategoryCount{}/
+\CVMRequiredScenarioCategoryCount{} required categories are verified.
+
+Completed rows are audited for route source and sensor freshness. For a precise
+comparison, define a status-only baseline
+\begin{equation}
+B_{\mathrm{status}}(r)=
+\mathbf{1}[\text{completed}(r)\land\text{metrics}(r)].
+\end{equation}
+It models the minimal reporting path that scores any completed metric-bearing row; it
+is not a separate wrapper implementation or an external competitor. WOD2Sim additionally
+requires the five contracts. A semantic pair is comparison-eligible only when both arms
+contain metrics, the full-route arm is route-valid and audit-valid, and the
+command-only arm is route-invalid and audit-invalid. This criterion excludes one pair
+whose nominal full arm also fell back to a command proxy. Metric deltas are therefore
+computed on \CVMSemanticAblationEligiblePairs{} pairs, but are not used for an
+inferential policy-effect claim.
+
 \section{Results}
 
-The primary result is integration effectiveness, not policy ranking. WOD2Sim executes
-the dependency-light public core, audits valid full-contract rollouts without false
-blocking, and rejects route-invalid ablations before they can be treated as policy
-evidence. Table~\ref{tab:main-results} reports the generated core policy status and the
-closed-loop diagnostic metrics currently available for dependency-light policies.
+Table~\ref{tab:main-results} reports integration status rather than behavior scores.
+All \CVMPublicCoreCompletedRuns{}/\CVMPublicCoreRows{} public-core rows complete with
+no service crash or blocker; \CVMPublicCoreAuditValidRuns{} are audit-valid. The two
+invalid core rows and one invalid semantic full-route row come from the same scene,
+where the audit finds late command-proxy fallback. They remain integration/evidence
+failures despite successful process completion.
 
 \begin{table}[t]
 \centering
-\caption{Public core dependency-light policy matrix status. Rows are constant-velocity and route-following rows only; optional gated direct-actor and learned-checkpoint extensions are excluded from this table and reported as blockers.}
+\caption{Dependency-light public-core integration status.}
 \label{tab:main-results}
 \resizebox{\columnwidth}{!}{\input{generated/main_results.tex}}
 \end{table}
 
-The configured matrices contain \CVMTotalRows{} rows: \CVMCoreRows{} mixed
-core-configuration rows, \CVMSemanticRows{} semantic-ablation rows,
-\CVMTemporalRows{} temporal-ablation rows, \CVMLifecycleRows{} lifecycle rows, and
-\CVMFaultRows{} fault-injection rows. The current aggregate attempts
-\CVMAttemptedRuns{} rows and completes \CVMCompletedRuns{} rows, including
-\CVMClosedLoopCompletedRuns{} closed-loop rollout(s). Among completed
-full-contract rollouts, \CVMFullContractAuditValidRuns{}/
-\CVMFullContractCompletedRuns{} pass the route and sensor audit. The public core itself
-contains \CVMPublicCoreRows{} dependency-light row(s);
-\CVMPublicCoreCompletedRuns{}/\CVMPublicCoreRows{} complete,
-\CVMPublicCoreAuditValidRuns{} pass the audit, and \CVMPublicCoreBlockedRows{} are
-blocked. Optional gated extension rows remain visible separately:
-\CVMOptionalGatedBlockedRows{}/\CVMOptionalGatedRows{} are blocked, including
-\CVMDirectActorBlockedRows{}/\CVMDirectActorRows{} direct actor-aware rows. The
-false-block check currently observes \CVMValidFullContractFalseBlockedRuns{}/
-\CVMValidFullContractFalseBlockDenominator{} valid full-contract rows incorrectly
-blocked by the evidence gate. Matched semantic-confound evidence includes
-\CVMSemanticAblationMetricPairs{}/\CVMSemanticAblationCompletedPairs{} metric-bearing
-pairs. Across those pairs, full-contract minus command-only route means are
-\CVMSemanticProgressDeltaMean{} progress, \CVMSemanticProgressRelDeltaMean{} relative
-progress, \CVMSemanticCollisionAnyDeltaMean{} collision-any, \CVMSemanticOffroadDeltaMean{}
-off-road, and \CVMSemanticPlanDeviationDeltaMean{} plan deviation. These deltas show
-that losing route geometry changes measured rollout behavior, but they are not a
-policy-quality comparison. The aggregate also keeps three completed full-contract
-rows from the same scene outside policy attribution because their audits found late
-command-proxy route fallback despite successful rollout completion; that is an
-integration-boundary finding, not a policy failure. The semantic rows are therefore an effectiveness
-comparison at the semantic
-integration boundary: a functional command-only wrapper completes
-\CVMNaiveWrapperMetricRuns{}/\CVMCommandProxyCompletedRuns{} metric-bearing rows that a
-non-contract path could incorrectly accept as policy evidence, whereas WOD2Sim rejects
-\CVMContractInvalidRejectedRuns{}/\CVMContractInvalidRejectionDenominator{} of those
-invalid route rows and improves attribution on \CVMAttributionImprovementInvalidRows{}
-rows. This is the invalidation demonstration: the same rollout records that would be
-scored as low-quality policy evidence by a non-contract path are retained as
-semantic-contract violations by WOD2Sim. The aggregate keeps
-\CVMPlannedRuns{} rows as planned/not launched and \CVMBlockedRuns{} rows as true
-precondition or unsupported-ablation blockers.
-
-The scene-coverage gate reports \CVMClosedLoopSceneCount{} unique closed-loop scene
-identifier(s), but only \CVMVerifiedRequiredScenarioCategoryCount{}/
-\CVMRequiredScenarioCategoryCount{} required scenario categories are verified by
-authoritative metadata, and \CVMUnclassifiedClosedLoopSceneCount{} closed-loop scene(s)
-remain unclassified. These rows are integration instances for exercising the contract
-boundary, not evidence of autonomous-driving scenario-category coverage.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\columnwidth]{figures/main_results.pdf}
-\caption{Completed closed-loop integration checks. Bars report audit-valid full-contract rows, accepted valid rows, matched semantic metric pairs, and rejected command-proxy route rows; unavailable rows remain reported as blockers in the aggregate.}
-\label{fig:main-results}
-\end{figure}
+The central invalidation check is shown in Table~\ref{tab:integration-checks}. All
+\CVMStatusOnlyAcceptedRuns{}/\CVMStatusOnlyAcceptanceDenominator{} command-only rows
+satisfy $B_{\mathrm{status}}$, whereas WOD2Sim rejects
+\CVMContractInvalidRejectedRuns{}/\CVMContractInvalidRejectionDenominator{} as
+route-invalid. This demonstrates a classification difference for retained closed-loop
+records: completion and metrics alone would admit them, while the semantic contract
+prevents policy attribution. It does not demonstrate improved driving or faster fault
+diagnosis.
 
 \begin{table}[t]
 \centering
-\caption{Closed-loop attribution-invalidation checks generated from retained rollout and audit artifacts. Synthetic lifecycle and fault rows are excluded from this table.}
+\caption{Closed-loop attribution checks from retained rollout and audit artifacts.}
 \label{tab:integration-checks}
 \resizebox{\columnwidth}{!}{\input{generated/ablations.tex}}
 \end{table}
 
-Table~\ref{tab:integration-checks} is the primary effectiveness evidence because it
-measures what the contracts buy on executed closed-loop rows. The first two rows test
-the positive path: completed full-contract rollouts should survive the audit and valid
-rows should not be falsely blocked. The route-loss rows are the invalidation
-demonstration: a functional command-only wrapper produces metric-bearing closed-loop
-records that a conventional non-contract path could score, while WOD2Sim rejects the
-same records as semantic-contract violations. The remaining rows state the claim
-boundary directly: rejected or coverage-unverified evidence is not promoted to policy
-failure or scenario-coverage evidence. The generated synthetic lifecycle and
-fault-localization artifacts remain service-level conformance diagnostics only; they
-are not used as evidence that WOD2Sim is faster, safer, or more correct than a
-functional non-contract wrapper in real simulator stress trials.
+Only \CVMSemanticAblationEligiblePairs{}/\CVMSemanticAblationCompletedPairs{} route-loss
+pairs satisfy the comparison criterion. Their full-minus-command score deltas have
+mixed signs and are descriptive only. With one uncontrolled execution per arm, the
+data do not support a systematic route-loss effect or any policy-quality comparison.
 
-The same aggregate also reports failure attribution. It contains
-\CVMContractValidClosedLoopRows{} contract-valid closed-loop row(s),
-\CVMIntegrationInvalidClosedLoopRows{} completed closed-loop row(s) rejected as
-integration/evidence-invalid, \CVMBlockedRuns{} precondition-blocked row(s),
-\CVMIntegrationFailureAttributableRows{} integration-failure-attributable row(s),
-\CVMSyntheticDiagnosticRows{} synthetic diagnostic row(s), and
-\CVMClaimValidPolicyBenchmarkRows{} claim-valid policy benchmark row(s). These counts
-are the operational separation between integration failure and policy failure in the
-current release: \CVMPolicyBehaviorAttributableRows{} audit-valid full-contract
-closed-loop row(s) are policy-behavior-attributable diagnostic evidence,
-\CVMPolicyFailureAttributableRows{} row(s) are policy-failure-attributable, and
-\CVMNonPolicyAttributedRows{} row(s) remain non-policy-attributed. No blocked,
-contract-invalid, synthetic, or benchmark-incomplete row can assign policy failure,
-even when its behavior metrics are degraded. A policy failure also requires the
-retained failure layer to be policy, not merely a degraded behavior metric.
+\begin{table}[t]
+\centering
+\caption{Descriptive full-route minus command-only mean deltas over the
+\CVMSemanticAblationEligiblePairs{} eligible pairs.}
+\label{tab:semantic-deltas}
+\begin{tabular}{lr}
+\toprule
+Metric & Mean delta \\
+\midrule
+Progress & \CVMSemanticProgressDeltaMean{} \\
+Relative progress & \CVMSemanticProgressRelDeltaMean{} \\
+Collision-any & \CVMSemanticCollisionAnyDeltaMean{} \\
+Off-road & \CVMSemanticOffroadDeltaMean{} \\
+Plan deviation & \CVMSemanticPlanDeviationDeltaMean{} \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-\section{Discussion, Limitations, and Related Work}
+Across all retained rows, \CVMPolicyBehaviorAttributableRows{} are
+policy-behavior-attributable diagnostics, \CVMPolicyFailureAttributableRows{} are
+policy-failure-attributable, and \CVMIntegrationFailureAttributableRows{} are
+integration/precondition blockers. The remaining \CVMNonPolicyAttributedRows{} include
+blocked, contract-invalid, synthetic, or benchmark-incomplete evidence. These counts
+operationalize the distinction: degraded metrics cannot assign policy failure unless
+the contracts pass and the retained failure layer is policy.
 
-The framework generalizes beyond a single simulator because the contracts identify
-boundary assumptions rather than AlpaSim-specific filenames. The five contracts are an
-engineering instantiation of contract-based cyber-physical system design and
-interface-level reasoning~\cite{sangiovanni2012taming,dealfaro2001interface}: an
-offline policy assumes route, timing, lifecycle, deployment, and evidence conditions,
-while the simulator boundary must either guarantee them or reject the run as
-non-claim-valid. Route geometry, sampling cadence, lifecycle robustness, deployment
-provenance, and claim-valid evidence also matter in WOD-style
-datasets~\cite{sun2020scalability} and in closed-loop planners and simulators such as
-nuPlan~\cite{caesar2021nuplan}, CARLA~\cite{dosovitskiy2017carla},
-Waymax~\cite{gulino2023waymax}, and NAVSIM~\cite{dauner2024navsim}. Scenario and
+\subsection{Interpretation}
+
+The experiment validates an attribution mechanism, not a driving intervention. The
+positive path shows that \CVMFullContractAuditValidRuns{} completed full-contract rows
+meet the recorded route and sensor checks. It does not establish a false-positive rate:
+audit-valid rows define the admitted set, and there is no independent oracle labeling
+which completed integrations should have passed. For that reason, WOD2Sim reports the
+directly observed \CVMFullContractAuditValidRuns{}/\CVMFullContractCompletedRuns{}
+audit outcome and makes no ``zero false blocks'' claim.
+
+The negative path asks a narrower counterfactual. If reporting used only terminal status
+and metric availability, every command-only row would be admitted. Adding route-source
+validity changes the attribution of all \CVMStatusOnlyAcceptedContractRejectedRuns{}
+such rows without changing their recorded simulator outcome. This is useful because the
+invalid records remain available for debugging while being excluded from policy
+evaluation. The gate neither repairs the route nor proves that a valid route would
+improve the score; Table~\ref{tab:semantic-deltas} in fact shows small and mixed average
+differences across metrics.
+
+Operationally, the same pattern gives each unavailable extension a typed outcome rather
+than an omitted experiment. A missing actor proxy or checkpoint is recorded as a
+deployment precondition, a command proxy as a semantic violation, and missing audit
+state as an evidence violation. This partition makes a future learned-policy study
+additive: new rows can be admitted only after their prerequisites and audits pass,
+without rewriting the interpretation of the retained invalid or blocked rows.
+
+\section{Related Work and Limitations}
+
+The contracts instantiate interface reasoning for cyber-physical
+systems~\cite{sangiovanni2012taming,dealfaro2001interface}. Closed-loop platforms and
+benchmarks such as CARLA, nuPlan, Waymax, NAVSIM, and
+AlpaSim~\cite{dosovitskiy2017carla,caesar2021nuplan,gulino2023waymax,
+dauner2024navsim,alpasim2025} emphasize simulation or planning evaluation. Scenario and
 falsification tools such as Scenic, VerifAI, DriveFuzz, and
 PlanFuzz~\cite{fremont2019scenic,dreossi2019verifai,kim2022drivefuzz,wan2022planfuzz}
-exercise autonomous-driving systems with generated or mutated conditions; WOD2Sim is
-complementary because it gates whether the simulator/policy boundary itself preserved
-the assumptions needed to interpret a rollout. WOD2Sim uses AlpaSim as the case study
-because its external-driver boundary makes these contracts explicit.
+generate or mutate conditions. WOD2Sim is complementary: it asks whether the
+policy/simulator boundary preserved the assumptions needed to interpret a rollout.
 
-The limitations are material. WOD2Sim is not an official Waymo challenge interface,
-does not reconstruct complete WOD worlds, and does not redistribute restricted scene
-assets. The current CVM package has no completed claim-valid benchmark matrix, no
-validated scene-category coverage (\CVMVerifiedRequiredScenarioCategoryCount{}/
-\CVMRequiredScenarioCategoryCount{} required categories verified), no public learned
-checkpoint, no bundled redistributable restricted-scene subset, no scene-matched
-direct-actor proxy for actor-aware planning, and no simulator-backed lifecycle or
-fault-injection stress trial. These absences mean the public repository is not a
-complete benchmark release. They block learned-policy, direct-actor,
-restricted-asset, scenario-coverage, and benchmark claims. What is complete is
-narrower: the \CVMPublicCoreCompletedRuns{}/\CVMPublicCoreRows{}
-dependency-light public core and the executed semantic route-boundary ablation.
-Their role is to show that the public contract layer runs, audits, and
-separates integration-valid from integration-invalid rows without mislabeling
-the missing benchmark prerequisites as policy failures. Lifecycle and
-fault-injection evidence still comes from public synthetic harnesses, so those
-counts are conformance checks rather than simulator-backed evaluation metrics.
+This distinction is upstream of benchmark metric design. nuPlan and NAVSIM formalize
+planning tasks and evaluation measures, while Waymax and CARLA provide controllable
+simulation interfaces. AlpaSim provides the external-driver service boundary used here.
+Those systems can expose malformed or incomplete inputs, but their behavior metrics do
+not by themselves identify which integration assumption failed. Contract-based design
+offers a vocabulary for assumptions and guarantees; WOD2Sim applies that vocabulary as
+runtime admission and artifact-lineage checks. Scenic and falsification tools vary the
+scenario presented to a system, whereas the present semantic ablation deliberately
+varies the information preserved by the integration boundary. The two directions are
+orthogonal and could be combined once verified scenario metadata and a claim-ready
+policy matrix exist.
 
-These limitations also explain why the paper does not compare policy quality. A system
-integration paper can claim effectiveness only where the corresponding rows are
-executed, audited, and attributed. The supported success claim is therefore operational:
-WOD2Sim makes valid dependency-light integrations executable
-(\CVMPublicCoreCompletedRuns{}/\CVMPublicCoreRows{} public-core rows), keeps valid
-full-contract rollouts from being falsely blocked
-(\CVMValidFullContractFalseBlockedRuns{}/
-\CVMValidFullContractFalseBlockDenominator{}), prevents a runnable non-contract route
-wrapper from promoting invalid metrics as policy evidence
-(\CVMContractInvalidRejectedRuns{}/
-\CVMContractInvalidRejectionDenominator{}), and preserves enough provenance for every
-reported number to be regenerated from retained artifacts. The
-\CVMOptionalGatedBlockedRows{} blocked optional-extension rows remain visible as
-remaining work, not as the primary result. This is integration-method effectiveness,
-not learned-policy superiority.
+The limitations are substantial. The repository is not an official WOD interface and
+does not reconstruct complete WOD worlds or redistribute restricted scenes. It has no
+public learned checkpoint, no scene-matched actor proxy, no verified scenario-category
+coverage, no completed temporal ablation, and no simulator-backed lifecycle or
+fault-injection stress comparison. The status-only baseline is deliberately minimal,
+not a competitive integration method. Restricted frame data are not public, and the
+public frame artifact is schema-only. Finally, one execution per arm and lack of
+runtime seed control preclude variance or significance estimates. These constraints
+block learned-policy, benchmark, coverage, reproducibility, and performance claims; the
+supported result is limited to contract enforcement and evidence attribution.
 
-\section{Future Work}
+\subsection{Threats to Validity}
 
-Future work will complete the optional benchmark path rather than weakening the current
-integration claim. The next steps are to generate scene-matched direct-actor oracle
-proxies, add a redistributable scene subset with authoritative scenario categories,
-package legitimate learned checkpoints, execute the temporal and direct-actor matrices,
-expand the external-evaluator compatibility harness across a documented scene set,
-retain the returned metrics with provenance, and compare time-to-diagnosis against a
-functional non-contract wrapper. Those additions would support learned-policy,
-scenario-coverage, portability, and benchmark claims only after their rows pass the same
-contract and evidence gates used here.
+\emph{Internal validity.} The command-only arm intentionally violates the declared
+semantic contract, so its rejection validates enforcement of a known condition rather
+than discovery of an unknown defect. The status-only baseline is evaluated on the same
+retained rows and ignores route and sensor fields by definition. It therefore isolates
+the attribution decision, but cannot support claims about runtime overhead,
+time-to-diagnosis, or superiority to another integration framework. In addition, the
+three invalid nominal full-contract rows share one scene and one observed fallback
+pattern; they are not three independent failure mechanisms.
 
+\emph{Construct validity.} Audit validity in the completed closed-loop rows directly
+measures route source and sensor freshness. Temporal correctness is exercised in unit
+tests, and lifecycle and fault localization are exercised in synthetic service
+harnesses. Those checks do not establish that all five contracts were stressed under
+the same simulator conditions. Counts of contract-valid rows therefore measure
+admission to the stated evidence boundary, not driving safety, integration completeness,
+or correctness of the simulator itself. Likewise, ``policy-behavior-attributable''
+means no recorded boundary violation was found; it is not a claim-valid benchmark row.
+
+\emph{External and conclusion validity.} The scenes were selected by local asset
+availability, remain category-unclassified, and cannot represent the WOD distribution
+or rare-event coverage. Results from constant-velocity and route-following policies
+cannot be generalized to learned trajectory policies. Restricted assets also prevent a
+reviewer without the same licensed inputs from replaying the closed-loop rows, although
+the public aggregates and gate logic can be inspected. Finally, the paired sample has
+\CVMSemanticAblationEligiblePairs{} eligible scenes, one execution per arm, and no
+effective simulator seed control. Mixed descriptive deltas cannot be treated as
+independent repeated trials or as evidence of a causal performance effect.
+
+\balance
 \section{Conclusion}
 
-Integrating a dataset-trained trajectory policy into distributed closed-loop simulation
-requires more than input/output conversion. WOD2Sim formulates the boundary as five
-contracts: semantic, temporal, lifecycle, deployment, and evidence. The current
-repository shows that this contract layer is already operational on the
-dependency-light public core: valid rows execute, route-loss ablations measurably alter
-behavior, invalid route evidence is rejected, and missing prerequisites remain visible
-as blockers instead of being blurred into policy outcomes. The paper still does not claim a
-full public benchmark, scenario-category coverage, or learned-policy result. Its
-stronger and more defensible conclusion is narrower: contract-based integration
-improves evaluation effectiveness by making the boundary executable, auditable, and
-attributable before policy-quality conclusions are drawn. That separation is the
-release-critical result because it prevents route, timing, lifecycle, deployment,
-evidence, and missing-prerequisite failures from being misreported as policy failures
-until the complete audited matrices exist.
+WOD2Sim formulates a closed-loop policy boundary as semantic, temporal, lifecycle,
+deployment, and evidence contracts. The current release shows that its dependency-light
+path executes and that route-invalid, metric-bearing rows are withheld from policy
+attribution. It does not show policy superiority, learned-policy performance, or
+scenario coverage. The defensible result is narrower: explicit contract gates make
+integration evidence auditable and prevent boundary or precondition failures from being
+reported as policy failures.
 
-\appendix[WOD2Sim Repository Evidence Map]
+\section*{Acknowledgment}
 
-The repository and paper share one release surface. The canonical manuscript is the
-root-level PDF. The paper source, bibliography, generated tables, figure inputs, matrix
-configuration, row manifests, aggregate CSV and JSON files, and release reports are all
-kept in named repository directories and rebuilt by the top-level release targets.
-Obsolete manuscript sources were removed from the release tree so the root PDF and
-\texttt{paper/cvm} source form the single paper surface.
-
-Repository-native code provides the implementation evidence. Simulator adapters implement
-the semantic and temporal contracts; CLI commands materialize launch, readiness, audit,
-support-bundle, and reproduction steps; aggregation regenerates every number, table, and
-figure used in the build from retained matrix evidence.
-
-This appendix is a traceability map, not an additional result. The current root PDF,
-README, reports, and generated evidence all preserve the same claim boundary: synthetic
-diagnostics are public service-harness evidence, while closed-loop scene rows are not
-claim-valid until executed, audited, and retained in the aggregate denominators.
-
-The public repository intentionally separates source, execution evidence, and paper
-assets. The implementation layer contains the simulator adapters, route and scene-signal
-conversion, temporal resampling, plugin entry points, setup/readiness commands, audit
-logic, and support-bundle generation. The evaluation layer contains the CVM
-configuration, scene manifest, row manifests, retained CSV/JSON summaries, blocked-run
-reports, and generated table and figure assets. The manuscript layer consumes only those
-generated artifacts; manual edits to tables are not part of the release workflow.
-
-The temporal adapter is traceable at unit-test level. Runtime frequency and horizon are
-validated as positive finite values; trajectories must be finite N-by-2 arrays; the
-current ego pose is the interpolation origin; optional source timestamps must be finite,
-strictly increasing, and inside the configured horizon; and headings are recomputed on
-the resampled runtime grid. These tests support the temporal contract statement, but
-they do not substitute for the blocked temporal-ablation scene matrix.
-
-The three paper figures serve different audit roles. The architecture figure identifies
-where semantic, temporal, lifecycle, deployment, and evidence failures cross the
-external-driver boundary. The evaluation-pipeline figure shows how readiness, launch
-manifests, rollout status, audit, aggregation, and paper assets are chained. The results
-figure shows completed closed-loop integration checks; configured, planned, and blocked
-denominators remain auditable in the generated tables and reports rather than being
-presented as successes.
-
-The release package also records what is absent. Gated scenes, private credentials,
-learned checkpoints, and proprietary container layers are not bundled. When they are
-needed for a future rollout, the repository records identifiers, hashes, commands, and
-precondition states so that restricted material does not become part of the public
-release and missing inputs are not misreported as policy behavior.
-
-The public artifact is also gated for release hygiene. The validator rebuilds the paper
-from generated inputs, checks generated table values against aggregate CSV/JSON sources,
-verifies the root PDF metadata and A4 geometry, rejects duplicate manuscript PDFs,
-scans public text for stale venue labels, private paths, credentials, unsupported
-benchmark language, and missing claim-boundary statements, and keeps external-conformance
-provenance in public-safe relative form. These checks are not policy-performance
-evidence. They make the integration evidence portable and auditable: a reviewer can
-trace each reported number to a retained artifact without trusting local scratch files,
-private mounts, or manually edited paper tables.
-
-The same appendix-level contract-conformance layer includes an external AlpaSim
-E2E-style driver harness. It is not a challenge submission, leaderboard result, or
-policy-quality benchmark; it checks whether the same service and evidence contracts can
-survive outside the local CVM scripts. The retained artifact completes
-\CVMExternalChallengePassedRollouts{}/\CVMExternalChallengeRollouts{} managed rollout,
-records \CVMExternalChallengeDriveRPCs{} driver RPCs and
-\CVMExternalChallengeImageEvents{} image events, and meets the driver latency target on
-\CVMExternalChallengeLatencyTargetMet{}/
-\CVMExternalChallengeLatencyTargetDenominator{} calls
-(\CVMExternalChallengeDriverLatencyMeanMs{} ms mean,
-\CVMExternalChallengeDriverLatencyMaxMs{} ms max). These numbers support interface
-conformance and provenance portability only; returned behavior metrics remain outside
-the main policy-attribution result unless future rows pass the same CVM gates.
-
-The intended reading order for the public release is therefore not only the paper. The
-repository inventory records the source tree, environment, build commands, and known
-gated prerequisites. The contract-test audit maps each required semantic, temporal,
-lifecycle, deployment/plugin-dependency, evidence, and fault-injection behavior to executable
-tests or to an explicit gap. The claim-evidence matrix is the final gate: a statement
-may appear as a paper claim only when it names the producing command, test, and evidence
-that support it. The blockers report keeps unavailable closed-loop rows visible, while
-planned rows remain visible without being misclassified as infrastructure blockers.
-
-This structure is deliberately stricter than a demo-first release. The synthetic demo
-proves that command materialization, audit generation, support-bundle construction, and
-public plotting work without restricted assets. It does not prove closed-loop policy
-performance. Conversely, the matrix runner can create manifests for closed-loop scene
-rows before launch, preserving scene identifiers, policy names, execution identifiers,
-scenario categories, configuration hashes, runtime seed metadata when available, and
-precondition states. That
-makes a future rerun additive: once assets, actor proxies, ablation flags, and runtime
-dependencies exist, new completed rows can be aggregated beside the retained planned and
-blocked rows rather than replacing them.
-
-The release commands follow the same separation. Inventory captures repository and
-environment state; check runs lint, conformance, and submission validation; demo
-generates a public synthetic run; synthetic evaluation executes lifecycle and
-fault-injection harnesses; scene evaluation records completed, planned, and blocked rows;
-aggregation regenerates result tables and figures; the paper target rebuilds the sole
-root-level PDF; and validation checks page count, A4 size, metadata, generated-artifact
-hashes, unresolved references, forbidden placeholder text, private paths, credentials,
-and duplicate manuscript PDFs. These gates are engineering controls, not scientific
-results.
+OpenAI Codex (GPT-5) assisted with language editing, consistency checks, and code audit.
+It did not generate experimental data; the author reviewed the resulting manuscript and
+accepts responsibility for its content.
 
 \bibliographystyle{ieeetr}
 \bibliography{references}

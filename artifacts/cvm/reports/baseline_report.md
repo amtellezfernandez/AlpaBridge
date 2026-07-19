@@ -10,20 +10,22 @@ not tracked; rerun the commands below to reproduce the release checks.
 | Command | Start UTC | End UTC | Duration | Exit | Result |
 |---|---|---|---:|---:|---|
 | `.venv/bin/python -m ruff check ...` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:04Z | 3.7s | 0 | Touched source, scripts, and tests passed lint. |
-| `.venv/bin/python -m pytest -q tests/` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:03Z | 2.9s | 0 | 318 passed, 14 skipped, and 15 subtests passed. |
+| `uv run python -m pytest -q tests/` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:03Z | 3.0s | 0 | 319 passed, 14 skipped, and 15 subtests passed. |
 | `.venv/bin/python scripts/aggregate_cvm.py --inputs artifacts/cvm/results --output artifacts/cvm/results` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:01Z | 0.2s | 0 | Regenerated the aggregate summary and paper-number macros, including external-conformance fields. |
-| `./scripts/build_cvm_paper.sh` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:01Z | 1.0s | 0 | Rebuilt the 6-page root `wod2sim.pdf` at 126223 bytes. |
+| `./scripts/build_cvm_paper.sh` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:02Z | 1.8s | 0 | Rebuilt the 4-page root `wod2sim.pdf` at 175064 bytes using the official PaperPlaza `ieeeconf` A4 class. |
 | `.venv/bin/python scripts/validate_cvm_submission.py` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:01Z | 0.5s | 0 | WOD2Sim paper validation passed. |
-| `pdfinfo wod2sim.pdf` and `qpdf --check wod2sim.pdf` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:01Z | <1s | 0 | PDF is 6 pages, portrait A4, 126223 bytes, and has no syntax or stream encoding errors reported by `qpdf`. |
+| `pdfinfo wod2sim.pdf`, `pdffonts wod2sim.pdf`, and `qpdf --check wod2sim.pdf` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:01Z | <1s | 0 | PDF is 4 pages, portrait A4, 175064 bytes, uses embedded Type 1 fonts, and has no syntax or stream encoding errors reported by `qpdf`. |
+| PaperPlaza public PDF test | 2026-07-19T00:00:00Z | 2026-07-19T00:00:20Z | <20s | 0 | Initial contributed-paper check accepted the final PDF with no critical issues or margin problems. |
 | `.venv/bin/python -m build` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:03Z | 2.4s | 0 | Source distribution and wheel built successfully with network-enabled build isolation. |
 
 ## Important Warnings
 
-- Previous full-verify baseline evidence is retained for traceability:
-  `make paper-verify PYTHON='uv run python'` rebuilt the root PDF and passed
-  submission validation; `make cvm-check PYTHON='uv run python'` passed with
-  311 passed, 14 skipped, and 15 subtests passed; coverage previously measured
-  62.61% against the configured 33.0% minimum.
+- Current controlled evidence includes
+  319 passed, 14 skipped, and 15 subtests passed; coverage measured 63.17%
+  against the configured 33.0% minimum.
+- The composite release gates are `make cvm-check PYTHON='uv run python'` and
+  `make paper-verify PYTHON='uv run python'`; their component checks are recorded
+  above.
 - The Docker-heavy `make verify` target was not rerun in the final controlled
   cleanup pass to avoid stressing the WSL environment. Its component gates were
   run directly where safe: lint, full unit tests, aggregate generation, paper
@@ -43,8 +45,9 @@ not tracked; rerun the commands below to reproduce the release checks.
 
 The release status is complete with documented limitations for the CVM paper
 package. It supports a completed dependency-light public core, semantic
-route-boundary ablation evidence, false-block accounting for audit-valid rows,
-and secondary synthetic lifecycle/fault conformance diagnostics. It does not
+route-boundary diagnostics, a defined status-only acceptance baseline,
+contract-gated attribution, and secondary synthetic lifecycle/fault
+conformance diagnostics. It does not
 support a policy-quality benchmark, learned-policy result, direct-actor
 temporal ablation, simulator-backed lifecycle/fault stress trial, or official
 Waymo compatibility claim.

@@ -1,5 +1,18 @@
 # Paper Changelog
 
+## 2026-07-19
+
+- Switched the manuscript to the official PaperPlaza `ieeeconf` A4 conference
+  class and reduced the paper to four pages.
+- Removed the unmeasured false-block claim and replaced the informal naive
+  wrapper comparison with a defined status-only acceptance baseline.
+- Added comparison eligibility to semantic pairs; 14/15 pairs qualify after
+  excluding the pair whose full-contract arm is route-invalid.
+- Recomputed semantic deltas on eligible pairs and removed the unsupported
+  claim that route loss systematically changes behavior.
+- Replaced policy-score columns with route, sensor, audit, crash, and blocker
+  integration status.
+
 ## 2026-07-17
 
 - Reframed the artifact vocabulary around the portable contract-validation
@@ -17,8 +30,8 @@
 - Added an external AlpaSim E2E-style compatibility conformance artifact: 1/1
   rollout completed, 197 driver RPCs, 396 image events, and 197/197
   latency-target hits.
-- Added `semantic_ablation_pairs.csv`, semantic delta summaries, false-block
-  counts, and CVM-prefixed paper macros generated from aggregate JSON/CSV.
+- Added `semantic_ablation_pairs.csv`, semantic delta summaries, and
+  CVM-prefixed paper macros generated from aggregate JSON/CSV.
 - Rebuilt the root `wod2sim.pdf` as the only tracked manuscript PDF.
 - Preserved the claim boundary: the paper now supports dependency-light core
   execution and bounded semantic integration-effectiveness evidence, but not

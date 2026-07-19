@@ -39,8 +39,8 @@ Waymo-to-AlpaSim scene conversion.
 | Question | Current answer |
 | --- | --- |
 | Can WOD-style adapters run as auditable AlpaSim external drivers? | Yes. The dependency-light public core completes `30/30` closed-loop rows over `15` local scenes. |
-| Does WOD2Sim prevent integration-invalid metrics from becoming policy evidence? | Yes. A runnable command-only route wrapper produces `15/15` metric-bearing invalid rows that a naive path could score, while WOD2Sim rejects `15/15` as non-claim-valid route evidence. |
-| Does the evidence gate reject valid integrations by mistake? | Not in the retained full-contract set: `0/42` audit-valid full-contract rows are false-blocked. |
+| Does WOD2Sim prevent integration-invalid metrics from becoming policy evidence? | Yes. A defined status-only baseline accepts `15/15` completed metric-bearing command-only rows, while WOD2Sim rejects the same `15/15` as non-claim-valid route evidence. |
+| Are all paired route-loss rows comparison-eligible? | No. `14/15` pairs qualify; one full-contract arm is also route-invalid, and the paired score deltas do not establish a systematic policy effect. |
 | Is this a policy-quality benchmark? | No. The release has `0` claim-valid policy benchmark rows, `0` policy-failure-attributable rows, and no verified scenario-category coverage. |
 
 ## Failure Attribution Boundary
@@ -78,11 +78,11 @@ The generated aggregate makes the boundary numeric: current artifacts contain
 `33` integration/precondition blocker rows, and `73` completed non-policy diagnostic rows
 that remain non-policy-attributed.
 The success evidence is the completed side of that partition: `42/45`
-full-contract closed-loop rollouts are audit-valid, `0/42` valid
-full-contract rows are false-blocked by the evidence gate, and the semantic
-baseline is comparative: `15/15` runnable command-only route rows produce
-metric-bearing evidence that a naive wrapper could accept, while WOD2Sim rejects
-`15/15` as non-claim-valid route evidence.
+full-contract closed-loop rollouts are audit-valid. The semantic comparison
+uses a defined status-only rule: it accepts `15/15` completed metric-bearing
+command-only rows, while WOD2Sim rejects those same `15/15` as non-claim-valid
+route evidence. Only `14/15` semantic pairs have a valid full-contract arm and
+an invalid command-only arm; their score deltas are descriptive only.
 The `33` blocked rows stay in the denominator as remaining unsupported
 direct-actor/temporal-ablation work.
 The three completed full-contract rows outside the `42/45` audit-valid count

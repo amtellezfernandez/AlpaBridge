@@ -3,13 +3,10 @@
 \toprule
 Closed-loop check & Obs. & Denom. & Meaning \\
 \midrule
-Full-contract audit-valid rows & 42 & 45 & valid integration survives audit \\
-Valid rows false-blocked & 0 & 42 & no valid-row rejection observed \\
-Matched route-loss pairs & 15 & 15 & semantic confound executed \\
-Naive invalid metrics accepted & 15 & 15 & non-contract path would score them \\
-WOD2Sim invalid metrics rejected & 15 & 15 & policy attribution blocked \\
-Attribution corrections & 15 & 15 & invalid rows not blamed on policy \\
-Policy-failure rows assigned & 0 & 60 & no unsupported policy blame \\
-Verified scenario categories & 0 & 6 & no coverage claim \\
+Full-contract audit-valid & 42 & 45 & audit passed \\
+Comparison-eligible pairs & 14 & 15 & valid/invalid arms \\
+Status-only baseline accepted & 15 & 15 & completion + metrics \\
+Invalid route rows rejected & 15 & 15 & route gate \\
+Verified scenario categories & 0 & 6 & coverage withheld \\
 \bottomrule
 \end{tabular}

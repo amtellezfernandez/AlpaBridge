@@ -179,7 +179,7 @@ class AggregateCVMTests(unittest.TestCase):
         self.assertEqual(2, summary["diagnostic_not_policy_rows"])
         self.assertEqual(3, summary["non_policy_attributed_rows"])
 
-    def test_integration_effectiveness_counts_functional_naive_route_wrapper(self) -> None:
+    def test_integration_effectiveness_counts_status_only_route_baseline(self) -> None:
         module = _load_module()
         evidence = [
             {
@@ -212,16 +212,79 @@ class AggregateCVMTests(unittest.TestCase):
 
         self.assertEqual(1, summary["full_contract_completed_runs"])
         self.assertEqual(1, summary["full_contract_audit_valid_runs"])
-        self.assertEqual(0, summary["valid_full_contract_false_blocked_runs"])
-        self.assertEqual(1, summary["semantic_ablation_metric_pairs"])
-        self.assertEqual(1, summary["functional_naive_wrapper_metric_runs"])
+        self.assertNotIn("valid_full_contract_false_blocked_runs", summary)
+        self.assertEqual(1, summary["semantic_ablation_comparison_eligible_pairs"])
+        self.assertEqual(1, summary["status_only_baseline_accepted_runs"])
         self.assertEqual(
             1,
-            summary["functional_naive_wrapper_invalid_evidence_accepted_runs"],
+            summary["status_only_baseline_acceptance_denominator"],
         )
         self.assertEqual(1, summary["contract_invalid_evidence_rejected_runs"])
         self.assertEqual(1.0, summary["contract_invalid_evidence_rejection_rate"])
-        self.assertEqual(1, summary["attribution_improvement_invalid_rows"])
+        self.assertEqual(1, summary["status_only_accepted_contract_rejected_runs"])
+
+    def test_semantic_deltas_exclude_pair_with_invalid_full_contract_arm(self) -> None:
+        module = _load_module()
+        evidence = [
+            {
+                "run_id": "valid-full",
+                "matrix": "semantic_ablation",
+                "policy": "route_following",
+                "scene_id": "valid-scene",
+                "seed": "17",
+                "adapter_config": "full_contract",
+                "audit_valid": "true",
+                "route_contract_ok": "true",
+                "metrics_present": "true",
+                "progress": "0.4",
+            },
+            {
+                "run_id": "valid-command",
+                "matrix": "semantic_ablation",
+                "policy": "route_following",
+                "scene_id": "valid-scene",
+                "seed": "17",
+                "adapter_config": "command_only_route",
+                "audit_valid": "false",
+                "route_contract_ok": "false",
+                "metrics_present": "true",
+                "progress": "0.1",
+            },
+            {
+                "run_id": "invalid-full",
+                "matrix": "semantic_ablation",
+                "policy": "route_following",
+                "scene_id": "invalid-scene",
+                "seed": "17",
+                "adapter_config": "full_contract",
+                "audit_valid": "false",
+                "route_contract_ok": "false",
+                "metrics_present": "true",
+                "progress": "0.9",
+            },
+            {
+                "run_id": "invalid-command",
+                "matrix": "semantic_ablation",
+                "policy": "route_following",
+                "scene_id": "invalid-scene",
+                "seed": "17",
+                "adapter_config": "command_only_route",
+                "audit_valid": "false",
+                "route_contract_ok": "false",
+                "metrics_present": "true",
+                "progress": "0.2",
+            },
+        ]
+
+        pair_counts = module._semantic_ablation_pairs(evidence)
+        pair_rows = module._semantic_ablation_pair_rows(evidence)
+        deltas = module._semantic_ablation_delta_summary(pair_rows)
+
+        self.assertEqual(2, pair_counts["completed_pairs"])
+        self.assertEqual(1, pair_counts["comparison_eligible_pairs"])
+        self.assertEqual(["false", "true"], sorted(row["comparison_eligible"] for row in pair_rows))
+        self.assertEqual(1, deltas["progress"]["count"])
+        self.assertEqual(0.3, deltas["progress"]["mean_delta_full_minus_command_only"])
 
     def test_external_compatibility_summary_counts_driver_conformance(self) -> None:
         module = _load_module()

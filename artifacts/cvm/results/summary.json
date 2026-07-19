@@ -72,6 +72,8 @@
       "offroad_mean": 0.0,
       "policy": "constant_velocity",
       "progress_mean": 0.525333,
+      "route_valid_runs": 14,
+      "sensor_valid_runs": 15,
       "service_crash_rows": 0
     },
     {
@@ -86,6 +88,8 @@
       "offroad_mean": null,
       "policy": "direct_actor_planner",
       "progress_mean": null,
+      "route_valid_runs": 0,
+      "sensor_valid_runs": 0,
       "service_crash_rows": 0
     },
     {
@@ -100,6 +104,8 @@
       "offroad_mean": 0.0,
       "policy": "route_following",
       "progress_mean": 0.476667,
+      "route_valid_runs": 14,
+      "sensor_valid_runs": 15,
       "service_crash_rows": 0
     }
   ],
@@ -158,25 +164,20 @@
   },
   "failure_rows": 33,
   "integration_effectiveness": {
-    "attribution_improvement_invalid_rows": 15,
     "contract_invalid_evidence_rejected_runs": 15,
     "contract_invalid_evidence_rejection_denominator": 15,
     "contract_invalid_evidence_rejection_rate": 1.0,
     "full_contract_audit_valid_runs": 42,
     "full_contract_completed_runs": 45,
-    "functional_naive_wrapper_completed_runs": 15,
-    "functional_naive_wrapper_invalid_acceptance_denominator": 15,
-    "functional_naive_wrapper_invalid_evidence_accepted_runs": 15,
-    "functional_naive_wrapper_metric_runs": 15,
-    "rule": "Integration-effectiveness is measured on executed closed-loop rows: valid full-contract rollouts should pass audit without false blocking, and runnable command-only route wrappers should be rejected as invalid policy evidence when they drop route geometry.",
+    "rule": "Integration-effectiveness is measured on executed closed-loop rows: completed full-contract rollouts are audited, and completed metric-bearing command-only rows are compared with a defined status-only acceptance baseline before route-invalid evidence is rejected.",
     "semantic_ablation_command_proxy_completed_runs": 15,
     "semantic_ablation_command_proxy_metric_runs": 15,
     "semantic_ablation_command_proxy_rejected_runs": 15,
+    "semantic_ablation_comparison_eligible_pairs": 14,
     "semantic_ablation_completed_pairs": 15,
-    "semantic_ablation_metric_pairs": 15,
-    "valid_full_contract_false_block_denominator": 42,
-    "valid_full_contract_false_block_rate": 0.0,
-    "valid_full_contract_false_blocked_runs": 0
+    "status_only_accepted_contract_rejected_runs": 15,
+    "status_only_baseline_acceptance_denominator": 15,
+    "status_only_baseline_accepted_runs": 15
   },
   "matrix_counts": {
     "core": 45,
@@ -199,6 +200,8 @@
       "offroad_mean": 0.0,
       "policy": "constant_velocity",
       "progress_mean": 0.525333,
+      "route_valid_runs": 14,
+      "sensor_valid_runs": 15,
       "service_crash_rows": 0
     },
     {
@@ -213,6 +216,8 @@
       "offroad_mean": 0.0,
       "policy": "route_following",
       "progress_mean": 0.476667,
+      "route_valid_runs": 14,
+      "sensor_valid_runs": 15,
       "service_crash_rows": 0
     }
   ],
@@ -261,34 +266,54 @@
   "schema": "cvm_aggregate_summary_v1",
   "semantic_ablation_deltas": {
     "collision_any": {
-      "count": 15,
+      "count": 14,
       "max_delta": 1.0,
-      "mean_delta_full_minus_command_only": 0.066667,
-      "min_delta": -1.0
+      "mean_delta_full_minus_command_only": 0.071429,
+      "median_delta": 0.0,
+      "min_delta": -1.0,
+      "negative_count": 1,
+      "positive_count": 2,
+      "zero_count": 11
     },
     "offroad": {
-      "count": 15,
+      "count": 14,
       "max_delta": 0.0,
       "mean_delta_full_minus_command_only": 0.0,
-      "min_delta": 0.0
+      "median_delta": 0.0,
+      "min_delta": 0.0,
+      "negative_count": 0,
+      "positive_count": 0,
+      "zero_count": 14
     },
     "plan_deviation": {
-      "count": 15,
+      "count": 14,
       "max_delta": 1.04,
-      "mean_delta_full_minus_command_only": 0.016,
-      "min_delta": -1.15
+      "mean_delta_full_minus_command_only": 0.016429,
+      "median_delta": 0.0,
+      "min_delta": -1.15,
+      "negative_count": 2,
+      "positive_count": 6,
+      "zero_count": 6
     },
     "progress": {
-      "count": 15,
+      "count": 14,
       "max_delta": 0.66,
-      "mean_delta_full_minus_command_only": -0.048667,
-      "min_delta": -0.69
+      "mean_delta_full_minus_command_only": -0.052143,
+      "median_delta": 0.0,
+      "min_delta": -0.69,
+      "negative_count": 6,
+      "positive_count": 2,
+      "zero_count": 6
     },
     "progress_rel": {
-      "count": 15,
+      "count": 14,
       "max_delta": 0.04,
-      "mean_delta_full_minus_command_only": -0.021333,
-      "min_delta": -0.21
+      "mean_delta_full_minus_command_only": -0.022857,
+      "median_delta": 0.0,
+      "min_delta": -0.21,
+      "negative_count": 4,
+      "positive_count": 1,
+      "zero_count": 9
     }
   },
   "status_counts": {

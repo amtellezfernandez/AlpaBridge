@@ -17,8 +17,8 @@ ABSTRACT_MAX_WORDS = 210
 A4_WIDTH_PT = 595.276
 A4_HEIGHT_PT = 841.89
 PAGE_SIZE_TOLERANCE_PT = 1.0
-IEEE_A4_DOCUMENTCLASS_RE = re.compile(
-    r"\\documentclass\s*\[\s*conference\s*,\s*a4paper\s*\]\s*\{IEEEtran\}"
+IEEECONF_A4_DOCUMENTCLASS_RE = re.compile(
+    r"\\documentclass\s*\[\s*a4paper\s*,\s*10pt\s*,\s*conference\s*\]\s*\{ieeeconf\}"
 )
 MANUSCRIPT_LAYOUT_PATTERNS: tuple[tuple[str, Pattern[str]], ...] = (
     (
@@ -35,7 +35,11 @@ MANUSCRIPT_LAYOUT_PATTERNS: tuple[tuple[str, Pattern[str]], ...] = (
     ),
     (
         "manual_page_style",
-        re.compile(r"\\(?:thispagestyle|pagestyle|pagenumbering)\s*\{"),
+        re.compile(r"\\(?:thispagestyle|pagestyle)\s*\{\s*(?!empty\s*\})"),
+    ),
+    (
+        "manual_page_numbering",
+        re.compile(r"\\pagenumbering\s*\{"),
     ),
     (
         "manual_page_counter",
@@ -56,10 +60,6 @@ MANUSCRIPT_LAYOUT_PATTERNS: tuple[tuple[str, Pattern[str]], ...] = (
         "page_enlargement",
         re.compile(r"\\enlargethispage\b"),
     ),
-    (
-        "template_override",
-        re.compile(r"\\IEEEoverridecommandlockouts\b"),
-    ),
 )
 LATEX_LOG_FAILURE_PATTERNS = (
     "Undefined control sequence",
@@ -79,8 +79,7 @@ REQUIRED_TABLES = (
 EXPECTED_TABLE_HEADERS = {
     "contract_map.tex": "Mismatch & Contract & Mechanism & Validation",
     "main_results.tex": (
-        "Public core policy & Rows & Done/att. & Audit & Progress & Coll./off & "
-        "Lat. p95 & Crash & Blocked"
+        "Public core policy & Rows & Done/att. & Audit & Route & Sensor & Crash & Blocked"
     ),
     "ablations.tex": "Closed-loop check & Obs. & Denom. & Meaning",
     "fault_localization.tex": "Synthetic diagnostic & Count & Total",
@@ -174,8 +173,8 @@ BASELINE_REPORT_REQUIRED_TERMS = (
     "make cvm-check",
     "make paper-verify",
     "make verify",
-    "311 passed, 14 skipped, and 15 subtests passed",
-    "62.61% against the configured 33.0% minimum",
+    "319 passed, 14 skipped, and 15 subtests passed",
+    "63.17% against the configured 33.0% minimum",
 )
 CONTRACT_TEST_AUDIT_REQUIRED_TERMS = (
     "# Contract Test Audit",
@@ -280,16 +279,9 @@ CLAIM_MATRIX_SUMMARY_LINES: tuple[tuple[str, tuple[str, ...]], ...] = (
         ),
     ),
     (
-        "Valid full-contract false-blocked rows",
+        "Comparison-eligible semantic pairs",
         (
-            "integration_effectiveness.valid_full_contract_false_blocked_runs",
-            "integration_effectiveness.valid_full_contract_false_block_denominator",
-        ),
-    ),
-    (
-        "Matched semantic metric pairs",
-        (
-            "integration_effectiveness.semantic_ablation_metric_pairs",
+            "integration_effectiveness.semantic_ablation_comparison_eligible_pairs",
             "integration_effectiveness.semantic_ablation_completed_pairs",
         ),
     ),
@@ -301,10 +293,10 @@ CLAIM_MATRIX_SUMMARY_LINES: tuple[tuple[str, tuple[str, ...]], ...] = (
         ),
     ),
     (
-        "Functional naive-wrapper invalid rows accepted",
+        "Status-only baseline accepted rows",
         (
-            "integration_effectiveness.functional_naive_wrapper_invalid_evidence_accepted_runs",
-            "integration_effectiveness.functional_naive_wrapper_invalid_acceptance_denominator",
+            "integration_effectiveness.status_only_baseline_accepted_runs",
+            "integration_effectiveness.status_only_baseline_acceptance_denominator",
         ),
     ),
     (
@@ -389,14 +381,6 @@ PAPER_NUMBER_JSON_FIELDS: tuple[tuple[str, str], ...] = (
     ("CVMClosedLoopMetricRows", "closed_loop_metric_rows"),
     ("CVMFullContractCompletedRuns", "integration_effectiveness.full_contract_completed_runs"),
     ("CVMFullContractAuditValidRuns", "integration_effectiveness.full_contract_audit_valid_runs"),
-    (
-        "CVMValidFullContractFalseBlockedRuns",
-        "integration_effectiveness.valid_full_contract_false_blocked_runs",
-    ),
-    (
-        "CVMValidFullContractFalseBlockDenominator",
-        "integration_effectiveness.valid_full_contract_false_block_denominator",
-    ),
     ("CVMClosedLoopSceneCount", "scenario_coverage.closed_loop_scene_count"),
     (
         "CVMRequiredScenarioCategoryCount",
@@ -443,8 +427,8 @@ PAPER_NUMBER_JSON_FIELDS: tuple[tuple[str, str], ...] = (
         "integration_effectiveness.semantic_ablation_completed_pairs",
     ),
     (
-        "CVMSemanticAblationMetricPairs",
-        "integration_effectiveness.semantic_ablation_metric_pairs",
+        "CVMSemanticAblationEligiblePairs",
+        "integration_effectiveness.semantic_ablation_comparison_eligible_pairs",
     ),
     (
         "CVMCommandProxyCompletedRuns",
@@ -455,12 +439,12 @@ PAPER_NUMBER_JSON_FIELDS: tuple[tuple[str, str], ...] = (
         "integration_effectiveness.semantic_ablation_command_proxy_rejected_runs",
     ),
     (
-        "CVMNaiveWrapperMetricRuns",
-        "integration_effectiveness.functional_naive_wrapper_metric_runs",
+        "CVMStatusOnlyAcceptedRuns",
+        "integration_effectiveness.status_only_baseline_accepted_runs",
     ),
     (
-        "CVMNaiveInvalidAcceptedRuns",
-        "integration_effectiveness.functional_naive_wrapper_invalid_evidence_accepted_runs",
+        "CVMStatusOnlyAcceptanceDenominator",
+        "integration_effectiveness.status_only_baseline_acceptance_denominator",
     ),
     (
         "CVMContractInvalidRejectedRuns",
@@ -471,8 +455,8 @@ PAPER_NUMBER_JSON_FIELDS: tuple[tuple[str, str], ...] = (
         "integration_effectiveness.contract_invalid_evidence_rejection_denominator",
     ),
     (
-        "CVMAttributionImprovementInvalidRows",
-        "integration_effectiveness.attribution_improvement_invalid_rows",
+        "CVMStatusOnlyAcceptedContractRejectedRuns",
+        "integration_effectiveness.status_only_accepted_contract_rejected_runs",
     ),
     ("CVMFailedRuns", "failed_runs"),
     ("CVMBlockedRuns", "blocked_runs"),
@@ -547,18 +531,15 @@ GENERATED_TABLE_JSON_FIELDS: tuple[str, ...] = (
     "blocked_runs",
     "integration_effectiveness.full_contract_completed_runs",
     "integration_effectiveness.full_contract_audit_valid_runs",
-    "integration_effectiveness.valid_full_contract_false_blocked_runs",
-    "integration_effectiveness.valid_full_contract_false_block_denominator",
     "integration_effectiveness.semantic_ablation_completed_pairs",
-    "integration_effectiveness.semantic_ablation_metric_pairs",
+    "integration_effectiveness.semantic_ablation_comparison_eligible_pairs",
     "integration_effectiveness.semantic_ablation_command_proxy_completed_runs",
     "integration_effectiveness.semantic_ablation_command_proxy_rejected_runs",
-    "integration_effectiveness.functional_naive_wrapper_metric_runs",
-    "integration_effectiveness.functional_naive_wrapper_invalid_evidence_accepted_runs",
-    "integration_effectiveness.functional_naive_wrapper_invalid_acceptance_denominator",
+    "integration_effectiveness.status_only_baseline_accepted_runs",
+    "integration_effectiveness.status_only_baseline_acceptance_denominator",
     "integration_effectiveness.contract_invalid_evidence_rejected_runs",
     "integration_effectiveness.contract_invalid_evidence_rejection_denominator",
-    "integration_effectiveness.attribution_improvement_invalid_rows",
+    "integration_effectiveness.status_only_accepted_contract_rejected_runs",
     "release_scope.public_core_configured_rows",
     "release_scope.public_core_completed_runs",
     "release_scope.public_core_blocked_rows",
@@ -817,7 +798,7 @@ def main() -> int:
     parser.add_argument("--figures", default=Path("artifacts/cvm/figures"), type=Path)
     parser.add_argument("--metadata", default=None, type=Path)
     parser.add_argument("--repo-root", default=Path("."), type=Path)
-    parser.add_argument("--max-pages", default=6, type=int)
+    parser.add_argument("--max-pages", default=4, type=int)
     parser.add_argument("--allow-eight-pages", action="store_true")
     args = parser.parse_args()
 
@@ -1097,8 +1078,11 @@ def _load_paper_metadata(path: Path) -> tuple[dict[str, object], list[str]]:
 def _source_text_failures(*, source_text: str, path: Path) -> list[str]:
     failures: list[str] = []
     active_source = _strip_latex_comments(source_text)
-    if not IEEE_A4_DOCUMENTCLASS_RE.search(active_source):
-        failures.append(f"source_documentclass_not_ieee_a4:{path}")
+    if not IEEECONF_A4_DOCUMENTCLASS_RE.search(active_source):
+        failures.append(f"source_documentclass_not_ieeeconf_a4:{path}")
+    for command in ("IEEEoverridecommandlockouts", "overrideIEEEmargins"):
+        if not re.search(rf"\\{command}\b", active_source):
+            failures.append(f"source_ieeeconf_command_missing:{path}:{command}")
     failures.extend(_source_layout_failures(source_text=source_text, path=path))
     abstract_words = _abstract_word_count(source_text)
     if abstract_words is None:
@@ -1140,11 +1124,11 @@ def _paper_metadata_text_failures(
     expected_author = str(metadata.get("author", ""))
     expected_affiliation = str(metadata.get("affiliation", ""))
     expected_pdf_subject = str(metadata.get("pdf_subject", ""))
-    title = _latex_command_value(source_text, "title")
+    title = _paper_title_value(source_text)
     pdf_title = _hypersetup_value(source_text, "pdftitle")
     pdf_author = _hypersetup_value(source_text, "pdfauthor")
     pdf_subject = _hypersetup_value(source_text, "pdfsubject")
-    author = _latex_command_value(source_text, "IEEEauthorblockN")
+    author = _paper_author_value(source_text)
     if title != expected_title:
         failures.append(f"metadata_title_mismatch:{source_path}:{metadata_path}")
     if pdf_title != expected_title:
@@ -1254,6 +1238,19 @@ def _latex_command_value(source_text: str, command: str) -> str:
     if match is None:
         return ""
     return _normalize_latex_source(match.group(1))
+
+
+def _paper_title_value(source_text: str) -> str:
+    title = _latex_command_value(source_text, "title")
+    return re.sub(r"^(?:\\(?:LARGE|Large|large|bf|bfseries)\s*)+", "", title).strip()
+
+
+def _paper_author_value(source_text: str) -> str:
+    legacy = _latex_command_value(source_text, "IEEEauthorblockN")
+    if legacy:
+        return legacy
+    match = re.search(r"\\author\s*\{\s*([^\\{}%]+)", source_text)
+    return "" if match is None else _normalize_latex_source(match.group(1))
 
 
 def _hypersetup_value(source_text: str, key: str) -> str:
@@ -1853,6 +1850,8 @@ def _generated_table_summary_field_failures(summary_path: Path, summary: dict[st
                 "attempted_runs",
                 "completed_runs",
                 "audit_valid_runs",
+                "route_valid_runs",
+                "sensor_valid_runs",
                 "blocked_runs",
                 "service_crash_rows",
             ):
@@ -1896,15 +1895,15 @@ def _expected_core_policy_row(item: dict[str, object]) -> str:
     completed = item.get("completed_runs") if isinstance(item.get("completed_runs"), int) else 0
     attempted = item.get("attempted_runs") if isinstance(item.get("attempted_runs"), int) else 0
     audit_valid = item.get("audit_valid_runs") if isinstance(item.get("audit_valid_runs"), int) else 0
+    route_valid = item.get("route_valid_runs") if isinstance(item.get("route_valid_runs"), int) else 0
+    sensor_valid = item.get("sensor_valid_runs") if isinstance(item.get("sensor_valid_runs"), int) else 0
     return _table_row(
         _latex_table_text(str(item.get("policy", ""))),
         item.get("configured_rows") if isinstance(item.get("configured_rows"), int) else 0,
         f"{completed}/{attempted}",
         f"{audit_valid}/{completed}",
-        _format_table_metric(item.get("progress_mean")),
-        f"{_format_table_metric(item.get('collision_any_mean'))}/"
-        f"{_format_table_metric(item.get('offroad_mean'))}",
-        _format_table_metric(item.get("action_latency_p95_ms")),
+        f"{route_valid}/{completed}",
+        f"{sensor_valid}/{completed}",
         item.get("service_crash_rows") if isinstance(item.get("service_crash_rows"), int) else 0,
         item.get("blocked_runs") if isinstance(item.get("blocked_runs"), int) else 0,
     )
@@ -1921,45 +1920,36 @@ def _latex_table_text(value: str) -> str:
 
 
 def _expected_ablations_rows(summary: dict[str, object]) -> list[str]:
-    false_block_denominator = _required_int(
-        summary,
-        "integration_effectiveness.valid_full_contract_false_block_denominator",
-    )
     return [
         _table_row(
-            "Full-contract audit-valid rows",
+            "Full-contract audit-valid",
             _required_int(summary, "integration_effectiveness.full_contract_audit_valid_runs"),
             _required_int(summary, "integration_effectiveness.full_contract_completed_runs"),
-            "valid integration survives audit",
+            "audit passed",
         ),
         _table_row(
-            "Valid rows false-blocked",
+            "Comparison-eligible pairs",
             _required_int(
-                summary, "integration_effectiveness.valid_full_contract_false_blocked_runs"
+                summary,
+                "integration_effectiveness.semantic_ablation_comparison_eligible_pairs",
             ),
-            false_block_denominator,
-            "no valid-row rejection observed",
-        ),
-        _table_row(
-            "Matched route-loss pairs",
-            _required_int(summary, "integration_effectiveness.semantic_ablation_metric_pairs"),
             _required_int(summary, "integration_effectiveness.semantic_ablation_completed_pairs"),
-            "semantic confound executed",
+            "valid/invalid arms",
         ),
         _table_row(
-            "Naive invalid metrics accepted",
+            "Status-only baseline accepted",
             _required_int(
                 summary,
-                "integration_effectiveness.functional_naive_wrapper_invalid_evidence_accepted_runs",
+                "integration_effectiveness.status_only_baseline_accepted_runs",
             ),
             _required_int(
                 summary,
-                "integration_effectiveness.functional_naive_wrapper_invalid_acceptance_denominator",
+                "integration_effectiveness.status_only_baseline_acceptance_denominator",
             ),
-            "non-contract path would score them",
+            "completion + metrics",
         ),
         _table_row(
-            "WOD2Sim invalid metrics rejected",
+            "Invalid route rows rejected",
             _required_int(
                 summary,
                 "integration_effectiveness.contract_invalid_evidence_rejected_runs",
@@ -1968,31 +1958,13 @@ def _expected_ablations_rows(summary: dict[str, object]) -> list[str]:
                 summary,
                 "integration_effectiveness.contract_invalid_evidence_rejection_denominator",
             ),
-            "policy attribution blocked",
-        ),
-        _table_row(
-            "Attribution corrections",
-            _required_int(
-                summary,
-                "integration_effectiveness.attribution_improvement_invalid_rows",
-            ),
-            _required_int(
-                summary,
-                "integration_effectiveness.contract_invalid_evidence_rejection_denominator",
-            ),
-            "invalid rows not blamed on policy",
-        ),
-        _table_row(
-            "Policy-failure rows assigned",
-            _required_int(summary, "failure_attribution.policy_failure_attributable_rows"),
-            _required_int(summary, "closed_loop_completed_runs"),
-            "no unsupported policy blame",
+            "route gate",
         ),
         _table_row(
             "Verified scenario categories",
             _required_int(summary, "scenario_coverage.verified_required_category_count"),
             _required_int(summary, "scenario_coverage.required_category_count"),
-            "no coverage claim",
+            "coverage withheld",
         ),
     ]
 

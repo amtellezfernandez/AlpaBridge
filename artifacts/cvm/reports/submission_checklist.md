@@ -86,8 +86,21 @@ Additional release-specific checks:
 - [x] `frames.csv` exposes the required public-safe frame-level schema without
   bundling restricted sensor frames or fabricating unavailable frame rows.
 
-Current status: complete with documented limitations for the CVM paper package.
-The dependency-light public core is complete and semantic ablation provides
-real closed-loop integration evidence. Direct-actor temporal ablation,
-learned-policy results, restricted scene redistribution, and policy benchmark
-claims remain excluded optional gated work.
+Scientific-readiness checks:
+
+- [ ] Evaluate at least one learned policy checkpoint through the complete
+  contract stack.
+- [ ] Compare against an independently implemented baseline or measure
+  diagnosis-time improvement against an ungated workflow.
+- [ ] Repeat scene-policy trials with controlled seeds and report uncertainty.
+- [ ] Verify coverage of the six required scenario categories.
+- [ ] Complete the direct-actor temporal-ablation matrix.
+- [ ] Publish sufficient scene identifiers and frame-level evidence for an
+  authorized evaluator to replay the reported trials.
+
+Current status: the PDF and release package are mechanically ready, with
+documented limitations. Scientific submission remains high risk because the
+dependency-light public core provides integration evidence but does not yet
+provide a learned-policy evaluation, independent comparator, replicated trials,
+verified scenario coverage, direct-actor temporal ablation, or fully replayable
+public evidence.

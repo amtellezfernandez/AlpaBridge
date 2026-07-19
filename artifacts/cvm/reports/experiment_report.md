@@ -22,22 +22,24 @@ matrix (CVM) evidence.
 
 - Dependency-light public core: 30/30 completed, 28/30 audit-valid, 0 blocked.
 - Full-contract rollouts: 42/45 audit-valid.
-- False-block observations on valid full-contract rows: 0/42.
 - Command-only route rows: 15/15 completed and 15/15 rejected as non-claim-valid.
-- Functional command-only route wrapper baseline: 15/15 rows completed with
-  metrics that a non-contract path could accept as policy evidence.
-- Contract-gated route evidence: 15/15 invalid command-only rows rejected,
-  improving attribution on 15 route-invalid rows.
-- Matched semantic pairs: 15/15 metric-bearing pairs.
-- Mean full-contract minus command-only deltas: progress -0.049, relative
-  progress -0.021, collision-any 0.067, off-road 0.000, plan deviation 0.016.
+- Status-only acceptance baseline: 15/15 command-only rows completed with
+  metrics, so the defined baseline accepts them.
+- Contract-gated route evidence: the same 15/15 rows are rejected as
+  route-invalid and cannot support policy attribution.
+- Comparison-eligible semantic pairs: 14/15; one pair is excluded because its
+  nominal full-contract arm is also route-invalid.
+- Mean full-contract minus command-only deltas on eligible pairs: progress
+  -0.052, relative progress -0.023, collision-any 0.071, off-road 0.000, and
+  plan deviation 0.016. Progress has median 0.000 and range [-0.690, 0.660].
 
-These are route-boundary confound, naive-wrapper comparison, and evidence-gate
-measurements, not policy-superiority claims. The deltas show that removing route
-geometry changes measured behavior. The baseline comparison shows the
-integration-effectiveness effect supported by the current release: a runnable
-command-only wrapper produces metric-bearing rows, while the contract gate keeps
-those same route-invalid rows out of policy-attribution claims. The 33 blocked
+These are route-boundary and evidence-gate measurements, not policy-superiority
+claims. The status-only baseline is a defined acceptance rule, not a separate
+wrapper or external competitor. The paired deltas are mixed and, with one
+uncontrolled execution per arm, do not establish a systematic route-loss or
+policy-quality effect. The supported integration result is that the contract
+gate keeps completed metric-bearing route-invalid rows out of
+policy-attribution claims. The 33 blocked
 direct-actor/temporal rows are optional gated extension rows retained as
 denominator and blocker context, not public-core dependencies or success
 metrics.

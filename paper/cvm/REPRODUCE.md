@@ -87,9 +87,9 @@ the title, author block, PDF subject, or abstract text intentionally changes.
 - Completed rows: 115.
 - Closed-loop completed rows: 60.
 - Full-contract rows audit-valid: 42/45.
-- Valid full-contract false-blocked rows: 0/42.
-- Matched semantic metric pairs: 15/15.
+- Comparison-eligible semantic pairs: 14/15.
 - Command-only rows rejected as non-claim-valid: 15/15.
+- Status-only baseline accepted rows: 15/15.
 - Planned rows: 0.
 - Blocked rows: 33.
 - Claim-valid benchmark matrix: 0.

@@ -7,18 +7,19 @@ refresh used the locked `uv run python` environment.
 
 | Command | Result |
 |---|---|
-| `./scripts/build_cvm_paper.sh` | Latest controlled pass rebuilt the 6-page root `wod2sim.pdf` at 126223 bytes. |
-| `uv run python scripts/validate_cvm_submission.py` | Passed, including metadata-backed title/author/affiliation/abstract checks, output-PDF title/author/subject checks, IEEE A4 source-layout checks, parsed PDF A4 MediaBox checks, LaTeX log warnings, canonical-to-paper generated asset sync, generated-table row/source-field value sync, package metadata checks, CI workflow gate checks, community-template claim-boundary checks, public local-reference and image-alt checks, CLI command-documentation drift checks, README visual/graph explanation checks, evaluation-status checks, venue-style benchmark-label checks, unstable generated citation-slug hygiene checks, README attribution-count sync, paper-number macro value sync, claim-evidence-matrix count sync, contract-test audit coverage checks, embedded PDF font descriptors, manifest-level failure-attribution checks, summary-level attribution and scenario-coverage partition checks, generic credential-leak checks, and README/paper claim-boundary checks. |
-| `make paper-verify PYTHON='uv run python'` | Passed: rebuilt 6-page root `wod2sim.pdf` and ran submission validation. |
-| `make conformance PYTHON='uv run python'` | Previously passed through `make verify`: 311 passed, 14 skipped, 15 subtests passed. |
+| `./scripts/build_cvm_paper.sh` | Latest controlled pass rebuilt the 4-page root `wod2sim.pdf` at 175064 bytes with the official PaperPlaza `ieeeconf` A4 class. |
+| `uv run python scripts/validate_cvm_submission.py` | Passed, including metadata-backed title/author/affiliation/abstract checks, output-PDF title/author/subject checks, official `ieeeconf` A4 source-layout checks, parsed PDF A4 MediaBox checks, LaTeX log warnings, canonical-to-paper generated asset sync, generated-table row/source-field value sync, package metadata checks, CI workflow gate checks, community-template claim-boundary checks, public local-reference and image-alt checks, CLI command-documentation drift checks, README visual/graph explanation checks, evaluation-status checks, venue-style benchmark-label checks, unstable generated citation-slug hygiene checks, README attribution-count sync, paper-number macro value sync, claim-evidence-matrix count sync, contract-test audit coverage checks, embedded PDF font descriptors, manifest-level failure-attribution checks, summary-level attribution and scenario-coverage partition checks, generic credential-leak checks, and README/paper claim-boundary checks. |
+| `make paper-verify PYTHON='uv run python'` | Passed: rebuilt the 4-page root `wod2sim.pdf` and ran submission validation. |
+| `make conformance PYTHON='uv run python'` | Latest controlled pass through `make cvm-check`: 319 passed, 14 skipped, 15 subtests passed. |
 | `make demo PYTHON='uv run python'` | Passed: synthetic demo valid with `valid_claim_evidence=false`. |
-| `make cvm-check PYTHON='uv run python'` | Previously passed: ruff clean, 311 passed, 14 skipped, 15 subtests passed, validation passed. |
+| `make cvm-check PYTHON='uv run python'` | Latest controlled pass: ruff clean, 319 passed, 14 skipped, 15 subtests passed, validation passed. |
 | `make cvm-eval PYTHON='uv run python'` | Expected exit 2: current aggregate retains 30 completed dependency-light public-core rows, 30 completed semantic-ablation rows, and 33 optional gated blockers. |
-| `.venv/bin/python -m pytest -q tests/` | Latest controlled pass: 318 passed, 14 skipped, 15 subtests passed. |
-| `uv run python -m pytest --cov` | Previously passed through `make verify`: 311 passed, 14 skipped, total coverage 62.61% against the configured 33.0% minimum. Not rerun in the final WSL-safe cleanup pass. |
+| `uv run python -m pytest -q tests/` | Latest controlled pass: 319 passed, 14 skipped, 15 subtests passed. |
+| `uv run python -m pytest --cov` | Latest controlled pass: 319 passed, 14 skipped, total coverage 63.17% against the configured 33.0% minimum. |
 | `.venv/bin/python -m build` | Latest controlled pass built source distribution and wheel with network-enabled build isolation. |
 | `uv run pre-commit run --all-files` | Passed without modifying files. |
-| `qpdf --check wod2sim.pdf && pdfinfo wod2sim.pdf` | Latest controlled pass: 6 pages, portrait A4, 126223 bytes, and no syntax or stream encoding errors reported by `qpdf`. |
+| `qpdf --check wod2sim.pdf && pdfinfo wod2sim.pdf && pdffonts wod2sim.pdf` | Latest controlled pass: 4 pages, portrait A4, 175064 bytes, embedded Type 1 fonts, and no syntax or stream encoding errors reported by `qpdf`. |
+| PaperPlaza public PDF test | Passed for the final initial contributed-paper PDF: 4 A4 pages, searchable, no critical issues, no margin problems, embedded/subset fonts, and no Type 3 fonts. |
 | `git diff --check` | Run as final whitespace validation. |
 
 Targeted contract selections:
@@ -54,8 +55,9 @@ It rejects generated PDF title, author, or subject drift from
 `paper/cvm/metadata.json`.
 It also rejects title, author, affiliation, PDF-subject, abstract word-count, or
 abstract-source drift against `paper/cvm/metadata.json`.
-It rejects manuscript-source page, margin, font-scaling, page-style, and
-negative-spacing overrides so the IEEE A4 template remains unmodified.
+It requires the official PaperPlaza `ieeeconf` A4 class and conference commands,
+and rejects unsupported manuscript-source page, margin, font-scaling, page-style,
+and negative-spacing overrides.
 It rejects unresolved citations/references, multiply defined labels, and
 overfull or underfull `\hbox` warnings in the generated LaTeX log.
 It rejects drift between canonical generated artifacts under `artifacts/cvm`
@@ -66,7 +68,7 @@ It rejects generated table row drift from `summary.json`,
 `lifecycle_stress.csv`, and `fault_injection.csv`, including missing or
 non-integer source fields.
 It rejects missing public-core policy rows in `main_results.tex`, including
-latency-p95 and terminal service-crash columns, and preserves tracked public
+audit, route, sensor, service-crash, and blocker columns, and preserves tracked public
 closed-loop metrics when ignored raw run directories are absent.
 It rejects package metadata that drops the author, README, BSD-3-Clause license
 expression, research keywords, publication classifiers, or repository,

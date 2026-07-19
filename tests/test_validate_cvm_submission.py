@@ -72,20 +72,16 @@ def _write_paper_number_fixture(root: Path, module) -> tuple[Path, Path, Path, P
         "integration_effectiveness": {
             "full_contract_completed_runs": 3,
             "full_contract_audit_valid_runs": 3,
-            "valid_full_contract_false_blocked_runs": 0,
-            "valid_full_contract_false_block_denominator": 3,
             "semantic_ablation_completed_pairs": 2,
-            "semantic_ablation_metric_pairs": 2,
+            "semantic_ablation_comparison_eligible_pairs": 2,
             "semantic_ablation_command_proxy_completed_runs": 2,
             "semantic_ablation_command_proxy_metric_runs": 2,
             "semantic_ablation_command_proxy_rejected_runs": 2,
-            "functional_naive_wrapper_completed_runs": 2,
-            "functional_naive_wrapper_metric_runs": 2,
-            "functional_naive_wrapper_invalid_evidence_accepted_runs": 2,
-            "functional_naive_wrapper_invalid_acceptance_denominator": 2,
+            "status_only_baseline_accepted_runs": 2,
+            "status_only_baseline_acceptance_denominator": 2,
             "contract_invalid_evidence_rejected_runs": 2,
             "contract_invalid_evidence_rejection_denominator": 2,
-            "attribution_improvement_invalid_rows": 2,
+            "status_only_accepted_contract_rejected_runs": 2,
         },
         "scenario_coverage": {
             "closed_loop_scene_count": 4,
@@ -146,6 +142,8 @@ def _write_paper_number_fixture(root: Path, module) -> tuple[Path, Path, Path, P
                 "attempted_runs": 3,
                 "completed_runs": 3,
                 "audit_valid_runs": 3,
+                "route_valid_runs": 3,
+                "sensor_valid_runs": 3,
                 "metric_rows": 3,
                 "blocked_runs": 1,
                 "progress_mean": 0.4,
@@ -162,6 +160,8 @@ def _write_paper_number_fixture(root: Path, module) -> tuple[Path, Path, Path, P
                 "attempted_runs": 3,
                 "completed_runs": 3,
                 "audit_valid_runs": 3,
+                "route_valid_runs": 3,
+                "sensor_valid_runs": 3,
                 "metric_rows": 3,
                 "blocked_runs": 1,
                 "progress_mean": 0.4,
@@ -296,7 +296,9 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         module = _load_module()
         body = " ".join(f"word{index}" for index in range(module.ABSTRACT_MIN_WORDS))
         source = (
-            "\\documentclass[conference,a4paper]{IEEEtran}\n"
+            "\\documentclass[a4paper,10pt,conference]{ieeeconf}\n"
+            "\\IEEEoverridecommandlockouts\n"
+            "\\overrideIEEEmargins\n"
             "\\hypersetup{pdfsubject={WOD2Sim integration-failure attribution paper}}\n"
             "\\begin{abstract}\n"
             + body
@@ -312,7 +314,9 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         module = _load_module()
         draft_subject = "paper " + "draft"
         source = (
-            "\\documentclass[conference,a4paper]{IEEEtran}\n"
+            "\\documentclass[a4paper,10pt,conference]{ieeeconf}\n"
+            "\\IEEEoverridecommandlockouts\n"
+            "\\overrideIEEEmargins\n"
             f"\\hypersetup{{pdfsubject={{WOD2Sim contract-based system-integration {draft_subject}}}}}\n"
             "\\begin{abstract}\nshort abstract\n\\end{abstract}\n"
         )
@@ -326,7 +330,9 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         module = _load_module()
         body = " ".join(f"word{index}" for index in range(module.ABSTRACT_MIN_WORDS))
         source = (
-            "\\documentclass[conference,a4paper]{IEEEtran}\n"
+            "\\documentclass[a4paper,10pt,conference]{ieeeconf}\n"
+            "\\IEEEoverridecommandlockouts\n"
+            "\\overrideIEEEmargins\n"
             "% \\usepackage{geometry}\n"
             "% \\vspace{-2em}\n"
             "\\begin{abstract}\n"
@@ -358,7 +364,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
 
         failures = module._source_text_failures(source_text=source, path=Path("main.tex"))
 
-        self.assertIn("source_documentclass_not_ieee_a4:main.tex", failures)
+        self.assertIn("source_documentclass_not_ieeeconf_a4:main.tex", failures)
         self.assertIn("source_layout_hack:main.tex:geometry_package", failures)
         self.assertIn("source_layout_hack:main.tex:manual_margin_length", failures)
         self.assertIn("source_layout_hack:main.tex:manual_page_style", failures)
@@ -366,7 +372,10 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         self.assertIn("source_layout_hack:main.tex:manual_font_scaling", failures)
         self.assertIn("source_layout_hack:main.tex:negative_spacing", failures)
         self.assertIn("source_layout_hack:main.tex:page_enlargement", failures)
-        self.assertIn("source_layout_hack:main.tex:template_override", failures)
+        self.assertIn(
+            "source_ieeeconf_command_missing:main.tex:overrideIEEEmargins",
+            failures,
+        )
 
     def test_latex_log_failures_report_reference_and_box_warnings(self) -> None:
         module = _load_module()
@@ -927,8 +936,8 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             main_results = tables / "main_results.tex"
             main_results.write_text(
                 main_results.read_text(encoding="utf-8").replace(
-                    r"constant\_velocity & 4 & 3/3 & 3/3 & 0.400 & 0.750/0.000 & -- & 0 & 1",
-                    r"constant\_velocity & 4 & 3/3 & 3/3 & 0.400 & 0.750/0.000 & -- & 0 & 999",
+                    r"constant\_velocity & 4 & 3/3 & 3/3 & 3/3 & 3/3 & 0 & 1",
+                    r"constant\_velocity & 4 & 3/3 & 3/3 & 3/3 & 3/3 & 0 & 999",
                 ),
                 encoding="utf-8",
             )
@@ -942,7 +951,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
 
         self.assertIn(
             f"generated_table_row_mismatch:{main_results}:"
-            r"constant\_velocity & 4 & 3/3 & 3/3 & 0.400 & 0.750/0.000 & -- & 0 & 1",
+            r"constant\_velocity & 4 & 3/3 & 3/3 & 3/3 & 3/3 & 0 & 1",
             failures,
         )
 
@@ -957,8 +966,8 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             main_results = tables / "main_results.tex"
             main_results.write_text(
                 main_results.read_text(encoding="utf-8").replace(
-                    "Lat. p95 & Crash",
-                    "Latency & Status",
+                    "Route & Sensor",
+                    "Route status & Sensor status",
                 ),
                 encoding="utf-8",
             )
@@ -972,8 +981,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
 
         self.assertIn(
             f"generated_table_header_mismatch:{main_results}:"
-            "Public core policy & Rows & Done/att. & Audit & Progress & Coll./off & "
-            "Lat. p95 & Crash & Blocked",
+            "Public core policy & Rows & Done/att. & Audit & Route & Sensor & Crash & Blocked",
             failures,
         )
 
@@ -1018,14 +1026,12 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
                 "integration_effectiveness": {
                     "full_contract_audit_valid_runs": 45,
                     "full_contract_completed_runs": 45,
-                    "valid_full_contract_false_blocked_runs": 0,
-                    "valid_full_contract_false_block_denominator": 45,
-                    "semantic_ablation_metric_pairs": 9,
+                    "semantic_ablation_comparison_eligible_pairs": 9,
                     "semantic_ablation_completed_pairs": 9,
                     "semantic_ablation_command_proxy_rejected_runs": 9,
                     "semantic_ablation_command_proxy_completed_runs": 9,
-                    "functional_naive_wrapper_invalid_evidence_accepted_runs": 9,
-                    "functional_naive_wrapper_invalid_acceptance_denominator": 9,
+                    "status_only_baseline_accepted_runs": 9,
+                    "status_only_baseline_acceptance_denominator": 9,
                     "contract_invalid_evidence_rejected_runs": 9,
                     "contract_invalid_evidence_rejection_denominator": 9,
                 },
@@ -1064,10 +1070,9 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
                         "- Completed rows: 109.",
                         "- Closed-loop completed rows: 54.",
                         "- Full-contract rows audit-valid: 45/45.",
-                        "- Valid full-contract false-blocked rows: 0/45.",
-                        "- Matched semantic metric pairs: 9/9.",
+                        "- Comparison-eligible semantic pairs: 9/9.",
                         "- Command-only rows rejected as non-claim-valid: 9/9.",
-                        "- Functional naive-wrapper invalid rows accepted: 9/9.",
+                        "- Status-only baseline accepted rows: 9/9.",
                         "- Contract-invalid route evidence rejected: 9/9.",
                         "- Closed-loop unique scenes: 6.",
                         "- Verified required scenario categories: 0/6.",
@@ -1109,14 +1114,12 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
                 "integration_effectiveness": {
                     "full_contract_audit_valid_runs": 1,
                     "full_contract_completed_runs": 1,
-                    "valid_full_contract_false_blocked_runs": 0,
-                    "valid_full_contract_false_block_denominator": 1,
-                    "semantic_ablation_metric_pairs": 0,
+                    "semantic_ablation_comparison_eligible_pairs": 0,
                     "semantic_ablation_completed_pairs": 0,
                     "semantic_ablation_command_proxy_rejected_runs": 0,
                     "semantic_ablation_command_proxy_completed_runs": 0,
-                    "functional_naive_wrapper_invalid_evidence_accepted_runs": 0,
-                    "functional_naive_wrapper_invalid_acceptance_denominator": 0,
+                    "status_only_baseline_accepted_runs": 0,
+                    "status_only_baseline_acceptance_denominator": 0,
                     "contract_invalid_evidence_rejected_runs": 0,
                     "contract_invalid_evidence_rejection_denominator": 0,
                 },
@@ -1557,8 +1560,8 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
                 "| `uv run python -m pytest -q tests/test_validate_cvm_submission.py` | Passed. |\n"
                 "| `make paper-verify PYTHON='uv run python'` | Passed. |\n"
                 "| `make cvm-check PYTHON='uv run python'` | Passed with "
-                "311 passed, 14 skipped, and 15 subtests passed. |\n"
-                "| `make verify` | Passed with 62.61% against the configured 33.0% minimum. |\n",
+                "319 passed, 14 skipped, and 15 subtests passed. |\n"
+                "| `make verify` | Passed with 63.17% against the configured 33.0% minimum. |\n",
                 encoding="utf-8",
             )
 
