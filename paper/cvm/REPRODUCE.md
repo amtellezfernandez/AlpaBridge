@@ -81,18 +81,20 @@ the title, author block, PDF subject, or abstract text intentionally changes.
 
 ## Current Claim Boundary
 
-- Configured rows: 97.
-- Public-core rows completed: 12/12.
-- Attempted rows: 73.
-- Completed rows: 73.
-- Closed-loop completed rows: 18.
-- Full-contract rows audit-valid: 15/15.
-- Valid full-contract false-blocked rows: 0/15.
-- Matched semantic metric pairs: 3/3.
-- Command-only rows rejected as non-claim-valid: 3/3.
+- Configured rows: 148.
+- Public-core rows completed: 30/30.
+- Attempted rows: 115.
+- Completed rows: 115.
+- Closed-loop completed rows: 60.
+- Full-contract rows audit-valid: 42/45.
+- Valid full-contract false-blocked rows: 0/42.
+- Matched semantic metric pairs: 15/15.
+- Command-only rows rejected as non-claim-valid: 15/15.
 - Planned rows: 0.
-- Blocked rows: 24.
+- Blocked rows: 33.
 - Claim-valid benchmark matrix: 0.
+- External compatibility smoke: 1/1 rollout, 197 driver RPCs, 396 image
+  events, and 197/197 latency-target hits.
 
 The current aggregate supports a completed dependency-light public core,
 completed full-contract integration checks, and bounded semantic

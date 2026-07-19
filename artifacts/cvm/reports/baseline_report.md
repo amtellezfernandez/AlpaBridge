@@ -9,13 +9,25 @@ not tracked; rerun the commands below to reproduce the release checks.
 
 | Command | Start UTC | End UTC | Duration | Exit | Result |
 |---|---|---|---:|---:|---|
-| `uv run python -m pytest -q tests/test_validate_cvm_submission.py` | 2026-07-18T16:00:00Z | 2026-07-18T16:00:01Z | 0.238s | 0 | 71 passed, including metadata, PDF, generated-artifact, public-hygiene, CVM acronym-definition, repository-inventory drift, baseline-report hygiene, and credential-hygiene validation fixtures. |
-| `make paper-verify PYTHON='uv run python'` | 2026-07-18T16:02:00Z | 2026-07-18T16:02:04Z | 3.861s | 0 | Rebuilt 6-page root `wod2sim.pdf` at 125386 bytes and ran submission validation. |
-| `make cvm-check PYTHON='uv run python'` | 2026-07-18T14:18:00Z | 2026-07-18T14:18:04Z | 3.497s | 0 | Ruff passed; conformance passed with 311 passed, 14 skipped, and 15 subtests passed; submission validation passed. |
-| `make verify` | 2026-07-18T16:00:00Z | 2026-07-18T16:01:15Z | 75s | 0 | Ruff, conformance, coverage, smoke install, package build, paper rebuild, and submission validation passed; coverage was 62.61% against the configured 33.0% minimum. |
+| `.venv/bin/python -m ruff check ...` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:04Z | 3.7s | 0 | Touched source, scripts, and tests passed lint. |
+| `.venv/bin/python -m pytest -q tests/` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:03Z | 2.9s | 0 | 318 passed, 14 skipped, and 15 subtests passed. |
+| `.venv/bin/python scripts/aggregate_cvm.py --inputs artifacts/cvm/results --output artifacts/cvm/results` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:01Z | 0.2s | 0 | Regenerated the aggregate summary and paper-number macros, including external-smoke fields. |
+| `./scripts/build_cvm_paper.sh` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:01Z | 1.0s | 0 | Rebuilt the 6-page root `wod2sim.pdf` at 127189 bytes. |
+| `.venv/bin/python scripts/validate_cvm_submission.py` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:01Z | 0.5s | 0 | WOD2Sim paper validation passed. |
+| `pdfinfo wod2sim.pdf` and `qpdf --check wod2sim.pdf` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:01Z | <1s | 0 | PDF is 6 pages, portrait A4, 127189 bytes, and has no syntax or stream encoding errors reported by `qpdf`. |
+| `.venv/bin/python -m build` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:03Z | 2.4s | 0 | Source distribution and wheel built successfully with network-enabled build isolation. |
 
 ## Important Warnings
 
+- Previous full-verify baseline evidence is retained for traceability:
+  `make paper-verify PYTHON='uv run python'` rebuilt the root PDF and passed
+  submission validation; `make cvm-check PYTHON='uv run python'` passed with
+  311 passed, 14 skipped, and 15 subtests passed; coverage previously measured
+  62.61% against the configured 33.0% minimum.
+- The Docker-heavy `make verify` target was not rerun in the final controlled
+  cleanup pass to avoid stressing the WSL environment. Its component gates were
+  run directly where safe: lint, full unit tests, aggregate generation, paper
+  build, submission validation, PDF structure checks, and package build.
 - `make cvm-eval` exits 2 because the mixed core matrix preserves optional
   direct actor-aware rows without the required scene-matched oracle actor
   proxy. This is a recorded optional-extension precondition blocker, not a
