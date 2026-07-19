@@ -471,6 +471,16 @@ needed for a future rollout, the repository records identifiers, hashes, command
 precondition states so that restricted material does not become part of the public
 release and missing inputs are not misreported as policy behavior.
 
+The public artifact is also gated for release hygiene. The validator rebuilds the paper
+from generated inputs, checks generated table values against aggregate CSV/JSON sources,
+verifies the root PDF metadata and A4 geometry, rejects duplicate manuscript PDFs,
+scans public text for stale venue labels, private paths, credentials, unsupported
+benchmark language, and missing claim-boundary statements, and keeps external-smoke
+provenance in public-safe relative form. These checks are not policy-performance
+evidence. They make the integration evidence portable and auditable: a reviewer can
+trace each reported number to a retained artifact without trusting local scratch files,
+private mounts, or manually edited paper tables.
+
 The intended reading order for the public release is therefore not only the paper. The
 repository inventory records the source tree, environment, build commands, and known
 gated prerequisites. The contract-test audit maps each required semantic, temporal,
