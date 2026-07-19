@@ -223,6 +223,64 @@ class AggregateCVMTests(unittest.TestCase):
         self.assertEqual(1.0, summary["contract_invalid_evidence_rejection_rate"])
         self.assertEqual(1, summary["attribution_improvement_invalid_rows"])
 
+    def test_external_compatibility_summary_counts_driver_smoke(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "challenge-driver-fixed.jsonl").write_text(
+                "\n".join(
+                    [
+                        json.dumps({"event": "start_session"}),
+                        json.dumps({"event": "image"}),
+                        json.dumps({"event": "route"}),
+                        json.dumps(
+                            {
+                                "event": "drive",
+                                "latency_ms": 2.0,
+                                "latency_target_met": True,
+                            }
+                        ),
+                        json.dumps(
+                            {
+                                "event": "drive",
+                                "latency_ms": 4.0,
+                                "latency_target_met": True,
+                            }
+                        ),
+                        json.dumps({"event": "close_session"}),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "results-summary.json").write_text(
+                json.dumps(
+                    {
+                        "rollouts": [
+                            {
+                                "passed": True,
+                                "status": "pass",
+                                "score": 0.25,
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            summary = module._external_compatibility_summary(root)
+
+        self.assertTrue(summary["available"])
+        self.assertEqual(1, summary["rollouts"])
+        self.assertEqual(1, summary["passed_rollouts"])
+        self.assertEqual(2, summary["drive_rpc_count"])
+        self.assertEqual(1, summary["image_event_count"])
+        self.assertEqual(2, summary["latency_target_met_count"])
+        self.assertEqual(2, summary["latency_target_denominator"])
+        self.assertEqual(3.0, summary["driver_latency_mean_ms"])
+        self.assertEqual(4.0, summary["driver_latency_max_ms"])
+        self.assertEqual(0.25, summary["score"])
+
     def test_release_scope_separates_public_core_from_gated_extensions(self) -> None:
         module = _load_module()
         rows = [

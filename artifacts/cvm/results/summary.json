@@ -105,6 +105,23 @@
   ],
   "created_at": "2026-07-18T21:18:19.088449+00:00",
   "data_hash": "582f451b74d52db721b8e2b5dc906ba8b7e352e9caee4607ebbeb581efac7af9",
+  "external_compatibility": {
+    "artifact_dir": "artifacts/external/alpasim_e2e_challenge_smoke",
+    "available": true,
+    "claim_boundary": "External evaluator smoke evidence checks interface portability only. It is not a challenge submission, leaderboard result, policy-quality benchmark, or scenario-coverage claim.",
+    "drive_rpc_count": 197,
+    "driver_events": 989,
+    "driver_latency_max_ms": 11.966,
+    "driver_latency_mean_ms": 2.135,
+    "egomotion_event_count": 197,
+    "image_event_count": 396,
+    "latency_target_denominator": 197,
+    "latency_target_met_count": 197,
+    "passed_rollouts": 1,
+    "rollouts": 1,
+    "route_event_count": 197,
+    "score": 0.214246
+  },
   "failed_runs": 0,
   "failure_attribution": {
     "claim_valid_policy_benchmark_rows": 0,

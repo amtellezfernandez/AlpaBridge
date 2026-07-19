@@ -129,6 +129,16 @@ def _write_paper_number_fixture(root: Path, module) -> tuple[Path, Path, Path, P
             "offroad": {"mean": 0.0},
             "progress": {"mean": 0.4},
         },
+        "external_compatibility": {
+            "rollouts": 1,
+            "passed_rollouts": 1,
+            "drive_rpc_count": 197,
+            "image_event_count": 396,
+            "latency_target_met_count": 197,
+            "latency_target_denominator": 197,
+            "driver_latency_mean_ms": 2.135,
+            "driver_latency_max_ms": 11.966,
+        },
         "core_policy_results": [
             {
                 "policy": "constant_velocity",

@@ -116,11 +116,15 @@ def main() -> int:
         fallback_rows=_load_existing_evidence(args.output / "closed_loop_metrics.csv"),
     )
     semantic_pair_rows = _semantic_ablation_pair_rows(closed_loop_evidence)
+    external_compatibility = _external_compatibility_summary(
+        args.output.parent.parent / "external" / "alpasim_e2e_challenge_smoke"
+    )
     summary = _summary(
         rows=rows,
         failures=failures,
         closed_loop_evidence=closed_loop_evidence,
         semantic_pair_rows=semantic_pair_rows,
+        external_compatibility=external_compatibility,
         created_at=_input_created_at(args.inputs),
     )
 
@@ -265,6 +269,91 @@ def _duplicate_completed_run_ids(rows: list[dict[str, str]]) -> list[str]:
     return sorted(run_id for run_id, count in counts.items() if count > 1)
 
 
+def _external_compatibility_summary(path: Path) -> dict[str, Any]:
+    """Summarize optional external evaluator smoke artifacts without changing CVM rows."""
+    driver_path = path / "challenge-driver-fixed.jsonl"
+    results_path = path / "results-summary.json"
+    driver_events: list[dict[str, Any]] = []
+    if driver_path.is_file():
+        for line in driver_path.read_text(encoding="utf-8", errors="ignore").splitlines():
+            try:
+                event = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(event, dict):
+                driver_events.append(event)
+
+    results: dict[str, Any] = {}
+    if results_path.is_file():
+        try:
+            loaded = json.loads(results_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            loaded = {}
+        if isinstance(loaded, dict):
+            results = loaded
+
+    event_counts = Counter(str(event.get("event", "")) for event in driver_events)
+    drive_latencies_ms = [
+        float(event["latency_ms"])
+        for event in driver_events
+        if event.get("event") == "drive"
+        and isinstance(event.get("latency_ms"), (int, float))
+        and math.isfinite(float(event["latency_ms"]))
+    ]
+    rollouts = results.get("rollouts")
+    rollout_items = rollouts if isinstance(rollouts, list) else []
+    passed_rollouts = sum(
+        1
+        for rollout in rollout_items
+        if isinstance(rollout, dict)
+        and (rollout.get("passed") is True or rollout.get("status") == "pass")
+    )
+    drive_count = event_counts.get("drive", 0)
+    latency_target_met = sum(
+        1
+        for event in driver_events
+        if event.get("event") == "drive" and event.get("latency_target_met") is True
+    )
+    return {
+        "artifact_dir": str(path),
+        "available": bool(driver_events or results),
+        "rollouts": len(rollout_items),
+        "passed_rollouts": passed_rollouts,
+        "driver_events": len(driver_events),
+        "drive_rpc_count": drive_count,
+        "image_event_count": event_counts.get("image", 0),
+        "route_event_count": event_counts.get("route", 0),
+        "egomotion_event_count": event_counts.get("egomotion", 0),
+        "latency_target_met_count": latency_target_met,
+        "latency_target_denominator": drive_count,
+        "driver_latency_mean_ms": round(sum(drive_latencies_ms) / len(drive_latencies_ms), 3)
+        if drive_latencies_ms
+        else None,
+        "driver_latency_max_ms": round(max(drive_latencies_ms), 3)
+        if drive_latencies_ms
+        else None,
+        "score": _external_score(results),
+        "claim_boundary": (
+            "External evaluator smoke evidence checks interface portability only. It is "
+            "not a challenge submission, leaderboard result, policy-quality benchmark, "
+            "or scenario-coverage claim."
+        ),
+    }
+
+
+def _external_score(results: dict[str, Any]) -> float | None:
+    rollouts = results.get("rollouts")
+    if not isinstance(rollouts, list) or not rollouts:
+        return None
+    first = rollouts[0]
+    if not isinstance(first, dict):
+        return None
+    score = first.get("score")
+    if isinstance(score, (int, float)) and math.isfinite(float(score)):
+        return round(float(score), 6)
+    return None
+
+
 def _input_created_at(inputs: Path) -> str:
     timestamps: list[str] = []
     for path in sorted(inputs.rglob("summary.json")):
@@ -286,6 +375,7 @@ def _summary(
     failures: list[dict[str, str]],
     closed_loop_evidence: list[dict[str, Any]],
     semantic_pair_rows: list[dict[str, Any]],
+    external_compatibility: dict[str, Any],
     created_at: str,
 ) -> dict[str, Any]:
     status_counts = Counter(row.get("status", "") for row in rows)
@@ -336,6 +426,7 @@ def _summary(
         "integration_effectiveness": effectiveness_summary,
         "scenario_coverage": scenario_coverage_summary,
         "failure_attribution": failure_attribution_summary,
+        "external_compatibility": external_compatibility,
         "semantic_ablation_deltas": semantic_delta_summary,
         "failed_runs": status_counts.get("failed", 0),
         "blocked_runs": status_counts.get("blocked", 0),
@@ -1173,6 +1264,7 @@ def _write_tables(output: Path, summary: dict[str, Any], rows: list[dict[str, st
     non_policy_attributed = _summary_int(attribution, "non_policy_attributed_rows")
     synthetic_diagnostic = _summary_int(attribution, "synthetic_diagnostic_rows")
     release_scope = summary.get("release_scope", {})
+    external = summary.get("external_compatibility", {})
     public_core_configured = _summary_int(release_scope, "public_core_configured_rows")
     public_core_completed = _summary_int(release_scope, "public_core_completed_runs")
     public_core_attempted = _summary_int(release_scope, "public_core_attempted_runs")
@@ -1319,6 +1411,18 @@ def _write_tables(output: Path, summary: dict[str, Any], rows: list[dict[str, st
         + "\\newcommand{\\CVMClosedLoopProgressMean}{"
         + _paper_metric(summary, "progress")
         + "}\n"
+        + f"\\newcommand{{\\CVMExternalChallengeRollouts}}{{{_summary_int(external, 'rollouts')}}}\n"
+        + f"\\newcommand{{\\CVMExternalChallengePassedRollouts}}{{{_summary_int(external, 'passed_rollouts')}}}\n"
+        + f"\\newcommand{{\\CVMExternalChallengeDriveRPCs}}{{{_summary_int(external, 'drive_rpc_count')}}}\n"
+        + f"\\newcommand{{\\CVMExternalChallengeImageEvents}}{{{_summary_int(external, 'image_event_count')}}}\n"
+        + f"\\newcommand{{\\CVMExternalChallengeLatencyTargetMet}}{{{_summary_int(external, 'latency_target_met_count')}}}\n"
+        + f"\\newcommand{{\\CVMExternalChallengeLatencyTargetDenominator}}{{{_summary_int(external, 'latency_target_denominator')}}}\n"
+        + "\\newcommand{\\CVMExternalChallengeDriverLatencyMeanMs}{"
+        + _paper_external_metric(summary, "driver_latency_mean_ms")
+        + "}\n"
+        + "\\newcommand{\\CVMExternalChallengeDriverLatencyMaxMs}{"
+        + _paper_external_metric(summary, "driver_latency_max_ms")
+        + "}\n"
         + f"\\newcommand{{\\CVMFailedRuns}}{{{summary['failed_runs']}}}\n"
         + f"\\newcommand{{\\CVMBlockedRuns}}{{{summary['blocked_runs']}}}\n"
         + f"\\newcommand{{\\CVMSyntheticRuns}}{{{summary['synthetic_completed_runs']}}}\n"
@@ -1353,6 +1457,16 @@ def _paper_metric(summary: dict[str, Any], metric: str) -> str:
     if not isinstance(item, dict) or "mean" not in item:
         return "n/a"
     value = item["mean"]
+    if not isinstance(value, (int, float)):
+        return "n/a"
+    return f"{float(value):.3f}"
+
+
+def _paper_external_metric(summary: dict[str, Any], metric: str) -> str:
+    external = summary.get("external_compatibility")
+    if not isinstance(external, dict):
+        return "n/a"
+    value = external.get(metric)
     if not isinstance(value, (int, float)):
         return "n/a"
     return f"{float(value):.3f}"

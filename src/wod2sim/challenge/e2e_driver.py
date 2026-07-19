@@ -314,11 +314,20 @@ def prediction_to_proto_trajectory(
     sin_yaw = math.sin(yaw0)
     count = max(1, int(trajectory_xy.shape[0]))
     trajectory = common_pb2.Trajectory()
-    for index, offset in enumerate(trajectory_xy):
-        x_local = origin_x + cos_yaw * float(offset[0]) - sin_yaw * float(offset[1])
-        y_local = origin_y + sin_yaw * float(offset[0]) + cos_yaw * float(offset[1])
-        heading = yaw0 + (float(headings[index]) if index < headings.shape[0] else 0.0)
-        timestamp_us = int(time_now_us) + int(round((index + 1) * horizon_seconds * 1_000_000 / count))
+    step_us = int(round(float(horizon_seconds) * 1_000_000 / count))
+    for index in range(count):
+        if index == 0:
+            x_local = origin_x
+            y_local = origin_y
+            heading = yaw0
+        else:
+            offset_index = min(index - 1, trajectory_xy.shape[0] - 1)
+            offset = trajectory_xy[offset_index]
+            x_local = origin_x + cos_yaw * float(offset[0]) - sin_yaw * float(offset[1])
+            y_local = origin_y + sin_yaw * float(offset[0]) + cos_yaw * float(offset[1])
+            heading_index = min(offset_index, headings.shape[0] - 1)
+            heading = yaw0 + (float(headings[heading_index]) if headings.shape[0] else 0.0)
+        timestamp_us = int(time_now_us) + index * step_us
         trajectory.poses.append(
             common_pb2.PoseAtTime(
                 timestamp_us=timestamp_us,
