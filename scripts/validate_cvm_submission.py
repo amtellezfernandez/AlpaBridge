@@ -173,8 +173,8 @@ BASELINE_REPORT_REQUIRED_TERMS = (
     "make cvm-check",
     "make paper-verify",
     "make verify",
-    "319 passed, 14 skipped, and 15 subtests passed",
-    "63.17% against the configured 33.0% minimum",
+    "338 passed, 14 skipped, and 15 subtests passed",
+    "64.67% against the configured 33.0% minimum",
 )
 CONTRACT_TEST_AUDIT_REQUIRED_TERMS = (
     "# Contract Test Audit",
@@ -231,6 +231,9 @@ EVALUATION_STATUS_TERMS = (
     "semantic route-boundary ablations",
     "integration-effectiveness evidence",
     "service-harness conformance diagnostics only",
+    "controlled trace mutations",
+    "post-trace diagnosis latency",
+    "online guard overhead",
     "denominator/context rather than success metrics",
     "public release core is the dependency-light adapter path",
     "optional gated extensions, not release-core dependencies",
@@ -490,6 +493,42 @@ PAPER_NUMBER_JSON_FIELDS: tuple[tuple[str, str], ...] = (
     ("CVMOptionalGatedBlockedRows", "release_scope.optional_gated_blocked_rows"),
     ("CVMDirectActorRows", "release_scope.direct_actor_configured_rows"),
     ("CVMDirectActorBlockedRows", "release_scope.direct_actor_blocked_rows"),
+    ("CVMDiagnosticCases", "diagnostic_experiment.design.total_cases"),
+    ("CVMDiagnosticFaultCases", "diagnostic_experiment.design.fault_cases"),
+    ("CVMDiagnosticControlCases", "diagnostic_experiment.design.control_cases"),
+    (
+        "CVMWODDiagnosticCorrect",
+        "diagnostic_experiment.classification.wod2sim.classification_correct",
+    ),
+    (
+        "CVMStatusDiagnosticCorrect",
+        "diagnostic_experiment.classification.status_only.classification_correct",
+    ),
+    (
+        "CVMWODDiagnosticFaultDetected",
+        "diagnostic_experiment.classification.wod2sim.faults_detected",
+    ),
+    (
+        "CVMWODDiagnosticLocalized",
+        "diagnostic_experiment.classification.wod2sim.faults_correctly_localized",
+    ),
+    (
+        "CVMWODDiagnosticFalsePositives",
+        "diagnostic_experiment.classification.wod2sim.false_positives",
+    ),
+    (
+        "CVMStatusDiagnosticFaultDetected",
+        "diagnostic_experiment.classification.status_only.faults_detected",
+    ),
+    (
+        "CVMStatusDiagnosticFalsePositives",
+        "diagnostic_experiment.classification.status_only.false_positives",
+    ),
+    (
+        "CVMDiagnosticMcNemarPBelowZeroZeroOne",
+        "diagnostic_experiment.classification.paired_mcnemar.exact_two_sided_p_below_0_001",
+    ),
+    ("CVMExternalTraceDriveRPCs", "diagnostic_experiment.source_trace.drive_count"),
 )
 PAPER_NUMBER_FLOAT_FIELDS: tuple[tuple[str, str], ...] = (
     (
@@ -522,6 +561,45 @@ PAPER_NUMBER_FLOAT_FIELDS: tuple[tuple[str, str], ...] = (
     (
         "CVMExternalChallengeDriverLatencyMaxMs",
         "external_compatibility.driver_latency_max_ms",
+    ),
+    (
+        "CVMDiagnosticDecisionMedianUs",
+        "diagnostic_experiment.timing.wod2sim_decision_us.p50",
+    ),
+    (
+        "CVMStatusDecisionMedianUs",
+        "diagnostic_experiment.timing.status_only_decision_us.p50",
+    ),
+    (
+        "CVMDiagnosisMedianUs",
+        "diagnostic_experiment.timing.correct_fault_diagnosis_us.p50",
+    ),
+    (
+        "CVMGuardOverheadMedianUs",
+        "diagnostic_experiment.online_guard_overhead.paired_incremental_us.p50",
+    ),
+    (
+        "CVMGuardOverheadRelativePercent",
+        "diagnostic_experiment.online_guard_overhead.paired_incremental_p50_percent",
+    ),
+    (
+        "CVMGuardOverheadTracePercent",
+        "diagnostic_experiment.online_guard_overhead."
+        "incremental_p50_as_source_driver_p50_percent",
+    ),
+    (
+        "CVMExternalTraceLatencyMedianMs",
+        "diagnostic_experiment.source_trace.latency_ms.p50",
+    ),
+    (
+        "CVMExternalTraceLatencyNinetyFifthMs",
+        "diagnostic_experiment.source_trace.latency_ms.p95",
+    ),
+)
+PAPER_NUMBER_SIX_DECIMAL_FIELDS: tuple[tuple[str, str], ...] = (
+    (
+        "CVMDiagnosticMcNemarP",
+        "diagnostic_experiment.classification.paired_mcnemar.exact_two_sided_p",
     ),
 )
 GENERATED_TABLE_JSON_FIELDS: tuple[str, ...] = (
@@ -1717,6 +1795,9 @@ def _paper_number_macro_failures(
     for macro, dotted_path in PAPER_NUMBER_FLOAT_FIELDS:
         value = _json_path_value(summary, dotted_path)
         expected[macro] = _format_paper_number_float(value)
+    for macro, dotted_path in PAPER_NUMBER_SIX_DECIMAL_FIELDS:
+        value = _json_path_value(summary, dotted_path)
+        expected[macro] = _format_paper_number_float(value, precision=6)
     lifecycle_counts, lifecycle_failures = _paper_number_lifecycle_counts(lifecycle_path)
     failures.extend(lifecycle_failures)
     expected.update(lifecycle_counts)
@@ -1758,10 +1839,10 @@ def _json_path_value(payload: dict[str, object], dotted_path: str) -> object:
     return value
 
 
-def _format_paper_number_float(value: object) -> str:
+def _format_paper_number_float(value: object, *, precision: int = 3) -> str:
     if not isinstance(value, (int, float)):
         return "n/a"
-    return f"{float(value):.3f}"
+    return f"{float(value):.{precision}f}"
 
 
 def _paper_number_lifecycle_counts(path: Path) -> tuple[dict[str, str], list[str]]:

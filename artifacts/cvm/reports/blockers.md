@@ -15,6 +15,11 @@
   full/command-only pairs.
 - Run manifests now record scene metadata and `scenario_category`; local
   closed-loop scenes remain explicitly unclassified.
+- The circular fault harness was replaced: controlled trace mutations are
+  diagnosed without passing expected labels, with 15 valid controls and an
+  executable status-only comparator.
+- Runtime evidence now records post-trace diagnosis latency and paired online
+  camera/context plus freshness-guard overhead.
 
 ## Remaining Blockers
 
@@ -41,6 +46,10 @@
 - Comparison-eligible semantic pairs: 14/15.
 - Status-only baseline accepted rows: 15/15.
 - Command-only rows rejected as non-claim-valid: 15/15.
+- Controlled diagnostic classifications: WOD2Sim 30/30; status-only 15/30.
+- Controlled fault localization and false positives: 15/15 and 0/15.
+- Median post-trace diagnosis and online guard increment: 234.855 us and
+  14.552 us.
 - Planned rows: 0.
 - Blocked rows: 33, all `direct_actor_oracle_proxy_missing`.
 
@@ -56,12 +65,12 @@ failures.
 ## Claim Boundary
 
 The paper may claim the completed dependency-light public core, semantic
-route-boundary diagnostic, and evidence-gate rejection of command-only route
-rows that a defined status-only baseline accepts. Public
-synthetic lifecycle/fault rows may be reported only as service-level
-conformance diagnostics. Missing scene-matched actor proxies, learned
+route-boundary diagnostic, evidence-gate rejection of command-only route rows,
+controlled trace classification/localization against the executable
+status-only gate, post-trace diagnosis latency, and scoped online guard
+overhead. Missing scene-matched actor proxies, learned
 checkpoints, and redistributable restricted scenes block optional extension or
 benchmark claims, not the public core. It must not claim a complete
 direct-actor temporal ablation, learned-policy performance, simulator-backed
-lifecycle/fault stress reliability, policy-quality superiority, or official
-Waymo benchmark compatibility.
+lifecycle stress reliability, broad integration-framework ranking,
+policy-quality superiority, or official Waymo benchmark compatibility.

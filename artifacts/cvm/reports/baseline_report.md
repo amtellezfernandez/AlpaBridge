@@ -10,18 +10,19 @@ not tracked; rerun the commands below to reproduce the release checks.
 | Command | Start UTC | End UTC | Duration | Exit | Result |
 |---|---|---|---:|---:|---|
 | `.venv/bin/python -m ruff check ...` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:04Z | 3.7s | 0 | Touched source, scripts, and tests passed lint. |
-| `uv run python -m pytest -q tests/` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:03Z | 3.0s | 0 | 319 passed, 14 skipped, and 15 subtests passed. |
-| `.venv/bin/python scripts/aggregate_cvm.py --inputs artifacts/cvm/results --output artifacts/cvm/results` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:01Z | 0.2s | 0 | Regenerated the aggregate summary and paper-number macros, including external-conformance fields. |
-| `./scripts/build_cvm_paper.sh` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:02Z | 1.8s | 0 | Rebuilt the 4-page root `wod2sim.pdf` at 175064 bytes using the official PaperPlaza `ieeeconf` A4 class. |
+| `uv run python -m pytest -q tests/` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:03Z | 3.1s | 0 | 338 passed, 14 skipped, and 15 subtests passed. |
+| `.venv/bin/python scripts/run_diagnostic_experiment.py` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:07Z | 7.0s | 0 | Generated 30 controlled diagnostic cases, comparator statistics, and timing/overhead measurements. |
+| `.venv/bin/python scripts/aggregate_cvm.py --inputs artifacts/cvm/results --output artifacts/cvm/results` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:01Z | 0.2s | 0 | Regenerated aggregate summary and paper macros, including controlled diagnostic fields. |
+| `./scripts/build_cvm_paper.sh` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:02Z | 1.8s | 0 | Rebuilt the 4-page root `wod2sim.pdf` at 189158 bytes using the official PaperPlaza `ieeeconf` A4 class. |
 | `.venv/bin/python scripts/validate_cvm_submission.py` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:01Z | 0.5s | 0 | WOD2Sim paper validation passed. |
-| `pdfinfo wod2sim.pdf`, `pdffonts wod2sim.pdf`, and `qpdf --check wod2sim.pdf` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:01Z | <1s | 0 | PDF is 4 pages, portrait A4, 175064 bytes, uses embedded Type 1 fonts, and has no syntax or stream encoding errors reported by `qpdf`. |
+| `pdfinfo wod2sim.pdf`, `pdffonts wod2sim.pdf`, and `qpdf --check wod2sim.pdf` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:01Z | <1s | PDF is 4 pages, portrait A4, 189158 bytes, uses embedded Type 1 fonts, and has no syntax or stream encoding errors reported by `qpdf`. |
 | PaperPlaza public PDF test | 2026-07-19T00:00:00Z | 2026-07-19T00:00:20Z | <20s | 0 | Initial contributed-paper check accepted the final PDF with no critical issues or margin problems. |
 | `.venv/bin/python -m build` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:03Z | 2.4s | 0 | Source distribution and wheel built successfully with network-enabled build isolation. |
 
 ## Important Warnings
 
 - Current controlled evidence includes
-  319 passed, 14 skipped, and 15 subtests passed; coverage measured 63.17%
+  338 passed, 14 skipped, and 15 subtests passed; coverage measured 64.67%
   against the configured 33.0% minimum.
 - The composite release gates are `make cvm-check PYTHON='uv run python'` and
   `make paper-verify PYTHON='uv run python'`; their component checks are recorded
@@ -47,7 +48,8 @@ The release status is complete with documented limitations for the CVM paper
 package. It supports a completed dependency-light public core, semantic
 route-boundary diagnostics, a defined status-only acceptance baseline,
 contract-gated attribution, and secondary synthetic lifecycle/fault
-conformance diagnostics. It does not
+conformance diagnostics. It also supports the controlled 30-case comparator,
+post-trace diagnosis latency, and scoped online guard overhead. It does not
 support a policy-quality benchmark, learned-policy result, direct-actor
 temporal ablation, simulator-backed lifecycle/fault stress trial, or official
 Waymo compatibility claim.

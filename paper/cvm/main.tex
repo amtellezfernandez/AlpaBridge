@@ -33,32 +33,33 @@ Email: amtellezfernandez@gmail.com.}%
 \begin{abstract}
 Closed-loop driving evaluation can misattribute degraded rollout metrics to policy
 quality when the simulator boundary drops route geometry, changes timing assumptions,
-or produces incomplete evidence. WOD2Sim is a contract-auditing layer between Waymo
-Open Dataset (WOD)-style trajectory-policy interfaces and AlpaSim external
-drivers. It validates semantic, temporal, lifecycle, deployment, and evidence
-contracts before a rollout is admitted as policy-behavior evidence. We evaluate the
-public dependency-light path on \CVMClosedLoopSceneCount{} locally available scenes.
-All \CVMPublicCoreCompletedRuns{}/\CVMPublicCoreRows{} constant-velocity and
-route-following rows complete, of which \CVMPublicCoreAuditValidRuns{} pass route and
-sensor audits. Across all matrices, \CVMFullContractAuditValidRuns{}/
-\CVMFullContractCompletedRuns{} completed full-contract rollouts are audit-valid. In
-a paired route-loss diagnostic, all \CVMStatusOnlyAcceptedRuns{}/
-\CVMStatusOnlyAcceptanceDenominator{} command-only rows complete with metrics and pass
-a defined status-only baseline, while the contract gate rejects
-\CVMContractInvalidRejectedRuns{}/\CVMContractInvalidRejectionDenominator{} because
-route geometry is absent. Only \CVMSemanticAblationEligiblePairs{}/
-\CVMSemanticAblationCompletedPairs{} pairs are comparison-eligible; their score
-deltas are descriptive because each scene has one execution and the simulator seed is
-uncontrolled. No learned policy or scenario coverage is evaluated. The contribution
-is an auditable failure-attribution method and evidence pipeline, not a policy
-benchmark or performance result.
+or produces incomplete evidence. WOD2Sim audits semantic, temporal, lifecycle,
+deployment, and evidence contracts between Waymo Open Motion Dataset-style
+trajectory policies and AlpaSim external drivers. We evaluate a retained
+\CVMExternalTraceDriveRPCs{}-call AlpaSim trace using \CVMDiagnosticFaultCases{}
+single-fault mutations and \CVMDiagnosticControlCases{} valid prefix controls; expected
+labels are withheld from the detector. WOD2Sim classifies
+\CVMWODDiagnosticCorrect{}/\CVMDiagnosticCases{} cases correctly, detects and localizes
+\CVMWODDiagnosticLocalized{}/\CVMDiagnosticFaultCases{} faults, and produces
+\CVMWODDiagnosticFalsePositives{}/\CVMDiagnosticControlCases{} control false
+positives. An executable completion-and-metrics gate classifies
+\CVMStatusDiagnosticCorrect{}/\CVMDiagnosticCases{} and detects no faults
+(exact paired McNemar $p=\CVMDiagnosticMcNemarP{}$). Across 3,000 fault decisions,
+median post-trace diagnosis is \CVMDiagnosisMedianUs{}~$\mu$s. In 200 paired
+route-following measurements, online camera/context and freshness checks add
+\CVMGuardOverheadMedianUs{}~$\mu$s median while preserving trajectory output, equivalent
+to \CVMGuardOverheadTracePercent{}\% of the retained driver-call median. Separately,
+the contract gate rejects all \CVMContractInvalidRejectedRuns{} completed,
+metric-bearing command-only rollouts admitted by the status gate. The result is a
+measured failure-attribution method; learned-policy quality and scenario coverage are
+outside this study.
 \end{abstract}
 
 \section{Introduction}
 
 Dataset-trained trajectory policies and closed-loop simulators expose different
-failure surfaces. A policy designed around the Waymo Open Dataset (WOD)
-interface~\cite{sun2020scalability} may assume logged observations, local route
+failure surfaces. A policy designed around the Waymo Open Motion Dataset (WOMD)
+interface~\cite{ettinger2021womd} may assume logged observations, local route
 geometry, and a fixed trajectory horizon. A simulator service must also accept
 incremental messages, meet the runtime clock, remain alive across session events, and
 retain enough evidence to explain a result. AlpaSim exposes this difference through
@@ -78,9 +79,8 @@ threefold:
   policy behavior;
   \item an adapter, audit, and artifact pipeline localizes violations and preserves
   completed, blocked, and invalid rows;
-  \item a bounded closed-loop evaluation compares a defined status-only acceptance
-  baseline with contract-gated attribution while keeping unavailable benchmark work
-  outside the claim.
+  \item a controlled trace-mutation study measures localization, post-trace diagnosis
+  time, and online guard overhead against an executable status-only gate.
 \end{itemize}
 The design targets WOD-style trajectory interfaces, but the present evaluation uses
 only dependency-light constant-velocity and route-following policies. It does not
@@ -198,8 +198,7 @@ The contract-validation matrix (CVM) contains \CVMTotalRows{} configured rows:
 temporal-ablation, \CVMLifecycleRows{} lifecycle, and \CVMFaultRows{}
 fault-injection rows. It completes \CVMCompletedRuns{} rows, including
 \CVMClosedLoopCompletedRuns{} simulator rollouts; \CVMBlockedRuns{} optional-extension
-rows remain blocked. Lifecycle and fault rows use public service harnesses and are
-conformance diagnostics, not simulator-backed effectiveness results.
+rows remain blocked.
 
 The public core executes two dependency-light policies over
 \CVMClosedLoopSceneCount{} locally cached front-camera scenes. The semantic matrix pairs
@@ -208,23 +207,35 @@ does not expose a simulator seed override, so each policy/scene arm has one exec
 the configured seed is provenance metadata rather than proof of deterministic replay.
 No authoritative metadata verifies straight, intersection, lane-change, dense-traffic,
 occlusion, or merge labels: \CVMUnclassifiedClosedLoopSceneCount{} scenes remain
-unclassified and \CVMVerifiedRequiredScenarioCategoryCount{}/
-\CVMRequiredScenarioCategoryCount{} required categories are verified.
+unclassified and
+\CVMVerifiedRequiredScenarioCategoryCount{}/\CVMRequiredScenarioCategoryCount{}
+required categories are verified.
 
-Completed rows are audited for route source and sensor freshness. For a precise
-comparison, define a status-only baseline
+The diagnostic experiment starts from a hashed, retained external AlpaSim trace with
+\CVMExternalTraceDriveRPCs{} drive calls. Fifteen single-field or runtime-context
+mutations cover three semantic, three temporal, three lifecycle, one plugin, three
+deployment, and two evidence faults. Fifteen increasing trace prefixes, each terminated
+by the retained close event, serve as valid controls. Mutation construction and
+diagnosis are separate: the detector receives only mutated events and runtime context;
+the scorer retains the expected label. For a paired comparator, define the executable
+status-only gate
 \begin{equation}
 B_{\mathrm{status}}(r)=
 \mathbf{1}[\text{completed}(r)\land\text{metrics}(r)].
 \end{equation}
-It models the minimal reporting path that scores any completed metric-bearing row; it
-is not a separate wrapper implementation or an external competitor. WOD2Sim additionally
-requires the five contracts. A semantic pair is comparison-eligible only when both arms
-contain metrics, the full-route arm is route-valid and audit-valid, and the
-command-only arm is route-invalid and audit-invalid. This criterion excludes one pair
-whose nominal full arm also fell back to a command proxy. Metric deltas are therefore
-computed on \CVMSemanticAblationEligiblePairs{} pairs, but are not used for an
-inferential policy-effect claim.
+Both methods return a decision for all 30 cases. We report correct classification, fault recall,
+localization, control false positives, Wilson 95\% intervals, and an exact two-sided
+McNemar test over paired correctness.
+
+Post-trace timing uses 200 randomized iterations, five calls per batch, yielding 3,000
+fault-diagnosis and 6,000 all-case WOD2Sim measurements. A second 200-iteration paired
+ablation compares the same route-following prediction with camera shape/context and
+sensor-freshness guards enabled or disabled, randomized within each iteration and
+batched over 20 calls. Both paths retain route extraction, trajectory generation,
+resampling, and reasoning serialization; output trajectories must match exactly.
+Completed simulator rows are separately audited for route source and sensor freshness.
+The same status gate is applied to metric-bearing command-only rows, while WOD2Sim
+additionally requires all five contracts.
 
 \section{Results}
 
@@ -242,14 +253,54 @@ failures despite successful process completion.
 \resizebox{\columnwidth}{!}{\input{generated/main_results.tex}}
 \end{table}
 
-The central invalidation check is shown in Table~\ref{tab:integration-checks}. All
+Controlled-trace results appear in Table~\ref{tab:diagnostic-comparison}. WOD2Sim is
+correct on \CVMWODDiagnosticCorrect{} of \CVMDiagnosticCases{} cases, detects and
+localizes all \CVMDiagnosticFaultCases{} faults, and flags none of the
+\CVMDiagnosticControlCases{} controls. The status gate is correct on
+\CVMStatusDiagnosticCorrect{} cases because it accepts every control and every
+completed fault case; it detects no faults. All 15 discordant pairs favor WOD2Sim
+(exact two-sided McNemar $p=\CVMDiagnosticMcNemarP{}$). The Wilson 95\% lower bounds
+are 0.886 for case classification and 0.796 for fault recall, making the finite
+denominators explicit.
+
+\begin{table}[t]
+\centering
+\caption{Paired controlled-trace diagnostics. FP denotes a valid control classified
+as faulty.}
+\label{tab:diagnostic-comparison}
+\begin{tabular}{lrrrr}
+\toprule
+Gate & Correct & Detected & Localized & FP \\
+\midrule
+WOD2Sim & \CVMWODDiagnosticCorrect{}/\CVMDiagnosticCases{} &
+\CVMWODDiagnosticFaultDetected{}/\CVMDiagnosticFaultCases{} &
+\CVMWODDiagnosticLocalized{}/\CVMDiagnosticFaultCases{} &
+\CVMWODDiagnosticFalsePositives{}/\CVMDiagnosticControlCases{} \\
+Status-only & \CVMStatusDiagnosticCorrect{}/\CVMDiagnosticCases{} &
+\CVMStatusDiagnosticFaultDetected{}/\CVMDiagnosticFaultCases{} &
+0/\CVMDiagnosticFaultCases{} &
+\CVMStatusDiagnosticFalsePositives{}/\CVMDiagnosticControlCases{} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Median WOD2Sim decision time is \CVMDiagnosticDecisionMedianUs{}~$\mu$s over 6,000
+measurements; correct fault diagnosis is \CVMDiagnosisMedianUs{}~$\mu$s over 3,000 fault
+measurements. The paired online guard increment is \CVMGuardOverheadMedianUs{}~$\mu$s, or
+\CVMGuardOverheadRelativePercent{}\% relative to the deliberately small unchecked
+route-following path. For operational context, it is
+\CVMGuardOverheadTracePercent{}\% of the retained external driver-call median
+(\CVMExternalTraceLatencyMedianMs{}~ms); all
+\CVMExternalChallengeLatencyTargetMet{}/\CVMExternalChallengeLatencyTargetDenominator{}
+retained calls meet the 100-ms target.
+
+The closed-loop invalidation check in Table~\ref{tab:integration-checks} is consistent
+with the mutation study. All
 \CVMStatusOnlyAcceptedRuns{}/\CVMStatusOnlyAcceptanceDenominator{} command-only rows
 satisfy $B_{\mathrm{status}}$, whereas WOD2Sim rejects
 \CVMContractInvalidRejectedRuns{}/\CVMContractInvalidRejectionDenominator{} as
-route-invalid. This demonstrates a classification difference for retained closed-loop
-records: completion and metrics alone would admit them, while the semantic contract
-prevents policy attribution. It does not demonstrate improved driving or faster fault
-diagnosis.
+route-invalid. Thus metric-bearing completion alone would admit records whose route
+contract is known to be false.
 
 \begin{table}[t]
 \centering
@@ -259,27 +310,11 @@ diagnosis.
 \end{table}
 
 Only \CVMSemanticAblationEligiblePairs{}/\CVMSemanticAblationCompletedPairs{} route-loss
-pairs satisfy the comparison criterion. Their full-minus-command score deltas have
-mixed signs and are descriptive only. With one uncontrolled execution per arm, the
-data do not support a systematic route-loss effect or any policy-quality comparison.
-
-\begin{table}[t]
-\centering
-\caption{Descriptive full-route minus command-only mean deltas over the
-\CVMSemanticAblationEligiblePairs{} eligible pairs.}
-\label{tab:semantic-deltas}
-\begin{tabular}{lr}
-\toprule
-Metric & Mean delta \\
-\midrule
-Progress & \CVMSemanticProgressDeltaMean{} \\
-Relative progress & \CVMSemanticProgressRelDeltaMean{} \\
-Collision-any & \CVMSemanticCollisionAnyDeltaMean{} \\
-Off-road & \CVMSemanticOffroadDeltaMean{} \\
-Plan deviation & \CVMSemanticPlanDeviationDeltaMean{} \\
-\bottomrule
-\end{tabular}
-\end{table}
+pairs satisfy the comparison criterion. Their full-minus-command means are mixed
+(progress \CVMSemanticProgressDeltaMean{}, collision-any
+\CVMSemanticCollisionAnyDeltaMean{}, plan deviation
+\CVMSemanticPlanDeviationDeltaMean{}); they describe retained outcomes rather than a
+policy effect because each arm has one execution and no effective seed control.
 
 Across all retained rows, \CVMPolicyBehaviorAttributableRows{} are
 policy-behavior-attributable diagnostics, \CVMPolicyFailureAttributableRows{} are
@@ -291,29 +326,21 @@ the contracts pass and the retained failure layer is policy.
 
 \subsection{Interpretation}
 
-The experiment validates an attribution mechanism, not a driving intervention. The
-positive path shows that \CVMFullContractAuditValidRuns{} completed full-contract rows
-meet the recorded route and sensor checks. It does not establish a false-positive rate:
-audit-valid rows define the admitted set, and there is no independent oracle labeling
-which completed integrations should have passed. For that reason, WOD2Sim reports the
-directly observed \CVMFullContractAuditValidRuns{}/\CVMFullContractCompletedRuns{}
-audit outcome and makes no ``zero false blocks'' claim.
+The controlled experiment validates classification and localization for the declared
+mutation set. Its 15 clean prefixes supply a negative class, so the observed
+0/\CVMDiagnosticControlCases{} false-positive count is independently scored rather
+than defined by audit admission. The closed-loop rows test a second path: adding
+route-source validity changes the attribution of all
+\CVMStatusOnlyAcceptedContractRejectedRuns{} metric-bearing command-only records
+without changing their simulator outcome.
 
-The negative path asks a narrower counterfactual. If reporting used only terminal status
-and metric availability, every command-only row would be admitted. Adding route-source
-validity changes the attribution of all \CVMStatusOnlyAcceptedContractRejectedRuns{}
-such rows without changing their recorded simulator outcome. This is useful because the
-invalid records remain available for debugging while being excluded from policy
-evaluation. The gate neither repairs the route nor proves that a valid route would
-improve the score; Table~\ref{tab:semantic-deltas} in fact shows small and mixed average
-differences across metrics.
-
-Operationally, the same pattern gives each unavailable extension a typed outcome rather
-than an omitted experiment. A missing actor proxy or checkpoint is recorded as a
-deployment precondition, a command proxy as a semantic violation, and missing audit
-state as an evidence violation. This partition makes a future learned-policy study
-additive: new rows can be admitted only after their prerequisites and audits pass,
-without rewriting the interpretation of the retained invalid or blocked rows.
+The timing results separate online and post-run costs. The
+\CVMGuardOverheadMedianUs{}~$\mu$s value measures only camera/context and freshness checks
+inside prediction; the \CVMDiagnosisMedianUs{}~$\mu$s value measures in-memory diagnosis
+after telemetry parsing. A missing actor proxy or checkpoint remains a deployment
+precondition, a command proxy a semantic violation, and missing audit state an evidence
+violation. Typed outcomes keep those cases available for debugging while excluding them
+from policy attribution.
 
 \section{Related Work and Limitations}
 
@@ -327,75 +354,63 @@ PlanFuzz~\cite{fremont2019scenic,dreossi2019verifai,kim2022drivefuzz,wan2022plan
 generate or mutate conditions. WOD2Sim is complementary: it asks whether the
 policy/simulator boundary preserved the assumptions needed to interpret a rollout.
 
-This distinction is upstream of benchmark metric design. nuPlan and NAVSIM formalize
-planning tasks and evaluation measures, while Waymax and CARLA provide controllable
-simulation interfaces. AlpaSim provides the external-driver service boundary used here.
-Those systems can expose malformed or incomplete inputs, but their behavior metrics do
-not by themselves identify which integration assumption failed. Contract-based design
-offers a vocabulary for assumptions and guarantees; WOD2Sim applies that vocabulary as
-runtime admission and artifact-lineage checks. Scenic and falsification tools vary the
-scenario presented to a system, whereas the present semantic ablation deliberately
-varies the information preserved by the integration boundary. The two directions are
-orthogonal and could be combined once verified scenario metadata and a claim-ready
-policy matrix exist.
+nuPlan and NAVSIM formalize planning tasks and measures; Waymax and CARLA provide
+controllable simulation interfaces; AlpaSim supplies the external-driver boundary used
+here. WOD2Sim instead applies contract assumptions and guarantees as runtime admission
+and artifact-lineage checks. Scenic and driving fuzzers vary scenarios to expose system
+behavior, whereas our mutations vary information or preconditions at the integration
+boundary. The approaches can be combined.
 
-The limitations are substantial. The repository is not an official WOD interface and
-does not reconstruct complete WOD worlds or redistribute restricted scenes. It has no
-public learned checkpoint, no scene-matched actor proxy, no verified scenario-category
-coverage, no completed temporal ablation, and no simulator-backed lifecycle or
-fault-injection stress comparison. The status-only baseline is deliberately minimal,
-not a competitive integration method. Restricted frame data are not public, and the
-public frame artifact is schema-only. Finally, one execution per arm and lack of
-runtime seed control preclude variance or significance estimates. These constraints
-block learned-policy, benchmark, coverage, reproducibility, and performance claims; the
-supported result is limited to contract enforcement and evidence attribution.
+The study scope is contract conformance. The mutations are framework-authored and
+applied offline to one retained trace; the valid controls are correlated prefixes of
+that trace. The status-only gate is a concrete completion-and-metrics comparator, not a
+surrogate for CARLA, nuPlan, or another full framework. The repository is not an
+official WOMD interface, does not reconstruct full WOMD worlds, and has no public
+learned checkpoint, scene-matched actor proxy, or verified scenario-category coverage.
+Restricted scenes remain licensed inputs; public artifacts retain the trace, manifests,
+aggregates, hashes, and testable gate logic.
 
 \subsection{Threats to Validity}
 
-\emph{Internal validity.} The command-only arm intentionally violates the declared
-semantic contract, so its rejection validates enforcement of a known condition rather
-than discovery of an unknown defect. The status-only baseline is evaluated on the same
-retained rows and ignores route and sensor fields by definition. It therefore isolates
-the attribution decision, but cannot support claims about runtime overhead,
-time-to-diagnosis, or superiority to another integration framework. In addition, the
-three invalid nominal full-contract rows share one scene and one observed fallback
-pattern; they are not three independent failure mechanisms.
+\emph{Internal validity.} Mutation and detector code share the declared contracts,
+which can favor the expected fault vocabulary. To reduce circularity, construction and
+diagnosis are separate functions, expected labels are withheld from the detector, every
+case is scored afterward, and 15 unmutated controls test false alarms. McNemar's test is
+paired by case; it measures the observed difference against the status gate on this
+designed set, not a population prevalence. Timing order is randomized and paired on one
+host, so hardware and background-load effects remain shared measurement conditions.
 
-\emph{Construct validity.} Audit validity in the completed closed-loop rows directly
-measures route source and sensor freshness. Temporal correctness is exercised in unit
-tests, and lifecycle and fault localization are exercised in synthetic service
-harnesses. Those checks do not establish that all five contracts were stressed under
-the same simulator conditions. Counts of contract-valid rows therefore measure
-admission to the stated evidence boundary, not driving safety, integration completeness,
-or correctness of the simulator itself. Likewise, ``policy-behavior-attributable''
-means no recorded boundary violation was found; it is not a claim-valid benchmark row.
+\emph{Construct validity.} The online overhead ablation covers camera shape/context and
+freshness checks in dependency-light route following; the diagnosis timer begins after
+JSON parsing. All five contracts, including the plugin precondition within deployment,
+are mutated against retained telemetry and context rather than rerun as physical
+simulator faults. Contract-valid therefore means admitted
+to the stated evidence boundary, not driving safety or simulator correctness.
 
 \emph{External and conclusion validity.} The scenes were selected by local asset
-availability, remain category-unclassified, and cannot represent the WOD distribution
-or rare-event coverage. Results from constant-velocity and route-following policies
-cannot be generalized to learned trajectory policies. Restricted assets also prevent a
-reviewer without the same licensed inputs from replaying the closed-loop rows, although
-the public aggregates and gate logic can be inspected. Finally, the paired sample has
-\CVMSemanticAblationEligiblePairs{} eligible scenes, one execution per arm, and no
-effective simulator seed control. Mixed descriptive deltas cannot be treated as
-independent repeated trials or as evidence of a causal performance effect.
+availability and remain category-unclassified. The diagnostic cases share one external
+trace, and the closed-loop route pairs have one execution per arm with no effective
+seed control. Accordingly, the reported comparison concerns the declared mutations and
+status gate; the measured latencies concern this host and dependency-light policy path.
+Learned-policy behavior, rare-event coverage, and route-loss effects require separate
+experiments.
 
 \balance
 \section{Conclusion}
 
 WOD2Sim formulates a closed-loop policy boundary as semantic, temporal, lifecycle,
-deployment, and evidence contracts. The current release shows that its dependency-light
-path executes and that route-invalid, metric-bearing rows are withheld from policy
-attribution. It does not show policy superiority, learned-policy performance, or
-scenario coverage. The defensible result is narrower: explicit contract gates make
-integration evidence auditable and prevent boundary or precondition failures from being
-reported as policy failures.
+deployment, and evidence contracts. On 15 controlled faults and 15 valid controls it
+classifies 30/30 cases, localizes 15/15 faults, and differs from the status-only gate on
+all 15 fault cases. Post-trace diagnosis and online guard costs are measured rather than
+assumed. Together with the retained closed-loop route invalidations, the result shows
+that explicit gates make integration evidence auditable before a rollout is attributed
+to policy behavior.
 
 \section*{Acknowledgment}
 
-OpenAI Codex (GPT-5) assisted with language editing, consistency checks, and code audit.
-It did not generate experimental data; the author reviewed the resulting manuscript and
-accepts responsibility for its content.
+OpenAI Codex (GPT-5) assisted with language editing, code audit, and test
+implementation. Repository scripts generated the measurements; the author reviewed the
+method, results, and manuscript and accepts responsibility for the content.
 
 \bibliographystyle{ieeetr}
 \bibliography{references}

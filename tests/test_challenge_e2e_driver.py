@@ -156,6 +156,7 @@ def test_challenge_adapter_writes_drive_telemetry() -> None:
     assert len(drive_rows) == 1
     assert drive_rows[0]["route_source"] == "alpasim_waypoints"
     assert drive_rows[0]["latency_target_ms"] == 100.0
+    assert drive_rows[0]["trajectory_finite"] is True
     assert summary["drive_count"] == 1
     assert summary["latency_ms"]["p95"] is not None
 

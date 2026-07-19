@@ -4,7 +4,7 @@ CONFORMANCE_TESTS ?= tests/
 DEMO_OUTPUT ?= demo/wod2sim-contract-demo
 
 .PHONY: paper paper-verify lint conformance coverage test smoke build demo verify clean
-.PHONY: cvm-inventory cvm-check cvm-demo cvm-eval cvm-synthetic cvm-aggregate
+.PHONY: cvm-inventory cvm-check cvm-demo cvm-eval cvm-diagnostics cvm-synthetic cvm-aggregate
 .PHONY: cvm-paper cvm-validate cvm-all
 
 paper:
@@ -53,9 +53,13 @@ cvm-demo:
 cvm-eval:
 	$(PYTHON) scripts/run_cvm_matrix.py --config configs/cvm/core.yaml --output artifacts/cvm/results/core --resume
 
+cvm-diagnostics:
+	$(PYTHON) scripts/run_diagnostic_experiment.py
+
 cvm-synthetic:
 	$(PYTHON) scripts/run_cvm_matrix.py --config configs/cvm/lifecycle_stress.yaml --output artifacts/cvm/results/lifecycle_stress --resume --execute
 	$(PYTHON) scripts/run_cvm_matrix.py --config configs/cvm/fault_injection.yaml --output artifacts/cvm/results/fault_injection --resume --execute
+	$(MAKE) cvm-diagnostics PYTHON='$(PYTHON)'
 
 cvm-aggregate:
 	$(PYTHON) scripts/aggregate_cvm.py --inputs artifacts/cvm/results --output artifacts/cvm/results

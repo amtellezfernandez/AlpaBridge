@@ -7,18 +7,19 @@ refresh used the locked `uv run python` environment.
 
 | Command | Result |
 |---|---|
-| `./scripts/build_cvm_paper.sh` | Latest controlled pass rebuilt the 4-page root `wod2sim.pdf` at 175064 bytes with the official PaperPlaza `ieeeconf` A4 class. |
+| `./scripts/build_cvm_paper.sh` | Latest controlled pass rebuilt the 4-page root `wod2sim.pdf` at 189158 bytes with the official PaperPlaza `ieeeconf` A4 class. |
+| `uv run python scripts/run_diagnostic_experiment.py` | Passed: 15 faults and 15 controls, WOD2Sim 30/30 versus status-only 15/30, exact paired `p=0.000061`, plus tracked diagnosis and guard timing. |
 | `uv run python scripts/validate_cvm_submission.py` | Passed, including metadata-backed title/author/affiliation/abstract checks, output-PDF title/author/subject checks, official `ieeeconf` A4 source-layout checks, parsed PDF A4 MediaBox checks, LaTeX log warnings, canonical-to-paper generated asset sync, generated-table row/source-field value sync, package metadata checks, CI workflow gate checks, community-template claim-boundary checks, public local-reference and image-alt checks, CLI command-documentation drift checks, README visual/graph explanation checks, evaluation-status checks, venue-style benchmark-label checks, unstable generated citation-slug hygiene checks, README attribution-count sync, paper-number macro value sync, claim-evidence-matrix count sync, contract-test audit coverage checks, embedded PDF font descriptors, manifest-level failure-attribution checks, summary-level attribution and scenario-coverage partition checks, generic credential-leak checks, and README/paper claim-boundary checks. |
 | `make paper-verify PYTHON='uv run python'` | Passed: rebuilt the 4-page root `wod2sim.pdf` and ran submission validation. |
-| `make conformance PYTHON='uv run python'` | Latest controlled pass through `make cvm-check`: 319 passed, 14 skipped, 15 subtests passed. |
+| `make conformance PYTHON='uv run python'` | Latest controlled pass: 338 passed, 14 skipped, 15 subtests passed. |
 | `make demo PYTHON='uv run python'` | Passed: synthetic demo valid with `valid_claim_evidence=false`. |
-| `make cvm-check PYTHON='uv run python'` | Latest controlled pass: ruff clean, 319 passed, 14 skipped, 15 subtests passed, validation passed. |
+| `make cvm-check PYTHON='uv run python'` | Latest controlled pass: ruff clean, 338 passed, 14 skipped, 15 subtests passed, validation passed. |
 | `make cvm-eval PYTHON='uv run python'` | Expected exit 2: current aggregate retains 30 completed dependency-light public-core rows, 30 completed semantic-ablation rows, and 33 optional gated blockers. |
-| `uv run python -m pytest -q tests/` | Latest controlled pass: 319 passed, 14 skipped, 15 subtests passed. |
-| `uv run python -m pytest --cov` | Latest controlled pass: 319 passed, 14 skipped, total coverage 63.17% against the configured 33.0% minimum. |
+| `uv run python -m pytest -q tests/` | Latest controlled pass: 338 passed, 14 skipped, 15 subtests passed. |
+| `uv run python -m pytest --cov` | Latest controlled pass: 338 passed, 14 skipped, total coverage 64.67% against the configured 33.0% minimum. |
 | `.venv/bin/python -m build` | Latest controlled pass built source distribution and wheel with network-enabled build isolation. |
 | `uv run pre-commit run --all-files` | Passed without modifying files. |
-| `qpdf --check wod2sim.pdf && pdfinfo wod2sim.pdf && pdffonts wod2sim.pdf` | Latest controlled pass: 4 pages, portrait A4, 175064 bytes, embedded Type 1 fonts, and no syntax or stream encoding errors reported by `qpdf`. |
+| `qpdf --check wod2sim.pdf && pdfinfo wod2sim.pdf && pdffonts wod2sim.pdf` | Latest controlled pass: 4 pages, portrait A4, 189158 bytes, embedded Type 1 fonts, and no syntax or stream encoding errors reported by `qpdf`. |
 | PaperPlaza public PDF test | Passed for the final initial contributed-paper PDF: 4 A4 pages, searchable, no critical issues, no margin problems, embedded/subset fonts, and no Type 3 fonts. |
 | `git diff --check` | Run as final whitespace validation. |
 
@@ -26,13 +27,13 @@ Targeted contract selections:
 
 | Selection | Result |
 |---|---|
-| `tests -k "semantic or route"` | 10 passed, 312 deselected. |
-| `tests -k "temporal or resampl"` | 10 passed, 312 deselected, 15 subtests passed. |
-| `tests -k "lifecycle or session"` | 10 passed, 312 deselected. |
-| `tests -k "plugin or entry_point"` | 5 passed, 317 deselected. |
-| `tests -k "deployment or readiness or launch"` | 20 passed, 302 deselected. |
-| `tests -k "evidence or audit or benchmark"` | 27 passed, 295 deselected. |
-| `tests -k "fault"` | 5 passed, 317 deselected. |
+| `tests -k "semantic or route"` | 17 passed, 335 deselected. |
+| `tests -k "temporal or resampl"` | 13 passed, 339 deselected, 15 subtests passed. |
+| `tests -k "lifecycle or session"` | 15 passed, 337 deselected. |
+| `tests -k "plugin or entry_point"` | 6 passed, 346 deselected. |
+| `tests -k "deployment or readiness or launch"` | 23 passed, 329 deselected. |
+| `tests -k "evidence or audit or benchmark"` | 30 passed, 322 deselected. |
+| `tests -k "fault"` | 8 passed, 344 deselected. |
 
 The release claim boundary is intentionally narrower than the test suite:
 passing tests support contract behavior and artifact hygiene, while policy
@@ -63,7 +64,8 @@ overfull or underfull `\hbox` warnings in the generated LaTeX log.
 It rejects drift between canonical generated artifacts under `artifacts/cvm`
 and the paper-side copies under `paper/cvm/generated` and `paper/cvm/figures`.
 It rejects `paper_numbers.tex` macro drift from `summary.json`,
-`lifecycle_stress.csv`, and `fault_injection.csv`.
+`lifecycle_stress.csv`, and `fault_injection.csv`, including controlled
+diagnostic comparison and timing fields.
 It rejects generated table row drift from `summary.json`,
 `lifecycle_stress.csv`, and `fault_injection.csv`, including missing or
 non-integer source fields.

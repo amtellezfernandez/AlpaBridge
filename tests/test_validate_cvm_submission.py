@@ -135,6 +135,44 @@ def _write_paper_number_fixture(root: Path, module) -> tuple[Path, Path, Path, P
             "driver_latency_mean_ms": 2.135,
             "driver_latency_max_ms": 11.966,
         },
+        "diagnostic_experiment": {
+            "design": {
+                "total_cases": 30,
+                "fault_cases": 15,
+                "control_cases": 15,
+            },
+            "classification": {
+                "wod2sim": {
+                    "classification_correct": 30,
+                    "faults_detected": 15,
+                    "faults_correctly_localized": 15,
+                    "false_positives": 0,
+                },
+                "status_only": {
+                    "classification_correct": 15,
+                    "faults_detected": 0,
+                    "false_positives": 0,
+                },
+                "paired_mcnemar": {
+                    "exact_two_sided_p": 0.00006103515625,
+                    "exact_two_sided_p_below_0_001": 1,
+                },
+            },
+            "timing": {
+                "wod2sim_decision_us": {"p50": 186.125},
+                "status_only_decision_us": {"p50": 0.210},
+                "correct_fault_diagnosis_us": {"p50": 205.750},
+            },
+            "online_guard_overhead": {
+                "paired_incremental_us": {"p50": 23.125},
+                "paired_incremental_p50_percent": 39.125,
+                "incremental_p50_as_source_driver_p50_percent": 1.081,
+            },
+            "source_trace": {
+                "drive_count": 197,
+                "latency_ms": {"p50": 1.793, "p95": 8.996},
+            },
+        },
         "core_policy_results": [
             {
                 "policy": "constant_velocity",
@@ -200,6 +238,11 @@ def _write_paper_number_fixture(root: Path, module) -> tuple[Path, Path, Path, P
     for macro, dotted_path in module.PAPER_NUMBER_FLOAT_FIELDS:
         macro_values[macro] = module._format_paper_number_float(
             module._json_path_value(summary, dotted_path)
+        )
+    for macro, dotted_path in module.PAPER_NUMBER_SIX_DECIMAL_FIELDS:
+        macro_values[macro] = module._format_paper_number_float(
+            module._json_path_value(summary, dotted_path),
+            precision=6,
         )
     macro_values.update(
         {
@@ -686,7 +729,8 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             "route-boundary ablations. The completed full-contract and "
             "semantic-ablation rollouts are integration-effectiveness evidence. "
             "Synthetic lifecycle/fault rows are service-harness conformance "
-            "diagnostics only, and blocked rows are retained as denominator/context "
+            "diagnostics only. Controlled trace mutations measure post-trace "
+            "diagnosis latency and online guard overhead. Blocked rows are retained as denominator/context "
             "rather than success metrics. The public release core is the "
             "dependency-light adapter path. Direct-actor, learned-checkpoint, and "
             "restricted-scene dependencies are optional gated extensions, not "
@@ -1560,8 +1604,8 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
                 "| `uv run python -m pytest -q tests/test_validate_cvm_submission.py` | Passed. |\n"
                 "| `make paper-verify PYTHON='uv run python'` | Passed. |\n"
                 "| `make cvm-check PYTHON='uv run python'` | Passed with "
-                "319 passed, 14 skipped, and 15 subtests passed. |\n"
-                "| `make verify` | Passed with 63.17% against the configured 33.0% minimum. |\n",
+                "338 passed, 14 skipped, and 15 subtests passed. |\n"
+                "| `make verify` | Passed with 64.67% against the configured 33.0% minimum. |\n",
                 encoding="utf-8",
             )
 

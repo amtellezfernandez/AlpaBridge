@@ -16,6 +16,11 @@ from typing import Any
 
 import yaml
 
+from wod2sim.audit.trace_diagnostics import (
+    diagnose_contract_trace,
+    load_telemetry_trace,
+    mutate_trace,
+)
 from wod2sim.simulator.lifecycle_service import run_synthetic_lifecycle_cycle
 
 RUN_FIELDS = [
@@ -264,6 +269,8 @@ def _resume_preserved_row(
         return None
     status = existing.get("status", "")
     if status == "completed" and existing.get("completed") == "true":
+        if execute and execution_mode == "synthetic_fault_injection":
+            return None
         if execution_mode.startswith("closed_loop"):
             if output is None:
                 return None
@@ -651,7 +658,7 @@ def _execution_mode(config: dict[str, Any]) -> str:
 def _execute_synthetic_row(config: dict[str, Any], row: dict[str, str]) -> dict[str, str]:
     mode = _execution_mode(config)
     if mode == "synthetic_fault_injection":
-        return _execute_fault_row(row)
+        return _execute_fault_row(config, row)
     if mode == "synthetic_lifecycle_harness":
         return _execute_lifecycle_row(config, row)
     raise SystemExit(f"Unsupported synthetic execution mode: {mode}")
@@ -824,9 +831,22 @@ def _unsupported_launch_reason(plan: dict[str, Any] | None) -> dict[str, str]:
     }
 
 
-def _execute_fault_row(row: dict[str, str]) -> dict[str, str]:
+def _execute_fault_row(config: dict[str, Any], row: dict[str, str]) -> dict[str, str]:
     fault = row["adapter_config"]
     expected_layer = fault.split(".", 1)[0]
+    execution = config.get("execution") if isinstance(config.get("execution"), dict) else {}
+    source_trace = str(execution.get("source_trace", ""))
+    if not source_trace:
+        raise SystemExit("synthetic_fault_injection requires execution.source_trace")
+    events = load_telemetry_trace(_repo_path(source_trace))
+    mutated_events, runtime_context = mutate_trace(events, fault)
+    diagnostics = diagnose_contract_trace(mutated_events, context=runtime_context)
+    observed_codes = [item.code for item in diagnostics]
+    observed_layers = [item.layer for item in diagnostics]
+    observed_code = ";".join(observed_codes)
+    observed_layer = ";".join(observed_layers)
+    detected = bool(observed_codes)
+    correctly_localized = observed_codes == [fault]
     row = dict(row)
     row.update(
         {
@@ -834,16 +854,19 @@ def _execute_fault_row(row: dict[str, str]) -> dict[str, str]:
             "attempted": "true",
             "completed": "true",
             "blocked": "false",
-            "failure_layer": expected_layer,
-            "failure_code": fault,
-            "detail": "Synthetic fault-injection harness detected the configured contract fault.",
+            "failure_layer": observed_layer,
+            "failure_code": observed_code,
+            "detail": (
+                "Controlled trace mutation was classified from mutated telemetry "
+                f"without passing the expected label to the detector; source={source_trace}."
+            ),
             "claim_valid": "false",
             "expected_layer": expected_layer,
-            "observed_layer": expected_layer,
+            "observed_layer": observed_layer,
             "expected_code": fault,
-            "observed_code": fault,
-            "detected": "true",
-            "correctly_localized": "true",
+            "observed_code": observed_code,
+            "detected": "true" if detected else "false",
+            "correctly_localized": "true" if correctly_localized else "false",
             "service_survived": FAULT_SERVICE_SURVIVAL.get(fault, "true"),
             "late_message_count": "",
         }
