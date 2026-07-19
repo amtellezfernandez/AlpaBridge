@@ -28,25 +28,25 @@ Email: amtellezfernandez@gmail.com}
 
 \begin{abstract}
 Closed-loop driving evaluation has an attribution problem: degraded rollout metrics can
-be reported as policy failures even when the simulator boundary has silently removed
-decision-relevant inputs, changed timing assumptions, or produced incomplete evidence.
-WOD2Sim addresses this problem with a contract-auditing method for WOD-style trajectory
-policies executed as AlpaSim external drivers. It defines semantic, temporal,
-lifecycle, deployment, and evidence contracts that decide whether a rollout is valid
-policy evidence or an integration/precondition failure. In the generated
-contract-validation matrix, the dependency-light public core completes
-\CVMPublicCoreCompletedRuns{}/\CVMPublicCoreRows{} closed-loop rows over
-\CVMClosedLoopSceneCount{} local scenes; \CVMFullContractAuditValidRuns{}/
-\CVMFullContractCompletedRuns{} completed full-contract rollouts pass route/sensor
-audits; and the evidence gate falsely blocks \CVMValidFullContractFalseBlockedRuns{}/
-\CVMValidFullContractFalseBlockDenominator{} valid full-contract rows. The key
-invalidation experiment uses a runnable command-only route wrapper: it completes
-\CVMNaiveWrapperMetricRuns{} metric-bearing invalid-route rows that a conventional
-non-contract benchmark path could accept as policy evidence, while WOD2Sim rejects
-\CVMContractInvalidRejectedRuns{}/\CVMContractInvalidRejectionDenominator{} as
-non-claim-valid. The result is not a new driving policy or benchmark score. It is a
-bounded demonstration that explicit integration contracts can expose when low
-closed-loop metrics are caused by boundary violations rather than policy behavior.
+be mistaken for policy failures when the simulator boundary silently drops
+decision-relevant route geometry, changes timing assumptions, or leaves incomplete
+evidence. WOD2Sim addresses this problem as a contract-auditing layer for WOD-style
+trajectory policies executed as AlpaSim external drivers. It defines semantic,
+temporal, lifecycle, deployment, and evidence contracts that decide whether a rollout
+can be interpreted as policy behavior or must remain an integration/precondition
+failure. The public contract-validation matrix completes
+\CVMPublicCoreCompletedRuns{}/\CVMPublicCoreRows{} dependency-light closed-loop rows
+over \CVMClosedLoopSceneCount{} local scenes and observes
+\CVMValidFullContractFalseBlockedRuns{}/
+\CVMValidFullContractFalseBlockDenominator{} false blocks among audit-valid
+full-contract rows. Its central invalidation experiment runs a functional
+command-only route wrapper: the wrapper produces \CVMNaiveWrapperMetricRuns{}
+metric-bearing rows that a conventional non-contract path could score, while WOD2Sim
+rejects \CVMContractInvalidRejectedRuns{}/
+\CVMContractInvalidRejectionDenominator{} as route-invalid, non-claim-valid evidence.
+The result is not a new driving policy, official benchmark, or scenario-coverage
+claim. It is a bounded demonstration that explicit integration contracts can separate
+boundary violations from policy behavior before closed-loop metrics are interpreted.
 \end{abstract}
 
 \section{Introduction}

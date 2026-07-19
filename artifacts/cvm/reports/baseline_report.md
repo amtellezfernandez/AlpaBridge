@@ -12,9 +12,9 @@ not tracked; rerun the commands below to reproduce the release checks.
 | `.venv/bin/python -m ruff check ...` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:04Z | 3.7s | 0 | Touched source, scripts, and tests passed lint. |
 | `.venv/bin/python -m pytest -q tests/` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:03Z | 2.9s | 0 | 318 passed, 14 skipped, and 15 subtests passed. |
 | `.venv/bin/python scripts/aggregate_cvm.py --inputs artifacts/cvm/results --output artifacts/cvm/results` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:01Z | 0.2s | 0 | Regenerated the aggregate summary and paper-number macros, including external-conformance fields. |
-| `./scripts/build_cvm_paper.sh` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:01Z | 1.0s | 0 | Rebuilt the 6-page root `wod2sim.pdf` at 126539 bytes. |
+| `./scripts/build_cvm_paper.sh` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:01Z | 1.0s | 0 | Rebuilt the 6-page root `wod2sim.pdf` at 126223 bytes. |
 | `.venv/bin/python scripts/validate_cvm_submission.py` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:01Z | 0.5s | 0 | WOD2Sim paper validation passed. |
-| `pdfinfo wod2sim.pdf` and `qpdf --check wod2sim.pdf` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:01Z | <1s | 0 | PDF is 6 pages, portrait A4, 126539 bytes, and has no syntax or stream encoding errors reported by `qpdf`. |
+| `pdfinfo wod2sim.pdf` and `qpdf --check wod2sim.pdf` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:01Z | <1s | 0 | PDF is 6 pages, portrait A4, 126223 bytes, and has no syntax or stream encoding errors reported by `qpdf`. |
 | `.venv/bin/python -m build` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:03Z | 2.4s | 0 | Source distribution and wheel built successfully with network-enabled build isolation. |
 
 ## Important Warnings

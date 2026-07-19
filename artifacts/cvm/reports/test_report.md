@@ -7,7 +7,7 @@ refresh used the locked `uv run python` environment.
 
 | Command | Result |
 |---|---|
-| `./scripts/build_cvm_paper.sh` | Latest controlled pass rebuilt the 6-page root `wod2sim.pdf` at 126539 bytes. |
+| `./scripts/build_cvm_paper.sh` | Latest controlled pass rebuilt the 6-page root `wod2sim.pdf` at 126223 bytes. |
 | `uv run python scripts/validate_cvm_submission.py` | Passed, including metadata-backed title/author/affiliation/abstract checks, output-PDF title/author/subject checks, IEEE A4 source-layout checks, parsed PDF A4 MediaBox checks, LaTeX log warnings, canonical-to-paper generated asset sync, generated-table row/source-field value sync, package metadata checks, CI workflow gate checks, community-template claim-boundary checks, public local-reference and image-alt checks, CLI command-documentation drift checks, README visual/graph explanation checks, evaluation-status checks, venue-style benchmark-label checks, unstable generated citation-slug hygiene checks, README attribution-count sync, paper-number macro value sync, claim-evidence-matrix count sync, contract-test audit coverage checks, embedded PDF font descriptors, manifest-level failure-attribution checks, summary-level attribution and scenario-coverage partition checks, generic credential-leak checks, and README/paper claim-boundary checks. |
 | `make paper-verify PYTHON='uv run python'` | Passed: rebuilt 6-page root `wod2sim.pdf` and ran submission validation. |
 | `make conformance PYTHON='uv run python'` | Previously passed through `make verify`: 311 passed, 14 skipped, 15 subtests passed. |
@@ -18,7 +18,7 @@ refresh used the locked `uv run python` environment.
 | `uv run python -m pytest --cov` | Previously passed through `make verify`: 311 passed, 14 skipped, total coverage 62.61% against the configured 33.0% minimum. Not rerun in the final WSL-safe cleanup pass. |
 | `.venv/bin/python -m build` | Latest controlled pass built source distribution and wheel with network-enabled build isolation. |
 | `uv run pre-commit run --all-files` | Passed without modifying files. |
-| `qpdf --check wod2sim.pdf && pdfinfo wod2sim.pdf` | Latest controlled pass: 6 pages, portrait A4, 126539 bytes, and no syntax or stream encoding errors reported by `qpdf`. |
+| `qpdf --check wod2sim.pdf && pdfinfo wod2sim.pdf` | Latest controlled pass: 6 pages, portrait A4, 126223 bytes, and no syntax or stream encoding errors reported by `qpdf`. |
 | `git diff --check` | Run as final whitespace validation. |
 
 Targeted contract selections:
