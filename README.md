@@ -80,6 +80,13 @@ all come from the same scene and are kept out of policy attribution because the
 audit found late command-proxy route fallback, despite successful rollout
 completion.
 
+External compatibility is recorded separately from the CVM benchmark gate. The
+AlpaSim E2E-style smoke artifact completes `1/1` evaluator-owned rollout,
+records `197` WOD2Sim driver RPCs and `396` image events, and meets the driver
+latency target on `197/197` calls. This is interface-portability evidence, not
+a challenge submission, leaderboard score, policy-quality benchmark, or
+scenario-coverage claim.
+
 ## Scenario Coverage Boundary
 
 The public CVM uses 15 locally cached 26.02 front-camera scene artifacts as

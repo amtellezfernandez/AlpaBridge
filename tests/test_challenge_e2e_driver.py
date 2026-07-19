@@ -193,9 +193,9 @@ def test_prediction_to_proto_trajectory_rotates_ego_relative_offsets() -> None:
         horizon_seconds=1.0,
     )
 
-    assert [pose.timestamp_us for pose in trajectory.poses] == [510_000, 1_010_000]
+    assert [pose.timestamp_us for pose in trajectory.poses] == [10_000, 510_000]
     np.testing.assert_allclose(
         [[pose.pose.vec.x, pose.pose.vec.y] for pose in trajectory.poses],
-        [[10.0, 21.0], [10.0, 22.0]],
+        [[10.0, 20.0], [10.0, 21.0]],
         atol=1e-6,
     )

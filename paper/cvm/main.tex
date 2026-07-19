@@ -27,33 +27,30 @@ Email: amtellezfernandez@gmail.com}
 \maketitle
 
 \begin{abstract}
-Offline driving policies are usually trained around logged observations, route context,
-and short-horizon trajectory targets, while distributed closed-loop simulators require
+Dataset-trained driving policies are built around logged observations, route context,
+and short-horizon trajectory targets; distributed closed-loop simulators require
 persistent services, runtime clocks, deployment provenance, and auditable evidence.
-WOD2Sim treats this mismatch as a contract-based system-integration problem rather than
-as a new driving-policy benchmark. It defines five contracts for executing
-dataset-trained trajectory policies as AlpaSim external drivers: semantic route and
-scene preservation, temporal trajectory adaptation, explicit lifecycle handling,
-deployment provenance, and evidence validity. The implementation provides
-dependency-light baselines, optional learned and actor-aware entry points, deterministic
-launch manifests, route/sensor audits, aggregate reports, and generated paper artifacts.
-In the current contract-validation matrix, the public dependency-light core completes
-\CVMPublicCoreCompletedRuns{}/\CVMPublicCoreRows{} closed-loop rows over
-\CVMClosedLoopSceneCount{} local scenes, and
+WOD2Sim treats this mismatch as a contract-based system-integration problem, not as a
+new driving policy or public benchmark. It defines five contracts for executing
+WOD-style trajectory policies as AlpaSim external drivers: semantic route and scene
+preservation, temporal trajectory adaptation, explicit lifecycle handling, deployment
+provenance, and evidence validity. In the generated contract-validation matrix, the
+dependency-light public core completes \CVMPublicCoreCompletedRuns{}/
+\CVMPublicCoreRows{} closed-loop rows over \CVMClosedLoopSceneCount{} local scenes;
 \CVMFullContractAuditValidRuns{}/\CVMFullContractCompletedRuns{} completed
-full-contract rollouts pass route and sensor audits. The evidence gate falsely blocks
+full-contract rollouts pass route/sensor audits; and the evidence gate falsely blocks
 \CVMValidFullContractFalseBlockedRuns{}/
-\CVMValidFullContractFalseBlockDenominator{} valid full-contract rows. Against a
-runnable command-only route wrapper, matched semantic ablations complete
-\CVMSemanticAblationMetricPairs{}/\CVMSemanticAblationCompletedPairs{}
-metric-bearing pairs: a non-contract path could accept
-\CVMNaiveInvalidAcceptedRuns{}/\CVMNaiveWrapperMetricRuns{} invalid route rows as
-policy evidence, while WOD2Sim rejects
-\CVMContractInvalidRejectedRuns{}/\CVMContractInvalidRejectionDenominator{} as
-non-claim-valid. These results support a bounded conclusion: explicit integration
-contracts make valid rollouts executable and prevent integration-invalid evidence from
-being misreported as policy behavior. The paper does not claim learned-policy
-superiority, scenario-category coverage, or public benchmark validity.
+\CVMValidFullContractFalseBlockDenominator{} valid full-contract rows. A runnable
+command-only route wrapper completes \CVMNaiveWrapperMetricRuns{} metric-bearing
+invalid-route rows that a non-contract path could accept as policy evidence, while
+WOD2Sim rejects \CVMContractInvalidRejectedRuns{}/
+\CVMContractInvalidRejectionDenominator{} as non-claim-valid. A separate external
+AlpaSim E2E-style smoke completes \CVMExternalChallengePassedRollouts{}/
+\CVMExternalChallengeRollouts{} rollout with \CVMExternalChallengeDriveRPCs{} driver
+RPCs. The bounded conclusion is that explicit integration contracts make valid rollouts
+executable and keep integration-invalid evidence out of policy-failure claims. The
+paper does not claim learned-policy superiority, scenario-category coverage, or public
+benchmark validity.
 \end{abstract}
 
 \section{Introduction}
@@ -355,9 +352,17 @@ compatibility harness. This path is not reported as a challenge submission or
 leaderboard result. It is an external integration-validation target: the evaluator owns
 the simulator stack, scenes, and metrics, while WOD2Sim records whether route, sensor,
 temporal, lifecycle, deployment, and evidence assumptions still hold behind that
-managed boundary. A successful run would support interface portability; a failed run
-would localize the breakage to a contract layer before any returned metric is treated
-as policy behavior.
+managed boundary. The retained smoke artifact completes
+\CVMExternalChallengePassedRollouts{}/\CVMExternalChallengeRollouts{} external rollout,
+records \CVMExternalChallengeDriveRPCs{} driver RPCs and
+\CVMExternalChallengeImageEvents{} image events, and meets the driver latency target on
+\CVMExternalChallengeLatencyTargetMet{}/
+\CVMExternalChallengeLatencyTargetDenominator{} calls
+(\CVMExternalChallengeDriverLatencyMeanMs{} ms mean,
+\CVMExternalChallengeDriverLatencyMaxMs{} ms max). This supports interface
+portability, not policy-quality benchmarking: returned behavior metrics remain
+external-smoke diagnostics until they pass the same release gate and scenario-coverage
+requirements as the CVM rows.
 
 The limitations are material. WOD2Sim is not an official Waymo challenge interface,
 does not reconstruct complete WOD worlds, and does not redistribute restricted scene
@@ -396,11 +401,11 @@ Future work will complete the optional benchmark path rather than weakening the 
 integration claim. The next steps are to generate scene-matched direct-actor oracle
 proxies, add a redistributable scene subset with authoritative scenario categories,
 package legitimate learned checkpoints, execute the temporal and direct-actor matrices,
-run the external-evaluator compatibility harness against a local or official
-challenge-style evaluation, retain the returned metrics with provenance, and compare
-time-to-diagnosis against a functional non-contract wrapper. Those additions would
-support learned-policy, scenario-coverage, portability, and benchmark claims only after
-their rows pass the same contract and evidence gates used here.
+expand the external-evaluator compatibility harness across a documented scene set,
+retain the returned metrics with provenance, and compare time-to-diagnosis against a
+functional non-contract wrapper. Those additions would support learned-policy,
+scenario-coverage, portability, and benchmark claims only after their rows pass the same
+contract and evidence gates used here.
 
 \section{Conclusion}
 

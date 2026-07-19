@@ -478,6 +478,21 @@ PAPER_NUMBER_JSON_FIELDS: tuple[tuple[str, str], ...] = (
     ("CVMTemporalRows", "matrix_counts.temporal_ablation"),
     ("CVMLifecycleRows", "matrix_counts.lifecycle_stress"),
     ("CVMFaultRows", "matrix_counts.fault_injection"),
+    ("CVMExternalChallengeRollouts", "external_compatibility.rollouts"),
+    (
+        "CVMExternalChallengePassedRollouts",
+        "external_compatibility.passed_rollouts",
+    ),
+    ("CVMExternalChallengeDriveRPCs", "external_compatibility.drive_rpc_count"),
+    ("CVMExternalChallengeImageEvents", "external_compatibility.image_event_count"),
+    (
+        "CVMExternalChallengeLatencyTargetMet",
+        "external_compatibility.latency_target_met_count",
+    ),
+    (
+        "CVMExternalChallengeLatencyTargetDenominator",
+        "external_compatibility.latency_target_denominator",
+    ),
     ("CVMPublicCoreRows", "release_scope.public_core_configured_rows"),
     ("CVMPublicCoreCompletedRuns", "release_scope.public_core_completed_runs"),
     ("CVMPublicCoreAttemptedRuns", "release_scope.public_core_attempted_runs"),
@@ -512,6 +527,14 @@ PAPER_NUMBER_FLOAT_FIELDS: tuple[tuple[str, str], ...] = (
     ("CVMClosedLoopCollisionAnyMean", "closed_loop_metrics.collision_any.mean"),
     ("CVMClosedLoopOffroadMean", "closed_loop_metrics.offroad.mean"),
     ("CVMClosedLoopProgressMean", "closed_loop_metrics.progress.mean"),
+    (
+        "CVMExternalChallengeDriverLatencyMeanMs",
+        "external_compatibility.driver_latency_mean_ms",
+    ),
+    (
+        "CVMExternalChallengeDriverLatencyMaxMs",
+        "external_compatibility.driver_latency_max_ms",
+    ),
 )
 GENERATED_TABLE_JSON_FIELDS: tuple[str, ...] = (
     "total_rows",
