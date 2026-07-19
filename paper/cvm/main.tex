@@ -382,18 +382,21 @@ the missing benchmark prerequisites as policy failures. Lifecycle and
 fault-injection evidence still comes from public synthetic harnesses, so those
 counts are conformance checks rather than simulator-backed evaluation metrics.
 
-These limitations also explain why the paper does not compare policy quality. A
-framework paper can report reliability, validity, and diagnostic coverage only after the
-corresponding rows are executed and audited. The supported success claim is narrower:
-\CVMPublicCoreCompletedRuns{}/\CVMPublicCoreRows{} public-core rows executed,
-\CVMFullContractAuditValidRuns{} full-contract closed-loop rows passed the route/sensor
-audit and were not falsely blocked by the evidence gate, and
-\CVMNaiveWrapperMetricRuns{} runnable command-only route rows produced metrics that a
-naive wrapper could accept, while \CVMContractInvalidRejectedRuns{}/
-\CVMContractInvalidRejectionDenominator{} were rejected as non-claim-valid route
-evidence by the contract gate. The
+These limitations also explain why the paper does not compare policy quality. A system
+integration paper can claim effectiveness only where the corresponding rows are
+executed, audited, and attributed. The supported success claim is therefore operational:
+WOD2Sim makes valid dependency-light integrations executable
+(\CVMPublicCoreCompletedRuns{}/\CVMPublicCoreRows{} public-core rows), keeps valid
+full-contract rollouts from being falsely blocked
+(\CVMValidFullContractFalseBlockedRuns{}/
+\CVMValidFullContractFalseBlockDenominator{}), prevents a runnable non-contract route
+wrapper from promoting invalid metrics as policy evidence
+(\CVMContractInvalidRejectedRuns{}/
+\CVMContractInvalidRejectionDenominator{}), and preserves enough provenance for every
+reported number to be regenerated from retained artifacts. The
 \CVMOptionalGatedBlockedRows{} blocked optional-extension rows remain visible as
-remaining work, not as the primary result.
+remaining work, not as the primary result. This is integration-method effectiveness,
+not learned-policy superiority.
 
 \section{Future Work}
 
@@ -414,14 +417,16 @@ requires more than input/output conversion. WOD2Sim formulates the boundary as f
 contracts: semantic, temporal, lifecycle, deployment, and evidence. The current
 repository shows that this contract layer is already operational on the
 dependency-light public core: valid rows execute, route-loss ablations measurably alter
-behavior, invalid route evidence is rejected, and missing prerequisites remain visible
-as blockers instead of being blurred into policy outcomes. The paper still does not
-claim a full public benchmark, scenario-category coverage, or learned-policy result.
-Its stronger and more defensible conclusion is narrower: contract-based integration can
-make failure attribution trustworthy before policy-quality conclusions are drawn. That
-separation is the release-critical result because it prevents route, timing, lifecycle,
-deployment, evidence, and missing-prerequisite failures from being misreported as
-policy failures until the complete audited matrices exist.
+behavior, invalid route evidence is rejected, external-driver smoke evidence exercises
+the interface outside the local CVM scripts, and missing prerequisites remain visible as
+blockers instead of being blurred into policy outcomes. The paper still does not claim a
+full public benchmark, scenario-category coverage, or learned-policy result. Its
+stronger and more defensible conclusion is narrower: contract-based integration
+improves evaluation effectiveness by making the boundary executable, auditable, and
+attributable before policy-quality conclusions are drawn. That separation is the
+release-critical result because it prevents route, timing, lifecycle, deployment,
+evidence, and missing-prerequisite failures from being misreported as policy failures
+until the complete audited matrices exist.
 
 \appendix[WOD2Sim Repository Evidence Map]
 
