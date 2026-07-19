@@ -34,6 +34,15 @@ and ego-relative trajectory outputs. This repository does not claim official
 Waymo challenge compatibility, leaderboard submission support, or a redistributable
 Waymo-to-AlpaSim scene conversion.
 
+## What This Release Proves
+
+| Question | Current answer |
+| --- | --- |
+| Can WOD-style adapters run as auditable AlpaSim external drivers? | Yes. The dependency-light public core completes `30/30` closed-loop rows over `15` local scenes. |
+| Does WOD2Sim prevent integration-invalid metrics from becoming policy evidence? | Yes. A runnable command-only route wrapper produces `15/15` metric-bearing invalid rows that a naive path could score, while WOD2Sim rejects `15/15` as non-claim-valid route evidence. |
+| Does the evidence gate reject valid integrations by mistake? | Not in the retained full-contract set: `0/42` audit-valid full-contract rows are false-blocked. |
+| Is this a policy-quality benchmark? | No. The release has `0` claim-valid policy benchmark rows, `0` policy-failure-attributable rows, and no verified scenario-category coverage. |
+
 ## Failure Attribution Boundary
 
 WOD2Sim's central release rule is separation between integration failure and
