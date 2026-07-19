@@ -26,7 +26,7 @@ host-specific paths, runtime identifiers, and local simulator state.
 - Format: IEEE conference two-column template using `paper/cvm/IEEEtran.cls`.
 - Page size: A4 verified by `mutool info` mediabox `[ 0 0 595.276 841.89 ]`.
 - Page count: 6.
-- PDF size at audit: 125548 bytes.
+- PDF size at audit: 126223 bytes.
 - Root PDF is the only tracked manuscript PDF.
 
 ## Commands And Targets

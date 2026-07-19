@@ -159,6 +159,10 @@ REPOSITORY_INVENTORY_TEST_COUNT_RE = re.compile(
     r"Test directory:\s*`tests`\s+with\s+(?P<count>\d+)\s+top-level test files",
     re.IGNORECASE,
 )
+REPOSITORY_INVENTORY_PDF_SIZE_RE = re.compile(
+    r"PDF size at audit:\s*(?P<size>\d+)\s+bytes",
+    re.IGNORECASE,
+)
 BASELINE_REPORT_FORBIDDEN_PATTERNS: tuple[tuple[str, Pattern[str]], ...] = (
     ("historical_release_gate", re.compile(r"\bHistorical\b", re.IGNORECASE)),
     ("venv_python_gate", re.compile(r"\./\.venv/bin/")),
@@ -2315,6 +2319,19 @@ def _repository_inventory_failures(*, repo_root: Path) -> list[str]:
                 f"repository_inventory_test_count_mismatch:{path.relative_to(root)}:"
                 f"{actual_count}:{reported_count}"
             )
+    pdf_path = root / "wod2sim.pdf"
+    pdf_size_match = REPOSITORY_INVENTORY_PDF_SIZE_RE.search(normalized)
+    if pdf_path.is_file():
+        if pdf_size_match is None:
+            failures.append(f"repository_inventory_pdf_size_missing:{path.relative_to(root)}")
+        else:
+            reported_pdf_size = int(pdf_size_match.group("size"))
+            actual_pdf_size = pdf_path.stat().st_size
+            if reported_pdf_size != actual_pdf_size:
+                failures.append(
+                    f"repository_inventory_pdf_size_mismatch:{path.relative_to(root)}:"
+                    f"{actual_pdf_size}:{reported_pdf_size}"
+                )
     if "test_report.md" not in text:
         failures.append(f"repository_inventory_missing_test_report_reference:{path.relative_to(root)}")
     if re.search(r"\b\d+\s+passing\s+dependency-light\s+conformance\s+tests\b", normalized):

@@ -1489,12 +1489,14 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         module = _load_module()
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
+            (root / "wod2sim.pdf").write_bytes(b"pdf")
             (root / "tests").mkdir()
             (root / "tests" / "test_alpha.py").write_text("", encoding="utf-8")
             (root / "tests" / "test_beta.py").write_text("", encoding="utf-8")
             report_dir = root / "artifacts" / "cvm" / "reports"
             report_dir.mkdir(parents=True)
             (report_dir / "repository_inventory.md").write_text(
+                "- PDF size at audit: 3 bytes.\n"
                 "- Test directory: `tests` with 2 top-level test files. Runtime pass/skip "
                 "counts are recorded in [`test_report.md`](test_report.md).\n",
                 encoding="utf-8",
@@ -1508,11 +1510,13 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         module = _load_module()
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
+            (root / "wod2sim.pdf").write_bytes(b"pdf")
             (root / "tests").mkdir()
             (root / "tests" / "test_alpha.py").write_text("", encoding="utf-8")
             report_dir = root / "artifacts" / "cvm" / "reports"
             report_dir.mkdir(parents=True)
             (report_dir / "repository_inventory.md").write_text(
+                "- PDF size at audit: 999 bytes.\n"
                 "- Test directory: `tests` with 3 top-level test files and 300 passing "
                 "dependency-light conformance tests in the latest release gate.\n",
                 encoding="utf-8",
@@ -1531,6 +1535,11 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         )
         self.assertIn(
             "repository_inventory_stale_pass_count:artifacts/cvm/reports/repository_inventory.md",
+            failures,
+        )
+        self.assertIn(
+            "repository_inventory_pdf_size_mismatch:"
+            "artifacts/cvm/reports/repository_inventory.md:3:999",
             failures,
         )
 
