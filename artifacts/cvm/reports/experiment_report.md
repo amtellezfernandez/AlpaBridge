@@ -35,7 +35,7 @@ matrix (CVM) evidence.
 
 These are route-boundary and evidence-gate measurements, not policy-superiority
 claims. The status-only baseline is a defined acceptance rule, not a separate
-wrapper or external competitor. The paired deltas are mixed and, with one
+full integration framework. The paired deltas are mixed and, with one
 uncontrolled execution per arm, do not establish a systematic route-loss or
 policy-quality effect. The supported integration result is that the contract
 gate keeps completed metric-bearing route-invalid rows out of
@@ -92,16 +92,43 @@ passes and the retained failure layer is policy.
 - Learned `token_dagger_bc` remains outside this CVM because no legitimate
   release checkpoint hash is configured.
 
-## Secondary Synthetic Diagnostics
+## Controlled Trace Diagnostics
+
+The tracked experiment mutates the hashed external AlpaSim driver trace rather
+than copying the configured label into the observed result. Mutation and
+detection are separate functions; `diagnose_contract_trace` receives only the
+mutated events and runtime context.
+
+- Cases: 15 single-fault mutations and 15 valid prefix controls.
+- WOD2Sim: 30/30 correctly classified, 15/15 faults detected, 15/15 localized,
+  and 0/15 control false positives.
+- Executable status-only gate: 15/30 correctly classified, 0/15 faults
+  detected, and 0/15 control false positives.
+- Paired comparison: 15 WOD2Sim-only correct cases, 0 status-only-only correct
+  cases, exact two-sided McNemar `p=0.00006103515625`.
+- Uncertainty: WOD2Sim classification Wilson 95% interval
+  `[0.8865, 1.0000]`; fault-recall interval `[0.7961, 1.0000]`.
+- Post-trace timing: 3,000 correct-fault measurements, median `234.855 us`;
+  6,000 all-case WOD2Sim decisions, median `207.980 us`.
+- Online guard ablation: 200 randomized paired measurements, median increment
+  `14.552 us` (`26.648%` of the unchecked dependency-light prediction and
+  `0.812%` of the retained external driver-call median). Guarded and unchecked
+  trajectories are identical.
+- External timing context: 197/197 retained drive calls met the 100-ms target;
+  median `1.793 ms`, p95 `8.996 ms`.
+
+The classifier result is a controlled conformance comparison on
+framework-authored mutations from one retained trace. The runtime result covers
+in-memory post-parse diagnosis and the camera/context plus freshness guards in
+the dependency-light route-following path.
+
+## Lifecycle Diagnostics
 
 - Lifecycle stress: 20/20 full-hardening synthetic cycles survived; 0/20
   strict/pre-hardening synthetic cycles survived duplicate-close/late-message
   injection.
-- Fault injection: 15/15 configured public synthetic faults were detected and
-  localized to the expected contract layer/code.
-- These diagnostics are not closed-loop scene rollouts and remain
-  `claim_valid=false`. They are retained as service-level conformance checks,
-  not as evidence of simulator-backed stress reliability or policy quality.
+- Lifecycle diagnostics are not closed-loop scene rollouts and remain
+  `claim_valid=false`.
 
 ## Generated Artifacts
 
@@ -112,6 +139,8 @@ passes and the retained failure layer is policy.
 - `artifacts/cvm/results/semantic_ablation_pairs.csv`
 - `artifacts/cvm/results/summary.json`
 - `artifacts/cvm/results/fault_injection.csv`
+- `artifacts/cvm/results/diagnostic_experiment.json`
+- `artifacts/cvm/results/diagnostic_experiment_cases.csv`
 - `artifacts/cvm/manifests/run_manifests/*.json`
 - `artifacts/cvm/tables/*.tex`
 - `artifacts/cvm/figures/*.pdf`
@@ -128,7 +157,9 @@ fabricated.
 
 The current aggregate supports a bounded integration-effectiveness claim for
 the completed dependency-light public core, route-boundary preservation, a
-functional command-only route baseline comparison, and evidence-gate rejection.
+functional command-only route baseline comparison, evidence-gate rejection,
+controlled fault classification, post-trace diagnosis latency, and scoped
+online guard overhead.
 It does not support a complete direct-actor temporal ablation, learned-policy
-result, policy-quality comparison, timing-effort comparison, or official Waymo
-benchmark claim.
+result, policy-quality comparison, broad integration-framework ranking, or
+official Waymo benchmark claim.

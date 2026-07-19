@@ -15,6 +15,13 @@ benchmark release.
   attribution boundary: 15/15 command-only rows satisfy a defined status-only
   acceptance baseline, and WOD2Sim rejects the same rows as non-claim-valid
   route evidence.
+- The controlled diagnostic comparison is claim-ready for its declared case
+  set: 30/30 WOD2Sim classifications versus 15/30 status-only, 15/15 fault
+  localizations, 0/15 control false positives, and exact paired
+  `p=0.000061`.
+- Post-trace diagnosis latency and the camera/context plus freshness guard
+  overhead are claim-ready for the dependency-light measured path: medians
+  `234.855 us` and `14.552 us`, respectively.
 - Only 14/15 semantic pairs are comparison-eligible; their score deltas are
   descriptive and do not support a systematic policy-effect claim.
 - The paper PDF, generated tables, figures, aggregate summaries, manifests, and
@@ -28,6 +35,7 @@ benchmark release.
 - Scenario-category coverage.
 - Official Waymo or challenge leaderboard compatibility.
 - Complete public policy benchmark status.
+- Ranking against a complete external integration framework.
 
 ## Verification Gate
 

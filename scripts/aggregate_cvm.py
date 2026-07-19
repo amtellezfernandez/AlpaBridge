@@ -120,12 +120,16 @@ def main() -> int:
     external_compatibility = _external_compatibility_summary(
         args.output.parent.parent / "external" / "alpasim_e2e_challenge_conformance"
     )
+    diagnostic_experiment = _diagnostic_experiment_summary(
+        args.inputs / "diagnostic_experiment.json"
+    )
     summary = _summary(
         rows=rows,
         failures=failures,
         closed_loop_evidence=closed_loop_evidence,
         semantic_pair_rows=semantic_pair_rows,
         external_compatibility=external_compatibility,
+        diagnostic_experiment=diagnostic_experiment,
         created_at=_input_created_at(args.inputs),
     )
 
@@ -342,6 +346,69 @@ def _external_compatibility_summary(path: Path) -> dict[str, Any]:
     }
 
 
+def _diagnostic_experiment_summary(path: Path) -> dict[str, Any]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise SystemExit(f"Missing diagnostic experiment artifact: {path}") from exc
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"Invalid diagnostic experiment JSON: {path}: {exc}") from exc
+    if not isinstance(payload, dict) or payload.get("schema") != "wod2sim_diagnostic_experiment_v1":
+        raise SystemExit(f"Invalid diagnostic experiment schema: {path}")
+
+    required_numbers = (
+        "design.total_cases",
+        "design.fault_cases",
+        "design.control_cases",
+        "classification.wod2sim.classification_correct",
+        "classification.wod2sim.faults_detected",
+        "classification.wod2sim.faults_correctly_localized",
+        "classification.wod2sim.false_positives",
+        "classification.status_only.classification_correct",
+        "classification.status_only.faults_detected",
+        "classification.status_only.false_positives",
+        "classification.paired_mcnemar.exact_two_sided_p",
+        "timing.wod2sim_decision_us.p50",
+        "timing.correct_fault_diagnosis_us.p50",
+        "online_guard_overhead.paired_incremental_us.p50",
+        "online_guard_overhead.paired_incremental_p50_percent",
+        "online_guard_overhead.incremental_p50_as_source_driver_p50_percent",
+        "source_trace.drive_count",
+        "source_trace.latency_ms.p50",
+        "source_trace.latency_ms.p95",
+    )
+    for dotted_path in required_numbers:
+        value = _nested_value(payload, dotted_path)
+        if not isinstance(value, (int, float)) or not math.isfinite(float(value)):
+            raise SystemExit(
+                f"Diagnostic experiment field is missing or non-finite: {path}:{dotted_path}"
+            )
+
+    total = int(_nested_value(payload, "design.total_cases"))
+    faults = int(_nested_value(payload, "design.fault_cases"))
+    controls = int(_nested_value(payload, "design.control_cases"))
+    cases = payload.get("cases")
+    if total != faults + controls or not isinstance(cases, list) or len(cases) != total:
+        raise SystemExit(f"Diagnostic experiment denominator mismatch: {path}")
+
+    result = dict(payload)
+    paired = result["classification"]["paired_mcnemar"]
+    paired["exact_two_sided_p_below_0_001"] = int(
+        float(paired["exact_two_sided_p"]) < 0.001
+    )
+    result["artifact_sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+    return result
+
+
+def _nested_value(payload: object, dotted_path: str) -> object:
+    value = payload
+    for part in dotted_path.split("."):
+        if not isinstance(value, dict) or part not in value:
+            return None
+        value = value[part]
+    return value
+
+
 def _external_score(results: dict[str, Any]) -> float | None:
     rollouts = results.get("rollouts")
     if not isinstance(rollouts, list) or not rollouts:
@@ -377,6 +444,7 @@ def _summary(
     closed_loop_evidence: list[dict[str, Any]],
     semantic_pair_rows: list[dict[str, Any]],
     external_compatibility: dict[str, Any],
+    diagnostic_experiment: dict[str, Any],
     created_at: str,
 ) -> dict[str, Any]:
     status_counts = Counter(row.get("status", "") for row in rows)
@@ -398,7 +466,7 @@ def _summary(
     return {
         "schema": "cvm_aggregate_summary_v1",
         "created_at": created_at,
-        "data_hash": _hash_rows(rows),
+        "data_hash": _hash_rows(rows, diagnostic_experiment=diagnostic_experiment),
         "planned_runs": status_counts.get("planned", 0),
         "attempted_runs": sum(row.get("attempted") == "true" for row in rows),
         "completed_runs": sum(row.get("completed") == "true" for row in rows),
@@ -428,6 +496,7 @@ def _summary(
         "scenario_coverage": scenario_coverage_summary,
         "failure_attribution": failure_attribution_summary,
         "external_compatibility": external_compatibility,
+        "diagnostic_experiment": diagnostic_experiment,
         "semantic_ablation_deltas": semantic_delta_summary,
         "failed_runs": status_counts.get("failed", 0),
         "blocked_runs": status_counts.get("blocked", 0),
@@ -630,8 +699,16 @@ def _failure_attribution_summary(
     }
 
 
-def _hash_rows(rows: list[dict[str, str]]) -> str:
-    payload = json.dumps(rows, sort_keys=True, separators=(",", ":")).encode("utf-8")
+def _hash_rows(
+    rows: list[dict[str, str]],
+    *,
+    diagnostic_experiment: dict[str, Any] | None = None,
+) -> str:
+    evidence = {
+        "rows": rows,
+        "diagnostic_experiment": diagnostic_experiment or {},
+    }
+    payload = json.dumps(evidence, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(payload).hexdigest()
 
 
@@ -1275,6 +1352,31 @@ def _write_tables(output: Path, summary: dict[str, Any], rows: list[dict[str, st
     synthetic_diagnostic = _summary_int(attribution, "synthetic_diagnostic_rows")
     release_scope = summary.get("release_scope", {})
     external = summary.get("external_compatibility", {})
+    diagnostic = summary.get("diagnostic_experiment", {})
+    diagnostic_design = (
+        diagnostic.get("design", {}) if isinstance(diagnostic, dict) else {}
+    )
+    diagnostic_classification = (
+        diagnostic.get("classification", {}) if isinstance(diagnostic, dict) else {}
+    )
+    diagnostic_wod2sim = (
+        diagnostic_classification.get("wod2sim", {})
+        if isinstance(diagnostic_classification, dict)
+        else {}
+    )
+    diagnostic_status = (
+        diagnostic_classification.get("status_only", {})
+        if isinstance(diagnostic_classification, dict)
+        else {}
+    )
+    diagnostic_paired = (
+        diagnostic_classification.get("paired_mcnemar", {})
+        if isinstance(diagnostic_classification, dict)
+        else {}
+    )
+    diagnostic_source = (
+        diagnostic.get("source_trace", {}) if isinstance(diagnostic, dict) else {}
+    )
     public_core_configured = _summary_int(release_scope, "public_core_configured_rows")
     public_core_completed = _summary_int(release_scope, "public_core_completed_runs")
     public_core_attempted = _summary_int(release_scope, "public_core_attempted_runs")
@@ -1427,6 +1529,55 @@ def _write_tables(output: Path, summary: dict[str, Any], rows: list[dict[str, st
         + "\\newcommand{\\CVMExternalChallengeDriverLatencyMaxMs}{"
         + _paper_external_metric(summary, "driver_latency_max_ms")
         + "}\n"
+        + f"\\newcommand{{\\CVMDiagnosticCases}}{{{_summary_int(diagnostic_design, 'total_cases')}}}\n"
+        + f"\\newcommand{{\\CVMDiagnosticFaultCases}}{{{_summary_int(diagnostic_design, 'fault_cases')}}}\n"
+        + f"\\newcommand{{\\CVMDiagnosticControlCases}}{{{_summary_int(diagnostic_design, 'control_cases')}}}\n"
+        + f"\\newcommand{{\\CVMWODDiagnosticCorrect}}{{{_summary_int(diagnostic_wod2sim, 'classification_correct')}}}\n"
+        + f"\\newcommand{{\\CVMStatusDiagnosticCorrect}}{{{_summary_int(diagnostic_status, 'classification_correct')}}}\n"
+        + f"\\newcommand{{\\CVMWODDiagnosticFaultDetected}}{{{_summary_int(diagnostic_wod2sim, 'faults_detected')}}}\n"
+        + f"\\newcommand{{\\CVMWODDiagnosticLocalized}}{{{_summary_int(diagnostic_wod2sim, 'faults_correctly_localized')}}}\n"
+        + f"\\newcommand{{\\CVMWODDiagnosticFalsePositives}}{{{_summary_int(diagnostic_wod2sim, 'false_positives')}}}\n"
+        + f"\\newcommand{{\\CVMStatusDiagnosticFaultDetected}}{{{_summary_int(diagnostic_status, 'faults_detected')}}}\n"
+        + f"\\newcommand{{\\CVMStatusDiagnosticFalsePositives}}{{{_summary_int(diagnostic_status, 'false_positives')}}}\n"
+        + f"\\newcommand{{\\CVMDiagnosticMcNemarPBelowZeroZeroOne}}{{{_summary_int(diagnostic_paired, 'exact_two_sided_p_below_0_001')}}}\n"
+        + "\\newcommand{\\CVMDiagnosticMcNemarP}{"
+        + _paper_diagnostic_metric(
+            summary,
+            "classification.paired_mcnemar.exact_two_sided_p",
+            precision=6,
+        )
+        + "}\n"
+        + f"\\newcommand{{\\CVMExternalTraceDriveRPCs}}{{{_summary_int(diagnostic_source, 'drive_count')}}}\n"
+        + "\\newcommand{\\CVMDiagnosticDecisionMedianUs}{"
+        + _paper_diagnostic_metric(summary, "timing.wod2sim_decision_us.p50")
+        + "}\n"
+        + "\\newcommand{\\CVMStatusDecisionMedianUs}{"
+        + _paper_diagnostic_metric(summary, "timing.status_only_decision_us.p50")
+        + "}\n"
+        + "\\newcommand{\\CVMDiagnosisMedianUs}{"
+        + _paper_diagnostic_metric(summary, "timing.correct_fault_diagnosis_us.p50")
+        + "}\n"
+        + "\\newcommand{\\CVMGuardOverheadMedianUs}{"
+        + _paper_diagnostic_metric(summary, "online_guard_overhead.paired_incremental_us.p50")
+        + "}\n"
+        + "\\newcommand{\\CVMGuardOverheadRelativePercent}{"
+        + _paper_diagnostic_metric(
+            summary,
+            "online_guard_overhead.paired_incremental_p50_percent",
+        )
+        + "}\n"
+        + "\\newcommand{\\CVMGuardOverheadTracePercent}{"
+        + _paper_diagnostic_metric(
+            summary,
+            "online_guard_overhead.incremental_p50_as_source_driver_p50_percent",
+        )
+        + "}\n"
+        + "\\newcommand{\\CVMExternalTraceLatencyMedianMs}{"
+        + _paper_diagnostic_metric(summary, "source_trace.latency_ms.p50")
+        + "}\n"
+        + "\\newcommand{\\CVMExternalTraceLatencyNinetyFifthMs}{"
+        + _paper_diagnostic_metric(summary, "source_trace.latency_ms.p95")
+        + "}\n"
         + f"\\newcommand{{\\CVMFailedRuns}}{{{summary['failed_runs']}}}\n"
         + f"\\newcommand{{\\CVMBlockedRuns}}{{{summary['blocked_runs']}}}\n"
         + f"\\newcommand{{\\CVMSyntheticRuns}}{{{summary['synthetic_completed_runs']}}}\n"
@@ -1474,6 +1625,19 @@ def _paper_external_metric(summary: dict[str, Any], metric: str) -> str:
     if not isinstance(value, (int, float)):
         return "n/a"
     return f"{float(value):.3f}"
+
+
+def _paper_diagnostic_metric(
+    summary: dict[str, Any],
+    dotted_path: str,
+    *,
+    precision: int = 3,
+) -> str:
+    diagnostic = summary.get("diagnostic_experiment")
+    value = _nested_value(diagnostic, dotted_path)
+    if not isinstance(value, (int, float)) or not math.isfinite(float(value)):
+        return "n/a"
+    return f"{float(value):.{precision}f}"
 
 
 def _paper_semantic_delta(summary: dict[str, Any], metric: str) -> str:

@@ -110,7 +110,662 @@
     }
   ],
   "created_at": "2026-07-18T21:18:19.088449+00:00",
-  "data_hash": "582f451b74d52db721b8e2b5dc906ba8b7e352e9caee4607ebbeb581efac7af9",
+  "data_hash": "1d694f35745cfc6714ff30d6714f95f5c7e2238246e3fd8143a83c7f8a91f58b",
+  "diagnostic_experiment": {
+    "artifact_sha256": "ca483afc042bc2c7964eea860fe0644fb2815148e9162411c8c407e652fa8114",
+    "cases": [
+      {
+        "case_id": "fault:semantic.route_missing",
+        "event_count": 792,
+        "expected_fault_code": "semantic.route_missing",
+        "expected_valid": false,
+        "status_only_classification_correct": false,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": true,
+        "wod2sim_localization_correct": true,
+        "wod2sim_observed_codes": [
+          "semantic.route_missing"
+        ],
+        "wod2sim_valid": false
+      },
+      {
+        "case_id": "fault:semantic.command_only",
+        "event_count": 989,
+        "expected_fault_code": "semantic.command_only",
+        "expected_valid": false,
+        "status_only_classification_correct": false,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": true,
+        "wod2sim_localization_correct": true,
+        "wod2sim_observed_codes": [
+          "semantic.command_only"
+        ],
+        "wod2sim_valid": false
+      },
+      {
+        "case_id": "fault:semantic.road_center_reference",
+        "event_count": 989,
+        "expected_fault_code": "semantic.road_center_reference",
+        "expected_valid": false,
+        "status_only_classification_correct": false,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": true,
+        "wod2sim_localization_correct": true,
+        "wod2sim_observed_codes": [
+          "semantic.road_center_reference"
+        ],
+        "wod2sim_valid": false
+      },
+      {
+        "case_id": "fault:temporal.stale_observation",
+        "event_count": 989,
+        "expected_fault_code": "temporal.stale_observation",
+        "expected_valid": false,
+        "status_only_classification_correct": false,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": true,
+        "wod2sim_localization_correct": true,
+        "wod2sim_observed_codes": [
+          "temporal.stale_observation"
+        ],
+        "wod2sim_valid": false
+      },
+      {
+        "case_id": "fault:temporal.invalid_sample_count",
+        "event_count": 989,
+        "expected_fault_code": "temporal.invalid_sample_count",
+        "expected_valid": false,
+        "status_only_classification_correct": false,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": true,
+        "wod2sim_localization_correct": true,
+        "wod2sim_observed_codes": [
+          "temporal.invalid_sample_count"
+        ],
+        "wod2sim_valid": false
+      },
+      {
+        "case_id": "fault:temporal.nan_trajectory",
+        "event_count": 989,
+        "expected_fault_code": "temporal.nan_trajectory",
+        "expected_valid": false,
+        "status_only_classification_correct": false,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": true,
+        "wod2sim_localization_correct": true,
+        "wod2sim_observed_codes": [
+          "temporal.nan_trajectory"
+        ],
+        "wod2sim_valid": false
+      },
+      {
+        "case_id": "fault:lifecycle.duplicate_close",
+        "event_count": 990,
+        "expected_fault_code": "lifecycle.duplicate_close",
+        "expected_valid": false,
+        "status_only_classification_correct": false,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": true,
+        "wod2sim_localization_correct": true,
+        "wod2sim_observed_codes": [
+          "lifecycle.duplicate_close"
+        ],
+        "wod2sim_valid": false
+      },
+      {
+        "case_id": "fault:lifecycle.late_image",
+        "event_count": 990,
+        "expected_fault_code": "lifecycle.late_image",
+        "expected_valid": false,
+        "status_only_classification_correct": false,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": true,
+        "wod2sim_localization_correct": true,
+        "wod2sim_observed_codes": [
+          "lifecycle.late_image"
+        ],
+        "wod2sim_valid": false
+      },
+      {
+        "case_id": "fault:lifecycle.late_route",
+        "event_count": 990,
+        "expected_fault_code": "lifecycle.late_route",
+        "expected_valid": false,
+        "status_only_classification_correct": false,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": true,
+        "wod2sim_localization_correct": true,
+        "wod2sim_observed_codes": [
+          "lifecycle.late_route"
+        ],
+        "wod2sim_valid": false
+      },
+      {
+        "case_id": "fault:plugin.optional_backend_missing",
+        "event_count": 989,
+        "expected_fault_code": "plugin.optional_backend_missing",
+        "expected_valid": false,
+        "status_only_classification_correct": false,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": true,
+        "wod2sim_localization_correct": true,
+        "wod2sim_observed_codes": [
+          "plugin.optional_backend_missing"
+        ],
+        "wod2sim_valid": false
+      },
+      {
+        "case_id": "fault:deployment.docker_unavailable",
+        "event_count": 989,
+        "expected_fault_code": "deployment.docker_unavailable",
+        "expected_valid": false,
+        "status_only_classification_correct": false,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": true,
+        "wod2sim_localization_correct": true,
+        "wod2sim_observed_codes": [
+          "deployment.docker_unavailable"
+        ],
+        "wod2sim_valid": false
+      },
+      {
+        "case_id": "fault:deployment.gpu_runtime_unavailable",
+        "event_count": 989,
+        "expected_fault_code": "deployment.gpu_runtime_unavailable",
+        "expected_valid": false,
+        "status_only_classification_correct": false,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": true,
+        "wod2sim_localization_correct": true,
+        "wod2sim_observed_codes": [
+          "deployment.gpu_runtime_unavailable"
+        ],
+        "wod2sim_valid": false
+      },
+      {
+        "case_id": "fault:deployment.scene_artifact_missing",
+        "event_count": 989,
+        "expected_fault_code": "deployment.scene_artifact_missing",
+        "expected_valid": false,
+        "status_only_classification_correct": false,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": true,
+        "wod2sim_localization_correct": true,
+        "wod2sim_observed_codes": [
+          "deployment.scene_artifact_missing"
+        ],
+        "wod2sim_valid": false
+      },
+      {
+        "case_id": "fault:evidence.manifest_missing",
+        "event_count": 989,
+        "expected_fault_code": "evidence.manifest_missing",
+        "expected_valid": false,
+        "status_only_classification_correct": false,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": true,
+        "wod2sim_localization_correct": true,
+        "wod2sim_observed_codes": [
+          "evidence.manifest_missing"
+        ],
+        "wod2sim_valid": false
+      },
+      {
+        "case_id": "fault:evidence.hash_mismatch",
+        "event_count": 989,
+        "expected_fault_code": "evidence.hash_mismatch",
+        "expected_valid": false,
+        "status_only_classification_correct": false,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": true,
+        "wod2sim_localization_correct": true,
+        "wod2sim_observed_codes": [
+          "evidence.hash_mismatch"
+        ],
+        "wod2sim_valid": false
+      },
+      {
+        "case_id": "control:trace_prefix_01",
+        "event_count": 7,
+        "expected_fault_code": "",
+        "expected_valid": true,
+        "status_only_classification_correct": true,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": false,
+        "wod2sim_localization_correct": false,
+        "wod2sim_observed_codes": [],
+        "wod2sim_valid": true
+      },
+      {
+        "case_id": "control:trace_prefix_02",
+        "event_count": 77,
+        "expected_fault_code": "",
+        "expected_valid": true,
+        "status_only_classification_correct": true,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": false,
+        "wod2sim_localization_correct": false,
+        "wod2sim_observed_codes": [],
+        "wod2sim_valid": true
+      },
+      {
+        "case_id": "control:trace_prefix_03",
+        "event_count": 147,
+        "expected_fault_code": "",
+        "expected_valid": true,
+        "status_only_classification_correct": true,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": false,
+        "wod2sim_localization_correct": false,
+        "wod2sim_observed_codes": [],
+        "wod2sim_valid": true
+      },
+      {
+        "case_id": "control:trace_prefix_04",
+        "event_count": 217,
+        "expected_fault_code": "",
+        "expected_valid": true,
+        "status_only_classification_correct": true,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": false,
+        "wod2sim_localization_correct": false,
+        "wod2sim_observed_codes": [],
+        "wod2sim_valid": true
+      },
+      {
+        "case_id": "control:trace_prefix_05",
+        "event_count": 287,
+        "expected_fault_code": "",
+        "expected_valid": true,
+        "status_only_classification_correct": true,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": false,
+        "wod2sim_localization_correct": false,
+        "wod2sim_observed_codes": [],
+        "wod2sim_valid": true
+      },
+      {
+        "case_id": "control:trace_prefix_06",
+        "event_count": 357,
+        "expected_fault_code": "",
+        "expected_valid": true,
+        "status_only_classification_correct": true,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": false,
+        "wod2sim_localization_correct": false,
+        "wod2sim_observed_codes": [],
+        "wod2sim_valid": true
+      },
+      {
+        "case_id": "control:trace_prefix_07",
+        "event_count": 427,
+        "expected_fault_code": "",
+        "expected_valid": true,
+        "status_only_classification_correct": true,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": false,
+        "wod2sim_localization_correct": false,
+        "wod2sim_observed_codes": [],
+        "wod2sim_valid": true
+      },
+      {
+        "case_id": "control:trace_prefix_08",
+        "event_count": 497,
+        "expected_fault_code": "",
+        "expected_valid": true,
+        "status_only_classification_correct": true,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": false,
+        "wod2sim_localization_correct": false,
+        "wod2sim_observed_codes": [],
+        "wod2sim_valid": true
+      },
+      {
+        "case_id": "control:trace_prefix_09",
+        "event_count": 567,
+        "expected_fault_code": "",
+        "expected_valid": true,
+        "status_only_classification_correct": true,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": false,
+        "wod2sim_localization_correct": false,
+        "wod2sim_observed_codes": [],
+        "wod2sim_valid": true
+      },
+      {
+        "case_id": "control:trace_prefix_10",
+        "event_count": 637,
+        "expected_fault_code": "",
+        "expected_valid": true,
+        "status_only_classification_correct": true,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": false,
+        "wod2sim_localization_correct": false,
+        "wod2sim_observed_codes": [],
+        "wod2sim_valid": true
+      },
+      {
+        "case_id": "control:trace_prefix_11",
+        "event_count": 707,
+        "expected_fault_code": "",
+        "expected_valid": true,
+        "status_only_classification_correct": true,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": false,
+        "wod2sim_localization_correct": false,
+        "wod2sim_observed_codes": [],
+        "wod2sim_valid": true
+      },
+      {
+        "case_id": "control:trace_prefix_12",
+        "event_count": 777,
+        "expected_fault_code": "",
+        "expected_valid": true,
+        "status_only_classification_correct": true,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": false,
+        "wod2sim_localization_correct": false,
+        "wod2sim_observed_codes": [],
+        "wod2sim_valid": true
+      },
+      {
+        "case_id": "control:trace_prefix_13",
+        "event_count": 847,
+        "expected_fault_code": "",
+        "expected_valid": true,
+        "status_only_classification_correct": true,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": false,
+        "wod2sim_localization_correct": false,
+        "wod2sim_observed_codes": [],
+        "wod2sim_valid": true
+      },
+      {
+        "case_id": "control:trace_prefix_14",
+        "event_count": 917,
+        "expected_fault_code": "",
+        "expected_valid": true,
+        "status_only_classification_correct": true,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": false,
+        "wod2sim_localization_correct": false,
+        "wod2sim_observed_codes": [],
+        "wod2sim_valid": true
+      },
+      {
+        "case_id": "control:trace_prefix_15",
+        "event_count": 987,
+        "expected_fault_code": "",
+        "expected_valid": true,
+        "status_only_classification_correct": true,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": false,
+        "wod2sim_localization_correct": false,
+        "wod2sim_observed_codes": [],
+        "wod2sim_valid": true
+      }
+    ],
+    "classification": {
+      "paired_mcnemar": {
+        "exact_two_sided_p": 6.103515625e-05,
+        "exact_two_sided_p_below_0_001": 1,
+        "status_only_only_correct": 0,
+        "wod2sim_only_correct": 15
+      },
+      "status_only": {
+        "classification_accuracy": 0.5,
+        "classification_accuracy_wilson95": [
+          0.33154125640533766,
+          0.6684587435946623
+        ],
+        "classification_correct": 15,
+        "classification_total": 30,
+        "control_total": 15,
+        "false_positives": 0,
+        "fault_recall": 0.0,
+        "fault_recall_wilson95": [
+          0.0,
+          0.20388330103584862
+        ],
+        "fault_total": 15,
+        "faults_correctly_localized": 0,
+        "faults_detected": 0,
+        "localization_rate": 0.0,
+        "specificity": 1.0
+      },
+      "wod2sim": {
+        "classification_accuracy": 1.0,
+        "classification_accuracy_wilson95": [
+          0.8864866068260312,
+          0.9999999999999999
+        ],
+        "classification_correct": 30,
+        "classification_total": 30,
+        "control_total": 15,
+        "false_positives": 0,
+        "fault_recall": 1.0,
+        "fault_recall_wilson95": [
+          0.7961166989641515,
+          1.0
+        ],
+        "fault_total": 15,
+        "faults_correctly_localized": 15,
+        "faults_detected": 15,
+        "localization_rate": 1.0,
+        "specificity": 1.0
+      }
+    },
+    "created_at": "2026-07-19T18:17:34.153927+00:00",
+    "design": {
+      "control_cases": 15,
+      "control_construction": "Fifteen increasing prefixes of the retained external trace, each terminated by the retained close event.",
+      "fault_cases": 15,
+      "fault_codes": [
+        "semantic.route_missing",
+        "semantic.command_only",
+        "semantic.road_center_reference",
+        "temporal.stale_observation",
+        "temporal.invalid_sample_count",
+        "temporal.nan_trajectory",
+        "lifecycle.duplicate_close",
+        "lifecycle.late_image",
+        "lifecycle.late_route",
+        "plugin.optional_backend_missing",
+        "deployment.docker_unavailable",
+        "deployment.gpu_runtime_unavailable",
+        "deployment.scene_artifact_missing",
+        "evidence.manifest_missing",
+        "evidence.hash_mismatch"
+      ],
+      "fault_construction": "One independent field or context mutation per case; the detector receives only the mutated trace and runtime context.",
+      "guard_batch_size": 20,
+      "guard_iterations": 200,
+      "random_seed": 2027,
+      "scoring": "Expected labels are retained by the experiment scorer and are not passed to diagnose_contract_trace.",
+      "timing_batch_size": 5,
+      "timing_iterations": 200,
+      "total_cases": 30
+    },
+    "environment": {
+      "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "processor": "Intel(R) Core(TM) Ultra 9 275HX",
+      "python": "3.12.12",
+      "timer": "time.perf_counter_ns"
+    },
+    "implementation_sha256": {
+      "src/wod2sim/audit/diagnostic_experiment.py": "f5b6a58a7103a41ce2b408572df8dfbb4366e02653c5c78ea2919edcb6fa0c04",
+      "src/wod2sim/audit/trace_diagnostics.py": "31ce91135b814c87c20517f0dffdb0f7cf0562903fce32b8ea92127bda032f45",
+      "src/wod2sim/simulator/baseline_drivers.py": "5b9cc009fe8c8ad56581203838ec2e53a2fc2fff89ac84fb822905714ea6fb44"
+    },
+    "online_guard_overhead": {
+      "guarded_prediction_us": {
+        "max": 255.26995,
+        "mean": 77.99196025,
+        "min": 58.90085,
+        "p50": 70.82277500000001,
+        "p95": 113.55179250000012,
+        "samples": 200
+      },
+      "incremental_p50_as_source_driver_p50_percent": 0.8117215447029759,
+      "paired_incremental_p50_percent": 26.648256564550422,
+      "paired_incremental_us": {
+        "max": 203.10184999999998,
+        "mean": 17.0270315,
+        "min": -40.852850000000004,
+        "p50": 14.552,
+        "p95": 43.21734750000005,
+        "samples": 200
+      },
+      "pairing": "Guarded and unchecked order is randomized per iteration; paired differences use per-call batch means.",
+      "scope": "dependency-light route-following prediction; guarded path enables camera shape/context and sensor-freshness checks, while both paths preserve route extraction, trajectory generation, resampling, and reasoning serialization",
+      "trajectory_outputs_equal": true,
+      "unchecked_prediction_us": {
+        "max": 134.8069,
+        "mean": 60.96492875,
+        "min": 45.8704,
+        "p50": 54.6077,
+        "p95": 95.85649500000004,
+        "samples": 200
+      },
+      "warmup_calls_per_method": 50
+    },
+    "schema": "wod2sim_diagnostic_experiment_v1",
+    "source_trace": {
+      "drive_count": 197,
+      "event_count": 989,
+      "latency_ms": {
+        "max": 11.966052,
+        "mean": 2.135029,
+        "p50": 1.792733,
+        "p95": 8.995557999999999
+      },
+      "latency_target_met_count": 197,
+      "latency_target_ms": 100.0,
+      "path": "artifacts/external/alpasim_e2e_challenge_conformance/challenge-driver-fixed.jsonl",
+      "sha256": "f22c4c3b0f7bd5ee5436c050ec9633fbc1beefb21c8327fa50090f40978f286d"
+    },
+    "timing": {
+      "correct_fault_diagnosis_us": {
+        "max": 1870.3038,
+        "mean": 270.04385493333336,
+        "min": 146.4458,
+        "p50": 234.85469999999998,
+        "p95": 417.82792000000006,
+        "samples": 3000
+      },
+      "incremental_decision_p50_us": 207.82010000000002,
+      "pairing": "Method order is randomized within every case and iteration; reported samples are per-call batch means.",
+      "scope": "in-memory post-run classification of parsed telemetry and runtime context",
+      "status_only_correct_fault_diagnoses": 0,
+      "status_only_decision_us": {
+        "max": 66.3014,
+        "mean": 0.193986,
+        "min": 0.0646,
+        "p50": 0.1597,
+        "p95": 0.31681000000000004,
+        "samples": 6000
+      },
+      "warmup_calls_per_case_and_method": 3,
+      "wod2sim_decision_us": {
+        "max": 1870.3038,
+        "mean": 201.57743469999997,
+        "min": 2.1474,
+        "p50": 207.9798,
+        "p95": 385.67570000000006,
+        "samples": 6000
+      }
+    }
+  },
   "external_compatibility": {
     "artifact_dir": "artifacts/external/alpasim_e2e_challenge_conformance",
     "available": true,
