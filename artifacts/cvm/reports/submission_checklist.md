@@ -3,6 +3,10 @@
 The contract-validation matrix (CVM) is the release evidence surface referenced
 in this checklist.
 
+- [x] Target-venue author instructions were rechecked on 2026-07-19: regular
+  papers are single-blind, 4-6 A4 pages, a single PDF no larger than 6 MB, and
+  submitted through PaperPlaza; the listed regular-paper deadline is
+  2026-08-07.
 - [x] Paper is 4-6 A4 pages, or justified <=8-page paid version.
 - [x] PDF is <=6 MB.
 - [x] PDF MediaBox is parsed and validated as portrait A4.
@@ -21,6 +25,8 @@ in this checklist.
   paper-validation, PDF-structure, artifact-upload, and minimal-permission
   gates.
 - [x] All citations resolve in the final LaTeX build.
+- [x] Bibliography metadata and claim-to-source alignment are checked against
+  primary publication or author records in `reference_audit.md`.
 - [x] LaTeX log has no unresolved references/citations, multiply defined
   labels, or overfull/underfull `\hbox` warnings.
 - [x] Every numerical paper claim maps to a generated artifact.
@@ -60,6 +66,8 @@ Additional release-specific checks:
   `lifecycle_stress.csv`, and `fault_injection.csv` source fields.
 - [x] `paper_numbers.tex` macros are validated against `summary.json`,
   `lifecycle_stress.csv`, and `fault_injection.csv`.
+- [x] Diagnostic case, comparator, timing, and overhead macros are validated
+  against the tracked diagnostic experiment in `summary.json`.
 - [x] Matrix and aggregate `created_at` timestamps are validated against
   run-manifest evidence timestamps so paper rebuilds do not drift on wall-clock
   time alone.
@@ -90,17 +98,20 @@ Scientific-readiness checks:
 
 - [ ] Evaluate at least one learned policy checkpoint through the complete
   contract stack.
-- [ ] Compare against an independently implemented baseline or measure
-  diagnosis-time improvement against an ungated workflow.
+- [x] Compare against an executable status-only gate and measure both
+  post-trace diagnosis latency and online guard overhead.
+- [ ] Compare against a complete independently maintained integration
+  framework or a human debugging workflow.
 - [ ] Repeat scene-policy trials with controlled seeds and report uncertainty.
 - [ ] Verify coverage of the six required scenario categories.
 - [ ] Complete the direct-actor temporal-ablation matrix.
 - [ ] Publish sufficient scene identifiers and frame-level evidence for an
   authorized evaluator to replay the reported trials.
 
-Current status: the PDF and release package are mechanically ready, with
-documented limitations. Scientific submission remains high risk because the
-dependency-light public core provides integration evidence but does not yet
-provide a learned-policy evaluation, independent comparator, replicated trials,
-verified scenario coverage, direct-actor temporal ablation, or fully replayable
-public evidence.
+Current status: the PDF and release package are mechanically ready. The
+controlled mutation study supplies an executable comparator, localization,
+false-positive controls, uncertainty, diagnosis timing, and scoped online
+overhead. Scientific scope remains contract conformance because the package
+does not include a learned-policy evaluation, external full-framework
+comparator, replicated scene trials, verified scenario coverage, direct-actor
+temporal ablation, or unrestricted replay assets.

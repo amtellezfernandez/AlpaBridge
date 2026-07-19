@@ -47,6 +47,26 @@ on synthetic local artifacts and reports route-loss and lane-offset diagnostics
 on public synthetic geometry. These diagnostics make the integration boundary
 inspectable, but they are not an AlpaSim rollout or policy result.
 
+## Controlled Diagnostic Evaluation
+
+Run `make cvm-diagnostics` to evaluate the hashed retained external-driver
+trace. The experiment creates 15 single-fault mutations across the five
+contracts and 15 valid prefix controls. Mutation and diagnosis are separate:
+the detector receives mutated events and runtime context, while the scorer
+retains the expected label.
+
+The current artifact reports WOD2Sim at 30/30 correct classifications, 15/15
+fault localizations, and 0/15 control false positives. The executable
+completion-and-metrics gate is correct on 15/30 and detects no faults; exact
+paired McNemar `p=0.000061`. Wilson intervals retain the finite-sample
+uncertainty.
+
+Post-trace diagnosis latency is measured after JSON parsing over 3,000 fault
+decisions. Online guard overhead is measured separately with 200 randomized,
+paired route-following iterations; guarded and unchecked trajectories must be
+identical. The current medians are 234.855 us for fault diagnosis and 14.552 us
+for the camera/context plus freshness guard increment.
+
 ## Policy Evaluation
 
 A report using WOD2Sim should declare:
@@ -98,6 +118,9 @@ The completed full-contract and semantic-ablation rollouts are the current
 integration-effectiveness evidence. Synthetic lifecycle/fault rows are secondary
 service-harness conformance diagnostics only, and blocked rows are retained as
 denominator/context rather than success metrics.
+Controlled trace mutations add case/control classification, an executable
+status-only comparator, post-trace diagnosis latency, and online guard overhead
+for the dependency-light path.
 The public release core is the dependency-light adapter path. Direct-actor,
 learned-checkpoint, restricted-scene, and complete-benchmark dependencies are
 optional gated extensions, not release-core dependencies.

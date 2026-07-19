@@ -244,6 +244,35 @@ class RunCVMMatrixTests(unittest.TestCase):
         self.assertEqual("public_synthetic", metadata["license_gating_status"])
         self.assertTrue(metadata["categories_verified"])
 
+    def test_fault_row_derives_observation_from_mutated_trace(self) -> None:
+        module = _load_module()
+        fault = "temporal.nan_trajectory"
+        config = {
+            "execution": {
+                "mode": "synthetic_fault_injection",
+                "source_trace": (
+                    "artifacts/external/alpasim_e2e_challenge_conformance/"
+                    "challenge-driver-fixed.jsonl"
+                ),
+            }
+        }
+        row = {
+            **_base_row(),
+            "run_id": "fault_temporal_nan_trajectory",
+            "matrix": "fault_injection",
+            "scene_id": "synthetic_fault_harness",
+            "adapter_config": fault,
+        }
+
+        result = module._execute_fault_row(config, row)
+
+        self.assertEqual(fault, result["expected_code"])
+        self.assertEqual(fault, result["observed_code"])
+        self.assertEqual("temporal", result["observed_layer"])
+        self.assertEqual("true", result["detected"])
+        self.assertEqual("true", result["correctly_localized"])
+        self.assertIn("without passing the expected label", result["detail"])
+
     def test_command_only_manifest_records_proxy_route_expectation(self) -> None:
         module = _load_module()
         config = _base_config()
@@ -384,6 +413,31 @@ class RunCVMMatrixTests(unittest.TestCase):
         self.assertEqual("completed", preserved["status"])
         self.assertEqual("true", preserved["completed"])
         self.assertEqual("existing completed evidence", preserved["detail"])
+
+    def test_execute_recomputes_completed_fault_rows_on_resume(self) -> None:
+        module = _load_module()
+        row = {
+            **_base_row(),
+            "run_id": "fault_temporal_nan_trajectory",
+            "matrix": "fault_injection",
+            "adapter_config": "temporal.nan_trajectory",
+        }
+        existing = {
+            **row,
+            "status": "completed",
+            "attempted": "true",
+            "completed": "true",
+            "blocked": "false",
+        }
+
+        preserved = module._resume_preserved_row(
+            {row["run_id"]: existing},
+            row,
+            execute=True,
+            execution_mode="synthetic_fault_injection",
+        )
+
+        self.assertIsNone(preserved)
 
 
 if __name__ == "__main__":

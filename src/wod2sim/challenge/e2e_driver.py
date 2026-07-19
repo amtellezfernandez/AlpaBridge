@@ -229,6 +229,10 @@ class WOD2SimChallengeAdapter:
                 "route_waypoint_count": signal.get("route_waypoint_count"),
                 "camera_count": signal.get("camera_count"),
                 "trajectory_points": len(getattr(trajectory, "poses", []) or []),
+                "trajectory_finite": bool(
+                    np.isfinite(np.asarray(prediction.trajectory_xy)).all()
+                    and np.isfinite(np.asarray(prediction.headings)).all()
+                ),
             }
         )
         return trajectory

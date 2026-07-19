@@ -16,6 +16,7 @@ host-specific paths, runtime identifiers, and local simulator state.
 - Experiment configs: `configs/cvm`.
 - Matrix runner: `scripts/run_cvm_matrix.py`.
 - Aggregator: `scripts/aggregate_cvm.py`.
+- Controlled diagnostic runner: `scripts/run_diagnostic_experiment.py`.
 - Figure generator: `scripts/generate_cvm_figures.py`.
 - Paper build script: `scripts/build_cvm_paper.sh`.
 - Submission validator: `scripts/validate_cvm_submission.py`.
@@ -23,17 +24,19 @@ host-specific paths, runtime identifiers, and local simulator state.
 
 ## Paper Artifact
 
-- Format: IEEE conference two-column template using `paper/cvm/IEEEtran.cls`.
+- Format: IEEE conference two-column template using the official
+  `paper/cvm/ieeeconf.cls`.
 - Page size: A4 verified by `mutool info` mediabox `[ 0 0 595.276 841.89 ]`.
-- Page count: 6.
-- PDF size at audit: 175064 bytes.
+- Page count: 4.
+- PDF size at audit: 189158 bytes.
 - Root PDF is the only tracked manuscript PDF.
 
 ## Commands And Targets
 
 - Core checks: `make conformance`, `make cvm-check`, `uv run python -m pytest -q`.
 - Demo: `make demo` and `make cvm-demo`.
-- Matrix expansion/execution: `make cvm-eval`, `make cvm-synthetic`.
+- Matrix expansion/execution: `make cvm-eval`, `make cvm-diagnostics`,
+  `make cvm-synthetic`.
 - Regeneration: `make cvm-aggregate`, `make cvm-paper`, `make cvm-validate`.
 - Full release target: `make cvm-all`.
 
@@ -47,7 +50,7 @@ host-specific paths, runtime identifiers, and local simulator state.
 - AlpaSim E2E challenge compatibility adapter: `src/wod2sim/challenge`.
 - Audit and evidence tools: `src/wod2sim/audit`, `src/wod2sim/neutral`.
 - AlpaSim patches/overrides: `src/wod2sim/alpasim_overrides`.
-- Test directory: `tests` with 24 top-level test files. Runtime pass/skip
+- Test directory: `tests` with 25 top-level test files. Runtime pass/skip
   counts are recorded in [`test_report.md`](test_report.md).
 - Public release decision: [`release_decision.md`](release_decision.md).
 
@@ -62,13 +65,19 @@ host-specific paths, runtime identifiers, and local simulator state.
 - Full-contract audit-valid rows: 42/45.
 - Command-only route rows rejected as non-claim-valid: 15/15.
 - Synthetic diagnostic rows: 55.
+- Controlled diagnostic cases: 30 total, with 15 single-fault mutations and 15
+  valid controls.
+- Controlled comparison: WOD2Sim 30/30 correct and 15/15 localized; status-only
+  15/30 correct; 0/15 WOD2Sim control false positives.
+- Median measured costs: 234.855 us post-trace fault diagnosis and 14.552 us
+  online guard increment.
 - Blocked rows: 33, all `direct_actor_oracle_proxy_missing`.
 - Claim-valid policy benchmark rows: 0.
 - Policy-attributable behavior rows: 42.
 - Policy-attributable failure rows: 0.
 - Completed non-policy diagnostic rows: 73.
 - Non-policy-attributed rows: 106.
-- Aggregate data hash: `582f451b74d52db721b8e2b5dc906ba8b7e352e9caee4607ebbeb581efac7af9`.
+- Aggregate data hash: `b77f17e9299cb3dc69543380ca512b18306c9959d33425a11255018d8009915c`.
 - Every public run manifest carries pre-audit `failure_attribution`, including
   policy-failure status, claim-valid benchmark status, failure layer/code, and
   the integration-vs-policy attribution rule. Aggregate `summary.json` upgrades
