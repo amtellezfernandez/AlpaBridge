@@ -78,14 +78,14 @@ bash integrations/alpasim_e2e_challenge/run_local_container.sh
 ## Non-Claim
 
 Do not report this as a WOD2Sim benchmark result unless an actual challenge
-submission or local challenge smoke run has completed and the returned metrics
-are retained with provenance. Constant velocity and route following are
+submission or local challenge conformance run has completed and the returned
+metrics are retained with provenance. Constant velocity and route following are
 integration baselines, not competitive autonomous-driving policies.
 
 The retained paper artifact includes one completed local external-evaluator
-smoke run with provenance in
-`artifacts/external/alpasim_e2e_challenge_smoke/`: 1/1 rollout completed, 197
-driver RPCs were served, 396 image events were observed, and 197/197 driver
+conformance run with provenance in
+`artifacts/external/alpasim_e2e_challenge_conformance/`: 1/1 rollout completed,
+197 driver RPCs were served, 396 image events were observed, and 197/197 driver
 calls met the latency target. This is interface-portability evidence only. The
 central result remains the separation between integration-invalid rows and
 policy-attributable behavior.

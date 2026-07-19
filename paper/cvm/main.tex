@@ -289,24 +289,23 @@ boundary, not evidence of autonomous-driving scenario-category coverage.
 
 \begin{table}[t]
 \centering
-\caption{Closed-loop integration-effectiveness checks generated from retained rollout and audit artifacts. Synthetic lifecycle and fault rows are excluded from this table.}
+\caption{Closed-loop attribution-invalidation checks generated from retained rollout and audit artifacts. Synthetic lifecycle and fault rows are excluded from this table.}
 \label{tab:integration-checks}
 \resizebox{\columnwidth}{!}{\input{generated/ablations.tex}}
 \end{table}
 
 Table~\ref{tab:integration-checks} is the primary effectiveness evidence because it
-measures what the contracts buy on executed closed-loop rows. Completed full-contract
-rollouts test whether a valid integration survives the audit without false blocking,
-matched semantic-ablation rows expose a real route-loss confound in closed-loop runs,
-and the command-only baseline tests whether a runnable non-contract wrapper would leave
-invalid route metrics in the evidence stream. The contract gate changes that outcome by
-rejecting the same route-invalid rows as non-claim-valid. These checks answer the
-integration question directly for the semantic boundary: the contracts make runnable
-integrations auditable, and they keep boundary violations out of policy-attribution
-claims. The generated synthetic lifecycle and fault-localization artifacts remain
-service-level conformance diagnostics only; they are not used as evidence that WOD2Sim
-is faster, safer, or more correct than a functional non-contract wrapper in real
-simulator stress trials.
+measures what the contracts buy on executed closed-loop rows. The first two rows test
+the positive path: completed full-contract rollouts should survive the audit and valid
+rows should not be falsely blocked. The route-loss rows are the invalidation
+demonstration: a functional command-only wrapper produces metric-bearing closed-loop
+records that a conventional non-contract path could score, while WOD2Sim rejects the
+same records as semantic-contract violations. The remaining rows state the claim
+boundary directly: rejected or coverage-unverified evidence is not promoted to policy
+failure or scenario-coverage evidence. The generated synthetic lifecycle and
+fault-localization artifacts remain service-level conformance diagnostics only; they
+are not used as evidence that WOD2Sim is faster, safer, or more correct than a
+functional non-contract wrapper in real simulator stress trials.
 
 The same aggregate also reports failure attribution. It contains
 \CVMContractValidClosedLoopRows{} contract-valid closed-loop row(s),

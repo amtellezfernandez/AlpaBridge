@@ -48,7 +48,7 @@ checkout in another terminal:
 ```bash
 ALPASIM_DRIVER_HOST=localhost ALPASIM_DRIVER_PORT=6789 \
   uv run alpasim_wizard +e2e_challenge=dev \
-  wizard.log_dir=./runs/e2e_challenge_wod2sim_smoke
+  wizard.log_dir=./runs/e2e_challenge_wod2sim_conformance
 ```
 
 For NuPlan, use the challenge `+e2e_challenge_nuplan=dev` preset and provide
@@ -63,5 +63,5 @@ This harness can produce external-driver compatibility evidence:
 - route geometry reaches WOD2Sim's route-following contract;
 - the local AlpaSim challenge dev preset can connect to the driver.
 
-It is not policy-quality evidence until an actual local smoke run or official
-submission returns metrics that are retained with provenance.
+It is not policy-quality evidence until an actual local conformance run or
+official submission returns metrics that are retained with provenance.
