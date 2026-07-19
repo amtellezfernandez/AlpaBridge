@@ -27,30 +27,26 @@ Email: amtellezfernandez@gmail.com}
 \maketitle
 
 \begin{abstract}
-Dataset-trained driving policies are built around logged observations, route context,
-and short-horizon trajectory targets; distributed closed-loop simulators require
-persistent services, runtime clocks, deployment provenance, and auditable evidence.
-WOD2Sim treats this mismatch as a contract-based system-integration problem, not as a
-new driving policy or public benchmark. It defines five contracts for executing
-WOD-style trajectory policies as AlpaSim external drivers: semantic route and scene
-preservation, temporal trajectory adaptation, explicit lifecycle handling, deployment
-provenance, and evidence validity. In the generated contract-validation matrix, the
-dependency-light public core completes \CVMPublicCoreCompletedRuns{}/
-\CVMPublicCoreRows{} closed-loop rows over \CVMClosedLoopSceneCount{} local scenes;
-\CVMFullContractAuditValidRuns{}/\CVMFullContractCompletedRuns{} completed
-full-contract rollouts pass route/sensor audits; and the evidence gate falsely blocks
-\CVMValidFullContractFalseBlockedRuns{}/
-\CVMValidFullContractFalseBlockDenominator{} valid full-contract rows. A runnable
-command-only route wrapper completes \CVMNaiveWrapperMetricRuns{} metric-bearing
-invalid-route rows that a non-contract path could accept as policy evidence, while
-WOD2Sim rejects \CVMContractInvalidRejectedRuns{}/
-\CVMContractInvalidRejectionDenominator{} as non-claim-valid. A separate external
-AlpaSim E2E-style smoke completes \CVMExternalChallengePassedRollouts{}/
-\CVMExternalChallengeRollouts{} rollout with \CVMExternalChallengeDriveRPCs{} driver
-RPCs. The bounded conclusion is that explicit integration contracts make valid rollouts
-executable and keep integration-invalid evidence out of policy-failure claims. The
-paper does not claim learned-policy superiority, scenario-category coverage, or public
-benchmark validity.
+Closed-loop driving evaluation has an attribution problem: degraded rollout metrics can
+be reported as policy failures even when the simulator boundary has silently removed
+decision-relevant inputs, changed timing assumptions, or produced incomplete evidence.
+WOD2Sim addresses this problem with a contract-auditing method for WOD-style trajectory
+policies executed as AlpaSim external drivers. It defines semantic, temporal,
+lifecycle, deployment, and evidence contracts that decide whether a rollout is valid
+policy evidence or an integration/precondition failure. In the generated
+contract-validation matrix, the dependency-light public core completes
+\CVMPublicCoreCompletedRuns{}/\CVMPublicCoreRows{} closed-loop rows over
+\CVMClosedLoopSceneCount{} local scenes; \CVMFullContractAuditValidRuns{}/
+\CVMFullContractCompletedRuns{} completed full-contract rollouts pass route/sensor
+audits; and the evidence gate falsely blocks \CVMValidFullContractFalseBlockedRuns{}/
+\CVMValidFullContractFalseBlockDenominator{} valid full-contract rows. The key
+invalidation experiment uses a runnable command-only route wrapper: it completes
+\CVMNaiveWrapperMetricRuns{} metric-bearing invalid-route rows that a conventional
+non-contract benchmark path could accept as policy evidence, while WOD2Sim rejects
+\CVMContractInvalidRejectedRuns{}/\CVMContractInvalidRejectionDenominator{} as
+non-claim-valid. The result is not a new driving policy or benchmark score. It is a
+bounded demonstration that explicit integration contracts can expose when low
+closed-loop metrics are caused by boundary violations rather than policy behavior.
 \end{abstract}
 
 \section{Introduction}
@@ -271,7 +267,9 @@ integration boundary: a functional command-only wrapper completes
 non-contract path could incorrectly accept as policy evidence, whereas WOD2Sim rejects
 \CVMContractInvalidRejectedRuns{}/\CVMContractInvalidRejectionDenominator{} of those
 invalid route rows and improves attribution on \CVMAttributionImprovementInvalidRows{}
-rows. The aggregate keeps
+rows. This is the invalidation demonstration: the same rollout records that would be
+scored as low-quality policy evidence by a non-contract path are retained as
+semantic-contract violations by WOD2Sim. The aggregate keeps
 \CVMPlannedRuns{} rows as planned/not launched and \CVMBlockedRuns{} rows as true
 precondition or unsupported-ablation blockers.
 
@@ -346,24 +344,6 @@ complementary because it gates whether the simulator/policy boundary itself pres
 the assumptions needed to interpret a rollout. WOD2Sim uses AlpaSim as the case study
 because its external-driver boundary makes these contracts explicit.
 
-To test whether the contract layer remains portable beyond the repository's local
-evaluation scripts, WOD2Sim also includes an AlpaSim E2E-style external-driver
-compatibility harness. This path is not reported as a challenge submission or
-leaderboard result. It is an external integration-validation target: the evaluator owns
-the simulator stack, scenes, and metrics, while WOD2Sim records whether route, sensor,
-temporal, lifecycle, deployment, and evidence assumptions still hold behind that
-managed boundary. The retained smoke artifact completes
-\CVMExternalChallengePassedRollouts{}/\CVMExternalChallengeRollouts{} external rollout,
-records \CVMExternalChallengeDriveRPCs{} driver RPCs and
-\CVMExternalChallengeImageEvents{} image events, and meets the driver latency target on
-\CVMExternalChallengeLatencyTargetMet{}/
-\CVMExternalChallengeLatencyTargetDenominator{} calls
-(\CVMExternalChallengeDriverLatencyMeanMs{} ms mean,
-\CVMExternalChallengeDriverLatencyMaxMs{} ms max). This supports interface
-portability, not policy-quality benchmarking: returned behavior metrics remain
-external-smoke diagnostics until they pass the same release gate and scenario-coverage
-requirements as the CVM rows.
-
 The limitations are material. WOD2Sim is not an official Waymo challenge interface,
 does not reconstruct complete WOD worlds, and does not redistribute restricted scene
 assets. The current CVM package has no completed claim-valid benchmark matrix, no
@@ -417,9 +397,8 @@ requires more than input/output conversion. WOD2Sim formulates the boundary as f
 contracts: semantic, temporal, lifecycle, deployment, and evidence. The current
 repository shows that this contract layer is already operational on the
 dependency-light public core: valid rows execute, route-loss ablations measurably alter
-behavior, invalid route evidence is rejected, external-driver smoke evidence exercises
-the interface outside the local CVM scripts, and missing prerequisites remain visible as
-blockers instead of being blurred into policy outcomes. The paper still does not claim a
+behavior, invalid route evidence is rejected, and missing prerequisites remain visible
+as blockers instead of being blurred into policy outcomes. The paper still does not claim a
 full public benchmark, scenario-category coverage, or learned-policy result. Its
 stronger and more defensible conclusion is narrower: contract-based integration
 improves evaluation effectiveness by making the boundary executable, auditable, and
@@ -480,11 +459,25 @@ The public artifact is also gated for release hygiene. The validator rebuilds th
 from generated inputs, checks generated table values against aggregate CSV/JSON sources,
 verifies the root PDF metadata and A4 geometry, rejects duplicate manuscript PDFs,
 scans public text for stale venue labels, private paths, credentials, unsupported
-benchmark language, and missing claim-boundary statements, and keeps external-smoke
+benchmark language, and missing claim-boundary statements, and keeps external-conformance
 provenance in public-safe relative form. These checks are not policy-performance
 evidence. They make the integration evidence portable and auditable: a reviewer can
 trace each reported number to a retained artifact without trusting local scratch files,
 private mounts, or manually edited paper tables.
+
+The same appendix-level contract-conformance layer includes an external AlpaSim
+E2E-style driver harness. It is not a challenge submission, leaderboard result, or
+policy-quality benchmark; it checks whether the same service and evidence contracts can
+survive outside the local CVM scripts. The retained artifact completes
+\CVMExternalChallengePassedRollouts{}/\CVMExternalChallengeRollouts{} managed rollout,
+records \CVMExternalChallengeDriveRPCs{} driver RPCs and
+\CVMExternalChallengeImageEvents{} image events, and meets the driver latency target on
+\CVMExternalChallengeLatencyTargetMet{}/
+\CVMExternalChallengeLatencyTargetDenominator{} calls
+(\CVMExternalChallengeDriverLatencyMeanMs{} ms mean,
+\CVMExternalChallengeDriverLatencyMaxMs{} ms max). These numbers support interface
+conformance and provenance portability only; returned behavior metrics remain outside
+the main policy-attribution result unless future rows pass the same CVM gates.
 
 The intended reading order for the public release is therefore not only the paper. The
 repository inventory records the source tree, environment, build commands, and known

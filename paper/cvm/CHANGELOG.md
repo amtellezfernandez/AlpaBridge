@@ -14,7 +14,7 @@
 - Executed 30/30 semantic ablation rows across fifteen scenes with paired
   full/command-only route configurations; retained 15/15 metric-bearing
   full/command-only pairs.
-- Added an external AlpaSim E2E-style compatibility smoke artifact: 1/1
+- Added an external AlpaSim E2E-style compatibility conformance artifact: 1/1
   rollout completed, 197 driver RPCs, 396 image events, and 197/197
   latency-target hits.
 - Added `semantic_ablation_pairs.csv`, semantic delta summaries, false-block
