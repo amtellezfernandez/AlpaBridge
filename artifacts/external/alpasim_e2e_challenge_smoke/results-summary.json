@@ -142,7 +142,7 @@
     "driver_drive_rpc_duration_mean_s": 0.004992591187871725,
     "driver_drive_rpc_duration_sum_s": 0.9835404640107299,
     "files_used": [
-      "/mnt/array_job_dir/telemetry/metrics.prom"
+      "telemetry/metrics.prom"
     ],
     "source": "telemetry/metrics.prom",
     "tag": "default"
