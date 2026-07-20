@@ -58,10 +58,13 @@ tests.
 | Current protocol-trace provenance | `source_trace` in `diagnostic_experiment.json`; `artifacts/cvm/inputs/diagnostic_protocol_sessions.jsonl` | 15 adapter sessions contain 120 drive records, all using telemetry schema v3 and explicitly recording the current pose, every future pose, and finite serialized output. |
 | Four-arm protocol replay | `artifacts/external/alpasim_protocol_replay/manifest.json` and `artifacts/cvm/results/summary.json` | Hash validation covers the official AlpaSim recording, four result/telemetry pairs, replay source files, and media. Route loss changes 56/60 route-following endpoints; all 60 NAVSIM negative-control pairs match exactly. |
 | Learned checkpoint provenance | `learned_policy` in the protocol replay manifest | [Official NAVSIM baseline repository](https://huggingface.co/autonomousvision/navsim_baselines), checkpoint revision `32d89c0ae6e7c13c311f4a034002006c250afab0`, SHA-256 `87d75b0f43d077ac3531370d7cccac98656d4e9b5ce5fa6618e28b7358b3a86b`, NAVSIM source commit `0811876c274e8b058ab2be9b3dcd4d37bd23f177`, and Apache-2.0 license are pinned; the checkpoint is not redistributed. |
+| Reactive learned external-driver rollout | `artifacts/external/alpasim_navsim_reactive_rollout/manifest.json`, telemetry, AlpaSim result, logs, and raw MP4 | The aggregate and validator hash-check every retained file. One rollout passes with 197/197 finite learned outputs, 198 live render requests, and 19.93 simulated seconds. The official public fixture source is pinned to AlpaSim commit `9177bd0bec547d7516cc77d1864e943780ef7e7a` and SHA-256 `0ee95b5bc3a69693cd5a3da3a7d430b673f15371f6844f641866302b5deab2f6`. Its repeated camera seed and added declared flat surface bound the claim to camera-blind lifecycle and exact-configuration timing. |
 | External-driver conformance | `artifacts/external/alpasim_e2e_challenge_conformance/challenge-driver-fixed.jsonl` | The separate retained evaluator-owned trace records 197 drive calls but uses telemetry schema v1 without the explicit finite-output field. |
 
 The controlled sessions and mutations are framework-authored designed cases,
 not independently sampled natural faults or external simulator reruns. The
 measured comparator is a completion-and-metrics gate, not another integration
 framework. Timings are bounded software microbenchmarks, not end-to-end runtime
-or human time-to-diagnosis.
+or human time-to-diagnosis. The separate reactive run reports observed service
+and wall-clock timing for one exact configuration; it is not comparative
+runtime-overhead evidence.

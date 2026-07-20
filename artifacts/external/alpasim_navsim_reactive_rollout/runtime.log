@@ -1,0 +1,2006 @@
+17:13:11.364 [W0] INFO:	Worker 0 starting (num_workers=1, num_consumers=1)
+17:13:11.387 [W0] INFO:	GPU monitoring initialized: 1 GPU(s) detected
+17:13:11.387 [W0] INFO:	Worker 0 ready with num_consumers=1
+17:13:11.387 [W0] INFO:	Event loop idle profiler installed
+17:13:11.554 [W0] INFO:	gc.freeze(): 381588 objects frozen to permanent generation (381213 tracked before, 0 tracked after)
+17:13:11.554 [W0] INFO:	GC pressure profiler installed (thresholds=(700, 10, 10), stall_threshold=0.100s, census=False)
+17:13:11.639 [W0] INFO:	Clipping n_sim_steps from 200 to 197 because only 197 complete policy steps fit between first_policy_timestamp_us=2056234117255 and scene end=2056253882550
+17:13:11.740 [W0] INFO:	Filtering traffic objects with min duration 3000000 us
+17:13:11.741 [W0] INFO:	Number of traffic objects before filtering: 54
+17:13:11.741 [W0] INFO:	Number of traffic objects after filtering: 41
+17:13:11.743 [W0] INFO:	Loading USDZ map data into memory. This will take a few seconds...
+17:13:12.840 [W0] INFO:	Successfully loaded map from clipgt/map_data
+17:13:12.864 [W0] WARNING:	Unable to find a preferable lane id, returning the first one
+17:13:12.889 [W0] INFO:	Parsed 10 camera(s) from clipgt/calibration_estimate.parquet: ['camera_cross_left_120fov', 'camera_cross_right_120fov', 'camera_front_fisheye_200fov', 'camera_front_tele_30fov', 'camera_front_wide_120fov', 'camera_left_fisheye_200fov', 'camera_rear_fisheye_200fov', 'camera_rear_left_70fov', 'camera_rear_right_70fov', 'camera_right_fisheye_200fov']
+17:13:12.901 [W0] INFO:	Extracting 20 clipgt files from mock-video.usdz
+17:13:12.942 [W0] INFO:	Created HD map archive: 571012 bytes (0.54 MB)
+17:13:12.943 [W0] INFO:	Starting video model session with 1 camera(s)...
+17:13:12.960 [W0] INFO:	Video model session started: seed-replay-0
+17:13:15.268 [W0] INFO:	Session STARTING: uuid=4956d514-845e-11f1-8b77-537c3b97cc28 scene=clipgt-0b10bce8-61f1-4350-8577-cf3c9493ffc3 steps=197
+17:13:15.268 [W0] INFO:	Event-based simulation loop timer started
+17:13:15.270 [W0] INFO:	sim_time 2_056_233_882_550us: InitialStepEvent @ 2_056_233_882_550us
+17:13:15.272 [W0] INFO:	sim_time 2_056_234_017_255us: VideoModelPrefetchEvent(chunk_start=2_056_234_117_255, size=1)
+17:13:15.273 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=True, dynamic_actors=3
+17:13:15.281 [W0] INFO:	SCENE_LOAD_TIMING scene=clipgt-0b10bce8-61f1-4350-8577-cf3c9493ffc3 phase=first_prefetch_total elapsed=0.008s
+17:13:15.281 [W0] INFO:	sim_time 2_056_234_117_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:15.454 [W0] INFO:	sim_time 2_056_234_117_255us: PolicyEvent @ 2_056_234_117_255us
+17:13:15.456 [W0] INFO:	Draining 2 outstanding tasks
+17:13:15.479 [W0] INFO:	sim_time 2_056_234_117_255us: ControllerEvent @ 2_056_234_117_255us
+17:13:15.522 [W0] INFO:	sim_time 2_056_234_117_255us: PhysicsEvent @ 2_056_234_117_255us
+17:13:15.523 [W0] INFO:	sim_time 2_056_234_117_255us: TrafficEvent @ 2_056_234_117_255us
+17:13:15.523 [W0] INFO:	sim_time 2_056_234_117_255us: PhysicsEvent @ 2_056_234_117_255us
+17:13:15.523 [W0] INFO:	sim_time 2_056_234_117_255us: StepEvent @ 2_056_234_117_255us
+17:13:15.525 [W0] INFO:	sim_time 2_056_234_117_255us: VideoModelPrefetchEvent(chunk_start=2_056_234_217_255, size=1)
+17:13:15.525 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:15.533 [W0] INFO:	sim_time 2_056_234_217_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:15.638 [W0] INFO:	sim_time 2_056_234_217_255us: PolicyEvent @ 2_056_234_217_255us
+17:13:15.638 [W0] INFO:	Draining 2 outstanding tasks
+17:13:15.645 [W0] INFO:	sim_time 2_056_234_217_255us: ControllerEvent @ 2_056_234_217_255us
+17:13:15.654 [W0] INFO:	sim_time 2_056_234_217_255us: PhysicsEvent @ 2_056_234_217_255us
+17:13:15.654 [W0] INFO:	sim_time 2_056_234_217_255us: TrafficEvent @ 2_056_234_217_255us
+17:13:15.655 [W0] INFO:	sim_time 2_056_234_217_255us: PhysicsEvent @ 2_056_234_217_255us
+17:13:15.655 [W0] INFO:	sim_time 2_056_234_217_255us: StepEvent @ 2_056_234_217_255us
+17:13:15.656 [W0] INFO:	sim_time 2_056_234_217_255us: VideoModelPrefetchEvent(chunk_start=2_056_234_317_255, size=1)
+17:13:15.657 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:15.666 [W0] INFO:	sim_time 2_056_234_317_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:15.770 [W0] INFO:	sim_time 2_056_234_317_255us: PolicyEvent @ 2_056_234_317_255us
+17:13:15.770 [W0] INFO:	Draining 2 outstanding tasks
+17:13:15.775 [W0] INFO:	sim_time 2_056_234_317_255us: ControllerEvent @ 2_056_234_317_255us
+17:13:15.788 [W0] INFO:	sim_time 2_056_234_317_255us: PhysicsEvent @ 2_056_234_317_255us
+17:13:15.788 [W0] INFO:	sim_time 2_056_234_317_255us: TrafficEvent @ 2_056_234_317_255us
+17:13:15.788 [W0] INFO:	sim_time 2_056_234_317_255us: PhysicsEvent @ 2_056_234_317_255us
+17:13:15.789 [W0] INFO:	sim_time 2_056_234_317_255us: StepEvent @ 2_056_234_317_255us
+17:13:15.791 [W0] INFO:	sim_time 2_056_234_317_255us: VideoModelPrefetchEvent(chunk_start=2_056_234_417_255, size=1)
+17:13:15.791 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:15.801 [W0] INFO:	sim_time 2_056_234_417_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:15.875 [W0] INFO:	sim_time 2_056_234_417_255us: PolicyEvent @ 2_056_234_417_255us
+17:13:15.876 [W0] INFO:	Draining 2 outstanding tasks
+17:13:15.882 [W0] INFO:	sim_time 2_056_234_417_255us: ControllerEvent @ 2_056_234_417_255us
+17:13:15.891 [W0] INFO:	sim_time 2_056_234_417_255us: PhysicsEvent @ 2_056_234_417_255us
+17:13:15.891 [W0] INFO:	sim_time 2_056_234_417_255us: TrafficEvent @ 2_056_234_417_255us
+17:13:15.892 [W0] INFO:	sim_time 2_056_234_417_255us: PhysicsEvent @ 2_056_234_417_255us
+17:13:15.892 [W0] INFO:	sim_time 2_056_234_417_255us: StepEvent @ 2_056_234_417_255us
+17:13:15.894 [W0] INFO:	sim_time 2_056_234_417_255us: VideoModelPrefetchEvent(chunk_start=2_056_234_517_255, size=1)
+17:13:15.895 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:15.907 [W0] INFO:	sim_time 2_056_234_517_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:15.962 [W0] INFO:	sim_time 2_056_234_517_255us: PolicyEvent @ 2_056_234_517_255us
+17:13:15.963 [W0] INFO:	Draining 2 outstanding tasks
+17:13:15.974 [W0] INFO:	sim_time 2_056_234_517_255us: ControllerEvent @ 2_056_234_517_255us
+17:13:15.983 [W0] INFO:	sim_time 2_056_234_517_255us: PhysicsEvent @ 2_056_234_517_255us
+17:13:15.983 [W0] INFO:	sim_time 2_056_234_517_255us: TrafficEvent @ 2_056_234_517_255us
+17:13:15.983 [W0] INFO:	sim_time 2_056_234_517_255us: PhysicsEvent @ 2_056_234_517_255us
+17:13:15.983 [W0] INFO:	sim_time 2_056_234_517_255us: StepEvent @ 2_056_234_517_255us
+17:13:15.985 [W0] INFO:	sim_time 2_056_234_517_255us: VideoModelPrefetchEvent(chunk_start=2_056_234_617_255, size=1)
+17:13:15.986 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:15.993 [W0] INFO:	sim_time 2_056_234_617_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:16.062 [W0] INFO:	sim_time 2_056_234_617_255us: PolicyEvent @ 2_056_234_617_255us
+17:13:16.062 [W0] INFO:	Draining 2 outstanding tasks
+17:13:16.068 [W0] INFO:	sim_time 2_056_234_617_255us: ControllerEvent @ 2_056_234_617_255us
+17:13:16.074 [W0] INFO:	sim_time 2_056_234_617_255us: PhysicsEvent @ 2_056_234_617_255us
+17:13:16.074 [W0] INFO:	sim_time 2_056_234_617_255us: TrafficEvent @ 2_056_234_617_255us
+17:13:16.075 [W0] INFO:	sim_time 2_056_234_617_255us: PhysicsEvent @ 2_056_234_617_255us
+17:13:16.075 [W0] INFO:	sim_time 2_056_234_617_255us: StepEvent @ 2_056_234_617_255us
+17:13:16.075 [W0] INFO:	sim_time 2_056_234_617_255us: VideoModelPrefetchEvent(chunk_start=2_056_234_717_255, size=1)
+17:13:16.076 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:16.082 [W0] INFO:	sim_time 2_056_234_717_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:16.154 [W0] INFO:	sim_time 2_056_234_717_255us: PolicyEvent @ 2_056_234_717_255us
+17:13:16.154 [W0] INFO:	Draining 2 outstanding tasks
+17:13:16.160 [W0] INFO:	sim_time 2_056_234_717_255us: ControllerEvent @ 2_056_234_717_255us
+17:13:16.163 [W0] INFO:	sim_time 2_056_234_717_255us: PhysicsEvent @ 2_056_234_717_255us
+17:13:16.164 [W0] INFO:	sim_time 2_056_234_717_255us: TrafficEvent @ 2_056_234_717_255us
+17:13:16.164 [W0] INFO:	sim_time 2_056_234_717_255us: PhysicsEvent @ 2_056_234_717_255us
+17:13:16.164 [W0] INFO:	sim_time 2_056_234_717_255us: StepEvent @ 2_056_234_717_255us
+17:13:16.165 [W0] INFO:	sim_time 2_056_234_717_255us: VideoModelPrefetchEvent(chunk_start=2_056_234_817_255, size=1)
+17:13:16.165 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:16.171 [W0] INFO:	sim_time 2_056_234_817_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:16.251 [W0] INFO:	sim_time 2_056_234_817_255us: PolicyEvent @ 2_056_234_817_255us
+17:13:16.252 [W0] INFO:	Draining 2 outstanding tasks
+17:13:16.258 [W0] INFO:	sim_time 2_056_234_817_255us: ControllerEvent @ 2_056_234_817_255us
+17:13:16.262 [W0] INFO:	sim_time 2_056_234_817_255us: PhysicsEvent @ 2_056_234_817_255us
+17:13:16.262 [W0] INFO:	sim_time 2_056_234_817_255us: TrafficEvent @ 2_056_234_817_255us
+17:13:16.262 [W0] INFO:	sim_time 2_056_234_817_255us: PhysicsEvent @ 2_056_234_817_255us
+17:13:16.262 [W0] INFO:	sim_time 2_056_234_817_255us: StepEvent @ 2_056_234_817_255us
+17:13:16.263 [W0] INFO:	sim_time 2_056_234_817_255us: VideoModelPrefetchEvent(chunk_start=2_056_234_917_255, size=1)
+17:13:16.264 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:16.270 [W0] INFO:	sim_time 2_056_234_917_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:16.329 [W0] INFO:	sim_time 2_056_234_917_255us: PolicyEvent @ 2_056_234_917_255us
+17:13:16.330 [W0] INFO:	Draining 2 outstanding tasks
+17:13:16.337 [W0] INFO:	sim_time 2_056_234_917_255us: ControllerEvent @ 2_056_234_917_255us
+17:13:16.341 [W0] INFO:	sim_time 2_056_234_917_255us: PhysicsEvent @ 2_056_234_917_255us
+17:13:16.341 [W0] INFO:	sim_time 2_056_234_917_255us: TrafficEvent @ 2_056_234_917_255us
+17:13:16.341 [W0] INFO:	sim_time 2_056_234_917_255us: PhysicsEvent @ 2_056_234_917_255us
+17:13:16.341 [W0] INFO:	sim_time 2_056_234_917_255us: StepEvent @ 2_056_234_917_255us
+17:13:16.342 [W0] INFO:	sim_time 2_056_234_917_255us: VideoModelPrefetchEvent(chunk_start=2_056_235_017_255, size=1)
+17:13:16.342 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:16.347 [W0] INFO:	sim_time 2_056_235_017_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:16.411 [W0] INFO:	sim_time 2_056_235_017_255us: PolicyEvent @ 2_056_235_017_255us
+17:13:16.411 [W0] INFO:	Draining 2 outstanding tasks
+17:13:16.419 [W0] INFO:	sim_time 2_056_235_017_255us: ControllerEvent @ 2_056_235_017_255us
+17:13:16.423 [W0] INFO:	sim_time 2_056_235_017_255us: PhysicsEvent @ 2_056_235_017_255us
+17:13:16.423 [W0] INFO:	sim_time 2_056_235_017_255us: TrafficEvent @ 2_056_235_017_255us
+17:13:16.423 [W0] INFO:	sim_time 2_056_235_017_255us: PhysicsEvent @ 2_056_235_017_255us
+17:13:16.423 [W0] INFO:	sim_time 2_056_235_017_255us: StepEvent @ 2_056_235_017_255us
+17:13:16.424 [W0] INFO:	sim_time 2_056_235_017_255us: VideoModelPrefetchEvent(chunk_start=2_056_235_117_255, size=1)
+17:13:16.424 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:16.430 [W0] INFO:	sim_time 2_056_235_117_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:16.528 [W0] INFO:	sim_time 2_056_235_117_255us: PolicyEvent @ 2_056_235_117_255us
+17:13:16.529 [W0] INFO:	Draining 2 outstanding tasks
+17:13:16.535 [W0] INFO:	sim_time 2_056_235_117_255us: ControllerEvent @ 2_056_235_117_255us
+17:13:16.540 [W0] INFO:	sim_time 2_056_235_117_255us: PhysicsEvent @ 2_056_235_117_255us
+17:13:16.540 [W0] INFO:	sim_time 2_056_235_117_255us: TrafficEvent @ 2_056_235_117_255us
+17:13:16.540 [W0] INFO:	sim_time 2_056_235_117_255us: PhysicsEvent @ 2_056_235_117_255us
+17:13:16.540 [W0] INFO:	sim_time 2_056_235_117_255us: StepEvent @ 2_056_235_117_255us
+17:13:16.541 [W0] INFO:	sim_time 2_056_235_117_255us: VideoModelPrefetchEvent(chunk_start=2_056_235_217_255, size=1)
+17:13:16.542 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:16.551 [W0] INFO:	sim_time 2_056_235_217_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:16.630 [W0] INFO:	sim_time 2_056_235_217_255us: PolicyEvent @ 2_056_235_217_255us
+17:13:16.630 [W0] INFO:	Draining 2 outstanding tasks
+17:13:16.635 [W0] INFO:	sim_time 2_056_235_217_255us: ControllerEvent @ 2_056_235_217_255us
+17:13:16.639 [W0] INFO:	sim_time 2_056_235_217_255us: PhysicsEvent @ 2_056_235_217_255us
+17:13:16.639 [W0] INFO:	sim_time 2_056_235_217_255us: TrafficEvent @ 2_056_235_217_255us
+17:13:16.640 [W0] INFO:	sim_time 2_056_235_217_255us: PhysicsEvent @ 2_056_235_217_255us
+17:13:16.640 [W0] INFO:	sim_time 2_056_235_217_255us: StepEvent @ 2_056_235_217_255us
+17:13:16.641 [W0] INFO:	sim_time 2_056_235_217_255us: VideoModelPrefetchEvent(chunk_start=2_056_235_317_255, size=1)
+17:13:16.641 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:16.650 [W0] INFO:	sim_time 2_056_235_317_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:16.714 [W0] INFO:	sim_time 2_056_235_317_255us: PolicyEvent @ 2_056_235_317_255us
+17:13:16.715 [W0] INFO:	Draining 2 outstanding tasks
+17:13:16.726 [W0] INFO:	sim_time 2_056_235_317_255us: ControllerEvent @ 2_056_235_317_255us
+17:13:16.731 [W0] INFO:	sim_time 2_056_235_317_255us: PhysicsEvent @ 2_056_235_317_255us
+17:13:16.731 [W0] INFO:	sim_time 2_056_235_317_255us: TrafficEvent @ 2_056_235_317_255us
+17:13:16.732 [W0] INFO:	sim_time 2_056_235_317_255us: PhysicsEvent @ 2_056_235_317_255us
+17:13:16.732 [W0] INFO:	sim_time 2_056_235_317_255us: StepEvent @ 2_056_235_317_255us
+17:13:16.733 [W0] INFO:	sim_time 2_056_235_317_255us: VideoModelPrefetchEvent(chunk_start=2_056_235_417_255, size=1)
+17:13:16.733 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:16.739 [W0] INFO:	sim_time 2_056_235_417_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:16.779 [W0] INFO:	sim_time 2_056_235_417_255us: PolicyEvent @ 2_056_235_417_255us
+17:13:16.779 [W0] INFO:	Draining 2 outstanding tasks
+17:13:16.786 [W0] INFO:	sim_time 2_056_235_417_255us: ControllerEvent @ 2_056_235_417_255us
+17:13:16.792 [W0] INFO:	sim_time 2_056_235_417_255us: PhysicsEvent @ 2_056_235_417_255us
+17:13:16.793 [W0] INFO:	sim_time 2_056_235_417_255us: TrafficEvent @ 2_056_235_417_255us
+17:13:16.793 [W0] INFO:	sim_time 2_056_235_417_255us: PhysicsEvent @ 2_056_235_417_255us
+17:13:16.793 [W0] INFO:	sim_time 2_056_235_417_255us: StepEvent @ 2_056_235_417_255us
+17:13:16.794 [W0] INFO:	sim_time 2_056_235_417_255us: VideoModelPrefetchEvent(chunk_start=2_056_235_517_255, size=1)
+17:13:16.794 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:16.800 [W0] INFO:	sim_time 2_056_235_517_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:16.871 [W0] INFO:	sim_time 2_056_235_517_255us: PolicyEvent @ 2_056_235_517_255us
+17:13:16.872 [W0] INFO:	Draining 2 outstanding tasks
+17:13:16.879 [W0] INFO:	sim_time 2_056_235_517_255us: ControllerEvent @ 2_056_235_517_255us
+17:13:16.883 [W0] INFO:	sim_time 2_056_235_517_255us: PhysicsEvent @ 2_056_235_517_255us
+17:13:16.883 [W0] INFO:	sim_time 2_056_235_517_255us: TrafficEvent @ 2_056_235_517_255us
+17:13:16.884 [W0] INFO:	sim_time 2_056_235_517_255us: PhysicsEvent @ 2_056_235_517_255us
+17:13:16.884 [W0] INFO:	sim_time 2_056_235_517_255us: StepEvent @ 2_056_235_517_255us
+17:13:16.886 [W0] INFO:	sim_time 2_056_235_517_255us: VideoModelPrefetchEvent(chunk_start=2_056_235_617_255, size=1)
+17:13:16.886 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:16.892 [W0] INFO:	sim_time 2_056_235_617_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:16.932 [W0] INFO:	sim_time 2_056_235_617_255us: PolicyEvent @ 2_056_235_617_255us
+17:13:16.933 [W0] INFO:	Draining 2 outstanding tasks
+17:13:16.941 [W0] INFO:	sim_time 2_056_235_617_255us: ControllerEvent @ 2_056_235_617_255us
+17:13:16.945 [W0] INFO:	sim_time 2_056_235_617_255us: PhysicsEvent @ 2_056_235_617_255us
+17:13:16.946 [W0] INFO:	sim_time 2_056_235_617_255us: TrafficEvent @ 2_056_235_617_255us
+17:13:16.946 [W0] INFO:	sim_time 2_056_235_617_255us: PhysicsEvent @ 2_056_235_617_255us
+17:13:16.946 [W0] INFO:	sim_time 2_056_235_617_255us: StepEvent @ 2_056_235_617_255us
+17:13:16.947 [W0] INFO:	sim_time 2_056_235_617_255us: VideoModelPrefetchEvent(chunk_start=2_056_235_717_255, size=1)
+17:13:16.947 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:16.954 [W0] INFO:	sim_time 2_056_235_717_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:17.000 [W0] INFO:	sim_time 2_056_235_717_255us: PolicyEvent @ 2_056_235_717_255us
+17:13:17.000 [W0] INFO:	Draining 2 outstanding tasks
+17:13:17.006 [W0] INFO:	sim_time 2_056_235_717_255us: ControllerEvent @ 2_056_235_717_255us
+17:13:17.010 [W0] INFO:	sim_time 2_056_235_717_255us: PhysicsEvent @ 2_056_235_717_255us
+17:13:17.016 [W0] INFO:	sim_time 2_056_235_717_255us: TrafficEvent @ 2_056_235_717_255us
+17:13:17.016 [W0] INFO:	sim_time 2_056_235_717_255us: PhysicsEvent @ 2_056_235_717_255us
+17:13:17.016 [W0] INFO:	sim_time 2_056_235_717_255us: StepEvent @ 2_056_235_717_255us
+17:13:17.018 [W0] INFO:	sim_time 2_056_235_717_255us: VideoModelPrefetchEvent(chunk_start=2_056_235_817_255, size=1)
+17:13:17.018 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:17.024 [W0] INFO:	sim_time 2_056_235_817_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:17.111 [W0] INFO:	sim_time 2_056_235_817_255us: PolicyEvent @ 2_056_235_817_255us
+17:13:17.111 [W0] INFO:	Draining 2 outstanding tasks
+17:13:17.117 [W0] INFO:	sim_time 2_056_235_817_255us: ControllerEvent @ 2_056_235_817_255us
+17:13:17.122 [W0] INFO:	sim_time 2_056_235_817_255us: PhysicsEvent @ 2_056_235_817_255us
+17:13:17.127 [W0] INFO:	sim_time 2_056_235_817_255us: TrafficEvent @ 2_056_235_817_255us
+17:13:17.127 [W0] INFO:	sim_time 2_056_235_817_255us: PhysicsEvent @ 2_056_235_817_255us
+17:13:17.127 [W0] INFO:	sim_time 2_056_235_817_255us: StepEvent @ 2_056_235_817_255us
+17:13:17.128 [W0] INFO:	sim_time 2_056_235_817_255us: VideoModelPrefetchEvent(chunk_start=2_056_235_917_255, size=1)
+17:13:17.129 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:17.139 [W0] INFO:	sim_time 2_056_235_917_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:17.198 [W0] INFO:	sim_time 2_056_235_917_255us: PolicyEvent @ 2_056_235_917_255us
+17:13:17.199 [W0] INFO:	Draining 2 outstanding tasks
+17:13:17.209 [W0] INFO:	sim_time 2_056_235_917_255us: ControllerEvent @ 2_056_235_917_255us
+17:13:17.213 [W0] INFO:	sim_time 2_056_235_917_255us: PhysicsEvent @ 2_056_235_917_255us
+17:13:17.216 [W0] INFO:	sim_time 2_056_235_917_255us: TrafficEvent @ 2_056_235_917_255us
+17:13:17.217 [W0] INFO:	sim_time 2_056_235_917_255us: PhysicsEvent @ 2_056_235_917_255us
+17:13:17.217 [W0] INFO:	sim_time 2_056_235_917_255us: StepEvent @ 2_056_235_917_255us
+17:13:17.218 [W0] INFO:	sim_time 2_056_235_917_255us: VideoModelPrefetchEvent(chunk_start=2_056_236_017_255, size=1)
+17:13:17.218 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:17.224 [W0] INFO:	sim_time 2_056_236_017_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:17.324 [W0] INFO:	sim_time 2_056_236_017_255us: PolicyEvent @ 2_056_236_017_255us
+17:13:17.324 [W0] INFO:	Draining 2 outstanding tasks
+17:13:17.331 [W0] INFO:	sim_time 2_056_236_017_255us: ControllerEvent @ 2_056_236_017_255us
+17:13:17.337 [W0] INFO:	sim_time 2_056_236_017_255us: PhysicsEvent @ 2_056_236_017_255us
+17:13:17.345 [W0] INFO:	sim_time 2_056_236_017_255us: TrafficEvent @ 2_056_236_017_255us
+17:13:17.346 [W0] INFO:	sim_time 2_056_236_017_255us: PhysicsEvent @ 2_056_236_017_255us
+17:13:17.346 [W0] INFO:	sim_time 2_056_236_017_255us: StepEvent @ 2_056_236_017_255us
+17:13:17.347 [W0] INFO:	sim_time 2_056_236_017_255us: VideoModelPrefetchEvent(chunk_start=2_056_236_117_255, size=1)
+17:13:17.347 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:17.353 [W0] INFO:	sim_time 2_056_236_117_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:17.431 [W0] INFO:	sim_time 2_056_236_117_255us: PolicyEvent @ 2_056_236_117_255us
+17:13:17.432 [W0] INFO:	Draining 2 outstanding tasks
+17:13:17.437 [W0] INFO:	sim_time 2_056_236_117_255us: ControllerEvent @ 2_056_236_117_255us
+17:13:17.441 [W0] INFO:	sim_time 2_056_236_117_255us: PhysicsEvent @ 2_056_236_117_255us
+17:13:17.452 [W0] INFO:	sim_time 2_056_236_117_255us: TrafficEvent @ 2_056_236_117_255us
+17:13:17.452 [W0] INFO:	sim_time 2_056_236_117_255us: PhysicsEvent @ 2_056_236_117_255us
+17:13:17.453 [W0] INFO:	sim_time 2_056_236_117_255us: StepEvent @ 2_056_236_117_255us
+17:13:17.455 [W0] INFO:	sim_time 2_056_236_117_255us: VideoModelPrefetchEvent(chunk_start=2_056_236_217_255, size=1)
+17:13:17.455 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:17.460 [W0] INFO:	sim_time 2_056_236_217_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:17.552 [W0] INFO:	sim_time 2_056_236_217_255us: PolicyEvent @ 2_056_236_217_255us
+17:13:17.552 [W0] INFO:	Draining 2 outstanding tasks
+17:13:17.559 [W0] INFO:	sim_time 2_056_236_217_255us: ControllerEvent @ 2_056_236_217_255us
+17:13:17.563 [W0] INFO:	sim_time 2_056_236_217_255us: PhysicsEvent @ 2_056_236_217_255us
+17:13:17.567 [W0] INFO:	sim_time 2_056_236_217_255us: TrafficEvent @ 2_056_236_217_255us
+17:13:17.567 [W0] INFO:	sim_time 2_056_236_217_255us: PhysicsEvent @ 2_056_236_217_255us
+17:13:17.568 [W0] INFO:	sim_time 2_056_236_217_255us: StepEvent @ 2_056_236_217_255us
+17:13:17.569 [W0] INFO:	sim_time 2_056_236_217_255us: VideoModelPrefetchEvent(chunk_start=2_056_236_317_255, size=1)
+17:13:17.569 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:17.574 [W0] INFO:	sim_time 2_056_236_317_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:17.625 [W0] INFO:	sim_time 2_056_236_317_255us: PolicyEvent @ 2_056_236_317_255us
+17:13:17.626 [W0] INFO:	Draining 2 outstanding tasks
+17:13:17.637 [W0] INFO:	sim_time 2_056_236_317_255us: ControllerEvent @ 2_056_236_317_255us
+17:13:17.642 [W0] INFO:	sim_time 2_056_236_317_255us: PhysicsEvent @ 2_056_236_317_255us
+17:13:17.647 [W0] INFO:	sim_time 2_056_236_317_255us: TrafficEvent @ 2_056_236_317_255us
+17:13:17.647 [W0] INFO:	sim_time 2_056_236_317_255us: PhysicsEvent @ 2_056_236_317_255us
+17:13:17.648 [W0] INFO:	sim_time 2_056_236_317_255us: StepEvent @ 2_056_236_317_255us
+17:13:17.649 [W0] INFO:	sim_time 2_056_236_317_255us: VideoModelPrefetchEvent(chunk_start=2_056_236_417_255, size=1)
+17:13:17.649 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:17.655 [W0] INFO:	sim_time 2_056_236_417_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:17.711 [W0] INFO:	sim_time 2_056_236_417_255us: PolicyEvent @ 2_056_236_417_255us
+17:13:17.711 [W0] INFO:	Draining 2 outstanding tasks
+17:13:17.722 [W0] INFO:	sim_time 2_056_236_417_255us: ControllerEvent @ 2_056_236_417_255us
+17:13:17.729 [W0] INFO:	sim_time 2_056_236_417_255us: PhysicsEvent @ 2_056_236_417_255us
+17:13:17.733 [W0] INFO:	sim_time 2_056_236_417_255us: TrafficEvent @ 2_056_236_417_255us
+17:13:17.734 [W0] INFO:	sim_time 2_056_236_417_255us: PhysicsEvent @ 2_056_236_417_255us
+17:13:17.734 [W0] INFO:	sim_time 2_056_236_417_255us: StepEvent @ 2_056_236_417_255us
+17:13:17.735 [W0] INFO:	sim_time 2_056_236_417_255us: VideoModelPrefetchEvent(chunk_start=2_056_236_517_255, size=1)
+17:13:17.736 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:17.745 [W0] INFO:	sim_time 2_056_236_517_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:17.797 [W0] INFO:	sim_time 2_056_236_517_255us: PolicyEvent @ 2_056_236_517_255us
+17:13:17.798 [W0] INFO:	Draining 2 outstanding tasks
+17:13:17.807 [W0] INFO:	sim_time 2_056_236_517_255us: ControllerEvent @ 2_056_236_517_255us
+17:13:17.812 [W0] INFO:	sim_time 2_056_236_517_255us: PhysicsEvent @ 2_056_236_517_255us
+17:13:17.820 [W0] INFO:	sim_time 2_056_236_517_255us: TrafficEvent @ 2_056_236_517_255us
+17:13:17.821 [W0] INFO:	sim_time 2_056_236_517_255us: PhysicsEvent @ 2_056_236_517_255us
+17:13:17.821 [W0] INFO:	sim_time 2_056_236_517_255us: StepEvent @ 2_056_236_517_255us
+17:13:17.822 [W0] INFO:	sim_time 2_056_236_517_255us: VideoModelPrefetchEvent(chunk_start=2_056_236_617_255, size=1)
+17:13:17.822 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:17.827 [W0] INFO:	sim_time 2_056_236_617_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:17.885 [W0] INFO:	sim_time 2_056_236_617_255us: PolicyEvent @ 2_056_236_617_255us
+17:13:17.885 [W0] INFO:	Draining 2 outstanding tasks
+17:13:17.891 [W0] INFO:	sim_time 2_056_236_617_255us: ControllerEvent @ 2_056_236_617_255us
+17:13:17.899 [W0] INFO:	sim_time 2_056_236_617_255us: PhysicsEvent @ 2_056_236_617_255us
+17:13:17.905 [W0] INFO:	sim_time 2_056_236_617_255us: TrafficEvent @ 2_056_236_617_255us
+17:13:17.906 [W0] INFO:	sim_time 2_056_236_617_255us: PhysicsEvent @ 2_056_236_617_255us
+17:13:17.906 [W0] INFO:	sim_time 2_056_236_617_255us: StepEvent @ 2_056_236_617_255us
+17:13:17.907 [W0] INFO:	sim_time 2_056_236_617_255us: VideoModelPrefetchEvent(chunk_start=2_056_236_717_255, size=1)
+17:13:17.907 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:17.915 [W0] INFO:	sim_time 2_056_236_717_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:17.954 [W0] INFO:	sim_time 2_056_236_717_255us: PolicyEvent @ 2_056_236_717_255us
+17:13:17.955 [W0] INFO:	Draining 2 outstanding tasks
+17:13:17.964 [W0] INFO:	sim_time 2_056_236_717_255us: ControllerEvent @ 2_056_236_717_255us
+17:13:17.968 [W0] INFO:	sim_time 2_056_236_717_255us: PhysicsEvent @ 2_056_236_717_255us
+17:13:17.974 [W0] INFO:	sim_time 2_056_236_717_255us: TrafficEvent @ 2_056_236_717_255us
+17:13:17.975 [W0] INFO:	sim_time 2_056_236_717_255us: PhysicsEvent @ 2_056_236_717_255us
+17:13:17.975 [W0] INFO:	sim_time 2_056_236_717_255us: StepEvent @ 2_056_236_717_255us
+17:13:17.976 [W0] INFO:	sim_time 2_056_236_717_255us: VideoModelPrefetchEvent(chunk_start=2_056_236_817_255, size=1)
+17:13:17.976 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:17.982 [W0] INFO:	sim_time 2_056_236_817_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:18.072 [W0] INFO:	sim_time 2_056_236_817_255us: PolicyEvent @ 2_056_236_817_255us
+17:13:18.073 [W0] INFO:	Draining 2 outstanding tasks
+17:13:18.078 [W0] INFO:	sim_time 2_056_236_817_255us: ControllerEvent @ 2_056_236_817_255us
+17:13:18.084 [W0] INFO:	sim_time 2_056_236_817_255us: PhysicsEvent @ 2_056_236_817_255us
+17:13:18.090 [W0] INFO:	sim_time 2_056_236_817_255us: TrafficEvent @ 2_056_236_817_255us
+17:13:18.091 [W0] INFO:	sim_time 2_056_236_817_255us: PhysicsEvent @ 2_056_236_817_255us
+17:13:18.091 [W0] INFO:	sim_time 2_056_236_817_255us: StepEvent @ 2_056_236_817_255us
+17:13:18.093 [W0] INFO:	sim_time 2_056_236_817_255us: VideoModelPrefetchEvent(chunk_start=2_056_236_917_255, size=1)
+17:13:18.093 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:18.101 [W0] INFO:	sim_time 2_056_236_917_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:18.138 [W0] INFO:	sim_time 2_056_236_917_255us: PolicyEvent @ 2_056_236_917_255us
+17:13:18.139 [W0] INFO:	Draining 2 outstanding tasks
+17:13:18.146 [W0] INFO:	sim_time 2_056_236_917_255us: ControllerEvent @ 2_056_236_917_255us
+17:13:18.150 [W0] INFO:	sim_time 2_056_236_917_255us: PhysicsEvent @ 2_056_236_917_255us
+17:13:18.155 [W0] INFO:	sim_time 2_056_236_917_255us: TrafficEvent @ 2_056_236_917_255us
+17:13:18.155 [W0] INFO:	sim_time 2_056_236_917_255us: PhysicsEvent @ 2_056_236_917_255us
+17:13:18.155 [W0] INFO:	sim_time 2_056_236_917_255us: StepEvent @ 2_056_236_917_255us
+17:13:18.157 [W0] INFO:	sim_time 2_056_236_917_255us: VideoModelPrefetchEvent(chunk_start=2_056_237_017_255, size=1)
+17:13:18.157 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:18.165 [W0] INFO:	sim_time 2_056_237_017_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:18.218 [W0] INFO:	sim_time 2_056_237_017_255us: PolicyEvent @ 2_056_237_017_255us
+17:13:18.218 [W0] INFO:	Draining 2 outstanding tasks
+17:13:18.224 [W0] INFO:	sim_time 2_056_237_017_255us: ControllerEvent @ 2_056_237_017_255us
+17:13:18.229 [W0] INFO:	sim_time 2_056_237_017_255us: PhysicsEvent @ 2_056_237_017_255us
+17:13:18.232 [W0] INFO:	sim_time 2_056_237_017_255us: TrafficEvent @ 2_056_237_017_255us
+17:13:18.233 [W0] INFO:	sim_time 2_056_237_017_255us: PhysicsEvent @ 2_056_237_017_255us
+17:13:18.233 [W0] INFO:	sim_time 2_056_237_017_255us: StepEvent @ 2_056_237_017_255us
+17:13:18.234 [W0] INFO:	sim_time 2_056_237_017_255us: VideoModelPrefetchEvent(chunk_start=2_056_237_117_255, size=1)
+17:13:18.234 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:18.238 [W0] INFO:	sim_time 2_056_237_117_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:18.287 [W0] INFO:	sim_time 2_056_237_117_255us: PolicyEvent @ 2_056_237_117_255us
+17:13:18.287 [W0] INFO:	Draining 2 outstanding tasks
+17:13:18.293 [W0] INFO:	sim_time 2_056_237_117_255us: ControllerEvent @ 2_056_237_117_255us
+17:13:18.297 [W0] INFO:	sim_time 2_056_237_117_255us: PhysicsEvent @ 2_056_237_117_255us
+17:13:18.304 [W0] INFO:	sim_time 2_056_237_117_255us: TrafficEvent @ 2_056_237_117_255us
+17:13:18.305 [W0] INFO:	sim_time 2_056_237_117_255us: PhysicsEvent @ 2_056_237_117_255us
+17:13:18.305 [W0] INFO:	sim_time 2_056_237_117_255us: StepEvent @ 2_056_237_117_255us
+17:13:18.306 [W0] INFO:	sim_time 2_056_237_117_255us: VideoModelPrefetchEvent(chunk_start=2_056_237_217_255, size=1)
+17:13:18.306 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:18.310 [W0] INFO:	sim_time 2_056_237_217_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:18.402 [W0] INFO:	sim_time 2_056_237_217_255us: PolicyEvent @ 2_056_237_217_255us
+17:13:18.403 [W0] INFO:	Draining 2 outstanding tasks
+17:13:18.408 [W0] INFO:	sim_time 2_056_237_217_255us: ControllerEvent @ 2_056_237_217_255us
+17:13:18.413 [W0] INFO:	sim_time 2_056_237_217_255us: PhysicsEvent @ 2_056_237_217_255us
+17:13:18.422 [W0] INFO:	sim_time 2_056_237_217_255us: TrafficEvent @ 2_056_237_217_255us
+17:13:18.423 [W0] INFO:	sim_time 2_056_237_217_255us: PhysicsEvent @ 2_056_237_217_255us
+17:13:18.423 [W0] INFO:	sim_time 2_056_237_217_255us: StepEvent @ 2_056_237_217_255us
+17:13:18.424 [W0] INFO:	sim_time 2_056_237_217_255us: VideoModelPrefetchEvent(chunk_start=2_056_237_317_255, size=1)
+17:13:18.424 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:18.430 [W0] INFO:	sim_time 2_056_237_317_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:18.470 [W0] INFO:	sim_time 2_056_237_317_255us: PolicyEvent @ 2_056_237_317_255us
+17:13:18.471 [W0] INFO:	Draining 2 outstanding tasks
+17:13:18.478 [W0] INFO:	sim_time 2_056_237_317_255us: ControllerEvent @ 2_056_237_317_255us
+17:13:18.484 [W0] INFO:	sim_time 2_056_237_317_255us: PhysicsEvent @ 2_056_237_317_255us
+17:13:18.487 [W0] INFO:	sim_time 2_056_237_317_255us: TrafficEvent @ 2_056_237_317_255us
+17:13:18.488 [W0] INFO:	sim_time 2_056_237_317_255us: PhysicsEvent @ 2_056_237_317_255us
+17:13:18.488 [W0] INFO:	sim_time 2_056_237_317_255us: StepEvent @ 2_056_237_317_255us
+17:13:18.489 [W0] INFO:	sim_time 2_056_237_317_255us: VideoModelPrefetchEvent(chunk_start=2_056_237_417_255, size=1)
+17:13:18.489 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:18.494 [W0] INFO:	sim_time 2_056_237_417_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:18.543 [W0] INFO:	sim_time 2_056_237_417_255us: PolicyEvent @ 2_056_237_417_255us
+17:13:18.543 [W0] INFO:	Draining 2 outstanding tasks
+17:13:18.549 [W0] INFO:	sim_time 2_056_237_417_255us: ControllerEvent @ 2_056_237_417_255us
+17:13:18.553 [W0] INFO:	sim_time 2_056_237_417_255us: PhysicsEvent @ 2_056_237_417_255us
+17:13:18.558 [W0] INFO:	sim_time 2_056_237_417_255us: TrafficEvent @ 2_056_237_417_255us
+17:13:18.558 [W0] INFO:	sim_time 2_056_237_417_255us: PhysicsEvent @ 2_056_237_417_255us
+17:13:18.558 [W0] INFO:	sim_time 2_056_237_417_255us: StepEvent @ 2_056_237_417_255us
+17:13:18.559 [W0] INFO:	sim_time 2_056_237_417_255us: VideoModelPrefetchEvent(chunk_start=2_056_237_517_255, size=1)
+17:13:18.559 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:18.564 [W0] INFO:	sim_time 2_056_237_517_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:18.609 [W0] INFO:	sim_time 2_056_237_517_255us: PolicyEvent @ 2_056_237_517_255us
+17:13:18.610 [W0] INFO:	Draining 2 outstanding tasks
+17:13:18.615 [W0] INFO:	sim_time 2_056_237_517_255us: ControllerEvent @ 2_056_237_517_255us
+17:13:18.620 [W0] INFO:	sim_time 2_056_237_517_255us: PhysicsEvent @ 2_056_237_517_255us
+17:13:18.624 [W0] INFO:	sim_time 2_056_237_517_255us: TrafficEvent @ 2_056_237_517_255us
+17:13:18.625 [W0] INFO:	sim_time 2_056_237_517_255us: PhysicsEvent @ 2_056_237_517_255us
+17:13:18.625 [W0] INFO:	sim_time 2_056_237_517_255us: StepEvent @ 2_056_237_517_255us
+17:13:18.626 [W0] INFO:	sim_time 2_056_237_517_255us: VideoModelPrefetchEvent(chunk_start=2_056_237_617_255, size=1)
+17:13:18.626 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:18.632 [W0] INFO:	sim_time 2_056_237_617_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:18.710 [W0] INFO:	sim_time 2_056_237_617_255us: PolicyEvent @ 2_056_237_617_255us
+17:13:18.710 [W0] INFO:	Draining 2 outstanding tasks
+17:13:18.716 [W0] INFO:	sim_time 2_056_237_617_255us: ControllerEvent @ 2_056_237_617_255us
+17:13:18.722 [W0] INFO:	sim_time 2_056_237_617_255us: PhysicsEvent @ 2_056_237_617_255us
+17:13:18.726 [W0] INFO:	sim_time 2_056_237_617_255us: TrafficEvent @ 2_056_237_617_255us
+17:13:18.727 [W0] INFO:	sim_time 2_056_237_617_255us: PhysicsEvent @ 2_056_237_617_255us
+17:13:18.727 [W0] INFO:	sim_time 2_056_237_617_255us: StepEvent @ 2_056_237_617_255us
+17:13:18.728 [W0] INFO:	sim_time 2_056_237_617_255us: VideoModelPrefetchEvent(chunk_start=2_056_237_717_255, size=1)
+17:13:18.728 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:18.733 [W0] INFO:	sim_time 2_056_237_717_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:18.774 [W0] INFO:	sim_time 2_056_237_717_255us: PolicyEvent @ 2_056_237_717_255us
+17:13:18.774 [W0] INFO:	Draining 2 outstanding tasks
+17:13:18.782 [W0] INFO:	sim_time 2_056_237_717_255us: ControllerEvent @ 2_056_237_717_255us
+17:13:18.787 [W0] INFO:	sim_time 2_056_237_717_255us: PhysicsEvent @ 2_056_237_717_255us
+17:13:18.791 [W0] INFO:	sim_time 2_056_237_717_255us: TrafficEvent @ 2_056_237_717_255us
+17:13:18.792 [W0] INFO:	sim_time 2_056_237_717_255us: PhysicsEvent @ 2_056_237_717_255us
+17:13:18.792 [W0] INFO:	sim_time 2_056_237_717_255us: StepEvent @ 2_056_237_717_255us
+17:13:18.794 [W0] INFO:	sim_time 2_056_237_717_255us: VideoModelPrefetchEvent(chunk_start=2_056_237_817_255, size=1)
+17:13:18.794 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:18.802 [W0] INFO:	sim_time 2_056_237_817_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:18.856 [W0] INFO:	sim_time 2_056_237_817_255us: PolicyEvent @ 2_056_237_817_255us
+17:13:18.858 [W0] INFO:	Draining 2 outstanding tasks
+17:13:18.868 [W0] INFO:	sim_time 2_056_237_817_255us: ControllerEvent @ 2_056_237_817_255us
+17:13:18.873 [W0] INFO:	sim_time 2_056_237_817_255us: PhysicsEvent @ 2_056_237_817_255us
+17:13:18.878 [W0] INFO:	sim_time 2_056_237_817_255us: TrafficEvent @ 2_056_237_817_255us
+17:13:18.878 [W0] INFO:	sim_time 2_056_237_817_255us: PhysicsEvent @ 2_056_237_817_255us
+17:13:18.878 [W0] INFO:	sim_time 2_056_237_817_255us: StepEvent @ 2_056_237_817_255us
+17:13:18.880 [W0] INFO:	sim_time 2_056_237_817_255us: VideoModelPrefetchEvent(chunk_start=2_056_237_917_255, size=1)
+17:13:18.880 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:18.886 [W0] INFO:	sim_time 2_056_237_917_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:18.923 [W0] INFO:	sim_time 2_056_237_917_255us: PolicyEvent @ 2_056_237_917_255us
+17:13:18.924 [W0] INFO:	Draining 2 outstanding tasks
+17:13:18.932 [W0] INFO:	sim_time 2_056_237_917_255us: ControllerEvent @ 2_056_237_917_255us
+17:13:18.936 [W0] INFO:	sim_time 2_056_237_917_255us: PhysicsEvent @ 2_056_237_917_255us
+17:13:18.939 [W0] INFO:	sim_time 2_056_237_917_255us: TrafficEvent @ 2_056_237_917_255us
+17:13:18.940 [W0] INFO:	sim_time 2_056_237_917_255us: PhysicsEvent @ 2_056_237_917_255us
+17:13:18.940 [W0] INFO:	sim_time 2_056_237_917_255us: StepEvent @ 2_056_237_917_255us
+17:13:18.941 [W0] INFO:	sim_time 2_056_237_917_255us: VideoModelPrefetchEvent(chunk_start=2_056_238_017_255, size=1)
+17:13:18.941 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:18.945 [W0] INFO:	sim_time 2_056_238_017_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:18.989 [W0] INFO:	sim_time 2_056_238_017_255us: PolicyEvent @ 2_056_238_017_255us
+17:13:18.989 [W0] INFO:	Draining 2 outstanding tasks
+17:13:18.998 [W0] INFO:	sim_time 2_056_238_017_255us: ControllerEvent @ 2_056_238_017_255us
+17:13:19.004 [W0] INFO:	sim_time 2_056_238_017_255us: PhysicsEvent @ 2_056_238_017_255us
+17:13:19.010 [W0] INFO:	sim_time 2_056_238_017_255us: TrafficEvent @ 2_056_238_017_255us
+17:13:19.010 [W0] INFO:	sim_time 2_056_238_017_255us: PhysicsEvent @ 2_056_238_017_255us
+17:13:19.010 [W0] INFO:	sim_time 2_056_238_017_255us: StepEvent @ 2_056_238_017_255us
+17:13:19.012 [W0] INFO:	sim_time 2_056_238_017_255us: VideoModelPrefetchEvent(chunk_start=2_056_238_117_255, size=1)
+17:13:19.012 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:19.018 [W0] INFO:	sim_time 2_056_238_117_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:19.071 [W0] INFO:	sim_time 2_056_238_117_255us: PolicyEvent @ 2_056_238_117_255us
+17:13:19.072 [W0] INFO:	Draining 2 outstanding tasks
+17:13:19.079 [W0] INFO:	sim_time 2_056_238_117_255us: ControllerEvent @ 2_056_238_117_255us
+17:13:19.085 [W0] INFO:	sim_time 2_056_238_117_255us: PhysicsEvent @ 2_056_238_117_255us
+17:13:19.090 [W0] INFO:	sim_time 2_056_238_117_255us: TrafficEvent @ 2_056_238_117_255us
+17:13:19.090 [W0] INFO:	sim_time 2_056_238_117_255us: PhysicsEvent @ 2_056_238_117_255us
+17:13:19.090 [W0] INFO:	sim_time 2_056_238_117_255us: StepEvent @ 2_056_238_117_255us
+17:13:19.092 [W0] INFO:	sim_time 2_056_238_117_255us: VideoModelPrefetchEvent(chunk_start=2_056_238_217_255, size=1)
+17:13:19.092 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:19.098 [W0] INFO:	sim_time 2_056_238_217_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:19.134 [W0] INFO:	sim_time 2_056_238_217_255us: PolicyEvent @ 2_056_238_217_255us
+17:13:19.135 [W0] INFO:	Draining 2 outstanding tasks
+17:13:19.146 [W0] INFO:	sim_time 2_056_238_217_255us: ControllerEvent @ 2_056_238_217_255us
+17:13:19.151 [W0] INFO:	sim_time 2_056_238_217_255us: PhysicsEvent @ 2_056_238_217_255us
+17:13:19.155 [W0] INFO:	sim_time 2_056_238_217_255us: TrafficEvent @ 2_056_238_217_255us
+17:13:19.155 [W0] INFO:	sim_time 2_056_238_217_255us: PhysicsEvent @ 2_056_238_217_255us
+17:13:19.156 [W0] INFO:	sim_time 2_056_238_217_255us: StepEvent @ 2_056_238_217_255us
+17:13:19.158 [W0] INFO:	sim_time 2_056_238_217_255us: VideoModelPrefetchEvent(chunk_start=2_056_238_317_255, size=1)
+17:13:19.158 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:19.162 [W0] INFO:	sim_time 2_056_238_317_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:19.237 [W0] INFO:	sim_time 2_056_238_317_255us: PolicyEvent @ 2_056_238_317_255us
+17:13:19.237 [W0] INFO:	Draining 2 outstanding tasks
+17:13:19.243 [W0] INFO:	sim_time 2_056_238_317_255us: ControllerEvent @ 2_056_238_317_255us
+17:13:19.247 [W0] INFO:	sim_time 2_056_238_317_255us: PhysicsEvent @ 2_056_238_317_255us
+17:13:19.254 [W0] INFO:	sim_time 2_056_238_317_255us: TrafficEvent @ 2_056_238_317_255us
+17:13:19.255 [W0] INFO:	sim_time 2_056_238_317_255us: PhysicsEvent @ 2_056_238_317_255us
+17:13:19.255 [W0] INFO:	sim_time 2_056_238_317_255us: StepEvent @ 2_056_238_317_255us
+17:13:19.256 [W0] INFO:	sim_time 2_056_238_317_255us: VideoModelPrefetchEvent(chunk_start=2_056_238_417_255, size=1)
+17:13:19.256 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:19.261 [W0] INFO:	sim_time 2_056_238_417_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:19.310 [W0] INFO:	sim_time 2_056_238_417_255us: PolicyEvent @ 2_056_238_417_255us
+17:13:19.310 [W0] INFO:	Draining 2 outstanding tasks
+17:13:19.318 [W0] INFO:	sim_time 2_056_238_417_255us: ControllerEvent @ 2_056_238_417_255us
+17:13:19.323 [W0] INFO:	sim_time 2_056_238_417_255us: PhysicsEvent @ 2_056_238_417_255us
+17:13:19.328 [W0] INFO:	sim_time 2_056_238_417_255us: TrafficEvent @ 2_056_238_417_255us
+17:13:19.328 [W0] INFO:	sim_time 2_056_238_417_255us: PhysicsEvent @ 2_056_238_417_255us
+17:13:19.329 [W0] INFO:	sim_time 2_056_238_417_255us: StepEvent @ 2_056_238_417_255us
+17:13:19.330 [W0] INFO:	sim_time 2_056_238_417_255us: VideoModelPrefetchEvent(chunk_start=2_056_238_517_255, size=1)
+17:13:19.330 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:19.335 [W0] INFO:	sim_time 2_056_238_517_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:19.411 [W0] INFO:	sim_time 2_056_238_517_255us: PolicyEvent @ 2_056_238_517_255us
+17:13:19.411 [W0] INFO:	Draining 2 outstanding tasks
+17:13:19.417 [W0] INFO:	sim_time 2_056_238_517_255us: ControllerEvent @ 2_056_238_517_255us
+17:13:19.422 [W0] INFO:	sim_time 2_056_238_517_255us: PhysicsEvent @ 2_056_238_517_255us
+17:13:19.430 [W0] INFO:	sim_time 2_056_238_517_255us: TrafficEvent @ 2_056_238_517_255us
+17:13:19.430 [W0] INFO:	sim_time 2_056_238_517_255us: PhysicsEvent @ 2_056_238_517_255us
+17:13:19.431 [W0] INFO:	sim_time 2_056_238_517_255us: StepEvent @ 2_056_238_517_255us
+17:13:19.432 [W0] INFO:	sim_time 2_056_238_517_255us: VideoModelPrefetchEvent(chunk_start=2_056_238_617_255, size=1)
+17:13:19.432 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:19.436 [W0] INFO:	sim_time 2_056_238_617_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:19.489 [W0] INFO:	sim_time 2_056_238_617_255us: PolicyEvent @ 2_056_238_617_255us
+17:13:19.490 [W0] INFO:	Draining 2 outstanding tasks
+17:13:20.481 [W0] INFO:	sim_time 2_056_238_617_255us: ControllerEvent @ 2_056_238_617_255us
+17:13:20.485 [W0] INFO:	sim_time 2_056_238_617_255us: PhysicsEvent @ 2_056_238_617_255us
+17:13:20.490 [W0] INFO:	sim_time 2_056_238_617_255us: TrafficEvent @ 2_056_238_617_255us
+17:13:20.490 [W0] INFO:	sim_time 2_056_238_617_255us: PhysicsEvent @ 2_056_238_617_255us
+17:13:20.491 [W0] INFO:	sim_time 2_056_238_617_255us: StepEvent @ 2_056_238_617_255us
+17:13:20.492 [W0] INFO:	sim_time 2_056_238_617_255us: VideoModelPrefetchEvent(chunk_start=2_056_238_717_255, size=1)
+17:13:20.492 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=4
+17:13:20.496 [W0] INFO:	sim_time 2_056_238_717_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:20.536 [W0] INFO:	sim_time 2_056_238_717_255us: PolicyEvent @ 2_056_238_717_255us
+17:13:20.536 [W0] INFO:	Draining 2 outstanding tasks
+17:13:20.546 [W0] INFO:	sim_time 2_056_238_717_255us: ControllerEvent @ 2_056_238_717_255us
+17:13:20.551 [W0] INFO:	sim_time 2_056_238_717_255us: PhysicsEvent @ 2_056_238_717_255us
+17:13:20.557 [W0] INFO:	sim_time 2_056_238_717_255us: TrafficEvent @ 2_056_238_717_255us
+17:13:20.557 [W0] INFO:	sim_time 2_056_238_717_255us: PhysicsEvent @ 2_056_238_717_255us
+17:13:20.557 [W0] INFO:	sim_time 2_056_238_717_255us: StepEvent @ 2_056_238_717_255us
+17:13:20.558 [W0] INFO:	sim_time 2_056_238_717_255us: VideoModelPrefetchEvent(chunk_start=2_056_238_817_255, size=1)
+17:13:20.558 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=4
+17:13:20.565 [W0] INFO:	sim_time 2_056_238_817_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:20.617 [W0] INFO:	sim_time 2_056_238_817_255us: PolicyEvent @ 2_056_238_817_255us
+17:13:20.617 [W0] INFO:	Draining 2 outstanding tasks
+17:13:20.623 [W0] INFO:	sim_time 2_056_238_817_255us: ControllerEvent @ 2_056_238_817_255us
+17:13:20.627 [W0] INFO:	sim_time 2_056_238_817_255us: PhysicsEvent @ 2_056_238_817_255us
+17:13:20.630 [W0] INFO:	sim_time 2_056_238_817_255us: TrafficEvent @ 2_056_238_817_255us
+17:13:20.631 [W0] INFO:	sim_time 2_056_238_817_255us: PhysicsEvent @ 2_056_238_817_255us
+17:13:20.631 [W0] INFO:	sim_time 2_056_238_817_255us: StepEvent @ 2_056_238_817_255us
+17:13:20.632 [W0] INFO:	sim_time 2_056_238_817_255us: VideoModelPrefetchEvent(chunk_start=2_056_238_917_255, size=1)
+17:13:20.633 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=4
+17:13:20.638 [W0] INFO:	sim_time 2_056_238_917_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:20.734 [W0] INFO:	sim_time 2_056_238_917_255us: PolicyEvent @ 2_056_238_917_255us
+17:13:20.734 [W0] INFO:	Draining 2 outstanding tasks
+17:13:20.740 [W0] INFO:	sim_time 2_056_238_917_255us: ControllerEvent @ 2_056_238_917_255us
+17:13:20.748 [W0] INFO:	sim_time 2_056_238_917_255us: PhysicsEvent @ 2_056_238_917_255us
+17:13:20.753 [W0] INFO:	sim_time 2_056_238_917_255us: TrafficEvent @ 2_056_238_917_255us
+17:13:20.754 [W0] INFO:	sim_time 2_056_238_917_255us: PhysicsEvent @ 2_056_238_917_255us
+17:13:20.755 [W0] INFO:	sim_time 2_056_238_917_255us: StepEvent @ 2_056_238_917_255us
+17:13:20.756 [W0] INFO:	sim_time 2_056_238_917_255us: VideoModelPrefetchEvent(chunk_start=2_056_239_017_255, size=1)
+17:13:20.756 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=4
+17:13:20.761 [W0] INFO:	sim_time 2_056_239_017_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:20.839 [W0] INFO:	sim_time 2_056_239_017_255us: PolicyEvent @ 2_056_239_017_255us
+17:13:20.840 [W0] INFO:	Draining 2 outstanding tasks
+17:13:20.845 [W0] INFO:	sim_time 2_056_239_017_255us: ControllerEvent @ 2_056_239_017_255us
+17:13:20.850 [W0] INFO:	sim_time 2_056_239_017_255us: PhysicsEvent @ 2_056_239_017_255us
+17:13:20.866 [W0] INFO:	sim_time 2_056_239_017_255us: TrafficEvent @ 2_056_239_017_255us
+17:13:20.866 [W0] INFO:	sim_time 2_056_239_017_255us: PhysicsEvent @ 2_056_239_017_255us
+17:13:20.867 [W0] INFO:	sim_time 2_056_239_017_255us: StepEvent @ 2_056_239_017_255us
+17:13:20.868 [W0] INFO:	sim_time 2_056_239_017_255us: VideoModelPrefetchEvent(chunk_start=2_056_239_117_255, size=1)
+17:13:20.869 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=4
+17:13:20.878 [W0] INFO:	sim_time 2_056_239_117_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:20.931 [W0] INFO:	sim_time 2_056_239_117_255us: PolicyEvent @ 2_056_239_117_255us
+17:13:20.932 [W0] INFO:	Draining 2 outstanding tasks
+17:13:20.937 [W0] INFO:	sim_time 2_056_239_117_255us: ControllerEvent @ 2_056_239_117_255us
+17:13:20.942 [W0] INFO:	sim_time 2_056_239_117_255us: PhysicsEvent @ 2_056_239_117_255us
+17:13:20.946 [W0] INFO:	sim_time 2_056_239_117_255us: TrafficEvent @ 2_056_239_117_255us
+17:13:20.947 [W0] INFO:	sim_time 2_056_239_117_255us: PhysicsEvent @ 2_056_239_117_255us
+17:13:20.947 [W0] INFO:	sim_time 2_056_239_117_255us: StepEvent @ 2_056_239_117_255us
+17:13:20.948 [W0] INFO:	sim_time 2_056_239_117_255us: VideoModelPrefetchEvent(chunk_start=2_056_239_217_255, size=1)
+17:13:20.948 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=4
+17:13:20.953 [W0] INFO:	sim_time 2_056_239_217_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:20.991 [W0] INFO:	sim_time 2_056_239_217_255us: PolicyEvent @ 2_056_239_217_255us
+17:13:20.991 [W0] INFO:	Draining 2 outstanding tasks
+17:13:21.002 [W0] INFO:	sim_time 2_056_239_217_255us: ControllerEvent @ 2_056_239_217_255us
+17:13:21.008 [W0] INFO:	sim_time 2_056_239_217_255us: PhysicsEvent @ 2_056_239_217_255us
+17:13:21.014 [W0] INFO:	sim_time 2_056_239_217_255us: TrafficEvent @ 2_056_239_217_255us
+17:13:21.014 [W0] INFO:	sim_time 2_056_239_217_255us: PhysicsEvent @ 2_056_239_217_255us
+17:13:21.014 [W0] INFO:	sim_time 2_056_239_217_255us: StepEvent @ 2_056_239_217_255us
+17:13:21.015 [W0] INFO:	sim_time 2_056_239_217_255us: VideoModelPrefetchEvent(chunk_start=2_056_239_317_255, size=1)
+17:13:21.016 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=4
+17:13:21.022 [W0] INFO:	sim_time 2_056_239_317_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:21.074 [W0] INFO:	sim_time 2_056_239_317_255us: PolicyEvent @ 2_056_239_317_255us
+17:13:21.075 [W0] INFO:	Draining 2 outstanding tasks
+17:13:21.080 [W0] INFO:	sim_time 2_056_239_317_255us: ControllerEvent @ 2_056_239_317_255us
+17:13:21.084 [W0] INFO:	sim_time 2_056_239_317_255us: PhysicsEvent @ 2_056_239_317_255us
+17:13:21.088 [W0] INFO:	sim_time 2_056_239_317_255us: TrafficEvent @ 2_056_239_317_255us
+17:13:21.089 [W0] INFO:	sim_time 2_056_239_317_255us: PhysicsEvent @ 2_056_239_317_255us
+17:13:21.089 [W0] INFO:	sim_time 2_056_239_317_255us: StepEvent @ 2_056_239_317_255us
+17:13:21.090 [W0] INFO:	sim_time 2_056_239_317_255us: VideoModelPrefetchEvent(chunk_start=2_056_239_417_255, size=1)
+17:13:21.090 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=4
+17:13:21.096 [W0] INFO:	sim_time 2_056_239_417_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:21.192 [W0] INFO:	sim_time 2_056_239_417_255us: PolicyEvent @ 2_056_239_417_255us
+17:13:21.192 [W0] INFO:	Draining 2 outstanding tasks
+17:13:21.198 [W0] INFO:	sim_time 2_056_239_417_255us: ControllerEvent @ 2_056_239_417_255us
+17:13:21.204 [W0] INFO:	sim_time 2_056_239_417_255us: PhysicsEvent @ 2_056_239_417_255us
+17:13:21.208 [W0] INFO:	sim_time 2_056_239_417_255us: TrafficEvent @ 2_056_239_417_255us
+17:13:21.208 [W0] INFO:	sim_time 2_056_239_417_255us: PhysicsEvent @ 2_056_239_417_255us
+17:13:21.209 [W0] INFO:	sim_time 2_056_239_417_255us: StepEvent @ 2_056_239_417_255us
+17:13:21.209 [W0] INFO:	sim_time 2_056_239_417_255us: VideoModelPrefetchEvent(chunk_start=2_056_239_517_255, size=1)
+17:13:21.209 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=4
+17:13:21.214 [W0] INFO:	sim_time 2_056_239_517_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:21.286 [W0] INFO:	sim_time 2_056_239_517_255us: PolicyEvent @ 2_056_239_517_255us
+17:13:21.287 [W0] INFO:	Draining 2 outstanding tasks
+17:13:21.294 [W0] INFO:	sim_time 2_056_239_517_255us: ControllerEvent @ 2_056_239_517_255us
+17:13:21.298 [W0] INFO:	sim_time 2_056_239_517_255us: PhysicsEvent @ 2_056_239_517_255us
+17:13:21.304 [W0] INFO:	sim_time 2_056_239_517_255us: TrafficEvent @ 2_056_239_517_255us
+17:13:21.304 [W0] INFO:	sim_time 2_056_239_517_255us: PhysicsEvent @ 2_056_239_517_255us
+17:13:21.305 [W0] INFO:	sim_time 2_056_239_517_255us: StepEvent @ 2_056_239_517_255us
+17:13:21.305 [W0] INFO:	sim_time 2_056_239_517_255us: VideoModelPrefetchEvent(chunk_start=2_056_239_617_255, size=1)
+17:13:21.306 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=4
+17:13:21.313 [W0] INFO:	sim_time 2_056_239_617_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:21.367 [W0] INFO:	sim_time 2_056_239_617_255us: PolicyEvent @ 2_056_239_617_255us
+17:13:21.367 [W0] INFO:	Draining 2 outstanding tasks
+17:13:21.379 [W0] INFO:	sim_time 2_056_239_617_255us: ControllerEvent @ 2_056_239_617_255us
+17:13:21.383 [W0] INFO:	sim_time 2_056_239_617_255us: PhysicsEvent @ 2_056_239_617_255us
+17:13:21.387 [W0] INFO:	sim_time 2_056_239_617_255us: TrafficEvent @ 2_056_239_617_255us
+17:13:21.387 [W0] INFO:	sim_time 2_056_239_617_255us: PhysicsEvent @ 2_056_239_617_255us
+17:13:21.388 [W0] INFO:	sim_time 2_056_239_617_255us: StepEvent @ 2_056_239_617_255us
+17:13:21.389 [W0] INFO:	sim_time 2_056_239_617_255us: VideoModelPrefetchEvent(chunk_start=2_056_239_717_255, size=1)
+17:13:21.389 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=4
+17:13:21.393 [W0] INFO:	sim_time 2_056_239_717_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:21.439 [W0] INFO:	sim_time 2_056_239_717_255us: PolicyEvent @ 2_056_239_717_255us
+17:13:21.439 [W0] INFO:	Draining 2 outstanding tasks
+17:13:21.446 [W0] INFO:	sim_time 2_056_239_717_255us: ControllerEvent @ 2_056_239_717_255us
+17:13:21.450 [W0] INFO:	sim_time 2_056_239_717_255us: PhysicsEvent @ 2_056_239_717_255us
+17:13:21.455 [W0] INFO:	sim_time 2_056_239_717_255us: TrafficEvent @ 2_056_239_717_255us
+17:13:21.456 [W0] INFO:	sim_time 2_056_239_717_255us: PhysicsEvent @ 2_056_239_717_255us
+17:13:21.456 [W0] INFO:	sim_time 2_056_239_717_255us: StepEvent @ 2_056_239_717_255us
+17:13:21.457 [W0] INFO:	sim_time 2_056_239_717_255us: VideoModelPrefetchEvent(chunk_start=2_056_239_817_255, size=1)
+17:13:21.457 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=4
+17:13:21.464 [W0] INFO:	sim_time 2_056_239_817_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:21.543 [W0] INFO:	sim_time 2_056_239_817_255us: PolicyEvent @ 2_056_239_817_255us
+17:13:21.544 [W0] INFO:	Draining 2 outstanding tasks
+17:13:21.548 [W0] INFO:	sim_time 2_056_239_817_255us: ControllerEvent @ 2_056_239_817_255us
+17:13:21.552 [W0] INFO:	sim_time 2_056_239_817_255us: PhysicsEvent @ 2_056_239_817_255us
+17:13:21.560 [W0] INFO:	sim_time 2_056_239_817_255us: TrafficEvent @ 2_056_239_817_255us
+17:13:21.561 [W0] INFO:	sim_time 2_056_239_817_255us: PhysicsEvent @ 2_056_239_817_255us
+17:13:21.561 [W0] INFO:	sim_time 2_056_239_817_255us: StepEvent @ 2_056_239_817_255us
+17:13:21.562 [W0] INFO:	sim_time 2_056_239_817_255us: VideoModelPrefetchEvent(chunk_start=2_056_239_917_255, size=1)
+17:13:21.563 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=4
+17:13:21.571 [W0] INFO:	sim_time 2_056_239_917_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:21.610 [W0] INFO:	sim_time 2_056_239_917_255us: PolicyEvent @ 2_056_239_917_255us
+17:13:21.610 [W0] INFO:	Draining 2 outstanding tasks
+17:13:21.618 [W0] INFO:	sim_time 2_056_239_917_255us: ControllerEvent @ 2_056_239_917_255us
+17:13:21.624 [W0] INFO:	sim_time 2_056_239_917_255us: PhysicsEvent @ 2_056_239_917_255us
+17:13:21.632 [W0] INFO:	sim_time 2_056_239_917_255us: TrafficEvent @ 2_056_239_917_255us
+17:13:21.632 [W0] INFO:	sim_time 2_056_239_917_255us: PhysicsEvent @ 2_056_239_917_255us
+17:13:21.632 [W0] INFO:	sim_time 2_056_239_917_255us: StepEvent @ 2_056_239_917_255us
+17:13:21.633 [W0] INFO:	sim_time 2_056_239_917_255us: VideoModelPrefetchEvent(chunk_start=2_056_240_017_255, size=1)
+17:13:21.633 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=4
+17:13:21.638 [W0] INFO:	sim_time 2_056_240_017_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:21.687 [W0] INFO:	sim_time 2_056_240_017_255us: PolicyEvent @ 2_056_240_017_255us
+17:13:21.688 [W0] INFO:	Draining 2 outstanding tasks
+17:13:21.699 [W0] INFO:	sim_time 2_056_240_017_255us: ControllerEvent @ 2_056_240_017_255us
+17:13:21.705 [W0] INFO:	sim_time 2_056_240_017_255us: PhysicsEvent @ 2_056_240_017_255us
+17:13:21.715 [W0] INFO:	sim_time 2_056_240_017_255us: TrafficEvent @ 2_056_240_017_255us
+17:13:21.715 [W0] INFO:	sim_time 2_056_240_017_255us: PhysicsEvent @ 2_056_240_017_255us
+17:13:21.715 [W0] INFO:	sim_time 2_056_240_017_255us: StepEvent @ 2_056_240_017_255us
+17:13:21.716 [W0] INFO:	sim_time 2_056_240_017_255us: VideoModelPrefetchEvent(chunk_start=2_056_240_117_255, size=1)
+17:13:21.717 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=4
+17:13:21.724 [W0] INFO:	sim_time 2_056_240_117_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:21.777 [W0] INFO:	sim_time 2_056_240_117_255us: PolicyEvent @ 2_056_240_117_255us
+17:13:21.778 [W0] INFO:	Draining 2 outstanding tasks
+17:13:21.785 [W0] INFO:	sim_time 2_056_240_117_255us: ControllerEvent @ 2_056_240_117_255us
+17:13:21.789 [W0] INFO:	sim_time 2_056_240_117_255us: PhysicsEvent @ 2_056_240_117_255us
+17:13:21.794 [W0] INFO:	sim_time 2_056_240_117_255us: TrafficEvent @ 2_056_240_117_255us
+17:13:21.795 [W0] INFO:	sim_time 2_056_240_117_255us: PhysicsEvent @ 2_056_240_117_255us
+17:13:21.795 [W0] INFO:	sim_time 2_056_240_117_255us: StepEvent @ 2_056_240_117_255us
+17:13:21.796 [W0] INFO:	sim_time 2_056_240_117_255us: VideoModelPrefetchEvent(chunk_start=2_056_240_217_255, size=1)
+17:13:21.796 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=4
+17:13:21.803 [W0] INFO:	sim_time 2_056_240_217_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:21.878 [W0] INFO:	sim_time 2_056_240_217_255us: PolicyEvent @ 2_056_240_217_255us
+17:13:21.878 [W0] INFO:	Draining 2 outstanding tasks
+17:13:21.882 [W0] INFO:	sim_time 2_056_240_217_255us: ControllerEvent @ 2_056_240_217_255us
+17:13:21.887 [W0] INFO:	sim_time 2_056_240_217_255us: PhysicsEvent @ 2_056_240_217_255us
+17:13:21.891 [W0] INFO:	sim_time 2_056_240_217_255us: TrafficEvent @ 2_056_240_217_255us
+17:13:21.892 [W0] INFO:	sim_time 2_056_240_217_255us: PhysicsEvent @ 2_056_240_217_255us
+17:13:21.892 [W0] INFO:	sim_time 2_056_240_217_255us: StepEvent @ 2_056_240_217_255us
+17:13:21.893 [W0] INFO:	sim_time 2_056_240_217_255us: VideoModelPrefetchEvent(chunk_start=2_056_240_317_255, size=1)
+17:13:21.894 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=4
+17:13:21.900 [W0] INFO:	sim_time 2_056_240_317_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:21.952 [W0] INFO:	sim_time 2_056_240_317_255us: PolicyEvent @ 2_056_240_317_255us
+17:13:21.953 [W0] INFO:	Draining 2 outstanding tasks
+17:13:21.960 [W0] INFO:	sim_time 2_056_240_317_255us: ControllerEvent @ 2_056_240_317_255us
+17:13:21.964 [W0] INFO:	sim_time 2_056_240_317_255us: PhysicsEvent @ 2_056_240_317_255us
+17:13:21.968 [W0] INFO:	sim_time 2_056_240_317_255us: TrafficEvent @ 2_056_240_317_255us
+17:13:21.969 [W0] INFO:	sim_time 2_056_240_317_255us: PhysicsEvent @ 2_056_240_317_255us
+17:13:21.969 [W0] INFO:	sim_time 2_056_240_317_255us: StepEvent @ 2_056_240_317_255us
+17:13:21.970 [W0] INFO:	sim_time 2_056_240_317_255us: VideoModelPrefetchEvent(chunk_start=2_056_240_417_255, size=1)
+17:13:21.970 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=4
+17:13:21.975 [W0] INFO:	sim_time 2_056_240_417_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:22.027 [W0] INFO:	sim_time 2_056_240_417_255us: PolicyEvent @ 2_056_240_417_255us
+17:13:22.027 [W0] INFO:	Draining 2 outstanding tasks
+17:13:22.035 [W0] INFO:	sim_time 2_056_240_417_255us: ControllerEvent @ 2_056_240_417_255us
+17:13:22.039 [W0] INFO:	sim_time 2_056_240_417_255us: PhysicsEvent @ 2_056_240_417_255us
+17:13:22.044 [W0] INFO:	sim_time 2_056_240_417_255us: TrafficEvent @ 2_056_240_417_255us
+17:13:22.045 [W0] INFO:	sim_time 2_056_240_417_255us: PhysicsEvent @ 2_056_240_417_255us
+17:13:22.045 [W0] INFO:	sim_time 2_056_240_417_255us: StepEvent @ 2_056_240_417_255us
+17:13:22.046 [W0] INFO:	sim_time 2_056_240_417_255us: VideoModelPrefetchEvent(chunk_start=2_056_240_517_255, size=1)
+17:13:22.047 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=4
+17:13:22.052 [W0] INFO:	sim_time 2_056_240_517_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:22.093 [W0] INFO:	sim_time 2_056_240_517_255us: PolicyEvent @ 2_056_240_517_255us
+17:13:22.094 [W0] INFO:	Draining 2 outstanding tasks
+17:13:22.103 [W0] INFO:	sim_time 2_056_240_517_255us: ControllerEvent @ 2_056_240_517_255us
+17:13:22.108 [W0] INFO:	sim_time 2_056_240_517_255us: PhysicsEvent @ 2_056_240_517_255us
+17:13:22.113 [W0] INFO:	sim_time 2_056_240_517_255us: TrafficEvent @ 2_056_240_517_255us
+17:13:22.114 [W0] INFO:	sim_time 2_056_240_517_255us: PhysicsEvent @ 2_056_240_517_255us
+17:13:22.114 [W0] INFO:	sim_time 2_056_240_517_255us: StepEvent @ 2_056_240_517_255us
+17:13:22.115 [W0] INFO:	sim_time 2_056_240_517_255us: VideoModelPrefetchEvent(chunk_start=2_056_240_617_255, size=1)
+17:13:22.115 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=4
+17:13:22.121 [W0] INFO:	sim_time 2_056_240_617_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:22.167 [W0] INFO:	sim_time 2_056_240_617_255us: PolicyEvent @ 2_056_240_617_255us
+17:13:22.167 [W0] INFO:	Draining 2 outstanding tasks
+17:13:22.173 [W0] INFO:	sim_time 2_056_240_617_255us: ControllerEvent @ 2_056_240_617_255us
+17:13:22.178 [W0] INFO:	sim_time 2_056_240_617_255us: PhysicsEvent @ 2_056_240_617_255us
+17:13:22.182 [W0] INFO:	sim_time 2_056_240_617_255us: TrafficEvent @ 2_056_240_617_255us
+17:13:22.183 [W0] INFO:	sim_time 2_056_240_617_255us: PhysicsEvent @ 2_056_240_617_255us
+17:13:22.183 [W0] INFO:	sim_time 2_056_240_617_255us: StepEvent @ 2_056_240_617_255us
+17:13:22.184 [W0] INFO:	sim_time 2_056_240_617_255us: VideoModelPrefetchEvent(chunk_start=2_056_240_717_255, size=1)
+17:13:22.184 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=4
+17:13:22.189 [W0] INFO:	sim_time 2_056_240_717_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:22.238 [W0] INFO:	sim_time 2_056_240_717_255us: PolicyEvent @ 2_056_240_717_255us
+17:13:22.238 [W0] INFO:	Draining 2 outstanding tasks
+17:13:22.248 [W0] INFO:	sim_time 2_056_240_717_255us: ControllerEvent @ 2_056_240_717_255us
+17:13:22.255 [W0] INFO:	sim_time 2_056_240_717_255us: PhysicsEvent @ 2_056_240_717_255us
+17:13:22.259 [W0] INFO:	sim_time 2_056_240_717_255us: TrafficEvent @ 2_056_240_717_255us
+17:13:22.260 [W0] INFO:	sim_time 2_056_240_717_255us: PhysicsEvent @ 2_056_240_717_255us
+17:13:22.260 [W0] INFO:	sim_time 2_056_240_717_255us: StepEvent @ 2_056_240_717_255us
+17:13:22.261 [W0] INFO:	sim_time 2_056_240_717_255us: VideoModelPrefetchEvent(chunk_start=2_056_240_817_255, size=1)
+17:13:22.261 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=4
+17:13:22.266 [W0] INFO:	sim_time 2_056_240_817_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:22.314 [W0] INFO:	sim_time 2_056_240_817_255us: PolicyEvent @ 2_056_240_817_255us
+17:13:22.314 [W0] INFO:	Draining 2 outstanding tasks
+17:13:22.322 [W0] INFO:	sim_time 2_056_240_817_255us: ControllerEvent @ 2_056_240_817_255us
+17:13:22.326 [W0] INFO:	sim_time 2_056_240_817_255us: PhysicsEvent @ 2_056_240_817_255us
+17:13:22.330 [W0] INFO:	sim_time 2_056_240_817_255us: TrafficEvent @ 2_056_240_817_255us
+17:13:22.331 [W0] INFO:	sim_time 2_056_240_817_255us: PhysicsEvent @ 2_056_240_817_255us
+17:13:22.331 [W0] INFO:	sim_time 2_056_240_817_255us: StepEvent @ 2_056_240_817_255us
+17:13:22.332 [W0] INFO:	sim_time 2_056_240_817_255us: VideoModelPrefetchEvent(chunk_start=2_056_240_917_255, size=1)
+17:13:22.332 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=4
+17:13:22.336 [W0] INFO:	sim_time 2_056_240_917_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:22.372 [W0] INFO:	sim_time 2_056_240_917_255us: PolicyEvent @ 2_056_240_917_255us
+17:13:22.372 [W0] INFO:	Draining 2 outstanding tasks
+17:13:22.377 [W0] INFO:	sim_time 2_056_240_917_255us: ControllerEvent @ 2_056_240_917_255us
+17:13:22.381 [W0] INFO:	sim_time 2_056_240_917_255us: PhysicsEvent @ 2_056_240_917_255us
+17:13:22.384 [W0] INFO:	sim_time 2_056_240_917_255us: TrafficEvent @ 2_056_240_917_255us
+17:13:22.385 [W0] INFO:	sim_time 2_056_240_917_255us: PhysicsEvent @ 2_056_240_917_255us
+17:13:22.385 [W0] INFO:	sim_time 2_056_240_917_255us: StepEvent @ 2_056_240_917_255us
+17:13:22.386 [W0] INFO:	sim_time 2_056_240_917_255us: VideoModelPrefetchEvent(chunk_start=2_056_241_017_255, size=1)
+17:13:22.386 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=4
+17:13:22.392 [W0] INFO:	sim_time 2_056_241_017_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:22.458 [W0] INFO:	sim_time 2_056_241_017_255us: PolicyEvent @ 2_056_241_017_255us
+17:13:22.459 [W0] INFO:	Draining 2 outstanding tasks
+17:13:22.467 [W0] INFO:	sim_time 2_056_241_017_255us: ControllerEvent @ 2_056_241_017_255us
+17:13:22.472 [W0] INFO:	sim_time 2_056_241_017_255us: PhysicsEvent @ 2_056_241_017_255us
+17:13:22.476 [W0] INFO:	sim_time 2_056_241_017_255us: TrafficEvent @ 2_056_241_017_255us
+17:13:22.476 [W0] INFO:	sim_time 2_056_241_017_255us: PhysicsEvent @ 2_056_241_017_255us
+17:13:22.477 [W0] INFO:	sim_time 2_056_241_017_255us: StepEvent @ 2_056_241_017_255us
+17:13:22.478 [W0] INFO:	sim_time 2_056_241_017_255us: VideoModelPrefetchEvent(chunk_start=2_056_241_117_255, size=1)
+17:13:22.478 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=4
+17:13:22.484 [W0] INFO:	sim_time 2_056_241_117_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:22.538 [W0] INFO:	sim_time 2_056_241_117_255us: PolicyEvent @ 2_056_241_117_255us
+17:13:22.538 [W0] INFO:	Draining 2 outstanding tasks
+17:13:22.549 [W0] INFO:	sim_time 2_056_241_117_255us: ControllerEvent @ 2_056_241_117_255us
+17:13:22.554 [W0] INFO:	sim_time 2_056_241_117_255us: PhysicsEvent @ 2_056_241_117_255us
+17:13:22.557 [W0] INFO:	sim_time 2_056_241_117_255us: TrafficEvent @ 2_056_241_117_255us
+17:13:22.558 [W0] INFO:	sim_time 2_056_241_117_255us: PhysicsEvent @ 2_056_241_117_255us
+17:13:22.558 [W0] INFO:	sim_time 2_056_241_117_255us: StepEvent @ 2_056_241_117_255us
+17:13:22.559 [W0] INFO:	sim_time 2_056_241_117_255us: VideoModelPrefetchEvent(chunk_start=2_056_241_217_255, size=1)
+17:13:22.559 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=4
+17:13:22.563 [W0] INFO:	sim_time 2_056_241_217_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:22.614 [W0] INFO:	sim_time 2_056_241_217_255us: PolicyEvent @ 2_056_241_217_255us
+17:13:22.614 [W0] INFO:	Draining 2 outstanding tasks
+17:13:22.621 [W0] INFO:	sim_time 2_056_241_217_255us: ControllerEvent @ 2_056_241_217_255us
+17:13:22.626 [W0] INFO:	sim_time 2_056_241_217_255us: PhysicsEvent @ 2_056_241_217_255us
+17:13:22.630 [W0] INFO:	sim_time 2_056_241_217_255us: TrafficEvent @ 2_056_241_217_255us
+17:13:22.631 [W0] INFO:	sim_time 2_056_241_217_255us: PhysicsEvent @ 2_056_241_217_255us
+17:13:22.631 [W0] INFO:	sim_time 2_056_241_217_255us: StepEvent @ 2_056_241_217_255us
+17:13:22.632 [W0] INFO:	sim_time 2_056_241_217_255us: VideoModelPrefetchEvent(chunk_start=2_056_241_317_255, size=1)
+17:13:22.632 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=4
+17:13:22.638 [W0] INFO:	sim_time 2_056_241_317_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:22.692 [W0] INFO:	sim_time 2_056_241_317_255us: PolicyEvent @ 2_056_241_317_255us
+17:13:22.692 [W0] INFO:	Draining 2 outstanding tasks
+17:13:22.699 [W0] INFO:	sim_time 2_056_241_317_255us: ControllerEvent @ 2_056_241_317_255us
+17:13:22.706 [W0] INFO:	sim_time 2_056_241_317_255us: PhysicsEvent @ 2_056_241_317_255us
+17:13:22.710 [W0] INFO:	sim_time 2_056_241_317_255us: TrafficEvent @ 2_056_241_317_255us
+17:13:22.710 [W0] INFO:	sim_time 2_056_241_317_255us: PhysicsEvent @ 2_056_241_317_255us
+17:13:22.710 [W0] INFO:	sim_time 2_056_241_317_255us: StepEvent @ 2_056_241_317_255us
+17:13:22.711 [W0] INFO:	sim_time 2_056_241_317_255us: VideoModelPrefetchEvent(chunk_start=2_056_241_417_255, size=1)
+17:13:22.712 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:22.717 [W0] INFO:	sim_time 2_056_241_417_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:22.785 [W0] INFO:	sim_time 2_056_241_417_255us: PolicyEvent @ 2_056_241_417_255us
+17:13:22.785 [W0] INFO:	Draining 2 outstanding tasks
+17:13:22.790 [W0] INFO:	sim_time 2_056_241_417_255us: ControllerEvent @ 2_056_241_417_255us
+17:13:22.795 [W0] INFO:	sim_time 2_056_241_417_255us: PhysicsEvent @ 2_056_241_417_255us
+17:13:22.803 [W0] INFO:	sim_time 2_056_241_417_255us: TrafficEvent @ 2_056_241_417_255us
+17:13:22.804 [W0] INFO:	sim_time 2_056_241_417_255us: PhysicsEvent @ 2_056_241_417_255us
+17:13:22.804 [W0] INFO:	sim_time 2_056_241_417_255us: StepEvent @ 2_056_241_417_255us
+17:13:22.805 [W0] INFO:	sim_time 2_056_241_417_255us: VideoModelPrefetchEvent(chunk_start=2_056_241_517_255, size=1)
+17:13:22.805 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:22.810 [W0] INFO:	sim_time 2_056_241_517_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:22.847 [W0] INFO:	sim_time 2_056_241_517_255us: PolicyEvent @ 2_056_241_517_255us
+17:13:22.848 [W0] INFO:	Draining 2 outstanding tasks
+17:13:22.853 [W0] INFO:	sim_time 2_056_241_517_255us: ControllerEvent @ 2_056_241_517_255us
+17:13:22.856 [W0] INFO:	sim_time 2_056_241_517_255us: PhysicsEvent @ 2_056_241_517_255us
+17:13:22.861 [W0] INFO:	sim_time 2_056_241_517_255us: TrafficEvent @ 2_056_241_517_255us
+17:13:22.861 [W0] INFO:	sim_time 2_056_241_517_255us: PhysicsEvent @ 2_056_241_517_255us
+17:13:22.861 [W0] INFO:	sim_time 2_056_241_517_255us: StepEvent @ 2_056_241_517_255us
+17:13:22.863 [W0] INFO:	sim_time 2_056_241_517_255us: VideoModelPrefetchEvent(chunk_start=2_056_241_617_255, size=1)
+17:13:22.863 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:22.872 [W0] INFO:	sim_time 2_056_241_617_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:22.938 [W0] INFO:	sim_time 2_056_241_617_255us: PolicyEvent @ 2_056_241_617_255us
+17:13:22.938 [W0] INFO:	Draining 2 outstanding tasks
+17:13:22.943 [W0] INFO:	sim_time 2_056_241_617_255us: ControllerEvent @ 2_056_241_617_255us
+17:13:22.948 [W0] INFO:	sim_time 2_056_241_617_255us: PhysicsEvent @ 2_056_241_617_255us
+17:13:22.954 [W0] INFO:	sim_time 2_056_241_617_255us: TrafficEvent @ 2_056_241_617_255us
+17:13:22.954 [W0] INFO:	sim_time 2_056_241_617_255us: PhysicsEvent @ 2_056_241_617_255us
+17:13:22.955 [W0] INFO:	sim_time 2_056_241_617_255us: StepEvent @ 2_056_241_617_255us
+17:13:22.955 [W0] INFO:	sim_time 2_056_241_617_255us: VideoModelPrefetchEvent(chunk_start=2_056_241_717_255, size=1)
+17:13:22.956 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:22.962 [W0] INFO:	sim_time 2_056_241_717_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:23.000 [W0] INFO:	sim_time 2_056_241_717_255us: PolicyEvent @ 2_056_241_717_255us
+17:13:23.001 [W0] INFO:	Draining 2 outstanding tasks
+17:13:23.006 [W0] INFO:	sim_time 2_056_241_717_255us: ControllerEvent @ 2_056_241_717_255us
+17:13:23.010 [W0] INFO:	sim_time 2_056_241_717_255us: PhysicsEvent @ 2_056_241_717_255us
+17:13:23.015 [W0] INFO:	sim_time 2_056_241_717_255us: TrafficEvent @ 2_056_241_717_255us
+17:13:23.015 [W0] INFO:	sim_time 2_056_241_717_255us: PhysicsEvent @ 2_056_241_717_255us
+17:13:23.015 [W0] INFO:	sim_time 2_056_241_717_255us: StepEvent @ 2_056_241_717_255us
+17:13:23.016 [W0] INFO:	sim_time 2_056_241_717_255us: VideoModelPrefetchEvent(chunk_start=2_056_241_817_255, size=1)
+17:13:23.016 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:23.021 [W0] INFO:	sim_time 2_056_241_817_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:23.082 [W0] INFO:	sim_time 2_056_241_817_255us: PolicyEvent @ 2_056_241_817_255us
+17:13:23.083 [W0] INFO:	Draining 2 outstanding tasks
+17:13:23.089 [W0] INFO:	sim_time 2_056_241_817_255us: ControllerEvent @ 2_056_241_817_255us
+17:13:23.094 [W0] INFO:	sim_time 2_056_241_817_255us: PhysicsEvent @ 2_056_241_817_255us
+17:13:23.098 [W0] INFO:	sim_time 2_056_241_817_255us: TrafficEvent @ 2_056_241_817_255us
+17:13:23.098 [W0] INFO:	sim_time 2_056_241_817_255us: PhysicsEvent @ 2_056_241_817_255us
+17:13:23.098 [W0] INFO:	sim_time 2_056_241_817_255us: StepEvent @ 2_056_241_817_255us
+17:13:23.100 [W0] INFO:	sim_time 2_056_241_817_255us: VideoModelPrefetchEvent(chunk_start=2_056_241_917_255, size=1)
+17:13:23.101 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:23.106 [W0] INFO:	sim_time 2_056_241_917_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:23.143 [W0] INFO:	sim_time 2_056_241_917_255us: PolicyEvent @ 2_056_241_917_255us
+17:13:23.144 [W0] INFO:	Draining 2 outstanding tasks
+17:13:23.151 [W0] INFO:	sim_time 2_056_241_917_255us: ControllerEvent @ 2_056_241_917_255us
+17:13:23.156 [W0] INFO:	sim_time 2_056_241_917_255us: PhysicsEvent @ 2_056_241_917_255us
+17:13:23.160 [W0] INFO:	sim_time 2_056_241_917_255us: TrafficEvent @ 2_056_241_917_255us
+17:13:23.160 [W0] INFO:	sim_time 2_056_241_917_255us: PhysicsEvent @ 2_056_241_917_255us
+17:13:23.161 [W0] INFO:	sim_time 2_056_241_917_255us: StepEvent @ 2_056_241_917_255us
+17:13:23.162 [W0] INFO:	sim_time 2_056_241_917_255us: VideoModelPrefetchEvent(chunk_start=2_056_242_017_255, size=1)
+17:13:23.162 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:23.170 [W0] INFO:	sim_time 2_056_242_017_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:23.261 [W0] INFO:	sim_time 2_056_242_017_255us: PolicyEvent @ 2_056_242_017_255us
+17:13:23.261 [W0] INFO:	Draining 2 outstanding tasks
+17:13:23.267 [W0] INFO:	sim_time 2_056_242_017_255us: ControllerEvent @ 2_056_242_017_255us
+17:13:23.273 [W0] INFO:	sim_time 2_056_242_017_255us: PhysicsEvent @ 2_056_242_017_255us
+17:13:23.277 [W0] INFO:	sim_time 2_056_242_017_255us: TrafficEvent @ 2_056_242_017_255us
+17:13:23.277 [W0] INFO:	sim_time 2_056_242_017_255us: PhysicsEvent @ 2_056_242_017_255us
+17:13:23.277 [W0] INFO:	sim_time 2_056_242_017_255us: StepEvent @ 2_056_242_017_255us
+17:13:23.278 [W0] INFO:	sim_time 2_056_242_017_255us: VideoModelPrefetchEvent(chunk_start=2_056_242_117_255, size=1)
+17:13:23.278 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:23.284 [W0] INFO:	sim_time 2_056_242_117_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:23.320 [W0] INFO:	sim_time 2_056_242_117_255us: PolicyEvent @ 2_056_242_117_255us
+17:13:23.321 [W0] INFO:	Draining 2 outstanding tasks
+17:13:23.330 [W0] INFO:	sim_time 2_056_242_117_255us: ControllerEvent @ 2_056_242_117_255us
+17:13:23.334 [W0] INFO:	sim_time 2_056_242_117_255us: PhysicsEvent @ 2_056_242_117_255us
+17:13:23.338 [W0] INFO:	sim_time 2_056_242_117_255us: TrafficEvent @ 2_056_242_117_255us
+17:13:23.338 [W0] INFO:	sim_time 2_056_242_117_255us: PhysicsEvent @ 2_056_242_117_255us
+17:13:23.338 [W0] INFO:	sim_time 2_056_242_117_255us: StepEvent @ 2_056_242_117_255us
+17:13:23.339 [W0] INFO:	sim_time 2_056_242_117_255us: VideoModelPrefetchEvent(chunk_start=2_056_242_217_255, size=1)
+17:13:23.339 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:23.344 [W0] INFO:	sim_time 2_056_242_217_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:23.405 [W0] INFO:	sim_time 2_056_242_217_255us: PolicyEvent @ 2_056_242_217_255us
+17:13:23.408 [W0] INFO:	Draining 2 outstanding tasks
+17:13:23.418 [W0] INFO:	sim_time 2_056_242_217_255us: ControllerEvent @ 2_056_242_217_255us
+17:13:23.422 [W0] INFO:	sim_time 2_056_242_217_255us: PhysicsEvent @ 2_056_242_217_255us
+17:13:23.426 [W0] INFO:	sim_time 2_056_242_217_255us: TrafficEvent @ 2_056_242_217_255us
+17:13:23.426 [W0] INFO:	sim_time 2_056_242_217_255us: PhysicsEvent @ 2_056_242_217_255us
+17:13:23.427 [W0] INFO:	sim_time 2_056_242_217_255us: StepEvent @ 2_056_242_217_255us
+17:13:23.428 [W0] INFO:	sim_time 2_056_242_217_255us: VideoModelPrefetchEvent(chunk_start=2_056_242_317_255, size=1)
+17:13:23.428 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:23.433 [W0] INFO:	sim_time 2_056_242_317_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:23.469 [W0] INFO:	sim_time 2_056_242_317_255us: PolicyEvent @ 2_056_242_317_255us
+17:13:23.469 [W0] INFO:	Draining 2 outstanding tasks
+17:13:23.475 [W0] INFO:	sim_time 2_056_242_317_255us: ControllerEvent @ 2_056_242_317_255us
+17:13:23.478 [W0] INFO:	sim_time 2_056_242_317_255us: PhysicsEvent @ 2_056_242_317_255us
+17:13:23.482 [W0] INFO:	sim_time 2_056_242_317_255us: TrafficEvent @ 2_056_242_317_255us
+17:13:23.482 [W0] INFO:	sim_time 2_056_242_317_255us: PhysicsEvent @ 2_056_242_317_255us
+17:13:23.483 [W0] INFO:	sim_time 2_056_242_317_255us: StepEvent @ 2_056_242_317_255us
+17:13:23.483 [W0] INFO:	sim_time 2_056_242_317_255us: VideoModelPrefetchEvent(chunk_start=2_056_242_417_255, size=1)
+17:13:23.484 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:23.488 [W0] INFO:	sim_time 2_056_242_417_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:23.550 [W0] INFO:	sim_time 2_056_242_417_255us: PolicyEvent @ 2_056_242_417_255us
+17:13:23.551 [W0] INFO:	Draining 2 outstanding tasks
+17:13:23.558 [W0] INFO:	sim_time 2_056_242_417_255us: ControllerEvent @ 2_056_242_417_255us
+17:13:23.562 [W0] INFO:	sim_time 2_056_242_417_255us: PhysicsEvent @ 2_056_242_417_255us
+17:13:23.566 [W0] INFO:	sim_time 2_056_242_417_255us: TrafficEvent @ 2_056_242_417_255us
+17:13:23.567 [W0] INFO:	sim_time 2_056_242_417_255us: PhysicsEvent @ 2_056_242_417_255us
+17:13:23.567 [W0] INFO:	sim_time 2_056_242_417_255us: StepEvent @ 2_056_242_417_255us
+17:13:23.568 [W0] INFO:	sim_time 2_056_242_417_255us: VideoModelPrefetchEvent(chunk_start=2_056_242_517_255, size=1)
+17:13:23.568 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:23.575 [W0] INFO:	sim_time 2_056_242_517_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:23.615 [W0] INFO:	sim_time 2_056_242_517_255us: PolicyEvent @ 2_056_242_517_255us
+17:13:23.615 [W0] INFO:	Draining 2 outstanding tasks
+17:13:23.624 [W0] INFO:	sim_time 2_056_242_517_255us: ControllerEvent @ 2_056_242_517_255us
+17:13:23.629 [W0] INFO:	sim_time 2_056_242_517_255us: PhysicsEvent @ 2_056_242_517_255us
+17:13:23.632 [W0] INFO:	sim_time 2_056_242_517_255us: TrafficEvent @ 2_056_242_517_255us
+17:13:23.633 [W0] INFO:	sim_time 2_056_242_517_255us: PhysicsEvent @ 2_056_242_517_255us
+17:13:23.633 [W0] INFO:	sim_time 2_056_242_517_255us: StepEvent @ 2_056_242_517_255us
+17:13:23.634 [W0] INFO:	sim_time 2_056_242_517_255us: VideoModelPrefetchEvent(chunk_start=2_056_242_617_255, size=1)
+17:13:23.634 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:23.640 [W0] INFO:	sim_time 2_056_242_617_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:23.710 [W0] INFO:	sim_time 2_056_242_617_255us: PolicyEvent @ 2_056_242_617_255us
+17:13:23.710 [W0] INFO:	Draining 2 outstanding tasks
+17:13:23.717 [W0] INFO:	sim_time 2_056_242_617_255us: ControllerEvent @ 2_056_242_617_255us
+17:13:23.722 [W0] INFO:	sim_time 2_056_242_617_255us: PhysicsEvent @ 2_056_242_617_255us
+17:13:23.730 [W0] INFO:	sim_time 2_056_242_617_255us: TrafficEvent @ 2_056_242_617_255us
+17:13:23.730 [W0] INFO:	sim_time 2_056_242_617_255us: PhysicsEvent @ 2_056_242_617_255us
+17:13:23.731 [W0] INFO:	sim_time 2_056_242_617_255us: StepEvent @ 2_056_242_617_255us
+17:13:23.733 [W0] INFO:	sim_time 2_056_242_617_255us: VideoModelPrefetchEvent(chunk_start=2_056_242_717_255, size=1)
+17:13:23.733 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:23.739 [W0] INFO:	sim_time 2_056_242_717_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:23.780 [W0] INFO:	sim_time 2_056_242_717_255us: PolicyEvent @ 2_056_242_717_255us
+17:13:23.781 [W0] INFO:	Draining 2 outstanding tasks
+17:13:23.786 [W0] INFO:	sim_time 2_056_242_717_255us: ControllerEvent @ 2_056_242_717_255us
+17:13:23.791 [W0] INFO:	sim_time 2_056_242_717_255us: PhysicsEvent @ 2_056_242_717_255us
+17:13:23.795 [W0] INFO:	sim_time 2_056_242_717_255us: TrafficEvent @ 2_056_242_717_255us
+17:13:23.796 [W0] INFO:	sim_time 2_056_242_717_255us: PhysicsEvent @ 2_056_242_717_255us
+17:13:23.796 [W0] INFO:	sim_time 2_056_242_717_255us: StepEvent @ 2_056_242_717_255us
+17:13:23.797 [W0] INFO:	sim_time 2_056_242_717_255us: VideoModelPrefetchEvent(chunk_start=2_056_242_817_255, size=1)
+17:13:23.797 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:23.802 [W0] INFO:	sim_time 2_056_242_817_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:23.862 [W0] INFO:	sim_time 2_056_242_817_255us: PolicyEvent @ 2_056_242_817_255us
+17:13:23.863 [W0] INFO:	Draining 2 outstanding tasks
+17:13:23.868 [W0] INFO:	sim_time 2_056_242_817_255us: ControllerEvent @ 2_056_242_817_255us
+17:13:23.875 [W0] INFO:	sim_time 2_056_242_817_255us: PhysicsEvent @ 2_056_242_817_255us
+17:13:23.879 [W0] INFO:	sim_time 2_056_242_817_255us: TrafficEvent @ 2_056_242_817_255us
+17:13:23.879 [W0] INFO:	sim_time 2_056_242_817_255us: PhysicsEvent @ 2_056_242_817_255us
+17:13:23.879 [W0] INFO:	sim_time 2_056_242_817_255us: StepEvent @ 2_056_242_817_255us
+17:13:23.881 [W0] INFO:	sim_time 2_056_242_817_255us: VideoModelPrefetchEvent(chunk_start=2_056_242_917_255, size=1)
+17:13:23.881 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:23.887 [W0] INFO:	sim_time 2_056_242_917_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:23.924 [W0] INFO:	sim_time 2_056_242_917_255us: PolicyEvent @ 2_056_242_917_255us
+17:13:23.924 [W0] INFO:	Draining 2 outstanding tasks
+17:13:23.929 [W0] INFO:	sim_time 2_056_242_917_255us: ControllerEvent @ 2_056_242_917_255us
+17:13:23.934 [W0] INFO:	sim_time 2_056_242_917_255us: PhysicsEvent @ 2_056_242_917_255us
+17:13:23.938 [W0] INFO:	sim_time 2_056_242_917_255us: TrafficEvent @ 2_056_242_917_255us
+17:13:23.938 [W0] INFO:	sim_time 2_056_242_917_255us: PhysicsEvent @ 2_056_242_917_255us
+17:13:23.938 [W0] INFO:	sim_time 2_056_242_917_255us: StepEvent @ 2_056_242_917_255us
+17:13:23.939 [W0] INFO:	sim_time 2_056_242_917_255us: VideoModelPrefetchEvent(chunk_start=2_056_243_017_255, size=1)
+17:13:23.939 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:23.945 [W0] INFO:	sim_time 2_056_243_017_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:24.009 [W0] INFO:	sim_time 2_056_243_017_255us: PolicyEvent @ 2_056_243_017_255us
+17:13:24.009 [W0] INFO:	Draining 2 outstanding tasks
+17:13:24.018 [W0] INFO:	sim_time 2_056_243_017_255us: ControllerEvent @ 2_056_243_017_255us
+17:13:24.022 [W0] INFO:	sim_time 2_056_243_017_255us: PhysicsEvent @ 2_056_243_017_255us
+17:13:24.026 [W0] INFO:	sim_time 2_056_243_017_255us: TrafficEvent @ 2_056_243_017_255us
+17:13:24.026 [W0] INFO:	sim_time 2_056_243_017_255us: PhysicsEvent @ 2_056_243_017_255us
+17:13:24.026 [W0] INFO:	sim_time 2_056_243_017_255us: StepEvent @ 2_056_243_017_255us
+17:13:24.027 [W0] INFO:	sim_time 2_056_243_017_255us: VideoModelPrefetchEvent(chunk_start=2_056_243_117_255, size=1)
+17:13:24.028 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:24.034 [W0] INFO:	sim_time 2_056_243_117_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:24.078 [W0] INFO:	sim_time 2_056_243_117_255us: PolicyEvent @ 2_056_243_117_255us
+17:13:24.078 [W0] INFO:	Draining 2 outstanding tasks
+17:13:24.090 [W0] INFO:	sim_time 2_056_243_117_255us: ControllerEvent @ 2_056_243_117_255us
+17:13:24.094 [W0] INFO:	sim_time 2_056_243_117_255us: PhysicsEvent @ 2_056_243_117_255us
+17:13:24.102 [W0] INFO:	sim_time 2_056_243_117_255us: TrafficEvent @ 2_056_243_117_255us
+17:13:24.102 [W0] INFO:	sim_time 2_056_243_117_255us: PhysicsEvent @ 2_056_243_117_255us
+17:13:24.102 [W0] INFO:	sim_time 2_056_243_117_255us: StepEvent @ 2_056_243_117_255us
+17:13:24.103 [W0] INFO:	sim_time 2_056_243_117_255us: VideoModelPrefetchEvent(chunk_start=2_056_243_217_255, size=1)
+17:13:24.104 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:24.112 [W0] INFO:	sim_time 2_056_243_217_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:24.173 [W0] INFO:	sim_time 2_056_243_217_255us: PolicyEvent @ 2_056_243_217_255us
+17:13:24.174 [W0] INFO:	Draining 2 outstanding tasks
+17:13:24.181 [W0] INFO:	sim_time 2_056_243_217_255us: ControllerEvent @ 2_056_243_217_255us
+17:13:24.186 [W0] INFO:	sim_time 2_056_243_217_255us: PhysicsEvent @ 2_056_243_217_255us
+17:13:24.190 [W0] INFO:	sim_time 2_056_243_217_255us: TrafficEvent @ 2_056_243_217_255us
+17:13:24.190 [W0] INFO:	sim_time 2_056_243_217_255us: PhysicsEvent @ 2_056_243_217_255us
+17:13:24.191 [W0] INFO:	sim_time 2_056_243_217_255us: StepEvent @ 2_056_243_217_255us
+17:13:24.191 [W0] INFO:	sim_time 2_056_243_217_255us: VideoModelPrefetchEvent(chunk_start=2_056_243_317_255, size=1)
+17:13:24.192 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:24.195 [W0] INFO:	sim_time 2_056_243_317_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:24.236 [W0] INFO:	sim_time 2_056_243_317_255us: PolicyEvent @ 2_056_243_317_255us
+17:13:24.236 [W0] INFO:	Draining 2 outstanding tasks
+17:13:24.242 [W0] INFO:	sim_time 2_056_243_317_255us: ControllerEvent @ 2_056_243_317_255us
+17:13:24.246 [W0] INFO:	sim_time 2_056_243_317_255us: PhysicsEvent @ 2_056_243_317_255us
+17:13:24.249 [W0] INFO:	sim_time 2_056_243_317_255us: TrafficEvent @ 2_056_243_317_255us
+17:13:24.250 [W0] INFO:	sim_time 2_056_243_317_255us: PhysicsEvent @ 2_056_243_317_255us
+17:13:24.250 [W0] INFO:	sim_time 2_056_243_317_255us: StepEvent @ 2_056_243_317_255us
+17:13:24.251 [W0] INFO:	sim_time 2_056_243_317_255us: VideoModelPrefetchEvent(chunk_start=2_056_243_417_255, size=1)
+17:13:24.251 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:24.255 [W0] INFO:	sim_time 2_056_243_417_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:24.315 [W0] INFO:	sim_time 2_056_243_417_255us: PolicyEvent @ 2_056_243_417_255us
+17:13:24.316 [W0] INFO:	Draining 2 outstanding tasks
+17:13:24.322 [W0] INFO:	sim_time 2_056_243_417_255us: ControllerEvent @ 2_056_243_417_255us
+17:13:24.326 [W0] INFO:	sim_time 2_056_243_417_255us: PhysicsEvent @ 2_056_243_417_255us
+17:13:24.329 [W0] INFO:	sim_time 2_056_243_417_255us: TrafficEvent @ 2_056_243_417_255us
+17:13:24.329 [W0] INFO:	sim_time 2_056_243_417_255us: PhysicsEvent @ 2_056_243_417_255us
+17:13:24.330 [W0] INFO:	sim_time 2_056_243_417_255us: StepEvent @ 2_056_243_417_255us
+17:13:24.330 [W0] INFO:	sim_time 2_056_243_417_255us: VideoModelPrefetchEvent(chunk_start=2_056_243_517_255, size=1)
+17:13:24.331 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:24.334 [W0] INFO:	sim_time 2_056_243_517_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:24.373 [W0] INFO:	sim_time 2_056_243_517_255us: PolicyEvent @ 2_056_243_517_255us
+17:13:24.374 [W0] INFO:	Draining 2 outstanding tasks
+17:13:24.379 [W0] INFO:	sim_time 2_056_243_517_255us: ControllerEvent @ 2_056_243_517_255us
+17:13:24.383 [W0] INFO:	sim_time 2_056_243_517_255us: PhysicsEvent @ 2_056_243_517_255us
+17:13:24.386 [W0] INFO:	sim_time 2_056_243_517_255us: TrafficEvent @ 2_056_243_517_255us
+17:13:24.386 [W0] INFO:	sim_time 2_056_243_517_255us: PhysicsEvent @ 2_056_243_517_255us
+17:13:24.387 [W0] INFO:	sim_time 2_056_243_517_255us: StepEvent @ 2_056_243_517_255us
+17:13:24.388 [W0] INFO:	sim_time 2_056_243_517_255us: VideoModelPrefetchEvent(chunk_start=2_056_243_617_255, size=1)
+17:13:24.388 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:24.392 [W0] INFO:	sim_time 2_056_243_617_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:24.452 [W0] INFO:	sim_time 2_056_243_617_255us: PolicyEvent @ 2_056_243_617_255us
+17:13:24.452 [W0] INFO:	Draining 2 outstanding tasks
+17:13:24.458 [W0] INFO:	sim_time 2_056_243_617_255us: ControllerEvent @ 2_056_243_617_255us
+17:13:24.463 [W0] INFO:	sim_time 2_056_243_617_255us: PhysicsEvent @ 2_056_243_617_255us
+17:13:24.471 [W0] INFO:	sim_time 2_056_243_617_255us: TrafficEvent @ 2_056_243_617_255us
+17:13:24.471 [W0] INFO:	sim_time 2_056_243_617_255us: PhysicsEvent @ 2_056_243_617_255us
+17:13:24.472 [W0] INFO:	sim_time 2_056_243_617_255us: StepEvent @ 2_056_243_617_255us
+17:13:24.473 [W0] INFO:	sim_time 2_056_243_617_255us: VideoModelPrefetchEvent(chunk_start=2_056_243_717_255, size=1)
+17:13:24.473 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:24.479 [W0] INFO:	sim_time 2_056_243_717_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:24.519 [W0] INFO:	sim_time 2_056_243_717_255us: PolicyEvent @ 2_056_243_717_255us
+17:13:24.519 [W0] INFO:	Draining 2 outstanding tasks
+17:13:24.524 [W0] INFO:	sim_time 2_056_243_717_255us: ControllerEvent @ 2_056_243_717_255us
+17:13:24.529 [W0] INFO:	sim_time 2_056_243_717_255us: PhysicsEvent @ 2_056_243_717_255us
+17:13:24.533 [W0] INFO:	sim_time 2_056_243_717_255us: TrafficEvent @ 2_056_243_717_255us
+17:13:24.534 [W0] INFO:	sim_time 2_056_243_717_255us: PhysicsEvent @ 2_056_243_717_255us
+17:13:24.534 [W0] INFO:	sim_time 2_056_243_717_255us: StepEvent @ 2_056_243_717_255us
+17:13:24.535 [W0] INFO:	sim_time 2_056_243_717_255us: VideoModelPrefetchEvent(chunk_start=2_056_243_817_255, size=1)
+17:13:24.535 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:24.541 [W0] INFO:	sim_time 2_056_243_817_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:24.607 [W0] INFO:	sim_time 2_056_243_817_255us: PolicyEvent @ 2_056_243_817_255us
+17:13:24.608 [W0] INFO:	Draining 2 outstanding tasks
+17:13:24.613 [W0] INFO:	sim_time 2_056_243_817_255us: ControllerEvent @ 2_056_243_817_255us
+17:13:24.617 [W0] INFO:	sim_time 2_056_243_817_255us: PhysicsEvent @ 2_056_243_817_255us
+17:13:24.620 [W0] INFO:	sim_time 2_056_243_817_255us: TrafficEvent @ 2_056_243_817_255us
+17:13:24.621 [W0] INFO:	sim_time 2_056_243_817_255us: PhysicsEvent @ 2_056_243_817_255us
+17:13:24.621 [W0] INFO:	sim_time 2_056_243_817_255us: StepEvent @ 2_056_243_817_255us
+17:13:24.622 [W0] INFO:	sim_time 2_056_243_817_255us: VideoModelPrefetchEvent(chunk_start=2_056_243_917_255, size=1)
+17:13:24.622 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:24.627 [W0] INFO:	sim_time 2_056_243_917_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:24.661 [W0] INFO:	sim_time 2_056_243_917_255us: PolicyEvent @ 2_056_243_917_255us
+17:13:24.662 [W0] INFO:	Draining 2 outstanding tasks
+17:13:24.667 [W0] INFO:	sim_time 2_056_243_917_255us: ControllerEvent @ 2_056_243_917_255us
+17:13:24.671 [W0] INFO:	sim_time 2_056_243_917_255us: PhysicsEvent @ 2_056_243_917_255us
+17:13:24.676 [W0] INFO:	sim_time 2_056_243_917_255us: TrafficEvent @ 2_056_243_917_255us
+17:13:24.676 [W0] INFO:	sim_time 2_056_243_917_255us: PhysicsEvent @ 2_056_243_917_255us
+17:13:24.676 [W0] INFO:	sim_time 2_056_243_917_255us: StepEvent @ 2_056_243_917_255us
+17:13:24.677 [W0] INFO:	sim_time 2_056_243_917_255us: VideoModelPrefetchEvent(chunk_start=2_056_244_017_255, size=1)
+17:13:24.677 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:24.681 [W0] INFO:	sim_time 2_056_244_017_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:24.749 [W0] INFO:	sim_time 2_056_244_017_255us: PolicyEvent @ 2_056_244_017_255us
+17:13:24.750 [W0] INFO:	Draining 2 outstanding tasks
+17:13:24.754 [W0] INFO:	sim_time 2_056_244_017_255us: ControllerEvent @ 2_056_244_017_255us
+17:13:24.758 [W0] INFO:	sim_time 2_056_244_017_255us: PhysicsEvent @ 2_056_244_017_255us
+17:13:24.761 [W0] INFO:	sim_time 2_056_244_017_255us: TrafficEvent @ 2_056_244_017_255us
+17:13:24.762 [W0] INFO:	sim_time 2_056_244_017_255us: PhysicsEvent @ 2_056_244_017_255us
+17:13:24.762 [W0] INFO:	sim_time 2_056_244_017_255us: StepEvent @ 2_056_244_017_255us
+17:13:24.763 [W0] INFO:	sim_time 2_056_244_017_255us: VideoModelPrefetchEvent(chunk_start=2_056_244_117_255, size=1)
+17:13:24.763 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:24.767 [W0] INFO:	sim_time 2_056_244_117_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:24.802 [W0] INFO:	sim_time 2_056_244_117_255us: PolicyEvent @ 2_056_244_117_255us
+17:13:24.802 [W0] INFO:	Draining 2 outstanding tasks
+17:13:24.807 [W0] INFO:	sim_time 2_056_244_117_255us: ControllerEvent @ 2_056_244_117_255us
+17:13:24.811 [W0] INFO:	sim_time 2_056_244_117_255us: PhysicsEvent @ 2_056_244_117_255us
+17:13:24.814 [W0] INFO:	sim_time 2_056_244_117_255us: TrafficEvent @ 2_056_244_117_255us
+17:13:24.815 [W0] INFO:	sim_time 2_056_244_117_255us: PhysicsEvent @ 2_056_244_117_255us
+17:13:24.815 [W0] INFO:	sim_time 2_056_244_117_255us: StepEvent @ 2_056_244_117_255us
+17:13:24.817 [W0] INFO:	sim_time 2_056_244_117_255us: VideoModelPrefetchEvent(chunk_start=2_056_244_217_255, size=1)
+17:13:24.817 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:24.822 [W0] INFO:	sim_time 2_056_244_217_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:24.883 [W0] INFO:	sim_time 2_056_244_217_255us: PolicyEvent @ 2_056_244_217_255us
+17:13:24.883 [W0] INFO:	Draining 2 outstanding tasks
+17:13:24.891 [W0] INFO:	sim_time 2_056_244_217_255us: ControllerEvent @ 2_056_244_217_255us
+17:13:24.896 [W0] INFO:	sim_time 2_056_244_217_255us: PhysicsEvent @ 2_056_244_217_255us
+17:13:24.900 [W0] INFO:	sim_time 2_056_244_217_255us: TrafficEvent @ 2_056_244_217_255us
+17:13:24.901 [W0] INFO:	sim_time 2_056_244_217_255us: PhysicsEvent @ 2_056_244_217_255us
+17:13:24.901 [W0] INFO:	sim_time 2_056_244_217_255us: StepEvent @ 2_056_244_217_255us
+17:13:24.903 [W0] INFO:	sim_time 2_056_244_217_255us: VideoModelPrefetchEvent(chunk_start=2_056_244_317_255, size=1)
+17:13:24.903 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:24.910 [W0] INFO:	sim_time 2_056_244_317_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:24.969 [W0] INFO:	sim_time 2_056_244_317_255us: PolicyEvent @ 2_056_244_317_255us
+17:13:24.970 [W0] INFO:	Draining 2 outstanding tasks
+17:13:24.976 [W0] INFO:	sim_time 2_056_244_317_255us: ControllerEvent @ 2_056_244_317_255us
+17:13:24.980 [W0] INFO:	sim_time 2_056_244_317_255us: PhysicsEvent @ 2_056_244_317_255us
+17:13:24.983 [W0] INFO:	sim_time 2_056_244_317_255us: TrafficEvent @ 2_056_244_317_255us
+17:13:24.984 [W0] INFO:	sim_time 2_056_244_317_255us: PhysicsEvent @ 2_056_244_317_255us
+17:13:24.984 [W0] INFO:	sim_time 2_056_244_317_255us: StepEvent @ 2_056_244_317_255us
+17:13:24.985 [W0] INFO:	sim_time 2_056_244_317_255us: VideoModelPrefetchEvent(chunk_start=2_056_244_417_255, size=1)
+17:13:24.985 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:24.989 [W0] INFO:	sim_time 2_056_244_417_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:25.048 [W0] INFO:	sim_time 2_056_244_417_255us: PolicyEvent @ 2_056_244_417_255us
+17:13:25.048 [W0] INFO:	Draining 2 outstanding tasks
+17:13:25.053 [W0] INFO:	sim_time 2_056_244_417_255us: ControllerEvent @ 2_056_244_417_255us
+17:13:25.057 [W0] INFO:	sim_time 2_056_244_417_255us: PhysicsEvent @ 2_056_244_417_255us
+17:13:25.060 [W0] INFO:	sim_time 2_056_244_417_255us: TrafficEvent @ 2_056_244_417_255us
+17:13:25.061 [W0] INFO:	sim_time 2_056_244_417_255us: PhysicsEvent @ 2_056_244_417_255us
+17:13:25.061 [W0] INFO:	sim_time 2_056_244_417_255us: StepEvent @ 2_056_244_417_255us
+17:13:25.062 [W0] INFO:	sim_time 2_056_244_417_255us: VideoModelPrefetchEvent(chunk_start=2_056_244_517_255, size=1)
+17:13:25.062 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:25.067 [W0] INFO:	sim_time 2_056_244_517_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:25.156 [W0] INFO:	sim_time 2_056_244_517_255us: PolicyEvent @ 2_056_244_517_255us
+17:13:25.156 [W0] INFO:	Draining 2 outstanding tasks
+17:13:25.163 [W0] INFO:	sim_time 2_056_244_517_255us: ControllerEvent @ 2_056_244_517_255us
+17:13:25.169 [W0] INFO:	sim_time 2_056_244_517_255us: PhysicsEvent @ 2_056_244_517_255us
+17:13:25.174 [W0] INFO:	sim_time 2_056_244_517_255us: TrafficEvent @ 2_056_244_517_255us
+17:13:25.175 [W0] INFO:	sim_time 2_056_244_517_255us: PhysicsEvent @ 2_056_244_517_255us
+17:13:25.175 [W0] INFO:	sim_time 2_056_244_517_255us: StepEvent @ 2_056_244_517_255us
+17:13:25.177 [W0] INFO:	sim_time 2_056_244_517_255us: VideoModelPrefetchEvent(chunk_start=2_056_244_617_255, size=1)
+17:13:25.177 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:25.183 [W0] INFO:	sim_time 2_056_244_617_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:25.239 [W0] INFO:	sim_time 2_056_244_617_255us: PolicyEvent @ 2_056_244_617_255us
+17:13:25.240 [W0] INFO:	Draining 2 outstanding tasks
+17:13:25.248 [W0] INFO:	sim_time 2_056_244_617_255us: ControllerEvent @ 2_056_244_617_255us
+17:13:25.253 [W0] INFO:	sim_time 2_056_244_617_255us: PhysicsEvent @ 2_056_244_617_255us
+17:13:25.259 [W0] INFO:	sim_time 2_056_244_617_255us: TrafficEvent @ 2_056_244_617_255us
+17:13:25.260 [W0] INFO:	sim_time 2_056_244_617_255us: PhysicsEvent @ 2_056_244_617_255us
+17:13:25.260 [W0] INFO:	sim_time 2_056_244_617_255us: StepEvent @ 2_056_244_617_255us
+17:13:25.262 [W0] INFO:	sim_time 2_056_244_617_255us: VideoModelPrefetchEvent(chunk_start=2_056_244_717_255, size=1)
+17:13:25.262 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:25.268 [W0] INFO:	sim_time 2_056_244_717_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:25.315 [W0] INFO:	sim_time 2_056_244_717_255us: PolicyEvent @ 2_056_244_717_255us
+17:13:25.316 [W0] INFO:	Draining 2 outstanding tasks
+17:13:25.324 [W0] INFO:	sim_time 2_056_244_717_255us: ControllerEvent @ 2_056_244_717_255us
+17:13:25.329 [W0] INFO:	sim_time 2_056_244_717_255us: PhysicsEvent @ 2_056_244_717_255us
+17:13:25.332 [W0] INFO:	sim_time 2_056_244_717_255us: TrafficEvent @ 2_056_244_717_255us
+17:13:25.333 [W0] INFO:	sim_time 2_056_244_717_255us: PhysicsEvent @ 2_056_244_717_255us
+17:13:25.333 [W0] INFO:	sim_time 2_056_244_717_255us: StepEvent @ 2_056_244_717_255us
+17:13:25.334 [W0] INFO:	sim_time 2_056_244_717_255us: VideoModelPrefetchEvent(chunk_start=2_056_244_817_255, size=1)
+17:13:25.335 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:25.339 [W0] INFO:	sim_time 2_056_244_817_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:25.392 [W0] INFO:	sim_time 2_056_244_817_255us: PolicyEvent @ 2_056_244_817_255us
+17:13:25.392 [W0] INFO:	Draining 2 outstanding tasks
+17:13:25.400 [W0] INFO:	sim_time 2_056_244_817_255us: ControllerEvent @ 2_056_244_817_255us
+17:13:25.404 [W0] INFO:	sim_time 2_056_244_817_255us: PhysicsEvent @ 2_056_244_817_255us
+17:13:25.408 [W0] INFO:	sim_time 2_056_244_817_255us: TrafficEvent @ 2_056_244_817_255us
+17:13:25.409 [W0] INFO:	sim_time 2_056_244_817_255us: PhysicsEvent @ 2_056_244_817_255us
+17:13:25.409 [W0] INFO:	sim_time 2_056_244_817_255us: StepEvent @ 2_056_244_817_255us
+17:13:25.410 [W0] INFO:	sim_time 2_056_244_817_255us: VideoModelPrefetchEvent(chunk_start=2_056_244_917_255, size=1)
+17:13:25.410 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:25.414 [W0] INFO:	sim_time 2_056_244_917_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:25.485 [W0] INFO:	sim_time 2_056_244_917_255us: PolicyEvent @ 2_056_244_917_255us
+17:13:25.485 [W0] INFO:	Draining 2 outstanding tasks
+17:13:25.496 [W0] INFO:	sim_time 2_056_244_917_255us: ControllerEvent @ 2_056_244_917_255us
+17:13:25.501 [W0] INFO:	sim_time 2_056_244_917_255us: PhysicsEvent @ 2_056_244_917_255us
+17:13:25.505 [W0] INFO:	sim_time 2_056_244_917_255us: TrafficEvent @ 2_056_244_917_255us
+17:13:25.506 [W0] INFO:	sim_time 2_056_244_917_255us: PhysicsEvent @ 2_056_244_917_255us
+17:13:25.506 [W0] INFO:	sim_time 2_056_244_917_255us: StepEvent @ 2_056_244_917_255us
+17:13:25.506 [W0] INFO:	sim_time 2_056_244_917_255us: VideoModelPrefetchEvent(chunk_start=2_056_245_017_255, size=1)
+17:13:25.507 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:25.513 [W0] INFO:	sim_time 2_056_245_017_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:25.595 [W0] INFO:	sim_time 2_056_245_017_255us: PolicyEvent @ 2_056_245_017_255us
+17:13:25.596 [W0] INFO:	Draining 2 outstanding tasks
+17:13:25.601 [W0] INFO:	sim_time 2_056_245_017_255us: ControllerEvent @ 2_056_245_017_255us
+17:13:25.606 [W0] INFO:	sim_time 2_056_245_017_255us: PhysicsEvent @ 2_056_245_017_255us
+17:13:25.616 [W0] INFO:	sim_time 2_056_245_017_255us: TrafficEvent @ 2_056_245_017_255us
+17:13:25.616 [W0] INFO:	sim_time 2_056_245_017_255us: PhysicsEvent @ 2_056_245_017_255us
+17:13:25.617 [W0] INFO:	sim_time 2_056_245_017_255us: StepEvent @ 2_056_245_017_255us
+17:13:25.617 [W0] INFO:	sim_time 2_056_245_017_255us: VideoModelPrefetchEvent(chunk_start=2_056_245_117_255, size=1)
+17:13:25.617 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:25.621 [W0] INFO:	sim_time 2_056_245_117_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:25.659 [W0] INFO:	sim_time 2_056_245_117_255us: PolicyEvent @ 2_056_245_117_255us
+17:13:25.659 [W0] INFO:	Draining 2 outstanding tasks
+17:13:25.665 [W0] INFO:	sim_time 2_056_245_117_255us: ControllerEvent @ 2_056_245_117_255us
+17:13:25.670 [W0] INFO:	sim_time 2_056_245_117_255us: PhysicsEvent @ 2_056_245_117_255us
+17:13:25.674 [W0] INFO:	sim_time 2_056_245_117_255us: TrafficEvent @ 2_056_245_117_255us
+17:13:25.674 [W0] INFO:	sim_time 2_056_245_117_255us: PhysicsEvent @ 2_056_245_117_255us
+17:13:25.674 [W0] INFO:	sim_time 2_056_245_117_255us: StepEvent @ 2_056_245_117_255us
+17:13:25.675 [W0] INFO:	sim_time 2_056_245_117_255us: VideoModelPrefetchEvent(chunk_start=2_056_245_217_255, size=1)
+17:13:25.676 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:25.681 [W0] INFO:	sim_time 2_056_245_217_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:25.731 [W0] INFO:	sim_time 2_056_245_217_255us: PolicyEvent @ 2_056_245_217_255us
+17:13:25.732 [W0] INFO:	Draining 2 outstanding tasks
+17:13:25.739 [W0] INFO:	sim_time 2_056_245_217_255us: ControllerEvent @ 2_056_245_217_255us
+17:13:25.743 [W0] INFO:	sim_time 2_056_245_217_255us: PhysicsEvent @ 2_056_245_217_255us
+17:13:25.752 [W0] INFO:	sim_time 2_056_245_217_255us: TrafficEvent @ 2_056_245_217_255us
+17:13:25.752 [W0] INFO:	sim_time 2_056_245_217_255us: PhysicsEvent @ 2_056_245_217_255us
+17:13:25.752 [W0] INFO:	sim_time 2_056_245_217_255us: StepEvent @ 2_056_245_217_255us
+17:13:25.753 [W0] INFO:	sim_time 2_056_245_217_255us: VideoModelPrefetchEvent(chunk_start=2_056_245_317_255, size=1)
+17:13:25.753 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:25.757 [W0] INFO:	sim_time 2_056_245_317_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:25.836 [W0] INFO:	sim_time 2_056_245_317_255us: PolicyEvent @ 2_056_245_317_255us
+17:13:25.836 [W0] INFO:	Draining 2 outstanding tasks
+17:13:25.840 [W0] INFO:	sim_time 2_056_245_317_255us: ControllerEvent @ 2_056_245_317_255us
+17:13:25.844 [W0] INFO:	sim_time 2_056_245_317_255us: PhysicsEvent @ 2_056_245_317_255us
+17:13:25.849 [W0] INFO:	sim_time 2_056_245_317_255us: TrafficEvent @ 2_056_245_317_255us
+17:13:25.849 [W0] INFO:	sim_time 2_056_245_317_255us: PhysicsEvent @ 2_056_245_317_255us
+17:13:25.849 [W0] INFO:	sim_time 2_056_245_317_255us: StepEvent @ 2_056_245_317_255us
+17:13:25.850 [W0] INFO:	sim_time 2_056_245_317_255us: VideoModelPrefetchEvent(chunk_start=2_056_245_417_255, size=1)
+17:13:25.850 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:25.854 [W0] INFO:	sim_time 2_056_245_417_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:25.928 [W0] INFO:	sim_time 2_056_245_417_255us: PolicyEvent @ 2_056_245_417_255us
+17:13:25.929 [W0] INFO:	Draining 2 outstanding tasks
+17:13:25.937 [W0] INFO:	sim_time 2_056_245_417_255us: ControllerEvent @ 2_056_245_417_255us
+17:13:25.942 [W0] INFO:	sim_time 2_056_245_417_255us: PhysicsEvent @ 2_056_245_417_255us
+17:13:25.946 [W0] INFO:	sim_time 2_056_245_417_255us: TrafficEvent @ 2_056_245_417_255us
+17:13:25.947 [W0] INFO:	sim_time 2_056_245_417_255us: PhysicsEvent @ 2_056_245_417_255us
+17:13:25.947 [W0] INFO:	sim_time 2_056_245_417_255us: StepEvent @ 2_056_245_417_255us
+17:13:25.948 [W0] INFO:	sim_time 2_056_245_417_255us: VideoModelPrefetchEvent(chunk_start=2_056_245_517_255, size=1)
+17:13:25.948 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:25.957 [W0] INFO:	sim_time 2_056_245_517_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:26.012 [W0] INFO:	sim_time 2_056_245_517_255us: PolicyEvent @ 2_056_245_517_255us
+17:13:26.013 [W0] INFO:	Draining 2 outstanding tasks
+17:13:26.020 [W0] INFO:	sim_time 2_056_245_517_255us: ControllerEvent @ 2_056_245_517_255us
+17:13:26.025 [W0] INFO:	sim_time 2_056_245_517_255us: PhysicsEvent @ 2_056_245_517_255us
+17:13:26.030 [W0] INFO:	sim_time 2_056_245_517_255us: TrafficEvent @ 2_056_245_517_255us
+17:13:26.031 [W0] INFO:	sim_time 2_056_245_517_255us: PhysicsEvent @ 2_056_245_517_255us
+17:13:26.031 [W0] INFO:	sim_time 2_056_245_517_255us: StepEvent @ 2_056_245_517_255us
+17:13:26.032 [W0] INFO:	sim_time 2_056_245_517_255us: VideoModelPrefetchEvent(chunk_start=2_056_245_617_255, size=1)
+17:13:26.033 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:26.040 [W0] INFO:	sim_time 2_056_245_617_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:26.080 [W0] INFO:	sim_time 2_056_245_617_255us: PolicyEvent @ 2_056_245_617_255us
+17:13:26.080 [W0] INFO:	Draining 2 outstanding tasks
+17:13:26.085 [W0] INFO:	sim_time 2_056_245_617_255us: ControllerEvent @ 2_056_245_617_255us
+17:13:26.089 [W0] INFO:	sim_time 2_056_245_617_255us: PhysicsEvent @ 2_056_245_617_255us
+17:13:26.093 [W0] INFO:	sim_time 2_056_245_617_255us: TrafficEvent @ 2_056_245_617_255us
+17:13:26.093 [W0] INFO:	sim_time 2_056_245_617_255us: PhysicsEvent @ 2_056_245_617_255us
+17:13:26.094 [W0] INFO:	sim_time 2_056_245_617_255us: StepEvent @ 2_056_245_617_255us
+17:13:26.095 [W0] INFO:	sim_time 2_056_245_617_255us: VideoModelPrefetchEvent(chunk_start=2_056_245_717_255, size=1)
+17:13:26.095 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:26.100 [W0] INFO:	sim_time 2_056_245_717_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:26.146 [W0] INFO:	sim_time 2_056_245_717_255us: PolicyEvent @ 2_056_245_717_255us
+17:13:26.147 [W0] INFO:	Draining 2 outstanding tasks
+17:13:26.152 [W0] INFO:	sim_time 2_056_245_717_255us: ControllerEvent @ 2_056_245_717_255us
+17:13:26.157 [W0] INFO:	sim_time 2_056_245_717_255us: PhysicsEvent @ 2_056_245_717_255us
+17:13:26.161 [W0] INFO:	sim_time 2_056_245_717_255us: TrafficEvent @ 2_056_245_717_255us
+17:13:26.161 [W0] INFO:	sim_time 2_056_245_717_255us: PhysicsEvent @ 2_056_245_717_255us
+17:13:26.161 [W0] INFO:	sim_time 2_056_245_717_255us: StepEvent @ 2_056_245_717_255us
+17:13:26.162 [W0] INFO:	sim_time 2_056_245_717_255us: VideoModelPrefetchEvent(chunk_start=2_056_245_817_255, size=1)
+17:13:26.162 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:26.167 [W0] INFO:	sim_time 2_056_245_817_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:26.203 [W0] INFO:	sim_time 2_056_245_817_255us: PolicyEvent @ 2_056_245_817_255us
+17:13:26.204 [W0] INFO:	Draining 2 outstanding tasks
+17:13:26.212 [W0] INFO:	sim_time 2_056_245_817_255us: ControllerEvent @ 2_056_245_817_255us
+17:13:26.216 [W0] INFO:	sim_time 2_056_245_817_255us: PhysicsEvent @ 2_056_245_817_255us
+17:13:26.221 [W0] INFO:	sim_time 2_056_245_817_255us: TrafficEvent @ 2_056_245_817_255us
+17:13:26.221 [W0] INFO:	sim_time 2_056_245_817_255us: PhysicsEvent @ 2_056_245_817_255us
+17:13:26.221 [W0] INFO:	sim_time 2_056_245_817_255us: StepEvent @ 2_056_245_817_255us
+17:13:26.222 [W0] INFO:	sim_time 2_056_245_817_255us: VideoModelPrefetchEvent(chunk_start=2_056_245_917_255, size=1)
+17:13:26.222 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:26.228 [W0] INFO:	sim_time 2_056_245_917_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:26.272 [W0] INFO:	sim_time 2_056_245_917_255us: PolicyEvent @ 2_056_245_917_255us
+17:13:26.272 [W0] INFO:	Draining 2 outstanding tasks
+17:13:26.278 [W0] INFO:	sim_time 2_056_245_917_255us: ControllerEvent @ 2_056_245_917_255us
+17:13:26.281 [W0] INFO:	sim_time 2_056_245_917_255us: PhysicsEvent @ 2_056_245_917_255us
+17:13:26.285 [W0] INFO:	sim_time 2_056_245_917_255us: TrafficEvent @ 2_056_245_917_255us
+17:13:26.285 [W0] INFO:	sim_time 2_056_245_917_255us: PhysicsEvent @ 2_056_245_917_255us
+17:13:26.286 [W0] INFO:	sim_time 2_056_245_917_255us: StepEvent @ 2_056_245_917_255us
+17:13:26.286 [W0] INFO:	sim_time 2_056_245_917_255us: VideoModelPrefetchEvent(chunk_start=2_056_246_017_255, size=1)
+17:13:26.286 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:26.290 [W0] INFO:	sim_time 2_056_246_017_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:26.328 [W0] INFO:	sim_time 2_056_246_017_255us: PolicyEvent @ 2_056_246_017_255us
+17:13:26.328 [W0] INFO:	Draining 2 outstanding tasks
+17:13:26.334 [W0] INFO:	sim_time 2_056_246_017_255us: ControllerEvent @ 2_056_246_017_255us
+17:13:26.339 [W0] INFO:	sim_time 2_056_246_017_255us: PhysicsEvent @ 2_056_246_017_255us
+17:13:26.343 [W0] INFO:	sim_time 2_056_246_017_255us: TrafficEvent @ 2_056_246_017_255us
+17:13:26.344 [W0] INFO:	sim_time 2_056_246_017_255us: PhysicsEvent @ 2_056_246_017_255us
+17:13:26.344 [W0] INFO:	sim_time 2_056_246_017_255us: StepEvent @ 2_056_246_017_255us
+17:13:26.345 [W0] INFO:	sim_time 2_056_246_017_255us: VideoModelPrefetchEvent(chunk_start=2_056_246_117_255, size=1)
+17:13:26.345 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:26.350 [W0] INFO:	sim_time 2_056_246_117_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:26.409 [W0] INFO:	sim_time 2_056_246_117_255us: PolicyEvent @ 2_056_246_117_255us
+17:13:26.410 [W0] INFO:	Draining 2 outstanding tasks
+17:13:26.416 [W0] INFO:	sim_time 2_056_246_117_255us: ControllerEvent @ 2_056_246_117_255us
+17:13:26.420 [W0] INFO:	sim_time 2_056_246_117_255us: PhysicsEvent @ 2_056_246_117_255us
+17:13:26.423 [W0] INFO:	sim_time 2_056_246_117_255us: TrafficEvent @ 2_056_246_117_255us
+17:13:26.424 [W0] INFO:	sim_time 2_056_246_117_255us: PhysicsEvent @ 2_056_246_117_255us
+17:13:26.424 [W0] INFO:	sim_time 2_056_246_117_255us: StepEvent @ 2_056_246_117_255us
+17:13:26.425 [W0] INFO:	sim_time 2_056_246_117_255us: VideoModelPrefetchEvent(chunk_start=2_056_246_217_255, size=1)
+17:13:26.425 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:26.429 [W0] INFO:	sim_time 2_056_246_217_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:26.483 [W0] INFO:	sim_time 2_056_246_217_255us: PolicyEvent @ 2_056_246_217_255us
+17:13:26.483 [W0] INFO:	Draining 2 outstanding tasks
+17:13:26.491 [W0] INFO:	sim_time 2_056_246_217_255us: ControllerEvent @ 2_056_246_217_255us
+17:13:26.496 [W0] INFO:	sim_time 2_056_246_217_255us: PhysicsEvent @ 2_056_246_217_255us
+17:13:26.500 [W0] INFO:	sim_time 2_056_246_217_255us: TrafficEvent @ 2_056_246_217_255us
+17:13:26.501 [W0] INFO:	sim_time 2_056_246_217_255us: PhysicsEvent @ 2_056_246_217_255us
+17:13:26.501 [W0] INFO:	sim_time 2_056_246_217_255us: StepEvent @ 2_056_246_217_255us
+17:13:26.502 [W0] INFO:	sim_time 2_056_246_217_255us: VideoModelPrefetchEvent(chunk_start=2_056_246_317_255, size=1)
+17:13:26.502 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:26.508 [W0] INFO:	sim_time 2_056_246_317_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:26.584 [W0] INFO:	sim_time 2_056_246_317_255us: PolicyEvent @ 2_056_246_317_255us
+17:13:26.584 [W0] INFO:	Draining 2 outstanding tasks
+17:13:26.588 [W0] INFO:	sim_time 2_056_246_317_255us: ControllerEvent @ 2_056_246_317_255us
+17:13:26.592 [W0] INFO:	sim_time 2_056_246_317_255us: PhysicsEvent @ 2_056_246_317_255us
+17:13:26.595 [W0] INFO:	sim_time 2_056_246_317_255us: TrafficEvent @ 2_056_246_317_255us
+17:13:26.595 [W0] INFO:	sim_time 2_056_246_317_255us: PhysicsEvent @ 2_056_246_317_255us
+17:13:26.596 [W0] INFO:	sim_time 2_056_246_317_255us: StepEvent @ 2_056_246_317_255us
+17:13:26.596 [W0] INFO:	sim_time 2_056_246_317_255us: VideoModelPrefetchEvent(chunk_start=2_056_246_417_255, size=1)
+17:13:26.596 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:26.600 [W0] INFO:	sim_time 2_056_246_417_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:26.669 [W0] INFO:	sim_time 2_056_246_417_255us: PolicyEvent @ 2_056_246_417_255us
+17:13:26.669 [W0] INFO:	Draining 2 outstanding tasks
+17:13:26.675 [W0] INFO:	sim_time 2_056_246_417_255us: ControllerEvent @ 2_056_246_417_255us
+17:13:26.679 [W0] INFO:	sim_time 2_056_246_417_255us: PhysicsEvent @ 2_056_246_417_255us
+17:13:26.685 [W0] INFO:	sim_time 2_056_246_417_255us: TrafficEvent @ 2_056_246_417_255us
+17:13:26.685 [W0] INFO:	sim_time 2_056_246_417_255us: PhysicsEvent @ 2_056_246_417_255us
+17:13:26.686 [W0] INFO:	sim_time 2_056_246_417_255us: StepEvent @ 2_056_246_417_255us
+17:13:26.686 [W0] INFO:	sim_time 2_056_246_417_255us: VideoModelPrefetchEvent(chunk_start=2_056_246_517_255, size=1)
+17:13:26.687 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:26.692 [W0] INFO:	sim_time 2_056_246_517_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:26.737 [W0] INFO:	sim_time 2_056_246_517_255us: PolicyEvent @ 2_056_246_517_255us
+17:13:26.737 [W0] INFO:	Draining 2 outstanding tasks
+17:13:26.744 [W0] INFO:	sim_time 2_056_246_517_255us: ControllerEvent @ 2_056_246_517_255us
+17:13:26.748 [W0] INFO:	sim_time 2_056_246_517_255us: PhysicsEvent @ 2_056_246_517_255us
+17:13:26.752 [W0] INFO:	sim_time 2_056_246_517_255us: TrafficEvent @ 2_056_246_517_255us
+17:13:26.752 [W0] INFO:	sim_time 2_056_246_517_255us: PhysicsEvent @ 2_056_246_517_255us
+17:13:26.752 [W0] INFO:	sim_time 2_056_246_517_255us: StepEvent @ 2_056_246_517_255us
+17:13:26.753 [W0] INFO:	sim_time 2_056_246_517_255us: VideoModelPrefetchEvent(chunk_start=2_056_246_617_255, size=1)
+17:13:26.753 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:26.758 [W0] INFO:	sim_time 2_056_246_617_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:26.815 [W0] INFO:	sim_time 2_056_246_617_255us: PolicyEvent @ 2_056_246_617_255us
+17:13:26.815 [W0] INFO:	Draining 2 outstanding tasks
+17:13:26.821 [W0] INFO:	sim_time 2_056_246_617_255us: ControllerEvent @ 2_056_246_617_255us
+17:13:26.825 [W0] INFO:	sim_time 2_056_246_617_255us: PhysicsEvent @ 2_056_246_617_255us
+17:13:26.829 [W0] INFO:	sim_time 2_056_246_617_255us: TrafficEvent @ 2_056_246_617_255us
+17:13:26.829 [W0] INFO:	sim_time 2_056_246_617_255us: PhysicsEvent @ 2_056_246_617_255us
+17:13:26.830 [W0] INFO:	sim_time 2_056_246_617_255us: StepEvent @ 2_056_246_617_255us
+17:13:26.831 [W0] INFO:	sim_time 2_056_246_617_255us: VideoModelPrefetchEvent(chunk_start=2_056_246_717_255, size=1)
+17:13:26.832 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:26.837 [W0] INFO:	sim_time 2_056_246_717_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:26.910 [W0] INFO:	sim_time 2_056_246_717_255us: PolicyEvent @ 2_056_246_717_255us
+17:13:26.911 [W0] INFO:	Draining 2 outstanding tasks
+17:13:26.915 [W0] INFO:	sim_time 2_056_246_717_255us: ControllerEvent @ 2_056_246_717_255us
+17:13:26.919 [W0] INFO:	sim_time 2_056_246_717_255us: PhysicsEvent @ 2_056_246_717_255us
+17:13:26.923 [W0] INFO:	sim_time 2_056_246_717_255us: TrafficEvent @ 2_056_246_717_255us
+17:13:26.925 [W0] INFO:	sim_time 2_056_246_717_255us: PhysicsEvent @ 2_056_246_717_255us
+17:13:26.925 [W0] INFO:	sim_time 2_056_246_717_255us: StepEvent @ 2_056_246_717_255us
+17:13:26.926 [W0] INFO:	sim_time 2_056_246_717_255us: VideoModelPrefetchEvent(chunk_start=2_056_246_817_255, size=1)
+17:13:26.926 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:26.932 [W0] INFO:	sim_time 2_056_246_817_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:26.967 [W0] INFO:	sim_time 2_056_246_817_255us: PolicyEvent @ 2_056_246_817_255us
+17:13:26.967 [W0] INFO:	Draining 2 outstanding tasks
+17:13:26.972 [W0] INFO:	sim_time 2_056_246_817_255us: ControllerEvent @ 2_056_246_817_255us
+17:13:26.977 [W0] INFO:	sim_time 2_056_246_817_255us: PhysicsEvent @ 2_056_246_817_255us
+17:13:26.981 [W0] INFO:	sim_time 2_056_246_817_255us: TrafficEvent @ 2_056_246_817_255us
+17:13:26.981 [W0] INFO:	sim_time 2_056_246_817_255us: PhysicsEvent @ 2_056_246_817_255us
+17:13:26.982 [W0] INFO:	sim_time 2_056_246_817_255us: StepEvent @ 2_056_246_817_255us
+17:13:26.982 [W0] INFO:	sim_time 2_056_246_817_255us: VideoModelPrefetchEvent(chunk_start=2_056_246_917_255, size=1)
+17:13:26.982 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:26.988 [W0] INFO:	sim_time 2_056_246_917_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:27.055 [W0] INFO:	sim_time 2_056_246_917_255us: PolicyEvent @ 2_056_246_917_255us
+17:13:27.056 [W0] INFO:	Draining 2 outstanding tasks
+17:13:27.062 [W0] INFO:	sim_time 2_056_246_917_255us: ControllerEvent @ 2_056_246_917_255us
+17:13:27.067 [W0] INFO:	sim_time 2_056_246_917_255us: PhysicsEvent @ 2_056_246_917_255us
+17:13:27.074 [W0] INFO:	sim_time 2_056_246_917_255us: TrafficEvent @ 2_056_246_917_255us
+17:13:27.075 [W0] INFO:	sim_time 2_056_246_917_255us: PhysicsEvent @ 2_056_246_917_255us
+17:13:27.075 [W0] INFO:	sim_time 2_056_246_917_255us: StepEvent @ 2_056_246_917_255us
+17:13:27.076 [W0] INFO:	sim_time 2_056_246_917_255us: VideoModelPrefetchEvent(chunk_start=2_056_247_017_255, size=1)
+17:13:27.076 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:27.081 [W0] INFO:	sim_time 2_056_247_017_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:27.155 [W0] INFO:	sim_time 2_056_247_017_255us: PolicyEvent @ 2_056_247_017_255us
+17:13:27.156 [W0] INFO:	Draining 2 outstanding tasks
+17:13:27.160 [W0] INFO:	sim_time 2_056_247_017_255us: ControllerEvent @ 2_056_247_017_255us
+17:13:27.166 [W0] INFO:	sim_time 2_056_247_017_255us: PhysicsEvent @ 2_056_247_017_255us
+17:13:27.170 [W0] INFO:	sim_time 2_056_247_017_255us: TrafficEvent @ 2_056_247_017_255us
+17:13:27.171 [W0] INFO:	sim_time 2_056_247_017_255us: PhysicsEvent @ 2_056_247_017_255us
+17:13:27.171 [W0] INFO:	sim_time 2_056_247_017_255us: StepEvent @ 2_056_247_017_255us
+17:13:27.172 [W0] INFO:	sim_time 2_056_247_017_255us: VideoModelPrefetchEvent(chunk_start=2_056_247_117_255, size=1)
+17:13:27.172 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:27.178 [W0] INFO:	sim_time 2_056_247_117_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:27.236 [W0] INFO:	sim_time 2_056_247_117_255us: PolicyEvent @ 2_056_247_117_255us
+17:13:27.236 [W0] INFO:	Draining 2 outstanding tasks
+17:13:27.242 [W0] INFO:	sim_time 2_056_247_117_255us: ControllerEvent @ 2_056_247_117_255us
+17:13:27.246 [W0] INFO:	sim_time 2_056_247_117_255us: PhysicsEvent @ 2_056_247_117_255us
+17:13:27.251 [W0] INFO:	sim_time 2_056_247_117_255us: TrafficEvent @ 2_056_247_117_255us
+17:13:27.251 [W0] INFO:	sim_time 2_056_247_117_255us: PhysicsEvent @ 2_056_247_117_255us
+17:13:27.251 [W0] INFO:	sim_time 2_056_247_117_255us: StepEvent @ 2_056_247_117_255us
+17:13:27.253 [W0] INFO:	sim_time 2_056_247_117_255us: VideoModelPrefetchEvent(chunk_start=2_056_247_217_255, size=1)
+17:13:27.253 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:27.259 [W0] INFO:	sim_time 2_056_247_217_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:27.296 [W0] INFO:	sim_time 2_056_247_217_255us: PolicyEvent @ 2_056_247_217_255us
+17:13:27.297 [W0] INFO:	Draining 2 outstanding tasks
+17:13:27.303 [W0] INFO:	sim_time 2_056_247_217_255us: ControllerEvent @ 2_056_247_217_255us
+17:13:27.306 [W0] INFO:	sim_time 2_056_247_217_255us: PhysicsEvent @ 2_056_247_217_255us
+17:13:27.310 [W0] INFO:	sim_time 2_056_247_217_255us: TrafficEvent @ 2_056_247_217_255us
+17:13:27.311 [W0] INFO:	sim_time 2_056_247_217_255us: PhysicsEvent @ 2_056_247_217_255us
+17:13:27.311 [W0] INFO:	sim_time 2_056_247_217_255us: StepEvent @ 2_056_247_217_255us
+17:13:27.312 [W0] INFO:	sim_time 2_056_247_217_255us: VideoModelPrefetchEvent(chunk_start=2_056_247_317_255, size=1)
+17:13:27.312 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:27.318 [W0] INFO:	sim_time 2_056_247_317_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:27.358 [W0] INFO:	sim_time 2_056_247_317_255us: PolicyEvent @ 2_056_247_317_255us
+17:13:27.359 [W0] INFO:	Draining 2 outstanding tasks
+17:13:27.365 [W0] INFO:	sim_time 2_056_247_317_255us: ControllerEvent @ 2_056_247_317_255us
+17:13:27.369 [W0] INFO:	sim_time 2_056_247_317_255us: PhysicsEvent @ 2_056_247_317_255us
+17:13:27.372 [W0] INFO:	sim_time 2_056_247_317_255us: TrafficEvent @ 2_056_247_317_255us
+17:13:27.373 [W0] INFO:	sim_time 2_056_247_317_255us: PhysicsEvent @ 2_056_247_317_255us
+17:13:27.373 [W0] INFO:	sim_time 2_056_247_317_255us: StepEvent @ 2_056_247_317_255us
+17:13:27.374 [W0] INFO:	sim_time 2_056_247_317_255us: VideoModelPrefetchEvent(chunk_start=2_056_247_417_255, size=1)
+17:13:27.374 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:27.378 [W0] INFO:	sim_time 2_056_247_417_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:27.442 [W0] INFO:	sim_time 2_056_247_417_255us: PolicyEvent @ 2_056_247_417_255us
+17:13:27.443 [W0] INFO:	Draining 2 outstanding tasks
+17:13:27.448 [W0] INFO:	sim_time 2_056_247_417_255us: ControllerEvent @ 2_056_247_417_255us
+17:13:27.453 [W0] INFO:	sim_time 2_056_247_417_255us: PhysicsEvent @ 2_056_247_417_255us
+17:13:27.461 [W0] INFO:	sim_time 2_056_247_417_255us: TrafficEvent @ 2_056_247_417_255us
+17:13:27.461 [W0] INFO:	sim_time 2_056_247_417_255us: PhysicsEvent @ 2_056_247_417_255us
+17:13:27.462 [W0] INFO:	sim_time 2_056_247_417_255us: StepEvent @ 2_056_247_417_255us
+17:13:27.462 [W0] INFO:	sim_time 2_056_247_417_255us: VideoModelPrefetchEvent(chunk_start=2_056_247_517_255, size=1)
+17:13:27.463 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:27.467 [W0] INFO:	sim_time 2_056_247_517_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:27.506 [W0] INFO:	sim_time 2_056_247_517_255us: PolicyEvent @ 2_056_247_517_255us
+17:13:27.506 [W0] INFO:	Draining 2 outstanding tasks
+17:13:27.512 [W0] INFO:	sim_time 2_056_247_517_255us: ControllerEvent @ 2_056_247_517_255us
+17:13:27.517 [W0] INFO:	sim_time 2_056_247_517_255us: PhysicsEvent @ 2_056_247_517_255us
+17:13:27.521 [W0] INFO:	sim_time 2_056_247_517_255us: TrafficEvent @ 2_056_247_517_255us
+17:13:27.521 [W0] INFO:	sim_time 2_056_247_517_255us: PhysicsEvent @ 2_056_247_517_255us
+17:13:27.522 [W0] INFO:	sim_time 2_056_247_517_255us: StepEvent @ 2_056_247_517_255us
+17:13:27.522 [W0] INFO:	sim_time 2_056_247_517_255us: VideoModelPrefetchEvent(chunk_start=2_056_247_617_255, size=1)
+17:13:27.522 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:27.528 [W0] INFO:	sim_time 2_056_247_617_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:27.580 [W0] INFO:	sim_time 2_056_247_617_255us: PolicyEvent @ 2_056_247_617_255us
+17:13:27.580 [W0] INFO:	Draining 2 outstanding tasks
+17:13:27.587 [W0] INFO:	sim_time 2_056_247_617_255us: ControllerEvent @ 2_056_247_617_255us
+17:13:27.591 [W0] INFO:	sim_time 2_056_247_617_255us: PhysicsEvent @ 2_056_247_617_255us
+17:13:27.597 [W0] INFO:	sim_time 2_056_247_617_255us: TrafficEvent @ 2_056_247_617_255us
+17:13:27.597 [W0] INFO:	sim_time 2_056_247_617_255us: PhysicsEvent @ 2_056_247_617_255us
+17:13:27.597 [W0] INFO:	sim_time 2_056_247_617_255us: StepEvent @ 2_056_247_617_255us
+17:13:27.599 [W0] INFO:	sim_time 2_056_247_617_255us: VideoModelPrefetchEvent(chunk_start=2_056_247_717_255, size=1)
+17:13:27.599 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:27.606 [W0] INFO:	sim_time 2_056_247_717_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:27.645 [W0] INFO:	sim_time 2_056_247_717_255us: PolicyEvent @ 2_056_247_717_255us
+17:13:27.645 [W0] INFO:	Draining 2 outstanding tasks
+17:13:27.650 [W0] INFO:	sim_time 2_056_247_717_255us: ControllerEvent @ 2_056_247_717_255us
+17:13:27.654 [W0] INFO:	sim_time 2_056_247_717_255us: PhysicsEvent @ 2_056_247_717_255us
+17:13:27.657 [W0] INFO:	sim_time 2_056_247_717_255us: TrafficEvent @ 2_056_247_717_255us
+17:13:27.658 [W0] INFO:	sim_time 2_056_247_717_255us: PhysicsEvent @ 2_056_247_717_255us
+17:13:27.658 [W0] INFO:	sim_time 2_056_247_717_255us: StepEvent @ 2_056_247_717_255us
+17:13:27.659 [W0] INFO:	sim_time 2_056_247_717_255us: VideoModelPrefetchEvent(chunk_start=2_056_247_817_255, size=1)
+17:13:27.659 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:27.663 [W0] INFO:	sim_time 2_056_247_817_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:27.713 [W0] INFO:	sim_time 2_056_247_817_255us: PolicyEvent @ 2_056_247_817_255us
+17:13:27.714 [W0] INFO:	Draining 2 outstanding tasks
+17:13:27.720 [W0] INFO:	sim_time 2_056_247_817_255us: ControllerEvent @ 2_056_247_817_255us
+17:13:27.724 [W0] INFO:	sim_time 2_056_247_817_255us: PhysicsEvent @ 2_056_247_817_255us
+17:13:27.733 [W0] INFO:	sim_time 2_056_247_817_255us: TrafficEvent @ 2_056_247_817_255us
+17:13:27.733 [W0] INFO:	sim_time 2_056_247_817_255us: PhysicsEvent @ 2_056_247_817_255us
+17:13:27.733 [W0] INFO:	sim_time 2_056_247_817_255us: StepEvent @ 2_056_247_817_255us
+17:13:27.734 [W0] INFO:	sim_time 2_056_247_817_255us: VideoModelPrefetchEvent(chunk_start=2_056_247_917_255, size=1)
+17:13:27.734 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:27.739 [W0] INFO:	sim_time 2_056_247_917_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:27.838 [W0] INFO:	sim_time 2_056_247_917_255us: PolicyEvent @ 2_056_247_917_255us
+17:13:27.838 [W0] INFO:	Draining 2 outstanding tasks
+17:13:27.844 [W0] INFO:	sim_time 2_056_247_917_255us: ControllerEvent @ 2_056_247_917_255us
+17:13:27.849 [W0] INFO:	sim_time 2_056_247_917_255us: PhysicsEvent @ 2_056_247_917_255us
+17:13:27.853 [W0] INFO:	sim_time 2_056_247_917_255us: TrafficEvent @ 2_056_247_917_255us
+17:13:27.853 [W0] INFO:	sim_time 2_056_247_917_255us: PhysicsEvent @ 2_056_247_917_255us
+17:13:27.854 [W0] INFO:	sim_time 2_056_247_917_255us: StepEvent @ 2_056_247_917_255us
+17:13:27.856 [W0] INFO:	sim_time 2_056_247_917_255us: VideoModelPrefetchEvent(chunk_start=2_056_248_017_255, size=1)
+17:13:27.856 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:27.862 [W0] INFO:	sim_time 2_056_248_017_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:27.915 [W0] INFO:	sim_time 2_056_248_017_255us: PolicyEvent @ 2_056_248_017_255us
+17:13:27.915 [W0] INFO:	Draining 2 outstanding tasks
+17:13:27.923 [W0] INFO:	sim_time 2_056_248_017_255us: ControllerEvent @ 2_056_248_017_255us
+17:13:27.928 [W0] INFO:	sim_time 2_056_248_017_255us: PhysicsEvent @ 2_056_248_017_255us
+17:13:27.933 [W0] INFO:	sim_time 2_056_248_017_255us: TrafficEvent @ 2_056_248_017_255us
+17:13:27.934 [W0] INFO:	sim_time 2_056_248_017_255us: PhysicsEvent @ 2_056_248_017_255us
+17:13:27.934 [W0] INFO:	sim_time 2_056_248_017_255us: StepEvent @ 2_056_248_017_255us
+17:13:27.935 [W0] INFO:	sim_time 2_056_248_017_255us: VideoModelPrefetchEvent(chunk_start=2_056_248_117_255, size=1)
+17:13:27.936 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:27.941 [W0] INFO:	sim_time 2_056_248_117_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:27.983 [W0] INFO:	sim_time 2_056_248_117_255us: PolicyEvent @ 2_056_248_117_255us
+17:13:27.983 [W0] INFO:	Draining 2 outstanding tasks
+17:13:27.990 [W0] INFO:	sim_time 2_056_248_117_255us: ControllerEvent @ 2_056_248_117_255us
+17:13:27.996 [W0] INFO:	sim_time 2_056_248_117_255us: PhysicsEvent @ 2_056_248_117_255us
+17:13:28.003 [W0] INFO:	sim_time 2_056_248_117_255us: TrafficEvent @ 2_056_248_117_255us
+17:13:28.004 [W0] INFO:	sim_time 2_056_248_117_255us: PhysicsEvent @ 2_056_248_117_255us
+17:13:28.004 [W0] INFO:	sim_time 2_056_248_117_255us: StepEvent @ 2_056_248_117_255us
+17:13:28.006 [W0] INFO:	sim_time 2_056_248_117_255us: VideoModelPrefetchEvent(chunk_start=2_056_248_217_255, size=1)
+17:13:28.006 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:28.012 [W0] INFO:	sim_time 2_056_248_217_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:28.073 [W0] INFO:	sim_time 2_056_248_217_255us: PolicyEvent @ 2_056_248_217_255us
+17:13:28.073 [W0] INFO:	Draining 2 outstanding tasks
+17:13:28.080 [W0] INFO:	sim_time 2_056_248_217_255us: ControllerEvent @ 2_056_248_217_255us
+17:13:28.086 [W0] INFO:	sim_time 2_056_248_217_255us: PhysicsEvent @ 2_056_248_217_255us
+17:13:28.090 [W0] INFO:	sim_time 2_056_248_217_255us: TrafficEvent @ 2_056_248_217_255us
+17:13:28.091 [W0] INFO:	sim_time 2_056_248_217_255us: PhysicsEvent @ 2_056_248_217_255us
+17:13:28.091 [W0] INFO:	sim_time 2_056_248_217_255us: StepEvent @ 2_056_248_217_255us
+17:13:28.092 [W0] INFO:	sim_time 2_056_248_217_255us: VideoModelPrefetchEvent(chunk_start=2_056_248_317_255, size=1)
+17:13:28.092 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:28.100 [W0] INFO:	sim_time 2_056_248_317_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:28.176 [W0] INFO:	sim_time 2_056_248_317_255us: PolicyEvent @ 2_056_248_317_255us
+17:13:28.177 [W0] INFO:	Draining 2 outstanding tasks
+17:13:28.183 [W0] INFO:	sim_time 2_056_248_317_255us: ControllerEvent @ 2_056_248_317_255us
+17:13:28.187 [W0] INFO:	sim_time 2_056_248_317_255us: PhysicsEvent @ 2_056_248_317_255us
+17:13:28.192 [W0] INFO:	sim_time 2_056_248_317_255us: TrafficEvent @ 2_056_248_317_255us
+17:13:28.192 [W0] INFO:	sim_time 2_056_248_317_255us: PhysicsEvent @ 2_056_248_317_255us
+17:13:28.192 [W0] INFO:	sim_time 2_056_248_317_255us: StepEvent @ 2_056_248_317_255us
+17:13:28.193 [W0] INFO:	sim_time 2_056_248_317_255us: VideoModelPrefetchEvent(chunk_start=2_056_248_417_255, size=1)
+17:13:28.193 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:28.199 [W0] INFO:	sim_time 2_056_248_417_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:28.250 [W0] INFO:	sim_time 2_056_248_417_255us: PolicyEvent @ 2_056_248_417_255us
+17:13:28.251 [W0] INFO:	Draining 2 outstanding tasks
+17:13:28.256 [W0] INFO:	sim_time 2_056_248_417_255us: ControllerEvent @ 2_056_248_417_255us
+17:13:28.261 [W0] INFO:	sim_time 2_056_248_417_255us: PhysicsEvent @ 2_056_248_417_255us
+17:13:28.265 [W0] INFO:	sim_time 2_056_248_417_255us: TrafficEvent @ 2_056_248_417_255us
+17:13:28.265 [W0] INFO:	sim_time 2_056_248_417_255us: PhysicsEvent @ 2_056_248_417_255us
+17:13:28.266 [W0] INFO:	sim_time 2_056_248_417_255us: StepEvent @ 2_056_248_417_255us
+17:13:28.266 [W0] INFO:	sim_time 2_056_248_417_255us: VideoModelPrefetchEvent(chunk_start=2_056_248_517_255, size=1)
+17:13:28.267 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:28.274 [W0] INFO:	sim_time 2_056_248_517_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:28.355 [W0] INFO:	sim_time 2_056_248_517_255us: PolicyEvent @ 2_056_248_517_255us
+17:13:28.355 [W0] INFO:	Draining 2 outstanding tasks
+17:13:28.360 [W0] INFO:	sim_time 2_056_248_517_255us: ControllerEvent @ 2_056_248_517_255us
+17:13:28.364 [W0] INFO:	sim_time 2_056_248_517_255us: PhysicsEvent @ 2_056_248_517_255us
+17:13:28.368 [W0] INFO:	sim_time 2_056_248_517_255us: TrafficEvent @ 2_056_248_517_255us
+17:13:28.368 [W0] INFO:	sim_time 2_056_248_517_255us: PhysicsEvent @ 2_056_248_517_255us
+17:13:28.369 [W0] INFO:	sim_time 2_056_248_517_255us: StepEvent @ 2_056_248_517_255us
+17:13:28.369 [W0] INFO:	sim_time 2_056_248_517_255us: VideoModelPrefetchEvent(chunk_start=2_056_248_617_255, size=1)
+17:13:28.370 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:28.374 [W0] INFO:	sim_time 2_056_248_617_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:28.424 [W0] INFO:	sim_time 2_056_248_617_255us: PolicyEvent @ 2_056_248_617_255us
+17:13:28.424 [W0] INFO:	Draining 2 outstanding tasks
+17:13:28.434 [W0] INFO:	sim_time 2_056_248_617_255us: ControllerEvent @ 2_056_248_617_255us
+17:13:28.439 [W0] INFO:	sim_time 2_056_248_617_255us: PhysicsEvent @ 2_056_248_617_255us
+17:13:28.444 [W0] INFO:	sim_time 2_056_248_617_255us: TrafficEvent @ 2_056_248_617_255us
+17:13:28.444 [W0] INFO:	sim_time 2_056_248_617_255us: PhysicsEvent @ 2_056_248_617_255us
+17:13:28.445 [W0] INFO:	sim_time 2_056_248_617_255us: StepEvent @ 2_056_248_617_255us
+17:13:28.446 [W0] INFO:	sim_time 2_056_248_617_255us: VideoModelPrefetchEvent(chunk_start=2_056_248_717_255, size=1)
+17:13:28.446 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:28.452 [W0] INFO:	sim_time 2_056_248_717_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:28.526 [W0] INFO:	sim_time 2_056_248_717_255us: PolicyEvent @ 2_056_248_717_255us
+17:13:28.527 [W0] INFO:	Draining 2 outstanding tasks
+17:13:28.532 [W0] INFO:	sim_time 2_056_248_717_255us: ControllerEvent @ 2_056_248_717_255us
+17:13:28.538 [W0] INFO:	sim_time 2_056_248_717_255us: PhysicsEvent @ 2_056_248_717_255us
+17:13:28.542 [W0] INFO:	sim_time 2_056_248_717_255us: TrafficEvent @ 2_056_248_717_255us
+17:13:28.543 [W0] INFO:	sim_time 2_056_248_717_255us: PhysicsEvent @ 2_056_248_717_255us
+17:13:28.543 [W0] INFO:	sim_time 2_056_248_717_255us: StepEvent @ 2_056_248_717_255us
+17:13:28.544 [W0] INFO:	sim_time 2_056_248_717_255us: VideoModelPrefetchEvent(chunk_start=2_056_248_817_255, size=1)
+17:13:28.544 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:13:28.549 [W0] INFO:	sim_time 2_056_248_817_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:28.597 [W0] INFO:	sim_time 2_056_248_817_255us: PolicyEvent @ 2_056_248_817_255us
+17:13:28.598 [W0] INFO:	Draining 2 outstanding tasks
+17:13:28.604 [W0] INFO:	sim_time 2_056_248_817_255us: ControllerEvent @ 2_056_248_817_255us
+17:13:28.607 [W0] INFO:	sim_time 2_056_248_817_255us: PhysicsEvent @ 2_056_248_817_255us
+17:13:28.610 [W0] INFO:	sim_time 2_056_248_817_255us: TrafficEvent @ 2_056_248_817_255us
+17:13:28.611 [W0] INFO:	sim_time 2_056_248_817_255us: PhysicsEvent @ 2_056_248_817_255us
+17:13:28.611 [W0] INFO:	sim_time 2_056_248_817_255us: StepEvent @ 2_056_248_817_255us
+17:13:28.612 [W0] INFO:	sim_time 2_056_248_817_255us: VideoModelPrefetchEvent(chunk_start=2_056_248_917_255, size=1)
+17:13:28.612 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:28.616 [W0] INFO:	sim_time 2_056_248_917_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:28.693 [W0] INFO:	sim_time 2_056_248_917_255us: PolicyEvent @ 2_056_248_917_255us
+17:13:28.694 [W0] INFO:	Draining 2 outstanding tasks
+17:13:28.698 [W0] INFO:	sim_time 2_056_248_917_255us: ControllerEvent @ 2_056_248_917_255us
+17:13:28.702 [W0] INFO:	sim_time 2_056_248_917_255us: PhysicsEvent @ 2_056_248_917_255us
+17:13:28.706 [W0] INFO:	sim_time 2_056_248_917_255us: TrafficEvent @ 2_056_248_917_255us
+17:13:28.706 [W0] INFO:	sim_time 2_056_248_917_255us: PhysicsEvent @ 2_056_248_917_255us
+17:13:28.707 [W0] INFO:	sim_time 2_056_248_917_255us: StepEvent @ 2_056_248_917_255us
+17:13:28.708 [W0] INFO:	sim_time 2_056_248_917_255us: VideoModelPrefetchEvent(chunk_start=2_056_249_017_255, size=1)
+17:13:28.708 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=2
+17:13:28.712 [W0] INFO:	sim_time 2_056_249_017_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:28.767 [W0] INFO:	sim_time 2_056_249_017_255us: PolicyEvent @ 2_056_249_017_255us
+17:13:28.768 [W0] INFO:	Draining 2 outstanding tasks
+17:13:28.774 [W0] INFO:	sim_time 2_056_249_017_255us: ControllerEvent @ 2_056_249_017_255us
+17:13:28.777 [W0] INFO:	sim_time 2_056_249_017_255us: PhysicsEvent @ 2_056_249_017_255us
+17:13:28.780 [W0] INFO:	sim_time 2_056_249_017_255us: TrafficEvent @ 2_056_249_017_255us
+17:13:28.781 [W0] INFO:	sim_time 2_056_249_017_255us: PhysicsEvent @ 2_056_249_017_255us
+17:13:28.781 [W0] INFO:	sim_time 2_056_249_017_255us: StepEvent @ 2_056_249_017_255us
+17:13:28.781 [W0] INFO:	sim_time 2_056_249_017_255us: VideoModelPrefetchEvent(chunk_start=2_056_249_117_255, size=1)
+17:13:28.782 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=1
+17:13:28.786 [W0] INFO:	sim_time 2_056_249_117_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:28.867 [W0] INFO:	sim_time 2_056_249_117_255us: PolicyEvent @ 2_056_249_117_255us
+17:13:28.867 [W0] INFO:	Draining 2 outstanding tasks
+17:13:28.872 [W0] INFO:	sim_time 2_056_249_117_255us: ControllerEvent @ 2_056_249_117_255us
+17:13:28.877 [W0] INFO:	sim_time 2_056_249_117_255us: PhysicsEvent @ 2_056_249_117_255us
+17:13:28.883 [W0] INFO:	sim_time 2_056_249_117_255us: TrafficEvent @ 2_056_249_117_255us
+17:13:28.884 [W0] INFO:	sim_time 2_056_249_117_255us: PhysicsEvent @ 2_056_249_117_255us
+17:13:28.884 [W0] INFO:	sim_time 2_056_249_117_255us: StepEvent @ 2_056_249_117_255us
+17:13:28.886 [W0] INFO:	sim_time 2_056_249_117_255us: VideoModelPrefetchEvent(chunk_start=2_056_249_217_255, size=1)
+17:13:28.886 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:28.895 [W0] INFO:	sim_time 2_056_249_217_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:28.944 [W0] INFO:	sim_time 2_056_249_217_255us: PolicyEvent @ 2_056_249_217_255us
+17:13:28.944 [W0] INFO:	Draining 2 outstanding tasks
+17:13:28.953 [W0] INFO:	sim_time 2_056_249_217_255us: ControllerEvent @ 2_056_249_217_255us
+17:13:28.956 [W0] INFO:	sim_time 2_056_249_217_255us: PhysicsEvent @ 2_056_249_217_255us
+17:13:28.960 [W0] INFO:	sim_time 2_056_249_217_255us: TrafficEvent @ 2_056_249_217_255us
+17:13:28.960 [W0] INFO:	sim_time 2_056_249_217_255us: PhysicsEvent @ 2_056_249_217_255us
+17:13:28.960 [W0] INFO:	sim_time 2_056_249_217_255us: StepEvent @ 2_056_249_217_255us
+17:13:28.961 [W0] INFO:	sim_time 2_056_249_217_255us: VideoModelPrefetchEvent(chunk_start=2_056_249_317_255, size=1)
+17:13:28.961 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:28.967 [W0] INFO:	sim_time 2_056_249_317_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:29.040 [W0] INFO:	sim_time 2_056_249_317_255us: PolicyEvent @ 2_056_249_317_255us
+17:13:29.040 [W0] INFO:	Draining 2 outstanding tasks
+17:13:29.045 [W0] INFO:	sim_time 2_056_249_317_255us: ControllerEvent @ 2_056_249_317_255us
+17:13:29.049 [W0] INFO:	sim_time 2_056_249_317_255us: PhysicsEvent @ 2_056_249_317_255us
+17:13:29.053 [W0] INFO:	sim_time 2_056_249_317_255us: TrafficEvent @ 2_056_249_317_255us
+17:13:29.053 [W0] INFO:	sim_time 2_056_249_317_255us: PhysicsEvent @ 2_056_249_317_255us
+17:13:29.053 [W0] INFO:	sim_time 2_056_249_317_255us: StepEvent @ 2_056_249_317_255us
+17:13:29.054 [W0] INFO:	sim_time 2_056_249_317_255us: VideoModelPrefetchEvent(chunk_start=2_056_249_417_255, size=1)
+17:13:29.055 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:29.059 [W0] INFO:	sim_time 2_056_249_417_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:29.108 [W0] INFO:	sim_time 2_056_249_417_255us: PolicyEvent @ 2_056_249_417_255us
+17:13:29.109 [W0] INFO:	Draining 2 outstanding tasks
+17:13:29.121 [W0] INFO:	sim_time 2_056_249_417_255us: ControllerEvent @ 2_056_249_417_255us
+17:13:29.125 [W0] INFO:	sim_time 2_056_249_417_255us: PhysicsEvent @ 2_056_249_417_255us
+17:13:29.131 [W0] INFO:	sim_time 2_056_249_417_255us: TrafficEvent @ 2_056_249_417_255us
+17:13:29.131 [W0] INFO:	sim_time 2_056_249_417_255us: PhysicsEvent @ 2_056_249_417_255us
+17:13:29.132 [W0] INFO:	sim_time 2_056_249_417_255us: StepEvent @ 2_056_249_417_255us
+17:13:29.133 [W0] INFO:	sim_time 2_056_249_417_255us: VideoModelPrefetchEvent(chunk_start=2_056_249_517_255, size=1)
+17:13:29.133 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:29.139 [W0] INFO:	sim_time 2_056_249_517_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:29.213 [W0] INFO:	sim_time 2_056_249_517_255us: PolicyEvent @ 2_056_249_517_255us
+17:13:29.214 [W0] INFO:	Draining 2 outstanding tasks
+17:13:29.219 [W0] INFO:	sim_time 2_056_249_517_255us: ControllerEvent @ 2_056_249_517_255us
+17:13:29.224 [W0] INFO:	sim_time 2_056_249_517_255us: PhysicsEvent @ 2_056_249_517_255us
+17:13:29.231 [W0] INFO:	sim_time 2_056_249_517_255us: TrafficEvent @ 2_056_249_517_255us
+17:13:29.231 [W0] INFO:	sim_time 2_056_249_517_255us: PhysicsEvent @ 2_056_249_517_255us
+17:13:29.231 [W0] INFO:	sim_time 2_056_249_517_255us: StepEvent @ 2_056_249_517_255us
+17:13:29.232 [W0] INFO:	sim_time 2_056_249_517_255us: VideoModelPrefetchEvent(chunk_start=2_056_249_617_255, size=1)
+17:13:29.233 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:29.239 [W0] INFO:	sim_time 2_056_249_617_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:29.297 [W0] INFO:	sim_time 2_056_249_617_255us: PolicyEvent @ 2_056_249_617_255us
+17:13:29.297 [W0] INFO:	Draining 2 outstanding tasks
+17:13:29.303 [W0] INFO:	sim_time 2_056_249_617_255us: ControllerEvent @ 2_056_249_617_255us
+17:13:29.307 [W0] INFO:	sim_time 2_056_249_617_255us: PhysicsEvent @ 2_056_249_617_255us
+17:13:29.312 [W0] INFO:	sim_time 2_056_249_617_255us: TrafficEvent @ 2_056_249_617_255us
+17:13:29.312 [W0] INFO:	sim_time 2_056_249_617_255us: PhysicsEvent @ 2_056_249_617_255us
+17:13:29.313 [W0] INFO:	sim_time 2_056_249_617_255us: StepEvent @ 2_056_249_617_255us
+17:13:29.314 [W0] INFO:	sim_time 2_056_249_617_255us: VideoModelPrefetchEvent(chunk_start=2_056_249_717_255, size=1)
+17:13:29.314 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:29.319 [W0] INFO:	sim_time 2_056_249_717_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:29.397 [W0] INFO:	sim_time 2_056_249_717_255us: PolicyEvent @ 2_056_249_717_255us
+17:13:29.398 [W0] INFO:	Draining 2 outstanding tasks
+17:13:29.402 [W0] INFO:	sim_time 2_056_249_717_255us: ControllerEvent @ 2_056_249_717_255us
+17:13:29.407 [W0] INFO:	sim_time 2_056_249_717_255us: PhysicsEvent @ 2_056_249_717_255us
+17:13:29.411 [W0] INFO:	sim_time 2_056_249_717_255us: TrafficEvent @ 2_056_249_717_255us
+17:13:29.412 [W0] INFO:	sim_time 2_056_249_717_255us: PhysicsEvent @ 2_056_249_717_255us
+17:13:29.412 [W0] INFO:	sim_time 2_056_249_717_255us: StepEvent @ 2_056_249_717_255us
+17:13:29.413 [W0] INFO:	sim_time 2_056_249_717_255us: VideoModelPrefetchEvent(chunk_start=2_056_249_817_255, size=1)
+17:13:29.413 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:29.418 [W0] INFO:	sim_time 2_056_249_817_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:29.469 [W0] INFO:	sim_time 2_056_249_817_255us: PolicyEvent @ 2_056_249_817_255us
+17:13:29.470 [W0] INFO:	Draining 2 outstanding tasks
+17:13:29.477 [W0] INFO:	sim_time 2_056_249_817_255us: ControllerEvent @ 2_056_249_817_255us
+17:13:29.481 [W0] INFO:	sim_time 2_056_249_817_255us: PhysicsEvent @ 2_056_249_817_255us
+17:13:29.486 [W0] INFO:	sim_time 2_056_249_817_255us: TrafficEvent @ 2_056_249_817_255us
+17:13:29.486 [W0] INFO:	sim_time 2_056_249_817_255us: PhysicsEvent @ 2_056_249_817_255us
+17:13:29.486 [W0] INFO:	sim_time 2_056_249_817_255us: StepEvent @ 2_056_249_817_255us
+17:13:29.487 [W0] INFO:	sim_time 2_056_249_817_255us: VideoModelPrefetchEvent(chunk_start=2_056_249_917_255, size=1)
+17:13:29.487 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:29.493 [W0] INFO:	sim_time 2_056_249_917_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:29.573 [W0] INFO:	sim_time 2_056_249_917_255us: PolicyEvent @ 2_056_249_917_255us
+17:13:29.573 [W0] INFO:	Draining 2 outstanding tasks
+17:13:29.577 [W0] INFO:	sim_time 2_056_249_917_255us: ControllerEvent @ 2_056_249_917_255us
+17:13:29.581 [W0] INFO:	sim_time 2_056_249_917_255us: PhysicsEvent @ 2_056_249_917_255us
+17:13:29.584 [W0] INFO:	sim_time 2_056_249_917_255us: TrafficEvent @ 2_056_249_917_255us
+17:13:29.585 [W0] INFO:	sim_time 2_056_249_917_255us: PhysicsEvent @ 2_056_249_917_255us
+17:13:29.585 [W0] INFO:	sim_time 2_056_249_917_255us: StepEvent @ 2_056_249_917_255us
+17:13:29.586 [W0] INFO:	sim_time 2_056_249_917_255us: VideoModelPrefetchEvent(chunk_start=2_056_250_017_255, size=1)
+17:13:29.586 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:29.590 [W0] INFO:	sim_time 2_056_250_017_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:29.636 [W0] INFO:	sim_time 2_056_250_017_255us: PolicyEvent @ 2_056_250_017_255us
+17:13:29.637 [W0] INFO:	Draining 2 outstanding tasks
+17:13:29.644 [W0] INFO:	sim_time 2_056_250_017_255us: ControllerEvent @ 2_056_250_017_255us
+17:13:29.649 [W0] INFO:	sim_time 2_056_250_017_255us: PhysicsEvent @ 2_056_250_017_255us
+17:13:29.652 [W0] INFO:	sim_time 2_056_250_017_255us: TrafficEvent @ 2_056_250_017_255us
+17:13:29.653 [W0] INFO:	sim_time 2_056_250_017_255us: PhysicsEvent @ 2_056_250_017_255us
+17:13:29.653 [W0] INFO:	sim_time 2_056_250_017_255us: StepEvent @ 2_056_250_017_255us
+17:13:29.654 [W0] INFO:	sim_time 2_056_250_017_255us: VideoModelPrefetchEvent(chunk_start=2_056_250_117_255, size=1)
+17:13:29.654 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:29.658 [W0] INFO:	sim_time 2_056_250_117_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:29.740 [W0] INFO:	sim_time 2_056_250_117_255us: PolicyEvent @ 2_056_250_117_255us
+17:13:29.741 [W0] INFO:	Draining 2 outstanding tasks
+17:13:29.745 [W0] INFO:	sim_time 2_056_250_117_255us: ControllerEvent @ 2_056_250_117_255us
+17:13:29.749 [W0] INFO:	sim_time 2_056_250_117_255us: PhysicsEvent @ 2_056_250_117_255us
+17:13:29.753 [W0] INFO:	sim_time 2_056_250_117_255us: TrafficEvent @ 2_056_250_117_255us
+17:13:29.753 [W0] INFO:	sim_time 2_056_250_117_255us: PhysicsEvent @ 2_056_250_117_255us
+17:13:29.753 [W0] INFO:	sim_time 2_056_250_117_255us: StepEvent @ 2_056_250_117_255us
+17:13:29.754 [W0] INFO:	sim_time 2_056_250_117_255us: VideoModelPrefetchEvent(chunk_start=2_056_250_217_255, size=1)
+17:13:29.755 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:29.760 [W0] INFO:	sim_time 2_056_250_217_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:29.864 [W0] INFO:	sim_time 2_056_250_217_255us: PolicyEvent @ 2_056_250_217_255us
+17:13:29.864 [W0] INFO:	Draining 2 outstanding tasks
+17:13:29.870 [W0] INFO:	sim_time 2_056_250_217_255us: ControllerEvent @ 2_056_250_217_255us
+17:13:29.874 [W0] INFO:	sim_time 2_056_250_217_255us: PhysicsEvent @ 2_056_250_217_255us
+17:13:29.879 [W0] INFO:	sim_time 2_056_250_217_255us: TrafficEvent @ 2_056_250_217_255us
+17:13:29.880 [W0] INFO:	sim_time 2_056_250_217_255us: PhysicsEvent @ 2_056_250_217_255us
+17:13:29.880 [W0] INFO:	sim_time 2_056_250_217_255us: StepEvent @ 2_056_250_217_255us
+17:13:29.880 [W0] INFO:	sim_time 2_056_250_217_255us: VideoModelPrefetchEvent(chunk_start=2_056_250_317_255, size=1)
+17:13:29.881 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:29.887 [W0] INFO:	sim_time 2_056_250_317_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:29.937 [W0] INFO:	sim_time 2_056_250_317_255us: PolicyEvent @ 2_056_250_317_255us
+17:13:29.938 [W0] INFO:	Draining 2 outstanding tasks
+17:13:29.950 [W0] INFO:	sim_time 2_056_250_317_255us: ControllerEvent @ 2_056_250_317_255us
+17:13:29.959 [W0] INFO:	sim_time 2_056_250_317_255us: PhysicsEvent @ 2_056_250_317_255us
+17:13:29.966 [W0] INFO:	sim_time 2_056_250_317_255us: TrafficEvent @ 2_056_250_317_255us
+17:13:29.966 [W0] INFO:	sim_time 2_056_250_317_255us: PhysicsEvent @ 2_056_250_317_255us
+17:13:29.966 [W0] INFO:	sim_time 2_056_250_317_255us: StepEvent @ 2_056_250_317_255us
+17:13:29.969 [W0] INFO:	sim_time 2_056_250_317_255us: VideoModelPrefetchEvent(chunk_start=2_056_250_417_255, size=1)
+17:13:29.969 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:29.978 [W0] INFO:	sim_time 2_056_250_417_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:30.029 [W0] INFO:	sim_time 2_056_250_417_255us: PolicyEvent @ 2_056_250_417_255us
+17:13:30.030 [W0] INFO:	Draining 2 outstanding tasks
+17:13:30.037 [W0] INFO:	sim_time 2_056_250_417_255us: ControllerEvent @ 2_056_250_417_255us
+17:13:30.042 [W0] INFO:	sim_time 2_056_250_417_255us: PhysicsEvent @ 2_056_250_417_255us
+17:13:30.046 [W0] INFO:	sim_time 2_056_250_417_255us: TrafficEvent @ 2_056_250_417_255us
+17:13:30.047 [W0] INFO:	sim_time 2_056_250_417_255us: PhysicsEvent @ 2_056_250_417_255us
+17:13:30.047 [W0] INFO:	sim_time 2_056_250_417_255us: StepEvent @ 2_056_250_417_255us
+17:13:30.049 [W0] INFO:	sim_time 2_056_250_417_255us: VideoModelPrefetchEvent(chunk_start=2_056_250_517_255, size=1)
+17:13:30.049 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:30.056 [W0] INFO:	sim_time 2_056_250_517_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:30.109 [W0] INFO:	sim_time 2_056_250_517_255us: PolicyEvent @ 2_056_250_517_255us
+17:13:30.109 [W0] INFO:	Draining 2 outstanding tasks
+17:13:30.116 [W0] INFO:	sim_time 2_056_250_517_255us: ControllerEvent @ 2_056_250_517_255us
+17:13:30.121 [W0] INFO:	sim_time 2_056_250_517_255us: PhysicsEvent @ 2_056_250_517_255us
+17:13:30.125 [W0] INFO:	sim_time 2_056_250_517_255us: TrafficEvent @ 2_056_250_517_255us
+17:13:30.126 [W0] INFO:	sim_time 2_056_250_517_255us: PhysicsEvent @ 2_056_250_517_255us
+17:13:30.126 [W0] INFO:	sim_time 2_056_250_517_255us: StepEvent @ 2_056_250_517_255us
+17:13:30.127 [W0] INFO:	sim_time 2_056_250_517_255us: VideoModelPrefetchEvent(chunk_start=2_056_250_617_255, size=1)
+17:13:30.127 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=1
+17:13:30.133 [W0] INFO:	sim_time 2_056_250_617_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:30.211 [W0] INFO:	sim_time 2_056_250_617_255us: PolicyEvent @ 2_056_250_617_255us
+17:13:30.211 [W0] INFO:	Draining 2 outstanding tasks
+17:13:30.217 [W0] INFO:	sim_time 2_056_250_617_255us: ControllerEvent @ 2_056_250_617_255us
+17:13:30.222 [W0] INFO:	sim_time 2_056_250_617_255us: PhysicsEvent @ 2_056_250_617_255us
+17:13:30.227 [W0] INFO:	sim_time 2_056_250_617_255us: TrafficEvent @ 2_056_250_617_255us
+17:13:30.228 [W0] INFO:	sim_time 2_056_250_617_255us: PhysicsEvent @ 2_056_250_617_255us
+17:13:30.228 [W0] INFO:	sim_time 2_056_250_617_255us: StepEvent @ 2_056_250_617_255us
+17:13:30.229 [W0] INFO:	sim_time 2_056_250_617_255us: VideoModelPrefetchEvent(chunk_start=2_056_250_717_255, size=1)
+17:13:30.229 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=1
+17:13:30.234 [W0] INFO:	sim_time 2_056_250_717_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:30.290 [W0] INFO:	sim_time 2_056_250_717_255us: PolicyEvent @ 2_056_250_717_255us
+17:13:30.290 [W0] INFO:	Draining 2 outstanding tasks
+17:13:30.297 [W0] INFO:	sim_time 2_056_250_717_255us: ControllerEvent @ 2_056_250_717_255us
+17:13:30.301 [W0] INFO:	sim_time 2_056_250_717_255us: PhysicsEvent @ 2_056_250_717_255us
+17:13:30.305 [W0] INFO:	sim_time 2_056_250_717_255us: TrafficEvent @ 2_056_250_717_255us
+17:13:30.305 [W0] INFO:	sim_time 2_056_250_717_255us: PhysicsEvent @ 2_056_250_717_255us
+17:13:30.305 [W0] INFO:	sim_time 2_056_250_717_255us: StepEvent @ 2_056_250_717_255us
+17:13:30.308 [W0] INFO:	sim_time 2_056_250_717_255us: VideoModelPrefetchEvent(chunk_start=2_056_250_817_255, size=1)
+17:13:30.308 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=1
+17:13:30.314 [W0] INFO:	sim_time 2_056_250_817_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:30.371 [W0] INFO:	sim_time 2_056_250_817_255us: PolicyEvent @ 2_056_250_817_255us
+17:13:30.371 [W0] INFO:	Draining 2 outstanding tasks
+17:13:30.377 [W0] INFO:	sim_time 2_056_250_817_255us: ControllerEvent @ 2_056_250_817_255us
+17:13:30.381 [W0] INFO:	sim_time 2_056_250_817_255us: PhysicsEvent @ 2_056_250_817_255us
+17:13:30.386 [W0] INFO:	sim_time 2_056_250_817_255us: TrafficEvent @ 2_056_250_817_255us
+17:13:30.386 [W0] INFO:	sim_time 2_056_250_817_255us: PhysicsEvent @ 2_056_250_817_255us
+17:13:30.386 [W0] INFO:	sim_time 2_056_250_817_255us: StepEvent @ 2_056_250_817_255us
+17:13:30.387 [W0] INFO:	sim_time 2_056_250_817_255us: VideoModelPrefetchEvent(chunk_start=2_056_250_917_255, size=1)
+17:13:30.388 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=1
+17:13:30.394 [W0] INFO:	sim_time 2_056_250_917_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:30.486 [W0] INFO:	sim_time 2_056_250_917_255us: PolicyEvent @ 2_056_250_917_255us
+17:13:30.486 [W0] INFO:	Draining 2 outstanding tasks
+17:13:30.492 [W0] INFO:	sim_time 2_056_250_917_255us: ControllerEvent @ 2_056_250_917_255us
+17:13:30.496 [W0] INFO:	sim_time 2_056_250_917_255us: PhysicsEvent @ 2_056_250_917_255us
+17:13:30.501 [W0] INFO:	sim_time 2_056_250_917_255us: TrafficEvent @ 2_056_250_917_255us
+17:13:30.501 [W0] INFO:	sim_time 2_056_250_917_255us: PhysicsEvent @ 2_056_250_917_255us
+17:13:30.501 [W0] INFO:	sim_time 2_056_250_917_255us: StepEvent @ 2_056_250_917_255us
+17:13:30.502 [W0] INFO:	sim_time 2_056_250_917_255us: VideoModelPrefetchEvent(chunk_start=2_056_251_017_255, size=1)
+17:13:30.502 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=1
+17:13:30.507 [W0] INFO:	sim_time 2_056_251_017_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:30.567 [W0] INFO:	sim_time 2_056_251_017_255us: PolicyEvent @ 2_056_251_017_255us
+17:13:30.568 [W0] INFO:	Draining 2 outstanding tasks
+17:13:30.576 [W0] INFO:	sim_time 2_056_251_017_255us: ControllerEvent @ 2_056_251_017_255us
+17:13:30.580 [W0] INFO:	sim_time 2_056_251_017_255us: PhysicsEvent @ 2_056_251_017_255us
+17:13:30.587 [W0] INFO:	sim_time 2_056_251_017_255us: TrafficEvent @ 2_056_251_017_255us
+17:13:30.588 [W0] INFO:	sim_time 2_056_251_017_255us: PhysicsEvent @ 2_056_251_017_255us
+17:13:30.588 [W0] INFO:	sim_time 2_056_251_017_255us: StepEvent @ 2_056_251_017_255us
+17:13:30.589 [W0] INFO:	sim_time 2_056_251_017_255us: VideoModelPrefetchEvent(chunk_start=2_056_251_117_255, size=1)
+17:13:30.589 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=1
+17:13:30.595 [W0] INFO:	sim_time 2_056_251_117_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:30.661 [W0] INFO:	sim_time 2_056_251_117_255us: PolicyEvent @ 2_056_251_117_255us
+17:13:30.661 [W0] INFO:	Draining 2 outstanding tasks
+17:13:30.667 [W0] INFO:	sim_time 2_056_251_117_255us: ControllerEvent @ 2_056_251_117_255us
+17:13:30.670 [W0] INFO:	sim_time 2_056_251_117_255us: PhysicsEvent @ 2_056_251_117_255us
+17:13:30.674 [W0] INFO:	sim_time 2_056_251_117_255us: TrafficEvent @ 2_056_251_117_255us
+17:13:30.674 [W0] INFO:	sim_time 2_056_251_117_255us: PhysicsEvent @ 2_056_251_117_255us
+17:13:30.675 [W0] INFO:	sim_time 2_056_251_117_255us: StepEvent @ 2_056_251_117_255us
+17:13:30.676 [W0] INFO:	sim_time 2_056_251_117_255us: VideoModelPrefetchEvent(chunk_start=2_056_251_217_255, size=1)
+17:13:30.676 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:30.681 [W0] INFO:	sim_time 2_056_251_217_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:30.733 [W0] INFO:	sim_time 2_056_251_217_255us: PolicyEvent @ 2_056_251_217_255us
+17:13:30.733 [W0] INFO:	Draining 2 outstanding tasks
+17:13:30.739 [W0] INFO:	sim_time 2_056_251_217_255us: ControllerEvent @ 2_056_251_217_255us
+17:13:30.744 [W0] INFO:	sim_time 2_056_251_217_255us: PhysicsEvent @ 2_056_251_217_255us
+17:13:30.748 [W0] INFO:	sim_time 2_056_251_217_255us: TrafficEvent @ 2_056_251_217_255us
+17:13:30.748 [W0] INFO:	sim_time 2_056_251_217_255us: PhysicsEvent @ 2_056_251_217_255us
+17:13:30.749 [W0] INFO:	sim_time 2_056_251_217_255us: StepEvent @ 2_056_251_217_255us
+17:13:30.750 [W0] INFO:	sim_time 2_056_251_217_255us: VideoModelPrefetchEvent(chunk_start=2_056_251_317_255, size=1)
+17:13:30.750 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:30.755 [W0] INFO:	sim_time 2_056_251_317_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:30.793 [W0] INFO:	sim_time 2_056_251_317_255us: PolicyEvent @ 2_056_251_317_255us
+17:13:30.793 [W0] INFO:	Draining 2 outstanding tasks
+17:13:30.800 [W0] INFO:	sim_time 2_056_251_317_255us: ControllerEvent @ 2_056_251_317_255us
+17:13:30.804 [W0] INFO:	sim_time 2_056_251_317_255us: PhysicsEvent @ 2_056_251_317_255us
+17:13:30.810 [W0] INFO:	sim_time 2_056_251_317_255us: TrafficEvent @ 2_056_251_317_255us
+17:13:30.811 [W0] INFO:	sim_time 2_056_251_317_255us: PhysicsEvent @ 2_056_251_317_255us
+17:13:30.811 [W0] INFO:	sim_time 2_056_251_317_255us: StepEvent @ 2_056_251_317_255us
+17:13:30.812 [W0] INFO:	sim_time 2_056_251_317_255us: VideoModelPrefetchEvent(chunk_start=2_056_251_417_255, size=1)
+17:13:30.812 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:30.818 [W0] INFO:	sim_time 2_056_251_417_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:30.855 [W0] INFO:	sim_time 2_056_251_417_255us: PolicyEvent @ 2_056_251_417_255us
+17:13:30.855 [W0] INFO:	Draining 2 outstanding tasks
+17:13:30.860 [W0] INFO:	sim_time 2_056_251_417_255us: ControllerEvent @ 2_056_251_417_255us
+17:13:30.866 [W0] INFO:	sim_time 2_056_251_417_255us: PhysicsEvent @ 2_056_251_417_255us
+17:13:30.870 [W0] INFO:	sim_time 2_056_251_417_255us: TrafficEvent @ 2_056_251_417_255us
+17:13:30.871 [W0] INFO:	sim_time 2_056_251_417_255us: PhysicsEvent @ 2_056_251_417_255us
+17:13:30.871 [W0] INFO:	sim_time 2_056_251_417_255us: StepEvent @ 2_056_251_417_255us
+17:13:30.872 [W0] INFO:	sim_time 2_056_251_417_255us: VideoModelPrefetchEvent(chunk_start=2_056_251_517_255, size=1)
+17:13:30.872 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:30.878 [W0] INFO:	sim_time 2_056_251_517_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:30.932 [W0] INFO:	sim_time 2_056_251_517_255us: PolicyEvent @ 2_056_251_517_255us
+17:13:30.932 [W0] INFO:	Draining 2 outstanding tasks
+17:13:30.941 [W0] INFO:	sim_time 2_056_251_517_255us: ControllerEvent @ 2_056_251_517_255us
+17:13:30.946 [W0] INFO:	sim_time 2_056_251_517_255us: PhysicsEvent @ 2_056_251_517_255us
+17:13:30.950 [W0] INFO:	sim_time 2_056_251_517_255us: TrafficEvent @ 2_056_251_517_255us
+17:13:30.951 [W0] INFO:	sim_time 2_056_251_517_255us: PhysicsEvent @ 2_056_251_517_255us
+17:13:30.951 [W0] INFO:	sim_time 2_056_251_517_255us: StepEvent @ 2_056_251_517_255us
+17:13:30.952 [W0] INFO:	sim_time 2_056_251_517_255us: VideoModelPrefetchEvent(chunk_start=2_056_251_617_255, size=1)
+17:13:30.953 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:30.958 [W0] INFO:	sim_time 2_056_251_617_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:31.003 [W0] INFO:	sim_time 2_056_251_617_255us: PolicyEvent @ 2_056_251_617_255us
+17:13:31.004 [W0] INFO:	Draining 2 outstanding tasks
+17:13:31.009 [W0] INFO:	sim_time 2_056_251_617_255us: ControllerEvent @ 2_056_251_617_255us
+17:13:31.014 [W0] INFO:	sim_time 2_056_251_617_255us: PhysicsEvent @ 2_056_251_617_255us
+17:13:31.020 [W0] INFO:	sim_time 2_056_251_617_255us: TrafficEvent @ 2_056_251_617_255us
+17:13:31.021 [W0] INFO:	sim_time 2_056_251_617_255us: PhysicsEvent @ 2_056_251_617_255us
+17:13:31.022 [W0] INFO:	sim_time 2_056_251_617_255us: StepEvent @ 2_056_251_617_255us
+17:13:31.022 [W0] INFO:	sim_time 2_056_251_617_255us: VideoModelPrefetchEvent(chunk_start=2_056_251_717_255, size=1)
+17:13:31.023 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:31.030 [W0] INFO:	sim_time 2_056_251_717_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:31.075 [W0] INFO:	sim_time 2_056_251_717_255us: PolicyEvent @ 2_056_251_717_255us
+17:13:31.076 [W0] INFO:	Draining 2 outstanding tasks
+17:13:31.081 [W0] INFO:	sim_time 2_056_251_717_255us: ControllerEvent @ 2_056_251_717_255us
+17:13:31.085 [W0] INFO:	sim_time 2_056_251_717_255us: PhysicsEvent @ 2_056_251_717_255us
+17:13:31.092 [W0] INFO:	sim_time 2_056_251_717_255us: TrafficEvent @ 2_056_251_717_255us
+17:13:31.093 [W0] INFO:	sim_time 2_056_251_717_255us: PhysicsEvent @ 2_056_251_717_255us
+17:13:31.093 [W0] INFO:	sim_time 2_056_251_717_255us: StepEvent @ 2_056_251_717_255us
+17:13:31.094 [W0] INFO:	sim_time 2_056_251_717_255us: VideoModelPrefetchEvent(chunk_start=2_056_251_817_255, size=1)
+17:13:31.094 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:31.098 [W0] INFO:	sim_time 2_056_251_817_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:31.152 [W0] INFO:	sim_time 2_056_251_817_255us: PolicyEvent @ 2_056_251_817_255us
+17:13:31.153 [W0] INFO:	Draining 2 outstanding tasks
+17:13:31.158 [W0] INFO:	sim_time 2_056_251_817_255us: ControllerEvent @ 2_056_251_817_255us
+17:13:31.162 [W0] INFO:	sim_time 2_056_251_817_255us: PhysicsEvent @ 2_056_251_817_255us
+17:13:31.169 [W0] INFO:	sim_time 2_056_251_817_255us: TrafficEvent @ 2_056_251_817_255us
+17:13:31.170 [W0] INFO:	sim_time 2_056_251_817_255us: PhysicsEvent @ 2_056_251_817_255us
+17:13:31.170 [W0] INFO:	sim_time 2_056_251_817_255us: StepEvent @ 2_056_251_817_255us
+17:13:31.171 [W0] INFO:	sim_time 2_056_251_817_255us: VideoModelPrefetchEvent(chunk_start=2_056_251_917_255, size=1)
+17:13:31.171 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:31.175 [W0] INFO:	sim_time 2_056_251_917_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:31.230 [W0] INFO:	sim_time 2_056_251_917_255us: PolicyEvent @ 2_056_251_917_255us
+17:13:31.230 [W0] INFO:	Draining 2 outstanding tasks
+17:13:31.236 [W0] INFO:	sim_time 2_056_251_917_255us: ControllerEvent @ 2_056_251_917_255us
+17:13:31.240 [W0] INFO:	sim_time 2_056_251_917_255us: PhysicsEvent @ 2_056_251_917_255us
+17:13:31.247 [W0] INFO:	sim_time 2_056_251_917_255us: TrafficEvent @ 2_056_251_917_255us
+17:13:31.247 [W0] INFO:	sim_time 2_056_251_917_255us: PhysicsEvent @ 2_056_251_917_255us
+17:13:31.248 [W0] INFO:	sim_time 2_056_251_917_255us: StepEvent @ 2_056_251_917_255us
+17:13:31.248 [W0] INFO:	sim_time 2_056_251_917_255us: VideoModelPrefetchEvent(chunk_start=2_056_252_017_255, size=1)
+17:13:31.248 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:31.253 [W0] INFO:	sim_time 2_056_252_017_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:31.292 [W0] INFO:	sim_time 2_056_252_017_255us: PolicyEvent @ 2_056_252_017_255us
+17:13:31.293 [W0] INFO:	Draining 2 outstanding tasks
+17:13:31.298 [W0] INFO:	sim_time 2_056_252_017_255us: ControllerEvent @ 2_056_252_017_255us
+17:13:31.302 [W0] INFO:	sim_time 2_056_252_017_255us: PhysicsEvent @ 2_056_252_017_255us
+17:13:31.306 [W0] INFO:	sim_time 2_056_252_017_255us: TrafficEvent @ 2_056_252_017_255us
+17:13:31.306 [W0] INFO:	sim_time 2_056_252_017_255us: PhysicsEvent @ 2_056_252_017_255us
+17:13:31.306 [W0] INFO:	sim_time 2_056_252_017_255us: StepEvent @ 2_056_252_017_255us
+17:13:31.307 [W0] INFO:	sim_time 2_056_252_017_255us: VideoModelPrefetchEvent(chunk_start=2_056_252_117_255, size=1)
+17:13:31.307 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:31.312 [W0] INFO:	sim_time 2_056_252_117_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:31.362 [W0] INFO:	sim_time 2_056_252_117_255us: PolicyEvent @ 2_056_252_117_255us
+17:13:31.363 [W0] INFO:	Draining 2 outstanding tasks
+17:13:31.369 [W0] INFO:	sim_time 2_056_252_117_255us: ControllerEvent @ 2_056_252_117_255us
+17:13:31.373 [W0] INFO:	sim_time 2_056_252_117_255us: PhysicsEvent @ 2_056_252_117_255us
+17:13:31.376 [W0] INFO:	sim_time 2_056_252_117_255us: TrafficEvent @ 2_056_252_117_255us
+17:13:31.377 [W0] INFO:	sim_time 2_056_252_117_255us: PhysicsEvent @ 2_056_252_117_255us
+17:13:31.377 [W0] INFO:	sim_time 2_056_252_117_255us: StepEvent @ 2_056_252_117_255us
+17:13:31.378 [W0] INFO:	sim_time 2_056_252_117_255us: VideoModelPrefetchEvent(chunk_start=2_056_252_217_255, size=1)
+17:13:31.378 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:31.383 [W0] INFO:	sim_time 2_056_252_217_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:31.429 [W0] INFO:	sim_time 2_056_252_217_255us: PolicyEvent @ 2_056_252_217_255us
+17:13:31.429 [W0] INFO:	Draining 2 outstanding tasks
+17:13:31.436 [W0] INFO:	sim_time 2_056_252_217_255us: ControllerEvent @ 2_056_252_217_255us
+17:13:31.441 [W0] INFO:	sim_time 2_056_252_217_255us: PhysicsEvent @ 2_056_252_217_255us
+17:13:31.445 [W0] INFO:	sim_time 2_056_252_217_255us: TrafficEvent @ 2_056_252_217_255us
+17:13:31.445 [W0] INFO:	sim_time 2_056_252_217_255us: PhysicsEvent @ 2_056_252_217_255us
+17:13:31.446 [W0] INFO:	sim_time 2_056_252_217_255us: StepEvent @ 2_056_252_217_255us
+17:13:31.446 [W0] INFO:	sim_time 2_056_252_217_255us: VideoModelPrefetchEvent(chunk_start=2_056_252_317_255, size=1)
+17:13:31.447 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:31.452 [W0] INFO:	sim_time 2_056_252_317_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:31.492 [W0] INFO:	sim_time 2_056_252_317_255us: PolicyEvent @ 2_056_252_317_255us
+17:13:31.492 [W0] INFO:	Draining 2 outstanding tasks
+17:13:31.499 [W0] INFO:	sim_time 2_056_252_317_255us: ControllerEvent @ 2_056_252_317_255us
+17:13:31.502 [W0] INFO:	sim_time 2_056_252_317_255us: PhysicsEvent @ 2_056_252_317_255us
+17:13:31.506 [W0] INFO:	sim_time 2_056_252_317_255us: TrafficEvent @ 2_056_252_317_255us
+17:13:31.506 [W0] INFO:	sim_time 2_056_252_317_255us: PhysicsEvent @ 2_056_252_317_255us
+17:13:31.506 [W0] INFO:	sim_time 2_056_252_317_255us: StepEvent @ 2_056_252_317_255us
+17:13:31.507 [W0] INFO:	sim_time 2_056_252_317_255us: VideoModelPrefetchEvent(chunk_start=2_056_252_417_255, size=1)
+17:13:31.507 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:31.511 [W0] INFO:	sim_time 2_056_252_417_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:31.566 [W0] INFO:	sim_time 2_056_252_417_255us: PolicyEvent @ 2_056_252_417_255us
+17:13:31.567 [W0] INFO:	Draining 2 outstanding tasks
+17:13:31.572 [W0] INFO:	sim_time 2_056_252_417_255us: ControllerEvent @ 2_056_252_417_255us
+17:13:31.576 [W0] INFO:	sim_time 2_056_252_417_255us: PhysicsEvent @ 2_056_252_417_255us
+17:13:31.581 [W0] INFO:	sim_time 2_056_252_417_255us: TrafficEvent @ 2_056_252_417_255us
+17:13:31.581 [W0] INFO:	sim_time 2_056_252_417_255us: PhysicsEvent @ 2_056_252_417_255us
+17:13:31.581 [W0] INFO:	sim_time 2_056_252_417_255us: StepEvent @ 2_056_252_417_255us
+17:13:31.582 [W0] INFO:	sim_time 2_056_252_417_255us: VideoModelPrefetchEvent(chunk_start=2_056_252_517_255, size=1)
+17:13:31.582 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:31.588 [W0] INFO:	sim_time 2_056_252_517_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:31.659 [W0] INFO:	sim_time 2_056_252_517_255us: PolicyEvent @ 2_056_252_517_255us
+17:13:31.660 [W0] INFO:	Draining 2 outstanding tasks
+17:13:31.663 [W0] INFO:	sim_time 2_056_252_517_255us: ControllerEvent @ 2_056_252_517_255us
+17:13:31.667 [W0] INFO:	sim_time 2_056_252_517_255us: PhysicsEvent @ 2_056_252_517_255us
+17:13:31.675 [W0] INFO:	sim_time 2_056_252_517_255us: TrafficEvent @ 2_056_252_517_255us
+17:13:31.675 [W0] INFO:	sim_time 2_056_252_517_255us: PhysicsEvent @ 2_056_252_517_255us
+17:13:31.675 [W0] INFO:	sim_time 2_056_252_517_255us: StepEvent @ 2_056_252_517_255us
+17:13:31.676 [W0] INFO:	sim_time 2_056_252_517_255us: VideoModelPrefetchEvent(chunk_start=2_056_252_617_255, size=1)
+17:13:31.676 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:31.683 [W0] INFO:	sim_time 2_056_252_617_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:31.748 [W0] INFO:	sim_time 2_056_252_617_255us: PolicyEvent @ 2_056_252_617_255us
+17:13:31.748 [W0] INFO:	Draining 2 outstanding tasks
+17:13:31.755 [W0] INFO:	sim_time 2_056_252_617_255us: ControllerEvent @ 2_056_252_617_255us
+17:13:31.759 [W0] INFO:	sim_time 2_056_252_617_255us: PhysicsEvent @ 2_056_252_617_255us
+17:13:31.765 [W0] INFO:	sim_time 2_056_252_617_255us: TrafficEvent @ 2_056_252_617_255us
+17:13:31.766 [W0] INFO:	sim_time 2_056_252_617_255us: PhysicsEvent @ 2_056_252_617_255us
+17:13:31.766 [W0] INFO:	sim_time 2_056_252_617_255us: StepEvent @ 2_056_252_617_255us
+17:13:31.766 [W0] INFO:	sim_time 2_056_252_617_255us: VideoModelPrefetchEvent(chunk_start=2_056_252_717_255, size=1)
+17:13:31.767 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:31.772 [W0] INFO:	sim_time 2_056_252_717_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:31.880 [W0] INFO:	sim_time 2_056_252_717_255us: PolicyEvent @ 2_056_252_717_255us
+17:13:31.880 [W0] INFO:	Draining 2 outstanding tasks
+17:13:31.887 [W0] INFO:	sim_time 2_056_252_717_255us: ControllerEvent @ 2_056_252_717_255us
+17:13:31.894 [W0] INFO:	sim_time 2_056_252_717_255us: PhysicsEvent @ 2_056_252_717_255us
+17:13:31.899 [W0] INFO:	sim_time 2_056_252_717_255us: TrafficEvent @ 2_056_252_717_255us
+17:13:31.899 [W0] INFO:	sim_time 2_056_252_717_255us: PhysicsEvent @ 2_056_252_717_255us
+17:13:31.900 [W0] INFO:	sim_time 2_056_252_717_255us: StepEvent @ 2_056_252_717_255us
+17:13:31.901 [W0] INFO:	sim_time 2_056_252_717_255us: VideoModelPrefetchEvent(chunk_start=2_056_252_817_255, size=1)
+17:13:31.901 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:31.910 [W0] INFO:	sim_time 2_056_252_817_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:31.969 [W0] INFO:	sim_time 2_056_252_817_255us: PolicyEvent @ 2_056_252_817_255us
+17:13:31.969 [W0] INFO:	Draining 2 outstanding tasks
+17:13:31.979 [W0] INFO:	sim_time 2_056_252_817_255us: ControllerEvent @ 2_056_252_817_255us
+17:13:31.984 [W0] INFO:	sim_time 2_056_252_817_255us: PhysicsEvent @ 2_056_252_817_255us
+17:13:31.990 [W0] INFO:	sim_time 2_056_252_817_255us: TrafficEvent @ 2_056_252_817_255us
+17:13:31.990 [W0] INFO:	sim_time 2_056_252_817_255us: PhysicsEvent @ 2_056_252_817_255us
+17:13:31.990 [W0] INFO:	sim_time 2_056_252_817_255us: StepEvent @ 2_056_252_817_255us
+17:13:31.991 [W0] INFO:	sim_time 2_056_252_817_255us: VideoModelPrefetchEvent(chunk_start=2_056_252_917_255, size=1)
+17:13:31.992 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:31.997 [W0] INFO:	sim_time 2_056_252_917_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:32.064 [W0] INFO:	sim_time 2_056_252_917_255us: PolicyEvent @ 2_056_252_917_255us
+17:13:32.065 [W0] INFO:	Draining 2 outstanding tasks
+17:13:32.071 [W0] INFO:	sim_time 2_056_252_917_255us: ControllerEvent @ 2_056_252_917_255us
+17:13:32.076 [W0] INFO:	sim_time 2_056_252_917_255us: PhysicsEvent @ 2_056_252_917_255us
+17:13:32.081 [W0] INFO:	sim_time 2_056_252_917_255us: TrafficEvent @ 2_056_252_917_255us
+17:13:32.082 [W0] INFO:	sim_time 2_056_252_917_255us: PhysicsEvent @ 2_056_252_917_255us
+17:13:32.083 [W0] INFO:	sim_time 2_056_252_917_255us: StepEvent @ 2_056_252_917_255us
+17:13:32.083 [W0] INFO:	sim_time 2_056_252_917_255us: VideoModelPrefetchEvent(chunk_start=2_056_253_017_255, size=1)
+17:13:32.083 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:32.089 [W0] INFO:	sim_time 2_056_253_017_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:32.152 [W0] INFO:	sim_time 2_056_253_017_255us: PolicyEvent @ 2_056_253_017_255us
+17:13:32.153 [W0] INFO:	Draining 2 outstanding tasks
+17:13:32.159 [W0] INFO:	sim_time 2_056_253_017_255us: ControllerEvent @ 2_056_253_017_255us
+17:13:32.163 [W0] INFO:	sim_time 2_056_253_017_255us: PhysicsEvent @ 2_056_253_017_255us
+17:13:32.167 [W0] INFO:	sim_time 2_056_253_017_255us: TrafficEvent @ 2_056_253_017_255us
+17:13:32.167 [W0] INFO:	sim_time 2_056_253_017_255us: PhysicsEvent @ 2_056_253_017_255us
+17:13:32.167 [W0] INFO:	sim_time 2_056_253_017_255us: StepEvent @ 2_056_253_017_255us
+17:13:32.168 [W0] INFO:	sim_time 2_056_253_017_255us: VideoModelPrefetchEvent(chunk_start=2_056_253_117_255, size=1)
+17:13:32.168 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:32.172 [W0] INFO:	sim_time 2_056_253_117_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:32.247 [W0] INFO:	sim_time 2_056_253_117_255us: PolicyEvent @ 2_056_253_117_255us
+17:13:32.247 [W0] INFO:	Draining 2 outstanding tasks
+17:13:32.252 [W0] INFO:	sim_time 2_056_253_117_255us: ControllerEvent @ 2_056_253_117_255us
+17:13:32.256 [W0] INFO:	sim_time 2_056_253_117_255us: PhysicsEvent @ 2_056_253_117_255us
+17:13:32.260 [W0] INFO:	sim_time 2_056_253_117_255us: TrafficEvent @ 2_056_253_117_255us
+17:13:32.261 [W0] INFO:	sim_time 2_056_253_117_255us: PhysicsEvent @ 2_056_253_117_255us
+17:13:32.261 [W0] INFO:	sim_time 2_056_253_117_255us: StepEvent @ 2_056_253_117_255us
+17:13:32.262 [W0] INFO:	sim_time 2_056_253_117_255us: VideoModelPrefetchEvent(chunk_start=2_056_253_217_255, size=1)
+17:13:32.262 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:32.268 [W0] INFO:	sim_time 2_056_253_217_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:32.321 [W0] INFO:	sim_time 2_056_253_217_255us: PolicyEvent @ 2_056_253_217_255us
+17:13:32.322 [W0] INFO:	Draining 2 outstanding tasks
+17:13:32.328 [W0] INFO:	sim_time 2_056_253_217_255us: ControllerEvent @ 2_056_253_217_255us
+17:13:32.333 [W0] INFO:	sim_time 2_056_253_217_255us: PhysicsEvent @ 2_056_253_217_255us
+17:13:32.338 [W0] INFO:	sim_time 2_056_253_217_255us: TrafficEvent @ 2_056_253_217_255us
+17:13:32.338 [W0] INFO:	sim_time 2_056_253_217_255us: PhysicsEvent @ 2_056_253_217_255us
+17:13:32.338 [W0] INFO:	sim_time 2_056_253_217_255us: StepEvent @ 2_056_253_217_255us
+17:13:32.339 [W0] INFO:	sim_time 2_056_253_217_255us: VideoModelPrefetchEvent(chunk_start=2_056_253_317_255, size=1)
+17:13:32.339 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:32.345 [W0] INFO:	sim_time 2_056_253_317_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:32.402 [W0] INFO:	sim_time 2_056_253_317_255us: PolicyEvent @ 2_056_253_317_255us
+17:13:32.402 [W0] INFO:	Draining 2 outstanding tasks
+17:13:32.408 [W0] INFO:	sim_time 2_056_253_317_255us: ControllerEvent @ 2_056_253_317_255us
+17:13:32.411 [W0] INFO:	sim_time 2_056_253_317_255us: PhysicsEvent @ 2_056_253_317_255us
+17:13:32.415 [W0] INFO:	sim_time 2_056_253_317_255us: TrafficEvent @ 2_056_253_317_255us
+17:13:32.415 [W0] INFO:	sim_time 2_056_253_317_255us: PhysicsEvent @ 2_056_253_317_255us
+17:13:32.415 [W0] INFO:	sim_time 2_056_253_317_255us: StepEvent @ 2_056_253_317_255us
+17:13:32.416 [W0] INFO:	sim_time 2_056_253_317_255us: VideoModelPrefetchEvent(chunk_start=2_056_253_417_255, size=1)
+17:13:32.416 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:32.421 [W0] INFO:	sim_time 2_056_253_417_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:32.479 [W0] INFO:	sim_time 2_056_253_417_255us: PolicyEvent @ 2_056_253_417_255us
+17:13:32.480 [W0] INFO:	Draining 2 outstanding tasks
+17:13:32.485 [W0] INFO:	sim_time 2_056_253_417_255us: ControllerEvent @ 2_056_253_417_255us
+17:13:32.490 [W0] INFO:	sim_time 2_056_253_417_255us: PhysicsEvent @ 2_056_253_417_255us
+17:13:32.495 [W0] INFO:	sim_time 2_056_253_417_255us: TrafficEvent @ 2_056_253_417_255us
+17:13:32.495 [W0] INFO:	sim_time 2_056_253_417_255us: PhysicsEvent @ 2_056_253_417_255us
+17:13:32.495 [W0] INFO:	sim_time 2_056_253_417_255us: StepEvent @ 2_056_253_417_255us
+17:13:32.496 [W0] INFO:	sim_time 2_056_253_417_255us: VideoModelPrefetchEvent(chunk_start=2_056_253_517_255, size=1)
+17:13:32.496 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:32.502 [W0] INFO:	sim_time 2_056_253_517_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:32.536 [W0] INFO:	sim_time 2_056_253_517_255us: PolicyEvent @ 2_056_253_517_255us
+17:13:32.537 [W0] INFO:	Draining 2 outstanding tasks
+17:13:32.542 [W0] INFO:	sim_time 2_056_253_517_255us: ControllerEvent @ 2_056_253_517_255us
+17:13:32.546 [W0] INFO:	sim_time 2_056_253_517_255us: PhysicsEvent @ 2_056_253_517_255us
+17:13:32.552 [W0] INFO:	sim_time 2_056_253_517_255us: TrafficEvent @ 2_056_253_517_255us
+17:13:32.553 [W0] INFO:	sim_time 2_056_253_517_255us: PhysicsEvent @ 2_056_253_517_255us
+17:13:32.553 [W0] INFO:	sim_time 2_056_253_517_255us: StepEvent @ 2_056_253_517_255us
+17:13:32.554 [W0] INFO:	sim_time 2_056_253_517_255us: VideoModelPrefetchEvent(chunk_start=2_056_253_617_255, size=1)
+17:13:32.554 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:32.560 [W0] INFO:	sim_time 2_056_253_617_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:32.621 [W0] INFO:	sim_time 2_056_253_617_255us: PolicyEvent @ 2_056_253_617_255us
+17:13:32.621 [W0] INFO:	Draining 2 outstanding tasks
+17:13:32.627 [W0] INFO:	sim_time 2_056_253_617_255us: ControllerEvent @ 2_056_253_617_255us
+17:13:32.632 [W0] INFO:	sim_time 2_056_253_617_255us: PhysicsEvent @ 2_056_253_617_255us
+17:13:32.637 [W0] INFO:	sim_time 2_056_253_617_255us: TrafficEvent @ 2_056_253_617_255us
+17:13:32.638 [W0] INFO:	sim_time 2_056_253_617_255us: PhysicsEvent @ 2_056_253_617_255us
+17:13:32.638 [W0] INFO:	sim_time 2_056_253_617_255us: StepEvent @ 2_056_253_617_255us
+17:13:32.639 [W0] INFO:	sim_time 2_056_253_617_255us: VideoModelPrefetchEvent(chunk_start=2_056_253_717_255, size=1)
+17:13:32.639 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:32.643 [W0] INFO:	sim_time 2_056_253_717_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:32.691 [W0] INFO:	sim_time 2_056_253_717_255us: PolicyEvent @ 2_056_253_717_255us
+17:13:32.692 [W0] INFO:	Draining 2 outstanding tasks
+17:13:32.700 [W0] INFO:	sim_time 2_056_253_717_255us: ControllerEvent @ 2_056_253_717_255us
+17:13:32.705 [W0] INFO:	sim_time 2_056_253_717_255us: PhysicsEvent @ 2_056_253_717_255us
+17:13:32.710 [W0] INFO:	sim_time 2_056_253_717_255us: TrafficEvent @ 2_056_253_717_255us
+17:13:32.710 [W0] INFO:	sim_time 2_056_253_717_255us: PhysicsEvent @ 2_056_253_717_255us
+17:13:32.710 [W0] INFO:	sim_time 2_056_253_717_255us: StepEvent @ 2_056_253_717_255us
+17:13:32.711 [W0] INFO:	sim_time 2_056_253_717_255us: VideoModelPrefetchEvent(chunk_start=2_056_253_817_255, size=1)
+17:13:32.711 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=0
+17:13:32.716 [W0] INFO:	sim_time 2_056_253_817_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:13:32.756 [W0] INFO:	sim_time 2_056_253_817_255us: SimulationEndEvent @ 2_056_253_817_255us
+17:13:32.756 [W0] INFO:	Simulation ended via SimulationEndEvent
+17:13:32.756 [W0] INFO:	Event-based simulation loop timer stopped
+17:16:48.100 [W0] INFO:	Session COMPLETED: uuid=4956d514-845e-11f1-8b77-537c3b97cc28 scene=clipgt-0b10bce8-61f1-4350-8577-cf3c9493ffc3 simulated 19.93 sim seconds in 16.51 wall clock seconds for 1.21x real time (total rollout 18.90s incl. setup/warmup)
+17:16:48.118 [W0] INFO:	Received shutdown signal
+17:16:48.881 [W0] INFO:	Exporting GPU metrics for 1 GPU(s)
+17:16:48.887 [W0] INFO:	Metrics written to /mnt/log_dir/telemetry/metrics_worker_0.prom
+17:16:48.887 [W0] INFO:	Worker 0 exiting
+17:16:48.891 [W0] INFO:	Merged 1 Prometheus files into /mnt/log_dir/telemetry/metrics.prom
+17:16:48.891 [W0] INFO:	Loading metrics from: /mnt/log_dir/telemetry/metrics.prom
+17:16:50.343 [W0] INFO:	Metrics plot saved to: /mnt/log_dir/metrics_plot.png

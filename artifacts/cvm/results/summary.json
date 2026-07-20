@@ -110,7 +110,7 @@
     }
   ],
   "created_at": "2026-07-18T21:18:19.088449+00:00",
-  "data_hash": "eca599704d943e322dc8114149fa6fa3bfe479a0f68824ae69142b1a9df87b4f",
+  "data_hash": "e1e64dda92079ac5778c9552556d72ddc4310cbab6eac1125be35dc7fa1436d0",
   "diagnostic_experiment": {
     "adapter_guard_path_timing": {
       "guarded_drive_path_us": {
@@ -862,6 +862,136 @@
     "lifecycle_stress": 40,
     "semantic_ablation": 30,
     "temporal_ablation": 18
+  },
+  "navsim_reactive_rollout": {
+    "artifact_dir": "artifacts/external/alpasim_navsim_reactive_rollout",
+    "artifact_sha256": "58651ebf5e116578eff8d76f1cf230c9485e1a54bdc46e44293337128d38a04e",
+    "available": true,
+    "behavior_metrics_not_used_as_policy_quality_claims": {
+      "collision_any": 0.0,
+      "dist_to_gt_location": 16.2922427809882,
+      "dist_to_gt_trajectory": 1.8110407074611314,
+      "dist_traveled_m": 61.86319335644219,
+      "gt_dist_traveled_m": 78.37454311238054,
+      "offroad": 0.0,
+      "plan_deviation": 0.2499127760248797,
+      "progress": 0.7854632416946014,
+      "progress_rel": 0.7912219438473825,
+      "score": 0.9818290521182517,
+      "wrong_lane": 1.0
+    },
+    "camera_event_count": 198,
+    "claim_boundary": {
+      "does_not_support": [
+        "reactive camera rendering or visual-policy evaluation",
+        "NuRec rendering quality",
+        "learned-policy quality or benchmark superiority",
+        "runtime overhead versus another integration",
+        "human time-to-diagnosis",
+        "cross-simulator transfer or population generalization"
+      ],
+      "supports": [
+        "one-scene reactive external-driver lifecycle completion",
+        "live learned-policy/controller/physics feedback for a camera-blind model",
+        "service timing for this exact configuration",
+        "frozen-camera rejection for a camera-validating negative control"
+      ]
+    },
+    "drive_rpc_count": 197,
+    "finite_drive_outputs": 197,
+    "fixture": {
+      "alpasim_source_sha256": "0ee95b5bc3a69693cd5a3da3a7d430b673f15371f6844f641866302b5deab2f6",
+      "alpasim_source_url": "https://media.githubusercontent.com/media/NVlabs/alpasim/9177bd0bec547d7516cc77d1864e943780ef7e7a/src/runtime/tests/data/mock_video_model/clipgt-0b10bce8-61f1-4350-8577-cf3c9493ffc3.usdz",
+      "derived_sha256": "069fd063a64c82112ec971b585b7eb08d09f9233a4f2ac5e816e19af7185d70d",
+      "derived_surface": {
+        "files_added": [
+          "mesh.ply",
+          "mesh_ground.ply",
+          "WOD2SIM_DERIVATION.json"
+        ],
+        "geometry": "flat z=0 m rectangle x=[-100,200], y=[-100,100]",
+        "recorded_payloads_changed": false
+      }
+    },
+    "internal_driver_latency_ms": {
+      "max": 18.142955,
+      "mean": 2.1909210812182742,
+      "min": 0.886126,
+      "p50": 1.982387,
+      "p95": 3.362453199999999
+    },
+    "latency_target_met_count": 197,
+    "media": {
+      "camera_map": {
+        "bytes": 981818,
+        "codec": "h264",
+        "content": "raw AlpaSim map, metrics, and recorded seed camera; camera panel has no WOD2Sim text overlay",
+        "duration_s": 19.9,
+        "frames": 199,
+        "height": 1000,
+        "path": "artifacts/external/alpasim_navsim_reactive_rollout/camera-map.mp4",
+        "r_frame_rate": "10/1",
+        "sha256": "2ca2bced5caa397354a5c1f3d8b6bb9ee4aea6ef2580ae94d05239994b683ea7",
+        "width": 900
+      }
+    },
+    "negative_control": {
+      "camera_events": 5,
+      "diagnostic": "RouteFollowingAlpaSimModel detected a frozen camera stream: ego pose changed from (0.1786, -0.0025, -0.002999) to (0.2308, -0.0024, -0.003765), and the latest camera timestamp advanced from 2056234417255 to 2056234517255, but the newest camera frame content did not change. The vehicle is moving while camera imagery is effectively frozen; check the upstream AlpaSim/sensorsim camera pipeline.",
+      "drive_calls_before_rejection": 4,
+      "model": "route_following",
+      "render_calls": 5,
+      "result": "rejected_frozen_camera_stream",
+      "session_uuid": "fc19558c-845e-11f1-855f-8378a45bfef7"
+    },
+    "passed_rollouts": 1,
+    "render_call_count": 198,
+    "renderer": {
+      "camera_contract": "recorded_seed_frame_replay",
+      "first_requested_xyz": [
+        0.06113193929195404,
+        -0.001269932254217565,
+        -0.00047897876356728375
+      ],
+      "initial_frame_sha256": {
+        "camera_front_wide_120fov": "8c04d6c1ebb2bc1180bfa6196e695cf1d48d7c4f64f84bab0e3dc75535e2ec58"
+      },
+      "kind": "video_model",
+      "last_requested_xyz": [
+        61.68334197998047,
+        0.5455278158187866,
+        0.0
+      ],
+      "render_calls": 198
+    },
+    "rollouts": 1,
+    "run": {
+      "alpasim_commit": "9177bd0bec547d7516cc77d1864e943780ef7e7a",
+      "alpasim_runtime_image_id": "sha256:a305ca08dc51ddabd668857fad704fca92772638fb21a9cf012d75767d71cee4",
+      "checkpoint": {
+        "name": "NAVSIM EgoStatusMLP seed 0",
+        "revision": "32d89c0ae6e7c13c311f4a034002006c250afab0",
+        "sha256": "87d75b0f43d077ac3531370d7cccac98656d4e9b5ce5fa6618e28b7358b3a86b",
+        "url": "https://huggingface.co/autonomousvision/navsim_baselines/resolve/32d89c0ae6e7c13c311f4a034002006c250afab0/ego_status_mlp/ego_status_mlp_seed_0.ckpt"
+      },
+      "model": "navsim_ego_status_mlp",
+      "model_input_contract": "velocity_xy+acceleration_xy+discrete_command",
+      "rollout_id": "4956d514-845e-11f1-8b77-537c3b97cc28",
+      "scene_id": "clipgt-0b10bce8-61f1-4350-8577-cf3c9493ffc3",
+      "status": "pass",
+      "wod2sim_commit": "aece540bfc916bc9044ed6d4f0512d16093434a7"
+    },
+    "runtime": {
+      "active_wall_clock_s": 16.51,
+      "realtime_factor": 1.21,
+      "simulated_s": 19.93,
+      "total_wall_clock_s": 18.9
+    },
+    "service_drive_rpc": {
+      "count": 197,
+      "mean_ms": 3.205829152278883,
+      "sum_s": 0.6315483429989399
+    }
   },
   "planned_runs": 0,
   "protocol_replay": {

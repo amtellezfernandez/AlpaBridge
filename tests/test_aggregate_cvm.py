@@ -391,6 +391,37 @@ class AggregateCVMTests(unittest.TestCase):
         self.assertEqual(0, learned_divergence["endpoint_difference_gt_0_1m"])
         self.assertEqual(0.0, learned_divergence["endpoint_difference_max_m"])
 
+    def test_navsim_reactive_summary_revalidates_tracked_evidence(self) -> None:
+        module = _load_module()
+
+        summary = module._navsim_reactive_summary(
+            ROOT / "artifacts" / "external" / "alpasim_navsim_reactive_rollout"
+        )
+
+        self.assertTrue(summary["available"])
+        self.assertEqual(1, summary["rollouts"])
+        self.assertEqual(1, summary["passed_rollouts"])
+        self.assertEqual(197, summary["drive_rpc_count"])
+        self.assertEqual(197, summary["finite_drive_outputs"])
+        self.assertEqual(198, summary["camera_event_count"])
+        self.assertEqual(198, summary["render_call_count"])
+        self.assertAlmostEqual(
+            3.3624532,
+            summary["internal_driver_latency_ms"]["p95"],
+        )
+        self.assertEqual(
+            "recorded_seed_frame_replay",
+            summary["renderer"]["camera_contract"],
+        )
+        self.assertEqual(
+            4,
+            summary["negative_control"]["drive_calls_before_rejection"],
+        )
+        self.assertEqual(
+            1.0,
+            summary["behavior_metrics_not_used_as_policy_quality_claims"]["wrong_lane"],
+        )
+
     def test_release_scope_separates_public_core_from_gated_extensions(self) -> None:
         module = _load_module()
         rows = [

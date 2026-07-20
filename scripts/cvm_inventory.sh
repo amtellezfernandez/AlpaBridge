@@ -7,6 +7,34 @@ cd "$ROOT"
 OUT="artifacts/cvm"
 mkdir -p "$OUT/environment" "$OUT/logs/baseline" "$OUT/reports"
 
+REPORT="$OUT/reports/repository_inventory.md"
+if [ ! -f "$REPORT" ]; then
+  echo "Missing tracked repository inventory: $REPORT" >&2
+  exit 1
+fi
+if [ ! -f "wod2sim.pdf" ]; then
+  echo "Missing paper artifact: wod2sim.pdf" >&2
+  exit 1
+fi
+
+TEST_FILE_COUNT="$(find tests -maxdepth 1 -type f -name 'test_*.py' | wc -l | tr -d '[:space:]')"
+PDF_SIZE="$(wc -c < wod2sim.pdf | tr -d '[:space:]')"
+WOD2SIM_TEST_FILE_COUNT="$TEST_FILE_COUNT" \
+  WOD2SIM_PDF_SIZE="$PDF_SIZE" \
+  perl -0pi -e '
+    s/(PDF size at audit:\s*)\d+(\s+bytes\.)/$1$ENV{"WOD2SIM_PDF_SIZE"}$2/;
+    s/(Test directory:\s*`tests`\s+with\s*)\d+(\s+top-level test files\.)/$1$ENV{"WOD2SIM_TEST_FILE_COUNT"}$2/;
+  ' "$REPORT"
+
+if ! grep -Fq "PDF size at audit: ${PDF_SIZE} bytes." "$REPORT"; then
+  echo "Failed to refresh the PDF size in $REPORT" >&2
+  exit 1
+fi
+if ! grep -Fq 'Test directory: `tests` with '"${TEST_FILE_COUNT}"' top-level test files.' "$REPORT"; then
+  echo "Failed to refresh the test-file count in $REPORT" >&2
+  exit 1
+fi
+
 redact() {
   local host
   host="$(hostname 2>/dev/null || true)"

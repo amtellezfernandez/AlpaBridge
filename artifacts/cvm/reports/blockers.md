@@ -27,6 +27,11 @@
   protocol serialization rejects non-finite or structurally invalid output.
 - A camera-alias freshness defect exposed by the new valid-session generator is
   fixed and regression-tested.
+- A published NAVSIM EgoStatusMLP checkpoint now completes one live AlpaSim
+  external-driver/controller/physics rollout: 197/197 finite outputs over
+  19.93 simulated seconds. The public fixture's repeated camera seed and added
+  declared flat surface remain explicit limitations; a camera-validating
+  control rejects the frozen stream after four completed calls.
 
 ## Remaining Blockers
 
@@ -79,10 +84,11 @@ The paper may claim the completed dependency-light public core, semantic
 route-boundary diagnostic, evidence-gate rejection of command-only route rows,
 controlled trace classification/localization against the executable
 status-only gate, post-parse detector execution, and a paired guard-path
-increments. Missing scene-matched actor proxies, learned
+increment, plus the bounded learned reactive lifecycle run. Missing
+scene-matched actor proxies, other learned
 checkpoints, and redistributable restricted scenes block optional extension or
 benchmark claims, not the public core. It must not claim a complete
 direct-actor temporal ablation, learned-policy performance, simulator-backed
 lifecycle stress reliability, broad integration-framework ranking,
-policy-quality superiority, end-to-end runtime overhead, human
+policy-quality superiority, comparative runtime overhead, human
 time-to-diagnosis, or official Waymo benchmark compatibility.

@@ -135,6 +135,34 @@ def _write_paper_number_fixture(root: Path, module) -> tuple[Path, Path, Path, P
             "driver_latency_mean_ms": 2.135,
             "driver_latency_max_ms": 11.966,
         },
+        "navsim_reactive_rollout": {
+            "rollouts": 1,
+            "passed_rollouts": 1,
+            "drive_rpc_count": 197,
+            "finite_drive_outputs": 197,
+            "latency_target_met_count": 197,
+            "camera_event_count": 198,
+            "render_call_count": 198,
+            "internal_driver_latency_ms": {
+                "p50": 1.982387,
+                "p95": 3.3624532,
+            },
+            "service_drive_rpc": {
+                "mean_ms": 3.205829152,
+            },
+            "runtime": {
+                "simulated_s": 19.93,
+                "active_wall_clock_s": 16.51,
+                "total_wall_clock_s": 18.90,
+            },
+            "behavior_metrics_not_used_as_policy_quality_claims": {
+                "dist_traveled_m": 61.863193356,
+                "wrong_lane": 1.0,
+            },
+            "negative_control": {
+                "drive_calls_before_rejection": 4,
+            },
+        },
         "protocol_replay": {
             "policy_family_count": 2,
             "media": {"camera_frames": 60},
@@ -412,6 +440,16 @@ def _write_summary_timestamp_fixture(root: Path) -> tuple[Path, Path]:
 
 
 class ValidateCVMSubmissionTests(unittest.TestCase):
+    def test_reactive_artifact_integrity_matches_generated_summary(self) -> None:
+        module = _load_module()
+
+        failures = module._reactive_artifact_failures(
+            repo_root=ROOT,
+            summary_path=ROOT / "artifacts" / "cvm" / "results" / "summary.json",
+        )
+
+        self.assertEqual([], failures)
+
     def test_source_text_accepts_release_abstract_length(self) -> None:
         module = _load_module()
         body = " ".join(f"word{index}" for index in range(module.ABSTRACT_MIN_WORDS))
@@ -1735,7 +1773,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
                 "| `uv run python -m pytest -q tests/test_validate_cvm_submission.py` | Passed. |\n"
                 "| `make paper-verify PYTHON='uv run python'` | Passed. |\n"
                 "| `make cvm-check PYTHON='uv run python'` | Passed with "
-                "367 passed, 14 skipped, and 15 subtests passed. |\n"
+                "373 passed, 14 skipped, and 15 subtests passed. |\n"
                 "| `make verify` | Passed with 65.31% against the configured 33.0% minimum. |\n",
                 encoding="utf-8",
             )

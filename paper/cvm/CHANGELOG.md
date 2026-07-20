@@ -2,6 +2,13 @@
 
 ## 2026-07-20
 
+- Added one hash-validated reactive AlpaSim run of the published camera-blind
+  NAVSIM checkpoint: 197/197 finite outputs, 198 render requests, and 19.93
+  simulated seconds through live driver/controller/physics feedback.
+- Reported the repeated public camera seed, declared synthetic flat ground,
+  retained `wrong_lane=1`, and frozen-camera negative control; explicitly
+  withheld visual-policy, policy-quality, comparative-overhead,
+  human-diagnosis, and cross-simulator claims.
 - Added a four-arm, hash-validated replay of the official AlpaSim integration
   protocol through live gRPC services.
 - Replaced the project-specific replay checkpoint with NAVSIM's official
