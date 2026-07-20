@@ -224,6 +224,19 @@ def test_contract_clean_trace_is_invariant_to_noncontract_metadata_and_session_n
     assert observed == []
 
 
+def test_command_only_route_is_valid_for_policy_that_does_not_require_geometry() -> None:
+    session = _session(0)
+    for event in session:
+        if event["event"] in {"route", "drive"}:
+            event["route_source"] = "command_proxy"
+            event["route_waypoint_count"] = 0
+            event["route_geometry_required"] = False
+
+    observed = diagnose_contract_trace(session, context=DEFAULT_CONTEXT)
+
+    assert observed == []
+
+
 def _session(index: int) -> list[dict[str, object]]:
     sessions = split_session_traces(load_telemetry_trace(TRACE))
     return copy.deepcopy(sessions[index])

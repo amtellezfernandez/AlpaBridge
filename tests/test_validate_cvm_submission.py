@@ -136,12 +136,25 @@ def _write_paper_number_fixture(root: Path, module) -> tuple[Path, Path, Path, P
             "driver_latency_max_ms": 11.966,
         },
         "protocol_replay": {
+            "policy_family_count": 2,
             "media": {"camera_frames": 60},
+            "trajectory_divergence": {
+                "route_following": {
+                    "endpoint_difference_gt_0_1m": 56,
+                },
+                "navsim_ego_status_mlp": {
+                    "endpoint_difference_gt_0_1m": 0,
+                    "endpoint_difference_gt_1m": 0,
+                    "endpoint_difference_mean_m": 0.0,
+                    "endpoint_difference_max_m": 0.0,
+                },
+            },
             "arms": {
                 "full_contract": {
                     "diagnostic_count": 0,
                     "drive_calls": 60,
                     "finite_drive_outputs": 60,
+                    "nonstationary_drive_outputs": 60,
                     "drive_calls_within_target": 60,
                     "drive_rpc_latency_ms": {
                         "p50": 1.786,
@@ -152,10 +165,33 @@ def _write_paper_number_fixture(root: Path, module) -> tuple[Path, Path, Path, P
                     "diagnostic_count": 1,
                     "drive_calls": 60,
                     "finite_drive_outputs": 60,
+                    "nonstationary_drive_outputs": 60,
                     "drive_calls_within_target": 60,
                     "drive_rpc_latency_ms": {
                         "p50": 1.835,
                         "p95": 2.338,
+                    },
+                },
+                "navsim_ego_status_mlp_full_contract": {
+                    "diagnostic_count": 0,
+                    "drive_calls": 60,
+                    "finite_drive_outputs": 60,
+                    "nonstationary_drive_outputs": 60,
+                    "drive_calls_within_target": 60,
+                    "drive_rpc_latency_ms": {
+                        "p50": 7.194,
+                        "p95": 8.477,
+                    },
+                },
+                "navsim_ego_status_mlp_command_only_route": {
+                    "diagnostic_count": 0,
+                    "drive_calls": 60,
+                    "finite_drive_outputs": 60,
+                    "nonstationary_drive_outputs": 60,
+                    "drive_calls_within_target": 60,
+                    "drive_rpc_latency_ms": {
+                        "p50": 6.750,
+                        "p95": 8.028,
                     },
                 },
             },
@@ -332,6 +368,10 @@ def _write_generated_table_fixture(root: Path, module) -> tuple[Path, Path, Path
 
     write_table("contract_map.tex", module._expected_contract_map_rows())
     write_table("main_results.tex", module._expected_main_results_rows(summary))
+    write_table(
+        "protocol_replay_policies.tex",
+        module._expected_protocol_replay_policy_rows(summary),
+    )
     write_table("ablations.tex", module._expected_ablations_rows(summary))
     write_table(
         "fault_localization.tex",
@@ -721,12 +761,15 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         module = _load_module()
         readme = (
             "## Executed Camera Replay\n"
-            "One official Apache-licensed AlpaSim integration recording uses live "
-            "gRPC adapter modes with camera, egomotion, route messages. A "
-            "RPC-completion check accepts both, while the contract audit accepts "
-            "one and reports semantic.command_only for the other. The replay is "
-            "non-reactive: outputs do not change the recorded future frames. It is "
-            "not a reactive simulator rollout or a policy-quality comparison. "
+            "The same official AlpaSim integration log runs through four live "
+            "WOD2Sim gRPC services under route-retaining and command-only service "
+            "modes. The route arm reports semantic.command_only; the learned "
+            "command-only arm correctly passes and paired outputs remain exactly "
+            "equal. The recorded camera and ego-state sequence is fixed. The replay "
+            "is non-reactive and is not a reactive simulator rollout, policy-quality "
+            "comparison, or cross-simulator test. Same policy, same recorded scene, "
+            "and same ego state are shown in live gRPC replay runs; neither output "
+            "changes the recorded future camera frames. "
             "See alpasim-protocol-replay.mp4, the validated manifest, and "
             "reproduction notes.\n"
         )
@@ -747,7 +790,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         )
 
         self.assertIn(
-            "readme_visual_explanation_missing:README.md:live gRPC adapter modes",
+            "readme_visual_explanation_missing:README.md:four live WOD2Sim gRPC services",
             failures,
         )
         self.assertIn(
@@ -768,9 +811,9 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             "rather than success metrics. The public release core is the "
             "dependency-light adapter path. Direct-actor, learned-checkpoint, and "
             "restricted-scene dependencies are optional gated extensions, not "
-            "release-core dependencies. The release excludes a redistributable scene "
-            "subset, verified scene-category coverage, and a claim-ready closed-loop "
-            "policy benchmark.\n"
+            "release-core dependencies. The release does not redistribute a "
+            "checkpoint or scene subset and excludes verified scene-category "
+            "coverage and a claim-ready closed-loop policy benchmark.\n"
         )
 
         failures = module._evaluation_status_failures(
@@ -1692,8 +1735,8 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
                 "| `uv run python -m pytest -q tests/test_validate_cvm_submission.py` | Passed. |\n"
                 "| `make paper-verify PYTHON='uv run python'` | Passed. |\n"
                 "| `make cvm-check PYTHON='uv run python'` | Passed with "
-                "358 passed, 14 skipped, and 15 subtests passed. |\n"
-                "| `make verify` | Passed with 65.32% against the configured 33.0% minimum. |\n",
+                "367 passed, 14 skipped, and 15 subtests passed. |\n"
+                "| `make verify` | Passed with 65.31% against the configured 33.0% minimum. |\n",
                 encoding="utf-8",
             )
 

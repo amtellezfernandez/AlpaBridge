@@ -107,6 +107,30 @@ PROTOCOL_REPLAY_SOURCE = {
         "src/runtime/tests/data/integration/rollout.asl"
     ),
 }
+PROTOCOL_REPLAY_LEARNED_POLICY = {
+    "checkpoint_repository": "autonomousvision/navsim_baselines",
+    "checkpoint_revision": "32d89c0ae6e7c13c311f4a034002006c250afab0",
+    "checkpoint_sha256": "87d75b0f43d077ac3531370d7cccac98656d4e9b5ce5fa6618e28b7358b3a86b",
+    "checkpoint_url": (
+        "https://huggingface.co/autonomousvision/navsim_baselines/resolve/"
+        "32d89c0ae6e7c13c311f4a034002006c250afab0/"
+        "ego_status_mlp/ego_status_mlp_seed_0.ckpt"
+    ),
+    "family": "NAVSIM v1.1 EgoStatusMLP blind learned baseline",
+    "input_contract": [
+        "velocity_xy",
+        "acceleration_xy",
+        "discrete_command",
+    ],
+    "license": "Apache-2.0",
+    "name": "ego_status_mlp_seed_0",
+    "navsim_source_commit": "0811876c274e8b058ab2be9b3dcd4d37bd23f177",
+    "redistributed_in_wod2sim": False,
+    "route_geometry_consumed": False,
+    "runtime_device": "cpu",
+    "trained_on_navsim": True,
+    "visual_policy": False,
+}
 
 
 def main() -> int:
@@ -384,7 +408,7 @@ def _protocol_replay_summary(path: Path) -> dict[str, Any]:
         raise SystemExit(f"Invalid protocol replay manifest JSON: {manifest_path}: {exc}") from exc
     if (
         not isinstance(manifest, dict)
-        or manifest.get("schema") != "wod2sim_alpasim_replay_demo_manifest_v1"
+        or manifest.get("schema") != "wod2sim_alpasim_replay_demo_manifest_v3"
     ):
         raise SystemExit(f"Invalid protocol replay manifest schema: {manifest_path}")
 
@@ -394,6 +418,9 @@ def _protocol_replay_summary(path: Path) -> dict[str, Any]:
     source_sha256 = source.get("asl_sha256")
     if not isinstance(source_sha256, str) or len(source_sha256) != 64:
         raise SystemExit(f"Invalid protocol replay source hash: {manifest_path}")
+    learned_policy = manifest.get("learned_policy")
+    if learned_policy != PROTOCOL_REPLAY_LEARNED_POLICY:
+        raise SystemExit(f"Invalid protocol replay learned-policy scope: {manifest_path}")
 
     repo_root = path.resolve().parents[2]
     _validate_replay_source_hashes(
@@ -406,12 +433,39 @@ def _protocol_replay_summary(path: Path) -> dict[str, Any]:
         raise SystemExit(f"Missing protocol replay arms: {manifest_path}")
 
     normalized_arms: dict[str, Any] = {}
-    for arm_name, expected_codes in (
-        ("full_contract", []),
-        ("command_only_route", ["semantic.command_only"]),
+    arm_drive_rows: dict[str, list[dict[str, Any]]] = {}
+    for arm_name, file_stem, expected_mode, expected_model, expected_codes in (
+        (
+            "full_contract",
+            "full_contract",
+            "full_contract",
+            "route_following",
+            [],
+        ),
+        (
+            "command_only_route",
+            "command_only_route",
+            "command_only_route",
+            "route_following",
+            ["semantic.command_only"],
+        ),
+        (
+            "navsim_ego_status_mlp_full_contract",
+            "navsim_ego_status_mlp_full_contract",
+            "full_contract",
+            "navsim_ego_status_mlp",
+            [],
+        ),
+        (
+            "navsim_ego_status_mlp_command_only_route",
+            "navsim_ego_status_mlp_command_only_route",
+            "command_only_route",
+            "navsim_ego_status_mlp",
+            [],
+        ),
     ):
-        result_path = path / f"{arm_name}.json"
-        telemetry_path = path / f"{arm_name}-telemetry.jsonl"
+        result_path = path / f"{file_stem}.json"
+        telemetry_path = path / f"{file_stem}-telemetry.jsonl"
         arm_manifest = arms_manifest.get(arm_name)
         if not isinstance(arm_manifest, dict):
             raise SystemExit(f"Missing protocol replay arm: {manifest_path}:{arm_name}")
@@ -435,9 +489,10 @@ def _protocol_replay_summary(path: Path) -> dict[str, Any]:
         adapter = result.get("adapter")
         if (
             not isinstance(result_source, dict)
-            or result_source.get("asl_sha256") != source_sha256
+            or result_source != source
             or not isinstance(adapter, dict)
-            or adapter.get("mode") != arm_name
+            or adapter.get("mode") != expected_mode
+            or adapter.get("version_id") != f"wod2sim-challenge-{expected_model}"
         ):
             raise SystemExit(f"Protocol replay arm provenance mismatch: {result_path}")
 
@@ -455,6 +510,35 @@ def _protocol_replay_summary(path: Path) -> dict[str, Any]:
         runtime = trace_runtime_summary(events)
         if runtime != arm_manifest.get("runtime"):
             raise SystemExit(f"Protocol replay manifest runtime drift: {manifest_path}:{arm_name}")
+        drive_events = [
+            event for event in events if isinstance(event, dict) and event.get("event") == "drive"
+        ]
+        if (
+            len(drive_events) != 60
+            or {event.get("model") for event in drive_events} != {expected_model}
+        ):
+            raise SystemExit(f"Protocol replay model telemetry mismatch: {telemetry_path}")
+        if expected_model == "navsim_ego_status_mlp":
+            if (
+                {
+                    event.get("checkpoint_sha256")
+                    for event in drive_events
+                }
+                != {PROTOCOL_REPLAY_LEARNED_POLICY["checkpoint_sha256"]}
+                or {
+                    event.get("model_input_contract")
+                    for event in drive_events
+                }
+                != {"velocity_xy+acceleration_xy+discrete_command"}
+                or {
+                    event.get("route_geometry_required")
+                    for event in drive_events
+                }
+                != {False}
+            ):
+                raise SystemExit(
+                    f"Protocol replay checkpoint telemetry mismatch: {telemetry_path}"
+                )
 
         results = result.get("results")
         drives = result.get("drives")
@@ -462,16 +546,41 @@ def _protocol_replay_summary(path: Path) -> dict[str, Any]:
             raise SystemExit(f"Protocol replay result payload is incomplete: {result_path}")
         drive_calls = results.get("drive_calls")
         finite_outputs = results.get("finite_drive_outputs")
+        nonstationary_outputs = results.get("nonstationary_drive_outputs")
         within_target = results.get("drive_calls_within_target")
         drive_latency = _nested_value(results, "rpc_latency_ms.drive")
+        latency_target = results.get("latency_target_ms")
+        recomputed_finite_outputs = sum(
+            row.get("trajectory_finite") is True
+            for row in drives
+            if isinstance(row, dict)
+        )
+        recomputed_nonstationary_outputs = sum(
+            isinstance(row, dict)
+            and isinstance(row.get("trajectory_progress_m"), (int, float))
+            and math.isfinite(float(row["trajectory_progress_m"]))
+            and float(row["trajectory_progress_m"]) > 1.0
+            for row in drives
+        )
+        recomputed_within_target = sum(
+            isinstance(row, dict)
+            and isinstance(row.get("rpc_latency_ms"), (int, float))
+            and math.isfinite(float(row["rpc_latency_ms"]))
+            and isinstance(latency_target, (int, float))
+            and float(row["rpc_latency_ms"]) <= float(latency_target)
+            for row in drives
+        )
         if (
             not isinstance(drive_calls, int)
             or drive_calls != len(drives)
+            or drive_calls != 60
             or not isinstance(finite_outputs, int)
-            or finite_outputs != sum(
-                row.get("trajectory_finite") is True for row in drives if isinstance(row, dict)
-            )
+            or finite_outputs != recomputed_finite_outputs
+            or finite_outputs != drive_calls
+            or nonstationary_outputs != recomputed_nonstationary_outputs
+            or nonstationary_outputs != drive_calls
             or not isinstance(within_target, int)
+            or within_target != recomputed_within_target
             or not isinstance(drive_latency, dict)
             or drive_latency.get("samples") != drive_calls
         ):
@@ -485,8 +594,11 @@ def _protocol_replay_summary(path: Path) -> dict[str, Any]:
         normalized_arms[arm_name] = {
             "diagnostic_codes": diagnostic_codes,
             "diagnostic_count": len(diagnostic_codes),
+            "model": expected_model,
+            "route_contract_mode": expected_mode,
             "drive_calls": drive_calls,
             "finite_drive_outputs": finite_outputs,
+            "nonstationary_drive_outputs": nonstationary_outputs,
             "drive_calls_within_target": within_target,
             "latency_target_ms": results.get("latency_target_ms"),
             "drive_rpc_latency_ms": drive_latency,
@@ -494,6 +606,29 @@ def _protocol_replay_summary(path: Path) -> dict[str, Any]:
             "result_sha256": arm_manifest["result_sha256"],
             "telemetry_sha256": arm_manifest["telemetry_sha256"],
         }
+        arm_drive_rows[arm_name] = drives
+
+    trajectory_divergence = {
+        "route_following": _paired_endpoint_divergence(
+            arm_drive_rows["full_contract"],
+            arm_drive_rows["command_only_route"],
+            label="route_following",
+        ),
+        "navsim_ego_status_mlp": _paired_endpoint_divergence(
+            arm_drive_rows["navsim_ego_status_mlp_full_contract"],
+            arm_drive_rows["navsim_ego_status_mlp_command_only_route"],
+            label="navsim_ego_status_mlp",
+        ),
+    }
+    learned_divergence = trajectory_divergence["navsim_ego_status_mlp"]
+    if (
+        learned_divergence["endpoint_difference_gt_0_1m"] != 0
+        or float(learned_divergence["endpoint_difference_max_m"]) > 1e-9
+    ):
+        raise SystemExit(
+            "NAVSIM EgoStatusMLP changed under a route mutation outside its "
+            "published input signature"
+        )
 
     media = _validated_replay_media(
         manifest.get("media"),
@@ -513,16 +648,70 @@ def _protocol_replay_summary(path: Path) -> dict[str, Any]:
         "artifact_sha256": hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
         "available": True,
         "source": source,
+        "learned_policy": learned_policy,
         "execution_environment": manifest.get("execution_environment"),
+        "policy_family_count": len(
+            {arm["model"] for arm in normalized_arms.values()}
+        ),
         "arms": normalized_arms,
+        "trajectory_divergence": trajectory_divergence,
         "media": media,
         "claim_boundary": (
             "This is an executed client-to-service gRPC replay of recorded camera, route, "
             "egomotion, and Drive messages. It measures transport-inclusive driver RPC "
             "latency and contract diagnostics. Recorded inputs are non-reactive, so it "
             "does not measure simulator runtime, policy quality, human diagnosis time, "
-            "or generalization to another integration framework."
+            "or generalization to another integration framework. Route-following "
+            "demonstrates the consequence of waypoint loss; the published NAVSIM "
+            "EgoStatusMLP is a policy-signature negative control and does not consume "
+            "route geometry."
         ),
+    }
+
+
+def _paired_endpoint_divergence(
+    full_rows: list[dict[str, Any]],
+    command_rows: list[dict[str, Any]],
+    *,
+    label: str,
+) -> dict[str, int | float]:
+    if len(full_rows) != 60 or len(command_rows) != len(full_rows):
+        raise SystemExit(f"Protocol replay pair denominator mismatch: {label}")
+    distances: list[float] = []
+    for index, (full, command) in enumerate(zip(full_rows, command_rows, strict=True)):
+        for key in ("index", "time_now_us", "time_query_us", "route_waypoints_xy"):
+            if full.get(key) != command.get(key):
+                raise SystemExit(
+                    f"Protocol replay paired input mismatch: {label}:{index}:{key}"
+                )
+        endpoints: list[tuple[float, float]] = []
+        for row in (full, command):
+            trajectory = row.get("trajectory_ego_xy")
+            if not isinstance(trajectory, list) or not trajectory:
+                raise SystemExit(
+                    f"Protocol replay trajectory missing: {label}:{index}"
+                )
+            endpoint = trajectory[-1]
+            if (
+                not isinstance(endpoint, list)
+                or len(endpoint) != 2
+                or not all(
+                    isinstance(value, (int, float)) and math.isfinite(float(value))
+                    for value in endpoint
+                )
+            ):
+                raise SystemExit(
+                    f"Protocol replay endpoint invalid: {label}:{index}"
+                )
+            endpoints.append((float(endpoint[0]), float(endpoint[1])))
+        distances.append(math.dist(endpoints[0], endpoints[1]))
+    return {
+        "paired_calls": len(distances),
+        "endpoint_difference_gt_0_1m": sum(value > 0.1 for value in distances),
+        "endpoint_difference_gt_1m": sum(value > 1.0 for value in distances),
+        "endpoint_difference_mean_m": round(sum(distances) / len(distances), 6),
+        "endpoint_difference_median_m": round(statistics.median(distances), 6),
+        "endpoint_difference_max_m": round(max(distances), 6),
     }
 
 
@@ -532,7 +721,13 @@ def _validate_replay_source_hashes(
     repo_root: Path,
     manifest_path: Path,
 ) -> None:
-    if not isinstance(value, dict) or set(value) != {"client", "renderer", "runner"}:
+    if not isinstance(value, dict) or set(value) != {
+        "challenge_driver",
+        "client",
+        "navsim_ego_status_mlp",
+        "renderer",
+        "runner",
+    }:
         raise SystemExit(f"Invalid protocol replay source manifest: {manifest_path}")
     for label, item in value.items():
         if not isinstance(item, dict):
@@ -660,7 +855,7 @@ def _diagnostic_experiment_summary(path: Path) -> dict[str, Any]:
     if (
         source_sessions != faults
         or finite_drives != source_drives
-        or telemetry_schemas != ["wod2sim_challenge_telemetry_v2"]
+        or telemetry_schemas != ["wod2sim_challenge_telemetry_v3"]
     ):
         raise SystemExit(f"Diagnostic experiment source-evidence mismatch: {path}")
 
@@ -1617,6 +1812,29 @@ def _write_tables(output: Path, summary: dict[str, Any], rows: list[dict[str, st
     replay_command = (
         replay_arms.get("command_only_route", {}) if isinstance(replay_arms, dict) else {}
     )
+    replay_learned_full = (
+        replay_arms.get("navsim_ego_status_mlp_full_contract", {})
+        if isinstance(replay_arms, dict)
+        else {}
+    )
+    replay_learned_command = (
+        replay_arms.get("navsim_ego_status_mlp_command_only_route", {})
+        if isinstance(replay_arms, dict)
+        else {}
+    )
+    replay_divergence = (
+        replay.get("trajectory_divergence", {}) if isinstance(replay, dict) else {}
+    )
+    replay_route_divergence = (
+        replay_divergence.get("route_following", {})
+        if isinstance(replay_divergence, dict)
+        else {}
+    )
+    replay_learned_divergence = (
+        replay_divergence.get("navsim_ego_status_mlp", {})
+        if isinstance(replay_divergence, dict)
+        else {}
+    )
     replay_media = replay.get("media", {}) if isinstance(replay, dict) else {}
     diagnostic = summary.get("diagnostic_experiment", {})
     diagnostic_design = diagnostic.get("design", {}) if isinstance(diagnostic, dict) else {}
@@ -1677,6 +1895,37 @@ def _write_tables(output: Path, summary: dict[str, Any], rows: list[dict[str, st
         + "\\midrule\n"
         + "\n".join(core_policy_rows)
         + "\n"
+        + "\\bottomrule\n\\end{tabular}\n",
+        encoding="utf-8",
+    )
+    (tables / "protocol_replay_policies.tex").write_text(
+        "% generated by contract-validation aggregate; data_hash="
+        + data_hash
+        + "\n"
+        + "\\begin{tabular}{llrrl}\n"
+        + "\\toprule\n"
+        + "Policy & Policy-visible route & Finite & Moving & Audit \\\\\n"
+        + "\\midrule\n"
+        + "Route following & 20 waypoints & "
+        + f"{_summary_int(replay_full, 'finite_drive_outputs')}/"
+        + f"{_summary_int(replay_full, 'drive_calls')} & "
+        + f"{_summary_int(replay_full, 'nonstationary_drive_outputs')}/"
+        + f"{_summary_int(replay_full, 'drive_calls')} & pass \\\\\n"
+        + "Route following & command only & "
+        + f"{_summary_int(replay_command, 'finite_drive_outputs')}/"
+        + f"{_summary_int(replay_command, 'drive_calls')} & "
+        + f"{_summary_int(replay_command, 'nonstationary_drive_outputs')}/"
+        + f"{_summary_int(replay_command, 'drive_calls')} & semantic fault \\\\\n"
+        + "NAVSIM EgoStatusMLP & command (route retained) & "
+        + f"{_summary_int(replay_learned_full, 'finite_drive_outputs')}/"
+        + f"{_summary_int(replay_learned_full, 'drive_calls')} & "
+        + f"{_summary_int(replay_learned_full, 'nonstationary_drive_outputs')}/"
+        + f"{_summary_int(replay_learned_full, 'drive_calls')} & pass \\\\\n"
+        + "NAVSIM EgoStatusMLP & command only & "
+        + f"{_summary_int(replay_learned_command, 'finite_drive_outputs')}/"
+        + f"{_summary_int(replay_learned_command, 'drive_calls')} & "
+        + f"{_summary_int(replay_learned_command, 'nonstationary_drive_outputs')}/"
+        + f"{_summary_int(replay_learned_command, 'drive_calls')} & pass \\\\\n"
         + "\\bottomrule\n\\end{tabular}\n",
         encoding="utf-8",
     )
@@ -1796,10 +2045,37 @@ def _write_tables(output: Path, summary: dict[str, Any], rows: list[dict[str, st
         + f"\\newcommand{{\\CVMReplayCameraFrames}}{{{_summary_int(replay_media, 'camera_frames')}}}\n"
         + f"\\newcommand{{\\CVMReplayFullFiniteDriveOutputs}}{{{_summary_int(replay_full, 'finite_drive_outputs')}}}\n"
         + f"\\newcommand{{\\CVMReplayCommandFiniteDriveOutputs}}{{{_summary_int(replay_command, 'finite_drive_outputs')}}}\n"
+        + f"\\newcommand{{\\CVMReplayFullMovingDriveOutputs}}{{{_summary_int(replay_full, 'nonstationary_drive_outputs')}}}\n"
+        + f"\\newcommand{{\\CVMReplayCommandMovingDriveOutputs}}{{{_summary_int(replay_command, 'nonstationary_drive_outputs')}}}\n"
         + f"\\newcommand{{\\CVMReplayFullLatencyTargetMet}}{{{_summary_int(replay_full, 'drive_calls_within_target')}}}\n"
         + f"\\newcommand{{\\CVMReplayCommandLatencyTargetMet}}{{{_summary_int(replay_command, 'drive_calls_within_target')}}}\n"
         + f"\\newcommand{{\\CVMReplayFullDiagnosticCount}}{{{_summary_int(replay_full, 'diagnostic_count')}}}\n"
         + f"\\newcommand{{\\CVMReplayCommandDiagnosticCount}}{{{_summary_int(replay_command, 'diagnostic_count')}}}\n"
+        + f"\\newcommand{{\\CVMReplayPolicyFamilies}}{{{_summary_int(replay, 'policy_family_count')}}}\n"
+        + f"\\newcommand{{\\CVMReplayLearnedDriveRPCsPerArm}}{{{_summary_int(replay_learned_full, 'drive_calls')}}}\n"
+        + f"\\newcommand{{\\CVMReplayLearnedFullFiniteDriveOutputs}}{{{_summary_int(replay_learned_full, 'finite_drive_outputs')}}}\n"
+        + f"\\newcommand{{\\CVMReplayLearnedCommandFiniteDriveOutputs}}{{{_summary_int(replay_learned_command, 'finite_drive_outputs')}}}\n"
+        + f"\\newcommand{{\\CVMReplayLearnedFullMovingDriveOutputs}}{{{_summary_int(replay_learned_full, 'nonstationary_drive_outputs')}}}\n"
+        + f"\\newcommand{{\\CVMReplayLearnedCommandMovingDriveOutputs}}{{{_summary_int(replay_learned_command, 'nonstationary_drive_outputs')}}}\n"
+        + f"\\newcommand{{\\CVMReplayLearnedFullLatencyTargetMet}}{{{_summary_int(replay_learned_full, 'drive_calls_within_target')}}}\n"
+        + f"\\newcommand{{\\CVMReplayLearnedCommandLatencyTargetMet}}{{{_summary_int(replay_learned_command, 'drive_calls_within_target')}}}\n"
+        + f"\\newcommand{{\\CVMReplayLearnedFullDiagnosticCount}}{{{_summary_int(replay_learned_full, 'diagnostic_count')}}}\n"
+        + f"\\newcommand{{\\CVMReplayLearnedCommandDiagnosticCount}}{{{_summary_int(replay_learned_command, 'diagnostic_count')}}}\n"
+        + f"\\newcommand{{\\CVMReplayRouteEndpointChanged}}{{{_summary_int(replay_route_divergence, 'endpoint_difference_gt_0_1m')}}}\n"
+        + f"\\newcommand{{\\CVMReplayLearnedEndpointChanged}}{{{_summary_int(replay_learned_divergence, 'endpoint_difference_gt_0_1m')}}}\n"
+        + f"\\newcommand{{\\CVMReplayLearnedEndpointChangedOneMeter}}{{{_summary_int(replay_learned_divergence, 'endpoint_difference_gt_1m')}}}\n"
+        + "\\newcommand{\\CVMReplayLearnedEndpointDifferenceMeanM}{"
+        + _paper_replay_metric(
+            summary,
+            "trajectory_divergence.navsim_ego_status_mlp.endpoint_difference_mean_m",
+        )
+        + "}\n"
+        + "\\newcommand{\\CVMReplayLearnedEndpointDifferenceMaxM}{"
+        + _paper_replay_metric(
+            summary,
+            "trajectory_divergence.navsim_ego_status_mlp.endpoint_difference_max_m",
+        )
+        + "}\n"
         + "\\newcommand{\\CVMReplayFullLatencyMedianMs}{"
         + _paper_replay_metric(
             summary,
@@ -1822,6 +2098,30 @@ def _write_tables(output: Path, summary: dict[str, Any], rows: list[dict[str, st
         + _paper_replay_metric(
             summary,
             "arms.command_only_route.drive_rpc_latency_ms.p95",
+        )
+        + "}\n"
+        + "\\newcommand{\\CVMReplayLearnedFullLatencyMedianMs}{"
+        + _paper_replay_metric(
+            summary,
+            "arms.navsim_ego_status_mlp_full_contract.drive_rpc_latency_ms.p50",
+        )
+        + "}\n"
+        + "\\newcommand{\\CVMReplayLearnedFullLatencyNinetyFifthMs}{"
+        + _paper_replay_metric(
+            summary,
+            "arms.navsim_ego_status_mlp_full_contract.drive_rpc_latency_ms.p95",
+        )
+        + "}\n"
+        + "\\newcommand{\\CVMReplayLearnedCommandLatencyMedianMs}{"
+        + _paper_replay_metric(
+            summary,
+            "arms.navsim_ego_status_mlp_command_only_route.drive_rpc_latency_ms.p50",
+        )
+        + "}\n"
+        + "\\newcommand{\\CVMReplayLearnedCommandLatencyNinetyFifthMs}{"
+        + _paper_replay_metric(
+            summary,
+            "arms.navsim_ego_status_mlp_command_only_route.drive_rpc_latency_ms.p95",
         )
         + "}\n"
         + f"\\newcommand{{\\CVMDiagnosticCases}}{{{_summary_int(diagnostic_design, 'total_cases')}}}\n"

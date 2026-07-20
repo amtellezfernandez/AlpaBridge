@@ -69,23 +69,29 @@ remain `claim_valid=false`.
 
 ## Paired AlpaSim Protocol Replay
 
-Run the same official recorded AlpaSim integration protocol through the
-route-preserving and command-only live services:
+Run the same official recorded AlpaSim integration protocol through four live
+services: route following and NAVSIM EgoStatusMLP, each under route-retaining
+and command-only service modes:
 
 ```bash
 ALPASIM_ROOT=/path/to/alpasim ./scripts/run_alpasim_replay_demo.sh
 ```
 
-The runner hash-checks the upstream ASL fixture, rebuilds the challenge-driver
-image, executes both arms, and regenerates the JSON/JSONL evidence, H.264 video,
-and README preview. The aggregate refuses changed evidence or media hashes and
-re-runs the trace diagnostics.
+The runner hash-checks the upstream ASL fixture, downloads and hash-checks
+NAVSIM's official `ego_status_mlp_seed_0` checkpoint, rebuilds the
+challenge-driver image, executes all four arms, and regenerates the JSON/JSONL
+evidence, H.264 video, and README preview. The checkpoint is not redistributed.
+The aggregate rejects changed evidence, source, or media hashes and re-runs the
+trace diagnostics.
 
-The replay records 60 `Drive` calls per arm. Both return 60/60 finite
-trajectories and meet the 100 ms target; the full-contract trace has no
-diagnostic, while the command-only trace isolates `semantic.command_only`.
-Measured client-to-service latency is 1.786 ms median / 2.191 ms p95 for the
-full-contract arm and 1.835 ms / 2.338 ms for the command-only arm.
+The replay records 60 `Drive` calls per arm. Every arm returns 60/60 finite,
+nonstationary trajectories and meets the 100 ms target. Removing geometry
+isolates `semantic.command_only` for route following and changes 56/60
+endpoints. It correctly produces no fault and no output change for the NAVSIM
+model because route geometry is outside that model's published input
+signature. Route-following full/reduced median/p95 latency is 3.769/4.833 ms
+and 3.104/3.958 ms; NAVSIM full/reduced is 4.715/5.945 ms and
+4.943/6.963 ms.
 
 This recording is non-reactive: service outputs do not alter later camera or
 ego-state messages. The values therefore include loopback gRPC and service
@@ -122,17 +128,19 @@ the title, author block, PDF subject, or abstract text intentionally changes.
 - Claim-valid benchmark matrix: 0.
 - External interface conformance: 1/1 rollout, 197 driver RPCs, 396 image
   events, and 197/197 latency-target hits.
-- Current-schema protocol replay: 60/60 finite `Drive` outputs per arm,
-  60/60 latency-target hits per arm, zero full-contract diagnostics, and one
-  command-only `semantic.command_only` diagnostic.
+- Current-schema protocol replay: four arms with 60/60 finite, nonstationary
+  `Drive` outputs and 60/60 latency-target hits each; route loss produces one
+  `semantic.command_only` diagnostic and 56/60 route-following endpoint
+  changes, while the NAVSIM negative control has no diagnostic and 60/60 exact
+  output matches.
 
 The current aggregate supports a completed dependency-light public core,
 completed full-contract integration checks, and bounded semantic
 route-boundary confound evidence. It does not support a complete public
 benchmark. Blocked rows remain optional gated extension denominator/context
 only. The aggregate does not support direct-actor temporal ablation,
-learned-policy result, scenario-category coverage, restricted scene
-redistribution, policy-quality comparison, human diagnosis time, or empirical
+learned-policy quality, visual-policy behavior, scenario-category coverage,
+restricted scene redistribution, human diagnosis time, or empirical
 generalization to another integration framework.
 
 Failure attribution is explicit in `artifacts/cvm/results/summary.json` under

@@ -49,6 +49,27 @@ hidden. They all use scene
 valid sensor pipeline, but 12/199 audited frames fell back to `command_proxy`,
 so the route contract correctly keeps those rows outside policy attribution.
 
+## Executed Protocol Replay
+
+The separate current-schema replay executes four live gRPC arms over the same
+60 recorded AlpaSim calls. Route following and NAVSIM's official,
+hash-validated EgoStatusMLP seed-0 checkpoint each run under route-retaining and
+command-only service modes. Every arm returns 60/60 finite, nonstationary
+outputs and meets the 100 ms target.
+
+Removing geometry produces `semantic.command_only` for route following and
+changes 56/60 endpoints by more than 0.1 m. It produces no fault and no output
+change for EgoStatusMLP: all 60 trajectory pairs are exactly equal because the
+published model signature consumes velocity, acceleration, and a discrete
+command, not route geometry. The latter is a policy-signature negative control,
+not a learned-policy quality result.
+
+Route-following full/reduced client-to-service latency is 3.769/4.833 ms
+median/p95 and 3.104/3.958 ms. EgoStatusMLP full/reduced latency is
+4.715/5.945 ms and 4.943/6.963 ms. These are descriptive loopback measurements
+from one ordered execution per arm; the recording is non-reactive and excludes
+simulator stepping, output feedback, format overhead, and human investigation.
+
 ## Failure Attribution
 
 - Contract-valid closed-loop rows: 42.
@@ -90,7 +111,8 @@ passes and the retained failure layer is policy.
   frames whose `scene_id` differs from the current prediction scene.
 - The temporal full-vs-naive resampling scene ablation is therefore not claimed.
 - Learned `token_dagger_bc` remains outside this CVM because no legitimate
-  release checkpoint hash is configured.
+  release checkpoint hash is configured. The separately executed NAVSIM replay
+  is a bounded policy-signature experiment, not a CVM policy benchmark row.
 
 ## Controlled Trace Diagnostics
 
@@ -112,11 +134,11 @@ not the scorer's expected label.
   cases. This exact count is descriptive; no population confidence interval or
   hypothesis test is reported for the designed cases.
 - Post-parse detector timing: 3,000 fault-case measurements, median
-  `11.441 us` and p95 `21.915 us`; 6,000 all-case measurements, median
-  `10.822 us` and p95 `20.789 us`.
+  `28.096 us` and p95 `55.774 us`; 6,000 all-case measurements, median
+  `26.169 us` and p95 `52.962 us`.
 - In-process adapter Drive-path timing: 1,000 guarded measurements rotating over
-  15 deterministic valid sessions, median `257.390 us` and p95 `449.371 us`.
-  The paired guard-path increment is `25.630 us` median and `112.659 us` p95.
+  15 deterministic valid sessions, median `617.549 us` and p95 `897.100 us`.
+  The paired guard-path increment is `68.871 us` median and `309.613 us` p95.
   Guarded and unchecked trajectories and headings are identical.
 - Separate external timing context: 197/197 retained drive calls met the 100-ms target;
   median `1.793 ms`, p95 `8.996 ms`.
@@ -172,7 +194,9 @@ The current aggregate supports a bounded integration-effectiveness claim for
 the completed dependency-light public core, route-boundary preservation, a
 functional command-only route baseline comparison, evidence-gate rejection,
 controlled fault classification, post-parse detector execution latency, and a
-paired guard-path increment.
+paired guard-path increment. The separate protocol replay supports
+client-to-service timing, a route-loss trajectory consequence for route
+following, and a learned command-native negative control.
 It does not support a complete direct-actor temporal ablation, learned-policy
-result, policy-quality comparison, broad integration-framework ranking, or
+quality result, visual-policy result, broad integration-framework ranking, or
 official Waymo benchmark claim.

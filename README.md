@@ -41,8 +41,9 @@ Waymo-to-AlpaSim scene conversion.
 | Can WOD-style adapters run as auditable AlpaSim external drivers? | Yes. The dependency-light public core completes `30/30` closed-loop rows over `15` local scenes. |
 | Does WOD2Sim prevent integration-invalid metrics from becoming policy evidence? | Yes. A defined status-only baseline accepts `15/15` completed metric-bearing command-only rows, while WOD2Sim rejects the same `15/15` as non-claim-valid route evidence. |
 | Does the detector distinguish controlled faults from valid traces? | Yes, for the declared designed suite. On `15` single-fault mutations paired with `15` separately instantiated valid adapter sessions, WOD2Sim classifies `30/30`, localizes `15/15`, and flags `0/15` controls; the executable completion-and-metrics gate classifies `15/30` and detects no faults. These are exact descriptive counts, not a framework-superiority test. |
-| What diagnostic timing is measured? | Post-parse fault-detector execution over `3,000` calls is `11.441 us` median and `21.915 us` p95. The guarded in-process adapter Drive path is `257.390 us` median and `449.371 us` p95; its paired camera-set and freshness-check increment is `25.630 us` median and `112.659 us` p95 over `1,000` measurements across `15` valid sessions, with identical output. These microbenchmarks exclude gRPC, simulator work, file I/O, and human investigation; they are not end-to-end runtime or human time-to-diagnosis. |
-| Is transport-inclusive service timing measured? | Yes, in a bounded non-reactive protocol replay. Each arm completes `60/60` live gRPC `Drive` calls with finite output. Full-contract latency is `1.786 ms` median and `2.191 ms` p95; command-only latency is `1.835 ms` median and `2.338 ms` p95. This measures loopback client-to-service time, not simulator runtime, human diagnosis time, or overhead attributable to either format. |
+| What diagnostic timing is measured? | Post-parse fault-detector execution over `3,000` calls is `28.096 us` median and `55.774 us` p95. The guarded in-process adapter Drive path is `617.549 us` median and `897.100 us` p95; its paired camera-set and freshness-check increment is `68.871 us` median and `309.613 us` p95 over `1,000` measurements across `15` valid sessions, with identical output. These microbenchmarks exclude gRPC, simulator work, file I/O, and human investigation; they are not end-to-end runtime or human time-to-diagnosis. |
+| Is transport-inclusive service timing measured? | Yes, in a bounded non-reactive protocol replay. Four arms spanning route following and NAVSIM's official learned EgoStatusMLP seed-0 checkpoint each complete `60/60` live gRPC `Drive` calls with finite, nonstationary output. Route-following full/reduced median/p95 latency is `3.769/4.833 ms` and `3.104/3.958 ms`; learned full/reduced is `4.715/5.945 ms` and `4.943/6.963 ms`. This is loopback client-to-service time, not simulator runtime, human diagnosis time, or format overhead. |
+| Does the semantic check generalize beyond one policy? | Its applicability is validated across two policy signatures in the same AlpaSim binding. Removing geometry flags route following and changes `56/60` endpoints; it correctly does not flag command-native EgoStatusMLP, whose `60/60` paired outputs are identical. This is a policy-signature negative control, not Waymax or cross-simulator evidence. |
 | Are all paired route-loss rows comparison-eligible? | No. `14/15` pairs qualify; one full-contract arm is also route-invalid, and the paired score deltas do not establish a systematic policy effect. |
 | Is this a policy-quality benchmark? | No. The release has `0` claim-valid policy benchmark rows, `0` policy-failure-attributable rows, and no verified scenario-category coverage. |
 
@@ -102,14 +103,19 @@ scenario-coverage claim. Its version-one telemetry predates the explicit
 finite-output field, so it is not used as current-schema mutation evidence.
 
 The current-schema protocol replay is also separate from the CVM benchmark
-gate. It replays the same official AlpaSim integration log through two live
-WOD2Sim gRPC services. Each arm completes `60/60` `Drive` calls with finite
-output and meets the 100 ms target. The route-preserving arm has no contract
-diagnostic; the command-only arm still completes but is rejected with
-`semantic.command_only`. Its recorded camera and ego-state sequence is fixed,
-so returned trajectories do not alter later observations. This is
-client-to-service transport and diagnostic evidence, not a reactive simulator
-rollout or a policy-quality comparison.
+gate. It replays the same official AlpaSim integration log through four live
+WOD2Sim gRPC services: route following and NAVSIM's hash-pinned official
+EgoStatusMLP seed-0 checkpoint, each under route-retaining and command-only
+service modes. Every arm completes `60/60` `Drive` calls with finite,
+nonstationary output and meets the 100 ms target. Removing geometry produces
+`semantic.command_only` only for route following, whose endpoint changes on
+`56/60` paired calls. EgoStatusMLP consumes ego status and a discrete command,
+not route geometry, so its command-only arm correctly passes and all `60/60`
+paired outputs remain exactly equal.
+The recorded camera and ego-state sequence is fixed, so returned trajectories
+do not alter later observations. This is client-to-service transport,
+within-boundary policy-family replication, and diagnostic evidence, not a
+reactive simulator rollout, policy-quality comparison, or cross-simulator test.
 
 The controlled diagnostic experiment instead generates `15` separate sessions
 through the current adapter: `405` events, `120` drive calls, and `120/120`
@@ -140,13 +146,11 @@ scenario-category coverage.
   </a>
 </p>
 
-**Video 1.** One official Apache-licensed AlpaSim integration recording is sent
-through both live gRPC adapter modes. The camera, egomotion, route messages, and
-policy are held fixed. Both services return finite trajectories, so a
-RPC-completion check accepts both; the contract audit accepts the
-route-preserving arm and rejects the command-only arm as
-`semantic.command_only`. The replay is non-reactive: outputs do not change the
-recorded future frames.
+**Video 1.** Same policy, same recorded scene, and same ego state. On the left,
+20 route points are collapsed to one turn command and the output remains
+straight while the route bends. On the right, the policy retains all 20 points
+and follows the route. Both sides come from live gRPC replay runs; the replay is
+non-reactive, so neither output changes the recorded future camera frames.
 
 [MP4 video](docs/assets/readme/alpasim-protocol-replay.mp4) |
 [validated manifest](artifacts/external/alpasim_protocol_replay/manifest.json) |
@@ -160,7 +164,7 @@ flowchart LR
     A[AlpaSim<br/>camera, ego motion, route] --> B[WOD2Sim input contract<br/>route + scene signal]
     B --> C{WOD-style policy}
     C --> D[Constant velocity / route following]
-    C --> E[Token BC / DAgger]
+    C --> E[Published checkpoint adapters]
     C --> F[Direct actor planner]
     D --> G[WOD2Sim output contract<br/>resampling + headings]
     E --> G
@@ -189,14 +193,22 @@ they are not release-core dependencies:
 - `direct_actor_planner` evaluates continuous candidates using a scene-matched actor proxy.
 - All adapters share route propagation, sensor checks, launch tooling, and audits.
 
-This release contains no public checkpoint, does not redistribute restricted
-scene assets, and does not provide a complete public benchmark. Missing learned
+The separate protocol-replay driver includes `navsim_ego_status_mlp`, which
+reproduces NAVSIM v1.1's published EgoStatusMLP architecture for inference from
+an externally downloaded checkpoint. It is replay evidence, not a release-core
+model-registry entry.
+
+The protocol replay downloads and verifies NAVSIM's official, public
+EgoStatusMLP seed-0 checkpoint without redistributing it. The baseline is
+learned and command-native, not visual or multimodal; it acts as a negative
+control for policy-specific route requirements rather than as a policy-quality
+result. This release does not redistribute restricted scene assets and does
+not provide a complete public benchmark. Other learned
 checkpoints, scene-matched direct-actor proxies, and redistributable scene
-subsets block learned-policy, actor-aware, and benchmark claims. They do not
-block the dependency-light public core, which is the narrower executable
-release surface. Claim-valid audits require executed rollouts with route
-waypoints reaching every driver-log frame; command-proxy route fallback is
-diagnostic only.
+subsets remain optional gated inputs. They do not block the dependency-light
+public core, which is the narrower executable release surface. Claim-valid
+audits require executed rollouts with route waypoints reaching every driver-log
+frame; command-proxy route fallback is diagnostic only.
 
 ## Install
 
@@ -323,9 +335,10 @@ post-parse detector execution latency, and a paired guard-path increment. These
 software microbenchmarks do not measure end-to-end runtime or human
 time-to-diagnosis, and the status-only comparator is not another integration
 framework.
-Missing restricted scenes, learned checkpoints, and scene-matched actor proxies
-remain explicit release limitations rather than hidden infrastructure
-assumptions.
+Missing restricted scenes, other learned-policy checkpoints, and scene-matched
+actor proxies remain explicit release limitations rather than hidden
+infrastructure assumptions. The one replay checkpoint supports only the
+declared policy-signature test within the AlpaSim boundary.
 The detailed test-to-contract traceability map is tracked in
 [`artifacts/cvm/reports/contract_test_audit.md`](artifacts/cvm/reports/contract_test_audit.md).
 

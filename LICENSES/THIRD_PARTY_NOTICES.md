@@ -52,6 +52,22 @@ measurements, labels, and contract-audit results. The upstream portion is
 redistributed under the Apache License, Version 2.0; the full license text is
 included at [`Apache-2.0.txt`](Apache-2.0.txt).
 
+## NAVSIM EgoStatusMLP reference implementation and checkpoint
+
+[`src/wod2sim/simulator/navsim_ego_status_mlp.py`](../src/wod2sim/simulator/navsim_ego_status_mlp.py)
+reproduces the published EgoStatusMLP architecture and input/output contract
+from NAVSIM v1.1 source commit
+`0811876c274e8b058ab2be9b3dcd4d37bd23f177`. The replay runner downloads the
+official `ego_status_mlp_seed_0` checkpoint from
+`autonomousvision/navsim_baselines` at revision
+`32d89c0ae6e7c13c311f4a034002006c250afab0` and verifies SHA-256
+`87d75b0f43d077ac3531370d7cccac98656d4e9b5ce5fa6618e28b7358b3a86b`.
+The checkpoint is not redistributed in this repository.
+
+NAVSIM and its baseline checkpoint repository are published under the Apache
+License, Version 2.0. The full license text is included at
+[`Apache-2.0.txt`](Apache-2.0.txt).
+
 ## IEEE conference LaTeX class
 
 [`paper/cvm/ieeeconf.cls`](../paper/cvm/ieeeconf.cls) is the unmodified

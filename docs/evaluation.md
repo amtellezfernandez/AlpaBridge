@@ -28,7 +28,8 @@ behavior attribution; it does not automatically make the event a policy failure.
 ## Contract Checks
 
 - AlpaSim discovers only the declared WOD2Sim model entry points.
-- Route waypoints reach policy code without being reduced to a command alone.
+- Route waypoints reach policy code when the active policy declares geometry as
+  required; command-native policies are audited against their own signature.
 - Camera, ego-motion, route, and structured hazards form a stable policy signal.
 - Five-second policy trajectories preserve native-rate samples, use origin-anchored
   endpoint interpolation when resampled, and recompute runtime headings.
@@ -68,10 +69,10 @@ sampled from a defined population. The completion gate is not a substitute for
 another integration framework.
 
 Post-parse detector execution latency is measured over 3,000 fault-case calls:
-11.441 us median and 21.915 us p95. The guarded in-process adapter Drive path is
-257.390 us median and 449.371 us p95. Across 1,000 randomized paired measurements
+28.096 us median and 55.774 us p95. The guarded in-process adapter Drive path is
+617.549 us median and 897.100 us p95. Across 1,000 randomized paired measurements
 rotating over 15 valid sessions, its camera-set and freshness-check
-increment is 25.630 us median and 112.659 us p95; guarded and unchecked
+increment is 68.871 us median and 309.613 us p95; guarded and unchecked
 trajectories and headings are identical. Context-length validation remains
 active in both arms. The adapter measurement includes input
 assembly, prediction, serialization, finite-output validation, reasoning
@@ -87,16 +88,22 @@ used as the mutation source.
 ## Executed Protocol Replay
 
 `scripts/run_alpasim_replay_demo.sh` replays one hash-pinned official AlpaSim
-integration recording through two live current-schema WOD2Sim gRPC services.
-Both arms receive identical session, camera, egomotion, route, and `Drive`
-messages. The full-contract arm retains route geometry; the diagnostic arm
-reduces that geometry to a command proxy.
+integration recording through four live current-schema WOD2Sim gRPC services.
+The policy families are route following and NAVSIM's official learned
+EgoStatusMLP seed-0 baseline. Each runs once with all 20 route points retained
+and once with only the derived command. All arms receive identical session,
+camera, egomotion, route, and `Drive` messages.
 
-Each arm returns 60/60 finite trajectories and meets the 100 ms latency target.
-The full-contract trace has no diagnostic. The command-only service also
-completes, but the contract audit reports `semantic.command_only`. Full-contract
-client-to-service latency is 1.786 ms median and 2.191 ms p95; command-only
-latency is 1.835 ms median and 2.338 ms p95.
+Each arm returns 60/60 finite, nonstationary trajectories and meets the 100 ms
+latency target. Removing geometry produces `semantic.command_only` only for
+route following and changes 56/60 paired endpoints. EgoStatusMLP declares
+velocity, acceleration, and command inputs but no route geometry; both arms
+therefore pass and all 60 output pairs are exactly equal. This is a
+policy-signature negative control.
+
+Route-following full/reduced client-to-service latency is 3.769/4.833 ms
+median/p95 and 3.104/3.958 ms. EgoStatusMLP full/reduced latency is
+4.715/5.945 ms and 4.943/6.963 ms.
 
 These are loopback transport-inclusive service measurements, not a reactive
 simulator runtime or format-overhead comparison. The recorded future camera and
@@ -167,6 +174,8 @@ The public release core is the dependency-light adapter path. Direct-actor,
 learned-checkpoint, restricted-scene, and complete-benchmark dependencies are
 optional gated extensions, not release-core dependencies.
 
-The release does not include a public checkpoint, a redistributable scene
-subset, verified scene-category coverage, direct-actor temporal ablation
-results, or a claim-ready closed-loop policy benchmark.
+The release does not redistribute a checkpoint or scene subset and does not
+provide verified scene-category coverage, direct-actor temporal ablation
+results, a visual learned-policy evaluation, or a claim-ready closed-loop
+policy benchmark. The official NAVSIM checkpoint is downloaded and hash-checked
+only for the bounded protocol replay.

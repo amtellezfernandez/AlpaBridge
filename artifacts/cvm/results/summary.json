@@ -110,41 +110,41 @@
     }
   ],
   "created_at": "2026-07-18T21:18:19.088449+00:00",
-  "data_hash": "5755caed5ccfae8a61edeba7edfdf2ed70f63313a07840d7277d796caf9262e2",
+  "data_hash": "eca599704d943e322dc8114149fa6fa3bfe479a0f68824ae69142b1a9df87b4f",
   "diagnostic_experiment": {
     "adapter_guard_path_timing": {
       "guarded_drive_path_us": {
-        "max": 559.2798,
-        "mean": 292.3468937,
-        "min": 176.04555,
-        "p50": 257.390425,
-        "p95": 449.3707075,
+        "max": 1275.773,
+        "mean": 640.8581337,
+        "min": 377.1673,
+        "p50": 617.54935,
+        "p95": 897.099835,
         "samples": 1000
       },
       "input_cases": 15,
-      "paired_incremental_p50_percent": 11.017600602158383,
+      "paired_incremental_p50_percent": 12.716692456820766,
       "paired_incremental_us": {
-        "max": 295.4965,
-        "mean": 30.061996999999998,
-        "min": -276.03554999999994,
-        "p50": 25.630224999999996,
-        "p95": 112.65924499999991,
+        "max": 692.2760000000001,
+        "mean": 71.02464865,
+        "min": -563.8442000000001,
+        "p50": 68.87140000000002,
+        "p95": 309.61273249999994,
         "samples": 1000
       },
       "pairing": "Guarded and unchecked order is randomized per iteration across 15 deterministic valid adapter sessions; paired differences use per-call batch means. The unchecked path disables only camera-set and sensor-freshness guards; context-length validation remains active in both paths.",
       "scope": "in-process WOD2SimChallengeAdapter.drive_once_to_proto route-following path; includes state-to-input assembly, prediction, trajectory serialization, finite-output validation, reasoning parsing, and in-memory telemetry, but excludes gRPC transport, file I/O, simulator work, and human investigation",
       "trajectory_outputs_equal": true,
       "unchecked_drive_path_us": {
-        "max": 540.9477,
-        "mean": 262.2848967,
-        "min": 157.706,
-        "p50": 232.629825,
-        "p95": 403.1082175,
+        "max": 1153.9843,
+        "mean": 569.83348505,
+        "min": 364.6452,
+        "p50": 541.5826500000001,
+        "p95": 824.4098724999999,
         "samples": 1000
       },
       "warmup_calls_per_method": 50
     },
-    "artifact_sha256": "154a3f536713c5d4be0aa3f875501f00ec2fadfe0d738da5795ddaf27142034c",
+    "artifact_sha256": "c8b7cc9dd4d5c50f87b5c47153fc47d4fbf521895a070c3843ff936a2b740838",
     "cases": [
       {
         "case_id": "fault:01:semantic.route_missing",
@@ -691,7 +691,7 @@
         "specificity": 1.0
       }
     },
-    "created_at": "2026-07-20T13:15:44.255185+00:00",
+    "created_at": "2026-07-20T15:14:21.405810+00:00",
     "design": {
       "adapter_batch_size": 20,
       "adapter_iterations": 1000,
@@ -732,8 +732,8 @@
     "implementation_sha256": {
       "src/wod2sim/audit/diagnostic_experiment.py": "d9d63c4e58aabf96fcb2107629d8adee0082bfc109f3e6af89adbb66ba0f7238",
       "src/wod2sim/audit/diagnostic_trace_generation.py": "2c14db4f8b72c6901faa2286dcafba5b474ed9abdaf5c02c848b62ece833cdd5",
-      "src/wod2sim/audit/trace_diagnostics.py": "3b36ff32093709ae1ee134af5fac065a9058e7b7d4a79b4fb17e6e04c92dc148",
-      "src/wod2sim/challenge/e2e_driver.py": "0809d759dd0118dc7453c8f55a7aca72bcaf9fa661830db24ec2a8dd63ca768f",
+      "src/wod2sim/audit/trace_diagnostics.py": "5b5866f9c81e3efd647dfd07753a3cc71f83ec43f9c55f6d787d9be37af238df",
+      "src/wod2sim/challenge/e2e_driver.py": "93e4f4a6c1b1b23eb5977f3d2e8d9b3895a499a5fa646d87a3bfb8b927e68e14",
       "src/wod2sim/simulator/baseline_drivers.py": "5b9cc009fe8c8ad56581203838ec2e53a2fc2fff89ac84fb822905714ea6fb44"
     },
     "schema": "wod2sim_diagnostic_experiment_v3",
@@ -743,46 +743,46 @@
       "explicit_finite_drive_count": 120,
       "kind": "dependency-light current-instrumentation adapter sessions; not external simulator rollouts",
       "latency_ms": {
-        "max": 0.750275,
-        "mean": 0.24781945000000002,
-        "p50": 0.2428085,
-        "p95": 0.3046141
+        "max": 1.433481,
+        "mean": 0.559817925,
+        "p50": 0.5277135,
+        "p95": 0.8404817499999998
       },
       "latency_target_met_count": 120,
       "latency_target_ms": 100.0,
       "path": "artifacts/cvm/inputs/diagnostic_protocol_sessions.jsonl",
       "session_count": 15,
-      "sha256": "30a474b851b924694b965db7d6860047115d13d75dfa94a44480ed5c75f7244b",
+      "sha256": "c6d3b177e956ed0000bc98af0ee4828585612b0b8a0f3bfd33db27f7173468aa",
       "telemetry_schemas": [
-        "wod2sim_challenge_telemetry_v2"
+        "wod2sim_challenge_telemetry_v3"
       ]
     },
     "timing": {
       "completion_gate_decision_us": {
-        "max": 33.4438,
-        "mean": 0.1393161,
-        "min": 0.0584,
-        "p50": 0.1216,
-        "p95": 0.21422000000000008,
+        "max": 218.1846,
+        "mean": 0.3734659,
+        "min": 0.1174,
+        "p50": 0.2378,
+        "p95": 0.5484100000000001,
         "samples": 6000
       },
       "contract_gate_decision_us": {
-        "max": 167.5032,
-        "mean": 11.907179266666667,
-        "min": 2.0098,
-        "p50": 10.822099999999999,
-        "p95": 20.78871,
+        "max": 1348.351,
+        "mean": 29.260463666666666,
+        "min": 4.4748,
+        "p50": 26.1693,
+        "p95": 52.962250000000004,
         "samples": 6000
       },
       "fault_case_detector_us": {
-        "max": 130.8612,
-        "mean": 12.759985,
-        "min": 2.386,
-        "p50": 11.4414,
-        "p95": 21.915490000000005,
+        "max": 1348.351,
+        "mean": 31.919710066666667,
+        "min": 5.3754,
+        "p50": 28.0957,
+        "p95": 55.77382,
         "samples": 3000
       },
-      "incremental_decision_p50_us": 10.700499999999998,
+      "incremental_decision_p50_us": 25.9315,
       "pairing": "Method order is randomized within every case and iteration; reported samples are per-call batch means.",
       "scope": "in-memory detector execution on already-parsed telemetry and runtime context; excludes JSON parsing, file I/O, and human investigation time",
       "warmup_calls_per_case_and_method": 3
@@ -874,33 +874,36 @@
         "drive_calls": 60,
         "drive_calls_within_target": 60,
         "drive_rpc_latency_ms": {
-          "max": 2.914963,
-          "mean": 1.8780992,
-          "p50": 1.8348145,
-          "p95": 2.33821815,
+          "max": 4.61186,
+          "mean": 3.1591675166666664,
+          "p50": 3.1039605,
+          "p95": 3.9580392499999997,
           "samples": 60
         },
         "finite_drive_outputs": 60,
         "latency_target_ms": 100.0,
-        "result_sha256": "adb4827fcf19512b06ada8f8ecd7a079a12ffa4014914b3ba0a811739a41f667",
+        "model": "route_following",
+        "nonstationary_drive_outputs": 60,
+        "result_sha256": "5bc3fe17957173c698d5545eed6036cb54fc8d2fc8ee3edb9fe3543db820ce56",
+        "route_contract_mode": "command_only_route",
         "telemetry_runtime": {
           "drive_count": 60,
           "event_count": 307,
           "explicit_finite_drive_count": 60,
           "latency_ms": {
-            "max": 1.618394,
-            "mean": 0.88288155,
-            "p50": 0.8496170000000001,
-            "p95": 1.2071724
+            "max": 2.06412,
+            "mean": 1.41970135,
+            "p50": 1.3637465,
+            "p95": 1.8600002499999997
           },
           "latency_target_met_count": 60,
           "latency_target_ms": 100.0,
           "session_count": 1,
           "telemetry_schemas": [
-            "wod2sim_challenge_telemetry_v2"
+            "wod2sim_challenge_telemetry_v3"
           ]
         },
-        "telemetry_sha256": "26114e8d344f424e03dcfa576b3e7ea699f390b682fad1fe628dfb6adaf50214"
+        "telemetry_sha256": "a6cbbee98ebe8082298cb246d75e246054fe09f566b6603639c946f9b45a1cae"
       },
       "full_contract": {
         "diagnostic_codes": [],
@@ -908,69 +911,170 @@
         "drive_calls": 60,
         "drive_calls_within_target": 60,
         "drive_rpc_latency_ms": {
-          "max": 2.523694,
-          "mean": 1.8232848166666666,
-          "p50": 1.7856025,
-          "p95": 2.1912602499999996,
+          "max": 5.800262,
+          "mean": 3.9362151666666665,
+          "p50": 3.76853,
+          "p95": 4.83331325,
           "samples": 60
         },
         "finite_drive_outputs": 60,
         "latency_target_ms": 100.0,
-        "result_sha256": "ba8a3503bbd971bf1055ffc86cc96470180f3f07163438f760c91c54c3e3a7a5",
+        "model": "route_following",
+        "nonstationary_drive_outputs": 60,
+        "result_sha256": "41c232b68c403fac84220c4fc313b402b41b3f252871ad9fc1b8529deffb3f73",
+        "route_contract_mode": "full_contract",
         "telemetry_runtime": {
           "drive_count": 60,
           "event_count": 307,
           "explicit_finite_drive_count": 60,
           "latency_ms": {
-            "max": 1.38589,
-            "mean": 0.8900985166666667,
-            "p50": 0.8541529999999999,
-            "p95": 1.0687760499999999
+            "max": 3.36388,
+            "mean": 1.84082245,
+            "p50": 1.7611379999999999,
+            "p95": 2.59888935
           },
           "latency_target_met_count": 60,
           "latency_target_ms": 100.0,
           "session_count": 1,
           "telemetry_schemas": [
-            "wod2sim_challenge_telemetry_v2"
+            "wod2sim_challenge_telemetry_v3"
           ]
         },
-        "telemetry_sha256": "9be57557e063cc6ff1b9bd7f51faed7f6369ae8b8e815cdceecbf6a34c4a87f7"
+        "telemetry_sha256": "f7d35b19379beb43f3b207cf9e2b96250f4b30ff858f0f5b238810f81937113d"
+      },
+      "navsim_ego_status_mlp_command_only_route": {
+        "diagnostic_codes": [],
+        "diagnostic_count": 0,
+        "drive_calls": 60,
+        "drive_calls_within_target": 60,
+        "drive_rpc_latency_ms": {
+          "max": 8.643005,
+          "mean": 5.21654475,
+          "p50": 4.942636,
+          "p95": 6.962782999999997,
+          "samples": 60
+        },
+        "finite_drive_outputs": 60,
+        "latency_target_ms": 100.0,
+        "model": "navsim_ego_status_mlp",
+        "nonstationary_drive_outputs": 60,
+        "result_sha256": "5cecb4c10fbea5c946ba7c7f5922519d397ad8f84208743fb28dd72d2b863439",
+        "route_contract_mode": "command_only_route",
+        "telemetry_runtime": {
+          "drive_count": 60,
+          "event_count": 307,
+          "explicit_finite_drive_count": 60,
+          "latency_ms": {
+            "max": 6.238251,
+            "mean": 2.9990327,
+            "p50": 2.6821425000000003,
+            "p95": 4.350917599999999
+          },
+          "latency_target_met_count": 60,
+          "latency_target_ms": 100.0,
+          "session_count": 1,
+          "telemetry_schemas": [
+            "wod2sim_challenge_telemetry_v3"
+          ]
+        },
+        "telemetry_sha256": "9ce66fa5799a523a50fd3a513515b9e4c8febdb5e636d25d546b19afd0aff58f"
+      },
+      "navsim_ego_status_mlp_full_contract": {
+        "diagnostic_codes": [],
+        "diagnostic_count": 0,
+        "drive_calls": 60,
+        "drive_calls_within_target": 60,
+        "drive_rpc_latency_ms": {
+          "max": 13.041379,
+          "mean": 4.890875783333333,
+          "p50": 4.715281,
+          "p95": 5.945360149999999,
+          "samples": 60
+        },
+        "finite_drive_outputs": 60,
+        "latency_target_ms": 100.0,
+        "model": "navsim_ego_status_mlp",
+        "nonstationary_drive_outputs": 60,
+        "result_sha256": "50eb8e08d6b8df9e571158ddbf81ec2a600b71d3dcd5d10432c4c9a42799444f",
+        "route_contract_mode": "full_contract",
+        "telemetry_runtime": {
+          "drive_count": 60,
+          "event_count": 307,
+          "explicit_finite_drive_count": 60,
+          "latency_ms": {
+            "max": 8.970579,
+            "mean": 2.8633862666666667,
+            "p50": 2.7219245,
+            "p95": 3.6468719499999995
+          },
+          "latency_target_met_count": 60,
+          "latency_target_ms": 100.0,
+          "session_count": 1,
+          "telemetry_schemas": [
+            "wod2sim_challenge_telemetry_v3"
+          ]
+        },
+        "telemetry_sha256": "c90f0c5a8e6bb78a2eb2904d18ccb245209e80bbb0bb3c58b63f463f789606b9"
       }
     },
     "artifact_dir": "artifacts/external/alpasim_protocol_replay",
-    "artifact_sha256": "a1e0887e25144dcce047dbbf2cad8c4b4484693a6d0a2b0736346a624bbb02d1",
+    "artifact_sha256": "3b9a878ce239ae07223f2ff1df5a21dfbce705f30646cbfd7fcbab572b5d1b65",
     "available": true,
-    "claim_boundary": "This is an executed client-to-service gRPC replay of recorded camera, route, egomotion, and Drive messages. It measures transport-inclusive driver RPC latency and contract diagnostics. Recorded inputs are non-reactive, so it does not measure simulator runtime, policy quality, human diagnosis time, or generalization to another integration framework.",
+    "claim_boundary": "This is an executed client-to-service gRPC replay of recorded camera, route, egomotion, and Drive messages. It measures transport-inclusive driver RPC latency and contract diagnostics. Recorded inputs are non-reactive, so it does not measure simulator runtime, policy quality, human diagnosis time, or generalization to another integration framework. Route-following demonstrates the consequence of waypoint loss; the published NAVSIM EgoStatusMLP is a policy-signature negative control and does not consume route geometry.",
     "execution_environment": {
       "cpu_model": "Intel(R) Core(TM) Ultra 9 275HX",
-      "docker_image_id": "sha256:2cdabfeb7254f3de88dd0c422ee7965e584b461c59689898044155afe31ecd7b",
+      "docker_image_id": "sha256:4fbbcb9406cb65796a28a8532f2126fdc224cde4feaed9a546d5e818fdaa5586",
       "grpc_transport": "host loopback",
       "host_machine": "x86_64",
       "host_platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "learned_runtime_image_id": "sha256:7ba4dbee3391aeb473aff739350e57e01f3019b84f7177e0e7e2503bce8e8732",
       "python": "3.12.12",
       "run_order": [
         "full_contract",
-        "command_only_route"
+        "command_only_route",
+        "navsim_ego_status_mlp_full_contract",
+        "navsim_ego_status_mlp_command_only_route"
       ],
       "timer": "time.perf_counter_ns",
-      "wod2sim_commit": "0ea523fbb31fc53e30faf24281782aa4dcea21f6"
+      "wod2sim_commit": "a6a2338a07b8aa3cb0703ff6163e3cdaedcd2563-dirty"
+    },
+    "learned_policy": {
+      "checkpoint_repository": "autonomousvision/navsim_baselines",
+      "checkpoint_revision": "32d89c0ae6e7c13c311f4a034002006c250afab0",
+      "checkpoint_sha256": "87d75b0f43d077ac3531370d7cccac98656d4e9b5ce5fa6618e28b7358b3a86b",
+      "checkpoint_url": "https://huggingface.co/autonomousvision/navsim_baselines/resolve/32d89c0ae6e7c13c311f4a034002006c250afab0/ego_status_mlp/ego_status_mlp_seed_0.ckpt",
+      "family": "NAVSIM v1.1 EgoStatusMLP blind learned baseline",
+      "input_contract": [
+        "velocity_xy",
+        "acceleration_xy",
+        "discrete_command"
+      ],
+      "license": "Apache-2.0",
+      "name": "ego_status_mlp_seed_0",
+      "navsim_source_commit": "0811876c274e8b058ab2be9b3dcd4d37bd23f177",
+      "redistributed_in_wod2sim": false,
+      "route_geometry_consumed": false,
+      "runtime_device": "cpu",
+      "trained_on_navsim": true,
+      "visual_policy": false
     },
     "media": {
       "camera_frames": 60,
-      "duration_seconds": 8.0,
+      "duration_seconds": 4.5,
       "readme_preview": {
-        "bytes": 8141332,
+        "bytes": 2612145,
         "format": "animated GIF",
         "path": "docs/assets/readme/alpasim-protocol-replay.gif",
-        "sha256": "d4b3ef8d246b7e67b223f9d25eda294349447e453114b5417de0883824126e78"
+        "sha256": "58ca4794c69958de8b82dbb1f25c3bc781763e9fb969529c296863e7994e894b"
       },
       "video": {
-        "bytes": 895030,
+        "bytes": 470872,
         "format": "H.264 MP4",
         "path": "docs/assets/readme/alpasim-protocol-replay.mp4",
-        "sha256": "dbfc6b58493855dc66526b8da6fdf2c6be8c485de04d8ed37988de71beee6e28"
+        "sha256": "f4d0c250c19fca80611a0fd74518dc51ad1defe02b39265d1bc03e4382312f4c"
       }
     },
+    "policy_family_count": 2,
     "source": {
       "alpasim_commit": "049f70fbfe8207e1efd4831a6c3e78a38703d473",
       "asl_sha256": "237d6b55f4da5b0610f1b8b1e940f52d9efdc9e39c8ca2b35c5b5285ebefdc1f",
@@ -978,6 +1082,24 @@
       "kind": "official Apache-licensed AlpaSim integration replay",
       "reactive_closed_loop": false,
       "url": "https://media.githubusercontent.com/media/NVlabs/alpasim/049f70fbfe8207e1efd4831a6c3e78a38703d473/src/runtime/tests/data/integration/rollout.asl"
+    },
+    "trajectory_divergence": {
+      "navsim_ego_status_mlp": {
+        "endpoint_difference_gt_0_1m": 0,
+        "endpoint_difference_gt_1m": 0,
+        "endpoint_difference_max_m": 0.0,
+        "endpoint_difference_mean_m": 0.0,
+        "endpoint_difference_median_m": 0.0,
+        "paired_calls": 60
+      },
+      "route_following": {
+        "endpoint_difference_gt_0_1m": 56,
+        "endpoint_difference_gt_1m": 22,
+        "endpoint_difference_max_m": 1.505999,
+        "endpoint_difference_mean_m": 0.708154,
+        "endpoint_difference_median_m": 0.386731,
+        "paired_calls": 60
+      }
     }
   },
   "public_core_policy_results": [

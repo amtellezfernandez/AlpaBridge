@@ -57,9 +57,9 @@
 - Controlled fault localization and false positives: 15/15 and 0/15.
 - Current protocol trace: 15 sessions, 120 drive calls, and 120/120 explicit
   finite serialized outputs.
-- Fault-case detector execution: 11.441 us median and 21.915 us p95.
-- Guarded in-process adapter Drive path: 257.390 us median and 449.371 us p95.
-- Paired guard-path increment: 25.630 us median and 112.659 us p95 across 1,000
+- Fault-case detector execution: 28.096 us median and 55.774 us p95.
+- Guarded in-process adapter Drive path: 617.549 us median and 897.100 us p95.
+- Paired guard-path increment: 68.871 us median and 309.613 us p95 across 1,000
   pairs rotating over 15 valid sessions.
 - Planned rows: 0.
 - Blocked rows: 33, all `direct_actor_oracle_proxy_missing`.

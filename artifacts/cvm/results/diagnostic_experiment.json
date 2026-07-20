@@ -1,32 +1,32 @@
 {
   "adapter_guard_path_timing": {
     "guarded_drive_path_us": {
-      "max": 559.2798,
-      "mean": 292.3468937,
-      "min": 176.04555,
-      "p50": 257.390425,
-      "p95": 449.3707075,
+      "max": 1275.773,
+      "mean": 640.8581337,
+      "min": 377.1673,
+      "p50": 617.54935,
+      "p95": 897.099835,
       "samples": 1000
     },
     "input_cases": 15,
-    "paired_incremental_p50_percent": 11.017600602158383,
+    "paired_incremental_p50_percent": 12.716692456820766,
     "paired_incremental_us": {
-      "max": 295.4965,
-      "mean": 30.061996999999998,
-      "min": -276.03554999999994,
-      "p50": 25.630224999999996,
-      "p95": 112.65924499999991,
+      "max": 692.2760000000001,
+      "mean": 71.02464865,
+      "min": -563.8442000000001,
+      "p50": 68.87140000000002,
+      "p95": 309.61273249999994,
       "samples": 1000
     },
     "pairing": "Guarded and unchecked order is randomized per iteration across 15 deterministic valid adapter sessions; paired differences use per-call batch means. The unchecked path disables only camera-set and sensor-freshness guards; context-length validation remains active in both paths.",
     "scope": "in-process WOD2SimChallengeAdapter.drive_once_to_proto route-following path; includes state-to-input assembly, prediction, trajectory serialization, finite-output validation, reasoning parsing, and in-memory telemetry, but excludes gRPC transport, file I/O, simulator work, and human investigation",
     "trajectory_outputs_equal": true,
     "unchecked_drive_path_us": {
-      "max": 540.9477,
-      "mean": 262.2848967,
-      "min": 157.706,
-      "p50": 232.629825,
-      "p95": 403.1082175,
+      "max": 1153.9843,
+      "mean": 569.83348505,
+      "min": 364.6452,
+      "p50": 541.5826500000001,
+      "p95": 824.4098724999999,
       "samples": 1000
     },
     "warmup_calls_per_method": 50
@@ -577,7 +577,7 @@
       "specificity": 1.0
     }
   },
-  "created_at": "2026-07-20T13:15:44.255185+00:00",
+  "created_at": "2026-07-20T15:14:21.405810+00:00",
   "design": {
     "adapter_batch_size": 20,
     "adapter_iterations": 1000,
@@ -618,8 +618,8 @@
   "implementation_sha256": {
     "src/wod2sim/audit/diagnostic_experiment.py": "d9d63c4e58aabf96fcb2107629d8adee0082bfc109f3e6af89adbb66ba0f7238",
     "src/wod2sim/audit/diagnostic_trace_generation.py": "2c14db4f8b72c6901faa2286dcafba5b474ed9abdaf5c02c848b62ece833cdd5",
-    "src/wod2sim/audit/trace_diagnostics.py": "3b36ff32093709ae1ee134af5fac065a9058e7b7d4a79b4fb17e6e04c92dc148",
-    "src/wod2sim/challenge/e2e_driver.py": "0809d759dd0118dc7453c8f55a7aca72bcaf9fa661830db24ec2a8dd63ca768f",
+    "src/wod2sim/audit/trace_diagnostics.py": "5b5866f9c81e3efd647dfd07753a3cc71f83ec43f9c55f6d787d9be37af238df",
+    "src/wod2sim/challenge/e2e_driver.py": "93e4f4a6c1b1b23eb5977f3d2e8d9b3895a499a5fa646d87a3bfb8b927e68e14",
     "src/wod2sim/simulator/baseline_drivers.py": "5b9cc009fe8c8ad56581203838ec2e53a2fc2fff89ac84fb822905714ea6fb44"
   },
   "schema": "wod2sim_diagnostic_experiment_v3",
@@ -629,46 +629,46 @@
     "explicit_finite_drive_count": 120,
     "kind": "dependency-light current-instrumentation adapter sessions; not external simulator rollouts",
     "latency_ms": {
-      "max": 0.750275,
-      "mean": 0.24781945000000002,
-      "p50": 0.2428085,
-      "p95": 0.3046141
+      "max": 1.433481,
+      "mean": 0.559817925,
+      "p50": 0.5277135,
+      "p95": 0.8404817499999998
     },
     "latency_target_met_count": 120,
     "latency_target_ms": 100.0,
     "path": "artifacts/cvm/inputs/diagnostic_protocol_sessions.jsonl",
     "session_count": 15,
-    "sha256": "30a474b851b924694b965db7d6860047115d13d75dfa94a44480ed5c75f7244b",
+    "sha256": "c6d3b177e956ed0000bc98af0ee4828585612b0b8a0f3bfd33db27f7173468aa",
     "telemetry_schemas": [
-      "wod2sim_challenge_telemetry_v2"
+      "wod2sim_challenge_telemetry_v3"
     ]
   },
   "timing": {
     "completion_gate_decision_us": {
-      "max": 33.4438,
-      "mean": 0.1393161,
-      "min": 0.0584,
-      "p50": 0.1216,
-      "p95": 0.21422000000000008,
+      "max": 218.1846,
+      "mean": 0.3734659,
+      "min": 0.1174,
+      "p50": 0.2378,
+      "p95": 0.5484100000000001,
       "samples": 6000
     },
     "contract_gate_decision_us": {
-      "max": 167.5032,
-      "mean": 11.907179266666667,
-      "min": 2.0098,
-      "p50": 10.822099999999999,
-      "p95": 20.78871,
+      "max": 1348.351,
+      "mean": 29.260463666666666,
+      "min": 4.4748,
+      "p50": 26.1693,
+      "p95": 52.962250000000004,
       "samples": 6000
     },
     "fault_case_detector_us": {
-      "max": 130.8612,
-      "mean": 12.759985,
-      "min": 2.386,
-      "p50": 11.4414,
-      "p95": 21.915490000000005,
+      "max": 1348.351,
+      "mean": 31.919710066666667,
+      "min": 5.3754,
+      "p50": 28.0957,
+      "p95": 55.77382,
       "samples": 3000
     },
-    "incremental_decision_p50_us": 10.700499999999998,
+    "incremental_decision_p50_us": 25.9315,
     "pairing": "Method order is randomized within every case and iteration; reported samples are per-call batch means.",
     "scope": "in-memory detector execution on already-parsed telemetry and runtime context; excludes JSON parsing, file I/O, and human investigation time",
     "warmup_calls_per_case_and_method": 3

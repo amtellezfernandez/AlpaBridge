@@ -2,6 +2,17 @@
 
 All notable public release changes are tracked here.
 
+## Unreleased - 2026-07-20
+
+- Added an inference adapter and four-arm replay for NAVSIM's official
+  EgoStatusMLP seed-0 checkpoint.
+- Made route-geometry diagnostics conditional on each policy's declared input
+  signature and added a command-native learned negative control.
+- Added schema-v3 trajectory cardinality telemetry and fixed serialization to
+  retain the current pose plus every predicted future waypoint.
+- Regenerated the real-camera comparison video, replay evidence, diagnostics,
+  tables, and paper from executed runs.
+
 ## 0.1.0 - 2026-07-17
 
 - Renamed the installable release surface to `wod2sim`.

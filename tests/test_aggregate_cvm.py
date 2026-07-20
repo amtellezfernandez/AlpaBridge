@@ -355,14 +355,41 @@ class AggregateCVMTests(unittest.TestCase):
         self.assertEqual(60, summary["media"]["camera_frames"])
         full = summary["arms"]["full_contract"]
         command = summary["arms"]["command_only_route"]
+        learned_full = summary["arms"]["navsim_ego_status_mlp_full_contract"]
+        learned_command = summary["arms"][
+            "navsim_ego_status_mlp_command_only_route"
+        ]
         self.assertEqual(60, full["drive_calls"])
         self.assertEqual(60, full["finite_drive_outputs"])
+        self.assertEqual(60, full["nonstationary_drive_outputs"])
         self.assertEqual([], full["diagnostic_codes"])
         self.assertEqual(60, command["drive_calls"])
         self.assertEqual(60, command["finite_drive_outputs"])
+        self.assertEqual(60, command["nonstationary_drive_outputs"])
         self.assertEqual(["semantic.command_only"], command["diagnostic_codes"])
         self.assertLess(full["drive_rpc_latency_ms"]["p95"], 100.0)
         self.assertLess(command["drive_rpc_latency_ms"]["p95"], 100.0)
+        self.assertEqual("navsim_ego_status_mlp", learned_full["model"])
+        self.assertEqual(60, learned_full["drive_calls"])
+        self.assertEqual(60, learned_full["finite_drive_outputs"])
+        self.assertEqual(60, learned_full["nonstationary_drive_outputs"])
+        self.assertEqual([], learned_full["diagnostic_codes"])
+        self.assertEqual("navsim_ego_status_mlp", learned_command["model"])
+        self.assertEqual(60, learned_command["drive_calls"])
+        self.assertEqual(60, learned_command["finite_drive_outputs"])
+        self.assertEqual(60, learned_command["nonstationary_drive_outputs"])
+        self.assertEqual([], learned_command["diagnostic_codes"])
+        self.assertLess(learned_full["drive_rpc_latency_ms"]["p95"], 100.0)
+        self.assertLess(learned_command["drive_rpc_latency_ms"]["p95"], 100.0)
+        route_divergence = summary["trajectory_divergence"]["route_following"]
+        learned_divergence = summary["trajectory_divergence"][
+            "navsim_ego_status_mlp"
+        ]
+        self.assertEqual(60, route_divergence["paired_calls"])
+        self.assertGreater(route_divergence["endpoint_difference_gt_0_1m"], 0)
+        self.assertEqual(60, learned_divergence["paired_calls"])
+        self.assertEqual(0, learned_divergence["endpoint_difference_gt_0_1m"])
+        self.assertEqual(0.0, learned_divergence["endpoint_difference_max_m"])
 
     def test_release_scope_separates_public_core_from_gated_extensions(self) -> None:
         module = _load_module()

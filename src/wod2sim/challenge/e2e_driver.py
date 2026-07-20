@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import logging
 import math
@@ -23,7 +24,7 @@ from wod2sim.simulator.baseline_drivers import (
 )
 
 LOGGER = logging.getLogger("wod2sim_challenge_driver")
-CHALLENGE_TELEMETRY_SCHEMA = "wod2sim_challenge_telemetry_v2"
+CHALLENGE_TELEMETRY_SCHEMA = "wod2sim_challenge_telemetry_v3"
 
 
 @dataclass
@@ -104,13 +105,40 @@ class WOD2SimChallengeAdapter:
         horizon_seconds: float = 5.0,
         telemetry_path: str | Path | None = None,
         latency_target_ms: float = 100.0,
+        checkpoint_path: str | Path | None = None,
+        device: str = "cpu",
+        route_contract_mode: str | None = None,
     ) -> None:
         self.model_name = _normalize_model_name(model_name)
         self.camera_candidates = tuple(camera_ids)
         self.model_camera_id = "front"
         self.output_frequency_hz = int(output_frequency_hz)
         self.horizon_seconds = float(horizon_seconds)
+        if self.model_name == "navsim_ego_status_mlp":
+            from wod2sim.simulator.navsim_ego_status_mlp import (
+                NAVSIM_EGO_STATUS_HORIZON_SECONDS,
+                NAVSIM_EGO_STATUS_OUTPUT_FREQUENCY_HZ,
+            )
+
+            self.horizon_seconds = NAVSIM_EGO_STATUS_HORIZON_SECONDS
+            self.output_frequency_hz = NAVSIM_EGO_STATUS_OUTPUT_FREQUENCY_HZ
         self.latency_target_ms = float(latency_target_ms)
+        self.checkpoint_path = (
+            Path(checkpoint_path).expanduser().resolve() if checkpoint_path else None
+        )
+        self.checkpoint_sha256 = (
+            _sha256_file(self.checkpoint_path) if self.checkpoint_path is not None else None
+        )
+        self.device = str(device)
+        self.route_geometry_required = self.model_name in {
+            "route_following",
+            "token_dagger_bc",
+        }
+        self.route_contract_mode = _normalize_route_contract_mode(
+            route_contract_mode
+            if route_contract_mode is not None
+            else os.getenv("WOD2SIM_ROUTE_CONTRACT_MODE", "full_contract")
+        )
         self._lock = threading.RLock()
         self._sessions: dict[str, ChallengeSessionState] = {}
         self._telemetry = ChallengeTelemetry(telemetry_path)
@@ -196,6 +224,7 @@ class WOD2SimChallengeAdapter:
                 "session_uuid": session.session_uuid,
                 "route_waypoint_count": len(waypoints),
                 "route_source": "alpasim_waypoints" if len(waypoints) >= 2 else "command_proxy",
+                "route_geometry_required": self.route_geometry_required,
             }
         )
 
@@ -217,20 +246,41 @@ class WOD2SimChallengeAdapter:
         latency_ms = (time.perf_counter_ns() - start_ns) / 1_000_000.0
         reasoning = _json_object(prediction.reasoning_text)
         signal = reasoning.get("alpasim_signal", {}) if isinstance(reasoning.get("alpasim_signal"), dict) else {}
+        visible_waypoints = list(prediction_input.route_waypoints)
         self._telemetry.record(
             {
                 "event": "drive",
                 "session_uuid": session_uuid,
                 "model": self.model_name,
+                "checkpoint_sha256": self.checkpoint_sha256,
                 "time_now_us": int(time_now_us),
                 "latency_ms": round(latency_ms, 6),
                 "latency_target_ms": self.latency_target_ms,
                 "latency_target_met": latency_ms <= self.latency_target_ms,
-                "route_source": signal.get("route_source"),
-                "route_waypoint_count": signal.get("route_waypoint_count"),
-                "camera_count": signal.get("camera_count"),
+                "route_contract_mode": self.route_contract_mode,
+                "route_source": (
+                    "alpasim_waypoints"
+                    if len(visible_waypoints) >= 2
+                    else "command_proxy"
+                ),
+                "route_waypoint_count": len(visible_waypoints),
+                "route_geometry_required": self.route_geometry_required,
+                "model_input_contract": reasoning.get("input_contract"),
+                "route_geometry_consumed": reasoning.get(
+                    "route_geometry_consumed",
+                    self.route_geometry_required,
+                ),
+                "camera_count": signal.get(
+                    "camera_count",
+                    len(prediction_input.camera_images),
+                ),
                 "speed_mps": float(prediction_input.speed),
                 "trajectory_points": len(getattr(trajectory, "poses", []) or []),
+                "trajectory_future_points": len(prediction.trajectory_xy),
+                "trajectory_expected_future_points": int(
+                    round(self.output_frequency_hz * self.horizon_seconds)
+                ),
+                "trajectory_includes_current_pose": True,
                 "trajectory_finite": _proto_trajectory_is_finite(trajectory),
             }
         )
@@ -257,12 +307,20 @@ class WOD2SimChallengeAdapter:
             command = session.command
             random_seed = session.random_seed
             debug_scene_id = session.debug_scene_id
+        if self.route_contract_mode == "command_only_route":
+            route_waypoints = []
+        speed, velocity_xy, acceleration_xy = _estimate_ego_kinematics(
+            ego_pose_history,
+            dynamic_states,
+        )
 
         return SimpleNamespace(
             camera_images=camera_images,
             command=command,
-            speed=_estimate_speed_mps(ego_pose_history, dynamic_states),
-            acceleration=0.0,
+            speed=speed,
+            acceleration=float(math.hypot(*acceleration_xy)),
+            velocity_xy=velocity_xy,
+            acceleration_xy=acceleration_xy,
             ego_pose_history=ego_pose_history,
             route_waypoints=route_waypoints,
             structured_hazards=[],
@@ -292,6 +350,30 @@ class WOD2SimChallengeAdapter:
             return ConstantVelocityAlpaSimModel(**kwargs)
         if self.model_name == "route_following":
             return RouteFollowingAlpaSimModel(**kwargs)
+        if self.model_name == "token_dagger_bc":
+            if self.checkpoint_path is None:
+                raise ValueError("token_dagger_bc requires a checkpoint path")
+            from wod2sim.simulator.alpasim_token_bc import TokenBCAlpaSimModel
+
+            return TokenBCAlpaSimModel(
+                checkpoint_path=self.checkpoint_path,
+                device=self.device,
+                camera_ids=[self.model_camera_id],
+                context_length=1,
+                output_frequency_hz=self.output_frequency_hz,
+            )
+        if self.model_name == "navsim_ego_status_mlp":
+            if self.checkpoint_path is None:
+                raise ValueError("navsim_ego_status_mlp requires a checkpoint path")
+            from wod2sim.simulator.navsim_ego_status_mlp import (
+                NavsimEgoStatusMLPModel,
+            )
+
+            return NavsimEgoStatusMLPModel(
+                checkpoint_path=self.checkpoint_path,
+                device=self.device,
+                camera_ids=[self.model_camera_id],
+            )
         raise ValueError(f"Unsupported challenge model: {self.model_name}")
 
     def _session(self, session_uuid: str) -> ChallengeSessionState:
@@ -328,21 +410,30 @@ def prediction_to_proto_trajectory(
     count = max(1, int(trajectory_xy.shape[0]))
     trajectory = common_pb2.Trajectory()
     step_us = int(round(float(horizon_seconds) * 1_000_000 / count))
-    for index in range(count):
-        if index == 0:
-            x_local = origin_x
-            y_local = origin_y
-            heading = yaw0
-        else:
-            offset_index = min(index - 1, trajectory_xy.shape[0] - 1)
-            offset = trajectory_xy[offset_index]
-            x_local = origin_x + cos_yaw * float(offset[0]) - sin_yaw * float(offset[1])
-            y_local = origin_y + sin_yaw * float(offset[0]) + cos_yaw * float(offset[1])
-            heading_index = min(offset_index, headings.shape[0] - 1)
-            heading = yaw0 + (float(headings[heading_index]) if headings.shape[0] else 0.0)
+    trajectory.poses.append(
+        common_pb2.PoseAtTime(
+            timestamp_us=int(time_now_us),
+            pose=common_pb2.Pose(
+                vec=common_pb2.Vec3(x=origin_x, y=origin_y, z=origin_z),
+                quat=_quat_from_yaw(yaw0, common_pb2),
+            ),
+        )
+    )
+    for offset_index, offset in enumerate(trajectory_xy):
+        x_local = (
+            origin_x
+            + cos_yaw * float(offset[0])
+            - sin_yaw * float(offset[1])
+        )
+        y_local = (
+            origin_y
+            + sin_yaw * float(offset[0])
+            + cos_yaw * float(offset[1])
+        )
+        heading = yaw0 + float(headings[offset_index])
         if not all(math.isfinite(value) for value in (x_local, y_local, heading)):
             raise ValueError("serialized trajectory must contain only finite values")
-        timestamp_us = int(time_now_us) + index * step_us
+        timestamp_us = int(time_now_us) + (offset_index + 1) * step_us
         trajectory.poses.append(
             common_pb2.PoseAtTime(
                 timestamp_us=timestamp_us,
@@ -382,9 +473,29 @@ def _proto_trajectory_is_finite(trajectory: Any) -> bool:
 
 def _normalize_model_name(model_name: str) -> str:
     value = model_name.strip().lower().replace("-", "_")
-    if value not in {"constant_velocity", "route_following"}:
-        raise ValueError("Challenge compatibility currently supports constant_velocity and route_following")
+    if value not in {
+        "constant_velocity",
+        "route_following",
+        "token_dagger_bc",
+        "navsim_ego_status_mlp",
+    }:
+        raise ValueError(
+            "Challenge compatibility supports constant_velocity, route_following, "
+            "token_dagger_bc, and navsim_ego_status_mlp"
+        )
     return value
+
+
+def _normalize_route_contract_mode(mode: str) -> str:
+    value = mode.strip().lower()
+    if value in {"", "full", "full_contract"}:
+        return "full_contract"
+    if value in {"command_only", "command_only_route"}:
+        return "command_only_route"
+    raise ValueError(
+        "route contract mode must be full_contract or command_only_route; "
+        f"got {mode!r}"
+    )
 
 
 def run_self_test(
@@ -392,11 +503,15 @@ def run_self_test(
     model_name: str = "route_following",
     iterations: int = 32,
     latency_target_ms: float = 100.0,
+    checkpoint_path: str | Path | None = None,
+    device: str = "cpu",
 ) -> dict[str, Any]:
     adapter = WOD2SimChallengeAdapter(
         model_name=model_name,
         latency_target_ms=latency_target_ms,
         telemetry_path=None,
+        checkpoint_path=checkpoint_path,
+        device=device,
     )
     session_uuid = "wod2sim-self-test"
     adapter.start_session(
@@ -447,7 +562,13 @@ def run_self_test(
     summary.update(
         {
             "model": adapter.model_name,
-            "claim": "dependency_light_challenge_adapter_self_test",
+            "checkpoint_sha256": adapter.checkpoint_sha256,
+            "claim": (
+                "learned_policy_challenge_adapter_self_test"
+                if adapter.model_name
+                in {"token_dagger_bc", "navsim_ego_status_mlp"}
+                else "dependency_light_challenge_adapter_self_test"
+            ),
             "benchmark_result": False,
             "latency_target_ms": latency_target_ms,
         }
@@ -496,20 +617,139 @@ def _command_from_waypoints(waypoints: list[dict[str, float]]) -> Any:
     return DriveCommand.STRAIGHT
 
 
-def _estimate_speed_mps(ego_pose_history: list[Any], dynamic_states: list[tuple[int, Any]]) -> float:
+def _estimate_speed_mps(
+    ego_pose_history: list[Any],
+    dynamic_states: list[tuple[int, Any]],
+) -> float:
+    return _estimate_ego_kinematics(ego_pose_history, dynamic_states)[0]
+
+
+def _estimate_ego_kinematics(
+    ego_pose_history: list[Any],
+    dynamic_states: list[tuple[int, Any]],
+) -> tuple[float, tuple[float, float], tuple[float, float]]:
+    pose_velocity = _pose_velocity_in_latest_rig(ego_pose_history[-2:])
+    pose_acceleration = _pose_acceleration_in_latest_rig(ego_pose_history[-3:])
+    dynamic_velocity: tuple[float, float] | None = None
+    dynamic_acceleration: tuple[float, float] | None = None
     if dynamic_states:
-        velocity = getattr(dynamic_states[-1][1], "linear_velocity", None)
-        if velocity is not None:
-            return float(math.hypot(float(getattr(velocity, "x", 0.0)), float(getattr(velocity, "y", 0.0))))
-    if len(ego_pose_history) >= 2:
-        a = ego_pose_history[-2]
-        b = ego_pose_history[-1]
-        dt_s = (int(getattr(b, "timestamp_us", 0)) - int(getattr(a, "timestamp_us", 0))) / 1_000_000.0
-        ax, ay, _, _ = _pose_origin_and_yaw(a)
-        bx, by, _, _ = _pose_origin_and_yaw(b)
-        if dt_s > 1e-6:
-            return float(math.hypot(bx - ax, by - ay) / dt_s)
-    return 5.0
+        state = dynamic_states[-1][1]
+        dynamic_velocity = _finite_vec2(getattr(state, "linear_velocity", None))
+        dynamic_acceleration = _finite_vec2(
+            getattr(state, "linear_acceleration", None)
+        )
+    pose_speed = (
+        float(math.hypot(*pose_velocity))
+        if pose_velocity is not None
+        else None
+    )
+    dynamic_speed = (
+        float(math.hypot(*dynamic_velocity))
+        if dynamic_velocity is not None
+        else None
+    )
+    if (
+        dynamic_velocity is not None
+        and dynamic_speed is not None
+        and (
+            dynamic_speed >= 0.1
+            or pose_speed is None
+            or pose_speed < 0.5
+        )
+    ):
+        velocity_xy = dynamic_velocity
+        speed = dynamic_speed
+    elif pose_velocity is not None and pose_speed is not None:
+        velocity_xy = pose_velocity
+        speed = pose_speed
+    else:
+        velocity_xy = (5.0, 0.0)
+        speed = 5.0
+    acceleration_xy = (
+        dynamic_acceleration
+        if dynamic_acceleration is not None
+        and math.hypot(*dynamic_acceleration) >= 1e-3
+        else pose_acceleration or (0.0, 0.0)
+    )
+    return speed, velocity_xy, acceleration_xy
+
+
+def _pose_velocity_in_latest_rig(
+    poses: list[Any],
+) -> tuple[float, float] | None:
+    if len(poses) < 2:
+        return None
+    earlier, later = poses[-2:]
+    dt_s = (
+        int(getattr(later, "timestamp_us", 0))
+        - int(getattr(earlier, "timestamp_us", 0))
+    ) / 1_000_000.0
+    if dt_s <= 1e-6:
+        return None
+    ax, ay, _, _ = _pose_origin_and_yaw(earlier)
+    bx, by, _, latest_yaw = _pose_origin_and_yaw(later)
+    world_vx = (bx - ax) / dt_s
+    world_vy = (by - ay) / dt_s
+    cos_yaw = math.cos(-latest_yaw)
+    sin_yaw = math.sin(-latest_yaw)
+    return (
+        cos_yaw * world_vx - sin_yaw * world_vy,
+        sin_yaw * world_vx + cos_yaw * world_vy,
+    )
+
+
+def _pose_acceleration_in_latest_rig(
+    poses: list[Any],
+) -> tuple[float, float] | None:
+    if len(poses) < 3:
+        return None
+    first, middle, last = poses[-3:]
+    first_velocity = _world_pose_velocity(first, middle)
+    second_velocity = _world_pose_velocity(middle, last)
+    if first_velocity is None or second_velocity is None:
+        return None
+    first_time = int(getattr(first, "timestamp_us", 0))
+    last_time = int(getattr(last, "timestamp_us", 0))
+    dt_s = (last_time - first_time) / 2_000_000.0
+    if dt_s <= 1e-6:
+        return None
+    world_ax = (second_velocity[0] - first_velocity[0]) / dt_s
+    world_ay = (second_velocity[1] - first_velocity[1]) / dt_s
+    _, _, _, latest_yaw = _pose_origin_and_yaw(last)
+    cos_yaw = math.cos(-latest_yaw)
+    sin_yaw = math.sin(-latest_yaw)
+    return (
+        cos_yaw * world_ax - sin_yaw * world_ay,
+        sin_yaw * world_ax + cos_yaw * world_ay,
+    )
+
+
+def _world_pose_velocity(
+    earlier: Any,
+    later: Any,
+) -> tuple[float, float] | None:
+    dt_s = (
+        int(getattr(later, "timestamp_us", 0))
+        - int(getattr(earlier, "timestamp_us", 0))
+    ) / 1_000_000.0
+    if dt_s <= 1e-6:
+        return None
+    ax, ay, _, _ = _pose_origin_and_yaw(earlier)
+    bx, by, _, _ = _pose_origin_and_yaw(later)
+    return ((bx - ax) / dt_s, (by - ay) / dt_s)
+
+
+def _finite_vec2(value: Any) -> tuple[float, float] | None:
+    if value is None:
+        return None
+    try:
+        parsed = (
+            float(getattr(value, "x")),
+            float(getattr(value, "y")),
+        )
+    except (AttributeError, TypeError, ValueError):
+        return None
+    return parsed if all(math.isfinite(item) for item in parsed) else None
 
 
 def _image_array_from_bytes(image_bytes: bytes) -> np.ndarray:
@@ -574,6 +814,14 @@ def _percentile(values: list[float], percentile: float) -> float | None:
         return ordered[lower]
     alpha = rank - lower
     return ordered[lower] * (1.0 - alpha) + ordered[upper] * alpha
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 class _SelfTestCommonPb2:
@@ -690,7 +938,34 @@ def _build_service_class(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Serve WOD2Sim as an AlpaSim E2E-style gRPC driver.")
-    parser.add_argument("--model", choices=("constant_velocity", "route_following"), default=os.getenv("WOD2SIM_CHALLENGE_MODEL", "route_following"))
+    parser.add_argument(
+        "--model",
+        choices=(
+            "constant_velocity",
+            "route_following",
+            "token_dagger_bc",
+            "navsim_ego_status_mlp",
+        ),
+        default=os.getenv("WOD2SIM_CHALLENGE_MODEL", "route_following"),
+    )
+    parser.add_argument(
+        "--checkpoint",
+        type=Path,
+        default=(
+            Path(os.environ["WOD2SIM_CHALLENGE_CHECKPOINT"])
+            if os.environ.get("WOD2SIM_CHALLENGE_CHECKPOINT")
+            else None
+        ),
+        help=(
+            "Learned checkpoint path required by token_dagger_bc or "
+            "navsim_ego_status_mlp."
+        ),
+    )
+    parser.add_argument(
+        "--device",
+        default=os.getenv("WOD2SIM_CHALLENGE_DEVICE", "cpu"),
+        help="Torch device for learned policies. Recorded replay defaults to CPU.",
+    )
     parser.add_argument("--host", default=os.getenv("ALPASIM_DRIVER_HOST", "0.0.0.0"))
     parser.add_argument("--port", type=int, default=int(os.getenv("ALPASIM_DRIVER_PORT", "6789")))
     parser.add_argument("--workers", type=int, default=int(os.getenv("ALPASIM_DRIVER_GRPC_WORKERS", "8")))
@@ -711,6 +986,8 @@ def main() -> None:
                     model_name=args.model,
                     iterations=args.self_test_iterations,
                     latency_target_ms=args.latency_target_ms,
+                    checkpoint_path=args.checkpoint,
+                    device=args.device,
                 ),
                 indent=2,
                 sort_keys=True,
@@ -722,6 +999,8 @@ def main() -> None:
         model_name=args.model,
         telemetry_path=args.telemetry_path,
         latency_target_ms=args.latency_target_ms,
+        checkpoint_path=args.checkpoint,
+        device=args.device,
     )
     service_cls = _build_service_class(
         grpc=grpc,

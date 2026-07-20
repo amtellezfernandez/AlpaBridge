@@ -30,8 +30,8 @@ host-specific paths, runtime identifiers, and local simulator state.
 - Format: IEEE conference two-column template using the official
   `paper/cvm/ieeeconf.cls`.
 - Page size: A4 verified by `mutool info` mediabox `[ 0 0 595.276 841.89 ]`.
-- Page count: 5.
-- PDF size at audit: 200108 bytes.
+- Page count: 6.
+- PDF size at audit: 203787 bytes.
 - Root PDF is the only tracked manuscript PDF.
 
 ## Commands And Targets
@@ -53,7 +53,7 @@ host-specific paths, runtime identifiers, and local simulator state.
 - AlpaSim E2E challenge compatibility adapter: `src/wod2sim/challenge`.
 - Audit and evidence tools: `src/wod2sim/audit`, `src/wod2sim/neutral`.
 - AlpaSim patches/overrides: `src/wod2sim/alpasim_overrides`.
-- Test directory: `tests` with 25 top-level test files. Runtime pass/skip
+- Test directory: `tests` with 26 top-level test files. Runtime pass/skip
   counts are recorded in [`test_report.md`](test_report.md).
 - Public release decision: [`release_decision.md`](release_decision.md).
 
@@ -74,21 +74,23 @@ host-specific paths, runtime identifiers, and local simulator state.
   120/120 explicit finite serialized outputs.
 - Controlled comparison: WOD2Sim 30/30 correct and 15/15 localized; status-only
   15/30 correct; 0/15 WOD2Sim control false positives.
-- Fault-case detector execution: 11.441 us median and 21.915 us p95.
-- Guarded in-process adapter Drive path: 257.390 us median and 449.371 us p95.
-- Paired guard-path increment: 25.630 us median and 112.659 us p95.
-- Current-schema protocol replay: 60/60 finite `Drive` outputs and 60/60
-  latency-target hits in each arm. Full-contract client-to-service latency is
-  1.786 ms median and 2.191 ms p95; command-only latency is 1.835 ms median and
-  2.338 ms p95. The full trace has no diagnostic and the command-only trace
-  isolates `semantic.command_only`.
+- Fault-case detector execution: 28.096 us median and 55.774 us p95.
+- Guarded in-process adapter Drive path: 617.549 us median and 897.100 us p95.
+- Paired guard-path increment: 68.871 us median and 309.613 us p95.
+- Current-schema protocol replay: four arms spanning route following and
+  NAVSIM EgoStatusMLP, with 60/60 finite, nonstationary `Drive` outputs and
+  60/60 latency-target hits in each arm. Route loss isolates
+  `semantic.command_only` and changes 56/60 route-following endpoints; all 60
+  NAVSIM negative-control pairs match exactly. Route-following full/reduced
+  client-to-service latency is 3.769/4.833 ms median/p95 and 3.104/3.958 ms;
+  NAVSIM full/reduced latency is 4.715/5.945 ms and 4.943/6.963 ms.
 - Blocked rows: 33, all `direct_actor_oracle_proxy_missing`.
 - Claim-valid policy benchmark rows: 0.
 - Policy-attributable behavior rows: 42.
 - Policy-attributable failure rows: 0.
 - Completed non-policy diagnostic rows: 73.
 - Non-policy-attributed rows: 106.
-- Aggregate data hash: `5755caed5ccfae8a61edeba7edfdf2ed70f63313a07840d7277d796caf9262e2`.
+- Aggregate data hash: `eca599704d943e322dc8114149fa6fa3bfe479a0f68824ae69142b1a9df87b4f`.
 - Every public run manifest carries pre-audit `failure_attribution`, including
   policy-failure status, claim-valid benchmark status, failure layer/code, and
   the integration-vs-policy attribution rule. Aggregate `summary.json` upgrades

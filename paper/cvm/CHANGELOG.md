@@ -2,8 +2,15 @@
 
 ## 2026-07-20
 
-- Added a hash-validated current-schema replay of the official AlpaSim
-  integration protocol through paired live gRPC services.
+- Added a four-arm, hash-validated replay of the official AlpaSim integration
+  protocol through live gRPC services.
+- Replaced the project-specific replay checkpoint with NAVSIM's official
+  EgoStatusMLP seed-0 checkpoint, pinned by repository revision and SHA-256.
+- Made route-contract diagnostics policy-aware: route removal is a fault for
+  route following, while the command-native NAVSIM model is a 60/60 exact-match
+  negative control.
+- Fixed and regression-tested an output serializer off-by-one error; schema v3
+  distinguishes the current pose from every predicted future waypoint.
 - Reported 60/60 finite outputs per arm and bounded client-to-service latency;
   retained the non-reactive, no-overhead, and no-human-diagnosis limits.
 - Added structural generalization beyond WOD message types while explicitly

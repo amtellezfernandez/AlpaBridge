@@ -15,7 +15,7 @@ from wod2sim.challenge.e2e_driver import (
     prediction_to_proto_trajectory,
     run_self_test,
 )
-from wod2sim.simulator.alpasim_contract import ModelPrediction
+from wod2sim.simulator.alpasim_contract import DriveCommand, ModelPrediction
 
 
 class _Repeated(list):
@@ -96,6 +96,45 @@ def test_challenge_adapter_preserves_route_geometry_for_route_following() -> Non
     assert float(prediction.trajectory_xy[-1, 1]) > 10.0
 
 
+def test_challenge_adapter_applies_command_only_route_at_shared_boundary() -> None:
+    adapter = WOD2SimChallengeAdapter(
+        model_name="route_following",
+        camera_ids=("front",),
+        route_contract_mode="command_only_route",
+    )
+    adapter.start_session(SimpleNamespace(session_uuid="session-command", random_seed=9))
+    adapter.submit_image_observation(
+        SimpleNamespace(
+            session_uuid="session-command",
+            camera_image=SimpleNamespace(
+                logical_id="front",
+                frame_end_us=1_000_000,
+                image_bytes=b"\x80",
+            ),
+        )
+    )
+    adapter.submit_route(
+        SimpleNamespace(
+            session_uuid="session-command",
+            route=SimpleNamespace(
+                waypoints=[
+                    SimpleNamespace(x=0.0, y=0.0, z=0.0),
+                    SimpleNamespace(x=20.0, y=15.0, z=0.0),
+                    SimpleNamespace(x=45.0, y=15.0, z=0.0),
+                ]
+            ),
+        )
+    )
+
+    prediction_input = adapter.prediction_input(
+        "session-command",
+        time_now_us=1_000_000,
+    )
+
+    assert prediction_input.route_waypoints == []
+    assert prediction_input.command == DriveCommand.LEFT
+
+
 def test_challenge_adapter_maps_challenge_camera_id_to_internal_contract_key() -> None:
     adapter = WOD2SimChallengeAdapter(model_name="constant_velocity")
     adapter.start_session(SimpleNamespace(session_uuid="session-cam", random_seed=3))
@@ -154,15 +193,91 @@ def test_challenge_adapter_writes_drive_telemetry() -> None:
         summary = adapter.telemetry_summary()
 
     drive_rows = [row for row in rows if row["event"] == "drive"]
-    assert len(trajectory.poses) == 50
+    assert len(trajectory.poses) == 51
     assert len(drive_rows) == 1
     assert drive_rows[0]["schema"] == CHALLENGE_TELEMETRY_SCHEMA
     assert drive_rows[0]["route_source"] == "alpasim_waypoints"
     assert drive_rows[0]["latency_target_ms"] == 100.0
     assert drive_rows[0]["speed_mps"] == pytest.approx(5.0)
+    assert drive_rows[0]["trajectory_points"] == 51
+    assert drive_rows[0]["trajectory_future_points"] == 50
+    assert drive_rows[0]["trajectory_expected_future_points"] == 50
+    assert drive_rows[0]["trajectory_includes_current_pose"] is True
     assert drive_rows[0]["trajectory_finite"] is True
     assert summary["drive_count"] == 1
     assert summary["latency_ms"]["p95"] is not None
+
+
+def test_challenge_adapter_uses_pose_speed_when_recorded_dynamic_speed_is_zero() -> None:
+    adapter = WOD2SimChallengeAdapter(
+        model_name="constant_velocity",
+        camera_ids=("CAM_F0",),
+    )
+    adapter.start_session(SimpleNamespace(session_uuid="session-speed", random_seed=13))
+    adapter.submit_image_observation(
+        SimpleNamespace(
+            session_uuid="session-speed",
+            camera_image=SimpleNamespace(
+                logical_id="CAM_F0",
+                frame_end_us=1_000_000,
+                image_bytes=b"\x80",
+            ),
+        )
+    )
+    adapter.submit_egomotion_observation(
+        SimpleNamespace(
+            session_uuid="session-speed",
+            trajectory=SimpleNamespace(
+                poses=[
+                    _pose_at(900_000, x=0.0, y=0.0),
+                    _pose_at(1_000_000, x=1.0, y=0.0),
+                ]
+            ),
+            dynamic_states=[
+                SimpleNamespace(linear_velocity=SimpleNamespace(x=0.0, y=0.0))
+            ],
+        )
+    )
+
+    prediction_input = adapter.prediction_input("session-speed", time_now_us=1_000_000)
+    prediction = adapter.predict("session-speed", time_now_us=1_000_000)
+
+    assert prediction_input.speed == pytest.approx(10.0)
+    assert float(prediction.trajectory_xy[-1, 0]) == pytest.approx(50.0)
+
+
+@pytest.mark.parametrize(
+    "model_name",
+    ("token_dagger_bc", "navsim_ego_status_mlp"),
+)
+def test_learned_challenge_adapter_requires_checkpoint(model_name: str) -> None:
+    with pytest.raises(ValueError, match="requires a checkpoint"):
+        WOD2SimChallengeAdapter(model_name=model_name)
+
+
+def test_learned_challenge_adapter_records_pinned_checkpoint_hash(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    checkpoint = tmp_path / "policy.pt"
+    checkpoint.write_bytes(b"pinned learned policy checkpoint")
+    monkeypatch.setattr(
+        WOD2SimChallengeAdapter,
+        "_build_model",
+        lambda _self: object(),
+    )
+
+    adapter = WOD2SimChallengeAdapter(
+        model_name="token_dagger_bc",
+        checkpoint_path=checkpoint,
+        device="cpu",
+    )
+
+    assert (
+        adapter.checkpoint_sha256
+        == "d6c9c340aea7e04bc485aad78a301182aacc2a8dce0f09a210fa042375c54cca"
+    )
+    assert adapter.device == "cpu"
 
 
 def test_challenge_self_test_reports_non_benchmark_latency_summary() -> None:
@@ -227,10 +342,14 @@ def test_prediction_to_proto_trajectory_rotates_ego_relative_offsets() -> None:
         horizon_seconds=1.0,
     )
 
-    assert [pose.timestamp_us for pose in trajectory.poses] == [10_000, 510_000]
+    assert [pose.timestamp_us for pose in trajectory.poses] == [
+        10_000,
+        510_000,
+        1_010_000,
+    ]
     np.testing.assert_allclose(
         [[pose.pose.vec.x, pose.pose.vec.y] for pose in trajectory.poses],
-        [[10.0, 20.0], [10.0, 21.0]],
+        [[10.0, 20.0], [10.0, 21.0], [10.0, 22.0]],
         atol=1e-6,
     )
 

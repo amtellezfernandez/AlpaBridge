@@ -73,6 +73,7 @@ LATEX_LOG_FAILURE_PATTERNS = (
 REQUIRED_TABLES = (
     "contract_map.tex",
     "main_results.tex",
+    "protocol_replay_policies.tex",
     "ablations.tex",
     "fault_localization.tex",
     "paper_numbers.tex",
@@ -81,6 +82,9 @@ EXPECTED_TABLE_HEADERS = {
     "contract_map.tex": "Mismatch & Contract & Mechanism & Validation",
     "main_results.tex": (
         "Public core policy & Rows & Done/att. & Audit & Route & Sensor & Crash & Blocked"
+    ),
+    "protocol_replay_policies.tex": (
+        "Policy & Policy-visible route & Finite & Moving & Audit"
     ),
     "ablations.tex": "Closed-loop check & Obs. & Denom. & Meaning",
     "fault_localization.tex": "Synthetic diagnostic & Count & Total",
@@ -174,8 +178,8 @@ BASELINE_REPORT_REQUIRED_TERMS = (
     "make cvm-check",
     "make paper-verify",
     "make verify",
-    "358 passed, 14 skipped, and 15 subtests passed",
-    "65.32% against the configured 33.0% minimum",
+    "367 passed, 14 skipped, and 15 subtests passed",
+    "65.31% against the configured 33.0% minimum",
 )
 CONTRACT_TEST_AUDIT_REQUIRED_TERMS = (
     "# Contract Test Audit",
@@ -218,15 +222,18 @@ CLAIM_BOUNDARY_SOURCE_TERMS = (
 )
 README_VISUAL_EXPLANATION_TERMS = (
     "Executed Camera Replay",
-    "official Apache-licensed AlpaSim integration recording",
-    "live gRPC adapter modes",
-    "camera, egomotion, route messages",
-    "RPC-completion check accepts both",
-    "contract audit accepts",
+    "same official AlpaSim integration log",
+    "four live WOD2Sim gRPC services",
+    "route-retaining and command-only service modes",
     "semantic.command_only",
+    "command-only arm correctly passes",
+    "paired outputs remain exactly equal",
+    "recorded camera and ego-state sequence is fixed",
     "non-reactive",
-    "outputs do not change the recorded future frames",
-    "not a reactive simulator rollout or a policy-quality comparison",
+    "not a reactive simulator rollout, policy-quality comparison, or cross-simulator test",
+    "Same policy, same recorded scene, and same ego state",
+    "live gRPC replay runs",
+    "neither output changes the recorded future camera frames",
     "alpasim-protocol-replay.mp4",
     "validated manifest",
     "reproduction notes",
@@ -243,7 +250,7 @@ EVALUATION_STATUS_TERMS = (
     "denominator/context rather than success metrics",
     "public release core is the dependency-light adapter path",
     "optional gated extensions, not release-core dependencies",
-    "redistributable scene subset",
+    "does not redistribute a checkpoint or scene subset",
     "verified scene-category coverage",
     "claim-ready closed-loop policy benchmark",
 )
@@ -504,6 +511,14 @@ PAPER_NUMBER_JSON_FIELDS: tuple[tuple[str, str], ...] = (
         "protocol_replay.arms.command_only_route.finite_drive_outputs",
     ),
     (
+        "CVMReplayFullMovingDriveOutputs",
+        "protocol_replay.arms.full_contract.nonstationary_drive_outputs",
+    ),
+    (
+        "CVMReplayCommandMovingDriveOutputs",
+        "protocol_replay.arms.command_only_route.nonstationary_drive_outputs",
+    ),
+    (
         "CVMReplayFullLatencyTargetMet",
         "protocol_replay.arms.full_contract.drive_calls_within_target",
     ),
@@ -518,6 +533,55 @@ PAPER_NUMBER_JSON_FIELDS: tuple[tuple[str, str], ...] = (
     (
         "CVMReplayCommandDiagnosticCount",
         "protocol_replay.arms.command_only_route.diagnostic_count",
+    ),
+    ("CVMReplayPolicyFamilies", "protocol_replay.policy_family_count"),
+    (
+        "CVMReplayLearnedDriveRPCsPerArm",
+        "protocol_replay.arms.navsim_ego_status_mlp_full_contract.drive_calls",
+    ),
+    (
+        "CVMReplayLearnedFullFiniteDriveOutputs",
+        "protocol_replay.arms.navsim_ego_status_mlp_full_contract.finite_drive_outputs",
+    ),
+    (
+        "CVMReplayLearnedCommandFiniteDriveOutputs",
+        "protocol_replay.arms.navsim_ego_status_mlp_command_only_route.finite_drive_outputs",
+    ),
+    (
+        "CVMReplayLearnedFullMovingDriveOutputs",
+        "protocol_replay.arms.navsim_ego_status_mlp_full_contract.nonstationary_drive_outputs",
+    ),
+    (
+        "CVMReplayLearnedCommandMovingDriveOutputs",
+        "protocol_replay.arms.navsim_ego_status_mlp_command_only_route.nonstationary_drive_outputs",
+    ),
+    (
+        "CVMReplayLearnedFullLatencyTargetMet",
+        "protocol_replay.arms.navsim_ego_status_mlp_full_contract.drive_calls_within_target",
+    ),
+    (
+        "CVMReplayLearnedCommandLatencyTargetMet",
+        "protocol_replay.arms.navsim_ego_status_mlp_command_only_route.drive_calls_within_target",
+    ),
+    (
+        "CVMReplayLearnedFullDiagnosticCount",
+        "protocol_replay.arms.navsim_ego_status_mlp_full_contract.diagnostic_count",
+    ),
+    (
+        "CVMReplayLearnedCommandDiagnosticCount",
+        "protocol_replay.arms.navsim_ego_status_mlp_command_only_route.diagnostic_count",
+    ),
+    (
+        "CVMReplayRouteEndpointChanged",
+        "protocol_replay.trajectory_divergence.route_following.endpoint_difference_gt_0_1m",
+    ),
+    (
+        "CVMReplayLearnedEndpointChanged",
+        "protocol_replay.trajectory_divergence.navsim_ego_status_mlp.endpoint_difference_gt_0_1m",
+    ),
+    (
+        "CVMReplayLearnedEndpointChangedOneMeter",
+        "protocol_replay.trajectory_divergence.navsim_ego_status_mlp.endpoint_difference_gt_1m",
     ),
     ("CVMPublicCoreRows", "release_scope.public_core_configured_rows"),
     ("CVMPublicCoreCompletedRuns", "release_scope.public_core_completed_runs"),
@@ -633,6 +697,30 @@ PAPER_NUMBER_FLOAT_FIELDS: tuple[tuple[str, str], ...] = (
         "protocol_replay.arms.command_only_route.drive_rpc_latency_ms.p95",
     ),
     (
+        "CVMReplayLearnedEndpointDifferenceMeanM",
+        "protocol_replay.trajectory_divergence.navsim_ego_status_mlp.endpoint_difference_mean_m",
+    ),
+    (
+        "CVMReplayLearnedEndpointDifferenceMaxM",
+        "protocol_replay.trajectory_divergence.navsim_ego_status_mlp.endpoint_difference_max_m",
+    ),
+    (
+        "CVMReplayLearnedFullLatencyMedianMs",
+        "protocol_replay.arms.navsim_ego_status_mlp_full_contract.drive_rpc_latency_ms.p50",
+    ),
+    (
+        "CVMReplayLearnedFullLatencyNinetyFifthMs",
+        "protocol_replay.arms.navsim_ego_status_mlp_full_contract.drive_rpc_latency_ms.p95",
+    ),
+    (
+        "CVMReplayLearnedCommandLatencyMedianMs",
+        "protocol_replay.arms.navsim_ego_status_mlp_command_only_route.drive_rpc_latency_ms.p50",
+    ),
+    (
+        "CVMReplayLearnedCommandLatencyNinetyFifthMs",
+        "protocol_replay.arms.navsim_ego_status_mlp_command_only_route.drive_rpc_latency_ms.p95",
+    ),
+    (
         "CVMDetectorDecisionMedianUs",
         "diagnostic_experiment.timing.contract_gate_decision_us.p50",
     ),
@@ -723,6 +811,19 @@ GENERATED_TABLE_JSON_FIELDS: tuple[str, ...] = (
     "failure_attribution.policy_behavior_attributable_rows",
     "failure_attribution.policy_failure_attributable_rows",
     "failure_attribution.integration_failure_attributable_rows",
+    "protocol_replay.policy_family_count",
+    "protocol_replay.arms.full_contract.drive_calls",
+    "protocol_replay.arms.full_contract.finite_drive_outputs",
+    "protocol_replay.arms.full_contract.nonstationary_drive_outputs",
+    "protocol_replay.arms.command_only_route.drive_calls",
+    "protocol_replay.arms.command_only_route.finite_drive_outputs",
+    "protocol_replay.arms.command_only_route.nonstationary_drive_outputs",
+    "protocol_replay.arms.navsim_ego_status_mlp_full_contract.drive_calls",
+    "protocol_replay.arms.navsim_ego_status_mlp_full_contract.finite_drive_outputs",
+    "protocol_replay.arms.navsim_ego_status_mlp_full_contract.nonstationary_drive_outputs",
+    "protocol_replay.arms.navsim_ego_status_mlp_command_only_route.drive_calls",
+    "protocol_replay.arms.navsim_ego_status_mlp_command_only_route.finite_drive_outputs",
+    "protocol_replay.arms.navsim_ego_status_mlp_command_only_route.nonstationary_drive_outputs",
 )
 PAPER_NUMBER_LIFECYCLE_ADAPTERS: tuple[tuple[str, str], ...] = (
     ("Full", "full_lifecycle_hardening"),
@@ -2031,6 +2132,9 @@ def _generated_table_value_failures(
     table_expectations = {
         "contract_map.tex": _expected_contract_map_rows(),
         "main_results.tex": _expected_main_results_rows(summary),
+        "protocol_replay_policies.tex": _expected_protocol_replay_policy_rows(
+            summary
+        ),
         "ablations.tex": _expected_ablations_rows(summary),
         "fault_localization.tex": _expected_fault_localization_rows(
             lifecycle_counts,
@@ -2135,6 +2239,56 @@ def _expected_core_policy_row(item: dict[str, object]) -> str:
         item.get("service_crash_rows") if isinstance(item.get("service_crash_rows"), int) else 0,
         item.get("blocked_runs") if isinstance(item.get("blocked_runs"), int) else 0,
     )
+
+
+def _expected_protocol_replay_policy_rows(
+    summary: dict[str, object],
+) -> list[str]:
+    specs = (
+        (
+            "Route following",
+            "20 waypoints",
+            "full_contract",
+            "pass",
+        ),
+        (
+            "Route following",
+            "command only",
+            "command_only_route",
+            "semantic fault",
+        ),
+        (
+            "NAVSIM EgoStatusMLP",
+            "command (route retained)",
+            "navsim_ego_status_mlp_full_contract",
+            "pass",
+        ),
+        (
+            "NAVSIM EgoStatusMLP",
+            "command only",
+            "navsim_ego_status_mlp_command_only_route",
+            "pass",
+        ),
+    )
+    rows: list[str] = []
+    for policy, route, arm, audit in specs:
+        prefix = f"protocol_replay.arms.{arm}"
+        calls = _required_int(summary, f"{prefix}.drive_calls")
+        finite = _required_int(summary, f"{prefix}.finite_drive_outputs")
+        moving = _required_int(
+            summary,
+            f"{prefix}.nonstationary_drive_outputs",
+        )
+        rows.append(
+            _table_row(
+                policy,
+                route,
+                f"{finite}/{calls}",
+                f"{moving}/{calls}",
+                audit,
+            )
+        )
+    return rows
 
 
 def _format_table_metric(value: object) -> str:

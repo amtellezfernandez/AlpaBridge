@@ -33,30 +33,30 @@ Email: amtellezfernandez@gmail.com.}%
 \begin{abstract}
 Closed-loop driving evaluation can misattribute degraded metrics to policy quality when
 a simulator boundary drops route geometry, changes timing, or produces incomplete
-evidence. WOD2Sim audits semantic, temporal, lifecycle, deployment, and evidence
-contracts between Waymo Open Motion Dataset-style trajectory policies and AlpaSim
-external drivers. An official recorded protocol is replayed through current-schema gRPC
-services. The route-preserving and command-only arms respectively return
-\CVMReplayFullFiniteDriveOutputs{}/\CVMReplayDriveRPCsPerArm{} and
-\CVMReplayCommandFiniteDriveOutputs{}/\CVMReplayDriveRPCsPerArm{} finite outputs; the
-audit accepts the former but isolates \texttt{semantic.command\_only} in the latter.
-Full-contract client-to-service latency is \CVMReplayFullLatencyMedianMs{}~ms median and
-\CVMReplayFullLatencyNinetyFifthMs{}~ms p95. A separate suite pairs
-\CVMProtocolTraceSessions{} adapter sessions with \CVMDiagnosticFaultCases{} predefined
-single-fault mutations while withholding labels. WOD2Sim classifies
+evidence. WOD2Sim audits five contracts between Waymo Open Motion Dataset-style
+trajectory policies and AlpaSim external drivers. An official protocol is replayed
+through route-following and NAVSIM EgoStatusMLP services under full and command-only
+route modes. All four return
+\CVMReplayDriveRPCsPerArm{}/\CVMReplayDriveRPCsPerArm{} finite, nonstationary
+trajectories. Geometry removal triggers
+\texttt{semantic.command\_only} for route following and changes
+\CVMReplayRouteEndpointChanged{}/\CVMReplayDriveRPCsPerArm{} endpoints. It is correctly
+accepted for EgoStatusMLP, whose published signature excludes route geometry; all
+\CVMReplayLearnedDriveRPCsPerArm{} paired outputs remain identical. Separately,
+\CVMProtocolTraceSessions{} adapter sessions are paired with
+\CVMDiagnosticFaultCases{} predefined single-fault mutations while withholding labels.
+WOD2Sim classifies
 \CVMWODDiagnosticCorrect{}/\CVMDiagnosticCases{} cases, localizes
 \CVMWODDiagnosticLocalized{}/\CVMDiagnosticFaultCases{} faults, and produces
 \CVMWODDiagnosticFalsePositives{}/\CVMDiagnosticControlCases{} control false positives;
-a completion-and-metrics gate classifies
-\CVMStatusDiagnosticCorrect{}/\CVMDiagnosticCases{} and detects no faults. Detector
-execution over 3,000 post-parse fault calls is \CVMFaultDetectorMedianUs{}~$\mu$s median
-and \CVMFaultDetectorNinetyFifthUs{}~$\mu$s p95. Across \CVMAdapterTimingSamples{}
-measurements, camera-set and freshness checks add
+a completion gate classifies \CVMStatusDiagnosticCorrect{}/\CVMDiagnosticCases{} and
+detects no faults. Post-parse detection is \CVMFaultDetectorMedianUs{}~$\mu$s median and
+\CVMFaultDetectorNinetyFifthUs{}~$\mu$s p95. Camera-set and freshness checks add
 \CVMAdapterGuardIncrementMedianUs{}~$\mu$s median and
-\CVMAdapterGuardIncrementNinetyFifthUs{}~$\mu$s p95 while preserving output. The replay
-is non-reactive, so it does not measure full simulator runtime or format overhead.
-Human diagnosis, learned-policy quality, scenario coverage, and cross-framework
-comparison remain outside the study.
+\CVMAdapterGuardIncrementNinetyFifthUs{}~$\mu$s p95. The non-reactive replay measures
+loopback client-to-service latency, not simulator runtime, format overhead, policy
+quality, or human diagnosis time. Scenario coverage and cross-framework transfer remain
+outside the study.
 \end{abstract}
 
 \section{Introduction}
@@ -85,14 +85,17 @@ threefold:
   completed, blocked, and invalid rows;
   \item a paired protocol-conformance suite measures localization, post-parse detector
   execution, and a guard-path increment against an executable status-only gate, while
-  a recorded-message gRPC replay measures client-to-service latency.
+  a recorded-message gRPC replay tests policy-specific semantic applicability across
+  route-dependent and command-native learned policies and measures client-to-service
+  latency.
 \end{itemize}
 The five contract classes concern information, clocks, service state, deployment, and
 evidence rather than a specific protobuf schema. The design can therefore be bound to
 other trajectory-policy/simulator interfaces. This is a structural generalization
-hypothesis: the present evaluation covers one WOD-style/AlpaSim binding and only
-dependency-light constant-velocity and route-following policies, not a learned policy
-or a second independently maintained framework.
+hypothesis. The present evaluation covers one WOD-style/AlpaSim binding: its matrix uses
+dependency-light constant-velocity and route-following policies, and its protocol replay
+adds one published NAVSIM learned baseline with a different input signature. It does not
+cover a second independently maintained simulator framework.
 
 \subsection{Failure Attribution Rule}
 
@@ -107,9 +110,10 @@ examined after validation; it does not declare every degraded metric a policy fa
 \section{Contract-Gated Integration}
 
 Table~\ref{tab:contract-map} maps the five recurring boundary mismatches to enforcement
-mechanisms. The \emph{semantic contract} preserves route geometry, ego state, camera
-availability, and actor fields at prediction time. A high-level route command may be
-diagnostic context, but it cannot substitute for a local polyline. The \emph{temporal
+mechanisms. The \emph{semantic contract} preserves the inputs declared by the active
+policy, including route geometry for route-conditioned policies plus required ego,
+camera, and actor fields at prediction time. A high-level route command cannot
+substitute for a local polyline when geometry is declared. The \emph{temporal
 contract} validates horizons and timestamps, anchors interpolation at the current ego
 pose, deterministically resamples a finite $N\times2$ trajectory, and recomputes
 headings on the runtime grid.
@@ -133,8 +137,10 @@ Figure~\ref{fig:architecture} shows the boundary. WOD2Sim reconstructs policy-fa
 state, preserves route geometry, resamples outputs, and isolates optional model
 discovery. On the runtime side it records deployment and evidence state before a row can
 be attributed to policy behavior. Constant-velocity and route-following models form the
-public core. Learned-checkpoint and direct actor-aware entry points remain gated when
-their checkpoints or scene-matched actor proxies are unavailable.
+public core. The protocol replay downloads and hash-checks NAVSIM's official
+EgoStatusMLP seed-0 checkpoint without redistributing it. Other learned checkpoints and
+direct actor-aware entry points remain gated when their artifacts or scene-matched actor
+proxies are unavailable.
 
 \begin{figure}[t]
 \centering
@@ -153,8 +159,10 @@ egomotion, route, and close messages update that state; prediction reads one
 consistent snapshot rather than reconstructing inputs from process-global variables.
 The route converter carries simulator waypoints into the policy input and records their
 source. When the explicit command-only diagnostic is selected, it labels the fallback
-as \texttt{command\_proxy}; the audit can then reject the row even if the service and
-simulator finish normally. Static hazards remain geometry-bearing objects, while
+as \texttt{command\_proxy}; the audit rejects the row if the active policy declares
+route geometry as required, even if the service and simulator finish normally. A
+command-native policy does not produce that false alarm. Static hazards remain
+geometry-bearing objects, while
 dynamic hazards retain position, motion, heading, and shape fields when the external
 interface supplies them. Visibility-risk signals remain diagnostics and do not create
 synthetic obstacles.
@@ -222,16 +230,23 @@ unclassified and
 required categories are verified.
 
 For transport-inclusive current-schema evidence, we replay the official AlpaSim
-integration recording identified in the artifact manifest through two live driver
-services. Both arms receive the same recorded session, route, egomotion, camera, and
-\texttt{Drive} messages; one preserves route geometry and one deliberately reduces it
-to the command proxy. The client times the complete loopback gRPC call using
+integration recording identified in the artifact manifest through four live driver
+services. The two policy families are route following and NAVSIM's published learned
+EgoStatusMLP seed-0 baseline~\cite{dauner2024navsim,dauner2024navsimbaselines},
+executed on CPU from a revision- and hash-pinned checkpoint. Its published input is
+planar velocity, acceleration, and a four-way command; it is neither a visual nor
+multimodal policy. For each policy, both arms receive the same recorded session, route,
+egomotion, camera, and \texttt{Drive} messages. One service mode retains all 20 route
+points and the other retains only the derived command. Route following declares the
+polyline required; EgoStatusMLP consumes the command and ego status but not the
+polyline. The client times the complete loopback gRPC call using
 \texttt{perf\_counter\_ns}. Each arm has one sequential execution with
-\CVMReplayDriveRPCsPerArm{} calls. Because returned trajectories do not alter the
-recorded future observations, this is a non-reactive protocol replay rather than a
-simulator rollout. It measures client serialization, transport, service dispatch,
-adapter execution, and response serialization, but not simulator stepping or
-closed-loop feedback. Its arm difference is not used as an overhead estimate.
+\CVMReplayDriveRPCsPerArm{} calls. We pair calls by index, timestamps, and raw route, then
+measure Euclidean separation between output endpoints in the local ego frame. Because
+returned trajectories do not alter recorded future observations, this is a non-reactive
+protocol replay rather than a simulator rollout. It includes client serialization,
+transport, service dispatch, adapter execution, and response serialization, but not
+simulator stepping or feedback. Arm timing differences are not overhead estimates.
 
 The retained external AlpaSim trace contains \CVMExternalChallengeDriveRPCs{} drive calls
 and establishes service-interface and recorded-latency conformance. It uses an earlier
@@ -335,27 +350,48 @@ measurements. Separately, all
 \CVMExternalChallengeLatencyTargetMet{}/\CVMExternalChallengeLatencyTargetDenominator{}
 calls in the retained external trace meet its 100-ms target.
 
-In the current-schema protocol replay, the full and command-only arms return finite
-trajectories on
-\CVMReplayFullFiniteDriveOutputs{}/\CVMReplayDriveRPCsPerArm{} and
-\CVMReplayCommandFiniteDriveOutputs{}/\CVMReplayDriveRPCsPerArm{} calls. They meet the
-100-ms target on
-\CVMReplayFullLatencyTargetMet{}/\CVMReplayDriveRPCsPerArm{} and
-\CVMReplayCommandLatencyTargetMet{}/\CVMReplayDriveRPCsPerArm{} calls, respectively.
-The full-contract arm produces \CVMReplayFullDiagnosticCount{}
-diagnostics, with median/p95 client-to-service latency of
-\CVMReplayFullLatencyMedianMs{}/\CVMReplayFullLatencyNinetyFifthMs{}~ms. The
-command-only arm produces \CVMReplayCommandDiagnosticCount{} diagnostic,
-\texttt{semantic.command\_only}, despite successful finite outputs; its median/p95 is
-\CVMReplayCommandLatencyMedianMs{}/\CVMReplayCommandLatencyNinetyFifthMs{}~ms. These are
-descriptive measurements from one ordered replay per arm, not a claim that either
-format is faster.
+Table~\ref{tab:replay-policies} reports the four current-schema replay arms. Every arm
+returns \CVMReplayDriveRPCsPerArm{}/\CVMReplayDriveRPCsPerArm{} finite and nonstationary
+trajectories and meets the 100-ms target. Both route-preserving traces produce zero
+diagnostics. The reduced route-following trace produces only
+\texttt{semantic.command\_only}, whereas the reduced EgoStatusMLP trace passes because
+route geometry is outside its declared input signature. Thus applicability of the
+semantic decision is tested across \CVMReplayPolicyFamilies{} policy families at the
+same boundary.
 
-Constructing the clean current-schema sessions also exposed a non-injected adapter
-defect: when both accepted front-camera aliases were present, alias priority could select
-an older frame and falsely report staleness. The adapter now selects the freshest
-candidate, with priority only for timestamp ties, and a regression test covers this
-case. This repaired defect is not counted among the 15 injected faults.
+\begin{table}[t]
+\centering
+\caption{Executed policy-family protocol replay. ``Moving'' means endpoint progress
+exceeds 1~m; audit outcomes are recomputed from retained telemetry.}
+\label{tab:replay-policies}
+\resizebox{\columnwidth}{!}{\input{generated/protocol_replay_policies.tex}}
+\end{table}
+
+Route removal changes the route-following endpoint by more than 0.1~m on
+\CVMReplayRouteEndpointChanged{}/\CVMReplayDriveRPCsPerArm{} calls. EgoStatusMLP is the
+policy-signature negative control: all \CVMReplayLearnedDriveRPCsPerArm{} full/reduced
+trajectory pairs are exactly equal, as required because the mutation removes no model
+input. Route-following full/reduced median/p95 client-to-service latency is
+\CVMReplayFullLatencyMedianMs{}/\CVMReplayFullLatencyNinetyFifthMs{} and
+\CVMReplayCommandLatencyMedianMs{}/\CVMReplayCommandLatencyNinetyFifthMs{}~ms;
+EgoStatusMLP is
+\CVMReplayLearnedFullLatencyMedianMs{}/\CVMReplayLearnedFullLatencyNinetyFifthMs{} and
+\CVMReplayLearnedCommandLatencyMedianMs{}/\CVMReplayLearnedCommandLatencyNinetyFifthMs{}~ms.
+These are descriptive values from one ordered run per arm, using different runtime
+images for the dependency-light and learned services; no format or policy overhead is
+inferred.
+
+Constructing the clean sessions exposed two non-injected adapter defects. Camera-alias
+priority could select an older frame and falsely report staleness; the adapter now
+selects the freshest candidate. In the real replay, AlpaSim's dynamic-speed field became
+zero while consecutive poses still advanced, causing 59 stationary outputs in the
+superseded artifact; the adapter now falls back to pose-derived speed when those signals
+conflict. Regression tests cover both cases, and all four replay arms were regenerated.
+Integrating the checkpoint also exposed a serializer off-by-one error that replaced the
+first future pose with the current pose and dropped the final prediction. Telemetry
+schema v3 now records current and future counts separately, and regression tests require
+the current pose plus every predicted waypoint. None of these repaired defects is
+counted among the 15 injected faults.
 
 The closed-loop invalidation check in Table~\ref{tab:integration-checks} is consistent
 with the mutation study. All
@@ -413,7 +449,7 @@ them from policy attribution.
 The contracts instantiate interface reasoning for cyber-physical
 systems~\cite{sangiovanni2012taming,dealfaro2001interface}. Closed-loop platforms and
 benchmarks such as CARLA, nuPlan, Waymax, NAVSIM, and
-AlpaSim~\cite{dosovitskiy2017carla,caesar2021nuplan,gulino2023waymax,
+AlpaSim~\cite{dosovitskiy2017carla,karnchanachari2024nuplan,gulino2023waymax,
 dauner2024navsim,alpasim2025} emphasize simulation or planning evaluation. Scenario and
 falsification tools such as Scenic, VerifAI, DriveFuzz, and
 PlanFuzz~\cite{fremont2019scenic,dreossi2019verifai,kim2022drivefuzz,wan2022planfuzz}
@@ -424,8 +460,10 @@ The abstraction boundary is broader than WOD: a route-conditioned policy in anot
 framework can bind its intent representation to the semantic contract, its prediction
 and control clocks to the temporal contract, and its service and artifact states to the
 remaining contracts. Such a binding may reuse the audit vocabulary without sharing WOD
-message types. The evidence in this paper does not establish that transfer empirically;
-doing so requires a second simulator/policy integration and a framework-independent
+message types. The route-following treatment and EgoStatusMLP negative control show that
+the semantic gate follows a policy's declared input signature rather than one policy
+implementation, but both use the same AlpaSim binding. Cross-simulator transfer still
+requires a second integration, such as a Waymax adapter, and a framework-independent
 fault set.
 
 nuPlan and NAVSIM formalize planning tasks and measures; Waymax and CARLA provide
@@ -442,9 +480,11 @@ service-conformance result, but its earlier schema omits the explicit finite-out
 field required by the current detector. The status-only gate is a concrete
 completion-and-metrics comparator, not a surrogate for CARLA, nuPlan, or another full
 framework. The repository is not an official WOMD interface, does not reconstruct full
-WOMD worlds, and has no public learned checkpoint, scene-matched actor proxy, or
-verified scenario-category coverage. Restricted scenes remain licensed inputs; public
-artifacts retain telemetry, manifests, aggregates, hashes, and testable gate logic.
+WOMD worlds, and has no scene-matched actor proxy or verified scenario-category
+coverage. One official NAVSIM learned checkpoint is hash-pinned for the replay but is
+not redistributed, visual, multimodal, or evaluated for policy quality. Restricted
+scenes remain licensed inputs; public artifacts retain telemetry, manifests,
+aggregates, hashes, and testable gate logic.
 
 \subsection{Threats to Validity}
 
@@ -475,11 +515,11 @@ availability and remain category-unclassified. The diagnostic cases use the same
 adapter, generator, and contract vocabulary, and the closed-loop route pairs have one
 execution per arm with no effective seed control. Accordingly, the descriptive
 comparison concerns only the declared mutations and completion gate; the measured
-software timings concern this host and dependency-light policy path. Learned-policy
-behavior, rare-event coverage, route-loss effects, human debugging time, and comparison
-with independently maintained frameworks require separate experiments. The contract
-taxonomy may transfer structurally, but cross-simulator empirical generalization remains
-untested.
+software timings concern this host and the declared paths. The learned replay measures
+input-signature invariance under route removal, not reactive behavior, safety, policy
+quality, or cross-dataset generalization. Rare-event coverage, human debugging time, and comparison with
+independently maintained frameworks require separate experiments. The contract taxonomy
+may transfer structurally, but cross-simulator empirical generalization remains untested.
 
 \section{Conclusion}
 
@@ -488,11 +528,13 @@ deployment, and evidence contracts. On 15 designed faults paired with 15 valid
 current-adapter sessions it classifies 30/30 cases, localizes 15/15 faults, and differs
 descriptively from the completion-and-metrics gate on all 15 fault cases. Post-parse
 detector execution, a paired guard-path increment, and current-schema client-to-service
-latency are measured. Full simulator runtime, human diagnosis, learned-policy quality,
-format overhead, cross-framework generalization, and framework superiority are not
-claimed. Together with the retained closed-loop route invalidations, the result shows
-that explicit gates make integration evidence auditable before a rollout is attributed
-to policy behavior.
+latency are measured. The semantic decision is also replicated across route following
+and a published learned command-native policy: only the route-dependent policy is
+rejected when geometry is removed, and the learned negative control remains invariant.
+Full simulator runtime, human diagnosis, learned-policy quality, format overhead,
+cross-framework generalization, and framework superiority are not claimed. Together
+with the retained closed-loop route invalidations, the result shows that explicit gates
+make integration evidence auditable before a rollout is attributed to policy behavior.
 
 \section*{Acknowledgment}
 

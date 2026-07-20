@@ -12,8 +12,9 @@ MAX_IMAGE_AGE_US = 100_000
 SUPPORTED_TELEMETRY_SCHEMAS = {
     "wod2sim_challenge_telemetry_v1",
     "wod2sim_challenge_telemetry_v2",
+    "wod2sim_challenge_telemetry_v3",
 }
-CURRENT_TELEMETRY_SCHEMA = "wod2sim_challenge_telemetry_v2"
+CURRENT_TELEMETRY_SCHEMA = "wod2sim_challenge_telemetry_v3"
 KNOWN_TELEMETRY_EVENTS = {
     "start_session",
     "image",
@@ -210,7 +211,10 @@ def diagnose_contract_trace(
             continue
 
         _diagnose_route_source(event, detected)
-        if session_uuid not in sessions_with_route:
+        if (
+            session_uuid not in sessions_with_route
+            and event.get("route_geometry_required") is not False
+        ):
             _record(
                 detected,
                 "semantic.route_missing",
@@ -250,22 +254,25 @@ def diagnose_contract_trace(
                 ),
             )
 
-        trajectory_points = _as_int(event.get("trajectory_points"))
-        if trajectory_points is None:
-            _record(
-                detected,
-                "evidence.telemetry_incomplete",
-                f"Drive telemetry for session {session_uuid} lacks trajectory_points.",
-            )
-        elif trajectory_points != EXPECTED_TRAJECTORY_POINTS:
-            _record(
-                detected,
-                "temporal.invalid_sample_count",
-                (
-                    f"Trajectory contained {trajectory_points} points; "
-                    f"{EXPECTED_TRAJECTORY_POINTS} were required."
-                ),
-            )
+        if schema == "wod2sim_challenge_telemetry_v3":
+            _diagnose_current_trajectory_shape(event, detected, session_uuid)
+        else:
+            trajectory_points = _as_int(event.get("trajectory_points"))
+            if trajectory_points is None:
+                _record(
+                    detected,
+                    "evidence.telemetry_incomplete",
+                    f"Drive telemetry for session {session_uuid} lacks trajectory_points.",
+                )
+            elif trajectory_points != EXPECTED_TRAJECTORY_POINTS:
+                _record(
+                    detected,
+                    "temporal.invalid_sample_count",
+                    (
+                        f"Trajectory contained {trajectory_points} points; "
+                        f"{EXPECTED_TRAJECTORY_POINTS} were required."
+                    ),
+                )
         if "trajectory_finite" not in event:
             _record(
                 detected,
@@ -359,7 +366,13 @@ def mutate_trace(
             if event.get("event") == "image" and _as_int(event.get("timestamp_us")) is not None:
                 event["timestamp_us"] = int(event["timestamp_us"]) - 1_000_000
     elif fault_code == "temporal.invalid_sample_count":
-        _first_event(mutated, "drive")["trajectory_points"] = EXPECTED_TRAJECTORY_POINTS - 1
+        drive = _first_event(mutated, "drive")
+        if drive.get("schema") == "wod2sim_challenge_telemetry_v3":
+            drive["trajectory_future_points"] = (
+                int(drive["trajectory_expected_future_points"]) - 1
+            )
+        else:
+            drive["trajectory_points"] = EXPECTED_TRAJECTORY_POINTS - 1
     elif fault_code == "temporal.nan_trajectory":
         _first_event(mutated, "drive")["trajectory_finite"] = False
     elif fault_code == "lifecycle.duplicate_close":
@@ -454,6 +467,8 @@ def _diagnose_route_source(
     event: Mapping[str, Any],
     detected: dict[str, ContractDiagnostic],
 ) -> None:
+    if event.get("route_geometry_required") is False:
+        return
     source = str(event.get("route_source", "") or "")
     if source == "command_proxy":
         _record(
@@ -466,6 +481,41 @@ def _diagnose_route_source(
             detected,
             "semantic.road_center_reference",
             "A road-center reference was presented as policy route geometry.",
+        )
+
+
+def _diagnose_current_trajectory_shape(
+    event: Mapping[str, Any],
+    detected: dict[str, ContractDiagnostic],
+    session_uuid: str,
+) -> None:
+    total = _as_int(event.get("trajectory_points"))
+    future = _as_int(event.get("trajectory_future_points"))
+    expected = _as_int(event.get("trajectory_expected_future_points"))
+    includes_current = event.get("trajectory_includes_current_pose")
+    if (
+        total is None
+        or future is None
+        or expected is None
+        or includes_current is not True
+    ):
+        _record(
+            detected,
+            "evidence.telemetry_incomplete",
+            (
+                f"Drive telemetry for session {session_uuid} lacks the v3 trajectory "
+                "shape fields."
+            ),
+        )
+        return
+    if future != expected or total != future + 1:
+        _record(
+            detected,
+            "temporal.invalid_sample_count",
+            (
+                f"Trajectory contained {future} future points plus the current pose; "
+                f"{expected} future points were required."
+            ),
         )
 
 

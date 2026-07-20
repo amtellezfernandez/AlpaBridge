@@ -82,7 +82,17 @@ def _percentile(values: list[float], percentile: float) -> float:
 def _trajectory_row(response: Any) -> dict[str, Any]:
     poses = list(getattr(getattr(response, "trajectory", None), "poses", []) or [])
     points: list[list[float]] = []
+    ego_points: list[list[float]] = []
     finite = bool(poses)
+    origin_x = origin_y = origin_z = origin_yaw = 0.0
+    if poses:
+        origin_pose = poses[0].pose
+        origin_x = float(origin_pose.vec.x)
+        origin_y = float(origin_pose.vec.y)
+        origin_z = float(origin_pose.vec.z)
+        origin_yaw = _yaw_from_quaternion(origin_pose.quat)
+    cos_yaw = math.cos(-origin_yaw)
+    sin_yaw = math.sin(-origin_yaw)
     for pose_at_time in poses:
         pose = pose_at_time.pose
         point = [
@@ -98,11 +108,33 @@ def _trajectory_row(response: Any) -> dict[str, Any]:
         ]
         finite = finite and all(math.isfinite(value) for value in (*point, *quaternion))
         points.append(point)
+        delta_x = point[0] - origin_x
+        delta_y = point[1] - origin_y
+        ego_points.append(
+            [
+                cos_yaw * delta_x - sin_yaw * delta_y,
+                sin_yaw * delta_x + cos_yaw * delta_y,
+            ]
+        )
     return {
         "trajectory_points": len(poses),
         "trajectory_finite": finite,
         "trajectory_xyz": points,
+        "trajectory_ego_xy": ego_points,
+        "trajectory_origin_xyz_yaw": [origin_x, origin_y, origin_z, origin_yaw],
+        "trajectory_progress_m": max(
+            (math.hypot(point[0], point[1]) for point in ego_points),
+            default=0.0,
+        ),
     }
+
+
+def _yaw_from_quaternion(quaternion: Any) -> float:
+    w = float(getattr(quaternion, "w", 1.0))
+    x = float(getattr(quaternion, "x", 0.0))
+    y = float(getattr(quaternion, "y", 0.0))
+    z = float(getattr(quaternion, "z", 0.0))
+    return math.atan2(2.0 * (w * z + x * y), 1.0 - 2.0 * (y * y + z * z))
 
 
 def _write_camera_frame(frame_dir: Path, image: Any, frame_index: int) -> str:
@@ -249,6 +281,9 @@ def replay(args: argparse.Namespace) -> dict[str, Any]:
             "drive_calls": len(drive_rows),
             "finite_drive_outputs": sum(
                 row["trajectory_finite"] is True for row in drive_rows
+            ),
+            "nonstationary_drive_outputs": sum(
+                float(row["trajectory_progress_m"]) > 1.0 for row in drive_rows
             ),
             "latency_target_ms": 100.0,
             "drive_calls_within_target": sum(
