@@ -344,6 +344,26 @@ class AggregateCVMTests(unittest.TestCase):
         self.assertEqual(4.0, summary["driver_latency_max_ms"])
         self.assertEqual(0.25, summary["score"])
 
+    def test_protocol_replay_summary_revalidates_tracked_evidence(self) -> None:
+        module = _load_module()
+
+        summary = module._protocol_replay_summary(
+            ROOT / "artifacts" / "external" / "alpasim_protocol_replay"
+        )
+
+        self.assertTrue(summary["available"])
+        self.assertEqual(60, summary["media"]["camera_frames"])
+        full = summary["arms"]["full_contract"]
+        command = summary["arms"]["command_only_route"]
+        self.assertEqual(60, full["drive_calls"])
+        self.assertEqual(60, full["finite_drive_outputs"])
+        self.assertEqual([], full["diagnostic_codes"])
+        self.assertEqual(60, command["drive_calls"])
+        self.assertEqual(60, command["finite_drive_outputs"])
+        self.assertEqual(["semantic.command_only"], command["diagnostic_codes"])
+        self.assertLess(full["drive_rpc_latency_ms"]["p95"], 100.0)
+        self.assertLess(command["drive_rpc_latency_ms"]["p95"], 100.0)
+
     def test_release_scope_separates_public_core_from_gated_extensions(self) -> None:
         module = _load_module()
         rows = [

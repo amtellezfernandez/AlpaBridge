@@ -110,7 +110,7 @@
     }
   ],
   "created_at": "2026-07-18T21:18:19.088449+00:00",
-  "data_hash": "0c2398419f8fd3f52d75fd6c5efe82527bf653dd4f9e730d01d308468faac402",
+  "data_hash": "5755caed5ccfae8a61edeba7edfdf2ed70f63313a07840d7277d796caf9262e2",
   "diagnostic_experiment": {
     "adapter_guard_path_timing": {
       "guarded_drive_path_us": {
@@ -864,6 +864,122 @@
     "temporal_ablation": 18
   },
   "planned_runs": 0,
+  "protocol_replay": {
+    "arms": {
+      "command_only_route": {
+        "diagnostic_codes": [
+          "semantic.command_only"
+        ],
+        "diagnostic_count": 1,
+        "drive_calls": 60,
+        "drive_calls_within_target": 60,
+        "drive_rpc_latency_ms": {
+          "max": 2.914963,
+          "mean": 1.8780992,
+          "p50": 1.8348145,
+          "p95": 2.33821815,
+          "samples": 60
+        },
+        "finite_drive_outputs": 60,
+        "latency_target_ms": 100.0,
+        "result_sha256": "adb4827fcf19512b06ada8f8ecd7a079a12ffa4014914b3ba0a811739a41f667",
+        "telemetry_runtime": {
+          "drive_count": 60,
+          "event_count": 307,
+          "explicit_finite_drive_count": 60,
+          "latency_ms": {
+            "max": 1.618394,
+            "mean": 0.88288155,
+            "p50": 0.8496170000000001,
+            "p95": 1.2071724
+          },
+          "latency_target_met_count": 60,
+          "latency_target_ms": 100.0,
+          "session_count": 1,
+          "telemetry_schemas": [
+            "wod2sim_challenge_telemetry_v2"
+          ]
+        },
+        "telemetry_sha256": "26114e8d344f424e03dcfa576b3e7ea699f390b682fad1fe628dfb6adaf50214"
+      },
+      "full_contract": {
+        "diagnostic_codes": [],
+        "diagnostic_count": 0,
+        "drive_calls": 60,
+        "drive_calls_within_target": 60,
+        "drive_rpc_latency_ms": {
+          "max": 2.523694,
+          "mean": 1.8232848166666666,
+          "p50": 1.7856025,
+          "p95": 2.1912602499999996,
+          "samples": 60
+        },
+        "finite_drive_outputs": 60,
+        "latency_target_ms": 100.0,
+        "result_sha256": "ba8a3503bbd971bf1055ffc86cc96470180f3f07163438f760c91c54c3e3a7a5",
+        "telemetry_runtime": {
+          "drive_count": 60,
+          "event_count": 307,
+          "explicit_finite_drive_count": 60,
+          "latency_ms": {
+            "max": 1.38589,
+            "mean": 0.8900985166666667,
+            "p50": 0.8541529999999999,
+            "p95": 1.0687760499999999
+          },
+          "latency_target_met_count": 60,
+          "latency_target_ms": 100.0,
+          "session_count": 1,
+          "telemetry_schemas": [
+            "wod2sim_challenge_telemetry_v2"
+          ]
+        },
+        "telemetry_sha256": "9be57557e063cc6ff1b9bd7f51faed7f6369ae8b8e815cdceecbf6a34c4a87f7"
+      }
+    },
+    "artifact_dir": "artifacts/external/alpasim_protocol_replay",
+    "artifact_sha256": "a1e0887e25144dcce047dbbf2cad8c4b4484693a6d0a2b0736346a624bbb02d1",
+    "available": true,
+    "claim_boundary": "This is an executed client-to-service gRPC replay of recorded camera, route, egomotion, and Drive messages. It measures transport-inclusive driver RPC latency and contract diagnostics. Recorded inputs are non-reactive, so it does not measure simulator runtime, policy quality, human diagnosis time, or generalization to another integration framework.",
+    "execution_environment": {
+      "cpu_model": "Intel(R) Core(TM) Ultra 9 275HX",
+      "docker_image_id": "sha256:2cdabfeb7254f3de88dd0c422ee7965e584b461c59689898044155afe31ecd7b",
+      "grpc_transport": "host loopback",
+      "host_machine": "x86_64",
+      "host_platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "python": "3.12.12",
+      "run_order": [
+        "full_contract",
+        "command_only_route"
+      ],
+      "timer": "time.perf_counter_ns",
+      "wod2sim_commit": "0ea523fbb31fc53e30faf24281782aa4dcea21f6"
+    },
+    "media": {
+      "camera_frames": 60,
+      "duration_seconds": 8.0,
+      "readme_preview": {
+        "bytes": 8141332,
+        "format": "animated GIF",
+        "path": "docs/assets/readme/alpasim-protocol-replay.gif",
+        "sha256": "d4b3ef8d246b7e67b223f9d25eda294349447e453114b5417de0883824126e78"
+      },
+      "video": {
+        "bytes": 895030,
+        "format": "H.264 MP4",
+        "path": "docs/assets/readme/alpasim-protocol-replay.mp4",
+        "sha256": "dbfc6b58493855dc66526b8da6fdf2c6be8c485de04d8ed37988de71beee6e28"
+      }
+    },
+    "source": {
+      "alpasim_commit": "049f70fbfe8207e1efd4831a6c3e78a38703d473",
+      "asl_sha256": "237d6b55f4da5b0610f1b8b1e940f52d9efdc9e39c8ca2b35c5b5285ebefdc1f",
+      "camera_id": "camera_front_wide_120fov",
+      "kind": "official Apache-licensed AlpaSim integration replay",
+      "reactive_closed_loop": false,
+      "url": "https://media.githubusercontent.com/media/NVlabs/alpasim/049f70fbfe8207e1efd4831a6c3e78a38703d473/src/runtime/tests/data/integration/rollout.asl"
+    }
+  },
   "public_core_policy_results": [
     {
       "action_latency_p95_ms": null,

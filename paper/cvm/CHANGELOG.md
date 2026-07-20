@@ -1,9 +1,20 @@
 # Paper Changelog
 
+## 2026-07-20
+
+- Added a hash-validated current-schema replay of the official AlpaSim
+  integration protocol through paired live gRPC services.
+- Reported 60/60 finite outputs per arm and bounded client-to-service latency;
+  retained the non-reactive, no-overhead, and no-human-diagnosis limits.
+- Added structural generalization beyond WOD message types while explicitly
+  withholding empirical cross-framework generalization.
+- Replaced illustrative README media with one real-camera comparison video and
+  a same-frame animated preview generated from the executed replay.
+
 ## 2026-07-19
 
 - Switched the manuscript to the official PaperPlaza `ieeeconf` A4 conference
-  class and reduced the paper to four pages.
+  class and kept the paper within the conference's regular-paper page range.
 - Removed the unmeasured false-block claim and replaced the informal naive
   wrapper comparison with a defined status-only acceptance baseline.
 - Added comparison eligibility to semantic pairs; 14/15 pairs qualify after

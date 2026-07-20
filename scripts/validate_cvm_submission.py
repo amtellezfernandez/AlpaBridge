@@ -217,21 +217,19 @@ CLAIM_BOUNDARY_SOURCE_TERMS = (
     "do not compute a population confidence interval or hypothesis test",
 )
 README_VISUAL_EXPLANATION_TERMS = (
-    "Visual Overview",
-    "adapter boundary",
-    "not a benchmark result",
-    "command-manifest example",
-    "valid_claim_evidence",
-    "metrics dashboard",
-    "RPC timing",
-    "service queue depth",
-    "rollout duration",
-    "step duration",
-    "CPU utilization",
-    "GPU utilization",
-    "GPU memory",
-    "service replica counts",
-    "do not evaluate policy quality",
+    "Executed Camera Replay",
+    "official Apache-licensed AlpaSim integration recording",
+    "live gRPC adapter modes",
+    "camera, egomotion, route messages",
+    "RPC-completion check accepts both",
+    "contract audit accepts",
+    "semantic.command_only",
+    "non-reactive",
+    "outputs do not change the recorded future frames",
+    "not a reactive simulator rollout or a policy-quality comparison",
+    "alpasim-protocol-replay.mp4",
+    "validated manifest",
+    "reproduction notes",
 )
 EVALUATION_STATUS_TERMS = (
     "completed dependency-light closed-loop diagnostic rows",
@@ -492,6 +490,35 @@ PAPER_NUMBER_JSON_FIELDS: tuple[tuple[str, str], ...] = (
         "CVMExternalChallengeLatencyTargetDenominator",
         "external_compatibility.latency_target_denominator",
     ),
+    (
+        "CVMReplayDriveRPCsPerArm",
+        "protocol_replay.arms.full_contract.drive_calls",
+    ),
+    ("CVMReplayCameraFrames", "protocol_replay.media.camera_frames"),
+    (
+        "CVMReplayFullFiniteDriveOutputs",
+        "protocol_replay.arms.full_contract.finite_drive_outputs",
+    ),
+    (
+        "CVMReplayCommandFiniteDriveOutputs",
+        "protocol_replay.arms.command_only_route.finite_drive_outputs",
+    ),
+    (
+        "CVMReplayFullLatencyTargetMet",
+        "protocol_replay.arms.full_contract.drive_calls_within_target",
+    ),
+    (
+        "CVMReplayCommandLatencyTargetMet",
+        "protocol_replay.arms.command_only_route.drive_calls_within_target",
+    ),
+    (
+        "CVMReplayFullDiagnosticCount",
+        "protocol_replay.arms.full_contract.diagnostic_count",
+    ),
+    (
+        "CVMReplayCommandDiagnosticCount",
+        "protocol_replay.arms.command_only_route.diagnostic_count",
+    ),
     ("CVMPublicCoreRows", "release_scope.public_core_configured_rows"),
     ("CVMPublicCoreCompletedRuns", "release_scope.public_core_completed_runs"),
     ("CVMPublicCoreAttemptedRuns", "release_scope.public_core_attempted_runs"),
@@ -588,6 +615,22 @@ PAPER_NUMBER_FLOAT_FIELDS: tuple[tuple[str, str], ...] = (
     (
         "CVMExternalChallengeDriverLatencyMaxMs",
         "external_compatibility.driver_latency_max_ms",
+    ),
+    (
+        "CVMReplayFullLatencyMedianMs",
+        "protocol_replay.arms.full_contract.drive_rpc_latency_ms.p50",
+    ),
+    (
+        "CVMReplayFullLatencyNinetyFifthMs",
+        "protocol_replay.arms.full_contract.drive_rpc_latency_ms.p95",
+    ),
+    (
+        "CVMReplayCommandLatencyMedianMs",
+        "protocol_replay.arms.command_only_route.drive_rpc_latency_ms.p50",
+    ),
+    (
+        "CVMReplayCommandLatencyNinetyFifthMs",
+        "protocol_replay.arms.command_only_route.drive_rpc_latency_ms.p95",
     ),
     (
         "CVMDetectorDecisionMedianUs",

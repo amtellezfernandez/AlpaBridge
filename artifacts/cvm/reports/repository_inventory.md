@@ -17,6 +17,9 @@ host-specific paths, runtime identifiers, and local simulator state.
 - Matrix runner: `scripts/run_cvm_matrix.py`.
 - Aggregator: `scripts/aggregate_cvm.py`.
 - Controlled diagnostic runner: `scripts/run_diagnostic_experiment.py`.
+- Public AlpaSim protocol-replay runner: `scripts/run_alpasim_replay_demo.sh`.
+- Protocol-replay evidence:
+  `artifacts/external/alpasim_protocol_replay`.
 - Figure generator: `scripts/generate_cvm_figures.py`.
 - Paper build script: `scripts/build_cvm_paper.sh`.
 - Submission validator: `scripts/validate_cvm_submission.py`.
@@ -28,7 +31,7 @@ host-specific paths, runtime identifiers, and local simulator state.
   `paper/cvm/ieeeconf.cls`.
 - Page size: A4 verified by `mutool info` mediabox `[ 0 0 595.276 841.89 ]`.
 - Page count: 5.
-- PDF size at audit: 187020 bytes.
+- PDF size at audit: 200108 bytes.
 - Root PDF is the only tracked manuscript PDF.
 
 ## Commands And Targets
@@ -74,13 +77,18 @@ host-specific paths, runtime identifiers, and local simulator state.
 - Fault-case detector execution: 11.441 us median and 21.915 us p95.
 - Guarded in-process adapter Drive path: 257.390 us median and 449.371 us p95.
 - Paired guard-path increment: 25.630 us median and 112.659 us p95.
+- Current-schema protocol replay: 60/60 finite `Drive` outputs and 60/60
+  latency-target hits in each arm. Full-contract client-to-service latency is
+  1.786 ms median and 2.191 ms p95; command-only latency is 1.835 ms median and
+  2.338 ms p95. The full trace has no diagnostic and the command-only trace
+  isolates `semantic.command_only`.
 - Blocked rows: 33, all `direct_actor_oracle_proxy_missing`.
 - Claim-valid policy benchmark rows: 0.
 - Policy-attributable behavior rows: 42.
 - Policy-attributable failure rows: 0.
 - Completed non-policy diagnostic rows: 73.
 - Non-policy-attributed rows: 106.
-- Aggregate data hash: `0c2398419f8fd3f52d75fd6c5efe82527bf653dd4f9e730d01d308468faac402`.
+- Aggregate data hash: `5755caed5ccfae8a61edeba7edfdf2ed70f63313a07840d7277d796caf9262e2`.
 - Every public run manifest carries pre-audit `failure_attribution`, including
   policy-failure status, claim-valid benchmark status, failure layer/code, and
   the integration-vs-policy attribution rule. Aggregate `summary.json` upgrades

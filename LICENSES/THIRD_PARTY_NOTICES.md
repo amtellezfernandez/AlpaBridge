@@ -30,6 +30,28 @@ repository are described in
 AlpaSim itself is **not** bundled in this repository; the runtime expects a
 separate AlpaSim checkout as described in the README.
 
+## NVIDIA AlpaSim protocol-replay media
+
+[`docs/assets/readme/alpasim-protocol-replay.mp4`](../docs/assets/readme/alpasim-protocol-replay.mp4)
+and its
+[`animated README preview`](../docs/assets/readme/alpasim-protocol-replay.gif)
+contain front-camera frames extracted from the official AlpaSim integration
+fixture `src/runtime/tests/data/integration/rollout.asl` at upstream commit
+`049f70fbfe8207e1efd4831a6c3e78a38703d473`. The exact source URL and SHA-256
+are recorded in
+[`artifacts/external/alpasim_protocol_replay/manifest.json`](../artifacts/external/alpasim_protocol_replay/manifest.json).
+
+The upstream fixture is part of NVIDIA AlpaSim:
+
+> SPDX-License-Identifier: Apache-2.0
+> Copyright (c) 2025-2026 NVIDIA Corporation
+
+WOD2Sim modified the rendered media by selecting the wide-camera stream,
+pairing frames with executed `Drive` calls, and adding comparison plots,
+measurements, labels, and contract-audit results. The upstream portion is
+redistributed under the Apache License, Version 2.0; the full license text is
+included at [`Apache-2.0.txt`](Apache-2.0.txt).
+
 ## IEEE conference LaTeX class
 
 [`paper/cvm/ieeeconf.cls`](../paper/cvm/ieeeconf.cls) is the unmodified

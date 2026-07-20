@@ -31,29 +31,32 @@ Email: amtellezfernandez@gmail.com.}%
 \pagestyle{empty}
 
 \begin{abstract}
-Closed-loop driving evaluation can misattribute degraded rollout metrics to policy
-quality when the simulator boundary drops route geometry, changes timing assumptions,
-or produces incomplete evidence. WOD2Sim audits semantic, temporal, lifecycle,
-deployment, and evidence contracts between Waymo Open Motion Dataset-style
-trajectory policies and AlpaSim external drivers. A retained external AlpaSim rollout
-establishes interface conformance; a separate current-instrumentation suite contains
-\CVMProtocolTraceSessions{} adapter sessions and \CVMProtocolTraceDriveRPCs{} drive
-records. We pair each session with one of \CVMDiagnosticFaultCases{} predefined
-single-fault mutations while withholding labels from the detector. WOD2Sim classifies
-\CVMWODDiagnosticCorrect{}/\CVMDiagnosticCases{} cases correctly, detects and localizes
+Closed-loop driving evaluation can misattribute degraded metrics to policy quality when
+a simulator boundary drops route geometry, changes timing, or produces incomplete
+evidence. WOD2Sim audits semantic, temporal, lifecycle, deployment, and evidence
+contracts between Waymo Open Motion Dataset-style trajectory policies and AlpaSim
+external drivers. An official recorded protocol is replayed through current-schema gRPC
+services. The route-preserving and command-only arms respectively return
+\CVMReplayFullFiniteDriveOutputs{}/\CVMReplayDriveRPCsPerArm{} and
+\CVMReplayCommandFiniteDriveOutputs{}/\CVMReplayDriveRPCsPerArm{} finite outputs; the
+audit accepts the former but isolates \texttt{semantic.command\_only} in the latter.
+Full-contract client-to-service latency is \CVMReplayFullLatencyMedianMs{}~ms median and
+\CVMReplayFullLatencyNinetyFifthMs{}~ms p95. A separate suite pairs
+\CVMProtocolTraceSessions{} adapter sessions with \CVMDiagnosticFaultCases{} predefined
+single-fault mutations while withholding labels. WOD2Sim classifies
+\CVMWODDiagnosticCorrect{}/\CVMDiagnosticCases{} cases, localizes
 \CVMWODDiagnosticLocalized{}/\CVMDiagnosticFaultCases{} faults, and produces
-\CVMWODDiagnosticFalsePositives{}/\CVMDiagnosticControlCases{} control false
-positives; an executable completion-and-metrics gate classifies
-\CVMStatusDiagnosticCorrect{}/\CVMDiagnosticCases{} and detects no faults. Across 3,000
-fault-case calls after parsing, detector execution has median
-\CVMFaultDetectorMedianUs{}~$\mu$s and p95
-\CVMFaultDetectorNinetyFifthUs{}~$\mu$s. Across \CVMAdapterTimingSamples{} paired measurements on
-\CVMAdapterInputCases{} valid route-following sessions, camera-set and freshness
-checks add \CVMAdapterGuardIncrementMedianUs{}~$\mu$s median and
-\CVMAdapterGuardIncrementNinetyFifthUs{}~$\mu$s p95 while preserving output. These are scoped
-software-path measurements, not end-to-end runtime or human diagnosis time, and not a
-comparison with another integration framework; learned-policy quality and scenario
-coverage remain outside the study.
+\CVMWODDiagnosticFalsePositives{}/\CVMDiagnosticControlCases{} control false positives;
+a completion-and-metrics gate classifies
+\CVMStatusDiagnosticCorrect{}/\CVMDiagnosticCases{} and detects no faults. Detector
+execution over 3,000 post-parse fault calls is \CVMFaultDetectorMedianUs{}~$\mu$s median
+and \CVMFaultDetectorNinetyFifthUs{}~$\mu$s p95. Across \CVMAdapterTimingSamples{}
+measurements, camera-set and freshness checks add
+\CVMAdapterGuardIncrementMedianUs{}~$\mu$s median and
+\CVMAdapterGuardIncrementNinetyFifthUs{}~$\mu$s p95 while preserving output. The replay
+is non-reactive, so it does not measure full simulator runtime or format overhead.
+Human diagnosis, learned-policy quality, scenario coverage, and cross-framework
+comparison remain outside the study.
 \end{abstract}
 
 \section{Introduction}
@@ -81,11 +84,15 @@ threefold:
   \item an adapter, audit, and artifact pipeline localizes violations and preserves
   completed, blocked, and invalid rows;
   \item a paired protocol-conformance suite measures localization, post-parse detector
-  execution, and a guard-path increment against an executable status-only gate.
+  execution, and a guard-path increment against an executable status-only gate, while
+  a recorded-message gRPC replay measures client-to-service latency.
 \end{itemize}
-The design targets WOD-style trajectory interfaces, but the present evaluation uses
-only dependency-light constant-velocity and route-following policies. It does not
-evaluate a learned policy.
+The five contract classes concern information, clocks, service state, deployment, and
+evidence rather than a specific protobuf schema. The design can therefore be bound to
+other trajectory-policy/simulator interfaces. This is a structural generalization
+hypothesis: the present evaluation covers one WOD-style/AlpaSim binding and only
+dependency-light constant-velocity and route-following policies, not a learned policy
+or a second independently maintained framework.
 
 \subsection{Failure Attribution Rule}
 
@@ -214,6 +221,18 @@ unclassified and
 \CVMVerifiedRequiredScenarioCategoryCount{}/\CVMRequiredScenarioCategoryCount{}
 required categories are verified.
 
+For transport-inclusive current-schema evidence, we replay the official AlpaSim
+integration recording identified in the artifact manifest through two live driver
+services. Both arms receive the same recorded session, route, egomotion, camera, and
+\texttt{Drive} messages; one preserves route geometry and one deliberately reduces it
+to the command proxy. The client times the complete loopback gRPC call using
+\texttt{perf\_counter\_ns}. Each arm has one sequential execution with
+\CVMReplayDriveRPCsPerArm{} calls. Because returned trajectories do not alter the
+recorded future observations, this is a non-reactive protocol replay rather than a
+simulator rollout. It measures client serialization, transport, service dispatch,
+adapter execution, and response serialization, but not simulator stepping or
+closed-loop feedback. Its arm difference is not used as an overhead estimate.
+
 The retained external AlpaSim trace contains \CVMExternalChallengeDriveRPCs{} drive calls
 and establishes service-interface and recorded-latency conformance. It uses an earlier
 telemetry schema that did not record the final finite-output check, so it is not the
@@ -316,6 +335,22 @@ measurements. Separately, all
 \CVMExternalChallengeLatencyTargetMet{}/\CVMExternalChallengeLatencyTargetDenominator{}
 calls in the retained external trace meet its 100-ms target.
 
+In the current-schema protocol replay, the full and command-only arms return finite
+trajectories on
+\CVMReplayFullFiniteDriveOutputs{}/\CVMReplayDriveRPCsPerArm{} and
+\CVMReplayCommandFiniteDriveOutputs{}/\CVMReplayDriveRPCsPerArm{} calls. They meet the
+100-ms target on
+\CVMReplayFullLatencyTargetMet{}/\CVMReplayDriveRPCsPerArm{} and
+\CVMReplayCommandLatencyTargetMet{}/\CVMReplayDriveRPCsPerArm{} calls, respectively.
+The full-contract arm produces \CVMReplayFullDiagnosticCount{}
+diagnostics, with median/p95 client-to-service latency of
+\CVMReplayFullLatencyMedianMs{}/\CVMReplayFullLatencyNinetyFifthMs{}~ms. The
+command-only arm produces \CVMReplayCommandDiagnosticCount{} diagnostic,
+\texttt{semantic.command\_only}, despite successful finite outputs; its median/p95 is
+\CVMReplayCommandLatencyMedianMs{}/\CVMReplayCommandLatencyNinetyFifthMs{}~ms. These are
+descriptive measurements from one ordered replay per arm, not a claim that either
+format is faster.
+
 Constructing the clean current-schema sessions also exposed a non-injected adapter
 defect: when both accepted front-camera aliases were present, alias priority could select
 an older frame and falsely report staleness. The adapter now selects the freshest
@@ -385,6 +420,14 @@ PlanFuzz~\cite{fremont2019scenic,dreossi2019verifai,kim2022drivefuzz,wan2022plan
 generate or mutate conditions. WOD2Sim is complementary: it asks whether the
 policy/simulator boundary preserved the assumptions needed to interpret a rollout.
 
+The abstraction boundary is broader than WOD: a route-conditioned policy in another
+framework can bind its intent representation to the semantic contract, its prediction
+and control clocks to the temporal contract, and its service and artifact states to the
+remaining contracts. Such a binding may reuse the audit vocabulary without sharing WOD
+message types. The evidence in this paper does not establish that transfer empirically;
+doing so requires a second simulator/policy integration and a framework-independent
+fault set.
+
 nuPlan and NAVSIM formalize planning tasks and measures; Waymax and CARLA provide
 controllable simulation interfaces; AlpaSim supplies the external-driver boundary used
 here. WOD2Sim instead applies contract assumptions and guarantees as runtime admission
@@ -418,11 +461,14 @@ freshness checks in the in-process adapter Drive path over 15 deterministic vali
 sessions. It includes input assembly, prediction, serialization, finite-output
 validation, reasoning parsing, and in-memory telemetry, but excludes gRPC, file I/O,
 simulator work, and human investigation. The detector timer begins after JSON parsing
-and excludes I/O and human investigation. Neither timer supports an end-to-end runtime
-or time-to-diagnosis claim. All five contracts, including the plugin precondition
-within deployment, are mutated against generated telemetry and context rather than
-rerun as physical simulator faults. Contract-valid therefore means admitted to the
-stated evidence boundary, not driving safety or simulator correctness.
+and excludes I/O and human investigation. Neither microbenchmark timer supports an
+end-to-end runtime or time-to-diagnosis claim. The recorded-message replay adds gRPC
+transport and service dispatch, but excludes simulator stepping and feedback; it
+therefore supports client-to-service latency, not end-to-end runtime or human
+diagnosis time. All five contracts, including the plugin precondition within deployment,
+are mutated against generated telemetry and context rather than rerun as physical
+simulator faults. Contract-valid therefore means admitted to the stated evidence
+boundary, not driving safety or simulator correctness.
 
 \emph{External and conclusion validity.} The scenes were selected by local asset
 availability and remain category-unclassified. The diagnostic cases use the same
@@ -431,7 +477,9 @@ execution per arm with no effective seed control. Accordingly, the descriptive
 comparison concerns only the declared mutations and completion gate; the measured
 software timings concern this host and dependency-light policy path. Learned-policy
 behavior, rare-event coverage, route-loss effects, human debugging time, and comparison
-with independently maintained frameworks require separate experiments.
+with independently maintained frameworks require separate experiments. The contract
+taxonomy may transfer structurally, but cross-simulator empirical generalization remains
+untested.
 
 \section{Conclusion}
 
@@ -439,11 +487,12 @@ WOD2Sim formulates a closed-loop policy boundary as semantic, temporal, lifecycl
 deployment, and evidence contracts. On 15 designed faults paired with 15 valid
 current-adapter sessions it classifies 30/30 cases, localizes 15/15 faults, and differs
 descriptively from the completion-and-metrics gate on all 15 fault cases. Post-parse
-detector execution and a paired guard-path increment are measured; human diagnosis,
-end-to-end overhead, learned-policy quality, and framework superiority are not claimed.
-Together with the retained closed-loop route invalidations, the result shows that
-explicit gates make integration evidence auditable before a rollout is attributed to
-policy behavior.
+detector execution, a paired guard-path increment, and current-schema client-to-service
+latency are measured. Full simulator runtime, human diagnosis, learned-policy quality,
+format overhead, cross-framework generalization, and framework superiority are not
+claimed. Together with the retained closed-loop route invalidations, the result shows
+that explicit gates make integration evidence auditable before a rollout is attributed
+to policy behavior.
 
 \section*{Acknowledgment}
 

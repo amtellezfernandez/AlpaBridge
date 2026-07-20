@@ -11,6 +11,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from wod2sim.audit.trace_diagnostics import (
+    diagnose_contract_trace,
+    load_telemetry_trace,
+    trace_runtime_summary,
+)
 from wod2sim.cli.commands.audit_run import build_report as build_audit_report
 from wod2sim.neutral.alpasim_metrics import load_alpasim_metrics
 
@@ -90,6 +95,18 @@ FRAME_FIELDS = (
     "lifecycle_warning_code",
     "policy_reasoning_status_code",
 )
+PROTOCOL_REPLAY_SOURCE = {
+    "alpasim_commit": "049f70fbfe8207e1efd4831a6c3e78a38703d473",
+    "asl_sha256": "237d6b55f4da5b0610f1b8b1e940f52d9efdc9e39c8ca2b35c5b5285ebefdc1f",
+    "camera_id": "camera_front_wide_120fov",
+    "kind": "official Apache-licensed AlpaSim integration replay",
+    "reactive_closed_loop": False,
+    "url": (
+        "https://media.githubusercontent.com/media/NVlabs/alpasim/"
+        "049f70fbfe8207e1efd4831a6c3e78a38703d473/"
+        "src/runtime/tests/data/integration/rollout.asl"
+    ),
+}
 
 
 def main() -> int:
@@ -119,6 +136,9 @@ def main() -> int:
     external_compatibility = _external_compatibility_summary(
         args.output.parent.parent / "external" / "alpasim_e2e_challenge_conformance"
     )
+    protocol_replay = _protocol_replay_summary(
+        args.output.parent.parent / "external" / "alpasim_protocol_replay"
+    )
     diagnostic_experiment = _diagnostic_experiment_summary(
         args.inputs / "diagnostic_experiment.json"
     )
@@ -128,6 +148,7 @@ def main() -> int:
         closed_loop_evidence=closed_loop_evidence,
         semantic_pair_rows=semantic_pair_rows,
         external_compatibility=external_compatibility,
+        protocol_replay=protocol_replay,
         diagnostic_experiment=diagnostic_experiment,
         created_at=_input_created_at(args.inputs),
     )
@@ -345,6 +366,239 @@ def _external_compatibility_summary(path: Path) -> dict[str, Any]:
     }
 
 
+def _protocol_replay_summary(path: Path) -> dict[str, Any]:
+    """Validate and summarize the current-schema, transport-inclusive replay."""
+    manifest_path = path / "manifest.json"
+    if not manifest_path.is_file():
+        return {
+            "artifact_dir": str(path),
+            "available": False,
+            "claim_boundary": (
+                "No protocol replay artifact is present. No client-to-service latency "
+                "or replay diagnostic claim is available."
+            ),
+        }
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"Invalid protocol replay manifest JSON: {manifest_path}: {exc}") from exc
+    if (
+        not isinstance(manifest, dict)
+        or manifest.get("schema") != "wod2sim_alpasim_replay_demo_manifest_v1"
+    ):
+        raise SystemExit(f"Invalid protocol replay manifest schema: {manifest_path}")
+
+    source = manifest.get("source")
+    if not isinstance(source, dict) or source != PROTOCOL_REPLAY_SOURCE:
+        raise SystemExit(f"Invalid protocol replay source scope: {manifest_path}")
+    source_sha256 = source.get("asl_sha256")
+    if not isinstance(source_sha256, str) or len(source_sha256) != 64:
+        raise SystemExit(f"Invalid protocol replay source hash: {manifest_path}")
+
+    repo_root = path.resolve().parents[2]
+    _validate_replay_source_hashes(
+        manifest.get("reproduction_sources"),
+        repo_root=repo_root,
+        manifest_path=manifest_path,
+    )
+    arms_manifest = manifest.get("arms")
+    if not isinstance(arms_manifest, dict):
+        raise SystemExit(f"Missing protocol replay arms: {manifest_path}")
+
+    normalized_arms: dict[str, Any] = {}
+    for arm_name, expected_codes in (
+        ("full_contract", []),
+        ("command_only_route", ["semantic.command_only"]),
+    ):
+        result_path = path / f"{arm_name}.json"
+        telemetry_path = path / f"{arm_name}-telemetry.jsonl"
+        arm_manifest = arms_manifest.get(arm_name)
+        if not isinstance(arm_manifest, dict):
+            raise SystemExit(f"Missing protocol replay arm: {manifest_path}:{arm_name}")
+        _require_artifact_hash(
+            result_path,
+            arm_manifest.get("result_sha256"),
+            label=f"{arm_name} result",
+        )
+        _require_artifact_hash(
+            telemetry_path,
+            arm_manifest.get("telemetry_sha256"),
+            label=f"{arm_name} telemetry",
+        )
+        try:
+            result = json.loads(result_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise SystemExit(f"Invalid protocol replay result JSON: {result_path}: {exc}") from exc
+        if not isinstance(result, dict) or result.get("schema") != "wod2sim_alpasim_protocol_replay_v1":
+            raise SystemExit(f"Invalid protocol replay result schema: {result_path}")
+        result_source = result.get("source")
+        adapter = result.get("adapter")
+        if (
+            not isinstance(result_source, dict)
+            or result_source.get("asl_sha256") != source_sha256
+            or not isinstance(adapter, dict)
+            or adapter.get("mode") != arm_name
+        ):
+            raise SystemExit(f"Protocol replay arm provenance mismatch: {result_path}")
+
+        events = load_telemetry_trace(telemetry_path)
+        diagnostics = diagnose_contract_trace(events)
+        diagnostic_dicts = [item.to_dict() for item in diagnostics]
+        diagnostic_codes = [item.code for item in diagnostics]
+        if diagnostic_codes != expected_codes:
+            raise SystemExit(
+                f"Protocol replay diagnostics mismatch: {telemetry_path}:"
+                f"{','.join(diagnostic_codes)}"
+            )
+        if diagnostic_dicts != arm_manifest.get("diagnostics"):
+            raise SystemExit(f"Protocol replay manifest diagnostics drift: {manifest_path}:{arm_name}")
+        runtime = trace_runtime_summary(events)
+        if runtime != arm_manifest.get("runtime"):
+            raise SystemExit(f"Protocol replay manifest runtime drift: {manifest_path}:{arm_name}")
+
+        results = result.get("results")
+        drives = result.get("drives")
+        if not isinstance(results, dict) or not isinstance(drives, list):
+            raise SystemExit(f"Protocol replay result payload is incomplete: {result_path}")
+        drive_calls = results.get("drive_calls")
+        finite_outputs = results.get("finite_drive_outputs")
+        within_target = results.get("drive_calls_within_target")
+        drive_latency = _nested_value(results, "rpc_latency_ms.drive")
+        if (
+            not isinstance(drive_calls, int)
+            or drive_calls != len(drives)
+            or not isinstance(finite_outputs, int)
+            or finite_outputs != sum(
+                row.get("trajectory_finite") is True for row in drives if isinstance(row, dict)
+            )
+            or not isinstance(within_target, int)
+            or not isinstance(drive_latency, dict)
+            or drive_latency.get("samples") != drive_calls
+        ):
+            raise SystemExit(f"Protocol replay result denominator mismatch: {result_path}")
+        for metric in ("mean", "p50", "p95", "max"):
+            value = drive_latency.get(metric)
+            if not isinstance(value, (int, float)) or not math.isfinite(float(value)):
+                raise SystemExit(f"Invalid protocol replay latency: {result_path}:{metric}")
+        if results != arm_manifest.get("results"):
+            raise SystemExit(f"Protocol replay manifest result drift: {manifest_path}:{arm_name}")
+        normalized_arms[arm_name] = {
+            "diagnostic_codes": diagnostic_codes,
+            "diagnostic_count": len(diagnostic_codes),
+            "drive_calls": drive_calls,
+            "finite_drive_outputs": finite_outputs,
+            "drive_calls_within_target": within_target,
+            "latency_target_ms": results.get("latency_target_ms"),
+            "drive_rpc_latency_ms": drive_latency,
+            "telemetry_runtime": runtime,
+            "result_sha256": arm_manifest["result_sha256"],
+            "telemetry_sha256": arm_manifest["telemetry_sha256"],
+        }
+
+    media = _validated_replay_media(
+        manifest.get("media"),
+        repo_root=repo_root,
+        manifest_path=manifest_path,
+    )
+    full_camera_names = {
+        str(row.get("camera_frame"))
+        for row in json.loads((path / "full_contract.json").read_text(encoding="utf-8"))["drives"]
+        if isinstance(row, dict) and row.get("camera_frame")
+    }
+    if media["camera_frames"] != len(full_camera_names):
+        raise SystemExit(f"Protocol replay camera denominator mismatch: {manifest_path}")
+
+    return {
+        "artifact_dir": str(path),
+        "artifact_sha256": hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
+        "available": True,
+        "source": source,
+        "execution_environment": manifest.get("execution_environment"),
+        "arms": normalized_arms,
+        "media": media,
+        "claim_boundary": (
+            "This is an executed client-to-service gRPC replay of recorded camera, route, "
+            "egomotion, and Drive messages. It measures transport-inclusive driver RPC "
+            "latency and contract diagnostics. Recorded inputs are non-reactive, so it "
+            "does not measure simulator runtime, policy quality, human diagnosis time, "
+            "or generalization to another integration framework."
+        ),
+    }
+
+
+def _validate_replay_source_hashes(
+    value: object,
+    *,
+    repo_root: Path,
+    manifest_path: Path,
+) -> None:
+    if not isinstance(value, dict) or set(value) != {"client", "renderer", "runner"}:
+        raise SystemExit(f"Invalid protocol replay source manifest: {manifest_path}")
+    for label, item in value.items():
+        if not isinstance(item, dict):
+            raise SystemExit(f"Invalid protocol replay source entry: {manifest_path}:{label}")
+        relative_path = item.get("path")
+        if not isinstance(relative_path, str) or Path(relative_path).is_absolute():
+            raise SystemExit(f"Invalid protocol replay source path: {manifest_path}:{label}")
+        _require_artifact_hash(
+            repo_root / relative_path,
+            item.get("sha256"),
+            label=f"replay source {label}",
+        )
+
+
+def _validated_replay_media(
+    value: object,
+    *,
+    repo_root: Path,
+    manifest_path: Path,
+) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        raise SystemExit(f"Missing protocol replay media: {manifest_path}")
+    camera_frames = value.get("camera_frames")
+    duration_seconds = value.get("duration_seconds")
+    if (
+        not isinstance(camera_frames, int)
+        or camera_frames < 1
+        or not isinstance(duration_seconds, (int, float))
+        or not math.isfinite(float(duration_seconds))
+        or float(duration_seconds) <= 0
+    ):
+        raise SystemExit(f"Invalid protocol replay media counts: {manifest_path}")
+    normalized: dict[str, Any] = {
+        "camera_frames": camera_frames,
+        "duration_seconds": float(duration_seconds),
+    }
+    for key, expected_format in (
+        ("video", "H.264 MP4"),
+        ("readme_preview", "animated GIF"),
+    ):
+        item = value.get(key)
+        if not isinstance(item, dict) or item.get("format") != expected_format:
+            raise SystemExit(f"Invalid protocol replay media entry: {manifest_path}:{key}")
+        relative_path = item.get("path")
+        if not isinstance(relative_path, str) or Path(relative_path).is_absolute():
+            raise SystemExit(f"Invalid protocol replay media path: {manifest_path}:{key}")
+        artifact_path = repo_root / relative_path
+        _require_artifact_hash(
+            artifact_path,
+            item.get("sha256"),
+            label=f"replay media {key}",
+        )
+        if item.get("bytes") != artifact_path.stat().st_size:
+            raise SystemExit(f"Protocol replay media size mismatch: {artifact_path}")
+        normalized[key] = dict(item)
+    return normalized
+
+
+def _require_artifact_hash(path: Path, expected: object, *, label: str) -> None:
+    if not path.is_file():
+        raise SystemExit(f"Missing {label}: {path}")
+    actual = hashlib.sha256(path.read_bytes()).hexdigest()
+    if not isinstance(expected, str) or actual != expected:
+        raise SystemExit(f"{label} sha256 mismatch: {path}: expected {expected}, got {actual}")
+
+
 def _diagnostic_experiment_summary(path: Path) -> dict[str, Any]:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
@@ -459,6 +713,7 @@ def _summary(
     closed_loop_evidence: list[dict[str, Any]],
     semantic_pair_rows: list[dict[str, Any]],
     external_compatibility: dict[str, Any],
+    protocol_replay: dict[str, Any],
     diagnostic_experiment: dict[str, Any],
     created_at: str,
 ) -> dict[str, Any]:
@@ -481,7 +736,11 @@ def _summary(
     return {
         "schema": "cvm_aggregate_summary_v1",
         "created_at": created_at,
-        "data_hash": _hash_rows(rows, diagnostic_experiment=diagnostic_experiment),
+        "data_hash": _hash_rows(
+            rows,
+            diagnostic_experiment=diagnostic_experiment,
+            protocol_replay=protocol_replay,
+        ),
         "planned_runs": status_counts.get("planned", 0),
         "attempted_runs": sum(row.get("attempted") == "true" for row in rows),
         "completed_runs": sum(row.get("completed") == "true" for row in rows),
@@ -511,6 +770,7 @@ def _summary(
         "scenario_coverage": scenario_coverage_summary,
         "failure_attribution": failure_attribution_summary,
         "external_compatibility": external_compatibility,
+        "protocol_replay": protocol_replay,
         "diagnostic_experiment": diagnostic_experiment,
         "semantic_ablation_deltas": semantic_delta_summary,
         "failed_runs": status_counts.get("failed", 0),
@@ -723,10 +983,12 @@ def _hash_rows(
     rows: list[dict[str, str]],
     *,
     diagnostic_experiment: dict[str, Any] | None = None,
+    protocol_replay: dict[str, Any] | None = None,
 ) -> str:
     evidence = {
         "rows": rows,
         "diagnostic_experiment": diagnostic_experiment or {},
+        "protocol_replay": protocol_replay or {},
     }
     payload = json.dumps(evidence, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(payload).hexdigest()
@@ -1349,6 +1611,13 @@ def _write_tables(output: Path, summary: dict[str, Any], rows: list[dict[str, st
     synthetic_diagnostic = _summary_int(attribution, "synthetic_diagnostic_rows")
     release_scope = summary.get("release_scope", {})
     external = summary.get("external_compatibility", {})
+    replay = summary.get("protocol_replay", {})
+    replay_arms = replay.get("arms", {}) if isinstance(replay, dict) else {}
+    replay_full = replay_arms.get("full_contract", {}) if isinstance(replay_arms, dict) else {}
+    replay_command = (
+        replay_arms.get("command_only_route", {}) if isinstance(replay_arms, dict) else {}
+    )
+    replay_media = replay.get("media", {}) if isinstance(replay, dict) else {}
     diagnostic = summary.get("diagnostic_experiment", {})
     diagnostic_design = diagnostic.get("design", {}) if isinstance(diagnostic, dict) else {}
     diagnostic_classification = (
@@ -1523,6 +1792,38 @@ def _write_tables(output: Path, summary: dict[str, Any], rows: list[dict[str, st
         + "\\newcommand{\\CVMExternalChallengeDriverLatencyMaxMs}{"
         + _paper_external_metric(summary, "driver_latency_max_ms")
         + "}\n"
+        + f"\\newcommand{{\\CVMReplayDriveRPCsPerArm}}{{{_summary_int(replay_full, 'drive_calls')}}}\n"
+        + f"\\newcommand{{\\CVMReplayCameraFrames}}{{{_summary_int(replay_media, 'camera_frames')}}}\n"
+        + f"\\newcommand{{\\CVMReplayFullFiniteDriveOutputs}}{{{_summary_int(replay_full, 'finite_drive_outputs')}}}\n"
+        + f"\\newcommand{{\\CVMReplayCommandFiniteDriveOutputs}}{{{_summary_int(replay_command, 'finite_drive_outputs')}}}\n"
+        + f"\\newcommand{{\\CVMReplayFullLatencyTargetMet}}{{{_summary_int(replay_full, 'drive_calls_within_target')}}}\n"
+        + f"\\newcommand{{\\CVMReplayCommandLatencyTargetMet}}{{{_summary_int(replay_command, 'drive_calls_within_target')}}}\n"
+        + f"\\newcommand{{\\CVMReplayFullDiagnosticCount}}{{{_summary_int(replay_full, 'diagnostic_count')}}}\n"
+        + f"\\newcommand{{\\CVMReplayCommandDiagnosticCount}}{{{_summary_int(replay_command, 'diagnostic_count')}}}\n"
+        + "\\newcommand{\\CVMReplayFullLatencyMedianMs}{"
+        + _paper_replay_metric(
+            summary,
+            "arms.full_contract.drive_rpc_latency_ms.p50",
+        )
+        + "}\n"
+        + "\\newcommand{\\CVMReplayFullLatencyNinetyFifthMs}{"
+        + _paper_replay_metric(
+            summary,
+            "arms.full_contract.drive_rpc_latency_ms.p95",
+        )
+        + "}\n"
+        + "\\newcommand{\\CVMReplayCommandLatencyMedianMs}{"
+        + _paper_replay_metric(
+            summary,
+            "arms.command_only_route.drive_rpc_latency_ms.p50",
+        )
+        + "}\n"
+        + "\\newcommand{\\CVMReplayCommandLatencyNinetyFifthMs}{"
+        + _paper_replay_metric(
+            summary,
+            "arms.command_only_route.drive_rpc_latency_ms.p95",
+        )
+        + "}\n"
         + f"\\newcommand{{\\CVMDiagnosticCases}}{{{_summary_int(diagnostic_design, 'total_cases')}}}\n"
         + f"\\newcommand{{\\CVMDiagnosticFaultCases}}{{{_summary_int(diagnostic_design, 'fault_cases')}}}\n"
         + f"\\newcommand{{\\CVMDiagnosticControlCases}}{{{_summary_int(diagnostic_design, 'control_cases')}}}\n"
@@ -1632,6 +1933,19 @@ def _paper_diagnostic_metric(
 ) -> str:
     diagnostic = summary.get("diagnostic_experiment")
     value = _nested_value(diagnostic, dotted_path)
+    if not isinstance(value, (int, float)) or not math.isfinite(float(value)):
+        return "n/a"
+    return f"{float(value):.{precision}f}"
+
+
+def _paper_replay_metric(
+    summary: dict[str, Any],
+    dotted_path: str,
+    *,
+    precision: int = 3,
+) -> str:
+    replay = summary.get("protocol_replay")
+    value = _nested_value(replay, dotted_path)
     if not isinstance(value, (int, float)) or not math.isfinite(float(value)):
         return "n/a"
     return f"{float(value):.{precision}f}"
