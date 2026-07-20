@@ -74,6 +74,7 @@ REQUIRED_TABLES = (
     "contract_map.tex",
     "main_results.tex",
     "protocol_replay_policies.tex",
+    "waymax_factorial.tex",
     "ablations.tex",
     "fault_localization.tex",
     "paper_numbers.tex",
@@ -86,6 +87,9 @@ EXPECTED_TABLE_HEADERS = {
     "protocol_replay_policies.tex": (
         "Policy & Policy-visible route & Finite & Moving & Audit"
     ),
+    "waymax_factorial.tex": (
+        "Policy & Median $D_T$ (m) & $D_T>0.1$ m & Full valid & Proxy valid"
+    ),
     "ablations.tex": "Closed-loop check & Obs. & Denom. & Meaning",
     "fault_localization.tex": "Synthetic diagnostic & Count & Total",
 }
@@ -93,6 +97,7 @@ REQUIRED_FIGURES = (
     "system_architecture.pdf",
     "evaluation_pipeline.pdf",
     "main_results.pdf",
+    "waymax_factorial.pdf",
 )
 ATTRIBUTION_CATEGORIES = {
     "policy_attributable_behavior",
@@ -178,8 +183,8 @@ BASELINE_REPORT_REQUIRED_TERMS = (
     "make cvm-check",
     "make paper-verify",
     "make verify",
-    "373 passed, 14 skipped, and 15 subtests passed",
-    "65.31% against the configured 33.0% minimum",
+    "392 passed, 14 skipped, and 15 subtests passed",
+    "65.43% against the configured 33.0% minimum",
 )
 CONTRACT_TEST_AUDIT_REQUIRED_TERMS = (
     "# Contract Test Audit",
@@ -622,6 +627,54 @@ PAPER_NUMBER_JSON_FIELDS: tuple[tuple[str, str], ...] = (
         "CVMReplayLearnedEndpointChangedOneMeter",
         "protocol_replay.trajectory_divergence.navsim_ego_status_mlp.endpoint_difference_gt_1m",
     ),
+    ("CVMWaymaxScenarioCount", "waymax_contract_study.behavior.scenario_count"),
+    (
+        "CVMWaymaxEligibleScenarios",
+        "waymax_contract_study.behavior.comparison_eligible_scenarios",
+    ),
+    (
+        "CVMWaymaxRouteUnavailableScenarios",
+        "waymax_contract_study.behavior.route_unavailable_scenarios",
+    ),
+    (
+        "CVMWaymaxClosedLoopSteps",
+        "waymax_contract_study.behavior.closed_loop_steps_total",
+    ),
+    (
+        "CVMWaymaxFinitePlans",
+        "waymax_contract_study.behavior.finite_trajectory_plans",
+    ),
+    (
+        "CVMWaymaxRouteEndpointChanged",
+        "waymax_contract_study.behavior.endpoint_difference_m.route_following.changed_count",
+    ),
+    (
+        "CVMWaymaxRouteEndpointMaterialChanged",
+        "waymax_contract_study.behavior.endpoint_difference_m.route_following."
+        "material_change_count",
+    ),
+    (
+        "CVMWaymaxNegativeControlInvariant",
+        "waymax_contract_study.behavior.negative_control_invariant_scenarios",
+    ),
+    (
+        "CVMWaymaxRouteFullClean",
+        "waymax_contract_study.behavior.attribution.route_following_full_route_clean",
+    ),
+    (
+        "CVMWaymaxRouteProxyRejected",
+        "waymax_contract_study.behavior.attribution."
+        "route_following_command_proxy_semantic_fault",
+    ),
+    (
+        "CVMWaymaxCVFullClean",
+        "waymax_contract_study.behavior.attribution.constant_velocity_full_route_clean",
+    ),
+    (
+        "CVMWaymaxCVProxyClean",
+        "waymax_contract_study.behavior.attribution."
+        "constant_velocity_command_proxy_clean",
+    ),
     ("CVMPublicCoreRows", "release_scope.public_core_configured_rows"),
     ("CVMPublicCoreCompletedRuns", "release_scope.public_core_completed_runs"),
     ("CVMPublicCoreAttemptedRuns", "release_scope.public_core_attempted_runs"),
@@ -791,6 +844,30 @@ PAPER_NUMBER_FLOAT_FIELDS: tuple[tuple[str, str], ...] = (
     (
         "CVMReplayLearnedCommandLatencyNinetyFifthMs",
         "protocol_replay.arms.navsim_ego_status_mlp_command_only_route.drive_rpc_latency_ms.p95",
+    ),
+    (
+        "CVMWaymaxRouteEndpointMeanM",
+        "waymax_contract_study.behavior.endpoint_difference_m.route_following.mean",
+    ),
+    (
+        "CVMWaymaxRouteEndpointMedianM",
+        "waymax_contract_study.behavior.endpoint_difference_m.route_following.median",
+    ),
+    (
+        "CVMWaymaxRouteEndpointMaxM",
+        "waymax_contract_study.behavior.endpoint_difference_m.route_following.max",
+    ),
+    (
+        "CVMWaymaxCVEndpointMaxM",
+        "waymax_contract_study.behavior.endpoint_difference_m.constant_velocity.max",
+    ),
+    (
+        "CVMWaymaxInteractionMeanM",
+        "waymax_contract_study.behavior.difference_in_differences_endpoint_m.mean",
+    ),
+    (
+        "CVMWaymaxInteractionMedianM",
+        "waymax_contract_study.behavior.difference_in_differences_endpoint_m.median",
     ),
     (
         "CVMDetectorDecisionMedianUs",

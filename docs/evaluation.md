@@ -8,9 +8,10 @@ not to an official Waymo challenge submission package. Reports should state the
 actual task specification, scene source, and asset revision they use.
 The five contracts are framework-neutral classes, not WOD protobuf fields. A
 second binding must map its own semantic inputs, clocks, service lifecycle,
-deployment state, and evidence into those classes. This release evaluates only
-the WOD-style/AlpaSim binding; cross-simulator transfer is not an empirical
-result.
+deployment state, and evidence into those classes. This release evaluates the
+full WOD-style/AlpaSim binding and a bounded Waymax binding for the semantic
+route experiment. The latter supports cross-runtime applicability of that one
+contract, not transfer of the other four.
 
 ## Failure Attribution Rule
 
@@ -54,6 +55,43 @@ The [ungated demo](demo.md) exercises the same audit and support-bundle formats
 on synthetic local artifacts and reports route-loss and lane-offset diagnostics
 on public synthetic geometry. These diagnostics make the integration boundary
 inspectable, but they are not an AlpaSim rollout or policy result.
+
+## Waymax Policy-Dependency Experiment
+
+Run `scripts/run_waymax_contract_study.sh` to reproduce the primary `2 x 2`
+negative-control experiment. The script clones Waymax at commit
+`a64dfec9be8576b60d9cecc94f406d9812d4a7d0`, verifies the bundled route
+TFRecord hash, creates an isolated environment, and runs all 20 actual WOMD
+TFExamples included by that revision. WOD2Sim redistributes only aggregate and
+scenario-level results, not the upstream records.
+
+One scenario has no valid `sdc_paths.on_route` candidate and is excluded before
+intervention. For each of the 19 eligible scenarios:
+
+| Policy | Full route | Command proxy |
+| --- | --- | --- |
+| Route following | Original WOMD route polyline | Same pure-pursuit controller with a straight proxy generated from intervention-defined `KEEP_HEADING` |
+| Constant velocity | Adapter constructs full representation, policy ignores it | Adapter constructs proxy representation, policy ignores it |
+
+All arms share initial state, 50 steps at 10 Hz, Waymax `StateDynamics`,
+controlled SDC, and non-SDC log playback. The primary paired quantity is
+`D_p(t) = ||x_p,full(t) - x_p,proxy(t)||_2`, and the interaction subtracts
+constant-velocity divergence from route-following divergence.
+
+The retained result is:
+
+- route following: `1.017 m` median and `1.973 m` mean endpoint divergence,
+  `13/19` above `0.1 m`, and `10/19` above `1 m`;
+- constant velocity: exact retained-trajectory invariance in `19/19`, maximum
+  endpoint divergence `0.000 m`;
+- audit: `19/19` RF/full accepted, `19/19` RF/proxy rejected with
+  `semantic.command_only`, and both CV arms accepted `19/19`.
+
+The audit is computed from the declared policy signature and route source
+before rollout stepping or behavior metrics. Collision and overlap remain
+descriptive because log-playback agents cannot react to the counterfactual
+ego. The bundled fixture is complete for its upstream test purpose but is not a
+random or representative WOMD evaluation sample, and neither policy is learned.
 
 ## Controlled Diagnostic Evaluation
 
@@ -142,7 +180,7 @@ supports one-scene reactive policy/controller/physics lifecycle and timing for
 that exact camera-blind configuration. It does not support reactive camera
 rendering, visual-policy evaluation, NuRec quality, learned-policy superiority,
 comparative runtime overhead, human diagnosis time, or cross-simulator
-generalization.
+generalization beyond the route semantic rule.
 
 ## Policy Evaluation
 
@@ -203,7 +241,12 @@ framework.
 The separate current-schema replay adds bounded client-to-service gRPC latency
 and a real-camera diagnostic video. It remains non-reactive and does not extend
 the claim to simulator runtime, format overhead, or empirical generalization
-across frameworks.
+of all contracts across frameworks.
+The Waymax factorial study adds WOMD-native cross-runtime evidence for one
+semantic rule and its policy-dependency interaction. It does not add a learned
+WOMD benchmark, representative scenario coverage, reactive non-ego behavior, or
+cross-runtime evidence for temporal, lifecycle, deployment, and evidence
+contracts.
 The separate learned rollout adds one-scene reactive external-driver,
 controller, and physics feedback plus exact-configuration service and wall-clock
 timing. Its camera pixels remain a repeated public seed and its ground is

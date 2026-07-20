@@ -68,6 +68,30 @@ NAVSIM and its baseline checkpoint repository are published under the Apache
 License, Version 2.0. The full license text is included at
 [`Apache-2.0.txt`](Apache-2.0.txt).
 
+## Waymax contract-study software and results
+
+The experiment runner at
+[`src/wod2sim/experiments/waymax_contract_study.py`](../src/wod2sim/experiments/waymax_contract_study.py)
+and the retained outputs under
+[`artifacts/external/waymax_contract_study/`](../artifacts/external/waymax_contract_study)
+were made using a pinned Waymax checkout and its bundled WOMD route fixture.
+Waymax source and the fixture are not redistributed by WOD2Sim.
+
+The following notice is included as required by the upstream license:
+
+> This research publication, software, and output data was made using the
+> Waymax Licensed Materials, provided by Waymo LLC under the Waymax License
+> Agreement for Non-Commercial Use, available at
+> https://github.com/waymo-research/waymax/blob/main/LICENSE, and your access
+> and use of the Waymax Licensed Materials are governed by the terms and
+> conditions contained therein.
+
+The Waymax-derived study software and results are available only for
+Non-commercial Purposes and are governed by the Waymax License Agreement for
+Non-Commercial Use, including its conditions on Derivative IP. They are
+exceptions to the repository's general BSD-3-Clause license. The upstream
+commit and fixture SHA-256 are recorded in the retained manifest.
+
 ## IEEE conference LaTeX class
 
 [`paper/cvm/ieeeconf.cls`](../paper/cvm/ieeeconf.cls) is the unmodified

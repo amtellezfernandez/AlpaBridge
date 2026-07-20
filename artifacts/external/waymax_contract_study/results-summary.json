@@ -1,0 +1,484 @@
+{
+  "behavior": {
+    "attribution": {
+      "constant_velocity_command_proxy_clean": 19,
+      "constant_velocity_full_route_clean": 19,
+      "route_following_command_proxy_semantic_fault": 19,
+      "route_following_full_route_clean": 19
+    },
+    "closed_loop_steps_per_arm": 50,
+    "closed_loop_steps_total": 3800,
+    "comparison_eligible_scenarios": 19,
+    "difference_in_differences_endpoint_m": {
+      "max": 14.210695,
+      "mean": 1.972612,
+      "median": 1.017287,
+      "positive_count": 15
+    },
+    "displacement_divergence_over_time_m": {
+      "constant_velocity": {
+        "mean": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "route_following": {
+        "mean": [
+          0.0,
+          0.056449,
+          0.111237,
+          0.164038,
+          0.214487,
+          0.263938,
+          0.311539,
+          0.357044,
+          0.402866,
+          0.447822,
+          0.491911,
+          0.511073,
+          0.529434,
+          0.542323,
+          0.592939,
+          0.619343,
+          0.643274,
+          0.663676,
+          0.681924,
+          0.697853,
+          0.712459,
+          0.725317,
+          0.736929,
+          0.748055,
+          0.758303,
+          0.768182,
+          0.777971,
+          0.789556,
+          0.805649,
+          0.799574,
+          0.849067,
+          0.889079,
+          0.917748,
+          0.943368,
+          0.966659,
+          0.987728,
+          1.008023,
+          1.128714,
+          1.14695,
+          1.270962,
+          1.287758,
+          1.410497,
+          1.42537,
+          1.548328,
+          1.563941,
+          1.68574,
+          1.700427,
+          1.821577,
+          1.835592,
+          1.957558,
+          1.972612
+        ],
+        "median": [
+          0.0,
+          0.010742,
+          0.019531,
+          0.026367,
+          0.033178,
+          0.037888,
+          0.041693,
+          0.044178,
+          0.051757,
+          0.064453,
+          0.070312,
+          0.082036,
+          0.098638,
+          0.11817,
+          0.138679,
+          0.155273,
+          0.164062,
+          0.170899,
+          0.175781,
+          0.179687,
+          0.181641,
+          0.182617,
+          0.182617,
+          0.18164,
+          0.180664,
+          0.138876,
+          0.130869,
+          0.144541,
+          0.15919,
+          0.176199,
+          0.191906,
+          0.210462,
+          0.229995,
+          0.250015,
+          0.271499,
+          0.293473,
+          0.316423,
+          0.823671,
+          0.906419,
+          0.958152,
+          0.965526,
+          0.9729,
+          0.978297,
+          0.983696,
+          0.989094,
+          0.994493,
+          0.999892,
+          1.005292,
+          1.00929,
+          1.013288,
+          1.017287
+        ]
+      }
+    },
+    "endpoint_difference_m": {
+      "constant_velocity": {
+        "changed_count": 0,
+        "material_change_count": 0,
+        "max": 0.0,
+        "mean": 0.0,
+        "median": 0.0
+      },
+      "route_following": {
+        "changed_count": 13,
+        "material_change_count": 10,
+        "max": 14.210695,
+        "mean": 1.972612,
+        "median": 1.017287
+      }
+    },
+    "finite_trajectory_plans": 3800,
+    "mean_route_distance_m": {
+      "command_proxy_lower": 0,
+      "equal": 4,
+      "full_lower": 15,
+      "paired_full_minus_command_proxy": -0.376788,
+      "route_following_command_proxy": 0.695814,
+      "route_following_full_route": 0.319026
+    },
+    "negative_control_invariant_scenarios": 19,
+    "predeclared_check_results": {
+      "H1_contract_sensitivity": {
+        "criterion": "route-following median endpoint divergence exceeds 0.1 m",
+        "supported_for_fixture": true
+      },
+      "H2_negative_control_invariance": {
+        "criterion": "all constant-velocity endpoint divergences are at most 1e-06 m",
+        "supported_for_fixture": true
+      },
+      "H3_attribution_correctness": {
+        "criterion": "only route-following with command-proxy geometry receives semantic.command_only",
+        "supported_for_fixture": true
+      }
+    },
+    "route_unavailable_diagnostic_counts": {
+      "semantic.route_missing": 1
+    },
+    "route_unavailable_scenarios": 1,
+    "scenario_count": 20,
+    "waymax_final_metrics": {
+      "constant_velocity": {
+        "command_proxy": {
+          "kinematic_infeasibility": {
+            "mean": 0.0,
+            "positive_count": 0
+          },
+          "log_divergence": {
+            "mean": 6.806519,
+            "positive_count": 19
+          },
+          "offroad": {
+            "mean": 0.052632,
+            "positive_count": 1
+          },
+          "overlap": {
+            "mean": 0.210526,
+            "positive_count": 4
+          },
+          "sdc_off_route": {
+            "mean": 0.783051,
+            "positive_count": 1
+          },
+          "sdc_progression": {
+            "mean": 0.805865,
+            "positive_count": 19
+          },
+          "sdc_wrongway": {
+            "mean": 0.783051,
+            "positive_count": 1
+          }
+        },
+        "full_route": {
+          "kinematic_infeasibility": {
+            "mean": 0.0,
+            "positive_count": 0
+          },
+          "log_divergence": {
+            "mean": 6.806519,
+            "positive_count": 19
+          },
+          "offroad": {
+            "mean": 0.052632,
+            "positive_count": 1
+          },
+          "overlap": {
+            "mean": 0.210526,
+            "positive_count": 4
+          },
+          "sdc_off_route": {
+            "mean": 0.783051,
+            "positive_count": 1
+          },
+          "sdc_progression": {
+            "mean": 0.805865,
+            "positive_count": 19
+          },
+          "sdc_wrongway": {
+            "mean": 0.783051,
+            "positive_count": 1
+          }
+        }
+      },
+      "route_following": {
+        "command_proxy": {
+          "kinematic_infeasibility": {
+            "mean": 0.0,
+            "positive_count": 0
+          },
+          "log_divergence": {
+            "mean": 6.806519,
+            "positive_count": 19
+          },
+          "offroad": {
+            "mean": 0.052632,
+            "positive_count": 1
+          },
+          "overlap": {
+            "mean": 0.210526,
+            "positive_count": 4
+          },
+          "sdc_off_route": {
+            "mean": 0.783051,
+            "positive_count": 1
+          },
+          "sdc_progression": {
+            "mean": 0.805865,
+            "positive_count": 19
+          },
+          "sdc_wrongway": {
+            "mean": 0.783051,
+            "positive_count": 1
+          }
+        },
+        "full_route": {
+          "kinematic_infeasibility": {
+            "mean": 0.052632,
+            "positive_count": 1
+          },
+          "log_divergence": {
+            "mean": 7.806162,
+            "positive_count": 19
+          },
+          "offroad": {
+            "mean": 0.0,
+            "positive_count": 0
+          },
+          "overlap": {
+            "mean": 0.315789,
+            "positive_count": 6
+          },
+          "sdc_off_route": {
+            "mean": 0.0,
+            "positive_count": 0
+          },
+          "sdc_progression": {
+            "mean": 0.797719,
+            "positive_count": 19
+          },
+          "sdc_wrongway": {
+            "mean": 0.0,
+            "positive_count": 0
+          }
+        }
+      }
+    }
+  },
+  "claim_boundary": "This is a deterministic policy-by-route negative-control experiment on the 20 scenarios bundled with the pinned Waymax checkout. It supports cross-runtime semantic-contract applicability and selective paired behavior consequences for this fixture. It is not a learned-policy benchmark, a representative WOMD sample, a safety comparison, a framework-superiority result, or a runtime-overhead measurement.",
+  "created_at": "2026-07-20T19:54:43.544662+00:00",
+  "dataset": {
+    "license": "Waymax License Agreement for Non-Commercial Use",
+    "name": "Waymax bundled WOMD route fixture",
+    "raw_records_redistributed_by_wod2sim": false,
+    "relative_path": "waymax/dataloader/testdata/tfrecord_with_routes",
+    "sha256": "aba63d14b00d133803db04f49a3263447beafd8ca3010ea535ca7dfff0635ba5"
+  },
+  "design": {
+    "command_proxy_provenance": "KEEP_HEADING is generated by the intervention operator; it is not read from the WOMD TFExample.",
+    "factorial_design": {
+      "policies": {
+        "constant_velocity": {
+          "controller": "constant velocity in the current heading",
+          "signature": [
+            "ego_pose",
+            "ego_velocity"
+          ]
+        },
+        "route_following": {
+          "controller": "constant-speed no-jump pure pursuit",
+          "signature": [
+            "ego_pose",
+            "ego_velocity",
+            "route_geometry"
+          ]
+        }
+      },
+      "route_conditions": {
+        "command_proxy": "original WOMD geometry replaced at the adapter boundary by a straight geometric proxy reconstructed from an intervention-defined KEEP_HEADING command",
+        "full_route": "valid WOMD sdc_paths.on_route geometry"
+      }
+    },
+    "inference_scope": "Paired descriptive evidence over the complete pinned fixture; the scenarios are not treated as a random sample from WOMD.",
+    "intervention": "Within each policy, the paired route conditions share scenario, initial state, horizon, frequency, dynamics, non-SDC log playback, and controller implementation. The route-following policy receives either the native geometry or a degraded command-derived proxy. Constant velocity ignores the same mutated route field and is the negative control.",
+    "non_sdc_behavior": "Waymax log playback",
+    "predeclared_checks": {
+      "H1_contract_sensitivity": "route-following median endpoint divergence exceeds 0.1 m",
+      "H2_negative_control_invariance": "every constant-velocity endpoint divergence is at most 1e-06 m",
+      "H3_attribution_correctness": "only route-following with command-proxy geometry is classified as a semantic-contract violation"
+    },
+    "primary_estimand": "paired endpoint divergence(route_following) minus paired endpoint divergence(constant_velocity)",
+    "rollout_steps": 50,
+    "route_controller": {
+      "lookahead_seconds": 0.5,
+      "minimum_lookahead_m": 2.0,
+      "type": "no-jump pure pursuit"
+    },
+    "scientific_question": "Can a contract-aware integration layer distinguish policy degradation caused by missing decision-relevant inputs from genuine policy failure?",
+    "step_seconds": 0.1,
+    "trajectory_future_points": 50,
+    "trajectory_horizon_seconds": 5.0
+  },
+  "implementation_sha256": {
+    "scripts/run_waymax_contract_study.sh": "7528adbc7c9beab5ea5334e70b3bc313d9197cc354897ff65b50a63d1d0b5f38",
+    "src/wod2sim/audit/trace_diagnostics.py": "a5e512cd45b845d5707c75de33fdacbecd5c17f83d1fde4059605a2ce43d0288",
+    "src/wod2sim/experiments/waymax_contract_study.py": "3002682d914531bb803dba983e87bf8a1c365076be99e1a6cbec0b17b0d61908"
+  },
+  "retained_full_study": true,
+  "runtime": {
+    "commit": "a64dfec9be8576b60d9cecc94f406d9812d4a7d0",
+    "device": "cpu",
+    "jax_version": "0.11.0",
+    "jaxlib_version": "0.11.0",
+    "name": "Waymax",
+    "numpy_version": "2.5.1",
+    "python_version": "3.12.12",
+    "repository": "https://github.com/waymo-research/waymax.git",
+    "tensorflow_version": "2.21.0"
+  },
+  "scenario_results": {
+    "path": "scenario-results.jsonl",
+    "sha256": "8efd8349465c33eab57ccc46d615e4a3bf783aadc61fb49a599b513c00e5e52f"
+  },
+  "schema": "wod2sim_waymax_contract_study_v1"
+}

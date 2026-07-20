@@ -7,16 +7,18 @@
 </p>
 
 <p align="center">
-  <strong>Run WOD-style trajectory policies inside AlpaSim's closed loop, then validate the boundary before judging the policy.</strong><br>
+  <strong>Validate whether a completed driving-simulator rollout is admissible evidence about the policy.</strong><br>
   <a href="wod2sim.pdf">Paper</a> |
   <a href="docs/README.md">Documentation</a> |
   <a href="CITATION.cff">Citation</a>
 </p>
 
-WOD2Sim connects a short-horizon trajectory-policy interface to AlpaSim's live
-external-driver boundary. It validates route meaning, policy-facing scene
-state, trajectory timing, lifecycle state, deployment prerequisites, and
-retained evidence before rollout behavior is attributed to the policy. It is a
+WOD2Sim validates route meaning, policy-facing scene state, trajectory timing,
+lifecycle state, deployment prerequisites, and retained evidence before
+rollout behavior is attributed to the policy. The full integration binds a
+short-horizon trajectory-policy interface to AlpaSim's live external driver; a
+separate WOMD-native Waymax experiment tests whether the semantic admission
+rule attributes a route-format failure correctly. WOD2Sim is a
 contract-validation integration framework, not a new driving policy.
 
 This repository has one canonical paper PDF: [`wod2sim.pdf`](wod2sim.pdf). The
@@ -30,15 +32,63 @@ diagnostics, and claim-valid policy evidence.
 
 Here, **WOD-style** means a policy-side interface inspired by the
 [Waymo Open Motion Dataset (WOMD)](https://waymo.com/open/data/motion/):
-observations, route intent, and a short-horizon ego trajectory. It does not mean
-that this repository loads WOMD `Scenario` records. The executed rollouts use
-AlpaSim scenes and translate AlpaSim inputs into that policy interface.
-WOD2Sim does not claim official Waymo challenge compatibility, leaderboard
-submission support, or a redistributable WOMD-to-AlpaSim scene conversion.
+observations, route intent, and a short-horizon ego trajectory. The AlpaSim
+rollouts use AlpaSim scenes and translate their inputs into that policy
+interface; they do not run WOMD scenes inside AlpaSim. The optional Waymax study
+does load the 20 actual WOMD TFExamples bundled with the pinned upstream
+checkout, without redistributing them. WOD2Sim does not claim official Waymo
+challenge compatibility, leaderboard submission support, representative WOMD
+coverage, or a redistributable WOMD-to-AlpaSim scene conversion.
 The five contracts themselves are not WOD message types: a new simulator binding
 maps its native policy inputs, clocks, lifecycle, deployment state, and evidence
-to the same contract classes. Only the WOD-style/AlpaSim binding is evaluated
-here, so cross-simulator transfer remains a hypothesis rather than a result.
+to the same contract classes. The route semantic rule is executed in Waymax and
+AlpaSim. The other four contracts are not yet validated across both runtimes.
+
+## Main Experiment: Attribution Correctness
+
+> **Can a contract-aware integration layer distinguish policy degradation
+> caused by missing decision-relevant inputs from genuine policy failure?**
+
+The primary experiment crosses two policies with two representations of the
+same route boundary on real WOMD records:
+
+| Policy | Full WOMD route geometry | Command-derived geometric proxy |
+| --- | --- | --- |
+| Route following | Valid control | Semantic violation |
+| Constant velocity | Negative control A | Negative control B |
+
+<p align="center">
+  <a href="artifacts/cvm/figures/waymax_factorial.pdf">
+    <img src="artifacts/cvm/figures/waymax_factorial.png" alt="Executed Waymax factorial experiment: route following diverges under a command proxy, constant velocity remains invariant, and the audit rejects only the policy whose declared input requires route geometry" width="100%">
+  </a>
+</p>
+
+The same no-jump pure-pursuit controller runs in both route-following arms.
+Only its route representation changes: the original `sdc_paths.on_route`
+polyline is replaced by a straight geometric proxy reconstructed from an
+intervention-defined `KEEP_HEADING` command. Constant velocity traverses the
+same adapter mutation but does not consume that field. Scenario, initial state,
+50-step horizon, 10 Hz rate, `StateDynamics`, and log playback of non-SDC agents
+are fixed.
+
+Of 20 bundled TFExamples, 19 contain a valid route and enter the paired study.
+Route-following endpoint divergence is `1.017 m` median (`1.973 m` mean), with
+`13/19` above `0.1 m` and `10/19` above `1 m`. Constant velocity is numerically
+identical across route conditions in `19/19`; its maximum endpoint divergence
+is `0.000 m`. All four arms complete, but the audit rejects only
+route-following with the command proxy (`19/19 semantic.command_only`) and
+accepts both constant-velocity arms. The audit decision uses the declared
+policy signature and route source before behavior metrics are computed.
+
+This is a causal policy-by-route interaction on the complete pinned fixture,
+not a claim that route following is better than constant velocity. The fixture
+is not a representative WOMD sample; other agents use log playback; collision
+and overlap are descriptive only. The experiment does not measure how often
+this fault occurs, policy quality, safety, or framework superiority.
+
+[retained summary](artifacts/external/waymax_contract_study/results-summary.json) |
+[scenario-level rows](artifacts/external/waymax_contract_study/scenario-results.jsonl) |
+[reproduction script](scripts/run_waymax_contract_study.sh)
 
 ## What Runs Closed Loop
 
@@ -61,9 +111,10 @@ ego state. That learned checkpoint is NAVSIM-based, camera-blind, and not a
 WOMD-trained checkpoint; it is lifecycle evidence rather than a policy-quality
 benchmark.
 
-**Current boundary:** WOD2Sim targets a policy interface, not WOMD scenes. The
-repository has demonstrated WOD-style trajectory policies inside AlpaSim's
+**Current AlpaSim boundary:** WOD2Sim targets a policy interface, not WOMD scenes.
+The repository has demonstrated WOD-style trajectory policies inside AlpaSim's
 closed loop; it has not demonstrated a WOMD `Scenario` running inside AlpaSim.
+Actual WOMD execution is confined to the separate Waymax fixture study above.
 
 ## Choosing A WOMD Target
 
@@ -73,7 +124,8 @@ These are different engineering and research targets:
 | --- | --- | --- |
 | Run a WOD-style trajectory policy on AlpaSim scenes | **Executed.** AlpaSim camera, ego motion, route, controller, and physics close the loop through WOD2Sim. | Start with [`route_following`](docs/getting-started.md#materialize-commands), then replace the policy behind the same declared input/output contract. |
 | Run a compatible learned trajectory checkpoint on AlpaSim scenes | **Adapter available, checkpoint gated.** `token_dagger_bc` requires a compatible local checkpoint. The retained public learned run uses NAVSIM EgoStatusMLP, not WOMD. | Verify the checkpoint's exact observations, coordinate frame, sampling, and route signature before registering it as an AlpaSim model. |
-| Run a policy on actual WOMD scenarios | **Not implemented by WOD2Sim.** | Use [Waymax](https://github.com/waymo-research/waymax), which loads WOMD records natively, or implement and evaluate a WOD2Sim Waymax binding. |
+| Run a deterministic policy on actual WOMD records | **Executed as a bounded contract study.** The runner uses Waymax's pinned 20-example route fixture; it is not a production binding or representative benchmark. | Run [`scripts/run_waymax_contract_study.sh`](scripts/run_waymax_contract_study.sh), or use Waymax directly for broader licensed WOMD evaluation. |
+| Evaluate a learned policy on representative WOMD scenarios | **Not implemented.** | Use [Waymax](https://github.com/waymo-research/waymax) with licensed WOMD data and a pinned learned checkpoint, then bind and test the declared WOD2Sim contracts. |
 | Run actual WOMD scenarios inside AlpaSim | **Not implemented.** No WOMD scene converter is present. | Build and validate a licensed converter for maps, actors, traffic states, route candidates, frames, clocks, and renderable scene assets. |
 
 The [WOMD targeting guide](docs/womd-targeting.md) maps each target to the
@@ -92,10 +144,11 @@ needs explicit schema, coordinate-frame, rate, route, and lifecycle translation.
 
 The scientific relevance is internal validity: if that translation violates a
 policy's declared input contract, downstream behavior cannot yet be attributed
-to the policy. The controlled replay below shows one causal consequence and the
-corresponding detector. It does not measure how often this fault occurs in
-production integrations, and it does not establish empirical generalization to
-Waymax or another simulator.
+to the policy. The Waymax factorial study above demonstrates selective behavior
+change plus correct admission; the controlled AlpaSim replay below replicates
+the policy-signature rule at its external-driver boundary. Together they cover
+one semantic contract in two runtimes, not cross-runtime validation of all five
+contracts.
 
 ## Executed Ablation: Route Geometry vs. Command Only
 
@@ -163,13 +216,14 @@ establish a valid rollout or a policy-quality result.
 
 | Question | Current answer |
 | --- | --- |
+| Can route information loss be separated from a global adapter/runtime perturbation? | Yes, for the pinned Waymax fixture. The route-dependent policy changes by `1.017 m` median at the endpoint, while the route-independent control is exactly invariant in `19/19`; WOD2Sim rejects only the route-dependent command-proxy arm. |
 | Can WOD-style adapters run as auditable AlpaSim external drivers? | Yes. The dependency-light public core completes `30/30` closed-loop rows over `15` local scenes. |
 | Does WOD2Sim prevent integration-invalid metrics from becoming policy evidence? | Yes. A defined status-only baseline accepts `15/15` completed metric-bearing command-only rows, while WOD2Sim rejects the same `15/15` as non-claim-valid route evidence. |
 | Does the detector distinguish controlled faults from valid traces? | Yes, for the declared designed suite. On `15` single-fault mutations paired with `15` separately instantiated valid adapter sessions, WOD2Sim classifies `30/30`, localizes `15/15`, and flags `0/15` controls; the executable completion-and-metrics gate classifies `15/30` and detects no faults. These are exact descriptive counts, not a framework-superiority test. |
 | What diagnostic timing is measured? | Post-parse fault-detector execution over `3,000` calls is `28.096 us` median and `55.774 us` p95. The guarded in-process adapter Drive path is `617.549 us` median and `897.100 us` p95; its paired camera-set and freshness-check increment is `68.871 us` median and `309.613 us` p95 over `1,000` measurements across `15` valid sessions, with identical output. These microbenchmarks exclude gRPC, simulator work, file I/O, and human investigation; they are not end-to-end runtime or human time-to-diagnosis. |
 | Is transport-inclusive service timing measured? | Yes, in a bounded non-reactive protocol replay. Four arms spanning route following and NAVSIM's official learned EgoStatusMLP seed-0 checkpoint each complete `60/60` live gRPC `Drive` calls with finite, nonstationary output. Route-following full/reduced median/p95 latency is `3.769/4.833 ms` and `3.104/3.958 ms`; learned full/reduced is `4.715/5.945 ms` and `4.943/6.963 ms`. This is loopback client-to-service time, not simulator runtime, human diagnosis time, or format overhead. |
 | Does a published learned checkpoint complete a reactive AlpaSim external-driver loop? | Yes, for one bounded camera-blind run. NAVSIM EgoStatusMLP completes `197/197` finite `Drive` outputs over `19.93` simulated seconds while AlpaSim controller and physics feed each result into the next ego state. Driver-internal median/p95 is `1.982/3.362 ms`; AlpaSim observes `3.206 ms` mean RPC time. The public camera fixture repeats one recorded seed frame and uses a declared flat ground surface, so this is lifecycle and exact-configuration timing evidence, not visual-policy, rendering-quality, policy-quality, comparative-overhead, or population evidence. |
-| Does the semantic check generalize beyond one policy? | Its applicability is validated across two policy signatures in the same AlpaSim binding. Removing geometry flags route following and changes `56/60` endpoints; it correctly does not flag command-native EgoStatusMLP, whose `60/60` paired outputs are identical. This is a policy-signature negative control, not Waymax or cross-simulator evidence. |
+| Does the semantic check transfer beyond one policy and runtime? | The declared route rule is exercised with route-dependent and route-independent policies in Waymax, then replicated across route following and command-native EgoStatusMLP at the AlpaSim boundary. This is bounded cross-runtime evidence for one semantic contract, not generalization of all five contracts or learned WOMD-policy performance. |
 | Are all paired route-loss rows comparison-eligible? | No. `14/15` pairs qualify; one full-contract arm is also route-invalid, and the paired score deltas do not establish a systematic policy effect. |
 | Is this a policy-quality benchmark? | No. The release has `0` claim-valid policy benchmark rows, `0` policy-failure-attributable rows, and no verified scenario-category coverage. |
 
@@ -463,7 +517,10 @@ actor proxies remain explicit release limitations rather than hidden
 infrastructure assumptions. The pinned checkpoint supports the declared
 policy-signature replay and one bounded reactive AlpaSim lifecycle run. It does
 not establish policy quality, responsive camera synthesis, comparative runtime
-overhead, human diagnosis time, or cross-simulator generalization.
+overhead, or human diagnosis time. The separate Waymax fixture study supports
+cross-runtime applicability of the route semantic rule only; it does not
+generalize the other contracts, learned policies, or representative WOMD
+performance.
 The detailed test-to-contract traceability map is tracked in
 [`artifacts/cvm/reports/contract_test_audit.md`](artifacts/cvm/reports/contract_test_audit.md).
 

@@ -13,11 +13,13 @@ SUPPORTED_TELEMETRY_SCHEMAS = {
     "wod2sim_challenge_telemetry_v1",
     "wod2sim_challenge_telemetry_v2",
     "wod2sim_challenge_telemetry_v3",
+    "wod2sim_contract_telemetry_v4",
 }
 CURRENT_TELEMETRY_SCHEMA = "wod2sim_challenge_telemetry_v3"
 KNOWN_TELEMETRY_EVENTS = {
     "start_session",
     "image",
+    "observation",
     "egomotion",
     "route",
     "drive",
@@ -55,6 +57,7 @@ DIAGNOSTIC_CODES = (
     "lifecycle.duplicate_start",
     "lifecycle.duplicate_close",
     "lifecycle.late_image",
+    "lifecycle.late_observation",
     "lifecycle.late_route",
     "lifecycle.late_drive",
     "lifecycle.session_not_closed",
@@ -116,7 +119,7 @@ def diagnose_contract_trace(
     state = {**DEFAULT_CONTEXT, **dict(context or {})}
     detected: dict[str, ContractDiagnostic] = {}
 
-    latest_image_timestamp: dict[str, int] = {}
+    latest_observation_timestamp: dict[str, int] = {}
     started_sessions: set[str] = set()
     active_sessions: set[str] = set()
     closed_sessions: set[str] = set()
@@ -178,6 +181,7 @@ def diagnose_contract_trace(
         if session_uuid in closed_sessions:
             late_codes = {
                 "image": "lifecycle.late_image",
+                "observation": "lifecycle.late_observation",
                 "route": "lifecycle.late_route",
                 "drive": "lifecycle.late_drive",
             }
@@ -195,16 +199,19 @@ def diagnose_contract_trace(
             _diagnose_route_source(event, detected)
             continue
 
-        if event_name == "image":
+        if event_name in {"image", "observation"}:
             timestamp = _as_int(event.get("timestamp_us"))
             if timestamp is None:
                 _record(
                     detected,
                     "evidence.telemetry_incomplete",
-                    f"Image telemetry for session {session_uuid} lacks an integer timestamp.",
+                    (
+                        f"{event_name.capitalize()} telemetry for session {session_uuid} "
+                        "lacks an integer timestamp."
+                    ),
                 )
             else:
-                latest_image_timestamp[session_uuid] = timestamp
+                latest_observation_timestamp[session_uuid] = timestamp
             continue
 
         if event_name != "drive":
@@ -222,39 +229,39 @@ def diagnose_contract_trace(
             )
 
         time_now_us = _as_int(event.get("time_now_us"))
-        image_timestamp_us = latest_image_timestamp.get(session_uuid)
+        observation_timestamp_us = latest_observation_timestamp.get(session_uuid)
         if time_now_us is None:
             _record(
                 detected,
                 "evidence.telemetry_incomplete",
                 f"Drive telemetry for session {session_uuid} lacks an integer runtime timestamp.",
             )
-        elif image_timestamp_us is None:
+        elif observation_timestamp_us is None:
             _record(
                 detected,
                 "temporal.missing_observation",
-                f"Session {session_uuid} reached Drive without a retained image timestamp.",
+                f"Session {session_uuid} reached Drive without a retained observation timestamp.",
             )
-        elif image_timestamp_us > time_now_us:
+        elif observation_timestamp_us > time_now_us:
             _record(
                 detected,
                 "temporal.future_observation",
                 (
-                    f"Image timestamp {image_timestamp_us} us is later than Drive time "
+                    f"Observation timestamp {observation_timestamp_us} us is later than Drive time "
                     f"{time_now_us} us for session {session_uuid}."
                 ),
             )
-        elif time_now_us - image_timestamp_us > MAX_IMAGE_AGE_US:
+        elif time_now_us - observation_timestamp_us > MAX_IMAGE_AGE_US:
             _record(
                 detected,
                 "temporal.stale_observation",
                 (
-                    f"Drive input lag was {time_now_us - image_timestamp_us} us, above "
+                    f"Drive input lag was {time_now_us - observation_timestamp_us} us, above "
                     f"the {MAX_IMAGE_AGE_US} us contract."
                 ),
             )
 
-        if schema == "wod2sim_challenge_telemetry_v3":
+        if schema in {"wod2sim_challenge_telemetry_v3", "wod2sim_contract_telemetry_v4"}:
             _diagnose_current_trajectory_shape(event, detected, session_uuid)
         else:
             trajectory_points = _as_int(event.get("trajectory_points"))
@@ -470,7 +477,13 @@ def _diagnose_route_source(
     if event.get("route_geometry_required") is False:
         return
     source = str(event.get("route_source", "") or "")
-    if source == "command_proxy":
+    if source in {"", "missing"}:
+        _record(
+            detected,
+            "semantic.route_missing",
+            "A route-conditioned policy received no route geometry.",
+        )
+    elif source == "command_proxy":
         _record(
             detected,
             "semantic.command_only",

@@ -2,6 +2,14 @@
 
 ## 2026-07-20
 
+- Added a pinned Waymax/WOMD `2 x 2` policy-by-route experiment over 20 bundled
+  TFExamples: 19 paired scenarios, 3,800 closed-loop steps, 1.017 m median
+  route-following endpoint divergence, and exact constant-velocity invariance.
+- Made the semantic audit policy-signature-aware before rollout metrics:
+  RF/proxy is rejected 19/19 while RF/full and both constant-velocity controls
+  pass 19/19.
+- Reframed the principal claim as causal attribution correctness and limited
+  cross-runtime evidence to the route semantic contract.
 - Added one hash-validated reactive AlpaSim run of the published camera-blind
   NAVSIM checkpoint: 197/197 finite outputs, 198 render requests, and 19.93
   simulated seconds through live driver/controller/physics feedback.
@@ -21,7 +29,7 @@
 - Reported 60/60 finite outputs per arm and bounded client-to-service latency;
   retained the non-reactive, no-overhead, and no-human-diagnosis limits.
 - Added structural generalization beyond WOD message types while explicitly
-  withholding empirical cross-framework generalization.
+  withholding cross-runtime generalization of the remaining contracts.
 - Replaced illustrative README media with one real-camera comparison video and
   a same-frame animated preview generated from the executed replay.
 

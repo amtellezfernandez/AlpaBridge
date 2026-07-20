@@ -9,16 +9,17 @@ matrix (CVM) release surface. Commands ran from the repository root on
 | Command | Result |
 |---|---|
 | `uv run python -m ruff check .` | Passed. |
-| `WOD2SIM_CORE_CONFORMANCE=1 uv run python -m pytest -q tests/` | 373 passed, 14 skipped, and 15 subtests passed. |
-| `uv run python -m pytest --cov` | 373 passed, 14 skipped; 65.31% against the configured 33.0% minimum. |
+| `WOD2SIM_CORE_CONFORMANCE=1 uv run python -m pytest -q tests/` | 392 passed, 14 skipped, and 15 subtests passed. |
+| `uv run python -m pytest --cov` | 392 passed, 14 skipped; 65.43% against the configured 33.0% minimum. |
+| `./scripts/run_waymax_contract_study.sh` | Executed the pinned 20-example Waymax/WOMD fixture: 19 scenarios were eligible, all four 50-step arms completed, and the retained H1-H3 fixture checks passed. |
 | `uv run python scripts/run_diagnostic_experiment.py` | Generated 15 current-adapter controls, 15 label-withheld faults, exact descriptive comparator counts, post-parse detector timing, and paired in-process adapter Drive-path timing. |
 | `./scripts/run_alpasim_replay_demo.sh` | Executed four 60-call gRPC arms, verified the official AlpaSim recording and NAVSIM checkpoint hashes, and regenerated telemetry, paired trajectories, and real-camera media. |
-| `uv run python scripts/aggregate_cvm.py --inputs artifacts/cvm/results --output artifacts/cvm/results` | Regenerated the aggregate summary and paper macros from diagnostic schema v3. |
+| `uv run python scripts/aggregate_cvm.py --inputs artifacts/cvm/results --output artifacts/cvm/results` | Regenerated the aggregate summary and paper macros from diagnostic schema v3 and the retained Waymax study. |
 | `make cvm-check PYTHON='uv run python'` | Passed lint, conformance, and submission validation. |
 | `make paper-verify PYTHON='uv run python'` | Passed the deterministic six-page paper rebuild and submission validation. |
 | `make verify PYTHON='uv run python'` | Passed lint, conformance, coverage, install smoke, package build, paper rebuild, and submission validation. |
 | `uv build` | Built the source distribution and wheel. |
-| `qpdf --check wod2sim.pdf`, `pdfinfo wod2sim.pdf`, and `pdffonts wod2sim.pdf` | The PDF is 6 pages, portrait A4, 207252 bytes, uses embedded subset Type 1 fonts, and has no syntax or stream encoding errors reported by `qpdf`. |
+| `qpdf --check wod2sim.pdf`, `pdfinfo wod2sim.pdf`, and `pdffonts wod2sim.pdf` | The PDF is 6 pages, portrait A4, 302218 bytes, uses embedded subset Type 1 fonts, and has no syntax or stream encoding errors reported by `qpdf`. |
 
 ## Important Warnings
 
@@ -46,7 +47,10 @@ The release supports the completed dependency-light public core, semantic
 route-boundary diagnostics, a defined completion-and-metrics comparator,
 contract-gated attribution, 15 designed fault mutations paired with 15 valid
 current-adapter sessions, post-parse detector timing, and an in-process adapter
-Drive-path timing ablation. The separate four-arm replay supports bounded
+Drive-path timing ablation. The primary Waymax/WOMD study supplies 19 eligible
+paired scenarios, 3,800 closed-loop steps, selective route-dependent divergence,
+an exact 19/19 constant-velocity negative control, and attribution decided before
+behavior metrics. The separate four-arm AlpaSim replay supports bounded
 client-to-service timing, a route-loss consequence for route following, and an
 exact 60/60 learned command-native negative control.
 The additional reactive artifact supports 1/1 camera-blind learned rollout,

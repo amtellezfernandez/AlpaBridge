@@ -4,6 +4,14 @@ All notable public release changes are tracked here.
 
 ## Unreleased - 2026-07-20
 
+- Added a hash-pinned Waymax/WOMD factorial study with route following and
+  constant velocity under full route geometry and an intervention-defined
+  command proxy.
+- Retained scenario-level evidence for 20 bundled TFExamples: 19 paired
+  scenarios, 3,800 steps, selective route-following divergence, exact
+  constant-velocity invariance, and policy-signature-aware audit decisions.
+- Added a three-panel causal figure generated from the retained run and made it
+  the primary README and paper result.
 - Rebuilt the executed replay media around the causal boundary mutation:
   identical raw messages, an explicit `20 waypoints -> LEFT only` ablation,
   shared meter axes, the measured endpoint miss, and unobstructed paired

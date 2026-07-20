@@ -27,6 +27,7 @@ The contract-validation matrix (CVM) is referenced in the release targets below.
 | `wod2sim-promote-batch-summary` | Copy a validated local summary to an explicit destination. |
 | `wod2sim-evidence` | Inspect AlpaSim runtime metrics. |
 | `wod2sim-challenge-driver` | Serve or self-test the AlpaSim E2E-style external-driver compatibility adapter. |
+| `wod2sim-waymax-study` | Run the bounded Waymax/WOMD policy-by-route attribution study against a pinned checkout. |
 
 ## Quality And Release Targets
 

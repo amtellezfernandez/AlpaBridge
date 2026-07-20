@@ -6,7 +6,8 @@ secondary public synthetic lifecycle/fault conformance diagnostics, and
 explicit optional gated direct-actor blockers. A separate public protocol replay
 records current-schema client-to-service gRPC timing and contract diagnostics;
 one public-fixture learned rollout records live external-driver/controller/
-physics feedback.
+physics feedback. The primary attribution experiment uses the pinned Waymax
+route fixture in a policy-by-route negative-control design.
 
 ## Quality Gates
 
@@ -68,6 +69,29 @@ make cvm-synthetic PYTHON='uv run python'
 These rows are service-harness diagnostics only; they are not closed-loop scene
 rollouts, are not effectiveness metrics for simulator-backed integration, and
 remain `claim_valid=false`.
+
+## Waymax/WOMD Attribution Study
+
+```bash
+./scripts/run_waymax_contract_study.sh
+```
+
+The runner clones Waymax at
+`a64dfec9be8576b60d9cecc94f406d9812d4a7d0`, verifies the bundled WOMD route
+TFRecord hash, installs the pinned checkout into an isolated environment, and
+executes four 50-step arms for every comparison-eligible scenario. The route
+following arms use the same pure-pursuit controller with either original
+`sdc_paths.on_route` geometry or an intervention-defined `KEEP_HEADING`
+geometric proxy. Constant velocity traverses the same route conversion but
+does not consume it.
+
+The retained artifact under `artifacts/external/waymax_contract_study` includes
+scenario rows, aggregate summary, implementation hashes, and a manifest. Of 20
+TFExamples, 19 are eligible. Route-following endpoint divergence is 1.017 m
+median; constant velocity is invariant in 19/19; the audit rejects only the
+19 route-following proxy arms. The upstream data is not redistributed and the
+study outputs remain governed by the Waymax License Agreement for
+Non-Commercial Use.
 
 ## Paired AlpaSim Protocol Replay
 
@@ -173,6 +197,10 @@ the title, author block, PDF subject, or abstract text intentionally changes.
 - Reactive NAVSIM rollout: 1/1 pass, 197/197 finite outputs, 198 camera events,
   198 renderer requests, 19.93 simulated seconds, and a route-following
   frozen-camera control rejected after four completed calls.
+- Waymax/WOMD factorial: 20 fixture scenarios, 19 comparison-eligible,
+  3,800 closed-loop steps, 1.017 m median route-following endpoint divergence,
+  19/19 exact constant-velocity invariance, and 19/19 correct audit decisions
+  in each factorial cell.
 
 The current aggregate supports a completed dependency-light public core,
 completed full-contract integration checks, and bounded semantic
@@ -181,8 +209,10 @@ benchmark. Blocked rows remain optional gated extension denominator/context
 only. The aggregate does not support direct-actor temporal ablation,
 learned-policy quality, visual-policy behavior, scenario-category coverage,
 restricted scene redistribution, human diagnosis time, or empirical
-generalization to another integration framework. It reports exact runtime for
-the single reactive configuration, not comparative runtime overhead.
+generalization of all contracts to another integration framework. The Waymax
+study supports cross-runtime applicability of the route semantic rule only. It
+reports exact runtime for the single reactive configuration, not comparative
+runtime overhead.
 
 Failure attribution is explicit in `artifacts/cvm/results/summary.json` under
 `failure_attribution`. A behavior row is policy-attributable only after route,

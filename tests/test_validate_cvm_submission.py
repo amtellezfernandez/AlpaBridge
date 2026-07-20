@@ -224,6 +224,38 @@ def _write_paper_number_fixture(root: Path, module) -> tuple[Path, Path, Path, P
                 },
             },
         },
+        "waymax_contract_study": {
+            "behavior": {
+                "scenario_count": 20,
+                "comparison_eligible_scenarios": 19,
+                "route_unavailable_scenarios": 1,
+                "closed_loop_steps_total": 3800,
+                "finite_trajectory_plans": 3800,
+                "negative_control_invariant_scenarios": 19,
+                "endpoint_difference_m": {
+                    "route_following": {
+                        "mean": 1.972612,
+                        "median": 1.017287,
+                        "max": 14.210695,
+                        "changed_count": 13,
+                        "material_change_count": 10,
+                    },
+                    "constant_velocity": {
+                        "max": 0.0,
+                    },
+                },
+                "difference_in_differences_endpoint_m": {
+                    "mean": 1.972612,
+                    "median": 1.017287,
+                },
+                "attribution": {
+                    "route_following_full_route_clean": 19,
+                    "route_following_command_proxy_semantic_fault": 19,
+                    "constant_velocity_full_route_clean": 19,
+                    "constant_velocity_command_proxy_clean": 19,
+                },
+            },
+        },
         "diagnostic_experiment": {
             "design": {
                 "total_cases": 30,
@@ -1783,8 +1815,8 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
                 "| `uv run python -m pytest -q tests/test_validate_cvm_submission.py` | Passed. |\n"
                 "| `make paper-verify PYTHON='uv run python'` | Passed. |\n"
                 "| `make cvm-check PYTHON='uv run python'` | Passed with "
-                "373 passed, 14 skipped, and 15 subtests passed. |\n"
-                "| `make verify` | Passed with 65.31% against the configured 33.0% minimum. |\n",
+                "392 passed, 14 skipped, and 15 subtests passed. |\n"
+                "| `make verify` | Passed with 65.43% against the configured 33.0% minimum. |\n",
                 encoding="utf-8",
             )
 

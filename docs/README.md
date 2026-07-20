@@ -3,7 +3,7 @@
 | Guide | Purpose |
 | --- | --- |
 | [Design](design.md) | Five-contract WOD2Sim integration boundary, architecture, and scope. |
-| [WOMD targeting](womd-targeting.md) | Policy-interface targeting, native WOMD execution, and the absent WOMD-to-AlpaSim scene-conversion boundary. |
+| [WOMD targeting](womd-targeting.md) | Policy-interface targeting, the bounded Waymax/WOMD contract study, broader native WOMD execution, and the absent WOMD-to-AlpaSim scene-conversion boundary. |
 | [Getting started](getting-started.md) | Installation, AlpaSim setup, and command materialization. |
 | [Reproduction](reproduction.md) | Executed-run workflow and evidence artifacts. |
 | [Evaluation](evaluation.md) | Metrics, baselines, and claim requirements. |

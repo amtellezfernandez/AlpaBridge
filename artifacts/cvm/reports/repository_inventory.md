@@ -31,7 +31,7 @@ host-specific paths, runtime identifiers, and local simulator state.
   `paper/cvm/ieeeconf.cls`.
 - Page size: A4 verified by `mutool info` mediabox `[ 0 0 595.276 841.89 ]`.
 - Page count: 6.
-- PDF size at audit: 207252 bytes.
+- PDF size at audit: 302218 bytes.
 - Root PDF is the only tracked manuscript PDF.
 
 ## Commands And Targets
@@ -53,7 +53,7 @@ host-specific paths, runtime identifiers, and local simulator state.
 - AlpaSim E2E challenge compatibility adapter: `src/wod2sim/challenge`.
 - Audit and evidence tools: `src/wod2sim/audit`, `src/wod2sim/neutral`.
 - AlpaSim patches/overrides: `src/wod2sim/alpasim_overrides`.
-- Test directory: `tests` with 27 top-level test files. Runtime pass/skip
+- Test directory: `tests` with 28 top-level test files. Runtime pass/skip
   counts are recorded in [`test_report.md`](test_report.md).
 - Public release decision: [`release_decision.md`](release_decision.md).
 

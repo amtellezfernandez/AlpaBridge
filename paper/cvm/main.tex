@@ -31,35 +31,30 @@ Email: amtellezfernandez@gmail.com.}%
 \pagestyle{empty}
 
 \begin{abstract}
-Closed-loop driving evaluation can misattribute degraded metrics to policy quality when
-a simulator boundary drops route geometry, changes timing, or produces incomplete
-evidence. WOD2Sim audits five contracts between Waymo Open Motion Dataset-style
-trajectory policies and AlpaSim external drivers. A controlled route-format ablation
-replays one protocol through route-following and NAVSIM EgoStatusMLP with and without
-route geometry. All four return
-\CVMReplayDriveRPCsPerArm{}/\CVMReplayDriveRPCsPerArm{} finite, nonstationary
-trajectories. Geometry removal triggers
-\texttt{semantic.command\_only} for route following and changes
-\CVMReplayRouteEndpointChanged{}/\CVMReplayDriveRPCsPerArm{} endpoints. It is correctly
-accepted for EgoStatusMLP, whose published signature excludes route geometry; all
-\CVMReplayLearnedDriveRPCsPerArm{} paired outputs remain identical. Separately,
-\CVMProtocolTraceSessions{} adapter sessions are paired with
-\CVMDiagnosticFaultCases{} predefined single-fault mutations while withholding labels.
-WOD2Sim classifies
-\CVMWODDiagnosticCorrect{}/\CVMDiagnosticCases{} cases, localizes
-\CVMWODDiagnosticLocalized{}/\CVMDiagnosticFaultCases{} faults, and produces
-\CVMWODDiagnosticFalsePositives{}/\CVMDiagnosticControlCases{} control false positives;
-a completion gate classifies \CVMStatusDiagnosticCorrect{}/\CVMDiagnosticCases{} and
-detects no faults. Post-parse detection is \CVMFaultDetectorMedianUs{}~$\mu$s median and
-\CVMFaultDetectorNinetyFifthUs{}~$\mu$s p95. Camera-set and freshness checks add
-\CVMAdapterGuardIncrementMedianUs{}~$\mu$s median and
-\CVMAdapterGuardIncrementNinetyFifthUs{}~$\mu$s p95. A reactive AlpaSim
-rollout closes the camera-blind learned policy through controller and physics for
-\CVMReactiveLearnedFiniteDriveOutputs{}/\CVMReactiveLearnedDriveRPCs{} finite outputs
-over \CVMReactiveSimulatedSeconds{} simulated seconds. Its camera repeats one recorded
-seed on a declared flat surface; this supports lifecycle and service timing only, not
-visual-policy quality, comparative overhead, human diagnosis time, scenario coverage,
-or cross-framework transfer.
+Closed-loop driving evaluation can misattribute degraded behavior to policy quality
+when an adapter loses decision-relevant inputs. WOD2Sim audits semantic, temporal,
+lifecycle, deployment, and evidence contracts before simulator output is admitted as
+policy evidence. We test attribution correctness with a specified $2\times2$
+negative-control design on the \CVMWaymaxScenarioCount{} WOMD TFExamples bundled with a
+pinned Waymax revision; \CVMWaymaxEligibleScenarios{} contain valid route geometry.
+For each, the same pure-pursuit policy receives either original WOMD geometry or a
+degraded geometric proxy reconstructed from an intervention-defined command. A
+constant-velocity policy traverses the same mutation but does not consume route input.
+All four arms complete 50-step rollouts. Route-following endpoint divergence has median
+\CVMWaymaxRouteEndpointMedianM{}~m and exceeds 0.1~m in
+\CVMWaymaxRouteEndpointChanged{}/\CVMWaymaxEligibleScenarios{} scenarios, whereas
+constant velocity is numerically invariant in
+\CVMWaymaxNegativeControlInvariant{}/\CVMWaymaxEligibleScenarios{}. WOD2Sim rejects
+only the \CVMWaymaxRouteProxyRejected{} route-dependent proxy executions as
+\texttt{semantic.command\_only}. A separate suite of
+\CVMDiagnosticControlCases{} clean and \CVMDiagnosticFaultCases{} single-fault adapter
+sessions yields \CVMWODDiagnosticCorrect{}/\CVMDiagnosticCases{} classifications,
+\CVMWODDiagnosticLocalized{}/\CVMDiagnosticFaultCases{} localizations, and
+\CVMWODDiagnosticFalsePositives{}/\CVMDiagnosticControlCases{} control false positives.
+Simulator completion alone therefore cannot distinguish policy degradation from
+adapter-induced information loss. The study does not establish policy superiority,
+representative WOMD performance, safety, fault prevalence, or comparative runtime
+overhead.
 \end{abstract}
 
 \section{Introduction}
@@ -87,20 +82,20 @@ threefold:
   policy behavior;
   \item an adapter, audit, and artifact pipeline localizes violations and preserves
   completed, blocked, and invalid rows;
-  \item a paired protocol-conformance suite measures localization, post-parse detector
-  execution, and a guard-path increment against an executable status-only gate, while
-  a recorded-message gRPC replay tests policy-specific semantic applicability across
-  route-dependent and command-native learned policies; a separate learned-policy
-  rollout tests live external-driver, controller, and physics feedback.
+  \item a policy-by-route negative-control experiment over real WOMD records tests
+  whether a detected semantic violation selectively changes a policy that requires the
+  lost information, while a protocol-conformance suite and AlpaSim execution test
+  localization and external-driver operation.
 \end{itemize}
 The five contract classes concern information, clocks, service state, deployment, and
 evidence rather than WOD records or a specific protobuf schema. A new binding maps its
 native policy inputs, clocks, service states, and artifacts to these contracts; the
-WOD-style/AlpaSim adapter is one instantiation, not the definition. This is a structural
-generalization hypothesis. Empirically, the present study still covers one simulator
-binding: its matrix uses dependency-light policies, while the replay and one reactive
-run add a published NAVSIM learned baseline. It does not cover a second independently
-maintained simulator framework.
+WOD-style/AlpaSim adapter is one instantiation, not the definition. Empirically, this
+paper exercises the semantic rule in both Waymax and AlpaSim. The Waymax experiment is
+a bounded WOMD-native binding for one route contract, not a production adapter or
+cross-runtime validation of all five contracts; the AlpaSim matrix uses
+dependency-light policies, while a replay and one reactive run add a published NAVSIM
+learned baseline.
 
 \subsection{Failure Attribution Rule}
 
@@ -137,6 +132,17 @@ timeout, endpoint, repository state, image identity, and gated inputs. The
 \emph{evidence contract} requires unique run identifiers, immutable manifests, terminal
 status, route and sensor audits, failed-run retention, and hashes linking generated
 paper assets to aggregate rows.
+
+For rollout $r$ and policy signature $p$, admission is
+\begin{equation}
+\mathcal{A}(r,p)=\bigwedge_{c\in\{\mathrm{sem,temp,life,deploy,evid}\}}
+C_c(r,p).
+\end{equation}
+A behavior measurement $Q(r)$ is policy-behavior-attributable only when
+$\mathcal{A}(r,p)=1$; a policy-failure claim additionally requires the retained failure
+layer to be \texttt{policy}. Contract checks consume declared requirements, message
+provenance, timestamps, lifecycle events, and artifacts, not $Q(r)$. Admission is
+therefore independent of whether the resulting trajectory appears good or bad.
 
 Figure~\ref{fig:architecture} shows the boundary. WOD2Sim reconstructs policy-facing
 state, preserves route geometry, resamples outputs, and isolates optional model
@@ -186,33 +192,15 @@ not reported as a result.
 
 \subsection{Artifact Lineage}
 
-Figure~\ref{fig:pipeline} shows the evidence path. Before launch, the matrix runner
-expands a configuration row and materializes its command, environment, scene identity,
-policy identity, adapter mode, prerequisite state, and expected route source. A
-readiness check distinguishes an executable row from a missing checkpoint, actor
-proxy, asset, or runtime dependency. Terminal state is then recorded as completed,
-failed, blocked, or planned; non-completed rows are retained rather than removed from
-the denominator.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\columnwidth]{figures/evaluation_pipeline.pdf}
-\caption{Manifests and audits precede aggregation, so blocked or invalid rows remain
-visible and cannot silently become paper results.}
-\label{fig:pipeline}
-\end{figure}
-
-For completed simulator rows, the audit reconstructs route-source and sensor-freshness
-status from retained telemetry and loads behavior metrics without using them to decide
-route validity. Aggregation rejects duplicate completed run identifiers, preserves
-failure codes, forms paired rows by policy, scene, and execution identifier, and writes
-CSV, JSON, LaTeX tables, and vector figures. Generated paper assets carry the aggregate
-data hash, and the submission validator compares their values with the JSON source.
-This lineage prevents manual table edits from changing a paper result independently of
-the row evidence. Restricted sensor frames and licensed scenes are not redistributed;
-the public package retains manifests, aggregate metrics, audit fields, and a stable
-frame schema. Consequently, artifact lineage is public, but complete replay still
-depends on legitimately acquired external scenes and runtime software.
+Before launch, the matrix runner records command, environment, scene and policy
+identities, adapter mode, prerequisites, and expected route source. Readiness and
+terminal states remain in the denominator. For completed rows, the audit reconstructs
+route and freshness status from telemetry before loading behavior metrics. Aggregation
+rejects duplicate run identifiers, preserves failure codes, and pairs rows by policy,
+scene, and execution. CSV, JSON, tables, and figures share one aggregate-data hash that
+the submission validator checks. Licensed scenes and sensor frames are not
+redistributed, so public lineage is complete while replay still requires legitimately
+acquired inputs and runtime software.
 
 \section{Evaluation Method}
 
@@ -223,65 +211,88 @@ fault-injection rows. It completes \CVMCompletedRuns{} rows, including
 \CVMClosedLoopCompletedRuns{} simulator rollouts; \CVMBlockedRuns{} optional-extension
 rows remain blocked.
 
-The public core executes two dependency-light policies over
-\CVMClosedLoopSceneCount{} locally cached front-camera scenes. The semantic matrix pairs
-full-route and command-only variants of route following on the same scenes. The launcher
-does not expose a simulator seed override, so each policy/scene arm has one execution;
-the configured seed is provenance metadata rather than proof of deterministic replay.
-No authoritative metadata verifies straight, intersection, lane-change, dense-traffic,
-occlusion, or merge labels: \CVMUnclassifiedClosedLoopSceneCount{} scenes remain
-unclassified and
-\CVMVerifiedRequiredScenarioCategoryCount{}/\CVMRequiredScenarioCategoryCount{}
-required categories are verified.
+\subsection{Policy-Dependency Negative Control}
 
-For transport-inclusive current-schema evidence, we replay the official AlpaSim
-integration recording identified in the artifact manifest through four live driver
-services. The two policy families are route following and NAVSIM's published learned
-EgoStatusMLP seed-0 baseline~\cite{dauner2024navsim,dauner2024navsimbaselines},
-executed on CPU from a revision- and hash-pinned checkpoint. Its published input is
-planar velocity, acceleration, and a four-way command; it is neither a visual nor
-multimodal policy. For each policy, both arms receive the same recorded session, route,
-egomotion, camera, and \texttt{Drive} messages. One service mode retains all 20 route
-points and the other retains only the derived command. Route following declares the
-polyline required; EgoStatusMLP consumes the command and ego status but not the
-polyline. The client times the complete loopback gRPC call using
-\texttt{perf\_counter\_ns}. Each arm has one sequential execution with
-\CVMReplayDriveRPCsPerArm{} calls. We pair calls by index, timestamps, and raw route, then
-measure Euclidean separation between output endpoints in the local ego frame. Because
-returned trajectories do not alter recorded future observations, this is a non-reactive
-protocol replay rather than a simulator rollout. It includes client serialization,
-transport, service dispatch, adapter execution, and response serialization, but not
-simulator stepping or feedback. This is a controlled route-format ablation for causal
-sensitivity and semantic-gate validation, not an estimate of fault prevalence or a
-comparison with another integration framework. Arm timing differences are not overhead
-estimates.
+Our primary question is whether the audit can distinguish degradation caused by a lost
+policy input from genuine policy failure. We use all \CVMWaymaxScenarioCount{}
+TFExamples in the route-bearing test fixture distributed with a commit-pinned Waymax
+checkout~\cite{gulino2023waymax}; raw records are not redistributed. One example has no
+valid \texttt{sdc\_paths.on\_route} candidate and is excluded before intervention,
+leaving \CVMWaymaxEligibleScenarios{} paired WOMD scenarios.
 
-To test live feedback separately, one run uses the current public AlpaSim fixture and
-the same pinned EgoStatusMLP checkpoint. AlpaSim's external driver, controller, and
-physics services remain live; each returned trajectory affects the next ego state.
-Because the fixture has no collision mesh, the artifact declares an added flat $z=0$
-surface. AlpaSim calls its official \texttt{video\_model} boundary, while the external
-endpoint repeats the fixture's recorded seed frame and logs every requested live
-trajectory. This is valid for the camera-blind checkpoint, whose input signature
-excludes pixels, but not for a visual policy. A same-scene route-following control
-declares camera freshness required and is expected to reject the repeated image rather
-than complete.
+The design crosses policy $P\in\{\mathrm{RF},\mathrm{CV}\}$ with route representation
+$R\in\{\mathrm{full},\mathrm{proxy}\}$. RF is a constant-speed, no-jump pure-pursuit
+controller. In the full arm it receives the selected WOMD route polyline. In the proxy
+arm, the adapter removes that original geometry and constructs a straight 200-m
+polyline from an intervention-defined \texttt{KEEP\_HEADING} command. This command is
+not read from the WOMD record. Both arms retain the same control law, 0.5-s lookahead,
+2-m minimum lookahead, and current-state speed; only the received geometry changes.
+CV traverses the same adapter mutation but its declared signature excludes route, so it
+ignores both representations.
 
-The retained external AlpaSim trace contains \CVMExternalChallengeDriveRPCs{} drive calls
-and establishes service-interface and recorded-latency conformance. It uses an earlier
-telemetry schema that did not record the final finite-output check, so it is not the
-source of the mutation experiment. Instead, the current adapter generates
-\CVMProtocolTraceSessions{} separate sessions containing
-\CVMProtocolTraceDriveRPCs{} drive calls; all
-\CVMProtocolFiniteDriveRecords{} calls explicitly record a finite serialized
-trajectory. The sessions vary accepted camera aliases, route geometry, speed, and valid
-sensor age, and each passes the five contracts before mutation.
+Every arm starts from the same state and uses Waymax \texttt{StateDynamics} for 50
+steps at 10~Hz; horizon, controlled SDC, and log playback of other agents are fixed.
+Thus the experiment comprises \CVMWaymaxClosedLoopSteps{} closed-loop steps and
+\CVMWaymaxFinitePlans{} finite plans. For scenario $i$ and policy $p$, the paired
+divergence is
+\begin{equation}
+D_i^p(t)=\left\lVert x_{i,t}^{p,\mathrm{full}}-
+x_{i,t}^{p,\mathrm{proxy}}\right\rVert_2,
+\end{equation}
+and the primary policy-by-route interaction is
+$I_i=D_i^{\mathrm{RF}}(T)-D_i^{\mathrm{CV}}(T)$. Before stepping or computing behavior
+metrics, the audit evaluates the declared route requirement and source. Before the
+retained corrected run, we fixed three checks: H1, median
+$D^{\mathrm{RF}}(T)>0.1$~m; H2, every
+$D_i^{\mathrm{CV}}(T)\leq10^{-6}$~m; and H3, only RF/proxy receives
+\texttt{semantic.command\_only}. An exploratory prototype on the same fixture had
+substituted a straight-line controller in the proxy arm; it exposed that confound and is
+not retained. The checks are therefore deterministic fixture-level decision criteria,
+not an independent preregistration or population significance test. Collision and
+overlap are retained as descriptive Waymax outputs but are not primary because non-SDC
+agents follow the log and cannot react to the counterfactual ego.
 
-Each clean session is paired with a copy containing one predefined single-field or
-runtime-context mutation. The 15 mutations cover three semantic, three temporal, three
-lifecycle, one plugin precondition within deployment, three other deployment, and two
-evidence faults. Mutation construction and detection are separate: the detector
-receives only events and runtime context, while the scorer retains the expected label.
+\subsection{Waymax Reproducibility}
+
+The repository entry point installs the pinned upstream revision in an isolated
+environment, verifies the bundled fixture hash, and executes each eligible scenario in
+all four arms. Eligibility is decided before route intervention; failed arms remain in
+the scenario record rather than disappearing from a denominator. The retained package
+contains a manifest, per-scenario JSON Lines, an aggregate JSON summary, implementation
+hashes, dependency versions, and the exact CPU command. The paper aggregator recomputes
+all endpoint and audit counts from those files and includes their content hash in every
+generated table and figure. The submission validator compares the LaTeX macros with the
+JSON source. Raw upstream TFRecords are intentionally omitted; reproducing the run
+therefore requires the pinned Waymax checkout and acceptance of its licensing terms.
+
+The public AlpaSim core executes two dependency-light policies on
+\CVMClosedLoopSceneCount{} locally cached scenes and pairs full-route and command-only
+route-following arms. Each arm has one execution because the launcher exposes no seed
+override. Scene categories are unverified
+(\CVMVerifiedRequiredScenarioCategoryCount{}/\CVMRequiredScenarioCategoryCount{}), so
+these rows are integration diagnostics, not coverage evidence.
+
+For transport-inclusive evidence, one official AlpaSim integration recording is replayed
+through four live services: route following and NAVSIM's published EgoStatusMLP seed-0
+baseline~\cite{dauner2024navsim,dauner2024navsimbaselines}, each with full geometry or
+command only. The CPU checkpoint is revision- and hash-pinned. EgoStatusMLP consumes ego
+status and command, not pixels or the polyline. Each sequential arm has
+\CVMReplayDriveRPCsPerArm{} paired calls. Returned trajectories cannot affect recorded
+future observations, so this is non-reactive protocol replay, not a rollout or an
+overhead comparison.
+
+One separate run tests live feedback with the same checkpoint and public AlpaSim
+fixture: external driver, controller, and physics remain live, and each trajectory
+changes the next ego state. The declared fixture adds a flat collision surface and
+repeats a seed frame at AlpaSim's \texttt{video\_model} boundary. This is admissible only
+for the camera-blind checkpoint; a camera-requiring control must reject the stale frame.
+
+The retained external trace has \CVMExternalChallengeDriveRPCs{} calls but predates the
+current finite-output field. The mutation study instead uses
+\CVMProtocolTraceSessions{} current-schema clean sessions, all contract-valid before
+mutation. Each is paired with one independently scored semantic, temporal, lifecycle,
+deployment, or evidence mutation; the detector sees events and runtime context but not
+the expected label.
 For a paired comparator, define the executable completion-and-metrics gate
 \begin{equation}
 B_{\mathrm{status}}(r)=
@@ -293,35 +304,58 @@ compute a population confidence interval or hypothesis test because the sessions
 fault operators are deliberately constructed rather than sampled independently from a
 defined population.
 
-Detector timing uses 200 randomized iterations and five calls per batch, yielding 3,000
-fault-case and 6,000 all-case per-call batch means. The timer starts after telemetry has
-been parsed and excludes file I/O and human investigation. A separate
-\CVMAdapterTimingSamples{}-iteration
-paired ablation rotates over \CVMAdapterInputCases{} deterministic valid sessions and
-compares the in-process adapter Drive path with camera-set and sensor-freshness guards
-enabled or disabled; context-length validation remains in both arms. Order is randomized
-batched by 20. Both paths retain state-to-input assembly, prediction, trajectory
-serialization, finite-output validation, reasoning parsing, and in-memory telemetry;
-output trajectories must match exactly. Completed
-simulator rows are separately audited for route source and sensor freshness. The same
-status gate is applied to metric-bearing command-only rows, while WOD2Sim additionally
-requires all five contracts.
+Randomized microbenchmarks time post-parse detection and a paired in-process Drive path
+with camera and freshness guards enabled or disabled; they exclude I/O, gRPC, simulator
+work, and human investigation. Guarded and unchecked outputs must match exactly.
+Completed simulator rows are separately audited for route source and freshness.
 
 \section{Results}
 
-Table~\ref{tab:main-results} reports integration status rather than behavior scores.
-All \CVMPublicCoreCompletedRuns{}/\CVMPublicCoreRows{} public-core rows complete with
-no service crash or blocker; \CVMPublicCoreAuditValidRuns{} are audit-valid. The two
-invalid core rows and one invalid semantic full-route row come from the same scene,
-where the audit finds late command-proxy fallback. They remain integration/evidence
-failures despite successful process completion.
+Figure~\ref{fig:waymax-factorial} reports the primary causal check. All four arms
+complete for \CVMWaymaxEligibleScenarios{} scenarios. RF has endpoint divergence mean
+\CVMWaymaxRouteEndpointMeanM{}~m, median \CVMWaymaxRouteEndpointMedianM{}~m, and maximum
+\CVMWaymaxRouteEndpointMaxM{}~m; \CVMWaymaxRouteEndpointChanged{} scenarios exceed
+0.1~m and \CVMWaymaxRouteEndpointMaterialChanged{} exceed 1~m. CV is numerically
+identical in the retained traces: its maximum endpoint divergence is
+\CVMWaymaxCVEndpointMaxM{}~m, and all
+\CVMWaymaxNegativeControlInvariant{}/\CVMWaymaxEligibleScenarios{} satisfy the
+$10^{-6}$-m invariant. The interaction therefore has mean
+\CVMWaymaxInteractionMeanM{}~m and median \CVMWaymaxInteractionMedianM{}~m. H1 and H2
+hold for the pinned fixture.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/waymax_factorial.pdf}
+\caption{Policy-dependency negative control on WOMD scenarios in Waymax. The same
+route-following controller receives full route geometry or an intervention-defined
+command proxy; constant velocity traverses the same adapter mutation without consuming
+route. Mean paired divergence grows only for the route-dependent policy. Audit
+admission is decided from the declared input signature before behavior metrics.}
+\label{fig:waymax-factorial}
+\end{figure*}
+
+Table~\ref{tab:waymax-factorial} separates completion from attribution. The audit
+accepts all \CVMWaymaxRouteFullClean{} RF/full executions and rejects all
+\CVMWaymaxRouteProxyRejected{} RF/proxy executions with only
+\texttt{semantic.command\_only}. It accepts both CV arms
+(\CVMWaymaxCVFullClean{}/\CVMWaymaxEligibleScenarios{} and
+\CVMWaymaxCVProxyClean{}/\CVMWaymaxEligibleScenarios{}), because geometry is outside
+that policy's signature. H3 therefore holds. Importantly, the rejected RF/proxy arms
+still finish and emit Waymax metrics: invalidation does not follow from poor trajectory
+values, and no policy-ranking or safety conclusion is drawn from collision or overlap.
 
 \begin{table}[t]
 \centering
-\caption{Dependency-light public-core integration status.}
-\label{tab:main-results}
-\resizebox{\columnwidth}{!}{\input{generated/main_results.tex}}
+\caption{Waymax/WOMD policy-by-route result. $D_T$ compares full and proxy endpoints
+within the same policy; ``valid'' is contract admission, not driving quality.}
+\label{tab:waymax-factorial}
+\resizebox{\columnwidth}{!}{\input{generated/waymax_factorial.tex}}
 \end{table}
+
+All \CVMPublicCoreCompletedRuns{}/\CVMPublicCoreRows{} dependency-light public-core rows
+complete without service crash or blocker, but only
+\CVMPublicCoreAuditValidRuns{} are audit-valid. Late command-proxy fallback makes the
+other completed rows integration/evidence failures rather than policy evidence.
 
 Designed-suite results appear in Table~\ref{tab:diagnostic-comparison}. WOD2Sim is
 correct on \CVMWODDiagnosticCorrect{} of \CVMDiagnosticCases{} cases, detects and
@@ -354,103 +388,66 @@ Status-only & \CVMStatusDiagnosticCorrect{}/\CVMDiagnosticCases{} &
 \end{tabular}
 \end{table}
 
-Post-parse contract-gate execution is \CVMDetectorDecisionMedianUs{}~$\mu$s median and
-\CVMDetectorDecisionNinetyFifthUs{}~$\mu$s p95 over 6,000 measurements. On the 3,000
-fault cases it is \CVMFaultDetectorMedianUs{}~$\mu$s median and
-\CVMFaultDetectorNinetyFifthUs{}~$\mu$s p95. The guarded in-process adapter Drive path
-is \CVMAdapterDriveMedianUs{}~$\mu$s median and
-\CVMAdapterDriveNinetyFifthUs{}~$\mu$s p95. Its paired guard-path increment is
+Post-parse detection is \CVMDetectorDecisionMedianUs{}~$\mu$s median and
+\CVMDetectorDecisionNinetyFifthUs{}~$\mu$s p95; the paired guard-path increment is
 \CVMAdapterGuardIncrementMedianUs{}~$\mu$s median and
-\CVMAdapterGuardIncrementNinetyFifthUs{}~$\mu$s p95 over
-\CVMAdapterTimingSamples{} measurements; guarded and
-unchecked calls return identical trajectories and headings. These timings describe the
-measured software paths on one host and are not end-to-end runtime or time-to-diagnosis
-measurements. Separately, all
-\CVMExternalChallengeLatencyTargetMet{}/\CVMExternalChallengeLatencyTargetDenominator{}
-calls in the retained external trace meet its 100-ms target.
+\CVMAdapterGuardIncrementNinetyFifthUs{}~$\mu$s p95. Outputs are identical between
+timed paths. These one-host microbenchmarks are not end-to-end runtime or
+time-to-diagnosis measurements.
 
-Table~\ref{tab:replay-policies} reports the four current-schema replay arms. Every arm
-returns \CVMReplayDriveRPCsPerArm{}/\CVMReplayDriveRPCsPerArm{} finite and nonstationary
-trajectories and meets the 100-ms target. Both route-preserving traces produce zero
-diagnostics. The reduced route-following trace produces only
-\texttt{semantic.command\_only}, whereas the reduced EgoStatusMLP trace passes because
-route geometry is outside its declared input signature. Thus applicability of the
-semantic decision is tested across \CVMReplayPolicyFamilies{} policy families at the
-same boundary.
+All four protocol-replay arms return \CVMReplayDriveRPCsPerArm{} finite, moving
+trajectories. Full-route traces pass. Command-only route following receives only
+\texttt{semantic.command\_only} and changes endpoint on
+\CVMReplayRouteEndpointChanged{}/\CVMReplayDriveRPCsPerArm{} calls; all
+\CVMReplayLearnedDriveRPCsPerArm{} EgoStatusMLP pairs are exactly equal and pass because
+route geometry is not a model input. This is input-signature evidence, not format or
+policy overhead.
 
 \begin{table}[t]
 \centering
-\caption{Executed policy-family protocol replay. ``Moving'' means endpoint progress
-exceeds 1~m; audit outcomes are recomputed from retained telemetry.}
+\caption{Executed AlpaSim policy-family protocol replay. ``Moving'' means endpoint
+progress exceeds 1~m; audit outcomes are recomputed from retained telemetry.}
 \label{tab:replay-policies}
 \resizebox{\columnwidth}{!}{\input{generated/protocol_replay_policies.tex}}
 \end{table}
 
-Route removal changes the route-following endpoint by more than 0.1~m on
-\CVMReplayRouteEndpointChanged{}/\CVMReplayDriveRPCsPerArm{} calls. EgoStatusMLP is the
-policy-signature negative control: all \CVMReplayLearnedDriveRPCsPerArm{} full/reduced
-trajectory pairs are exactly equal, as required because the mutation removes no model
-input. Route-following full/reduced median/p95 client-to-service latency is
-\CVMReplayFullLatencyMedianMs{}/\CVMReplayFullLatencyNinetyFifthMs{} and
-\CVMReplayCommandLatencyMedianMs{}/\CVMReplayCommandLatencyNinetyFifthMs{}~ms;
-EgoStatusMLP is
-\CVMReplayLearnedFullLatencyMedianMs{}/\CVMReplayLearnedFullLatencyNinetyFifthMs{} and
-\CVMReplayLearnedCommandLatencyMedianMs{}/\CVMReplayLearnedCommandLatencyNinetyFifthMs{}~ms.
-These are descriptive values from one ordered run per arm, using different runtime
-images for the dependency-light and learned services; no format or policy overhead is
-inferred.
+The learned reactive arm completes its one rollout with
+\CVMReactiveLearnedFiniteDriveOutputs{}/\CVMReactiveLearnedDriveRPCs{} finite outputs and
+advances \CVMReactiveDistanceTraveledM{}~m over
+\CVMReactiveSimulatedSeconds{} simulated seconds. These are measurements of that exact
+configuration, not overhead versus another integration or a policy-quality result. The
+camera-requiring control completes \CVMReactiveNegativeControlDrives{} calls, then
+rejects the next unchanged frame as stale.
 
-The learned reactive arm completes
-\CVMReactiveLearnedPassedRollouts{}/\CVMReactiveLearnedRollouts{} rollout with
-\CVMReactiveLearnedFiniteDriveOutputs{}/\CVMReactiveLearnedDriveRPCs{} finite outputs
-and \CVMReactiveLearnedLatencyTargetMet{}/\CVMReactiveLearnedDriveRPCs{} below its
-100-ms internal target. Driver-internal median/p95 is
-\CVMReactiveLearnedLatencyMedianMs{}/\CVMReactiveLearnedLatencyNinetyFifthMs{}~ms;
-AlpaSim observes \CVMReactiveLearnedServiceDriveMeanMs{}~ms mean \texttt{Drive} RPC
-time. The run advances \CVMReactiveDistanceTraveledM{}~m over
-\CVMReactiveSimulatedSeconds{} simulated seconds in
-\CVMReactiveActiveWallSeconds{} active wall-clock seconds
-(\CVMReactiveTotalWallSeconds{} including setup). These are measurements of this exact
-configuration, not overhead versus another integration. The retained behavior record
-includes \texttt{wrong\_lane}=\CVMReactiveWrongLane{} and is not used as a
-policy-quality result. In the camera-validating control,
-\CVMReactiveNegativeControlDrives{} calls complete before WOD2Sim rejects the next
-unchanged frame as stale. Thus the static camera limitation is detected rather than
-silently accepted for a model that requires camera freshness.
+The external runs also exposed three non-injected defects: stale camera-alias priority,
+zero dynamic speed despite advancing poses, and a trajectory-serializer off-by-one.
+Freshest-frame selection, pose-derived speed fallback, and current/future count checks
+now have regression tests. All replay arms were regenerated; these repairs are not
+counted among the designed faults.
 
-Constructing the clean sessions exposed two non-injected adapter defects. Camera-alias
-priority could select an older frame and falsely report staleness; the adapter now
-selects the freshest candidate. In the real replay, AlpaSim's dynamic-speed field became
-zero while consecutive poses still advanced, causing 59 stationary outputs in the
-superseded artifact; the adapter now falls back to pose-derived speed when those signals
-conflict. Regression tests cover both cases, and all four replay arms were regenerated.
-Integrating the checkpoint also exposed a serializer off-by-one error that replaced the
-first future pose with the current pose and dropped the final prediction. Telemetry
-schema v3 now records current and future counts separately, and regression tests require
-the current pose plus every predicted waypoint. None of these repaired defects is
-counted among the 15 injected faults.
+\subsection{Cross-Runtime Scope}
 
-The closed-loop invalidation check in Table~\ref{tab:integration-checks} is consistent
-with the mutation study. All
-\CVMStatusOnlyAcceptedRuns{}/\CVMStatusOnlyAcceptanceDenominator{} command-only rows
-satisfy $B_{\mathrm{status}}$, whereas WOD2Sim rejects
+The unit of transfer is a declared contract binding, not a dataset conversion. In
+Waymax, the policy-side representation is native WOMD geometry and the intervention
+changes the closed-loop SDC trajectory while other agents follow the log. In AlpaSim,
+the external-driver binding independently records whether a policy receives geometry
+or only a command. The replay then applies that rule to a route-dependent controller
+and a published learned command-native policy; the live run adds simulator feedback for
+the learned service. Across both runtimes, command-derived geometry is rejected only
+when the active signature requires the original polyline.
+
+This is mechanism-level replication of one semantic rule under different state,
+dynamics, and service interfaces. It is not simulator equivalence or policy-performance
+transfer: the two route-following implementations are not asserted to be identical, the
+learned checkpoint is NAVSIM rather than WOMD-trained, and only Waymax supplies the
+paired causal rollout. Testing the same learned WOMD policy in both runtimes and
+repeating the other four contracts remain required for broader generalization.
+
+All \CVMStatusOnlyAcceptedRuns{}/\CVMStatusOnlyAcceptanceDenominator{} metric-bearing
+command-only rows satisfy $B_{\mathrm{status}}$, whereas WOD2Sim rejects
 \CVMContractInvalidRejectedRuns{}/\CVMContractInvalidRejectionDenominator{} as
-route-invalid. Thus metric-bearing completion alone would admit records whose route
-contract is known to be false.
-
-\begin{table}[t]
-\centering
-\caption{Closed-loop attribution checks from retained rollout and audit artifacts.}
-\label{tab:integration-checks}
-\resizebox{\columnwidth}{!}{\input{generated/ablations.tex}}
-\end{table}
-
-Only \CVMSemanticAblationEligiblePairs{}/\CVMSemanticAblationCompletedPairs{} route-loss
-pairs satisfy the comparison criterion. Their full-minus-command means are mixed
-(progress \CVMSemanticProgressDeltaMean{}, collision-any
-\CVMSemanticCollisionAnyDeltaMean{}, plan deviation
-\CVMSemanticPlanDeviationDeltaMean{}); they describe retained outcomes rather than a
-policy effect because each arm has one execution and no effective seed control.
+route-invalid. Their simulator outcomes cannot be used as a policy effect because each
+AlpaSim arm has one execution and no effective seed control.
 
 Across all retained rows, \CVMPolicyBehaviorAttributableRows{} are
 policy-behavior-attributable diagnostics, \CVMPolicyFailureAttributableRows{} are
@@ -499,9 +496,10 @@ and control clocks to the temporal contract, and its service and artifact states
 remaining contracts. Such a binding may reuse the audit vocabulary without sharing WOD
 message types. The route-following treatment and EgoStatusMLP negative control show that
 the semantic gate follows a policy's declared input signature rather than one policy
-implementation, but both use the same AlpaSim binding. Cross-simulator transfer still
-requires a second integration, such as a Waymax adapter, and a framework-independent
-fault set.
+implementation. The factorial experiment additionally executes that rule in a
+WOMD-native Waymax environment, while the external-driver evidence uses AlpaSim. This
+is cross-runtime evidence for the route semantic contract, not evidence that all five
+contracts, policies, or fault classes transfer unchanged between the frameworks.
 
 nuPlan and NAVSIM formalize planning tasks and measures; Waymax and CARLA provide
 controllable simulation interfaces; AlpaSim supplies the external-driver boundary used
@@ -510,20 +508,24 @@ and artifact-lineage checks. Scenic and driving fuzzers vary scenarios to expose
 behavior, whereas our mutations vary information or preconditions at the integration
 boundary. The approaches can be combined.
 
-The study scope is contract conformance. The mutations and clean sessions are
-framework-authored, deterministic software cases rather than natural fault samples or
-external simulator reruns. The retained external trace establishes a separate
-service-conformance result, but its earlier schema omits the explicit finite-output
-field required by the current detector. The status-only gate is a concrete
+The study scope is contract conformance. The diagnostic mutations and clean sessions
+are framework-authored, deterministic software cases rather than natural fault
+samples. The retained external trace establishes a separate service-conformance result,
+but its earlier schema omits the explicit finite-output field required by the current
+detector. The status-only gate is a concrete
 completion-and-metrics comparator, not a surrogate for CARLA, nuPlan, or another full
-framework. The repository is not an official WOMD interface, does not reconstruct full
-WOMD worlds, and has no scene-matched actor proxy or verified scenario-category
-coverage. One official NAVSIM learned checkpoint is hash-pinned for the replay and one
-reactive external-driver rollout, but is not redistributed. It is camera-blind rather
-than visual or multimodal and is not evaluated for policy quality. The public reactive
-fixture repeats a recorded seed frame and uses a declared synthetic flat physics
-surface. Restricted scenes remain licensed inputs; public artifacts retain telemetry,
-manifests, aggregates, hashes, and testable gate logic.
+framework. The Waymax study uses the complete 20-example route test fixture bundled by
+the pinned upstream revision; it is neither a random nor representative WOMD sample,
+and one example lacks the route required for the paired comparison. It evaluates two
+deterministic policies, not a learned WOMD planner. WOD2Sim does not redistribute the
+fixture or reconstruct WOMD worlds inside AlpaSim, and the AlpaSim matrix has no
+scene-matched actor proxy or verified scenario-category coverage. One official NAVSIM
+learned checkpoint is hash-pinned for the replay and one reactive external-driver
+rollout, but is not redistributed. It is camera-blind rather than visual or multimodal
+and is not evaluated for policy quality. The public reactive fixture repeats a recorded
+seed frame and uses a declared synthetic flat physics surface. Restricted scenes remain
+licensed inputs; public artifacts retain telemetry, manifests, aggregates, hashes, and
+testable gate logic.
 The study does not measure how often route geometry or another policy input is lost in
 production integrations; the designed ablation establishes consequence and detection
 for the executed boundary only.
@@ -555,36 +557,36 @@ precondition within deployment, are mutated against generated telemetry and cont
 rather than rerun as physical simulator faults. Contract-valid therefore means admitted
 to the stated evidence boundary, not driving safety or simulator correctness.
 
-\emph{External and conclusion validity.} The scenes were selected by local asset
-availability and remain category-unclassified. The diagnostic cases use the same
-adapter, generator, and contract vocabulary, and the closed-loop route pairs have one
-execution per arm with no effective seed control. Accordingly, the descriptive
-comparison concerns only the declared mutations and completion gate; the measured
-software timings concern this host and the declared paths. The learned replay measures
-input-signature invariance under route removal; the reactive learned run covers one
-scene with synthetic ground and non-reactive pixels. Neither establishes safety, policy
-quality, or cross-dataset generalization. Rare-event coverage, human debugging time,
-and comparison with independently maintained frameworks require separate experiments.
-The contract taxonomy may transfer structurally, but cross-simulator empirical
-generalization remains untested.
+\emph{External and conclusion validity.} The AlpaSim scenes were selected by local
+asset availability and remain category-unclassified. The Waymax fixture is small and
+upstream-selected for testing, not evaluation coverage. Its paired arms are
+deterministic and share initial state, but log-playback agents do not react to the
+counterfactual ego. Accordingly, endpoint divergence supports selective behavioral
+consequence, while collision and overlap do not establish counterfactual safety. The
+learned replay measures input-signature invariance under route reduction; the reactive
+learned run covers one scene with synthetic ground and non-reactive pixels. None
+establishes policy quality, fault prevalence, or cross-dataset generalization. The
+semantic route rule is exercised in two independently maintained runtimes, but
+cross-runtime generalization of the other four contracts and learned WOMD policies
+requires further experiments.
 
 \section{Conclusion}
 
 WOD2Sim formulates a closed-loop policy boundary as semantic, temporal, lifecycle,
-deployment, and evidence contracts. On 15 designed faults paired with 15 valid
-current-adapter sessions it classifies 30/30 cases, localizes 15/15 faults, and differs
-descriptively from the completion-and-metrics gate on all 15 fault cases. Post-parse
-detector execution, a paired guard-path increment, and current-schema client-to-service
-latency are measured. The semantic decision is also replicated across route following
-and a published learned command-native policy: only the route-dependent policy is
-rejected when geometry is removed, and the learned negative control remains invariant.
-A separate learned rollout completes the live AlpaSim driver/controller/physics loop
-under its declared camera-blind input contract, while a camera-validating control
-rejects the repeated frame. Comparative runtime overhead, human diagnosis,
-learned-policy quality, visual behavior, cross-framework generalization, and framework
-superiority are not claimed. Together with the retained closed-loop route invalidations,
-the result shows that explicit gates make integration evidence auditable before a
-rollout is attributed to policy behavior.
+deployment, and evidence contracts. In the WOMD-native factorial experiment, degrading
+route geometry selectively changes the route-dependent controller (median interaction
+\CVMWaymaxInteractionMedianM{}~m), while the route-independent control remains exactly
+invariant on \CVMWaymaxNegativeControlInvariant{}/\CVMWaymaxEligibleScenarios{}
+scenarios. All arms complete, yet the audit rejects only RF/proxy. This establishes the
+central attribution result: completion is insufficient to decide whether a metric
+characterizes policy quality. On \CVMDiagnosticFaultCases{} designed faults paired with
+\CVMDiagnosticControlCases{} valid sessions, WOD2Sim classifies
+\CVMWODDiagnosticCorrect{}/\CVMDiagnosticCases{} and localizes
+\CVMWODDiagnosticLocalized{}/\CVMDiagnosticFaultCases{}. AlpaSim replay and reactive
+execution provide complementary external-driver evidence, so the semantic route rule
+is exercised in two runtimes. Representative WOMD performance, learned-WOMD-policy
+transfer, safety, comparative overhead, human diagnosis time, and framework superiority
+remain outside the claims.
 
 \section*{Acknowledgment}
 
