@@ -1,8 +1,9 @@
 PYTHON ?= $(shell if command -v uv >/dev/null 2>&1; then printf 'uv run python'; else printf 'python3'; fi)
 PAPER_PDF ?= alpabridge.pdf
 CONFORMANCE_TESTS ?= tests/
+DEMO_OUTPUT ?= demo/alpabridge-contract-demo
 
-.PHONY: lint conformance coverage test smoke build verify clean
+.PHONY: lint conformance coverage test smoke build demo verify clean
 .PHONY: paper paper-verify cvm-inventory cvm-check cvm-demo cvm-eval cvm-diagnostics
 .PHONY: cvm-synthetic cvm-aggregate cvm-paper cvm-validate cvm-all
 
@@ -20,6 +21,9 @@ coverage:
 
 smoke:
 	$(PYTHON) scripts/release_bootstrap_smoke.py
+
+demo:
+	$(PYTHON) scripts/run_synthetic_contract_demo.py --output $(DEMO_OUTPUT) --overwrite --json
 
 build:
 	if command -v uv >/dev/null 2>&1; then \
@@ -76,6 +80,6 @@ cvm-all: cvm-inventory cvm-check cvm-demo cvm-synthetic
 	exit "$$status"
 
 clean:
-	rm -rf .pytest_cache build dist src/*.egg-info
+	rm -rf .pytest_cache build dist src/*.egg-info $(DEMO_OUTPUT)
 	find scripts src tests -type d -name '__pycache__' -prune -exec rm -rf {} +
 	$(MAKE) -C paper clean

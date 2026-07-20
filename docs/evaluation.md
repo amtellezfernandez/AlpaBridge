@@ -1,0 +1,264 @@
+# Evaluation
+
+AlpaBridge should be evaluated as a contract-based integration boundary before it
+is evaluated as a policy runtime.
+
+`WOD-style` refers to the policy-interface shape used by logged driving tasks,
+not to an official Waymo challenge submission package. Reports should state the
+actual task specification, scene source, and asset revision they use.
+The five contracts are framework-neutral classes, not WOD protobuf fields. A
+second binding must map its own semantic inputs, clocks, service lifecycle,
+deployment state, and evidence into those classes. This release evaluates the
+full WOD-style/AlpaSim binding and a bounded Waymax binding for the semantic
+route experiment. The latter supports cross-runtime applicability of that one
+contract, not transfer of the other four.
+
+## Failure Attribution Rule
+
+Separate integration failures from policy failures before reporting any behavior
+metric. AlpaBridge uses this operational rule:
+
+| Row state | Attribution |
+| --- | --- |
+| Route, sensor, temporal, lifecycle, deployment, or evidence contract fails. | Integration/precondition/evidence failure; do not score as policy behavior or policy failure. |
+| Row executes and the route/sensor audit passes, but benchmark prerequisites are incomplete. | Contract-valid diagnostic rollout; inspectable, but not a public policy benchmark. |
+| Row executes, passes all audits, satisfies the benchmark gate, and is retained in the aggregate denominator. | Policy behavior may be analyzed and compared; policy failure additionally requires a retained policy-layer failure. |
+
+This boundary is the main evaluation object. It prevents a route adapter bug,
+stale observation, missing actor proxy, or incomplete manifest from being
+misreported as a bad driving policy. A collision, timeout, invalid trajectory,
+or degraded progress metric inside a contract-invalid row is an integration
+symptom until the claim-valid gate passes. Passing that gate permits policy
+behavior attribution; it does not automatically make the event a policy failure.
+
+## Contract Checks
+
+- AlpaSim discovers only the declared AlpaBridge model entry points.
+- Route waypoints reach policy code when the active policy declares geometry as
+  required; command-native policies are audited against their own signature.
+- Camera, ego-motion, route, and structured hazards form a stable policy signal.
+- Five-second policy trajectories preserve native-rate samples, use origin-anchored
+  endpoint interpolation when resampled, and recompute runtime headings.
+- Final protocol serialization rejects empty trajectories, point/heading count
+  mismatches, and non-finite coordinates or headings.
+- A replay-identity adapter preserves logged trajectory points through the shared
+  output contract.
+- Late session messages and repeated close events do not corrupt a batch.
+- Run configuration and evidence artifacts are materialized before execution.
+- Claim-valid audits require `route_source=alpasim_waypoints` for every driver-log frame.
+
+These checks are covered by the dependency-light [core conformance tier](conformance.md).
+Torch-dependent checkpoint tests are skipped from conformance and remain optional
+for learned-policy validation.
+
+The [ungated demo](demo.md) exercises the same audit and support-bundle formats
+on synthetic local artifacts and reports route-loss and lane-offset diagnostics
+on public synthetic geometry. These diagnostics make the integration boundary
+inspectable, but they are not an AlpaSim rollout or policy result.
+
+## Waymax Policy-Dependency Experiment
+
+Run `scripts/run_waymax_contract_study.sh` to reproduce the primary `2 x 2`
+negative-control experiment. The script clones Waymax at commit
+`a64dfec9be8576b60d9cecc94f406d9812d4a7d0`, verifies the bundled route
+TFRecord hash, creates an isolated environment, and runs all 20 actual WOMD
+TFExamples included by that revision. AlpaBridge redistributes only aggregate and
+scenario-level results, not the upstream records.
+
+One scenario has no valid `sdc_paths.on_route` candidate and is excluded before
+intervention. For each of the 19 eligible scenarios:
+
+| Policy | Full route | Command proxy |
+| --- | --- | --- |
+| Route following | Original WOMD route polyline | Same pure-pursuit controller with a straight proxy generated from intervention-defined `KEEP_HEADING` |
+| Constant velocity | Adapter constructs full representation, policy ignores it | Adapter constructs proxy representation, policy ignores it |
+
+All arms share initial state, 50 steps at 10 Hz, Waymax `StateDynamics`,
+controlled SDC, and non-SDC log playback. The primary paired quantity is
+`D_p(t) = ||x_p,full(t) - x_p,proxy(t)||_2`, and the interaction subtracts
+constant-velocity divergence from route-following divergence.
+
+The retained result is:
+
+- route following: `1.017 m` median and `1.973 m` mean endpoint divergence,
+  `13/19` above `0.1 m`, and `10/19` above `1 m`;
+- constant velocity: exact retained-trajectory invariance in `19/19`, maximum
+  endpoint divergence `0.000 m`;
+- audit: `19/19` RF/full accepted, `19/19` RF/proxy rejected with
+  `semantic.command_only`, and both CV arms accepted `19/19`.
+
+The audit is computed from the declared policy signature and route source
+before rollout stepping or behavior metrics. Collision and overlap remain
+descriptive because log-playback agents cannot react to the counterfactual
+ego. The bundled fixture is complete for its upstream test purpose but is not a
+random or representative WOMD evaluation sample, and neither policy is learned.
+
+## Controlled Diagnostic Evaluation
+
+Run `make cvm-diagnostics` to regenerate 15 separate sessions through the
+current adapter. The trace contains 405 events and 120 drive calls, all with an
+explicit finite serialized-trajectory result. Each valid session is paired with
+one predefined single-fault mutation across the five contracts. Mutation and
+detection are separate: the detector receives events and runtime context, while
+the scorer retains the expected label.
+
+The current artifact reports AlpaBridge at 30/30 correct classifications, 15/15
+fault localizations, and 0/15 control false positives. The executable
+completion-and-metrics gate is correct on 15/30 and detects no faults. All 15
+discordant pairs favor AlpaBridge on this declared suite. These are exact
+descriptive counts; no population confidence interval or hypothesis test is
+reported because neither sessions nor fault operators are independently
+sampled from a defined population. The completion gate is not a substitute for
+another integration framework.
+
+Post-parse detector execution latency is measured over 3,000 fault-case calls:
+28.096 us median and 55.774 us p95. The guarded in-process adapter Drive path is
+617.549 us median and 897.100 us p95. Across 1,000 randomized paired measurements
+rotating over 15 valid sessions, its camera-set and freshness-check
+increment is 68.871 us median and 309.613 us p95; guarded and unchecked
+trajectories and headings are identical. Context-length validation remains
+active in both arms. The adapter measurement includes input
+assembly, prediction, serialization, finite-output validation, reasoning
+parsing, and in-memory telemetry. The measurements exclude gRPC transport, file
+I/O, simulator work, and human investigation. They do not establish end-to-end
+runtime overhead or time-to-diagnosis.
+
+The retained evaluator-owned AlpaSim trace remains separate interface-conformance
+evidence: it records 197 drive calls meeting the 100-ms target. Its earlier
+telemetry schema does not include the explicit finite-output field and is not
+used as the mutation source.
+
+## Executed Protocol Replay
+
+`scripts/run_alpasim_replay_demo.sh` replays one hash-pinned official AlpaSim
+integration recording through four live current-schema AlpaBridge gRPC services.
+The policy families are route following and NAVSIM's official learned
+EgoStatusMLP seed-0 baseline. Each runs once with all 20 route points retained
+and once with only the derived command. All arms receive identical session,
+camera, egomotion, route, and `Drive` messages.
+
+Each arm returns 60/60 finite, nonstationary trajectories and meets the 100 ms
+latency target. Removing geometry produces `semantic.command_only` only for
+route following and changes 56/60 paired endpoints. EgoStatusMLP declares
+velocity, acceleration, and command inputs but no route geometry; both arms
+therefore pass and all 60 output pairs are exactly equal. This is a
+policy-signature negative control.
+
+Route-following full/reduced client-to-service latency is 3.769/4.833 ms
+median/p95 and 3.104/3.958 ms. EgoStatusMLP full/reduced latency is
+4.715/5.945 ms and 4.943/6.963 ms.
+
+These are loopback transport-inclusive service measurements, not a reactive
+simulator runtime or format-overhead comparison. The recorded future camera and
+ego-state sequence is unchanged by service output, the arms run once in a fixed
+order, and no human time-to-diagnosis study is performed.
+
+## Reactive Learned External-Driver Rollout
+
+The separate artifact under
+`artifacts/external/alpasim_navsim_reactive_rollout` closes a published,
+hash-pinned NAVSIM EgoStatusMLP checkpoint through AlpaSim's external driver,
+controller, and physics services. The run completes 1/1 rollout with 197/197
+finite trajectories and 197/197 calls below the 100 ms internal target.
+Driver-internal latency is 1.982 ms median and 3.362 ms p95; AlpaSim observes
+3.206 ms mean `Drive` RPC time. It simulates 19.93 seconds in 16.51 active
+wall-clock seconds, or 18.90 seconds including setup and warmup.
+
+The evidence boundary is intentionally narrow. EgoStatusMLP is camera-blind and
+declares velocity, acceleration, and command inputs. The public AlpaSim fixture
+lacks collision geometry, so the derived USDZ adds and declares a flat `z=0`
+surface without changing its recorded camera, map, or trajectory payloads.
+AlpaSim uses its official `video_model` boundary, but the external endpoint
+repeats the fixture's recorded seed frame while logging all 198 requested live
+trajectories. The ego travels 61.863 m; `wrong_lane=1` is retained but not used
+as a policy-quality claim.
+
+A same-scene route-following negative control requires camera freshness. Four
+`Drive` calls complete; the next advancing timestamp with unchanged image bytes
+is rejected as a frozen camera stream. The successful learned run therefore
+supports one-scene reactive policy/controller/physics lifecycle and timing for
+that exact camera-blind configuration. It does not support reactive camera
+rendering, visual-policy evaluation, NuRec quality, learned-policy superiority,
+comparative runtime overhead, human diagnosis time, or cross-simulator
+generalization beyond the route semantic rule.
+
+## Policy Evaluation
+
+A report using AlpaBridge should declare:
+
+| Category | Required reporting |
+| --- | --- |
+| Scene set | IDs or preset, count, exclusions, and asset revision. |
+| Model | Adapter, checkpoint/proxy provenance, and configuration. |
+| Baselines | At least replay/constant velocity, route following, and an unmodified AlpaSim path where applicable. |
+| Behavior | Collision, at-fault collision, off-road, wrong-lane, progress, completion, and timeout rates. |
+| Runtime | Valid-frame ratio, sensor freshness, action latency, late messages, and process failures. |
+| Evidence | Manifest, AlpaSim checkout and Docker image provenance, audit, summary, hashes, and failed-scene taxonomy. |
+
+Results must use scenes as statistical units. Partial attempts and command plans
+must not be promoted as benchmark summaries. Runs that fall back to
+`route_source=command_proxy` are adapter triage evidence, not policy benchmark
+evidence, because route geometry did not reach the policy contract.
+
+## Benchmark Readiness Gate
+
+Use `alpabridge-batch-summary` for each executed driver batch, then gate the public
+claim with:
+
+```bash
+alpabridge-benchmark-readiness \
+  --batch-summary summaries/constant_velocity.json \
+  --batch-summary summaries/route_following.json \
+  --batch-summary summaries/token_dagger_bc.json \
+  --output summaries/benchmark-readiness.json \
+  --json
+```
+
+The default gate requires at least 15 unique executed scenes, clean closed-loop
+batch summaries only, route-waypoint-backed audited frames, behavior/runtime
+metrics, and three baseline families: replay or constant velocity, route
+following, and `token_dagger_bc`. It returns nonzero until those conditions are
+met. This is intentional: the command prevents demo artifacts, command plans,
+or partial bootstrap/conformance checks from being mistaken for a claim-ready
+public benchmark result.
+
+## Current Status
+
+The release checks package, semantic, temporal, lifecycle, deployment, and
+evidence contracts. The contract-validation matrix (CVM) includes completed
+dependency-light closed-loop diagnostic rows on locally available gated scene
+assets, completed semantic route-boundary ablations, and public synthetic
+lifecycle/fault diagnostics.
+The completed full-contract and semantic-ablation rollouts are the current
+integration-effectiveness evidence. Synthetic lifecycle/fault rows are secondary
+service-harness conformance diagnostics only, and blocked rows are retained as
+denominator/context rather than success metrics.
+Controlled trace mutations add case/control classification, an executable
+status-only comparator, post-parse detector execution latency, and a paired
+guard-path increment on the dependency-light path. They do not support human
+time-to-diagnosis, end-to-end runtime, or superiority over another integration
+framework.
+The separate current-schema replay adds bounded client-to-service gRPC latency
+and a real-camera diagnostic video. It remains non-reactive and does not extend
+the claim to simulator runtime, format overhead, or empirical generalization
+of all contracts across frameworks.
+The Waymax factorial study adds WOMD-native cross-runtime evidence for one
+semantic rule and its policy-dependency interaction. It does not add a learned
+WOMD benchmark, representative scenario coverage, reactive non-ego behavior, or
+cross-runtime evidence for temporal, lifecycle, deployment, and evidence
+contracts.
+The separate learned rollout adds one-scene reactive external-driver,
+controller, and physics feedback plus exact-configuration service and wall-clock
+timing. Its camera pixels remain a repeated public seed and its ground is
+synthetic and flat, so the evidence does not extend to visual behavior,
+policy quality, comparative overhead, or population coverage.
+The public release core is the dependency-light adapter path. Direct-actor,
+learned-checkpoint, restricted-scene, and complete-benchmark dependencies are
+optional gated extensions, not release-core dependencies.
+
+The release does not redistribute a checkpoint or scene subset and does not
+provide verified scene-category coverage, direct-actor temporal ablation
+results, a visual learned-policy evaluation, or a claim-ready closed-loop
+policy benchmark. The official NAVSIM checkpoint is downloaded and hash-checked
+for the bounded protocol replay and reactive lifecycle run; it is not
+redistributed.

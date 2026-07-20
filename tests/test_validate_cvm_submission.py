@@ -263,7 +263,7 @@ def _write_paper_number_fixture(root: Path, module) -> tuple[Path, Path, Path, P
                 "control_cases": 15,
             },
             "classification": {
-                "alpabridge": {
+                "wod2sim": {
                     "classification_correct": 30,
                     "faults_detected": 15,
                     "faults_correctly_localized": 15,

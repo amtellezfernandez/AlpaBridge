@@ -23,10 +23,10 @@ labels: bug
 
 ## Actual Behavior
 
-## Failure Layer
+## Claim Boundary
 
-- Did the failure occur in setup, readiness, the driver, AlpaSim, or evidence packaging?
-- Which run manifest, driver event, or simulator log identifies it?
+- Is this an integration failure, policy failure, deployment/precondition failure, or evidence/audit failure?
+- If you believe it is a policy failure, what claim-valid audit or run manifest supports that attribution?
 
 ## Logs or Artifacts
 

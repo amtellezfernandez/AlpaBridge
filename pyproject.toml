@@ -17,6 +17,7 @@ keywords = [
     "alpasim",
     "autonomous-driving",
     "closed-loop-simulation",
+    "contract-validation",
     "system-integration",
     "trajectory-policies",
 ]
@@ -76,12 +77,14 @@ alpabridge-batch-summary = "alpabridge.cli.commands.batch_summary:main"
 alpabridge-benchmark-readiness = "alpabridge.cli.commands.benchmark_readiness:main"
 alpabridge-evidence = "alpabridge.neutral.alpasim_metrics:main"
 alpabridge-challenge-driver = "alpabridge.challenge.e2e_driver:main"
+alpabridge-waymax-study = "alpabridge.experiments.waymax_contract_study:main"
 
 [project.urls]
 Homepage = "https://github.com/amtellezfernandez/AlpaBridge"
 Repository = "https://github.com/amtellezfernandez/AlpaBridge"
 Issues = "https://github.com/amtellezfernandez/AlpaBridge/issues"
 Documentation = "https://github.com/amtellezfernandez/AlpaBridge/tree/main/docs"
+Paper = "https://github.com/amtellezfernandez/AlpaBridge/blob/sii/alpabridge.pdf"
 Citation = "https://github.com/amtellezfernandez/AlpaBridge/blob/main/CITATION.cff"
 
 [tool.setuptools]

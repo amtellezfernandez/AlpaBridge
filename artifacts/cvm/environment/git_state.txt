@@ -1,0 +1,36 @@
+# Git state
+captured_at_utc=2026-07-21T15:14:22Z
+
+## pwd
+<repo>
+
+## git rev-parse --show-toplevel
+<repo>
+
+## git status --short
+ M .github/CONTRIBUTING.md
+ M .github/ISSUE_TEMPLATE/bug_report.md
+ M .github/ISSUE_TEMPLATE/feature_request.md
+ M .github/pull_request_template.md
+ M Makefile
+ M README.md
+ M artifacts/cvm/reports/contract_test_audit.md
+ M artifacts/cvm/reports/repository_inventory.md
+ M docs/README.md
+ M docs/cli.md
+ M paper/cvm/metadata.json
+ M pyproject.toml
+ M scripts/validate_cvm_submission.py
+?? artifacts/cvm/environment/
+?? artifacts/cvm/logs/
+?? docs/conformance.md
+?? docs/demo.md
+?? docs/evaluation.md
+
+## note
+This status is captured before committing regenerated artifacts; the publish state is the Git commit containing this file.
+
+## git rev-parse HEAD
+164679cc7cbeee126a2ded364e933397960fbd4f
+
+## git submodule status --recursive

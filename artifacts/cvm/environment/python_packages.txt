@@ -1,0 +1,11 @@
+# Python environment
+captured_at_utc=2026-07-21T15:14:23Z
+
+## uv run python --version
+Python 3.12.12
+
+## uv run python -m pip --version
+<repo>/.venv/bin/python3: No module named pip
+
+## uv run python -m pip list --format=freeze
+<repo>/.venv/bin/python3: No module named pip

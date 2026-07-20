@@ -1,0 +1,19 @@
+# Simulator state
+captured_at_utc=2026-07-21T15:14:23Z
+
+## workspace/alpasim
+missing git checkout
+
+## workspace/alpasim-clean
+missing git checkout
+
+## docker images --digests
+alpasim-base:0.66.0 <none> 7ba4dbee3391 20.2GB
+alpasim-base:0.89.0 <none> a305ca08dc51 20.5GB
+alpasim-e2e-wod2sim:latest <none> 4fbbcb9406cb 228MB
+nvcr.io/nvidia/nre/nre-ga:26.02 sha256:dbb6be50cabc878fa15bbc9cf3bf4fb4b0904cb67bea7a83a32aa9d96bac8b8d 68ec54441b53 28.4GB
+nvcr.io/nvidia/nre/nre-ga:26.04 sha256:1c3a838440fce96258e055615b146fa8f75ad2a799e131aaa480755592317d1f e853b24e7b25 27.9GB
+nvidia/cuda:12.4.1-base-ubuntu22.04 sha256:0f6bfcbf267e65123bcc2287e2153dedfc0f24772fb5ce84afe16ac4b2fada95 ca14dc8401b6 244MB
+nvidia/cuda:12.9.1-base-ubuntu24.04 sha256:29e5e3425e2e0f5a4e97c9fb4695ba4887cd78210a43cf94c3bcafc6ab01c5e6 7fd106f3a608 404MB
+
+## local scene assets

@@ -689,7 +689,7 @@ PAPER_NUMBER_JSON_FIELDS: tuple[tuple[str, str], ...] = (
     ("CVMDiagnosticControlCases", "diagnostic_experiment.design.control_cases"),
     (
         "CVMWODDiagnosticCorrect",
-        "diagnostic_experiment.classification.alpabridge.classification_correct",
+        "diagnostic_experiment.classification.wod2sim.classification_correct",
     ),
     (
         "CVMStatusDiagnosticCorrect",
@@ -697,15 +697,15 @@ PAPER_NUMBER_JSON_FIELDS: tuple[tuple[str, str], ...] = (
     ),
     (
         "CVMWODDiagnosticFaultDetected",
-        "diagnostic_experiment.classification.alpabridge.faults_detected",
+        "diagnostic_experiment.classification.wod2sim.faults_detected",
     ),
     (
         "CVMWODDiagnosticLocalized",
-        "diagnostic_experiment.classification.alpabridge.faults_correctly_localized",
+        "diagnostic_experiment.classification.wod2sim.faults_correctly_localized",
     ),
     (
         "CVMWODDiagnosticFalsePositives",
-        "diagnostic_experiment.classification.alpabridge.false_positives",
+        "diagnostic_experiment.classification.wod2sim.false_positives",
     ),
     (
         "CVMStatusDiagnosticFaultDetected",

@@ -1,76 +1,69 @@
 # CLI
 
+The contract-validation matrix (CVM) is referenced in the release targets below.
+
 ## Setup And Execution
 
 | Command | Purpose |
 | --- | --- |
 | `alpabridge-doctor` | Validate the installed package and optional AlpaSim environment. |
 | `alpabridge-setup` | Apply and validate the tracked AlpaSim override layer. |
-| `alpabridge-ready` | Check platform, local AlpaSim environment, Docker, GPU, image, and scene readiness. |
-| `alpabridge-launch` | Materialize or execute one matched driver and AlpaSim run. |
+| `alpabridge-ready` | Check platform, local AlpaSim `.venv`, Docker, GPU, image, and scene readiness. |
+| `alpabridge-launch` | Materialize or execute one matched driver/wizard run. |
 | `alpabridge-batch` | Execute scenes independently with retries and timeouts. |
 | `alpabridge-reproduce` | Plan or execute setup through evidence packaging. |
 
-## Inputs And Run Records
+## Inputs And Evidence
 
 | Command | Purpose |
 | --- | --- |
 | `alpabridge-build-local-cache` | Build or validate a local scene cache. |
 | `alpabridge-build-oracle-proxy` | Build the scene-matched actor proxy required by the direct planner. |
-| `alpabridge-audit-run` | Normalize driver logs and check route and sensor inputs. |
+| `alpabridge-audit-run` | Normalize driver logs and check sensor freshness. |
 | `alpabridge-support-bundle` | Package selected logs, configs, and audit output. |
 | `alpabridge-batch-summary` | Aggregate a multi-scene batch. |
 | `alpabridge-benchmark-summary` | Aggregate reproduction manifests and run audits. |
-| `alpabridge-benchmark-readiness` | Check whether a requested public benchmark matrix is complete. |
+| `alpabridge-benchmark-readiness` | Gate public benchmark claims against clean batch summaries. |
 | `alpabridge-promote-batch-summary` | Copy a validated local summary to an explicit destination. |
 | `alpabridge-evidence` | Inspect AlpaSim runtime metrics. |
-| `alpabridge-challenge-driver` | Serve or self-test the AlpaSim E2E-style external driver. |
+| `alpabridge-challenge-driver` | Serve or self-test the AlpaSim E2E-style external-driver compatibility adapter. |
+| `alpabridge-waymax-study` | Run the bounded Waymax/WOMD policy-by-route attribution study against a pinned checkout. |
 
-## Development Targets
+## Quality And Release Targets
 
 | Command | Purpose |
 | --- | --- |
-| `make test` | Run the test suite. |
+| `make conformance` | Run the dependency-light contract conformance tier. |
+| `make demo` | Generate the public synthetic contract demo. |
+| `make verify` | Run lint, conformance, coverage, smoke, build, paper rebuild, and validation. |
+| `make paper` | Rebuild the canonical paper PDF through the CVM paper target. |
+| `make paper-verify` | Rebuild the canonical paper PDF and run submission validation. |
+| `make cvm-inventory` | Refresh the redacted repository and environment inventory. |
+| `make cvm-check` | Run lint, conformance, and CVM submission validation. |
+| `make cvm-demo` | Write the synthetic CVM demo under `artifacts/cvm/results/demo`. |
+| `make cvm-eval` | Expand the mixed CVM core matrix, preserving completed public-core rows and optional gated blockers. |
+| `make cvm-diagnostics` | Generate current-adapter protocol sessions, evaluate paired controlled mutations and valid controls, and record scoped software timings. |
+| `make cvm-synthetic` | Execute lifecycle stress, label-withheld fault localization, and the controlled diagnostic experiment. |
+| `make cvm-aggregate` | Regenerate aggregate CSV/JSON, LaTeX tables, and figures from CVM results. |
+| `make cvm-paper` | Build the paper source and copy the canonical root `alpabridge.pdf`. |
+| `make cvm-validate` | Run the CVM paper and release-surface validator. |
+| `make cvm-all` | Run the end-to-end CVM release sequence, preserving exit 2 for documented blockers. |
+
+## Developer Targets
+
+| Command | Purpose |
+| --- | --- |
+| `make test` | Run the test suite without the conformance environment flag. |
 | `make lint` | Run Ruff over the repository. |
-| `make conformance` | Run the dependency-light adapter conformance tier. |
-| `make coverage` | Run the test suite with the coverage gate. |
-| `make smoke` | Install a fresh copied checkout and exercise the public CLI. |
-| `make build` | Build the wheel and source distribution. |
-| `make verify` | Run lint, conformance, coverage, smoke, and build. |
-| `make clean` | Remove local build, cache, and Python bytecode artifacts. |
+| `make coverage` | Run the pytest coverage target. |
+| `make smoke` | Run the release bootstrap smoke check. |
+| `make build` | Build the Python package with `uv build` when available, otherwise `python -m build`. |
+| `make clean` | Remove local build, cache, demo, and Python bytecode artifacts. |
 
 Run any command with `--help` for its complete arguments.
 
-`alpabridge-ready` is a launch-readiness check. By default it requires the local
+`alpabridge-ready` is a launch-readiness check: by default it requires the local
 AlpaSim Python environment and `alpasim_wizard` executable because
-`alpabridge-launch` needs both even when only materializing commands. Use
-`--skip-local-env` only for host or container diagnostics.
-
-## Conformance Tier
-
-`make conformance` sets `ALPABRIDGE_CORE_CONFORMANCE=1` and runs the public
-test suite with learned-policy checkpoint tests skipped — the
-dependency-light adapter check intended for CI and for reviewers without
-AlpaSim scene assets, Docker, a GPU, torch, or private checkpoints. This
-keeps the core tier stable across machines that may or may not have torch
-installed.
-
-| Adapter property | Evidence in the core tier |
-| --- | --- |
-| Public model registry is curated | Entry-point and installed-doctor tests expose `constant_velocity`, `route_following`, `token_dagger_bc`, and `direct_actor_planner`; only the first two are dependency-light public-core models. |
-| Route geometry reaches policy code | Signal tests require `route_source=alpasim_waypoints` when route waypoints are present. |
-| Command-proxy fallback is visible | Audit, batch-summary, and benchmark-summary tests retain route provenance. |
-| Scene signal is behavior-neutral by default | Signal tests keep brightness/dynamics risk diagnostic-only unless structured hazards are present. |
-| Trajectory output preserves adapter identity | Resampling identity, endpoint interpolation, and replay-identity tests cover the shared output contract. |
-| Launch state is materialized | Setup and launcher tests check command files, metadata, AlpaSim checkout provenance, and Docker-image inspection fields. |
-| Evidence can be audited without gated assets | Audit, support-bundle, batch-summary, benchmark-summary, and reproduction-manifest tests run on synthetic local artifacts. |
-
-The core tier is not a driving benchmark. It does not execute AlpaSim
-rollouts, validate a learned checkpoint, or prove collision, progress, or
-off-road performance — those results require executed representative
-scenes, appropriate baselines, and failure analysis. Torch-dependent
-token-policy tests remain part of the normal test suite when torch is
-installed, but are excluded from core conformance so CI can verify the
-public adapter without private model artifacts. Direct-actor proxies,
-learned checkpoints, and restricted scene assets are optional gated
-extensions for live evaluation, not prerequisites for core conformance.
+`alpabridge-launch` needs both even in command-materialization mode. Use
+`--skip-local-env` only for host/container diagnostics that are not launch
+claims.

@@ -8,6 +8,9 @@
 | [Reproduction](reproduction.md) | Plan or execute a run and retain its configuration and evidence. |
 | [AlpaSim E2E compatibility](challenge-compatibility.md) | Package and run the evaluator-owned external-driver path. |
 | [CLI](cli.md) | Public commands, development targets, and the conformance tier. |
+| [Conformance](conformance.md) | The dependency-light core conformance tier and what it covers. |
+| [Ungated demo](demo.md) | Generate and inspect a public synthetic run without private assets. |
+| [Evaluation](evaluation.md) | What the contract-validation matrix (CVM) paper's evidence does and does not claim. |
 | [Changelog](changelog.md) | Adapter release history. |
 
 The repository does not install AlpaSim, redistribute gated scene assets, or
