@@ -1,0 +1,22 @@
+schema: cvm_experiment_matrix_manifest_v1
+matrices:
+  core:
+    config: configs/cvm/core.yaml
+    expected_runs: 54
+    status: executed_with_blocked_direct_actor_rows
+  semantic_ablation:
+    config: configs/cvm/semantic_ablation.yaml
+    expected_runs: 18
+    status: executed
+  temporal_ablation:
+    config: configs/cvm/temporal_ablation.yaml
+    expected_runs: 18
+    status: blocked_missing_direct_actor_proxy
+  lifecycle_stress:
+    config: configs/cvm/lifecycle_stress.yaml
+    expected_runs: 40
+    status: executed_synthetic_diagnostic
+  fault_injection:
+    config: configs/cvm/fault_injection.yaml
+    expected_runs: 15
+    status: executed_synthetic_diagnostic

@@ -1,0 +1,12 @@
+{
+  "implementation_sha256": {
+    "scripts/run_waymax_contract_study.sh": "7528adbc7c9beab5ea5334e70b3bc313d9197cc354897ff65b50a63d1d0b5f38",
+    "src/wod2sim/audit/trace_diagnostics.py": "a5e512cd45b845d5707c75de33fdacbecd5c17f83d1fde4059605a2ce43d0288",
+    "src/wod2sim/experiments/waymax_contract_study.py": "3002682d914531bb803dba983e87bf8a1c365076be99e1a6cbec0b17b0d61908"
+  },
+  "results_summary_sha256": "1ad796360325cfa19e8f850e27de7c290a28ce0ffb3b20ab28b09799ed2eff14",
+  "scenario_results_sha256": "8efd8349465c33eab57ccc46d615e4a3bf783aadc61fb49a599b513c00e5e52f",
+  "schema": "wod2sim_waymax_contract_manifest_v1",
+  "waymax_commit": "a64dfec9be8576b60d9cecc94f406d9812d4a7d0",
+  "waymax_data_sha256": "aba63d14b00d133803db04f49a3263447beafd8ca3010ea535ca7dfff0635ba5"
+}

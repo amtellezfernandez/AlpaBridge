@@ -114,3 +114,51 @@ jobs:
         with:
           name: alpabridge-dist
           path: dist/*
+
+  paper:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+
+      - name: Install paper dependencies
+        run: |
+          uv sync --extra dev
+
+      - name: Install TeX packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            texlive-latex-base \
+            texlive-latex-extra \
+            texlive-fonts-recommended \
+            texlive-bibtex-extra \
+            mupdf-tools \
+            poppler-utils \
+            qpdf
+
+      - name: Build and validate canonical CVM paper
+        run: |
+          make paper-verify PYTHON='uv run python'
+          test -s alpabridge.pdf
+          qpdf --check alpabridge.pdf
+          pdfinfo alpabridge.pdf
+          pdffonts alpabridge.pdf
+          pdffonts alpabridge.pdf | awk '
+            NR > 2 && $(NF-4) != "yes" { print "unembedded font: " $0; bad=1 }
+            END { exit bad }
+          '
+
+      - name: Upload paper artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: alpabridge-paper
+          path: alpabridge.pdf

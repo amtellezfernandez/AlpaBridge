@@ -1,0 +1,401 @@
+{
+  "arms": {
+    "command_only_route": {
+      "diagnostics": [
+        {
+          "code": "semantic.command_only",
+          "detail": "A high-level command proxy replaced route geometry.",
+          "layer": "semantic"
+        }
+      ],
+      "result_path": "artifacts/external/alpasim_protocol_replay/command_only_route.json",
+      "result_sha256": "5bc3fe17957173c698d5545eed6036cb54fc8d2fc8ee3edb9fe3543db820ce56",
+      "results": {
+        "drive_calls": 60,
+        "drive_calls_within_target": 60,
+        "finite_drive_outputs": 60,
+        "latency_target_ms": 100.0,
+        "nonstationary_drive_outputs": 60,
+        "rpc_latency_ms": {
+          "close_session": {
+            "max": 1.744478,
+            "mean": 1.744478,
+            "p50": 1.744478,
+            "p95": 1.744478,
+            "samples": 1
+          },
+          "drive": {
+            "max": 4.61186,
+            "mean": 3.1591675166666664,
+            "p50": 3.1039605,
+            "p95": 3.9580392499999997,
+            "samples": 60
+          },
+          "start_session": {
+            "max": 1.955019,
+            "mean": 1.955019,
+            "p50": 1.955019,
+            "p95": 1.955019,
+            "samples": 1
+          },
+          "submit_egomotion_observation": {
+            "max": 4.749943,
+            "mean": 1.4816999193548388,
+            "p50": 1.3866325000000002,
+            "p95": 2.1469177500000005,
+            "samples": 62
+          },
+          "submit_image_observation": {
+            "max": 2.654756,
+            "mean": 1.5362083770491801,
+            "p50": 1.4986335,
+            "p95": 2.02779665,
+            "samples": 122
+          },
+          "submit_route": {
+            "max": 2.082608,
+            "mean": 1.3448404590163934,
+            "p50": 1.307128,
+            "p95": 1.770852,
+            "samples": 61
+          }
+        }
+      },
+      "runtime": {
+        "drive_count": 60,
+        "event_count": 307,
+        "explicit_finite_drive_count": 60,
+        "latency_ms": {
+          "max": 2.06412,
+          "mean": 1.41970135,
+          "p50": 1.3637465,
+          "p95": 1.8600002499999997
+        },
+        "latency_target_met_count": 60,
+        "latency_target_ms": 100.0,
+        "session_count": 1,
+        "telemetry_schemas": [
+          "wod2sim_challenge_telemetry_v3"
+        ]
+      },
+      "telemetry_path": "artifacts/external/alpasim_protocol_replay/command_only_route-telemetry.jsonl",
+      "telemetry_sha256": "a6cbbee98ebe8082298cb246d75e246054fe09f566b6603639c946f9b45a1cae"
+    },
+    "full_contract": {
+      "diagnostics": [],
+      "result_path": "artifacts/external/alpasim_protocol_replay/full_contract.json",
+      "result_sha256": "41c232b68c403fac84220c4fc313b402b41b3f252871ad9fc1b8529deffb3f73",
+      "results": {
+        "drive_calls": 60,
+        "drive_calls_within_target": 60,
+        "finite_drive_outputs": 60,
+        "latency_target_ms": 100.0,
+        "nonstationary_drive_outputs": 60,
+        "rpc_latency_ms": {
+          "close_session": {
+            "max": 1.789039,
+            "mean": 1.789039,
+            "p50": 1.789039,
+            "p95": 1.789039,
+            "samples": 1
+          },
+          "drive": {
+            "max": 5.800262,
+            "mean": 3.9362151666666665,
+            "p50": 3.76853,
+            "p95": 4.83331325,
+            "samples": 60
+          },
+          "start_session": {
+            "max": 2.069358,
+            "mean": 2.069358,
+            "p50": 2.069358,
+            "p95": 2.069358,
+            "samples": 1
+          },
+          "submit_egomotion_observation": {
+            "max": 3.087012,
+            "mean": 1.7555459193548386,
+            "p50": 1.6832155,
+            "p95": 2.2422474,
+            "samples": 62
+          },
+          "submit_image_observation": {
+            "max": 3.558852,
+            "mean": 1.9741411721311475,
+            "p50": 1.8897815,
+            "p95": 2.62449215,
+            "samples": 122
+          },
+          "submit_route": {
+            "max": 2.634517,
+            "mean": 1.7132431639344263,
+            "p50": 1.662912,
+            "p95": 2.239734,
+            "samples": 61
+          }
+        }
+      },
+      "runtime": {
+        "drive_count": 60,
+        "event_count": 307,
+        "explicit_finite_drive_count": 60,
+        "latency_ms": {
+          "max": 3.36388,
+          "mean": 1.84082245,
+          "p50": 1.7611379999999999,
+          "p95": 2.59888935
+        },
+        "latency_target_met_count": 60,
+        "latency_target_ms": 100.0,
+        "session_count": 1,
+        "telemetry_schemas": [
+          "wod2sim_challenge_telemetry_v3"
+        ]
+      },
+      "telemetry_path": "artifacts/external/alpasim_protocol_replay/full_contract-telemetry.jsonl",
+      "telemetry_sha256": "f7d35b19379beb43f3b207cf9e2b96250f4b30ff858f0f5b238810f81937113d"
+    },
+    "navsim_ego_status_mlp_command_only_route": {
+      "diagnostics": [],
+      "result_path": "artifacts/external/alpasim_protocol_replay/navsim_ego_status_mlp_command_only_route.json",
+      "result_sha256": "5cecb4c10fbea5c946ba7c7f5922519d397ad8f84208743fb28dd72d2b863439",
+      "results": {
+        "drive_calls": 60,
+        "drive_calls_within_target": 60,
+        "finite_drive_outputs": 60,
+        "latency_target_ms": 100.0,
+        "nonstationary_drive_outputs": 60,
+        "rpc_latency_ms": {
+          "close_session": {
+            "max": 1.900517,
+            "mean": 1.900517,
+            "p50": 1.900517,
+            "p95": 1.900517,
+            "samples": 1
+          },
+          "drive": {
+            "max": 8.643005,
+            "mean": 5.21654475,
+            "p50": 4.942636,
+            "p95": 6.962782999999997,
+            "samples": 60
+          },
+          "start_session": {
+            "max": 3.050494,
+            "mean": 3.050494,
+            "p50": 3.050494,
+            "p95": 3.050494,
+            "samples": 1
+          },
+          "submit_egomotion_observation": {
+            "max": 3.440221,
+            "mean": 2.1317607096774194,
+            "p50": 1.990178,
+            "p95": 3.12830945,
+            "samples": 62
+          },
+          "submit_image_observation": {
+            "max": 115.44629,
+            "mean": 6.598570467213115,
+            "p50": 5.437079499999999,
+            "p95": 7.44673555,
+            "samples": 122
+          },
+          "submit_route": {
+            "max": 9.784584,
+            "mean": 2.109294180327869,
+            "p50": 1.938703,
+            "p95": 2.810117,
+            "samples": 61
+          }
+        }
+      },
+      "runtime": {
+        "drive_count": 60,
+        "event_count": 307,
+        "explicit_finite_drive_count": 60,
+        "latency_ms": {
+          "max": 6.238251,
+          "mean": 2.9990327,
+          "p50": 2.6821425000000003,
+          "p95": 4.350917599999999
+        },
+        "latency_target_met_count": 60,
+        "latency_target_ms": 100.0,
+        "session_count": 1,
+        "telemetry_schemas": [
+          "wod2sim_challenge_telemetry_v3"
+        ]
+      },
+      "telemetry_path": "artifacts/external/alpasim_protocol_replay/navsim_ego_status_mlp_command_only_route-telemetry.jsonl",
+      "telemetry_sha256": "9ce66fa5799a523a50fd3a513515b9e4c8febdb5e636d25d546b19afd0aff58f"
+    },
+    "navsim_ego_status_mlp_full_contract": {
+      "diagnostics": [],
+      "result_path": "artifacts/external/alpasim_protocol_replay/navsim_ego_status_mlp_full_contract.json",
+      "result_sha256": "50eb8e08d6b8df9e571158ddbf81ec2a600b71d3dcd5d10432c4c9a42799444f",
+      "results": {
+        "drive_calls": 60,
+        "drive_calls_within_target": 60,
+        "finite_drive_outputs": 60,
+        "latency_target_ms": 100.0,
+        "nonstationary_drive_outputs": 60,
+        "rpc_latency_ms": {
+          "close_session": {
+            "max": 1.786472,
+            "mean": 1.786472,
+            "p50": 1.786472,
+            "p95": 1.786472,
+            "samples": 1
+          },
+          "drive": {
+            "max": 13.041379,
+            "mean": 4.890875783333333,
+            "p50": 4.715281,
+            "p95": 5.945360149999999,
+            "samples": 60
+          },
+          "start_session": {
+            "max": 2.840979,
+            "mean": 2.840979,
+            "p50": 2.840979,
+            "p95": 2.840979,
+            "samples": 1
+          },
+          "submit_egomotion_observation": {
+            "max": 3.140592,
+            "mean": 1.7985775161290323,
+            "p50": 1.7759589999999998,
+            "p95": 2.3204868500000004,
+            "samples": 62
+          },
+          "submit_image_observation": {
+            "max": 111.686785,
+            "mean": 6.279715475409835,
+            "p50": 5.207928,
+            "p95": 6.7225854,
+            "samples": 122
+          },
+          "submit_route": {
+            "max": 2.833667,
+            "mean": 1.7834903278688525,
+            "p50": 1.752296,
+            "p95": 2.271893,
+            "samples": 61
+          }
+        }
+      },
+      "runtime": {
+        "drive_count": 60,
+        "event_count": 307,
+        "explicit_finite_drive_count": 60,
+        "latency_ms": {
+          "max": 8.970579,
+          "mean": 2.8633862666666667,
+          "p50": 2.7219245,
+          "p95": 3.6468719499999995
+        },
+        "latency_target_met_count": 60,
+        "latency_target_ms": 100.0,
+        "session_count": 1,
+        "telemetry_schemas": [
+          "wod2sim_challenge_telemetry_v3"
+        ]
+      },
+      "telemetry_path": "artifacts/external/alpasim_protocol_replay/navsim_ego_status_mlp_full_contract-telemetry.jsonl",
+      "telemetry_sha256": "c90f0c5a8e6bb78a2eb2904d18ccb245209e80bbb0bb3c58b63f463f789606b9"
+    }
+  },
+  "claim_scope": "Executed client-to-service gRPC protocol replay with recorded camera, route, egomotion, and Drive messages. The replay is non-reactive: adapter outputs do not change the recorded camera or ego-state sequence.",
+  "created_at": "2026-07-20T18:34:41.868292+00:00",
+  "execution_environment": {
+    "cpu_model": "Intel(R) Core(TM) Ultra 9 275HX",
+    "docker_image_id": "sha256:4fbbcb9406cb65796a28a8532f2126fdc224cde4feaed9a546d5e818fdaa5586",
+    "grpc_transport": "host loopback",
+    "host_machine": "x86_64",
+    "host_platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "learned_runtime_image_id": "sha256:7ba4dbee3391aeb473aff739350e57e01f3019b84f7177e0e7e2503bce8e8732",
+    "python": "3.12.12",
+    "run_order": [
+      "full_contract",
+      "command_only_route",
+      "navsim_ego_status_mlp_full_contract",
+      "navsim_ego_status_mlp_command_only_route"
+    ],
+    "timer": "time.perf_counter_ns",
+    "wod2sim_commit": "a6a2338a07b8aa3cb0703ff6163e3cdaedcd2563-dirty"
+  },
+  "learned_policy": {
+    "checkpoint_repository": "autonomousvision/navsim_baselines",
+    "checkpoint_revision": "32d89c0ae6e7c13c311f4a034002006c250afab0",
+    "checkpoint_sha256": "87d75b0f43d077ac3531370d7cccac98656d4e9b5ce5fa6618e28b7358b3a86b",
+    "checkpoint_url": "https://huggingface.co/autonomousvision/navsim_baselines/resolve/32d89c0ae6e7c13c311f4a034002006c250afab0/ego_status_mlp/ego_status_mlp_seed_0.ckpt",
+    "family": "NAVSIM v1.1 EgoStatusMLP blind learned baseline",
+    "input_contract": [
+      "velocity_xy",
+      "acceleration_xy",
+      "discrete_command"
+    ],
+    "license": "Apache-2.0",
+    "name": "ego_status_mlp_seed_0",
+    "navsim_source_commit": "0811876c274e8b058ab2be9b3dcd4d37bd23f177",
+    "redistributed_in_wod2sim": false,
+    "route_geometry_consumed": false,
+    "runtime_device": "cpu",
+    "trained_on_navsim": true,
+    "visual_policy": false
+  },
+  "media": {
+    "camera_frames": 60,
+    "displayed_camera_frames": 18,
+    "duration_seconds": 4.3,
+    "end_drive_index": 47,
+    "maximum_endpoint_separation_m": 1.505999,
+    "readme_preview": {
+      "bytes": 2607516,
+      "format": "animated GIF",
+      "path": "docs/assets/readme/alpasim-protocol-replay.gif",
+      "sha256": "37585d304ba8e4f4d3fd81a77697a17a90a1a15de3fafbd3842e593280b96167"
+    },
+    "start_drive_index": 30,
+    "video": {
+      "bytes": 598092,
+      "format": "H.264 MP4",
+      "path": "docs/assets/readme/alpasim-protocol-replay.mp4",
+      "sha256": "5b2fe8d29fafc234ff22bbfe02de18fa478f71324a7b541162c3e0326b0f7191"
+    }
+  },
+  "reproduction": "scripts/run_alpasim_replay_demo.sh",
+  "reproduction_sources": {
+    "challenge_driver": {
+      "path": "src/wod2sim/challenge/e2e_driver.py",
+      "sha256": "93e4f4a6c1b1b23eb5977f3d2e8d9b3895a499a5fa646d87a3bfb8b927e68e14"
+    },
+    "client": {
+      "path": "scripts/run_alpasim_replay_client.py",
+      "sha256": "bb876a9bdf9f0f5899c0b213999a559349412e527b0e84690bce2c05c581eb23"
+    },
+    "navsim_ego_status_mlp": {
+      "path": "src/wod2sim/simulator/navsim_ego_status_mlp.py",
+      "sha256": "f160784a60fd9230d82c82b9ba4b4f9e3475349be007c43cb2c5ac138744f8a6"
+    },
+    "renderer": {
+      "path": "scripts/generate_alpasim_replay_video.py",
+      "sha256": "6c136ca155c070557d2fe971274ac00b96abbff444e1bf0e515c8931e74adaf6"
+    },
+    "runner": {
+      "path": "scripts/run_alpasim_replay_demo.sh",
+      "sha256": "2086075a39de667d55fbaa910293587f1b81fbe6b83243ca8e9031df00f1046b"
+    }
+  },
+  "schema": "wod2sim_alpasim_replay_demo_manifest_v3",
+  "source": {
+    "alpasim_commit": "049f70fbfe8207e1efd4831a6c3e78a38703d473",
+    "asl_sha256": "237d6b55f4da5b0610f1b8b1e940f52d9efdc9e39c8ca2b35c5b5285ebefdc1f",
+    "camera_id": "camera_front_wide_120fov",
+    "kind": "official Apache-licensed AlpaSim integration replay",
+    "reactive_closed_loop": false,
+    "url": "https://media.githubusercontent.com/media/NVlabs/alpasim/049f70fbfe8207e1efd4831a6c3e78a38703d473/src/runtime/tests/data/integration/rollout.asl"
+  }
+}

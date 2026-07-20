@@ -1,0 +1,115 @@
+schema: cvm_scene_manifest_v1
+source:
+  preset: front_camera_50scene_public2602
+  local_usdz_manifest: workspace/alpasim-clean/data/nre-artifacts/local-usdzs-front-camera-15/wod2sim-local-usdz-cache-manifest.json
+  limitation: >
+    Fifteen locally available 26.02 front-camera scenes are selected by availability only.
+    The repository does not currently expose authoritative metadata for straight,
+    turn/intersection, lane-change, dense-traffic, occlusion, or merge labels, so
+    category coverage is not claimed.
+scenes:
+  - scene_id: clipgt-01d503d4-449b-46fc-8d78-9085e70d3554
+    category: available_front_camera_26_02_unclassified
+    selection_rationale: first locally cached public-2602 front-camera scene
+    asset_availability: local_usdz_present
+    expected_route_feature: unverified
+    expected_interaction_feature: unverified
+    license_gating_status: gated_asset_referenced_not_redistributed
+  - scene_id: clipgt-02e075b9-fd24-426b-971b-7cfcb2074cc9
+    category: available_front_camera_26_02_unclassified
+    selection_rationale: second locally cached public-2602 front-camera scene
+    asset_availability: local_usdz_present
+    expected_route_feature: unverified
+    expected_interaction_feature: unverified
+    license_gating_status: gated_asset_referenced_not_redistributed
+  - scene_id: clipgt-048b974e-1546-488a-b8f9-d32bff77f5aa
+    category: available_front_camera_26_02_unclassified
+    selection_rationale: third locally cached public-2602 front-camera scene
+    asset_availability: local_usdz_present
+    expected_route_feature: unverified
+    expected_interaction_feature: unverified
+    license_gating_status: gated_asset_referenced_not_redistributed
+  - scene_id: clipgt-0499fb41-122d-4180-83af-f954a9974d3b
+    category: available_front_camera_26_02_unclassified
+    selection_rationale: fourth locally cached public-2602 front-camera scene
+    asset_availability: local_usdz_present
+    expected_route_feature: unverified
+    expected_interaction_feature: unverified
+    license_gating_status: gated_asset_referenced_not_redistributed
+  - scene_id: clipgt-05f35348-9de0-4f68-ac65-f31316dbb59e
+    category: available_front_camera_26_02_unclassified
+    selection_rationale: fifth locally cached public-2602 front-camera scene
+    asset_availability: local_usdz_present
+    expected_route_feature: unverified
+    expected_interaction_feature: unverified
+    license_gating_status: gated_asset_referenced_not_redistributed
+  - scene_id: clipgt-07981e6a-22dd-4796-ad2f-1252037ecd28
+    category: available_front_camera_26_02_unclassified
+    selection_rationale: sixth locally cached public-2602 front-camera scene
+    asset_availability: local_usdz_present
+    expected_route_feature: unverified
+    expected_interaction_feature: unverified
+    license_gating_status: gated_asset_referenced_not_redistributed
+  - scene_id: clipgt-098e2482-6db2-473b-b08a-2a80be9320f3
+    category: available_front_camera_26_02_unclassified
+    selection_rationale: seventh locally cached public-2602 front-camera scene
+    asset_availability: local_usdz_present
+    expected_route_feature: unverified
+    expected_interaction_feature: unverified
+    license_gating_status: gated_asset_referenced_not_redistributed
+  - scene_id: clipgt-0ce02937-f31b-4b4e-8286-3af73ae8861e
+    category: available_front_camera_26_02_unclassified
+    selection_rationale: eighth locally cached public-2602 front-camera scene
+    asset_availability: local_usdz_present
+    expected_route_feature: unverified
+    expected_interaction_feature: unverified
+    license_gating_status: gated_asset_referenced_not_redistributed
+  - scene_id: clipgt-0ce6f2a3-a6cf-42c3-9133-111139be1dd1
+    category: available_front_camera_26_02_unclassified
+    selection_rationale: ninth locally cached public-2602 front-camera scene
+    asset_availability: local_usdz_present
+    expected_route_feature: unverified
+    expected_interaction_feature: unverified
+    license_gating_status: gated_asset_referenced_not_redistributed
+  - scene_id: clipgt-0fa7060f-1481-4ff3-977e-510285e2515d
+    category: available_front_camera_26_02_unclassified
+    selection_rationale: tenth locally cached public-2602 front-camera scene
+    asset_availability: local_usdz_present
+    expected_route_feature: unverified
+    expected_interaction_feature: unverified
+    license_gating_status: gated_asset_referenced_not_redistributed
+  - scene_id: clipgt-0fd06bc3-1899-4b45-9278-c5c018b3968d
+    category: available_front_camera_26_02_unclassified
+    selection_rationale: eleventh locally cached public-2602 front-camera scene
+    asset_availability: local_usdz_present
+    expected_route_feature: unverified
+    expected_interaction_feature: unverified
+    license_gating_status: gated_asset_referenced_not_redistributed
+  - scene_id: clipgt-0fd2c051-f5e1-4416-9bb5-9b93d92f55fb
+    category: available_front_camera_26_02_unclassified
+    selection_rationale: twelfth locally cached public-2602 front-camera scene
+    asset_availability: local_usdz_present
+    expected_route_feature: unverified
+    expected_interaction_feature: unverified
+    license_gating_status: gated_asset_referenced_not_redistributed
+  - scene_id: clipgt-11e62ffc-ebd9-448b-88ca-61796a5e5db6
+    category: available_front_camera_26_02_unclassified
+    selection_rationale: thirteenth locally cached public-2602 front-camera scene
+    asset_availability: local_usdz_present
+    expected_route_feature: unverified
+    expected_interaction_feature: unverified
+    license_gating_status: gated_asset_referenced_not_redistributed
+  - scene_id: clipgt-11fce928-d921-42fb-b202-29608242745a
+    category: available_front_camera_26_02_unclassified
+    selection_rationale: fourteenth locally cached public-2602 front-camera scene
+    asset_availability: local_usdz_present
+    expected_route_feature: unverified
+    expected_interaction_feature: unverified
+    license_gating_status: gated_asset_referenced_not_redistributed
+  - scene_id: clipgt-12449274-01ce-4d5e-b5f8-5fe675668dd0
+    category: available_front_camera_26_02_unclassified
+    selection_rationale: fifteenth locally cached public-2602 front-camera scene
+    asset_availability: local_usdz_present
+    expected_route_feature: unverified
+    expected_interaction_feature: unverified
+    license_gating_status: gated_asset_referenced_not_redistributed

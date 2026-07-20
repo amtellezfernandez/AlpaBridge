@@ -1,0 +1,110 @@
+{
+  "adapter_config": "full_lifecycle_hardening",
+  "attempted": true,
+  "blocked": false,
+  "claim_valid": false,
+  "completed": true,
+  "config_path": "configs/cvm/lifecycle_stress.yaml",
+  "config_sha256": "755093975bf02d75568e30b3921ace9e4362ea7a975cbaa428f4b53956f8bab0",
+  "contract_expectations": {
+    "claim_valid_requires_route_waypoints": true,
+    "evidence_gate": "claim_valid_false_until_audit_aggregation",
+    "route_source": "alpasim_waypoints",
+    "source_horizon_seconds": 5.0,
+    "target_runtime_frequency_hz": 4,
+    "target_runtime_samples": 20
+  },
+  "created_at": "2026-07-17T17:07:34.660782+00:00",
+  "detail": "Synthetic lifecycle service classified duplicate-close and late-message events.",
+  "execution_mode": "synthetic_lifecycle_harness",
+  "failure_attribution": {
+    "category": "diagnostic_rollout_pending_claim_gate",
+    "claim_valid_policy_benchmark": false,
+    "failure_code": "",
+    "failure_layer": "",
+    "integration_failure_attributable": false,
+    "integration_or_evidence_invalid": true,
+    "interpretation": "completed_diagnostic_pending_evidence_gate_not_policy_failure",
+    "policy_attributable": false,
+    "policy_behavior_attributable": false,
+    "policy_failure_attributable": false,
+    "rule": "A behavior event, including a policy failure, is policy-attributable only after semantic, temporal, lifecycle, deployment, and evidence gates pass; otherwise the row remains an integration, precondition, evidence, or diagnostic record and cannot be counted as a policy failure."
+  },
+  "failure_code": "",
+  "failure_layer": "",
+  "matrix": "lifecycle_stress",
+  "policy": "constant_velocity",
+  "provenance": {
+    "alpasim": {
+      "dirty": null,
+      "dirty_diff_sha256": "",
+      "git_sha": "",
+      "path": "",
+      "present": false,
+      "status_paths": []
+    },
+    "checkpoint": {
+      "available": "false",
+      "path": "",
+      "sha256": ""
+    },
+    "config": {
+      "path": "configs/cvm/lifecycle_stress.yaml",
+      "sha256": "755093975bf02d75568e30b3921ace9e4362ea7a975cbaa428f4b53956f8bab0"
+    },
+    "docker_image": {
+      "available": false,
+      "id": "",
+      "repo_digests": [],
+      "tag": ""
+    },
+    "gpu_runtime": {
+      "available": "true",
+      "driver": "592.27",
+      "gpu": "NVIDIA GeForce RTX 5080 Laptop GPU"
+    },
+    "launch_plan_schema": "",
+    "patches": {
+      "src/wod2sim/alpasim_overrides/Dockerfile.amd64": "088de1456fb80df5c88f22bb710df29a66992b1ce157033aea6b4ef61d6e0714",
+      "src/wod2sim/alpasim_overrides/__init__.py": "59efd2872774597c1995ea2d6d92aafc626390182175f0a94ca5f9ba4af02890",
+      "src/wod2sim/alpasim_overrides/local_checkout.patch": "a010e65459ad9c92045f36711236628e483663a56598198719e59d1e74d34617",
+      "src/wod2sim/alpasim_overrides/route_waypoints.patch": "b4ee8ecc4aab297426ab5ddfc79507b62b07cd64ceb543bacba985b536bfeb9d",
+      "src/wod2sim/alpasim_overrides/src/driver/src/alpasim_driver/models/__init__.py": "c27efe9481527156b9280f7dd6788f6926d92a7156b74942b01f14d173db2537",
+      "src/wod2sim/alpasim_overrides/src/wizard/alpasim_wizard/deployment/docker_compose.py": "d3210f973f53cbbdc0ca9634686cdee46d8113e88e5a7b242ee5d775b0bc0191",
+      "src/wod2sim/alpasim_overrides/src/wizard/configs/deploy/local_arm_external_driver.yaml": "2d8e5ab7e69ca7377b9427c96f4da600ec90802bc2a2e8d15ed825c5833ec240"
+    },
+    "python": {
+      "executable": ".venv/bin/python",
+      "version": "Python 3.12.12"
+    },
+    "repository": {
+      "dirty": false,
+      "dirty_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "git_sha": "7074484e330614caf3852b4300385c2113595dad"
+    }
+  },
+  "run_id": "lifecycle_stress_constant_velocity_17_full_lifecycle_hardening_cycle05",
+  "scenario_category": "synthetic_lifecycle_harness",
+  "scene": {
+    "asset_availability": "public_synthetic",
+    "categories_verified": true,
+    "category": "synthetic_lifecycle_harness",
+    "expected_interaction_feature": "not_applicable",
+    "expected_route_feature": "not_applicable",
+    "license_gating_status": "public_synthetic",
+    "scenario_category": "synthetic_lifecycle_harness",
+    "scene_id": "synthetic_lifecycle_harness",
+    "selection_rationale": "public deterministic service harness",
+    "source_manifest": ""
+  },
+  "scene_id": "synthetic_lifecycle_harness",
+  "schema": "cvm_run_manifest_v1",
+  "seed": "17",
+  "status": "completed",
+  "terminal_status": "completed",
+  "timestamps": {
+    "ended_at": "",
+    "source": "not_available",
+    "started_at": ""
+  }
+}

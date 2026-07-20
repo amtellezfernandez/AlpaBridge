@@ -1,0 +1,28 @@
+schema: cvm_experiment_config_v1
+name: temporal_ablation
+description: Optional gated temporal-contract ablation comparing deterministic resampling to naive/disabled resampling.
+scene_manifest: artifacts/cvm/manifests/scene_manifest.yaml
+release_scope:
+  optional_gated_extension: true
+  note: This matrix requires a scene-matched direct-actor oracle proxy and is not a public-core dependency.
+policies:
+  - direct_actor_planner
+# The configured value is an execution identifier, not an AlpaSim seed.
+seeds: [17]
+adapter_configs:
+  - full_temporal_contract
+  - naive_or_disabled_resampling
+execution:
+  mode: closed_loop_ablation
+  expected_runs: 6
+  alpasim_root: workspace/alpasim-clean
+  local_usdz_dir: workspace/alpasim-clean/data/nre-artifacts/local-usdzs-front-camera-15
+  scene_limit: 3
+  required_docker_image: alpasim-base:0.66.0
+  timeout_seconds: 900
+  wizard_args:
+    - eval.video.render_video=false
+  direct_actor_oracle_proxy: null
+claim_boundary:
+  ablated_behavior_default: false
+  categories_verified: false

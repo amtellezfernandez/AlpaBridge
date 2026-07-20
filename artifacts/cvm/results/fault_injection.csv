@@ -1,0 +1,16 @@
+injection,expected_layer,observed_layer,expected_code,observed_code,detected,service_survived,claim_valid,status,correctly_localized
+semantic.route_missing,semantic,semantic,semantic.route_missing,semantic.route_missing,true,true,false,completed,true
+semantic.command_only,semantic,semantic,semantic.command_only,semantic.command_only,true,true,false,completed,true
+semantic.road_center_reference,semantic,semantic,semantic.road_center_reference,semantic.road_center_reference,true,true,false,completed,true
+temporal.stale_observation,temporal,temporal,temporal.stale_observation,temporal.stale_observation,true,true,false,completed,true
+temporal.invalid_sample_count,temporal,temporal,temporal.invalid_sample_count,temporal.invalid_sample_count,true,true,false,completed,true
+temporal.nan_trajectory,temporal,temporal,temporal.nan_trajectory,temporal.nan_trajectory,true,true,false,completed,true
+lifecycle.duplicate_close,lifecycle,lifecycle,lifecycle.duplicate_close,lifecycle.duplicate_close,true,true,false,completed,true
+lifecycle.late_image,lifecycle,lifecycle,lifecycle.late_image,lifecycle.late_image,true,true,false,completed,true
+lifecycle.late_route,lifecycle,lifecycle,lifecycle.late_route,lifecycle.late_route,true,true,false,completed,true
+plugin.optional_backend_missing,deployment,deployment,plugin.optional_backend_missing,plugin.optional_backend_missing,true,true,false,completed,true
+deployment.docker_unavailable,deployment,deployment,deployment.docker_unavailable,deployment.docker_unavailable,true,false,false,completed,true
+deployment.gpu_runtime_unavailable,deployment,deployment,deployment.gpu_runtime_unavailable,deployment.gpu_runtime_unavailable,true,false,false,completed,true
+deployment.scene_artifact_missing,deployment,deployment,deployment.scene_artifact_missing,deployment.scene_artifact_missing,true,false,false,completed,true
+evidence.manifest_missing,evidence,evidence,evidence.manifest_missing,evidence.manifest_missing,true,true,false,completed,true
+evidence.hash_mismatch,evidence,evidence,evidence.hash_mismatch,evidence.hash_mismatch,true,true,false,completed,true

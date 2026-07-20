@@ -1,0 +1,1861 @@
+{
+  "attempted_runs": 115,
+  "blocked_runs": 33,
+  "blocker_counts": {
+    "direct_actor_oracle_proxy_missing": 33
+  },
+  "claim_valid": false,
+  "closed_loop_audit_valid_runs": 42,
+  "closed_loop_completed_runs": 60,
+  "closed_loop_metric_rows": 60,
+  "closed_loop_metrics": {
+    "collision_any": {
+      "count": 60,
+      "max": 1.0,
+      "mean": 0.7,
+      "min": 0.0
+    },
+    "collision_at_fault": {
+      "count": 60,
+      "max": 1.0,
+      "mean": 0.133333,
+      "min": 0.0
+    },
+    "dist_traveled_m": {
+      "count": 60,
+      "max": 550.02,
+      "mean": 103.089,
+      "min": 1.54
+    },
+    "duration_frac_20s": {
+      "count": 60,
+      "max": 0.91,
+      "mean": 0.539333,
+      "min": 0.06
+    },
+    "offroad": {
+      "count": 60,
+      "max": 0.0,
+      "mean": 0.0,
+      "min": 0.0
+    },
+    "plan_deviation": {
+      "count": 60,
+      "max": 1.47,
+      "mean": 0.275333,
+      "min": 0.01
+    },
+    "progress": {
+      "count": 60,
+      "max": 1.0,
+      "mean": 0.501,
+      "min": 0.05
+    },
+    "progress_rel": {
+      "count": 60,
+      "max": 0.95,
+      "mean": 0.748,
+      "min": 0.06
+    }
+  },
+  "completed_runs": 115,
+  "core_policy_results": [
+    {
+      "action_latency_p95_ms": null,
+      "attempted_runs": 15,
+      "audit_valid_runs": 14,
+      "blocked_runs": 0,
+      "collision_any_mean": 0.666667,
+      "completed_runs": 15,
+      "configured_rows": 15,
+      "metric_rows": 15,
+      "offroad_mean": 0.0,
+      "policy": "constant_velocity",
+      "progress_mean": 0.525333,
+      "route_valid_runs": 14,
+      "sensor_valid_runs": 15,
+      "service_crash_rows": 0
+    },
+    {
+      "action_latency_p95_ms": null,
+      "attempted_runs": 0,
+      "audit_valid_runs": 0,
+      "blocked_runs": 15,
+      "collision_any_mean": null,
+      "completed_runs": 0,
+      "configured_rows": 15,
+      "metric_rows": 0,
+      "offroad_mean": null,
+      "policy": "direct_actor_planner",
+      "progress_mean": null,
+      "route_valid_runs": 0,
+      "sensor_valid_runs": 0,
+      "service_crash_rows": 0
+    },
+    {
+      "action_latency_p95_ms": null,
+      "attempted_runs": 15,
+      "audit_valid_runs": 14,
+      "blocked_runs": 0,
+      "collision_any_mean": 0.733333,
+      "completed_runs": 15,
+      "configured_rows": 15,
+      "metric_rows": 15,
+      "offroad_mean": 0.0,
+      "policy": "route_following",
+      "progress_mean": 0.476667,
+      "route_valid_runs": 14,
+      "sensor_valid_runs": 15,
+      "service_crash_rows": 0
+    }
+  ],
+  "created_at": "2026-07-18T21:18:19.088449+00:00",
+  "data_hash": "33d2cce37856ff3bccbac6889d039297039727d8196d54a8eef6f77972c926c6",
+  "diagnostic_experiment": {
+    "adapter_guard_path_timing": {
+      "guarded_drive_path_us": {
+        "max": 1275.773,
+        "mean": 640.8581337,
+        "min": 377.1673,
+        "p50": 617.54935,
+        "p95": 897.099835,
+        "samples": 1000
+      },
+      "input_cases": 15,
+      "paired_incremental_p50_percent": 12.716692456820766,
+      "paired_incremental_us": {
+        "max": 692.2760000000001,
+        "mean": 71.02464865,
+        "min": -563.8442000000001,
+        "p50": 68.87140000000002,
+        "p95": 309.61273249999994,
+        "samples": 1000
+      },
+      "pairing": "Guarded and unchecked order is randomized per iteration across 15 deterministic valid adapter sessions; paired differences use per-call batch means. The unchecked path disables only camera-set and sensor-freshness guards; context-length validation remains active in both paths.",
+      "scope": "in-process WOD2SimChallengeAdapter.drive_once_to_proto route-following path; includes state-to-input assembly, prediction, trajectory serialization, finite-output validation, reasoning parsing, and in-memory telemetry, but excludes gRPC transport, file I/O, simulator work, and human investigation",
+      "trajectory_outputs_equal": true,
+      "unchecked_drive_path_us": {
+        "max": 1153.9843,
+        "mean": 569.83348505,
+        "min": 364.6452,
+        "p50": 541.5826500000001,
+        "p95": 824.4098724999999,
+        "samples": 1000
+      },
+      "warmup_calls_per_method": 50
+    },
+    "artifact_sha256": "c8b7cc9dd4d5c50f87b5c47153fc47d4fbf521895a070c3843ff936a2b740838",
+    "cases": [
+      {
+        "case_id": "fault:01:semantic.route_missing",
+        "event_count": 5,
+        "expected_fault_code": "semantic.route_missing",
+        "expected_valid": false,
+        "pair_id": "session_pair_01",
+        "status_only_classification_correct": false,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": true,
+        "wod2sim_localization_correct": true,
+        "wod2sim_observed_codes": [
+          "semantic.route_missing"
+        ],
+        "wod2sim_valid": false
+      },
+      {
+        "case_id": "fault:02:semantic.command_only",
+        "event_count": 9,
+        "expected_fault_code": "semantic.command_only",
+        "expected_valid": false,
+        "pair_id": "session_pair_02",
+        "status_only_classification_correct": false,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": true,
+        "wod2sim_localization_correct": true,
+        "wod2sim_observed_codes": [
+          "semantic.command_only"
+        ],
+        "wod2sim_valid": false
+      },
+      {
+        "case_id": "fault:03:semantic.road_center_reference",
+        "event_count": 12,
+        "expected_fault_code": "semantic.road_center_reference",
+        "expected_valid": false,
+        "pair_id": "session_pair_03",
+        "status_only_classification_correct": false,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": true,
+        "wod2sim_localization_correct": true,
+        "wod2sim_observed_codes": [
+          "semantic.road_center_reference"
+        ],
+        "wod2sim_valid": false
+      },
+      {
+        "case_id": "fault:04:temporal.stale_observation",
+        "event_count": 15,
+        "expected_fault_code": "temporal.stale_observation",
+        "expected_valid": false,
+        "pair_id": "session_pair_04",
+        "status_only_classification_correct": false,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": true,
+        "wod2sim_localization_correct": true,
+        "wod2sim_observed_codes": [
+          "temporal.stale_observation"
+        ],
+        "wod2sim_valid": false
+      },
+      {
+        "case_id": "fault:05:temporal.invalid_sample_count",
+        "event_count": 18,
+        "expected_fault_code": "temporal.invalid_sample_count",
+        "expected_valid": false,
+        "pair_id": "session_pair_05",
+        "status_only_classification_correct": false,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": true,
+        "wod2sim_localization_correct": true,
+        "wod2sim_observed_codes": [
+          "temporal.invalid_sample_count"
+        ],
+        "wod2sim_valid": false
+      },
+      {
+        "case_id": "fault:06:temporal.nan_trajectory",
+        "event_count": 21,
+        "expected_fault_code": "temporal.nan_trajectory",
+        "expected_valid": false,
+        "pair_id": "session_pair_06",
+        "status_only_classification_correct": false,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": true,
+        "wod2sim_localization_correct": true,
+        "wod2sim_observed_codes": [
+          "temporal.nan_trajectory"
+        ],
+        "wod2sim_valid": false
+      },
+      {
+        "case_id": "fault:07:lifecycle.duplicate_close",
+        "event_count": 25,
+        "expected_fault_code": "lifecycle.duplicate_close",
+        "expected_valid": false,
+        "pair_id": "session_pair_07",
+        "status_only_classification_correct": false,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": true,
+        "wod2sim_localization_correct": true,
+        "wod2sim_observed_codes": [
+          "lifecycle.duplicate_close"
+        ],
+        "wod2sim_valid": false
+      },
+      {
+        "case_id": "fault:08:lifecycle.late_image",
+        "event_count": 28,
+        "expected_fault_code": "lifecycle.late_image",
+        "expected_valid": false,
+        "pair_id": "session_pair_08",
+        "status_only_classification_correct": false,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": true,
+        "wod2sim_localization_correct": true,
+        "wod2sim_observed_codes": [
+          "lifecycle.late_image"
+        ],
+        "wod2sim_valid": false
+      },
+      {
+        "case_id": "fault:09:lifecycle.late_route",
+        "event_count": 31,
+        "expected_fault_code": "lifecycle.late_route",
+        "expected_valid": false,
+        "pair_id": "session_pair_09",
+        "status_only_classification_correct": false,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": true,
+        "wod2sim_localization_correct": true,
+        "wod2sim_observed_codes": [
+          "lifecycle.late_route"
+        ],
+        "wod2sim_valid": false
+      },
+      {
+        "case_id": "fault:10:plugin.optional_backend_missing",
+        "event_count": 33,
+        "expected_fault_code": "plugin.optional_backend_missing",
+        "expected_valid": false,
+        "pair_id": "session_pair_10",
+        "status_only_classification_correct": false,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": true,
+        "wod2sim_localization_correct": true,
+        "wod2sim_observed_codes": [
+          "plugin.optional_backend_missing"
+        ],
+        "wod2sim_valid": false
+      },
+      {
+        "case_id": "fault:11:deployment.docker_unavailable",
+        "event_count": 36,
+        "expected_fault_code": "deployment.docker_unavailable",
+        "expected_valid": false,
+        "pair_id": "session_pair_11",
+        "status_only_classification_correct": false,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": true,
+        "wod2sim_localization_correct": true,
+        "wod2sim_observed_codes": [
+          "deployment.docker_unavailable"
+        ],
+        "wod2sim_valid": false
+      },
+      {
+        "case_id": "fault:12:deployment.gpu_runtime_unavailable",
+        "event_count": 39,
+        "expected_fault_code": "deployment.gpu_runtime_unavailable",
+        "expected_valid": false,
+        "pair_id": "session_pair_12",
+        "status_only_classification_correct": false,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": true,
+        "wod2sim_localization_correct": true,
+        "wod2sim_observed_codes": [
+          "deployment.gpu_runtime_unavailable"
+        ],
+        "wod2sim_valid": false
+      },
+      {
+        "case_id": "fault:13:deployment.scene_artifact_missing",
+        "event_count": 42,
+        "expected_fault_code": "deployment.scene_artifact_missing",
+        "expected_valid": false,
+        "pair_id": "session_pair_13",
+        "status_only_classification_correct": false,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": true,
+        "wod2sim_localization_correct": true,
+        "wod2sim_observed_codes": [
+          "deployment.scene_artifact_missing"
+        ],
+        "wod2sim_valid": false
+      },
+      {
+        "case_id": "fault:14:evidence.manifest_missing",
+        "event_count": 45,
+        "expected_fault_code": "evidence.manifest_missing",
+        "expected_valid": false,
+        "pair_id": "session_pair_14",
+        "status_only_classification_correct": false,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": true,
+        "wod2sim_localization_correct": true,
+        "wod2sim_observed_codes": [
+          "evidence.manifest_missing"
+        ],
+        "wod2sim_valid": false
+      },
+      {
+        "case_id": "fault:15:evidence.hash_mismatch",
+        "event_count": 48,
+        "expected_fault_code": "evidence.hash_mismatch",
+        "expected_valid": false,
+        "pair_id": "session_pair_15",
+        "status_only_classification_correct": false,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": true,
+        "wod2sim_localization_correct": true,
+        "wod2sim_observed_codes": [
+          "evidence.hash_mismatch"
+        ],
+        "wod2sim_valid": false
+      },
+      {
+        "case_id": "control:01",
+        "event_count": 6,
+        "expected_fault_code": "",
+        "expected_valid": true,
+        "pair_id": "session_pair_01",
+        "status_only_classification_correct": true,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": false,
+        "wod2sim_localization_correct": false,
+        "wod2sim_observed_codes": [],
+        "wod2sim_valid": true
+      },
+      {
+        "case_id": "control:02",
+        "event_count": 9,
+        "expected_fault_code": "",
+        "expected_valid": true,
+        "pair_id": "session_pair_02",
+        "status_only_classification_correct": true,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": false,
+        "wod2sim_localization_correct": false,
+        "wod2sim_observed_codes": [],
+        "wod2sim_valid": true
+      },
+      {
+        "case_id": "control:03",
+        "event_count": 12,
+        "expected_fault_code": "",
+        "expected_valid": true,
+        "pair_id": "session_pair_03",
+        "status_only_classification_correct": true,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": false,
+        "wod2sim_localization_correct": false,
+        "wod2sim_observed_codes": [],
+        "wod2sim_valid": true
+      },
+      {
+        "case_id": "control:04",
+        "event_count": 15,
+        "expected_fault_code": "",
+        "expected_valid": true,
+        "pair_id": "session_pair_04",
+        "status_only_classification_correct": true,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": false,
+        "wod2sim_localization_correct": false,
+        "wod2sim_observed_codes": [],
+        "wod2sim_valid": true
+      },
+      {
+        "case_id": "control:05",
+        "event_count": 18,
+        "expected_fault_code": "",
+        "expected_valid": true,
+        "pair_id": "session_pair_05",
+        "status_only_classification_correct": true,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": false,
+        "wod2sim_localization_correct": false,
+        "wod2sim_observed_codes": [],
+        "wod2sim_valid": true
+      },
+      {
+        "case_id": "control:06",
+        "event_count": 21,
+        "expected_fault_code": "",
+        "expected_valid": true,
+        "pair_id": "session_pair_06",
+        "status_only_classification_correct": true,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": false,
+        "wod2sim_localization_correct": false,
+        "wod2sim_observed_codes": [],
+        "wod2sim_valid": true
+      },
+      {
+        "case_id": "control:07",
+        "event_count": 24,
+        "expected_fault_code": "",
+        "expected_valid": true,
+        "pair_id": "session_pair_07",
+        "status_only_classification_correct": true,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": false,
+        "wod2sim_localization_correct": false,
+        "wod2sim_observed_codes": [],
+        "wod2sim_valid": true
+      },
+      {
+        "case_id": "control:08",
+        "event_count": 27,
+        "expected_fault_code": "",
+        "expected_valid": true,
+        "pair_id": "session_pair_08",
+        "status_only_classification_correct": true,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": false,
+        "wod2sim_localization_correct": false,
+        "wod2sim_observed_codes": [],
+        "wod2sim_valid": true
+      },
+      {
+        "case_id": "control:09",
+        "event_count": 30,
+        "expected_fault_code": "",
+        "expected_valid": true,
+        "pair_id": "session_pair_09",
+        "status_only_classification_correct": true,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": false,
+        "wod2sim_localization_correct": false,
+        "wod2sim_observed_codes": [],
+        "wod2sim_valid": true
+      },
+      {
+        "case_id": "control:10",
+        "event_count": 33,
+        "expected_fault_code": "",
+        "expected_valid": true,
+        "pair_id": "session_pair_10",
+        "status_only_classification_correct": true,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": false,
+        "wod2sim_localization_correct": false,
+        "wod2sim_observed_codes": [],
+        "wod2sim_valid": true
+      },
+      {
+        "case_id": "control:11",
+        "event_count": 36,
+        "expected_fault_code": "",
+        "expected_valid": true,
+        "pair_id": "session_pair_11",
+        "status_only_classification_correct": true,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": false,
+        "wod2sim_localization_correct": false,
+        "wod2sim_observed_codes": [],
+        "wod2sim_valid": true
+      },
+      {
+        "case_id": "control:12",
+        "event_count": 39,
+        "expected_fault_code": "",
+        "expected_valid": true,
+        "pair_id": "session_pair_12",
+        "status_only_classification_correct": true,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": false,
+        "wod2sim_localization_correct": false,
+        "wod2sim_observed_codes": [],
+        "wod2sim_valid": true
+      },
+      {
+        "case_id": "control:13",
+        "event_count": 42,
+        "expected_fault_code": "",
+        "expected_valid": true,
+        "pair_id": "session_pair_13",
+        "status_only_classification_correct": true,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": false,
+        "wod2sim_localization_correct": false,
+        "wod2sim_observed_codes": [],
+        "wod2sim_valid": true
+      },
+      {
+        "case_id": "control:14",
+        "event_count": 45,
+        "expected_fault_code": "",
+        "expected_valid": true,
+        "pair_id": "session_pair_14",
+        "status_only_classification_correct": true,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": false,
+        "wod2sim_localization_correct": false,
+        "wod2sim_observed_codes": [],
+        "wod2sim_valid": true
+      },
+      {
+        "case_id": "control:15",
+        "event_count": 48,
+        "expected_fault_code": "",
+        "expected_valid": true,
+        "pair_id": "session_pair_15",
+        "status_only_classification_correct": true,
+        "status_only_fault_detected": false,
+        "status_only_localization_correct": false,
+        "status_only_valid": true,
+        "wod2sim_classification_correct": true,
+        "wod2sim_fault_detected": false,
+        "wod2sim_localization_correct": false,
+        "wod2sim_observed_codes": [],
+        "wod2sim_valid": true
+      }
+    ],
+    "classification": {
+      "paired_comparison": {
+        "discordant_pairs": 15,
+        "scope": "Descriptive paired counts for this designed suite; no independence-based significance test is applied.",
+        "status_only_only_correct": 0,
+        "wod2sim_only_correct": 15
+      },
+      "status_only": {
+        "classification_accuracy": 0.5,
+        "classification_correct": 15,
+        "classification_total": 30,
+        "control_total": 15,
+        "false_positives": 0,
+        "fault_recall": 0.0,
+        "fault_total": 15,
+        "faults_correctly_localized": 0,
+        "faults_detected": 0,
+        "localization_rate": 0.0,
+        "specificity": 1.0
+      },
+      "wod2sim": {
+        "classification_accuracy": 1.0,
+        "classification_correct": 30,
+        "classification_total": 30,
+        "control_total": 15,
+        "false_positives": 0,
+        "fault_recall": 1.0,
+        "fault_total": 15,
+        "faults_correctly_localized": 15,
+        "faults_detected": 15,
+        "localization_rate": 1.0,
+        "specificity": 1.0
+      }
+    },
+    "created_at": "2026-07-20T15:14:21.405810+00:00",
+    "design": {
+      "adapter_batch_size": 20,
+      "adapter_iterations": 1000,
+      "control_cases": 15,
+      "control_construction": "Fifteen unmodified, separately instantiated current-instrumentation adapter sessions, one paired with each fault operator.",
+      "fault_cases": 15,
+      "fault_codes": [
+        "semantic.route_missing",
+        "semantic.command_only",
+        "semantic.road_center_reference",
+        "temporal.stale_observation",
+        "temporal.invalid_sample_count",
+        "temporal.nan_trajectory",
+        "lifecycle.duplicate_close",
+        "lifecycle.late_image",
+        "lifecycle.late_route",
+        "plugin.optional_backend_missing",
+        "deployment.docker_unavailable",
+        "deployment.gpu_runtime_unavailable",
+        "deployment.scene_artifact_missing",
+        "evidence.manifest_missing",
+        "evidence.hash_mismatch"
+      ],
+      "fault_construction": "One predefined telemetry or runtime-context mutation per source session; the detector receives only the mutated trace and context.",
+      "inference": "No population-level confidence interval or hypothesis test is reported because sessions and mutations form a designed conformance suite.",
+      "random_seed": 2027,
+      "scoring": "Expected labels are retained by the experiment scorer and are not passed to diagnose_contract_trace.",
+      "timing_batch_size": 5,
+      "timing_iterations": 200,
+      "total_cases": 30
+    },
+    "environment": {
+      "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "processor": "Intel(R) Core(TM) Ultra 9 275HX",
+      "python": "3.12.12",
+      "timer": "time.perf_counter_ns"
+    },
+    "implementation_sha256": {
+      "src/wod2sim/audit/diagnostic_experiment.py": "d9d63c4e58aabf96fcb2107629d8adee0082bfc109f3e6af89adbb66ba0f7238",
+      "src/wod2sim/audit/diagnostic_trace_generation.py": "2c14db4f8b72c6901faa2286dcafba5b474ed9abdaf5c02c848b62ece833cdd5",
+      "src/wod2sim/audit/trace_diagnostics.py": "5b5866f9c81e3efd647dfd07753a3cc71f83ec43f9c55f6d787d9be37af238df",
+      "src/wod2sim/challenge/e2e_driver.py": "93e4f4a6c1b1b23eb5977f3d2e8d9b3895a499a5fa646d87a3bfb8b927e68e14",
+      "src/wod2sim/simulator/baseline_drivers.py": "5b9cc009fe8c8ad56581203838ec2e53a2fc2fff89ac84fb822905714ea6fb44"
+    },
+    "schema": "wod2sim_diagnostic_experiment_v3",
+    "source_trace": {
+      "drive_count": 120,
+      "event_count": 405,
+      "explicit_finite_drive_count": 120,
+      "kind": "dependency-light current-instrumentation adapter sessions; not external simulator rollouts",
+      "latency_ms": {
+        "max": 1.433481,
+        "mean": 0.559817925,
+        "p50": 0.5277135,
+        "p95": 0.8404817499999998
+      },
+      "latency_target_met_count": 120,
+      "latency_target_ms": 100.0,
+      "path": "artifacts/cvm/inputs/diagnostic_protocol_sessions.jsonl",
+      "session_count": 15,
+      "sha256": "c6d3b177e956ed0000bc98af0ee4828585612b0b8a0f3bfd33db27f7173468aa",
+      "telemetry_schemas": [
+        "wod2sim_challenge_telemetry_v3"
+      ]
+    },
+    "timing": {
+      "completion_gate_decision_us": {
+        "max": 218.1846,
+        "mean": 0.3734659,
+        "min": 0.1174,
+        "p50": 0.2378,
+        "p95": 0.5484100000000001,
+        "samples": 6000
+      },
+      "contract_gate_decision_us": {
+        "max": 1348.351,
+        "mean": 29.260463666666666,
+        "min": 4.4748,
+        "p50": 26.1693,
+        "p95": 52.962250000000004,
+        "samples": 6000
+      },
+      "fault_case_detector_us": {
+        "max": 1348.351,
+        "mean": 31.919710066666667,
+        "min": 5.3754,
+        "p50": 28.0957,
+        "p95": 55.77382,
+        "samples": 3000
+      },
+      "incremental_decision_p50_us": 25.9315,
+      "pairing": "Method order is randomized within every case and iteration; reported samples are per-call batch means.",
+      "scope": "in-memory detector execution on already-parsed telemetry and runtime context; excludes JSON parsing, file I/O, and human investigation time",
+      "warmup_calls_per_case_and_method": 3
+    }
+  },
+  "external_compatibility": {
+    "artifact_dir": "artifacts/external/alpasim_e2e_challenge_conformance",
+    "available": true,
+    "claim_boundary": "External evaluator conformance evidence checks interface portability only. It is not a challenge submission, leaderboard result, policy-quality benchmark, or scenario-coverage claim.",
+    "drive_rpc_count": 197,
+    "driver_events": 989,
+    "driver_latency_max_ms": 11.966,
+    "driver_latency_mean_ms": 2.135,
+    "egomotion_event_count": 197,
+    "image_event_count": 396,
+    "latency_target_denominator": 197,
+    "latency_target_met_count": 197,
+    "passed_rollouts": 1,
+    "rollouts": 1,
+    "route_event_count": 197,
+    "score": 0.214246
+  },
+  "failed_runs": 0,
+  "failure_attribution": {
+    "claim_valid_policy_benchmark_rows": 0,
+    "contract_valid_closed_loop_rows": 42,
+    "diagnostic_not_policy_rows": 73,
+    "integration_failure_attributable_rows": 33,
+    "integration_or_evidence_invalid_closed_loop_rows": 18,
+    "non_policy_attributed_rows": 106,
+    "planned_not_launched_rows": 0,
+    "policy_behavior_attributable_rows": 42,
+    "policy_failure_attributable_rows": 0,
+    "precondition_blocked_rows": 33,
+    "rule": "Closed-loop behavior can be attributed to the policy only after the semantic route contract, temporal adapter, sensor-freshness audit, lifecycle state, deployment preconditions, and evidence gate pass. Public policy benchmark claims require the stricter benchmark gate. Rows outside the integration gate remain integration, precondition, evidence, or diagnostic records and cannot be counted as policy failures. A policy failure also requires the retained failure layer to be policy.",
+    "synthetic_diagnostic_rows": 55
+  },
+  "failure_code_counts": {
+    "deployment.docker_unavailable": 1,
+    "deployment.gpu_runtime_unavailable": 1,
+    "deployment.scene_artifact_missing": 1,
+    "direct_actor_oracle_proxy_missing": 33,
+    "duplicate_close_unhandled": 20,
+    "evidence.hash_mismatch": 1,
+    "evidence.manifest_missing": 1,
+    "lifecycle.duplicate_close": 1,
+    "lifecycle.late_image": 1,
+    "lifecycle.late_route": 1,
+    "plugin.optional_backend_missing": 1,
+    "semantic.command_only": 1,
+    "semantic.road_center_reference": 1,
+    "semantic.route_missing": 1,
+    "temporal.invalid_sample_count": 1,
+    "temporal.nan_trajectory": 1,
+    "temporal.stale_observation": 1
+  },
+  "failure_rows": 33,
+  "integration_effectiveness": {
+    "contract_invalid_evidence_rejected_runs": 15,
+    "contract_invalid_evidence_rejection_denominator": 15,
+    "contract_invalid_evidence_rejection_rate": 1.0,
+    "full_contract_audit_valid_runs": 42,
+    "full_contract_completed_runs": 45,
+    "rule": "Integration-effectiveness is measured on executed closed-loop rows: completed full-contract rollouts are audited, and completed metric-bearing command-only rows are compared with a defined status-only acceptance baseline before route-invalid evidence is rejected.",
+    "semantic_ablation_command_proxy_completed_runs": 15,
+    "semantic_ablation_command_proxy_metric_runs": 15,
+    "semantic_ablation_command_proxy_rejected_runs": 15,
+    "semantic_ablation_comparison_eligible_pairs": 14,
+    "semantic_ablation_completed_pairs": 15,
+    "status_only_accepted_contract_rejected_runs": 15,
+    "status_only_baseline_acceptance_denominator": 15,
+    "status_only_baseline_accepted_runs": 15
+  },
+  "matrix_counts": {
+    "core": 45,
+    "fault_injection": 15,
+    "lifecycle_stress": 40,
+    "semantic_ablation": 30,
+    "temporal_ablation": 18
+  },
+  "navsim_reactive_rollout": {
+    "artifact_dir": "artifacts/external/alpasim_navsim_reactive_rollout",
+    "artifact_sha256": "58651ebf5e116578eff8d76f1cf230c9485e1a54bdc46e44293337128d38a04e",
+    "available": true,
+    "behavior_metrics_not_used_as_policy_quality_claims": {
+      "collision_any": 0.0,
+      "dist_to_gt_location": 16.2922427809882,
+      "dist_to_gt_trajectory": 1.8110407074611314,
+      "dist_traveled_m": 61.86319335644219,
+      "gt_dist_traveled_m": 78.37454311238054,
+      "offroad": 0.0,
+      "plan_deviation": 0.2499127760248797,
+      "progress": 0.7854632416946014,
+      "progress_rel": 0.7912219438473825,
+      "score": 0.9818290521182517,
+      "wrong_lane": 1.0
+    },
+    "camera_event_count": 198,
+    "claim_boundary": {
+      "does_not_support": [
+        "reactive camera rendering or visual-policy evaluation",
+        "NuRec rendering quality",
+        "learned-policy quality or benchmark superiority",
+        "runtime overhead versus another integration",
+        "human time-to-diagnosis",
+        "cross-simulator transfer or population generalization"
+      ],
+      "supports": [
+        "one-scene reactive external-driver lifecycle completion",
+        "live learned-policy/controller/physics feedback for a camera-blind model",
+        "service timing for this exact configuration",
+        "frozen-camera rejection for a camera-validating negative control"
+      ]
+    },
+    "drive_rpc_count": 197,
+    "finite_drive_outputs": 197,
+    "fixture": {
+      "alpasim_source_sha256": "0ee95b5bc3a69693cd5a3da3a7d430b673f15371f6844f641866302b5deab2f6",
+      "alpasim_source_url": "https://media.githubusercontent.com/media/NVlabs/alpasim/9177bd0bec547d7516cc77d1864e943780ef7e7a/src/runtime/tests/data/mock_video_model/clipgt-0b10bce8-61f1-4350-8577-cf3c9493ffc3.usdz",
+      "derived_sha256": "069fd063a64c82112ec971b585b7eb08d09f9233a4f2ac5e816e19af7185d70d",
+      "derived_surface": {
+        "files_added": [
+          "mesh.ply",
+          "mesh_ground.ply",
+          "WOD2SIM_DERIVATION.json"
+        ],
+        "geometry": "flat z=0 m rectangle x=[-100,200], y=[-100,100]",
+        "recorded_payloads_changed": false
+      }
+    },
+    "internal_driver_latency_ms": {
+      "max": 18.142955,
+      "mean": 2.1909210812182742,
+      "min": 0.886126,
+      "p50": 1.982387,
+      "p95": 3.362453199999999
+    },
+    "latency_target_met_count": 197,
+    "media": {
+      "camera_map": {
+        "bytes": 981818,
+        "codec": "h264",
+        "content": "raw AlpaSim map, metrics, and recorded seed camera; camera panel has no WOD2Sim text overlay",
+        "duration_s": 19.9,
+        "frames": 199,
+        "height": 1000,
+        "path": "artifacts/external/alpasim_navsim_reactive_rollout/camera-map.mp4",
+        "r_frame_rate": "10/1",
+        "sha256": "2ca2bced5caa397354a5c1f3d8b6bb9ee4aea6ef2580ae94d05239994b683ea7",
+        "width": 900
+      }
+    },
+    "negative_control": {
+      "camera_events": 5,
+      "diagnostic": "RouteFollowingAlpaSimModel detected a frozen camera stream: ego pose changed from (0.1786, -0.0025, -0.002999) to (0.2308, -0.0024, -0.003765), and the latest camera timestamp advanced from 2056234417255 to 2056234517255, but the newest camera frame content did not change. The vehicle is moving while camera imagery is effectively frozen; check the upstream AlpaSim/sensorsim camera pipeline.",
+      "drive_calls_before_rejection": 4,
+      "model": "route_following",
+      "render_calls": 5,
+      "result": "rejected_frozen_camera_stream",
+      "session_uuid": "fc19558c-845e-11f1-855f-8378a45bfef7"
+    },
+    "passed_rollouts": 1,
+    "render_call_count": 198,
+    "renderer": {
+      "camera_contract": "recorded_seed_frame_replay",
+      "first_requested_xyz": [
+        0.06113193929195404,
+        -0.001269932254217565,
+        -0.00047897876356728375
+      ],
+      "initial_frame_sha256": {
+        "camera_front_wide_120fov": "8c04d6c1ebb2bc1180bfa6196e695cf1d48d7c4f64f84bab0e3dc75535e2ec58"
+      },
+      "kind": "video_model",
+      "last_requested_xyz": [
+        61.68334197998047,
+        0.5455278158187866,
+        0.0
+      ],
+      "render_calls": 198
+    },
+    "rollouts": 1,
+    "run": {
+      "alpasim_commit": "9177bd0bec547d7516cc77d1864e943780ef7e7a",
+      "alpasim_runtime_image_id": "sha256:a305ca08dc51ddabd668857fad704fca92772638fb21a9cf012d75767d71cee4",
+      "checkpoint": {
+        "name": "NAVSIM EgoStatusMLP seed 0",
+        "revision": "32d89c0ae6e7c13c311f4a034002006c250afab0",
+        "sha256": "87d75b0f43d077ac3531370d7cccac98656d4e9b5ce5fa6618e28b7358b3a86b",
+        "url": "https://huggingface.co/autonomousvision/navsim_baselines/resolve/32d89c0ae6e7c13c311f4a034002006c250afab0/ego_status_mlp/ego_status_mlp_seed_0.ckpt"
+      },
+      "model": "navsim_ego_status_mlp",
+      "model_input_contract": "velocity_xy+acceleration_xy+discrete_command",
+      "rollout_id": "4956d514-845e-11f1-8b77-537c3b97cc28",
+      "scene_id": "clipgt-0b10bce8-61f1-4350-8577-cf3c9493ffc3",
+      "status": "pass",
+      "wod2sim_commit": "aece540bfc916bc9044ed6d4f0512d16093434a7"
+    },
+    "runtime": {
+      "active_wall_clock_s": 16.51,
+      "realtime_factor": 1.21,
+      "simulated_s": 19.93,
+      "total_wall_clock_s": 18.9
+    },
+    "service_drive_rpc": {
+      "count": 197,
+      "mean_ms": 3.205829152278883,
+      "sum_s": 0.6315483429989399
+    }
+  },
+  "planned_runs": 0,
+  "protocol_replay": {
+    "arms": {
+      "command_only_route": {
+        "diagnostic_codes": [
+          "semantic.command_only"
+        ],
+        "diagnostic_count": 1,
+        "drive_calls": 60,
+        "drive_calls_within_target": 60,
+        "drive_rpc_latency_ms": {
+          "max": 4.61186,
+          "mean": 3.1591675166666664,
+          "p50": 3.1039605,
+          "p95": 3.9580392499999997,
+          "samples": 60
+        },
+        "finite_drive_outputs": 60,
+        "latency_target_ms": 100.0,
+        "model": "route_following",
+        "nonstationary_drive_outputs": 60,
+        "result_sha256": "5bc3fe17957173c698d5545eed6036cb54fc8d2fc8ee3edb9fe3543db820ce56",
+        "route_contract_mode": "command_only_route",
+        "telemetry_runtime": {
+          "drive_count": 60,
+          "event_count": 307,
+          "explicit_finite_drive_count": 60,
+          "latency_ms": {
+            "max": 2.06412,
+            "mean": 1.41970135,
+            "p50": 1.3637465,
+            "p95": 1.8600002499999997
+          },
+          "latency_target_met_count": 60,
+          "latency_target_ms": 100.0,
+          "session_count": 1,
+          "telemetry_schemas": [
+            "wod2sim_challenge_telemetry_v3"
+          ]
+        },
+        "telemetry_sha256": "a6cbbee98ebe8082298cb246d75e246054fe09f566b6603639c946f9b45a1cae"
+      },
+      "full_contract": {
+        "diagnostic_codes": [],
+        "diagnostic_count": 0,
+        "drive_calls": 60,
+        "drive_calls_within_target": 60,
+        "drive_rpc_latency_ms": {
+          "max": 5.800262,
+          "mean": 3.9362151666666665,
+          "p50": 3.76853,
+          "p95": 4.83331325,
+          "samples": 60
+        },
+        "finite_drive_outputs": 60,
+        "latency_target_ms": 100.0,
+        "model": "route_following",
+        "nonstationary_drive_outputs": 60,
+        "result_sha256": "41c232b68c403fac84220c4fc313b402b41b3f252871ad9fc1b8529deffb3f73",
+        "route_contract_mode": "full_contract",
+        "telemetry_runtime": {
+          "drive_count": 60,
+          "event_count": 307,
+          "explicit_finite_drive_count": 60,
+          "latency_ms": {
+            "max": 3.36388,
+            "mean": 1.84082245,
+            "p50": 1.7611379999999999,
+            "p95": 2.59888935
+          },
+          "latency_target_met_count": 60,
+          "latency_target_ms": 100.0,
+          "session_count": 1,
+          "telemetry_schemas": [
+            "wod2sim_challenge_telemetry_v3"
+          ]
+        },
+        "telemetry_sha256": "f7d35b19379beb43f3b207cf9e2b96250f4b30ff858f0f5b238810f81937113d"
+      },
+      "navsim_ego_status_mlp_command_only_route": {
+        "diagnostic_codes": [],
+        "diagnostic_count": 0,
+        "drive_calls": 60,
+        "drive_calls_within_target": 60,
+        "drive_rpc_latency_ms": {
+          "max": 8.643005,
+          "mean": 5.21654475,
+          "p50": 4.942636,
+          "p95": 6.962782999999997,
+          "samples": 60
+        },
+        "finite_drive_outputs": 60,
+        "latency_target_ms": 100.0,
+        "model": "navsim_ego_status_mlp",
+        "nonstationary_drive_outputs": 60,
+        "result_sha256": "5cecb4c10fbea5c946ba7c7f5922519d397ad8f84208743fb28dd72d2b863439",
+        "route_contract_mode": "command_only_route",
+        "telemetry_runtime": {
+          "drive_count": 60,
+          "event_count": 307,
+          "explicit_finite_drive_count": 60,
+          "latency_ms": {
+            "max": 6.238251,
+            "mean": 2.9990327,
+            "p50": 2.6821425000000003,
+            "p95": 4.350917599999999
+          },
+          "latency_target_met_count": 60,
+          "latency_target_ms": 100.0,
+          "session_count": 1,
+          "telemetry_schemas": [
+            "wod2sim_challenge_telemetry_v3"
+          ]
+        },
+        "telemetry_sha256": "9ce66fa5799a523a50fd3a513515b9e4c8febdb5e636d25d546b19afd0aff58f"
+      },
+      "navsim_ego_status_mlp_full_contract": {
+        "diagnostic_codes": [],
+        "diagnostic_count": 0,
+        "drive_calls": 60,
+        "drive_calls_within_target": 60,
+        "drive_rpc_latency_ms": {
+          "max": 13.041379,
+          "mean": 4.890875783333333,
+          "p50": 4.715281,
+          "p95": 5.945360149999999,
+          "samples": 60
+        },
+        "finite_drive_outputs": 60,
+        "latency_target_ms": 100.0,
+        "model": "navsim_ego_status_mlp",
+        "nonstationary_drive_outputs": 60,
+        "result_sha256": "50eb8e08d6b8df9e571158ddbf81ec2a600b71d3dcd5d10432c4c9a42799444f",
+        "route_contract_mode": "full_contract",
+        "telemetry_runtime": {
+          "drive_count": 60,
+          "event_count": 307,
+          "explicit_finite_drive_count": 60,
+          "latency_ms": {
+            "max": 8.970579,
+            "mean": 2.8633862666666667,
+            "p50": 2.7219245,
+            "p95": 3.6468719499999995
+          },
+          "latency_target_met_count": 60,
+          "latency_target_ms": 100.0,
+          "session_count": 1,
+          "telemetry_schemas": [
+            "wod2sim_challenge_telemetry_v3"
+          ]
+        },
+        "telemetry_sha256": "c90f0c5a8e6bb78a2eb2904d18ccb245209e80bbb0bb3c58b63f463f789606b9"
+      }
+    },
+    "artifact_dir": "artifacts/external/alpasim_protocol_replay",
+    "artifact_sha256": "3d5a3b50efde8d4d5dc6aa6f08d8af1791140b1000e944c1730d56b197a3b7aa",
+    "available": true,
+    "claim_boundary": "This is an executed client-to-service gRPC replay of recorded camera, route, egomotion, and Drive messages. It measures transport-inclusive driver RPC latency and contract diagnostics. Recorded inputs are non-reactive, so it does not measure simulator runtime, policy quality, human diagnosis time, or generalization to another integration framework. Route-following demonstrates the consequence of waypoint loss; the published NAVSIM EgoStatusMLP is a policy-signature negative control and does not consume route geometry.",
+    "execution_environment": {
+      "cpu_model": "Intel(R) Core(TM) Ultra 9 275HX",
+      "docker_image_id": "sha256:4fbbcb9406cb65796a28a8532f2126fdc224cde4feaed9a546d5e818fdaa5586",
+      "grpc_transport": "host loopback",
+      "host_machine": "x86_64",
+      "host_platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "learned_runtime_image_id": "sha256:7ba4dbee3391aeb473aff739350e57e01f3019b84f7177e0e7e2503bce8e8732",
+      "python": "3.12.12",
+      "run_order": [
+        "full_contract",
+        "command_only_route",
+        "navsim_ego_status_mlp_full_contract",
+        "navsim_ego_status_mlp_command_only_route"
+      ],
+      "timer": "time.perf_counter_ns",
+      "wod2sim_commit": "a6a2338a07b8aa3cb0703ff6163e3cdaedcd2563-dirty"
+    },
+    "learned_policy": {
+      "checkpoint_repository": "autonomousvision/navsim_baselines",
+      "checkpoint_revision": "32d89c0ae6e7c13c311f4a034002006c250afab0",
+      "checkpoint_sha256": "87d75b0f43d077ac3531370d7cccac98656d4e9b5ce5fa6618e28b7358b3a86b",
+      "checkpoint_url": "https://huggingface.co/autonomousvision/navsim_baselines/resolve/32d89c0ae6e7c13c311f4a034002006c250afab0/ego_status_mlp/ego_status_mlp_seed_0.ckpt",
+      "family": "NAVSIM v1.1 EgoStatusMLP blind learned baseline",
+      "input_contract": [
+        "velocity_xy",
+        "acceleration_xy",
+        "discrete_command"
+      ],
+      "license": "Apache-2.0",
+      "name": "ego_status_mlp_seed_0",
+      "navsim_source_commit": "0811876c274e8b058ab2be9b3dcd4d37bd23f177",
+      "redistributed_in_wod2sim": false,
+      "route_geometry_consumed": false,
+      "runtime_device": "cpu",
+      "trained_on_navsim": true,
+      "visual_policy": false
+    },
+    "media": {
+      "camera_frames": 60,
+      "displayed_camera_frames": 18,
+      "duration_seconds": 4.3,
+      "end_drive_index": 47,
+      "maximum_endpoint_separation_m": 1.505999,
+      "readme_preview": {
+        "bytes": 2607516,
+        "format": "animated GIF",
+        "path": "docs/assets/readme/alpasim-protocol-replay.gif",
+        "sha256": "37585d304ba8e4f4d3fd81a77697a17a90a1a15de3fafbd3842e593280b96167"
+      },
+      "start_drive_index": 30,
+      "video": {
+        "bytes": 598092,
+        "format": "H.264 MP4",
+        "path": "docs/assets/readme/alpasim-protocol-replay.mp4",
+        "sha256": "5b2fe8d29fafc234ff22bbfe02de18fa478f71324a7b541162c3e0326b0f7191"
+      }
+    },
+    "policy_family_count": 2,
+    "source": {
+      "alpasim_commit": "049f70fbfe8207e1efd4831a6c3e78a38703d473",
+      "asl_sha256": "237d6b55f4da5b0610f1b8b1e940f52d9efdc9e39c8ca2b35c5b5285ebefdc1f",
+      "camera_id": "camera_front_wide_120fov",
+      "kind": "official Apache-licensed AlpaSim integration replay",
+      "reactive_closed_loop": false,
+      "url": "https://media.githubusercontent.com/media/NVlabs/alpasim/049f70fbfe8207e1efd4831a6c3e78a38703d473/src/runtime/tests/data/integration/rollout.asl"
+    },
+    "trajectory_divergence": {
+      "navsim_ego_status_mlp": {
+        "endpoint_difference_gt_0_1m": 0,
+        "endpoint_difference_gt_1m": 0,
+        "endpoint_difference_max_drive_index": 0,
+        "endpoint_difference_max_m": 0.0,
+        "endpoint_difference_mean_m": 0.0,
+        "endpoint_difference_median_m": 0.0,
+        "paired_calls": 60
+      },
+      "route_following": {
+        "endpoint_difference_gt_0_1m": 56,
+        "endpoint_difference_gt_1m": 22,
+        "endpoint_difference_max_drive_index": 47,
+        "endpoint_difference_max_m": 1.505999,
+        "endpoint_difference_mean_m": 0.708154,
+        "endpoint_difference_median_m": 0.386731,
+        "paired_calls": 60
+      }
+    }
+  },
+  "public_core_policy_results": [
+    {
+      "action_latency_p95_ms": null,
+      "attempted_runs": 15,
+      "audit_valid_runs": 14,
+      "blocked_runs": 0,
+      "collision_any_mean": 0.666667,
+      "completed_runs": 15,
+      "configured_rows": 15,
+      "metric_rows": 15,
+      "offroad_mean": 0.0,
+      "policy": "constant_velocity",
+      "progress_mean": 0.525333,
+      "route_valid_runs": 14,
+      "sensor_valid_runs": 15,
+      "service_crash_rows": 0
+    },
+    {
+      "action_latency_p95_ms": null,
+      "attempted_runs": 15,
+      "audit_valid_runs": 14,
+      "blocked_runs": 0,
+      "collision_any_mean": 0.733333,
+      "completed_runs": 15,
+      "configured_rows": 15,
+      "metric_rows": 15,
+      "offroad_mean": 0.0,
+      "policy": "route_following",
+      "progress_mean": 0.476667,
+      "route_valid_runs": 14,
+      "sensor_valid_runs": 15,
+      "service_crash_rows": 0
+    }
+  ],
+  "release_scope": {
+    "direct_actor_blocked_rows": 33,
+    "direct_actor_configured_rows": 33,
+    "optional_gated_blocked_rows": 33,
+    "optional_gated_configured_rows": 33,
+    "optional_gated_policy_names": [
+      "direct_actor_planner",
+      "token_dagger_bc"
+    ],
+    "public_core_attempted_runs": 30,
+    "public_core_audit_valid_runs": 28,
+    "public_core_blocked_rows": 0,
+    "public_core_completed_runs": 30,
+    "public_core_configured_rows": 30,
+    "public_core_policy_names": [
+      "constant_velocity",
+      "route_following"
+    ],
+    "public_learned_checkpoint_bundled": false,
+    "restricted_scene_assets_bundled": false,
+    "scope_rule": "The public release core is the dependency-light contract adapter path using constant_velocity and route_following. Direct actor-aware planning, learned checkpoint execution, restricted scene redistribution, and a full policy benchmark are optional gated extensions, not release-core dependencies."
+  },
+  "scenario_coverage": {
+    "closed_loop_scene_count": 15,
+    "required_categories": [
+      "straight",
+      "intersection",
+      "lane_change",
+      "dense_traffic",
+      "occlusion",
+      "merge"
+    ],
+    "required_category_count": 6,
+    "rule": "Scenario-category coverage can be claimed only when authoritative metadata verifies each required category for the retained closed-loop scene set. Availability-selected unclassified scenes count as integration instances, not as coverage evidence.",
+    "scenario_category_coverage_claimed": false,
+    "scenario_category_coverage_claimed_int": 0,
+    "unclassified_closed_loop_scene_count": 15,
+    "verified_categories": [],
+    "verified_category_count": 0,
+    "verified_required_categories": [],
+    "verified_required_category_count": 0
+  },
+  "schema": "cvm_aggregate_summary_v1",
+  "semantic_ablation_deltas": {
+    "collision_any": {
+      "count": 14,
+      "max_delta": 1.0,
+      "mean_delta_full_minus_command_only": 0.071429,
+      "median_delta": 0.0,
+      "min_delta": -1.0,
+      "negative_count": 1,
+      "positive_count": 2,
+      "zero_count": 11
+    },
+    "offroad": {
+      "count": 14,
+      "max_delta": 0.0,
+      "mean_delta_full_minus_command_only": 0.0,
+      "median_delta": 0.0,
+      "min_delta": 0.0,
+      "negative_count": 0,
+      "positive_count": 0,
+      "zero_count": 14
+    },
+    "plan_deviation": {
+      "count": 14,
+      "max_delta": 1.04,
+      "mean_delta_full_minus_command_only": 0.016429,
+      "median_delta": 0.0,
+      "min_delta": -1.15,
+      "negative_count": 2,
+      "positive_count": 6,
+      "zero_count": 6
+    },
+    "progress": {
+      "count": 14,
+      "max_delta": 0.66,
+      "mean_delta_full_minus_command_only": -0.052143,
+      "median_delta": 0.0,
+      "min_delta": -0.69,
+      "negative_count": 6,
+      "positive_count": 2,
+      "zero_count": 6
+    },
+    "progress_rel": {
+      "count": 14,
+      "max_delta": 0.04,
+      "mean_delta_full_minus_command_only": -0.022857,
+      "median_delta": 0.0,
+      "min_delta": -0.21,
+      "negative_count": 4,
+      "positive_count": 1,
+      "zero_count": 9
+    }
+  },
+  "status_counts": {
+    "blocked": 33,
+    "completed": 115
+  },
+  "synthetic_completed_runs": 55,
+  "total_rows": 148,
+  "waymax_contract_study": {
+    "available": true,
+    "behavior": {
+      "attribution": {
+        "constant_velocity_command_proxy_clean": 19,
+        "constant_velocity_full_route_clean": 19,
+        "route_following_command_proxy_semantic_fault": 19,
+        "route_following_full_route_clean": 19
+      },
+      "closed_loop_steps_per_arm": 50,
+      "closed_loop_steps_total": 3800,
+      "comparison_eligible_scenarios": 19,
+      "difference_in_differences_endpoint_m": {
+        "max": 14.210695,
+        "mean": 1.972612,
+        "median": 1.017287,
+        "positive_count": 15
+      },
+      "displacement_divergence_over_time_m": {
+        "constant_velocity": {
+          "mean": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "median": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "route_following": {
+          "mean": [
+            0.0,
+            0.056449,
+            0.111237,
+            0.164038,
+            0.214487,
+            0.263938,
+            0.311539,
+            0.357044,
+            0.402866,
+            0.447822,
+            0.491911,
+            0.511073,
+            0.529434,
+            0.542323,
+            0.592939,
+            0.619343,
+            0.643274,
+            0.663676,
+            0.681924,
+            0.697853,
+            0.712459,
+            0.725317,
+            0.736929,
+            0.748055,
+            0.758303,
+            0.768182,
+            0.777971,
+            0.789556,
+            0.805649,
+            0.799574,
+            0.849067,
+            0.889079,
+            0.917748,
+            0.943368,
+            0.966659,
+            0.987728,
+            1.008023,
+            1.128714,
+            1.14695,
+            1.270962,
+            1.287758,
+            1.410497,
+            1.42537,
+            1.548328,
+            1.563941,
+            1.68574,
+            1.700427,
+            1.821577,
+            1.835592,
+            1.957558,
+            1.972612
+          ],
+          "median": [
+            0.0,
+            0.010742,
+            0.019531,
+            0.026367,
+            0.033178,
+            0.037888,
+            0.041693,
+            0.044178,
+            0.051757,
+            0.064453,
+            0.070312,
+            0.082036,
+            0.098638,
+            0.11817,
+            0.138679,
+            0.155273,
+            0.164062,
+            0.170899,
+            0.175781,
+            0.179687,
+            0.181641,
+            0.182617,
+            0.182617,
+            0.18164,
+            0.180664,
+            0.138876,
+            0.130869,
+            0.144541,
+            0.15919,
+            0.176199,
+            0.191906,
+            0.210462,
+            0.229995,
+            0.250015,
+            0.271499,
+            0.293473,
+            0.316423,
+            0.823671,
+            0.906419,
+            0.958152,
+            0.965526,
+            0.9729,
+            0.978297,
+            0.983696,
+            0.989094,
+            0.994493,
+            0.999892,
+            1.005292,
+            1.00929,
+            1.013288,
+            1.017287
+          ]
+        }
+      },
+      "endpoint_difference_m": {
+        "constant_velocity": {
+          "changed_count": 0,
+          "material_change_count": 0,
+          "max": 0.0,
+          "mean": 0.0,
+          "median": 0.0
+        },
+        "route_following": {
+          "changed_count": 13,
+          "material_change_count": 10,
+          "max": 14.210695,
+          "mean": 1.972612,
+          "median": 1.017287
+        }
+      },
+      "finite_trajectory_plans": 3800,
+      "mean_route_distance_m": {
+        "command_proxy_lower": 0,
+        "equal": 4,
+        "full_lower": 15,
+        "paired_full_minus_command_proxy": -0.376788,
+        "route_following_command_proxy": 0.695814,
+        "route_following_full_route": 0.319026
+      },
+      "negative_control_invariant_scenarios": 19,
+      "predeclared_check_results": {
+        "H1_contract_sensitivity": {
+          "criterion": "route-following median endpoint divergence exceeds 0.1 m",
+          "supported_for_fixture": true
+        },
+        "H2_negative_control_invariance": {
+          "criterion": "all constant-velocity endpoint divergences are at most 1e-06 m",
+          "supported_for_fixture": true
+        },
+        "H3_attribution_correctness": {
+          "criterion": "only route-following with command-proxy geometry receives semantic.command_only",
+          "supported_for_fixture": true
+        }
+      },
+      "route_unavailable_diagnostic_counts": {
+        "semantic.route_missing": 1
+      },
+      "route_unavailable_scenarios": 1,
+      "scenario_count": 20,
+      "waymax_final_metrics": {
+        "constant_velocity": {
+          "command_proxy": {
+            "kinematic_infeasibility": {
+              "mean": 0.0,
+              "positive_count": 0
+            },
+            "log_divergence": {
+              "mean": 6.806519,
+              "positive_count": 19
+            },
+            "offroad": {
+              "mean": 0.052632,
+              "positive_count": 1
+            },
+            "overlap": {
+              "mean": 0.210526,
+              "positive_count": 4
+            },
+            "sdc_off_route": {
+              "mean": 0.783051,
+              "positive_count": 1
+            },
+            "sdc_progression": {
+              "mean": 0.805865,
+              "positive_count": 19
+            },
+            "sdc_wrongway": {
+              "mean": 0.783051,
+              "positive_count": 1
+            }
+          },
+          "full_route": {
+            "kinematic_infeasibility": {
+              "mean": 0.0,
+              "positive_count": 0
+            },
+            "log_divergence": {
+              "mean": 6.806519,
+              "positive_count": 19
+            },
+            "offroad": {
+              "mean": 0.052632,
+              "positive_count": 1
+            },
+            "overlap": {
+              "mean": 0.210526,
+              "positive_count": 4
+            },
+            "sdc_off_route": {
+              "mean": 0.783051,
+              "positive_count": 1
+            },
+            "sdc_progression": {
+              "mean": 0.805865,
+              "positive_count": 19
+            },
+            "sdc_wrongway": {
+              "mean": 0.783051,
+              "positive_count": 1
+            }
+          }
+        },
+        "route_following": {
+          "command_proxy": {
+            "kinematic_infeasibility": {
+              "mean": 0.0,
+              "positive_count": 0
+            },
+            "log_divergence": {
+              "mean": 6.806519,
+              "positive_count": 19
+            },
+            "offroad": {
+              "mean": 0.052632,
+              "positive_count": 1
+            },
+            "overlap": {
+              "mean": 0.210526,
+              "positive_count": 4
+            },
+            "sdc_off_route": {
+              "mean": 0.783051,
+              "positive_count": 1
+            },
+            "sdc_progression": {
+              "mean": 0.805865,
+              "positive_count": 19
+            },
+            "sdc_wrongway": {
+              "mean": 0.783051,
+              "positive_count": 1
+            }
+          },
+          "full_route": {
+            "kinematic_infeasibility": {
+              "mean": 0.052632,
+              "positive_count": 1
+            },
+            "log_divergence": {
+              "mean": 7.806162,
+              "positive_count": 19
+            },
+            "offroad": {
+              "mean": 0.0,
+              "positive_count": 0
+            },
+            "overlap": {
+              "mean": 0.315789,
+              "positive_count": 6
+            },
+            "sdc_off_route": {
+              "mean": 0.0,
+              "positive_count": 0
+            },
+            "sdc_progression": {
+              "mean": 0.797719,
+              "positive_count": 19
+            },
+            "sdc_wrongway": {
+              "mean": 0.0,
+              "positive_count": 0
+            }
+          }
+        }
+      }
+    },
+    "claim_boundary": "This is a deterministic policy-by-route negative-control experiment on the 20 scenarios bundled with the pinned Waymax checkout. It supports cross-runtime semantic-contract applicability and selective paired behavior consequences for this fixture. It is not a learned-policy benchmark, a representative WOMD sample, a safety comparison, a framework-superiority result, or a runtime-overhead measurement.",
+    "created_at": "2026-07-20T19:54:43.544662+00:00",
+    "dataset": {
+      "license": "Waymax License Agreement for Non-Commercial Use",
+      "name": "Waymax bundled WOMD route fixture",
+      "raw_records_redistributed_by_wod2sim": false,
+      "relative_path": "waymax/dataloader/testdata/tfrecord_with_routes",
+      "sha256": "aba63d14b00d133803db04f49a3263447beafd8ca3010ea535ca7dfff0635ba5"
+    },
+    "design": {
+      "command_proxy_provenance": "KEEP_HEADING is generated by the intervention operator; it is not read from the WOMD TFExample.",
+      "factorial_design": {
+        "policies": {
+          "constant_velocity": {
+            "controller": "constant velocity in the current heading",
+            "signature": [
+              "ego_pose",
+              "ego_velocity"
+            ]
+          },
+          "route_following": {
+            "controller": "constant-speed no-jump pure pursuit",
+            "signature": [
+              "ego_pose",
+              "ego_velocity",
+              "route_geometry"
+            ]
+          }
+        },
+        "route_conditions": {
+          "command_proxy": "original WOMD geometry replaced at the adapter boundary by a straight geometric proxy reconstructed from an intervention-defined KEEP_HEADING command",
+          "full_route": "valid WOMD sdc_paths.on_route geometry"
+        }
+      },
+      "inference_scope": "Paired descriptive evidence over the complete pinned fixture; the scenarios are not treated as a random sample from WOMD.",
+      "intervention": "Within each policy, the paired route conditions share scenario, initial state, horizon, frequency, dynamics, non-SDC log playback, and controller implementation. The route-following policy receives either the native geometry or a degraded command-derived proxy. Constant velocity ignores the same mutated route field and is the negative control.",
+      "non_sdc_behavior": "Waymax log playback",
+      "predeclared_checks": {
+        "H1_contract_sensitivity": "route-following median endpoint divergence exceeds 0.1 m",
+        "H2_negative_control_invariance": "every constant-velocity endpoint divergence is at most 1e-06 m",
+        "H3_attribution_correctness": "only route-following with command-proxy geometry is classified as a semantic-contract violation"
+      },
+      "primary_estimand": "paired endpoint divergence(route_following) minus paired endpoint divergence(constant_velocity)",
+      "rollout_steps": 50,
+      "route_controller": {
+        "lookahead_seconds": 0.5,
+        "minimum_lookahead_m": 2.0,
+        "type": "no-jump pure pursuit"
+      },
+      "scientific_question": "Can a contract-aware integration layer distinguish policy degradation caused by missing decision-relevant inputs from genuine policy failure?",
+      "step_seconds": 0.1,
+      "trajectory_future_points": 50,
+      "trajectory_horizon_seconds": 5.0
+    },
+    "implementation_sha256": {
+      "scripts/run_waymax_contract_study.sh": "7528adbc7c9beab5ea5334e70b3bc313d9197cc354897ff65b50a63d1d0b5f38",
+      "src/wod2sim/audit/trace_diagnostics.py": "a5e512cd45b845d5707c75de33fdacbecd5c17f83d1fde4059605a2ce43d0288",
+      "src/wod2sim/experiments/waymax_contract_study.py": "3002682d914531bb803dba983e87bf8a1c365076be99e1a6cbec0b17b0d61908"
+    },
+    "retained_full_study": true,
+    "runtime": {
+      "commit": "a64dfec9be8576b60d9cecc94f406d9812d4a7d0",
+      "device": "cpu",
+      "jax_version": "0.11.0",
+      "jaxlib_version": "0.11.0",
+      "name": "Waymax",
+      "numpy_version": "2.5.1",
+      "python_version": "3.12.12",
+      "repository": "https://github.com/waymo-research/waymax.git",
+      "tensorflow_version": "2.21.0"
+    },
+    "scenario_results": {
+      "path": "scenario-results.jsonl",
+      "sha256": "8efd8349465c33eab57ccc46d615e4a3bf783aadc61fb49a599b513c00e5e52f"
+    },
+    "schema": "wod2sim_waymax_contract_study_v1"
+  }
+}

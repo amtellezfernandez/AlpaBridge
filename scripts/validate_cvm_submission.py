@@ -1,0 +1,3308 @@
+from __future__ import annotations
+
+import argparse
+import csv
+import hashlib
+import json
+import math
+import re
+import subprocess
+import tarfile
+from pathlib import Path
+from typing import Pattern
+from urllib.parse import unquote
+
+PLACEHOLDERS = ("TODO", "TBD", "FIXME", "RESULTS_PENDING", "[N]", "[M]")
+ABSTRACT_MIN_WORDS = 160
+ABSTRACT_MAX_WORDS = 210
+A4_WIDTH_PT = 595.276
+A4_HEIGHT_PT = 841.89
+PAGE_SIZE_TOLERANCE_PT = 1.0
+IEEECONF_A4_DOCUMENTCLASS_RE = re.compile(
+    r"\\documentclass\s*\[\s*a4paper\s*,\s*10pt\s*,\s*conference\s*\]\s*\{ieeeconf\}"
+)
+MANUSCRIPT_LAYOUT_PATTERNS: tuple[tuple[str, Pattern[str]], ...] = (
+    (
+        "geometry_package",
+        re.compile(r"\\usepackage(?:\[[^\]]*\])?\s*\{\s*geometry\s*\}"),
+    ),
+    (
+        "manual_margin_length",
+        re.compile(
+            r"\\(?:setlength|addtolength)\s*\{\s*\\"
+            r"(?:textwidth|textheight|oddsidemargin|evensidemargin|topmargin|"
+            r"headheight|headsep|footskip|columnsep|hoffset|voffset)\s*\}"
+        ),
+    ),
+    (
+        "manual_page_style",
+        re.compile(r"\\(?:thispagestyle|pagestyle)\s*\{\s*(?!empty\s*\})"),
+    ),
+    (
+        "manual_page_numbering",
+        re.compile(r"\\pagenumbering\s*\{"),
+    ),
+    (
+        "manual_page_counter",
+        re.compile(r"\\setcounter\s*\{\s*page\s*\}"),
+    ),
+    (
+        "manual_font_scaling",
+        re.compile(
+            r"\\(?:fontsize|linespread)\s*\{|"
+            r"\\renewcommand\s*\{\s*\\baselinestretch\s*\}"
+        ),
+    ),
+    (
+        "negative_spacing",
+        re.compile(r"\\[hv]space\*?\s*\{\s*-\s*[\d.]"),
+    ),
+    (
+        "page_enlargement",
+        re.compile(r"\\enlargethispage\b"),
+    ),
+)
+LATEX_LOG_FAILURE_PATTERNS = (
+    "Undefined control sequence",
+    "Citation `",
+    "Reference `",
+    "multiply defined",
+    "Overfull \\hbox",
+    "Underfull \\hbox",
+)
+REQUIRED_TABLES = (
+    "contract_map.tex",
+    "main_results.tex",
+    "protocol_replay_policies.tex",
+    "waymax_factorial.tex",
+    "ablations.tex",
+    "fault_localization.tex",
+    "paper_numbers.tex",
+)
+EXPECTED_TABLE_HEADERS = {
+    "contract_map.tex": "Mismatch & Contract & Mechanism & Validation",
+    "main_results.tex": (
+        "Public core policy & Rows & Done/att. & Audit & Route & Sensor & Crash & Blocked"
+    ),
+    "protocol_replay_policies.tex": (
+        "Policy & Policy-visible route & Finite & Moving & Audit"
+    ),
+    "waymax_factorial.tex": (
+        "Policy & Median $D_T$ (m) & $D_T>0.1$ m & Full valid & Proxy valid"
+    ),
+    "ablations.tex": "Closed-loop check & Obs. & Denom. & Meaning",
+    "fault_localization.tex": "Synthetic diagnostic & Count & Total",
+}
+REQUIRED_FIGURES = (
+    "system_architecture.pdf",
+    "evaluation_pipeline.pdf",
+    "main_results.pdf",
+    "waymax_factorial.pdf",
+)
+ATTRIBUTION_CATEGORIES = {
+    "policy_attributable_behavior",
+    "integration_precondition_or_unsupported_contract",
+    "integration_runtime_or_evidence_failure",
+    "diagnostic_rollout_pending_claim_gate",
+    "planned_not_launched",
+}
+ATTRIBUTION_INTERPRETATIONS = {
+    "policy_behavior_allowed",
+    "integration_precondition_blocker_not_policy_failure",
+    "integration_runtime_or_evidence_failure_not_policy_failure",
+    "controlled_contract_diagnostic_not_policy_failure",
+    "completed_diagnostic_pending_evidence_gate_not_policy_failure",
+    "planned_not_launched_not_policy_failure",
+}
+REQUIRED_ATTRIBUTION_FIELDS = (
+    "category",
+    "policy_attributable",
+    "policy_behavior_attributable",
+    "policy_failure_attributable",
+    "claim_valid_policy_benchmark",
+    "integration_or_evidence_invalid",
+    "integration_failure_attributable",
+    "interpretation",
+    "failure_layer",
+    "failure_code",
+    "rule",
+)
+EXPECTED_ATTRIBUTION_BY_STATUS = {
+    "blocked": "integration_precondition_or_unsupported_contract",
+    "failed": "integration_runtime_or_evidence_failure",
+    "completed": "diagnostic_rollout_pending_claim_gate",
+    "planned": "planned_not_launched",
+}
+REQUIRED_FRAME_FIELDS = (
+    "run_id",
+    "frame_index",
+    "sim_timestamp",
+    "observation_timestamp",
+    "observation_age_ms",
+    "camera_count",
+    "route_source",
+    "route_waypoint_count",
+    "source_trajectory_samples",
+    "target_trajectory_samples",
+    "trajectory_valid",
+    "inference_latency_ms",
+    "end_to_end_action_latency_ms",
+    "late_message_count",
+    "lifecycle_warning_code",
+    "policy_reasoning_status_code",
+)
+REQUIRED_SCENE_FIELDS = (
+    "scene_id",
+    "category",
+    "scenario_category",
+    "selection_rationale",
+    "asset_availability",
+    "expected_route_feature",
+    "expected_interaction_feature",
+    "license_gating_status",
+    "categories_verified",
+)
+CVM_DEFINITION_TERM = "contract-validation matrix (CVM)"
+CVM_ACRONYM_RE = re.compile(r"\bCVM\b")
+REPOSITORY_INVENTORY_TEST_COUNT_RE = re.compile(
+    r"Test directory:\s*`tests`\s+with\s+(?P<count>\d+)\s+top-level test files",
+    re.IGNORECASE,
+)
+REPOSITORY_INVENTORY_PDF_SIZE_RE = re.compile(
+    r"PDF size at audit:\s*(?P<size>\d+)\s+bytes",
+    re.IGNORECASE,
+)
+BASELINE_REPORT_FORBIDDEN_PATTERNS: tuple[tuple[str, Pattern[str]], ...] = (
+    ("historical_release_gate", re.compile(r"\bHistorical\b", re.IGNORECASE)),
+    ("venv_python_gate", re.compile(r"\./\.venv/bin/")),
+    ("stale_hardening_count", re.compile(r"\bafter\s+[-A-Za-z0-9\s]+hardening\b", re.IGNORECASE)),
+)
+BASELINE_REPORT_REQUIRED_TERMS = (
+    "Current Release Gate Evidence",
+    "uv run python",
+    "make cvm-check",
+    "make paper-verify",
+    "make verify",
+    "392 passed, 14 skipped, and 15 subtests passed",
+    "65.43% against the configured 33.0% minimum",
+)
+CONTRACT_TEST_AUDIT_REQUIRED_TERMS = (
+    "# Contract Test Audit",
+    "Semantic Contract",
+    "Temporal Contract",
+    "Lifecycle Contract",
+    "Deployment And Plugin-Dependency Contract",
+    "Evidence Contract",
+    "Fault-Injection Diagnostics",
+    "Explicit Gaps Kept Out Of Policy Claims",
+    "Covered",
+    "Partially covered",
+    "Gap",
+    "policy claims",
+)
+CLAIM_BOUNDARY_README_TERMS = (
+    "Failure Attribution Boundary",
+    "integration failure",
+    "policy failure",
+    "policy behavior",
+    "not policy failure",
+    "claim-valid",
+    "Integration/precondition/evidence failure",
+    "not a framework-superiority test",
+    "not end-to-end runtime or human time-to-diagnosis",
+    "No population confidence interval or hypothesis test is reported",
+    "policy interface, not WOMD scenes",
+    "does not measure how often this fault occurs",
+    "Waymax",
+)
+CLAIM_BOUNDARY_SOURCE_TERMS = (
+    "Failure Attribution Rule",
+    "integration, precondition, or evidence failure",
+    "policy-behavior attribution",
+    "policy-failure attribution",
+    "\\CVMPolicyBehaviorAttributableRows{}",
+    "\\CVMPolicyFailureAttributableRows{}",
+    "\\CVMIntegrationFailureAttributableRows{}",
+    "not end-to-end runtime or human diagnosis time",
+    "not end-to-end runtime or time-to-diagnosis measurements",
+    "not evidence of population-level superiority to another integration framework",
+    "do not compute a population confidence interval or hypothesis test",
+)
+README_VISUAL_EXPLANATION_TERMS = (
+    "Executed Ablation: Route Geometry vs. Command Only",
+    "same official AlpaSim integration log",
+    "four live AlpaBridge gRPC services",
+    "route-retaining and command-only service modes",
+    "semantic.command_only",
+    "command-only arm correctly passes",
+    "paired outputs remain exactly equal",
+    "recorded camera and ego-state sequence is fixed",
+    "non-reactive",
+    "not a reactive simulator rollout, policy-quality comparison, or cross-simulator test",
+    "deliberate format ablation",
+    "not missing AlpaSim data",
+    "same 20 `(x,y)` route waypoints",
+    "high-level `LEFT` command",
+    "same route-following policy",
+    "Both plots use the same axes in meters",
+    "1.506 m",
+    "camera and ego-state messages are fixed",
+    "do not show a reactive future",
+    "not a competing policy or integration framework",
+    "alpasim-protocol-replay.mp4",
+    "validated manifest",
+    "reproduction notes",
+)
+EVALUATION_STATUS_TERMS = (
+    "completed dependency-light closed-loop diagnostic rows",
+    "locally available gated scene assets",
+    "semantic route-boundary ablations",
+    "integration-effectiveness evidence",
+    "service-harness conformance diagnostics only",
+    "controlled trace mutations",
+    "post-parse detector execution latency",
+    "paired guard-path increment",
+    "denominator/context rather than success metrics",
+    "public release core is the dependency-light adapter path",
+    "optional gated extensions, not release-core dependencies",
+    "does not redistribute a checkpoint or scene subset",
+    "verified scene-category coverage",
+    "claim-ready closed-loop policy benchmark",
+)
+REQUIRED_SUMMARY_ATTRIBUTION_FIELDS = (
+    "rule",
+    "contract_valid_closed_loop_rows",
+    "integration_or_evidence_invalid_closed_loop_rows",
+    "precondition_blocked_rows",
+    "claim_valid_policy_benchmark_rows",
+    "policy_behavior_attributable_rows",
+    "policy_failure_attributable_rows",
+    "integration_failure_attributable_rows",
+    "diagnostic_not_policy_rows",
+    "non_policy_attributed_rows",
+)
+REQUIRED_SCENARIO_COVERAGE_FIELDS = (
+    "rule",
+    "closed_loop_scene_count",
+    "required_category_count",
+    "verified_required_category_count",
+    "unclassified_closed_loop_scene_count",
+    "scenario_category_coverage_claimed",
+    "scenario_category_coverage_claimed_int",
+)
+CLAIM_MATRIX_SUMMARY_LINES: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("Configured rows", ("total_rows",)),
+    (
+        "Public-core rows completed",
+        (
+            "release_scope.public_core_completed_runs",
+            "release_scope.public_core_configured_rows",
+        ),
+    ),
+    ("Attempted rows", ("attempted_runs",)),
+    ("Completed rows", ("completed_runs",)),
+    ("Closed-loop completed rows", ("closed_loop_completed_runs",)),
+    (
+        "Full-contract rows audit-valid",
+        (
+            "integration_effectiveness.full_contract_audit_valid_runs",
+            "integration_effectiveness.full_contract_completed_runs",
+        ),
+    ),
+    (
+        "Comparison-eligible semantic pairs",
+        (
+            "integration_effectiveness.semantic_ablation_comparison_eligible_pairs",
+            "integration_effectiveness.semantic_ablation_completed_pairs",
+        ),
+    ),
+    (
+        "Command-only rows rejected as non-claim-valid",
+        (
+            "integration_effectiveness.semantic_ablation_command_proxy_rejected_runs",
+            "integration_effectiveness.semantic_ablation_command_proxy_completed_runs",
+        ),
+    ),
+    (
+        "Status-only baseline accepted rows",
+        (
+            "integration_effectiveness.status_only_baseline_accepted_runs",
+            "integration_effectiveness.status_only_baseline_acceptance_denominator",
+        ),
+    ),
+    (
+        "Contract-invalid route evidence rejected",
+        (
+            "integration_effectiveness.contract_invalid_evidence_rejected_runs",
+            "integration_effectiveness.contract_invalid_evidence_rejection_denominator",
+        ),
+    ),
+    (
+        "Closed-loop unique scenes",
+        ("scenario_coverage.closed_loop_scene_count",),
+    ),
+    (
+        "Verified required scenario categories",
+        (
+            "scenario_coverage.verified_required_category_count",
+            "scenario_coverage.required_category_count",
+        ),
+    ),
+    (
+        "Unclassified closed-loop scenes",
+        ("scenario_coverage.unclassified_closed_loop_scene_count",),
+    ),
+    (
+        "Contract-valid closed-loop rows",
+        ("failure_attribution.contract_valid_closed_loop_rows",),
+    ),
+    (
+        "Integration/evidence-invalid closed-loop rows",
+        ("failure_attribution.integration_or_evidence_invalid_closed_loop_rows",),
+    ),
+    (
+        "Policy-attributable behavior rows",
+        ("failure_attribution.policy_behavior_attributable_rows",),
+    ),
+    (
+        "Policy-attributable failure rows",
+        ("failure_attribution.policy_failure_attributable_rows",),
+    ),
+    (
+        "Non-policy-attributed rows",
+        ("failure_attribution.non_policy_attributed_rows",),
+    ),
+    (
+        "Claim-valid policy benchmark rows",
+        ("failure_attribution.claim_valid_policy_benchmark_rows",),
+    ),
+    ("Planned rows", ("planned_runs",)),
+    ("Blocked rows", ("blocked_runs",)),
+)
+README_SUMMARY_COUNT_SNIPPETS: tuple[tuple[str, str, str], ...] = (
+    (
+        "policy_behavior_attributable_rows",
+        "failure_attribution.policy_behavior_attributable_rows",
+        "policy-attributable behavior rows",
+    ),
+    (
+        "policy_failure_attributable_rows",
+        "failure_attribution.policy_failure_attributable_rows",
+        "policy-attributable failure rows",
+    ),
+    (
+        "integration_failure_attributable_rows",
+        "failure_attribution.integration_failure_attributable_rows",
+        "integration/precondition blocker rows",
+    ),
+    (
+        "diagnostic_not_policy_rows",
+        "failure_attribution.diagnostic_not_policy_rows",
+        "completed non-policy diagnostic rows",
+    ),
+)
+PAPER_NUMBER_JSON_FIELDS: tuple[tuple[str, str], ...] = (
+    ("CVMTotalRows", "total_rows"),
+    ("CVMPlannedRuns", "planned_runs"),
+    ("CVMAttemptedRuns", "attempted_runs"),
+    ("CVMCompletedRuns", "completed_runs"),
+    ("CVMSyntheticCompletedRuns", "synthetic_completed_runs"),
+    ("CVMClosedLoopCompletedRuns", "closed_loop_completed_runs"),
+    ("CVMClosedLoopAuditValidRuns", "closed_loop_audit_valid_runs"),
+    ("CVMClosedLoopMetricRows", "closed_loop_metric_rows"),
+    ("CVMFullContractCompletedRuns", "integration_effectiveness.full_contract_completed_runs"),
+    ("CVMFullContractAuditValidRuns", "integration_effectiveness.full_contract_audit_valid_runs"),
+    ("CVMClosedLoopSceneCount", "scenario_coverage.closed_loop_scene_count"),
+    (
+        "CVMRequiredScenarioCategoryCount",
+        "scenario_coverage.required_category_count",
+    ),
+    (
+        "CVMVerifiedRequiredScenarioCategoryCount",
+        "scenario_coverage.verified_required_category_count",
+    ),
+    (
+        "CVMUnclassifiedClosedLoopSceneCount",
+        "scenario_coverage.unclassified_closed_loop_scene_count",
+    ),
+    (
+        "CVMScenarioCategoryCoverageClaimed",
+        "scenario_coverage.scenario_category_coverage_claimed_int",
+    ),
+    ("CVMContractValidClosedLoopRows", "failure_attribution.contract_valid_closed_loop_rows"),
+    (
+        "CVMIntegrationInvalidClosedLoopRows",
+        "failure_attribution.integration_or_evidence_invalid_closed_loop_rows",
+    ),
+    (
+        "CVMClaimValidPolicyBenchmarkRows",
+        "failure_attribution.claim_valid_policy_benchmark_rows",
+    ),
+    (
+        "CVMPolicyBehaviorAttributableRows",
+        "failure_attribution.policy_behavior_attributable_rows",
+    ),
+    (
+        "CVMPolicyFailureAttributableRows",
+        "failure_attribution.policy_failure_attributable_rows",
+    ),
+    (
+        "CVMIntegrationFailureAttributableRows",
+        "failure_attribution.integration_failure_attributable_rows",
+    ),
+    ("CVMDiagnosticNotPolicyRows", "failure_attribution.diagnostic_not_policy_rows"),
+    ("CVMNonPolicyAttributedRows", "failure_attribution.non_policy_attributed_rows"),
+    ("CVMSyntheticDiagnosticRows", "failure_attribution.synthetic_diagnostic_rows"),
+    (
+        "CVMSemanticAblationCompletedPairs",
+        "integration_effectiveness.semantic_ablation_completed_pairs",
+    ),
+    (
+        "CVMSemanticAblationEligiblePairs",
+        "integration_effectiveness.semantic_ablation_comparison_eligible_pairs",
+    ),
+    (
+        "CVMCommandProxyCompletedRuns",
+        "integration_effectiveness.semantic_ablation_command_proxy_completed_runs",
+    ),
+    (
+        "CVMCommandProxyRejectedRuns",
+        "integration_effectiveness.semantic_ablation_command_proxy_rejected_runs",
+    ),
+    (
+        "CVMStatusOnlyAcceptedRuns",
+        "integration_effectiveness.status_only_baseline_accepted_runs",
+    ),
+    (
+        "CVMStatusOnlyAcceptanceDenominator",
+        "integration_effectiveness.status_only_baseline_acceptance_denominator",
+    ),
+    (
+        "CVMContractInvalidRejectedRuns",
+        "integration_effectiveness.contract_invalid_evidence_rejected_runs",
+    ),
+    (
+        "CVMContractInvalidRejectionDenominator",
+        "integration_effectiveness.contract_invalid_evidence_rejection_denominator",
+    ),
+    (
+        "CVMStatusOnlyAcceptedContractRejectedRuns",
+        "integration_effectiveness.status_only_accepted_contract_rejected_runs",
+    ),
+    ("CVMFailedRuns", "failed_runs"),
+    ("CVMBlockedRuns", "blocked_runs"),
+    ("CVMSyntheticRuns", "synthetic_completed_runs"),
+    ("CVMCoreRows", "matrix_counts.core"),
+    ("CVMSemanticRows", "matrix_counts.semantic_ablation"),
+    ("CVMTemporalRows", "matrix_counts.temporal_ablation"),
+    ("CVMLifecycleRows", "matrix_counts.lifecycle_stress"),
+    ("CVMFaultRows", "matrix_counts.fault_injection"),
+    ("CVMExternalChallengeRollouts", "external_compatibility.rollouts"),
+    (
+        "CVMExternalChallengePassedRollouts",
+        "external_compatibility.passed_rollouts",
+    ),
+    ("CVMExternalChallengeDriveRPCs", "external_compatibility.drive_rpc_count"),
+    ("CVMExternalChallengeImageEvents", "external_compatibility.image_event_count"),
+    (
+        "CVMExternalChallengeLatencyTargetMet",
+        "external_compatibility.latency_target_met_count",
+    ),
+    (
+        "CVMExternalChallengeLatencyTargetDenominator",
+        "external_compatibility.latency_target_denominator",
+    ),
+    ("CVMReactiveLearnedRollouts", "navsim_reactive_rollout.rollouts"),
+    (
+        "CVMReactiveLearnedPassedRollouts",
+        "navsim_reactive_rollout.passed_rollouts",
+    ),
+    (
+        "CVMReactiveLearnedDriveRPCs",
+        "navsim_reactive_rollout.drive_rpc_count",
+    ),
+    (
+        "CVMReactiveLearnedFiniteDriveOutputs",
+        "navsim_reactive_rollout.finite_drive_outputs",
+    ),
+    (
+        "CVMReactiveLearnedLatencyTargetMet",
+        "navsim_reactive_rollout.latency_target_met_count",
+    ),
+    (
+        "CVMReactiveLearnedCameraEvents",
+        "navsim_reactive_rollout.camera_event_count",
+    ),
+    (
+        "CVMReactiveLearnedRenderRPCs",
+        "navsim_reactive_rollout.render_call_count",
+    ),
+    (
+        "CVMReactiveNegativeControlDrives",
+        "navsim_reactive_rollout.negative_control.drive_calls_before_rejection",
+    ),
+    (
+        "CVMReplayDriveRPCsPerArm",
+        "protocol_replay.arms.full_contract.drive_calls",
+    ),
+    ("CVMReplayCameraFrames", "protocol_replay.media.camera_frames"),
+    (
+        "CVMReplayFullFiniteDriveOutputs",
+        "protocol_replay.arms.full_contract.finite_drive_outputs",
+    ),
+    (
+        "CVMReplayCommandFiniteDriveOutputs",
+        "protocol_replay.arms.command_only_route.finite_drive_outputs",
+    ),
+    (
+        "CVMReplayFullMovingDriveOutputs",
+        "protocol_replay.arms.full_contract.nonstationary_drive_outputs",
+    ),
+    (
+        "CVMReplayCommandMovingDriveOutputs",
+        "protocol_replay.arms.command_only_route.nonstationary_drive_outputs",
+    ),
+    (
+        "CVMReplayFullLatencyTargetMet",
+        "protocol_replay.arms.full_contract.drive_calls_within_target",
+    ),
+    (
+        "CVMReplayCommandLatencyTargetMet",
+        "protocol_replay.arms.command_only_route.drive_calls_within_target",
+    ),
+    (
+        "CVMReplayFullDiagnosticCount",
+        "protocol_replay.arms.full_contract.diagnostic_count",
+    ),
+    (
+        "CVMReplayCommandDiagnosticCount",
+        "protocol_replay.arms.command_only_route.diagnostic_count",
+    ),
+    ("CVMReplayPolicyFamilies", "protocol_replay.policy_family_count"),
+    (
+        "CVMReplayLearnedDriveRPCsPerArm",
+        "protocol_replay.arms.navsim_ego_status_mlp_full_contract.drive_calls",
+    ),
+    (
+        "CVMReplayLearnedFullFiniteDriveOutputs",
+        "protocol_replay.arms.navsim_ego_status_mlp_full_contract.finite_drive_outputs",
+    ),
+    (
+        "CVMReplayLearnedCommandFiniteDriveOutputs",
+        "protocol_replay.arms.navsim_ego_status_mlp_command_only_route.finite_drive_outputs",
+    ),
+    (
+        "CVMReplayLearnedFullMovingDriveOutputs",
+        "protocol_replay.arms.navsim_ego_status_mlp_full_contract.nonstationary_drive_outputs",
+    ),
+    (
+        "CVMReplayLearnedCommandMovingDriveOutputs",
+        "protocol_replay.arms.navsim_ego_status_mlp_command_only_route.nonstationary_drive_outputs",
+    ),
+    (
+        "CVMReplayLearnedFullLatencyTargetMet",
+        "protocol_replay.arms.navsim_ego_status_mlp_full_contract.drive_calls_within_target",
+    ),
+    (
+        "CVMReplayLearnedCommandLatencyTargetMet",
+        "protocol_replay.arms.navsim_ego_status_mlp_command_only_route.drive_calls_within_target",
+    ),
+    (
+        "CVMReplayLearnedFullDiagnosticCount",
+        "protocol_replay.arms.navsim_ego_status_mlp_full_contract.diagnostic_count",
+    ),
+    (
+        "CVMReplayLearnedCommandDiagnosticCount",
+        "protocol_replay.arms.navsim_ego_status_mlp_command_only_route.diagnostic_count",
+    ),
+    (
+        "CVMReplayRouteEndpointChanged",
+        "protocol_replay.trajectory_divergence.route_following.endpoint_difference_gt_0_1m",
+    ),
+    (
+        "CVMReplayLearnedEndpointChanged",
+        "protocol_replay.trajectory_divergence.navsim_ego_status_mlp.endpoint_difference_gt_0_1m",
+    ),
+    (
+        "CVMReplayLearnedEndpointChangedOneMeter",
+        "protocol_replay.trajectory_divergence.navsim_ego_status_mlp.endpoint_difference_gt_1m",
+    ),
+    ("CVMWaymaxScenarioCount", "waymax_contract_study.behavior.scenario_count"),
+    (
+        "CVMWaymaxEligibleScenarios",
+        "waymax_contract_study.behavior.comparison_eligible_scenarios",
+    ),
+    (
+        "CVMWaymaxRouteUnavailableScenarios",
+        "waymax_contract_study.behavior.route_unavailable_scenarios",
+    ),
+    (
+        "CVMWaymaxClosedLoopSteps",
+        "waymax_contract_study.behavior.closed_loop_steps_total",
+    ),
+    (
+        "CVMWaymaxFinitePlans",
+        "waymax_contract_study.behavior.finite_trajectory_plans",
+    ),
+    (
+        "CVMWaymaxRouteEndpointChanged",
+        "waymax_contract_study.behavior.endpoint_difference_m.route_following.changed_count",
+    ),
+    (
+        "CVMWaymaxRouteEndpointMaterialChanged",
+        "waymax_contract_study.behavior.endpoint_difference_m.route_following."
+        "material_change_count",
+    ),
+    (
+        "CVMWaymaxNegativeControlInvariant",
+        "waymax_contract_study.behavior.negative_control_invariant_scenarios",
+    ),
+    (
+        "CVMWaymaxRouteFullClean",
+        "waymax_contract_study.behavior.attribution.route_following_full_route_clean",
+    ),
+    (
+        "CVMWaymaxRouteProxyRejected",
+        "waymax_contract_study.behavior.attribution."
+        "route_following_command_proxy_semantic_fault",
+    ),
+    (
+        "CVMWaymaxCVFullClean",
+        "waymax_contract_study.behavior.attribution.constant_velocity_full_route_clean",
+    ),
+    (
+        "CVMWaymaxCVProxyClean",
+        "waymax_contract_study.behavior.attribution."
+        "constant_velocity_command_proxy_clean",
+    ),
+    ("CVMPublicCoreRows", "release_scope.public_core_configured_rows"),
+    ("CVMPublicCoreCompletedRuns", "release_scope.public_core_completed_runs"),
+    ("CVMPublicCoreAttemptedRuns", "release_scope.public_core_attempted_runs"),
+    ("CVMPublicCoreAuditValidRuns", "release_scope.public_core_audit_valid_runs"),
+    ("CVMPublicCoreBlockedRows", "release_scope.public_core_blocked_rows"),
+    ("CVMOptionalGatedRows", "release_scope.optional_gated_configured_rows"),
+    ("CVMOptionalGatedBlockedRows", "release_scope.optional_gated_blocked_rows"),
+    ("CVMDirectActorRows", "release_scope.direct_actor_configured_rows"),
+    ("CVMDirectActorBlockedRows", "release_scope.direct_actor_blocked_rows"),
+    ("CVMDiagnosticCases", "diagnostic_experiment.design.total_cases"),
+    ("CVMDiagnosticFaultCases", "diagnostic_experiment.design.fault_cases"),
+    ("CVMDiagnosticControlCases", "diagnostic_experiment.design.control_cases"),
+    (
+        "CVMWODDiagnosticCorrect",
+        "diagnostic_experiment.classification.alpabridge.classification_correct",
+    ),
+    (
+        "CVMStatusDiagnosticCorrect",
+        "diagnostic_experiment.classification.status_only.classification_correct",
+    ),
+    (
+        "CVMWODDiagnosticFaultDetected",
+        "diagnostic_experiment.classification.alpabridge.faults_detected",
+    ),
+    (
+        "CVMWODDiagnosticLocalized",
+        "diagnostic_experiment.classification.alpabridge.faults_correctly_localized",
+    ),
+    (
+        "CVMWODDiagnosticFalsePositives",
+        "diagnostic_experiment.classification.alpabridge.false_positives",
+    ),
+    (
+        "CVMStatusDiagnosticFaultDetected",
+        "diagnostic_experiment.classification.status_only.faults_detected",
+    ),
+    (
+        "CVMStatusDiagnosticFalsePositives",
+        "diagnostic_experiment.classification.status_only.false_positives",
+    ),
+    (
+        "CVMDiagnosticDiscordantPairs",
+        "diagnostic_experiment.classification.paired_comparison.discordant_pairs",
+    ),
+    (
+        "CVMProtocolTraceSessions",
+        "diagnostic_experiment.source_trace.session_count",
+    ),
+    (
+        "CVMProtocolTraceDriveRPCs",
+        "diagnostic_experiment.source_trace.drive_count",
+    ),
+    (
+        "CVMProtocolFiniteDriveRecords",
+        "diagnostic_experiment.source_trace.explicit_finite_drive_count",
+    ),
+    (
+        "CVMAdapterInputCases",
+        "diagnostic_experiment.adapter_guard_path_timing.input_cases",
+    ),
+    (
+        "CVMAdapterTimingSamples",
+        "diagnostic_experiment.adapter_guard_path_timing.paired_incremental_us.samples",
+    ),
+)
+PAPER_NUMBER_FLOAT_FIELDS: tuple[tuple[str, str], ...] = (
+    (
+        "CVMSemanticProgressDeltaMean",
+        "semantic_ablation_deltas.progress.mean_delta_full_minus_command_only",
+    ),
+    (
+        "CVMSemanticProgressRelDeltaMean",
+        "semantic_ablation_deltas.progress_rel.mean_delta_full_minus_command_only",
+    ),
+    (
+        "CVMSemanticOffroadDeltaMean",
+        "semantic_ablation_deltas.offroad.mean_delta_full_minus_command_only",
+    ),
+    (
+        "CVMSemanticCollisionAnyDeltaMean",
+        "semantic_ablation_deltas.collision_any.mean_delta_full_minus_command_only",
+    ),
+    (
+        "CVMSemanticPlanDeviationDeltaMean",
+        "semantic_ablation_deltas.plan_deviation.mean_delta_full_minus_command_only",
+    ),
+    ("CVMClosedLoopCollisionAnyMean", "closed_loop_metrics.collision_any.mean"),
+    ("CVMClosedLoopOffroadMean", "closed_loop_metrics.offroad.mean"),
+    ("CVMClosedLoopProgressMean", "closed_loop_metrics.progress.mean"),
+    (
+        "CVMExternalChallengeDriverLatencyMeanMs",
+        "external_compatibility.driver_latency_mean_ms",
+    ),
+    (
+        "CVMExternalChallengeDriverLatencyMaxMs",
+        "external_compatibility.driver_latency_max_ms",
+    ),
+    (
+        "CVMReactiveLearnedLatencyMedianMs",
+        "navsim_reactive_rollout.internal_driver_latency_ms.p50",
+    ),
+    (
+        "CVMReactiveLearnedLatencyNinetyFifthMs",
+        "navsim_reactive_rollout.internal_driver_latency_ms.p95",
+    ),
+    (
+        "CVMReactiveLearnedServiceDriveMeanMs",
+        "navsim_reactive_rollout.service_drive_rpc.mean_ms",
+    ),
+    (
+        "CVMReactiveSimulatedSeconds",
+        "navsim_reactive_rollout.runtime.simulated_s",
+    ),
+    (
+        "CVMReactiveActiveWallSeconds",
+        "navsim_reactive_rollout.runtime.active_wall_clock_s",
+    ),
+    (
+        "CVMReactiveTotalWallSeconds",
+        "navsim_reactive_rollout.runtime.total_wall_clock_s",
+    ),
+    (
+        "CVMReactiveDistanceTraveledM",
+        "navsim_reactive_rollout.behavior_metrics_not_used_as_policy_quality_claims."
+        "dist_traveled_m",
+    ),
+    (
+        "CVMReactiveWrongLane",
+        "navsim_reactive_rollout.behavior_metrics_not_used_as_policy_quality_claims.wrong_lane",
+    ),
+    (
+        "CVMReplayFullLatencyMedianMs",
+        "protocol_replay.arms.full_contract.drive_rpc_latency_ms.p50",
+    ),
+    (
+        "CVMReplayFullLatencyNinetyFifthMs",
+        "protocol_replay.arms.full_contract.drive_rpc_latency_ms.p95",
+    ),
+    (
+        "CVMReplayCommandLatencyMedianMs",
+        "protocol_replay.arms.command_only_route.drive_rpc_latency_ms.p50",
+    ),
+    (
+        "CVMReplayCommandLatencyNinetyFifthMs",
+        "protocol_replay.arms.command_only_route.drive_rpc_latency_ms.p95",
+    ),
+    (
+        "CVMReplayLearnedEndpointDifferenceMeanM",
+        "protocol_replay.trajectory_divergence.navsim_ego_status_mlp.endpoint_difference_mean_m",
+    ),
+    (
+        "CVMReplayLearnedEndpointDifferenceMaxM",
+        "protocol_replay.trajectory_divergence.navsim_ego_status_mlp.endpoint_difference_max_m",
+    ),
+    (
+        "CVMReplayLearnedFullLatencyMedianMs",
+        "protocol_replay.arms.navsim_ego_status_mlp_full_contract.drive_rpc_latency_ms.p50",
+    ),
+    (
+        "CVMReplayLearnedFullLatencyNinetyFifthMs",
+        "protocol_replay.arms.navsim_ego_status_mlp_full_contract.drive_rpc_latency_ms.p95",
+    ),
+    (
+        "CVMReplayLearnedCommandLatencyMedianMs",
+        "protocol_replay.arms.navsim_ego_status_mlp_command_only_route.drive_rpc_latency_ms.p50",
+    ),
+    (
+        "CVMReplayLearnedCommandLatencyNinetyFifthMs",
+        "protocol_replay.arms.navsim_ego_status_mlp_command_only_route.drive_rpc_latency_ms.p95",
+    ),
+    (
+        "CVMWaymaxRouteEndpointMeanM",
+        "waymax_contract_study.behavior.endpoint_difference_m.route_following.mean",
+    ),
+    (
+        "CVMWaymaxRouteEndpointMedianM",
+        "waymax_contract_study.behavior.endpoint_difference_m.route_following.median",
+    ),
+    (
+        "CVMWaymaxRouteEndpointMaxM",
+        "waymax_contract_study.behavior.endpoint_difference_m.route_following.max",
+    ),
+    (
+        "CVMWaymaxCVEndpointMaxM",
+        "waymax_contract_study.behavior.endpoint_difference_m.constant_velocity.max",
+    ),
+    (
+        "CVMWaymaxInteractionMeanM",
+        "waymax_contract_study.behavior.difference_in_differences_endpoint_m.mean",
+    ),
+    (
+        "CVMWaymaxInteractionMedianM",
+        "waymax_contract_study.behavior.difference_in_differences_endpoint_m.median",
+    ),
+    (
+        "CVMDetectorDecisionMedianUs",
+        "diagnostic_experiment.timing.contract_gate_decision_us.p50",
+    ),
+    (
+        "CVMDetectorDecisionNinetyFifthUs",
+        "diagnostic_experiment.timing.contract_gate_decision_us.p95",
+    ),
+    (
+        "CVMFaultDetectorMedianUs",
+        "diagnostic_experiment.timing.fault_case_detector_us.p50",
+    ),
+    (
+        "CVMFaultDetectorNinetyFifthUs",
+        "diagnostic_experiment.timing.fault_case_detector_us.p95",
+    ),
+    (
+        "CVMAdapterDriveMedianUs",
+        "diagnostic_experiment.adapter_guard_path_timing.guarded_drive_path_us.p50",
+    ),
+    (
+        "CVMAdapterDriveNinetyFifthUs",
+        "diagnostic_experiment.adapter_guard_path_timing.guarded_drive_path_us.p95",
+    ),
+    (
+        "CVMAdapterGuardIncrementMedianUs",
+        "diagnostic_experiment.adapter_guard_path_timing.paired_incremental_us.p50",
+    ),
+    (
+        "CVMAdapterGuardIncrementNinetyFifthUs",
+        "diagnostic_experiment.adapter_guard_path_timing.paired_incremental_us.p95",
+    ),
+)
+PAPER_NUMBER_SIX_DECIMAL_FIELDS: tuple[tuple[str, str], ...] = ()
+DIAGNOSTIC_TIMING_TEXT_FIELDS: tuple[tuple[str, str], ...] = (
+    (
+        "fault_detector_p50",
+        "diagnostic_experiment.timing.fault_case_detector_us.p50",
+    ),
+    (
+        "fault_detector_p95",
+        "diagnostic_experiment.timing.fault_case_detector_us.p95",
+    ),
+    (
+        "guard_increment_p50",
+        "diagnostic_experiment.adapter_guard_path_timing.paired_incremental_us.p50",
+    ),
+    (
+        "guard_increment_p95",
+        "diagnostic_experiment.adapter_guard_path_timing.paired_incremental_us.p95",
+    ),
+)
+DIAGNOSTIC_TIMING_CLAIM_PATHS = (
+    "README.md",
+    "docs/evaluation.md",
+    "artifacts/cvm/reports/experiment_report.md",
+    "artifacts/cvm/reports/claim_evidence_matrix.md",
+    "artifacts/cvm/reports/blockers.md",
+    "artifacts/cvm/reports/repository_inventory.md",
+    "artifacts/cvm/reports/release_decision.md",
+)
+GENERATED_TABLE_JSON_FIELDS: tuple[str, ...] = (
+    "total_rows",
+    "completed_runs",
+    "planned_runs",
+    "blocked_runs",
+    "integration_effectiveness.full_contract_completed_runs",
+    "integration_effectiveness.full_contract_audit_valid_runs",
+    "integration_effectiveness.semantic_ablation_completed_pairs",
+    "integration_effectiveness.semantic_ablation_comparison_eligible_pairs",
+    "integration_effectiveness.semantic_ablation_command_proxy_completed_runs",
+    "integration_effectiveness.semantic_ablation_command_proxy_rejected_runs",
+    "integration_effectiveness.status_only_baseline_accepted_runs",
+    "integration_effectiveness.status_only_baseline_acceptance_denominator",
+    "integration_effectiveness.contract_invalid_evidence_rejected_runs",
+    "integration_effectiveness.contract_invalid_evidence_rejection_denominator",
+    "integration_effectiveness.status_only_accepted_contract_rejected_runs",
+    "release_scope.public_core_configured_rows",
+    "release_scope.public_core_completed_runs",
+    "release_scope.public_core_blocked_rows",
+    "release_scope.optional_gated_configured_rows",
+    "release_scope.optional_gated_blocked_rows",
+    "release_scope.direct_actor_blocked_rows",
+    "scenario_coverage.closed_loop_scene_count",
+    "scenario_coverage.verified_required_category_count",
+    "scenario_coverage.required_category_count",
+    "scenario_coverage.unclassified_closed_loop_scene_count",
+    "scenario_coverage.scenario_category_coverage_claimed_int",
+    "failure_attribution.policy_behavior_attributable_rows",
+    "failure_attribution.policy_failure_attributable_rows",
+    "failure_attribution.integration_failure_attributable_rows",
+    "protocol_replay.policy_family_count",
+    "protocol_replay.arms.full_contract.drive_calls",
+    "protocol_replay.arms.full_contract.finite_drive_outputs",
+    "protocol_replay.arms.full_contract.nonstationary_drive_outputs",
+    "protocol_replay.arms.command_only_route.drive_calls",
+    "protocol_replay.arms.command_only_route.finite_drive_outputs",
+    "protocol_replay.arms.command_only_route.nonstationary_drive_outputs",
+    "protocol_replay.arms.navsim_ego_status_mlp_full_contract.drive_calls",
+    "protocol_replay.arms.navsim_ego_status_mlp_full_contract.finite_drive_outputs",
+    "protocol_replay.arms.navsim_ego_status_mlp_full_contract.nonstationary_drive_outputs",
+    "protocol_replay.arms.navsim_ego_status_mlp_command_only_route.drive_calls",
+    "protocol_replay.arms.navsim_ego_status_mlp_command_only_route.finite_drive_outputs",
+    "protocol_replay.arms.navsim_ego_status_mlp_command_only_route.nonstationary_drive_outputs",
+    "navsim_reactive_rollout.rollouts",
+    "navsim_reactive_rollout.passed_rollouts",
+    "navsim_reactive_rollout.drive_rpc_count",
+    "navsim_reactive_rollout.finite_drive_outputs",
+    "navsim_reactive_rollout.camera_event_count",
+    "navsim_reactive_rollout.render_call_count",
+    "navsim_reactive_rollout.negative_control.drive_calls_before_rejection",
+)
+PAPER_NUMBER_LIFECYCLE_ADAPTERS: tuple[tuple[str, str], ...] = (
+    ("Full", "full_lifecycle_hardening"),
+    ("Strict", "strict_or_pre_hardening_behavior"),
+)
+REQUIRED_METADATA_FIELDS = (
+    "title",
+    "author",
+    "affiliation",
+    "pdf_subject",
+    "abstract_source_sha256",
+    "abstract_word_count",
+)
+REQUIRED_PROJECT_KEYWORDS = (
+    "autonomous-driving",
+    "closed-loop-simulation",
+    "contract-validation",
+    "system-integration",
+    "trajectory-policies",
+)
+REQUIRED_PROJECT_CLASSIFIERS = (
+    "Intended Audience :: Science/Research",
+    "Operating System :: POSIX :: Linux",
+    "Topic :: Scientific/Engineering",
+)
+REQUIRED_PROJECT_URLS = (
+    "Homepage",
+    "Repository",
+    "Issues",
+    "Documentation",
+    "Paper",
+    "Citation",
+)
+REQUIRED_INSTALL_DOC_TOKENS = (
+    "uv sync --extra dev",
+    "uv run alpabridge-doctor --strict-installed --json",
+    "uv.lock",
+)
+REQUIRED_CI_WORKFLOW_TOKENS = (
+    "actions/checkout@",
+    "actions/setup-python@",
+    "astral-sh/setup-uv@",
+    "uv sync --extra dev",
+    "PYTHON='uv run python'",
+    "make lint",
+    "make conformance",
+    "make coverage",
+    "make smoke",
+    "python -m build",
+    "uv run alpabridge-doctor --strict-installed --json",
+    "alpabridge-build-oracle-proxy --help",
+    "alpabridge-batch",
+    "make paper-verify",
+    "qpdf --check alpabridge.pdf",
+    "pdfinfo alpabridge.pdf",
+    "pdffonts alpabridge.pdf",
+    "actions/upload-artifact@",
+)
+COMMUNITY_DOC_REQUIREMENTS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    (
+        ".github/CONTRIBUTING.md",
+        (
+            "contract-validation",
+            "integration failure",
+            "policy failure",
+            "claim-valid",
+            "restricted assets",
+            "tokens",
+            "make cvm-check",
+            "make paper-verify",
+        ),
+    ),
+    (
+        ".github/pull_request_template.md",
+        (
+            "integration failure",
+            "policy failure",
+            "claim-valid",
+            "restricted assets",
+            "tokens",
+            "make cvm-check",
+        ),
+    ),
+    (
+        ".github/ISSUE_TEMPLATE/bug_report.md",
+        (
+            "integration failure",
+            "policy failure",
+            "claim-valid",
+            "restricted assets",
+            "tokens",
+        ),
+    ),
+    (
+        ".github/ISSUE_TEMPLATE/feature_request.md",
+        (
+            "contract layer",
+            "integration failure",
+            "policy failure",
+            "claim-valid",
+            "restricted assets",
+        ),
+    ),
+    (
+        ".github/SECURITY.md",
+        (
+            "tokens",
+            "restricted assets",
+            "private issue",
+        ),
+    ),
+)
+PUBLIC_SCAN_PATHS = (
+    "README.md",
+    "CITATION.cff",
+    "LICENSE",
+    "LICENSES",
+    "docs",
+    "paper",
+    "scripts",
+    "artifacts/cvm",
+    ".github",
+    "Makefile",
+    "pyproject.toml",
+    "src",
+    "tests",
+    "configs",
+    "third_party",
+)
+PUBLIC_SCAN_SKIP_PARTS = (
+    ("artifacts", "cvm", "results", "core_probe"),
+    ("artifacts", "cvm", "logs"),
+    ("artifacts", "cvm", "results", "demo"),
+)
+PUBLIC_SCAN_SKIP_NAMES = {"run_dirs"}
+TEXT_SKIP_SUFFIXES = {
+    ".pdf",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".gz",
+    ".zip",
+    ".tar",
+    ".pyc",
+}
+FONT_REF_RE = re.compile(r":\s+[^\n']*'([^']+)'\s+\((\d+)\s+0\s+R\)")
+FONT_DESCRIPTOR_RE = re.compile(r"/FontDescriptor\s+(\d+)\s+0\s+R")
+DESCENDANT_FONT_RE = re.compile(r"/DescendantFonts\s*\[\s*((?:\d+\s+0\s+R\s*)+)\]")
+OBJECT_REF_RE = re.compile(r"(\d+)\s+0\s+R")
+EMBEDDED_FONT_FILE_RE = re.compile(r"/FontFile(?:2|3)?\b")
+MARKDOWN_LINK_RE = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
+MARKDOWN_IMAGE_RE = re.compile(r"!\[([^\]]*)\]\(([^)]+)\)")
+HTML_LOCAL_REF_RE = re.compile(r"\b(?:href|src)\s*=\s*['\"]([^'\"]+)['\"]", re.IGNORECASE)
+HTML_IMAGE_TAG_RE = re.compile(r"<img\b[^>]*>", re.IGNORECASE)
+HTML_ALT_ATTR_RE = re.compile(r"\balt\s*=\s*(['\"])(.*?)\1", re.IGNORECASE)
+ARCHIVE_TEXT_SUFFIXES = {
+    ".json",
+    ".jsonl",
+    ".csv",
+    ".txt",
+    ".md",
+    ".sh",
+    ".yaml",
+    ".yml",
+    ".log",
+}
+DETERMINISTIC_ARCHIVE_MTIME = 0
+FORBIDDEN_TEXT_PATTERNS: tuple[tuple[str, Pattern[str]], ...] = (
+    ("huggingface_token", re.compile(r"hf_[A-Za-z0-9]{20,}")),
+    (
+        "credential_assignment",
+        re.compile(
+            r"\b(?:password|passwd|api[_-]?key|secret|token)\s*[:=]\s*"
+            r"(['\"])[A-Za-z0-9][A-Za-z0-9._/+~-]{7,}\1",
+            re.IGNORECASE,
+        ),
+    ),
+    ("private_home_path", re.compile(r"/home/(?!user\b|\.\.\.)([A-Za-z0-9_.-]+)")),
+    ("private_host", re.compile(r"\bMARSO-PC\b")),
+    ("legacy_smoke_fixture", re.compile(r"\b" + "spot" + r"light_reflex\b", re.IGNORECASE)),
+    ("legacy_smoke_claim", re.compile(r"\b" + "Spot" + r"light\b")),
+    ("claim_valid_true_text", re.compile(r"\bclaim_valid\s*=\s*true\b")),
+    ("valid_claim_evidence_true_text", re.compile(r"\bvalid_claim_evidence:\s*true\b")),
+    ("state_of_the_art_claim", re.compile(r"\bstate[\s-]+of[\s-]+the[\s-]+art\b", re.IGNORECASE)),
+    ("significant_improvement_claim", re.compile(r"\bsignificant\s+improvement\b", re.IGNORECASE)),
+    ("outperformance_claim", re.compile(r"\bwe\s+outperform\b", re.IGNORECASE)),
+    ("sota_claim", re.compile(r"\bSOTA\b")),
+    ("paper_draft_label", re.compile(r"\bpaper\s+draft\b", re.IGNORECASE)),
+    ("generated_draft_url", re.compile(r"\bauto[-_]draft[-_/0-9A-Za-z]*\b", re.IGNORECASE)),
+    ("venue_coupled_process_label", re.compile(r"\bvenue[-\s]+specific\b", re.IGNORECASE)),
+    (
+        "venue_style_benchmark_label",
+        re.compile(
+            r"\b(?:"
+            + "|".join(
+                (
+                    "Neur" + "IPS",
+                    chr(83) + chr(73) + chr(73),
+                    "IC" + "LR",
+                    "IC" + "ML",
+                    "CV" + "PR",
+                    "IC" + "RA",
+                    "IR" + "OS",
+                )
+            )
+            + r")[-\s]+style\s+benchmark\b"
+        ),
+    ),
+    (
+        "weak_adapter_artifact_label",
+        re.compile(r"\badapter\s+and\s+evaluation\s+artifact\b", re.IGNORECASE),
+    ),
+    ("weak_artifact_scaffold_label", re.compile(r"\bartifact\s+scaffold\b", re.IGNORECASE)),
+    (
+        "stale_target_event_artifact_name",
+        re.compile(
+            r"\b"
+            + chr(115)
+            + chr(105)
+            + chr(105)
+            + r"2027\b|\b"
+            + chr(83)
+            + chr(73)
+            + chr(73)
+            + r"\s+2027\b",
+            re.IGNORECASE,
+        ),
+    ),
+)
+DUPLICATE_MANUSCRIPT_PDFS = (
+    "paper.pdf",
+    "paper/paper.pdf",
+    "paper/cvm/paper.pdf",
+    "paper/cvm/main.pdf",
+)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Validate the AlpaBridge paper release package.")
+    parser.add_argument("--paper", default=Path("alpabridge.pdf"), type=Path)
+    parser.add_argument("--source", default=Path("paper/cvm"), type=Path)
+    parser.add_argument("--results", default=Path("artifacts/cvm/results"), type=Path)
+    parser.add_argument("--tables", default=Path("artifacts/cvm/tables"), type=Path)
+    parser.add_argument("--figures", default=Path("artifacts/cvm/figures"), type=Path)
+    parser.add_argument("--metadata", default=None, type=Path)
+    parser.add_argument("--repo-root", default=Path("."), type=Path)
+    parser.add_argument("--max-pages", default=6, type=int)
+    parser.add_argument("--allow-eight-pages", action="store_true")
+    args = parser.parse_args()
+
+    failures: list[str] = []
+    paper_info = ""
+    if not args.paper.is_file():
+        failures.append(f"missing_pdf:{args.paper}")
+    else:
+        size = args.paper.stat().st_size
+        if size > 6 * 1024 * 1024:
+            failures.append(f"pdf_too_large:{size}")
+        paper_info = _mutool_info(args.paper)
+        pages = _extract_pages(paper_info)
+        if pages is None:
+            failures.append("page_count_unavailable")
+        else:
+            max_pages = 8 if args.allow_eight_pages else args.max_pages
+            if pages < 4 or pages > max_pages:
+                failures.append(f"page_count_out_of_range:{pages}")
+        failures.extend(_pdf_a4_page_size_failures(info=paper_info, path=args.paper))
+        if not re.search(r"/Title(?:<[^>]+>|\([^)]+\))", paper_info):
+            failures.append("pdf_title_metadata_missing")
+        if not re.search(r"/Author(?:<[^>]+>|\([^)]+\))", paper_info):
+            failures.append("pdf_author_metadata_missing")
+        failures.extend(_pdf_font_embedding_failures(args.paper))
+
+    main_tex = args.source / "main.tex"
+    metadata_path = args.metadata if args.metadata is not None else args.source / "metadata.json"
+    metadata, metadata_failures = _load_paper_metadata(metadata_path)
+    failures.extend(metadata_failures)
+    source_text = (
+        main_tex.read_text(encoding="utf-8", errors="ignore") if main_tex.is_file() else ""
+    )
+    failures.extend(
+        _paper_metadata_text_failures(
+            metadata=metadata,
+            metadata_path=metadata_path,
+            source_text=source_text,
+            source_path=main_tex,
+        )
+    )
+    failures.extend(
+        _pdf_metadata_text_failures(
+            metadata=metadata,
+            metadata_path=metadata_path,
+            paper_info=paper_info,
+            paper_path=args.paper,
+        )
+    )
+    failures.extend(_source_text_failures(source_text=source_text, path=main_tex))
+    readme_path = args.repo_root / "README.md"
+    readme_text = (
+        readme_path.read_text(encoding="utf-8", errors="ignore") if readme_path.is_file() else ""
+    )
+    failures.extend(
+        _claim_boundary_text_failures(
+            readme_text=readme_text,
+            readme_path=readme_path,
+            source_text=source_text,
+            source_path=main_tex,
+        )
+    )
+    failures.extend(
+        _readme_visual_explanation_failures(
+            readme_text=readme_text,
+            readme_path=readme_path,
+        )
+    )
+    evaluation_path = args.repo_root / "docs" / "evaluation.md"
+    evaluation_text = (
+        evaluation_path.read_text(encoding="utf-8", errors="ignore")
+        if evaluation_path.is_file()
+        else ""
+    )
+    failures.extend(
+        _evaluation_status_failures(
+            evaluation_text=evaluation_text,
+            evaluation_path=evaluation_path,
+        )
+    )
+
+    for path in sorted(args.source.rglob("*.tex")) + sorted(args.source.rglob("*.bib")):
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        for token in PLACEHOLDERS:
+            if token in text:
+                failures.append(f"placeholder:{path}:{token}")
+        if re.search(r"/home/[A-Za-z0-9_.-]+", text):
+            failures.append(f"private_path:{path}")
+
+    log = args.source / "main.log"
+    failures.extend(_latex_log_failures(log))
+
+    data_hash = _load_summary_data_hash(args.results / "summary.json")
+    if data_hash is None:
+        failures.append("missing_or_invalid_summary_data_hash")
+    else:
+        failures.extend(_summary_attribution_failures(args.results / "summary.json"))
+        failures.extend(_summary_scenario_coverage_failures(args.results / "summary.json"))
+        failures.extend(
+            _reactive_artifact_failures(
+                repo_root=args.repo_root,
+                summary_path=args.results / "summary.json",
+            )
+        )
+        failures.extend(
+            _summary_timestamp_failures(
+                results_dir=args.results,
+                manifest_dir=args.results.parent / "manifests" / "run_manifests",
+            )
+        )
+        failures.extend(
+            _readme_summary_count_failures(
+                readme_text=readme_text,
+                readme_path=readme_path,
+                summary_path=args.results / "summary.json",
+            )
+        )
+        failures.extend(
+            _diagnostic_timing_claim_failures(
+                repo_root=args.repo_root,
+                summary_path=args.results / "summary.json",
+            )
+        )
+        failures.extend(
+            _generated_artifact_failures(
+                data_hash=data_hash,
+                table_dirs=(args.tables, args.source / "generated"),
+                figure_dirs=(args.figures, args.source / "figures"),
+            )
+        )
+        failures.extend(
+            _paper_generated_copy_failures(
+                canonical_tables=args.tables,
+                paper_tables=args.source / "generated",
+                canonical_figures=args.figures,
+                paper_figures=args.source / "figures",
+            )
+        )
+        failures.extend(
+            _paper_number_macro_failures(
+                summary_path=args.results / "summary.json",
+                paper_numbers_path=args.tables / "paper_numbers.tex",
+                lifecycle_path=args.results / "lifecycle_stress" / "lifecycle_stress.csv",
+                fault_path=args.results / "fault_injection.csv",
+            )
+        )
+        failures.extend(
+            _generated_table_value_failures(
+                tables=args.tables,
+                summary_path=args.results / "summary.json",
+                lifecycle_path=args.results / "lifecycle_stress" / "lifecycle_stress.csv",
+                fault_path=args.results / "fault_injection.csv",
+            )
+        )
+    failures.extend(_frame_schema_failures(args.results / "frames.csv"))
+    failures.extend(
+        _claim_evidence_matrix_failures(
+            matrix_path=args.results.parent / "reports" / "claim_evidence_matrix.md",
+            summary_path=args.results / "summary.json",
+        )
+    )
+    failures.extend(
+        _contract_test_audit_failures(
+            audit_path=args.results.parent / "reports" / "contract_test_audit.md",
+            tests_dir=args.repo_root / "tests",
+        )
+    )
+    failures.extend(
+        _manifest_attribution_failures(args.results.parent / "manifests" / "run_manifests")
+    )
+    failures.extend(_release_hygiene_failures(repo_root=args.repo_root, canonical_paper=args.paper))
+
+    if failures:
+        for failure in failures:
+            print(failure)
+        return 1
+    print("AlpaBridge paper validation passed")
+    return 0
+
+
+def _mutool_info(path: Path) -> str:
+    result = subprocess.run(
+        ["mutool", "info", str(path)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        return ""
+    return result.stdout
+
+
+def _mutool_info_fonts(path: Path) -> str:
+    result = subprocess.run(
+        ["mutool", "info", "-F", str(path)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        return ""
+    return result.stdout
+
+
+def _mutool_show(path: Path, object_id: str) -> str:
+    result = subprocess.run(
+        ["mutool", "show", str(path), object_id],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        return ""
+    return result.stdout
+
+
+def _extract_pages(info: str) -> int | None:
+    match = re.search(r"Pages:\s+(\d+)", info)
+    return None if match is None else int(match.group(1))
+
+
+def _pdf_a4_page_size_failures(*, info: str, path: Path) -> list[str]:
+    mediaboxes = _extract_mediaboxes(info)
+    if not mediaboxes:
+        return [f"page_size_unavailable:{path}"]
+    failures: list[str] = []
+    for index, (x0, y0, x1, y1) in enumerate(mediaboxes, start=1):
+        width = abs(x1 - x0)
+        height = abs(y1 - y0)
+        if not (_within_tolerance(width, A4_WIDTH_PT) and _within_tolerance(height, A4_HEIGHT_PT)):
+            failures.append(f"page_size_not_a4:{path}:{index}:{width:.3f}x{height:.3f}")
+    return failures
+
+
+def _extract_mediaboxes(info: str) -> list[tuple[float, float, float, float]]:
+    mediaboxes: list[tuple[float, float, float, float]] = []
+    for line in info.splitlines():
+        if "[" not in line or "]" not in line:
+            continue
+        values = re.findall(r"-?\d+(?:\.\d+)?", line[line.find("[") : line.rfind("]") + 1])
+        if len(values) != 4:
+            continue
+        x0, y0, x1, y1 = (float(value) for value in values)
+        mediaboxes.append((x0, y0, x1, y1))
+    return mediaboxes
+
+
+def _within_tolerance(actual: float, expected: float) -> bool:
+    return abs(actual - expected) <= PAGE_SIZE_TOLERANCE_PT
+
+
+def _load_summary_data_hash(path: Path) -> str | None:
+    if not path.is_file():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+    data_hash = payload.get("data_hash")
+    return data_hash if isinstance(data_hash, str) and data_hash else None
+
+
+def _load_paper_metadata(path: Path) -> tuple[dict[str, object], list[str]]:
+    if not path.is_file():
+        return {}, [f"missing_paper_metadata:{path}"]
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {}, [f"invalid_paper_metadata_json:{path}"]
+    if not isinstance(payload, dict):
+        return {}, [f"invalid_paper_metadata_type:{path}"]
+    failures: list[str] = []
+    for field in REQUIRED_METADATA_FIELDS:
+        value = payload.get(field)
+        if field == "abstract_word_count":
+            if not isinstance(value, int):
+                failures.append(f"paper_metadata_field_missing:{path}:{field}")
+        elif not isinstance(value, str) or not value.strip():
+            failures.append(f"paper_metadata_field_missing:{path}:{field}")
+    return payload, failures
+
+
+def _source_text_failures(*, source_text: str, path: Path) -> list[str]:
+    failures: list[str] = []
+    active_source = _strip_latex_comments(source_text)
+    if not IEEECONF_A4_DOCUMENTCLASS_RE.search(active_source):
+        failures.append(f"source_documentclass_not_ieeeconf_a4:{path}")
+    for command in ("IEEEoverridecommandlockouts", "overrideIEEEmargins"):
+        if not re.search(rf"\\{command}\b", active_source):
+            failures.append(f"source_ieeeconf_command_missing:{path}:{command}")
+    failures.extend(_source_layout_failures(source_text=source_text, path=path))
+    abstract_words = _abstract_word_count(source_text)
+    if abstract_words is None:
+        failures.append(f"missing_abstract:{path}")
+    elif abstract_words < ABSTRACT_MIN_WORDS or abstract_words > ABSTRACT_MAX_WORDS:
+        failures.append(f"abstract_word_count_out_of_range:{path}:{abstract_words}")
+    if re.search(r"pdfsubject\s*=\s*\{[^}]*\bdraft\b", source_text, re.IGNORECASE):
+        failures.append(f"source_pdfsubject_marked_draft:{path}")
+    return failures
+
+
+def _source_layout_failures(*, source_text: str, path: Path) -> list[str]:
+    active_source = _strip_latex_comments(source_text)
+    failures: list[str] = []
+    for label, pattern in MANUSCRIPT_LAYOUT_PATTERNS:
+        if pattern.search(active_source):
+            failures.append(f"source_layout_hack:{path}:{label}")
+    return failures
+
+
+def _latex_log_failures(path: Path) -> list[str]:
+    if not path.is_file():
+        return []
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    return [
+        f"latex_log_warning:{pattern}" for pattern in LATEX_LOG_FAILURE_PATTERNS if pattern in text
+    ]
+
+
+def _paper_metadata_text_failures(
+    *,
+    metadata: dict[str, object],
+    metadata_path: Path,
+    source_text: str,
+    source_path: Path,
+) -> list[str]:
+    if not metadata:
+        return []
+    failures: list[str] = []
+    expected_title = str(metadata.get("title", ""))
+    expected_author = str(metadata.get("author", ""))
+    expected_affiliation = str(metadata.get("affiliation", ""))
+    expected_pdf_subject = str(metadata.get("pdf_subject", ""))
+    title = _paper_title_value(source_text)
+    pdf_title = _hypersetup_value(source_text, "pdftitle")
+    pdf_author = _hypersetup_value(source_text, "pdfauthor")
+    pdf_subject = _hypersetup_value(source_text, "pdfsubject")
+    author = _paper_author_value(source_text)
+    if title != expected_title:
+        failures.append(f"metadata_title_mismatch:{source_path}:{metadata_path}")
+    if pdf_title != expected_title:
+        failures.append(f"metadata_pdf_title_mismatch:{source_path}:{metadata_path}")
+    if author != expected_author:
+        failures.append(f"metadata_author_mismatch:{source_path}:{metadata_path}")
+    if pdf_author != expected_author:
+        failures.append(f"metadata_pdf_author_mismatch:{source_path}:{metadata_path}")
+    if expected_affiliation not in source_text:
+        failures.append(f"metadata_affiliation_missing:{source_path}:{metadata_path}")
+    if pdf_subject != expected_pdf_subject:
+        failures.append(f"metadata_pdf_subject_mismatch:{source_path}:{metadata_path}")
+    failures.extend(
+        _paper_abstract_metadata_failures(
+            metadata=metadata,
+            metadata_path=metadata_path,
+            source_text=source_text,
+            source_path=source_path,
+        )
+    )
+    return failures
+
+
+def _pdf_metadata_text_failures(
+    *,
+    metadata: dict[str, object],
+    metadata_path: Path,
+    paper_info: str,
+    paper_path: Path,
+) -> list[str]:
+    if not metadata or not paper_info:
+        return []
+    failures: list[str] = []
+    expected = {
+        "Title": str(metadata.get("title", "")),
+        "Author": str(metadata.get("author", "")),
+        "Subject": str(metadata.get("pdf_subject", "")),
+    }
+    for key, expected_value in expected.items():
+        actual_value = _pdf_info_text_value(paper_info, key)
+        if actual_value is None:
+            failures.append(f"pdf_metadata_field_missing:{paper_path}:{key}")
+            continue
+        if actual_value != expected_value:
+            failures.append(f"pdf_metadata_field_mismatch:{paper_path}:{metadata_path}:{key}")
+    return failures
+
+
+def _pdf_info_text_value(info: str, key: str) -> str | None:
+    match = re.search(
+        rf"/{re.escape(key)}(?P<value><[0-9A-Fa-f\s]*>|\((?:\\.|[^\\)])*\))",
+        info,
+        re.DOTALL,
+    )
+    if match is None:
+        return None
+    return _decode_pdf_string(match.group("value"))
+
+
+def _decode_pdf_string(value: str) -> str:
+    if value.startswith("<") and value.endswith(">"):
+        hex_text = re.sub(r"\s+", "", value[1:-1])
+        try:
+            raw = bytes.fromhex(hex_text)
+        except ValueError:
+            return ""
+        for encoding in ("utf-16", "utf-16-be", "utf-8", "latin-1"):
+            try:
+                return raw.decode(encoding).strip("\ufeff")
+            except UnicodeDecodeError:
+                continue
+        return ""
+    if value.startswith("(") and value.endswith(")"):
+        literal = value[1:-1]
+        literal = literal.replace(r"\(", "(").replace(r"\)", ")").replace(r"\\", "\\")
+        return literal
+    return value
+
+
+def _paper_abstract_metadata_failures(
+    *,
+    metadata: dict[str, object],
+    metadata_path: Path,
+    source_text: str,
+    source_path: Path,
+) -> list[str]:
+    abstract = _abstract_body(source_text)
+    if abstract is None:
+        return [f"metadata_abstract_missing:{source_path}:{metadata_path}"]
+    actual_hash = _sha256_text(_normalize_latex_source(abstract))
+    expected_hash = str(metadata.get("abstract_source_sha256", ""))
+    failures: list[str] = []
+    if actual_hash != expected_hash:
+        failures.append(f"metadata_abstract_hash_mismatch:{source_path}:{metadata_path}")
+    actual_words = _abstract_word_count(source_text)
+    expected_words = metadata.get("abstract_word_count")
+    if actual_words != expected_words:
+        failures.append(
+            f"metadata_abstract_word_count_mismatch:{source_path}:{metadata_path}:"
+            f"{actual_words}:{expected_words}"
+        )
+    return failures
+
+
+def _latex_command_value(source_text: str, command: str) -> str:
+    match = re.search(rf"\\{re.escape(command)}\{{([^{{}}]*)\}}", source_text, re.DOTALL)
+    if match is None:
+        return ""
+    return _normalize_latex_source(match.group(1))
+
+
+def _paper_title_value(source_text: str) -> str:
+    title = _latex_command_value(source_text, "title")
+    return re.sub(r"^(?:\\(?:LARGE|Large|large|bf|bfseries)\s*)+", "", title).strip()
+
+
+def _paper_author_value(source_text: str) -> str:
+    legacy = _latex_command_value(source_text, "IEEEauthorblockN")
+    if legacy:
+        return legacy
+    match = re.search(r"\\author\s*\{\s*([^\\{}%]+)", source_text)
+    return "" if match is None else _normalize_latex_source(match.group(1))
+
+
+def _hypersetup_value(source_text: str, key: str) -> str:
+    match = re.search(rf"{re.escape(key)}\s*=\s*\{{([^{{}}]*)\}}", source_text, re.DOTALL)
+    if match is None:
+        return ""
+    return _normalize_latex_source(match.group(1))
+
+
+def _abstract_body(source_text: str) -> str | None:
+    match = re.search(r"\\begin\{abstract\}(.*?)\\end\{abstract\}", source_text, re.DOTALL)
+    return None if match is None else match.group(1)
+
+
+def _normalize_latex_source(text: str) -> str:
+    text = _strip_latex_comments(text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def _strip_latex_comments(text: str) -> str:
+    return re.sub(r"(?m)(?<!\\)%.*$", "", text)
+
+
+def _sha256_text(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _pdf_font_embedding_failures(path: Path) -> list[str]:
+    font_info = _mutool_info_fonts(path)
+    if not font_info:
+        return [f"font_list_unavailable:{path}"]
+    fonts = _extract_pdf_fonts(font_info)
+    if not fonts:
+        return [f"font_list_empty:{path}"]
+    failures: list[str] = []
+    for font_name, object_id in fonts:
+        status, failure_object = _embedded_font_status(path, object_id, visited=set())
+        if status == "ok":
+            continue
+        failures.append(f"{status}:{path}:{font_name}:{failure_object}")
+    return failures
+
+
+def _extract_pdf_fonts(font_info: str) -> list[tuple[str, str]]:
+    fonts: list[tuple[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for match in FONT_REF_RE.finditer(font_info):
+        font = (match.group(1), match.group(2))
+        if font in seen:
+            continue
+        seen.add(font)
+        fonts.append(font)
+    return fonts
+
+
+def _embedded_font_status(
+    path: Path,
+    object_id: str,
+    *,
+    visited: set[str],
+) -> tuple[str, str]:
+    if object_id in visited:
+        return ("font_descriptor_missing", object_id)
+    visited.add(object_id)
+    font_object = _mutool_show(path, object_id)
+    if not font_object:
+        return ("font_object_unavailable", object_id)
+    if EMBEDDED_FONT_FILE_RE.search(font_object):
+        return ("ok", object_id)
+    descriptor_ids = FONT_DESCRIPTOR_RE.findall(font_object)
+    if descriptor_ids:
+        for descriptor_id in descriptor_ids:
+            descriptor = _mutool_show(path, descriptor_id)
+            if not descriptor:
+                return ("font_descriptor_unavailable", descriptor_id)
+            if EMBEDDED_FONT_FILE_RE.search(descriptor):
+                return ("ok", descriptor_id)
+        return ("font_not_embedded", descriptor_ids[0])
+    for descendant_group in DESCENDANT_FONT_RE.findall(font_object):
+        for descendant_id in OBJECT_REF_RE.findall(descendant_group):
+            status, failure_object = _embedded_font_status(
+                path,
+                descendant_id,
+                visited=visited,
+            )
+            if status == "ok":
+                return ("ok", failure_object)
+            if status != "font_descriptor_missing":
+                return (status, failure_object)
+    return ("font_descriptor_missing", object_id)
+
+
+def _claim_boundary_text_failures(
+    *,
+    readme_text: str,
+    readme_path: Path,
+    source_text: str,
+    source_path: Path,
+) -> list[str]:
+    failures: list[str] = []
+    for term in CLAIM_BOUNDARY_README_TERMS:
+        if not _contains_claim_term(readme_text, term):
+            failures.append(f"claim_boundary_readme_missing:{readme_path}:{term}")
+    for term in CLAIM_BOUNDARY_SOURCE_TERMS:
+        if not _contains_claim_term(source_text, term):
+            failures.append(f"claim_boundary_source_missing:{source_path}:{term}")
+    return failures
+
+
+def _readme_visual_explanation_failures(*, readme_text: str, readme_path: Path) -> list[str]:
+    failures: list[str] = []
+    for term in README_VISUAL_EXPLANATION_TERMS:
+        if not _contains_claim_term(readme_text, term):
+            failures.append(f"readme_visual_explanation_missing:{readme_path}:{term}")
+    return failures
+
+
+def _evaluation_status_failures(*, evaluation_text: str, evaluation_path: Path) -> list[str]:
+    failures: list[str] = []
+    for term in EVALUATION_STATUS_TERMS:
+        if not _contains_claim_term(evaluation_text, term):
+            failures.append(f"evaluation_status_missing:{evaluation_path}:{term}")
+    return failures
+
+
+def _contains_claim_term(text: str, term: str) -> bool:
+    normalized_text = re.sub(r"\s+", " ", text)
+    normalized_term = re.sub(r"\s+", " ", term)
+    if "\\" in term:
+        return normalized_term in normalized_text
+    return normalized_term.lower() in normalized_text.lower()
+
+
+def _abstract_word_count(source_text: str) -> int | None:
+    abstract = _abstract_body(source_text)
+    if abstract is None:
+        return None
+    abstract = re.sub(r"%.*", "", abstract)
+    abstract = abstract.replace(r"\_", "_")
+    abstract = re.sub(r"\\[A-Za-z]+\*?(?:\[[^\]]*\])?\{\}", " number ", abstract)
+    abstract = re.sub(r"\\[A-Za-z]+\*?(?:\[[^\]]*\])?\{([^{}]*)\}", r" \1 ", abstract)
+    abstract = re.sub(r"\\[A-Za-z]+\*?(?:\[[^\]]*\])?", " ", abstract)
+    return len(re.findall(r"[A-Za-z0-9]+(?:[-'][A-Za-z0-9]+)?", abstract))
+
+
+def _summary_attribution_failures(path: Path) -> list[str]:
+    failures: list[str] = []
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return [f"summary_attribution_unreadable:{path}"]
+    total_rows = payload.get("total_rows")
+    attribution = payload.get("failure_attribution")
+    if not isinstance(attribution, dict):
+        return [f"summary_attribution_missing:{path}"]
+    for field in REQUIRED_SUMMARY_ATTRIBUTION_FIELDS:
+        if field not in attribution:
+            failures.append(f"summary_attribution_field_missing:{path}:{field}")
+    rule = str(attribution.get("rule", ""))
+    for term in ("policy failure", "semantic", "temporal", "lifecycle", "deployment", "evidence"):
+        if term not in rule:
+            failures.append(f"summary_attribution_rule_missing:{path}:{term}")
+    policy_behavior = _summary_int(attribution, "policy_behavior_attributable_rows")
+    policy_failure = _summary_int(attribution, "policy_failure_attributable_rows")
+    claim_valid_policy = _summary_int(attribution, "claim_valid_policy_benchmark_rows")
+    contract_valid = _summary_int(attribution, "contract_valid_closed_loop_rows")
+    non_policy = _summary_int(attribution, "non_policy_attributed_rows")
+    if policy_failure > policy_behavior:
+        failures.append(f"summary_policy_failure_exceeds_behavior:{path}")
+    if claim_valid_policy > policy_behavior:
+        failures.append(f"summary_claim_valid_policy_exceeds_behavior:{path}")
+    if policy_behavior != contract_valid:
+        failures.append(f"summary_policy_behavior_contract_valid_mismatch:{path}")
+    if isinstance(total_rows, int) and non_policy + policy_behavior != total_rows:
+        failures.append(f"summary_policy_attribution_partition_mismatch:{path}")
+    return failures
+
+
+def _summary_scenario_coverage_failures(path: Path) -> list[str]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return [f"summary_scenario_coverage_unreadable:{path}"]
+    coverage = payload.get("scenario_coverage")
+    if not isinstance(coverage, dict):
+        return [f"summary_scenario_coverage_missing:{path}"]
+
+    failures: list[str] = []
+    for field in REQUIRED_SCENARIO_COVERAGE_FIELDS:
+        if field not in coverage:
+            failures.append(f"summary_scenario_coverage_field_missing:{path}:{field}")
+    rule = str(coverage.get("rule", ""))
+    for term in ("authoritative metadata", "unclassified scenes", "coverage evidence"):
+        if term not in rule:
+            failures.append(f"summary_scenario_coverage_rule_missing:{path}:{term}")
+    required = _summary_int(coverage, "required_category_count")
+    verified_required = _summary_int(coverage, "verified_required_category_count")
+    unclassified = _summary_int(coverage, "unclassified_closed_loop_scene_count")
+    claimed = coverage.get("scenario_category_coverage_claimed") is True
+    claimed_int = _summary_int(coverage, "scenario_category_coverage_claimed_int")
+    if claimed_int not in {0, 1}:
+        failures.append(f"summary_scenario_coverage_claim_flag_invalid:{path}")
+    if claimed != bool(claimed_int):
+        failures.append(f"summary_scenario_coverage_claim_flag_mismatch:{path}")
+    if claimed and verified_required < required:
+        failures.append(f"summary_scenario_coverage_claim_without_required_categories:{path}")
+    if claimed and unclassified:
+        failures.append(f"summary_scenario_coverage_claim_with_unclassified_scenes:{path}")
+    return failures
+
+
+def _summary_timestamp_failures(*, results_dir: Path, manifest_dir: Path) -> list[str]:
+    matrix_summaries = _matrix_summary_paths(results_dir)
+    failures: list[str] = []
+    matrix_created_at: list[str] = []
+    for summary_path in matrix_summaries:
+        payload, load_failure = _load_json_object(summary_path, "matrix_summary")
+        if load_failure:
+            failures.append(load_failure)
+            continue
+        matrix_name = str(payload.get("matrix", summary_path.parent.name))
+        run_ids = _matrix_run_ids(results_dir=results_dir, matrix_name=matrix_name)
+        expected = _max_manifest_created_at(manifest_dir=manifest_dir, run_ids=run_ids)
+        actual = payload.get("created_at")
+        if not isinstance(actual, str) or not actual:
+            failures.append(f"matrix_summary_created_at_missing:{summary_path}")
+            continue
+        if expected is None:
+            failures.append(
+                f"matrix_summary_manifest_timestamp_missing:{summary_path}:{matrix_name}"
+            )
+            continue
+        if actual != expected:
+            failures.append(
+                f"matrix_summary_created_at_mismatch:{summary_path}:{actual}:{expected}"
+            )
+        matrix_created_at.append(actual)
+
+    aggregate_path = results_dir / "summary.json"
+    aggregate, load_failure = _load_json_object(aggregate_path, "aggregate_summary")
+    if load_failure:
+        failures.append(load_failure)
+        return failures
+    actual_aggregate = aggregate.get("created_at")
+    expected_aggregate = max(matrix_created_at) if matrix_created_at else None
+    if not isinstance(actual_aggregate, str) or not actual_aggregate:
+        failures.append(f"aggregate_summary_created_at_missing:{aggregate_path}")
+    elif expected_aggregate is None:
+        failures.append(f"aggregate_summary_matrix_timestamp_missing:{aggregate_path}")
+    elif actual_aggregate != expected_aggregate:
+        failures.append(
+            f"aggregate_summary_created_at_mismatch:{aggregate_path}:"
+            f"{actual_aggregate}:{expected_aggregate}"
+        )
+    return failures
+
+
+def _matrix_summary_paths(results_dir: Path) -> list[Path]:
+    paths: list[Path] = []
+    for path in sorted(results_dir.glob("*/summary.json")):
+        if path.parent == results_dir:
+            continue
+        paths.append(path)
+    return paths
+
+
+def _matrix_run_ids(*, results_dir: Path, matrix_name: str) -> list[str]:
+    runs_path = results_dir / matrix_name / "runs.csv"
+    if not runs_path.is_file():
+        return []
+    with runs_path.open(newline="", encoding="utf-8") as handle:
+        return [
+            str(row.get("run_id", ""))
+            for row in csv.DictReader(handle)
+            if str(row.get("run_id", "")).strip()
+        ]
+
+
+def _max_manifest_created_at(*, manifest_dir: Path, run_ids: list[str]) -> str | None:
+    timestamps: list[str] = []
+    for run_id in run_ids:
+        manifest_path = manifest_dir / f"{run_id}.json"
+        payload, _load_failure = _load_json_object(manifest_path, "run_manifest")
+        if not payload:
+            continue
+        created_at = payload.get("created_at")
+        if isinstance(created_at, str) and created_at:
+            timestamps.append(created_at)
+    return max(timestamps) if timestamps else None
+
+
+def _load_json_object(path: Path, label: str) -> tuple[dict[str, object], str | None]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return {}, f"{label}_missing:{path}"
+    except json.JSONDecodeError:
+        return {}, f"{label}_invalid_json:{path}"
+    if not isinstance(payload, dict):
+        return {}, f"{label}_invalid_type:{path}"
+    return payload, None
+
+
+def _readme_summary_count_failures(
+    *,
+    readme_text: str,
+    readme_path: Path,
+    summary_path: Path,
+) -> list[str]:
+    try:
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return [f"readme_summary_unreadable:{summary_path}"]
+    if not isinstance(summary, dict):
+        return [f"readme_summary_invalid:{summary_path}"]
+
+    failures: list[str] = []
+    for label, dotted_path, suffix in README_SUMMARY_COUNT_SNIPPETS:
+        value = _json_path_value(summary, dotted_path)
+        if not isinstance(value, int):
+            failures.append(f"readme_summary_field_missing:{summary_path}:{dotted_path}")
+            continue
+        expected = f"`{value}` {suffix}"
+        if not _contains_claim_term(readme_text, expected):
+            failures.append(f"readme_summary_count_mismatch:{readme_path}:{label}:{expected}")
+    return failures
+
+
+def _claim_evidence_matrix_failures(*, matrix_path: Path, summary_path: Path) -> list[str]:
+    if not matrix_path.is_file():
+        return [f"missing_claim_evidence_matrix:{matrix_path}"]
+    try:
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return [f"claim_evidence_summary_unreadable:{summary_path}"]
+    if not isinstance(summary, dict):
+        return [f"claim_evidence_summary_invalid:{summary_path}"]
+    text = matrix_path.read_text(encoding="utf-8", errors="ignore")
+    failures: list[str] = []
+    for label, value_paths in CLAIM_MATRIX_SUMMARY_LINES:
+        expected_values = [_claim_matrix_summary_value(summary, path) for path in value_paths]
+        if any(value is None for value in expected_values):
+            failures.append(f"claim_evidence_summary_field_missing:{summary_path}:{label}")
+            continue
+        expected_value = "/".join(str(value) for value in expected_values)
+        expected_line = f"- {label}: {expected_value}."
+        if expected_line not in text:
+            failures.append(
+                f"claim_evidence_matrix_count_mismatch:{matrix_path}:{label}:{expected_value}"
+            )
+    if "`artifacts/cvm/results/summary.json`" not in text:
+        failures.append(f"claim_evidence_matrix_missing_summary_artifact:{matrix_path}")
+    return failures
+
+
+def _diagnostic_timing_claim_failures(
+    *,
+    repo_root: Path,
+    summary_path: Path,
+) -> list[str]:
+    try:
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return [f"diagnostic_timing_summary_invalid:{summary_path}"]
+    if not isinstance(summary, dict):
+        return [f"diagnostic_timing_summary_invalid:{summary_path}"]
+
+    expected: list[tuple[str, str]] = []
+    failures: list[str] = []
+    for label, dotted_path in DIAGNOSTIC_TIMING_TEXT_FIELDS:
+        value = _json_path_value(summary, dotted_path)
+        if not isinstance(value, (int, float)) or not math.isfinite(float(value)):
+            failures.append(f"diagnostic_timing_field_missing:{summary_path}:{dotted_path}")
+            continue
+        expected.append((label, f"{float(value):.3f}"))
+
+    for relative_path in DIAGNOSTIC_TIMING_CLAIM_PATHS:
+        path = repo_root / relative_path
+        try:
+            text = path.read_text(encoding="utf-8", errors="ignore")
+        except FileNotFoundError:
+            failures.append(f"diagnostic_timing_claim_missing_file:{path}")
+            continue
+        for label, formatted in expected:
+            if re.search(rf"(?<![0-9.]){re.escape(formatted)}\s*us\b", text) is None:
+                failures.append(f"diagnostic_timing_claim_mismatch:{path}:{label}:{formatted}")
+    return failures
+
+
+def _reactive_artifact_failures(*, repo_root: Path, summary_path: Path) -> list[str]:
+    try:
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return [f"reactive_artifact_summary_invalid:{summary_path}"]
+    reactive = summary.get("navsim_reactive_rollout") if isinstance(summary, dict) else None
+    if not isinstance(reactive, dict) or reactive.get("available") is not True:
+        return [f"reactive_artifact_summary_missing:{summary_path}"]
+
+    artifact_dir = repo_root / "artifacts/external/alpasim_navsim_reactive_rollout"
+    manifest_path = artifact_dir / "manifest.json"
+    try:
+        manifest_bytes = manifest_path.read_bytes()
+        manifest = json.loads(manifest_bytes)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return [f"reactive_artifact_manifest_invalid:{manifest_path}"]
+    failures: list[str] = []
+    if (
+        not isinstance(manifest, dict)
+        or manifest.get("schema") != "wod2sim_alpasim_navsim_reactive_evidence_v1"
+    ):
+        failures.append(f"reactive_artifact_manifest_schema:{manifest_path}")
+        return failures
+    actual_manifest_hash = hashlib.sha256(manifest_bytes).hexdigest()
+    if reactive.get("artifact_sha256") != actual_manifest_hash:
+        failures.append(
+            f"reactive_artifact_summary_hash_mismatch:{manifest_path}:"
+            f"{reactive.get('artifact_sha256')}:{actual_manifest_hash}"
+        )
+
+    files = manifest.get("files")
+    if not isinstance(files, dict):
+        failures.append(f"reactive_artifact_file_manifest_missing:{manifest_path}")
+        return failures
+    for name, item in files.items():
+        path = artifact_dir / name
+        if not isinstance(item, dict) or not path.is_file():
+            failures.append(f"reactive_artifact_file_missing:{path}")
+            continue
+        actual_hash = hashlib.sha256(path.read_bytes()).hexdigest()
+        if item.get("sha256") != actual_hash:
+            failures.append(
+                f"reactive_artifact_file_hash_mismatch:{path}:"
+                f"{item.get('sha256')}:{actual_hash}"
+            )
+        if item.get("bytes") != path.stat().st_size:
+            failures.append(f"reactive_artifact_file_size_mismatch:{path}")
+
+    for key, dotted_path in (
+        ("drive_calls", "drive_rpc_count"),
+        ("finite_drive_outputs", "finite_drive_outputs"),
+        ("camera_events", "camera_event_count"),
+    ):
+        manifest_value = _json_path_value(manifest, f"execution.{key}")
+        if manifest_value != reactive.get(dotted_path):
+            failures.append(
+                f"reactive_artifact_summary_count_mismatch:{manifest_path}:{key}:"
+                f"{manifest_value}:{reactive.get(dotted_path)}"
+            )
+    manifest_render_calls = _json_path_value(manifest, "execution.renderer.render_calls")
+    if manifest_render_calls != reactive.get("render_call_count"):
+        failures.append(
+            f"reactive_artifact_summary_count_mismatch:{manifest_path}:render_calls:"
+            f"{manifest_render_calls}:{reactive.get('render_call_count')}"
+        )
+
+    exclusions = _json_path_value(manifest, "claim_boundary.does_not_support")
+    required_exclusions = (
+        "reactive camera rendering or visual-policy evaluation",
+        "learned-policy quality or benchmark superiority",
+        "runtime overhead versus another integration",
+        "human time-to-diagnosis",
+        "cross-simulator transfer or population generalization",
+    )
+    if not isinstance(exclusions, list) or any(
+        exclusion not in exclusions for exclusion in required_exclusions
+    ):
+        failures.append(f"reactive_artifact_claim_boundary_incomplete:{manifest_path}")
+    return failures
+
+
+def _contract_test_audit_failures(*, audit_path: Path, tests_dir: Path) -> list[str]:
+    if not audit_path.is_file():
+        return [f"missing_contract_test_audit:{audit_path}"]
+    text = audit_path.read_text(encoding="utf-8", errors="ignore")
+    failures: list[str] = []
+    for term in CONTRACT_TEST_AUDIT_REQUIRED_TERMS:
+        if not _contains_claim_term(text, term):
+            failures.append(f"contract_test_audit_missing:{audit_path}:{term}")
+    for match in re.finditer(r"`(tests/[^`]+\.py)`", text):
+        referenced = tests_dir.parent / match.group(1)
+        if not referenced.is_file():
+            failures.append(f"contract_test_audit_missing_test_file:{audit_path}:{match.group(1)}")
+    return failures
+
+
+def _claim_matrix_summary_value(summary: dict[str, object], dotted_path: str) -> int | None:
+    value: object = summary
+    for part in dotted_path.split("."):
+        if not isinstance(value, dict) or part not in value:
+            return None
+        value = value[part]
+    return value if isinstance(value, int) else None
+
+
+def _generated_artifact_failures(
+    *, data_hash: str, table_dirs: tuple[Path, ...], figure_dirs: tuple[Path, ...]
+) -> list[str]:
+    failures: list[str] = []
+    expected_marker = f"data_hash={data_hash}"
+    for table_dir in table_dirs:
+        for name in REQUIRED_TABLES:
+            path = table_dir / name
+            if not path.is_file():
+                failures.append(f"missing_generated_table:{path}")
+                continue
+            first_line = path.read_text(encoding="utf-8", errors="ignore").splitlines()[:1]
+            if not first_line or expected_marker not in first_line[0]:
+                failures.append(f"generated_table_hash_mismatch:{path}")
+    for figure_dir in figure_dirs:
+        for name in REQUIRED_FIGURES:
+            path = figure_dir / name
+            if not path.is_file():
+                failures.append(f"missing_generated_figure:{path}")
+                continue
+            info = _mutool_info(path)
+            if expected_marker not in info:
+                failures.append(f"generated_figure_hash_mismatch:{path}")
+    return failures
+
+
+def _paper_generated_copy_failures(
+    *,
+    canonical_tables: Path,
+    paper_tables: Path,
+    canonical_figures: Path,
+    paper_figures: Path,
+) -> list[str]:
+    failures: list[str] = []
+    for name in REQUIRED_TABLES:
+        failures.extend(
+            _generated_copy_pair_failures(
+                canonical=canonical_tables / name,
+                paper_copy=paper_tables / name,
+                label="table",
+            )
+        )
+    for name in REQUIRED_FIGURES:
+        failures.extend(
+            _generated_copy_pair_failures(
+                canonical=canonical_figures / name,
+                paper_copy=paper_figures / name,
+                label="figure",
+            )
+        )
+    return failures
+
+
+def _generated_copy_pair_failures(*, canonical: Path, paper_copy: Path, label: str) -> list[str]:
+    if not canonical.is_file():
+        return [f"missing_canonical_generated_{label}:{canonical}"]
+    if not paper_copy.is_file():
+        return [f"missing_paper_generated_{label}:{paper_copy}"]
+    if canonical.read_bytes() != paper_copy.read_bytes():
+        return [f"paper_generated_{label}_drift:{paper_copy}:{canonical}"]
+    return []
+
+
+def _paper_number_macro_failures(
+    *,
+    summary_path: Path,
+    paper_numbers_path: Path,
+    lifecycle_path: Path,
+    fault_path: Path,
+) -> list[str]:
+    failures: list[str] = []
+    try:
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return [f"paper_numbers_summary_unreadable:{summary_path}"]
+    if not isinstance(summary, dict):
+        return [f"paper_numbers_summary_invalid:{summary_path}"]
+    macros, duplicates = _parse_latex_newcommands(paper_numbers_path)
+    if not macros and not paper_numbers_path.is_file():
+        return [f"missing_paper_numbers:{paper_numbers_path}"]
+    failures.extend(
+        f"paper_numbers_duplicate_macro:{paper_numbers_path}:{name}" for name in duplicates
+    )
+    expected: dict[str, str] = {}
+    for macro, dotted_path in PAPER_NUMBER_JSON_FIELDS:
+        value = _json_path_value(summary, dotted_path)
+        if not isinstance(value, int):
+            failures.append(
+                f"paper_numbers_summary_field_missing:{summary_path}:{macro}:{dotted_path}"
+            )
+            continue
+        expected[macro] = str(value)
+    for macro, dotted_path in PAPER_NUMBER_FLOAT_FIELDS:
+        value = _json_path_value(summary, dotted_path)
+        expected[macro] = _format_paper_number_float(value)
+    for macro, dotted_path in PAPER_NUMBER_SIX_DECIMAL_FIELDS:
+        value = _json_path_value(summary, dotted_path)
+        expected[macro] = _format_paper_number_float(value, precision=6)
+    lifecycle_counts, lifecycle_failures = _paper_number_lifecycle_counts(lifecycle_path)
+    failures.extend(lifecycle_failures)
+    expected.update(lifecycle_counts)
+    fault_counts, fault_failures = _paper_number_fault_counts(fault_path)
+    failures.extend(fault_failures)
+    expected.update(fault_counts)
+    for macro, expected_value in sorted(expected.items()):
+        actual_value = macros.get(macro)
+        if actual_value is None:
+            failures.append(f"paper_numbers_macro_missing:{paper_numbers_path}:{macro}")
+        elif actual_value != expected_value:
+            failures.append(
+                f"paper_numbers_macro_mismatch:{paper_numbers_path}:{macro}:"
+                f"{actual_value}:{expected_value}"
+            )
+    return failures
+
+
+def _parse_latex_newcommands(path: Path) -> tuple[dict[str, str], list[str]]:
+    if not path.is_file():
+        return {}, []
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    macros: dict[str, str] = {}
+    duplicates: list[str] = []
+    for match in re.finditer(r"\\newcommand\{\\([A-Za-z0-9]+)\}\{([^{}]*)\}", text):
+        name = match.group(1)
+        if name in macros:
+            duplicates.append(name)
+        macros[name] = match.group(2)
+    return macros, duplicates
+
+
+def _json_path_value(payload: dict[str, object], dotted_path: str) -> object:
+    value: object = payload
+    for part in dotted_path.split("."):
+        if not isinstance(value, dict) or part not in value:
+            return None
+        value = value[part]
+    return value
+
+
+def _format_paper_number_float(value: object, *, precision: int = 3) -> str:
+    if not isinstance(value, (int, float)):
+        return "n/a"
+    return f"{float(value):.{precision}f}"
+
+
+def _paper_number_lifecycle_counts(path: Path) -> tuple[dict[str, str], list[str]]:
+    rows, failures = _read_csv_dicts(path, "paper_numbers_lifecycle_csv")
+    counts: dict[str, str] = {}
+    for label, adapter in PAPER_NUMBER_LIFECYCLE_ADAPTERS:
+        adapter_rows = [row for row in rows if row.get("adapter_config") == adapter]
+        survived = sum(row.get("service_survived") == "true" for row in adapter_rows)
+        counts[f"CVMLifecycle{label}Survived"] = str(survived)
+        counts[f"CVMLifecycle{label}Total"] = str(len(adapter_rows))
+    return counts, failures
+
+
+def _paper_number_fault_counts(path: Path) -> tuple[dict[str, str], list[str]]:
+    rows, failures = _read_csv_dicts(path, "paper_numbers_fault_csv")
+    detected = sum(row.get("detected") == "true" for row in rows)
+    localized = sum(row.get("correctly_localized") == "true" for row in rows)
+    return (
+        {
+            "CVMFaultDetected": str(detected),
+            "CVMFaultLocalized": str(localized),
+            "CVMFaultTotal": str(len(rows)),
+        },
+        failures,
+    )
+
+
+def _generated_table_value_failures(
+    *,
+    tables: Path,
+    summary_path: Path,
+    lifecycle_path: Path,
+    fault_path: Path,
+) -> list[str]:
+    try:
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return [f"generated_table_summary_unreadable:{summary_path}"]
+    if not isinstance(summary, dict):
+        return [f"generated_table_summary_invalid:{summary_path}"]
+    lifecycle_counts, lifecycle_failures = _paper_number_lifecycle_counts(lifecycle_path)
+    fault_counts, fault_failures = _paper_number_fault_counts(fault_path)
+    failures = lifecycle_failures + fault_failures
+    failures.extend(_generated_table_summary_field_failures(summary_path, summary))
+    table_expectations = {
+        "contract_map.tex": _expected_contract_map_rows(),
+        "main_results.tex": _expected_main_results_rows(summary),
+        "protocol_replay_policies.tex": _expected_protocol_replay_policy_rows(
+            summary
+        ),
+        "ablations.tex": _expected_ablations_rows(summary),
+        "fault_localization.tex": _expected_fault_localization_rows(
+            lifecycle_counts,
+            fault_counts,
+        ),
+    }
+    for name, expected_rows in table_expectations.items():
+        path = tables / name
+        expected_header = EXPECTED_TABLE_HEADERS.get(name)
+        if expected_header is not None:
+            failures.extend(
+                _table_expected_header_failures(
+                    path=path,
+                    expected_header=expected_header,
+                )
+            )
+        failures.extend(_table_expected_row_failures(path=path, expected_rows=expected_rows))
+    return failures
+
+
+def _generated_table_summary_field_failures(
+    summary_path: Path, summary: dict[str, object]
+) -> list[str]:
+    failures: list[str] = []
+    for dotted_path in GENERATED_TABLE_JSON_FIELDS:
+        if not isinstance(_json_path_value(summary, dotted_path), int):
+            failures.append(f"generated_table_summary_field_missing:{summary_path}:{dotted_path}")
+    core_policy_results = summary.get("core_policy_results")
+    if not isinstance(core_policy_results, list) or not core_policy_results:
+        failures.append(f"generated_table_summary_field_missing:{summary_path}:core_policy_results")
+    else:
+        for index, item in enumerate(core_policy_results):
+            if not isinstance(item, dict):
+                failures.append(
+                    f"generated_table_summary_field_invalid:{summary_path}:core_policy_results:{index}"
+                )
+                continue
+            for field in (
+                "policy",
+                "configured_rows",
+                "attempted_runs",
+                "completed_runs",
+                "audit_valid_runs",
+                "route_valid_runs",
+                "sensor_valid_runs",
+                "blocked_runs",
+                "service_crash_rows",
+            ):
+                if field == "policy":
+                    if not isinstance(item.get(field), str) or not item.get(field):
+                        failures.append(
+                            f"generated_table_summary_field_missing:"
+                            f"{summary_path}:core_policy_results:{index}:{field}"
+                        )
+                    continue
+                if not isinstance(item.get(field), int):
+                    failures.append(
+                        f"generated_table_summary_field_missing:"
+                        f"{summary_path}:core_policy_results:{index}:{field}"
+                    )
+    return failures
+
+
+def _expected_contract_map_rows() -> list[str]:
+    return [
+        "Command-only route & Semantic & Preserve route geometry & route-source audit",
+        "Policy horizon/runtime grid & Temporal & Deterministic resampling & cadence tests",
+        "Script flow/session service & Lifecycle & Idempotent late-event handling & lifecycle tests",
+        "Implicit host state & Deployment & Materialized manifests & readiness checks",
+        "Process exit/evidence & Evidence & Audit-valid summaries & claim gate",
+    ]
+
+
+def _expected_main_results_rows(summary: dict[str, object]) -> list[str]:
+    core_policy_results = summary.get("public_core_policy_results")
+    if not isinstance(core_policy_results, list):
+        return []
+    return [
+        _expected_core_policy_row(item) for item in core_policy_results if isinstance(item, dict)
+    ]
+
+
+def _expected_core_policy_row(item: dict[str, object]) -> str:
+    completed = item.get("completed_runs") if isinstance(item.get("completed_runs"), int) else 0
+    attempted = item.get("attempted_runs") if isinstance(item.get("attempted_runs"), int) else 0
+    audit_valid = (
+        item.get("audit_valid_runs") if isinstance(item.get("audit_valid_runs"), int) else 0
+    )
+    route_valid = (
+        item.get("route_valid_runs") if isinstance(item.get("route_valid_runs"), int) else 0
+    )
+    sensor_valid = (
+        item.get("sensor_valid_runs") if isinstance(item.get("sensor_valid_runs"), int) else 0
+    )
+    return _table_row(
+        _latex_table_text(str(item.get("policy", ""))),
+        item.get("configured_rows") if isinstance(item.get("configured_rows"), int) else 0,
+        f"{completed}/{attempted}",
+        f"{audit_valid}/{completed}",
+        f"{route_valid}/{completed}",
+        f"{sensor_valid}/{completed}",
+        item.get("service_crash_rows") if isinstance(item.get("service_crash_rows"), int) else 0,
+        item.get("blocked_runs") if isinstance(item.get("blocked_runs"), int) else 0,
+    )
+
+
+def _expected_protocol_replay_policy_rows(
+    summary: dict[str, object],
+) -> list[str]:
+    specs = (
+        (
+            "Route following",
+            "20 waypoints",
+            "full_contract",
+            "pass",
+        ),
+        (
+            "Route following",
+            "command only",
+            "command_only_route",
+            "semantic fault",
+        ),
+        (
+            "NAVSIM EgoStatusMLP",
+            "command (route retained)",
+            "navsim_ego_status_mlp_full_contract",
+            "pass",
+        ),
+        (
+            "NAVSIM EgoStatusMLP",
+            "command only",
+            "navsim_ego_status_mlp_command_only_route",
+            "pass",
+        ),
+    )
+    rows: list[str] = []
+    for policy, route, arm, audit in specs:
+        prefix = f"protocol_replay.arms.{arm}"
+        calls = _required_int(summary, f"{prefix}.drive_calls")
+        finite = _required_int(summary, f"{prefix}.finite_drive_outputs")
+        moving = _required_int(
+            summary,
+            f"{prefix}.nonstationary_drive_outputs",
+        )
+        rows.append(
+            _table_row(
+                policy,
+                route,
+                f"{finite}/{calls}",
+                f"{moving}/{calls}",
+                audit,
+            )
+        )
+    return rows
+
+
+def _format_table_metric(value: object) -> str:
+    if not isinstance(value, (int, float)):
+        return "--"
+    return f"{float(value):.3f}"
+
+
+def _latex_table_text(value: str) -> str:
+    return value.replace("\\", r"\textbackslash{}").replace("_", r"\_")
+
+
+def _expected_ablations_rows(summary: dict[str, object]) -> list[str]:
+    return [
+        _table_row(
+            "Full-contract audit-valid",
+            _required_int(summary, "integration_effectiveness.full_contract_audit_valid_runs"),
+            _required_int(summary, "integration_effectiveness.full_contract_completed_runs"),
+            "audit passed",
+        ),
+        _table_row(
+            "Comparison-eligible pairs",
+            _required_int(
+                summary,
+                "integration_effectiveness.semantic_ablation_comparison_eligible_pairs",
+            ),
+            _required_int(summary, "integration_effectiveness.semantic_ablation_completed_pairs"),
+            "valid/invalid arms",
+        ),
+        _table_row(
+            "Status-only baseline accepted",
+            _required_int(
+                summary,
+                "integration_effectiveness.status_only_baseline_accepted_runs",
+            ),
+            _required_int(
+                summary,
+                "integration_effectiveness.status_only_baseline_acceptance_denominator",
+            ),
+            "completion + metrics",
+        ),
+        _table_row(
+            "Invalid route rows rejected",
+            _required_int(
+                summary,
+                "integration_effectiveness.contract_invalid_evidence_rejected_runs",
+            ),
+            _required_int(
+                summary,
+                "integration_effectiveness.contract_invalid_evidence_rejection_denominator",
+            ),
+            "route gate",
+        ),
+        _table_row(
+            "Verified scenario categories",
+            _required_int(summary, "scenario_coverage.verified_required_category_count"),
+            _required_int(summary, "scenario_coverage.required_category_count"),
+            "coverage withheld",
+        ),
+    ]
+
+
+def _expected_fault_localization_rows(
+    lifecycle_counts: dict[str, str],
+    fault_counts: dict[str, str],
+) -> list[str]:
+    return [
+        _table_row(
+            "Lifecycle hardening survived",
+            lifecycle_counts.get("CVMLifecycleFullSurvived", "0"),
+            lifecycle_counts.get("CVMLifecycleFullTotal", "0"),
+        ),
+        _table_row(
+            "Pre-hardening survived",
+            lifecycle_counts.get("CVMLifecycleStrictSurvived", "0"),
+            lifecycle_counts.get("CVMLifecycleStrictTotal", "0"),
+        ),
+        _table_row(
+            "Faults detected",
+            fault_counts.get("CVMFaultDetected", "0"),
+            fault_counts.get("CVMFaultTotal", "0"),
+        ),
+        _table_row(
+            "Faults localized",
+            fault_counts.get("CVMFaultLocalized", "0"),
+            fault_counts.get("CVMFaultTotal", "0"),
+        ),
+    ]
+
+
+def _table_expected_row_failures(*, path: Path, expected_rows: list[str]) -> list[str]:
+    if not path.is_file():
+        return [f"generated_table_missing_for_value_check:{path}"]
+    normalized_rows = {
+        _normalize_table_row(line)
+        for line in path.read_text(encoding="utf-8", errors="ignore").splitlines()
+    }
+    failures: list[str] = []
+    for row in expected_rows:
+        if _normalize_table_row(row) not in normalized_rows:
+            failures.append(f"generated_table_row_mismatch:{path}:{row}")
+    return failures
+
+
+def _table_expected_header_failures(*, path: Path, expected_header: str) -> list[str]:
+    if not path.is_file():
+        return [f"generated_table_missing_for_header_check:{path}"]
+    normalized_rows = {
+        _normalize_table_row(line)
+        for line in path.read_text(encoding="utf-8", errors="ignore").splitlines()
+    }
+    if _normalize_table_row(expected_header) not in normalized_rows:
+        return [f"generated_table_header_mismatch:{path}:{expected_header}"]
+    return []
+
+
+def _normalize_table_row(row: str) -> str:
+    row = row.strip()
+    row = row.removesuffix(r"\\").strip()
+    row = re.sub(r"\s*&\s*", " & ", row)
+    return re.sub(r"\s+", " ", row)
+
+
+def _table_row(*values: object) -> str:
+    return " & ".join(str(value) for value in values)
+
+
+def _required_int(payload: dict[str, object], dotted_path: str) -> int:
+    value = _json_path_value(payload, dotted_path)
+    return value if isinstance(value, int) else 0
+
+
+def _read_csv_dicts(path: Path, label: str) -> tuple[list[dict[str, str]], list[str]]:
+    if not path.is_file():
+        return [], [f"{label}_missing:{path}"]
+    with path.open(newline="", encoding="utf-8") as handle:
+        try:
+            return list(csv.DictReader(handle)), []
+        except csv.Error:
+            return [], [f"{label}_unreadable:{path}"]
+
+
+def _frame_schema_failures(path: Path) -> list[str]:
+    if not path.is_file():
+        return [f"missing_frames_csv:{path}"]
+    with path.open(newline="", encoding="utf-8") as handle:
+        try:
+            header = next(csv.reader(handle))
+        except StopIteration:
+            return [f"empty_frames_csv:{path}"]
+    missing = [field for field in REQUIRED_FRAME_FIELDS if field not in header]
+    if missing:
+        return [f"frames_csv_missing_fields:{path}:{','.join(missing)}"]
+    unexpected_order = list(REQUIRED_FRAME_FIELDS)
+    if header[: len(unexpected_order)] != unexpected_order:
+        return [f"frames_csv_field_order_mismatch:{path}"]
+    return []
+
+
+def _manifest_attribution_failures(manifest_dir: Path) -> list[str]:
+    failures: list[str] = []
+    if not manifest_dir.is_dir():
+        return [f"missing_run_manifest_dir:{manifest_dir}"]
+    paths = sorted(manifest_dir.glob("*.json"))
+    if not paths:
+        return [f"empty_run_manifest_dir:{manifest_dir}"]
+    for path in paths:
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            failures.append(f"invalid_run_manifest_json:{path}")
+            continue
+        run_id = str(payload.get("run_id", path.stem))
+        attribution = payload.get("failure_attribution")
+        if not isinstance(attribution, dict):
+            failures.append(f"missing_failure_attribution:{path}:{run_id}")
+            continue
+        failures.extend(
+            _single_manifest_attribution_failures(
+                payload=payload,
+                attribution=attribution,
+                path=path,
+                run_id=run_id,
+            )
+        )
+        failures.extend(_single_manifest_scene_failures(payload=payload, path=path, run_id=run_id))
+    return failures
+
+
+def _single_manifest_scene_failures(
+    *,
+    payload: dict[str, object],
+    path: Path,
+    run_id: str,
+) -> list[str]:
+    failures: list[str] = []
+    scene = payload.get("scene")
+    if not isinstance(scene, dict):
+        return [f"missing_scene_metadata:{path}:{run_id}"]
+    for field in REQUIRED_SCENE_FIELDS:
+        if field not in scene:
+            failures.append(f"missing_scene_metadata_field:{path}:{run_id}:{field}")
+    scene_id = str(payload.get("scene_id", ""))
+    if str(scene.get("scene_id", "")) != scene_id:
+        failures.append(f"scene_metadata_id_mismatch:{path}:{run_id}")
+    category = str(scene.get("category", ""))
+    scenario_category = str(scene.get("scenario_category", ""))
+    if not category:
+        failures.append(f"scene_metadata_empty_category:{path}:{run_id}")
+    if scenario_category != category:
+        failures.append(f"scenario_category_mismatch:{path}:{run_id}")
+    if str(payload.get("scenario_category", "")) != scenario_category:
+        failures.append(f"manifest_scenario_category_mismatch:{path}:{run_id}")
+    if not str(scene.get("license_gating_status", "")):
+        failures.append(f"scene_metadata_missing_license_status:{path}:{run_id}")
+    if not isinstance(scene.get("categories_verified"), bool):
+        failures.append(f"scene_metadata_categories_verified_not_bool:{path}:{run_id}")
+    return failures
+
+
+def _single_manifest_attribution_failures(
+    *,
+    payload: dict[str, object],
+    attribution: dict[str, object],
+    path: Path,
+    run_id: str,
+) -> list[str]:
+    failures: list[str] = []
+    status = str(payload.get("status", ""))
+    claim_valid = payload.get("claim_valid") is True
+    failure_layer = str(payload.get("failure_layer", ""))
+    for field in REQUIRED_ATTRIBUTION_FIELDS:
+        if field not in attribution:
+            failures.append(f"missing_failure_attribution_field:{path}:{run_id}:{field}")
+    category = str(attribution.get("category", ""))
+    if category not in ATTRIBUTION_CATEGORIES:
+        failures.append(f"invalid_failure_attribution_category:{path}:{run_id}:{category}")
+    interpretation = str(attribution.get("interpretation", ""))
+    if interpretation not in ATTRIBUTION_INTERPRETATIONS:
+        failures.append(
+            f"invalid_failure_attribution_interpretation:{path}:{run_id}:{interpretation}"
+        )
+    expected_interpretation = _expected_failure_interpretation(
+        status=status,
+        claim_valid=claim_valid,
+        failure_layer=failure_layer,
+    )
+    if expected_interpretation is not None and interpretation != expected_interpretation:
+        failures.append(
+            f"failure_attribution_interpretation_mismatch:{path}:{run_id}:{status}:{interpretation}"
+        )
+    expected_category = (
+        "policy_attributable_behavior"
+        if claim_valid
+        else EXPECTED_ATTRIBUTION_BY_STATUS.get(status)
+    )
+    if expected_category is not None and category != expected_category:
+        failures.append(
+            f"failure_attribution_category_mismatch:{path}:{run_id}:{status}:{category}"
+        )
+    if attribution.get("policy_attributable") is not claim_valid:
+        failures.append(f"policy_attributable_mismatch:{path}:{run_id}")
+    if attribution.get("policy_behavior_attributable") is not claim_valid:
+        failures.append(f"policy_behavior_attributable_mismatch:{path}:{run_id}")
+    if attribution.get("policy_failure_attributable") is not (
+        claim_valid and failure_layer == "policy"
+    ):
+        failures.append(f"policy_failure_attributable_mismatch:{path}:{run_id}")
+    if attribution.get("claim_valid_policy_benchmark") is not claim_valid:
+        failures.append(f"claim_valid_policy_benchmark_mismatch:{path}:{run_id}")
+    if attribution.get("integration_or_evidence_invalid") is not (not claim_valid):
+        failures.append(f"integration_invalid_mismatch:{path}:{run_id}")
+    if attribution.get("integration_failure_attributable") is not (
+        not claim_valid and status in {"blocked", "failed"} and bool(failure_layer)
+    ):
+        failures.append(f"integration_failure_attributable_mismatch:{path}:{run_id}")
+    attribution_failure_layer = str(attribution.get("failure_layer", ""))
+    if (failure_layer == "policy" or attribution_failure_layer == "policy") and not claim_valid:
+        failures.append(f"non_claim_valid_policy_failure_layer:{path}:{run_id}")
+    if attribution_failure_layer != failure_layer:
+        failures.append(f"failure_attribution_layer_mismatch:{path}:{run_id}")
+    if str(attribution.get("failure_code", "")) != str(payload.get("failure_code", "")):
+        failures.append(f"failure_attribution_code_mismatch:{path}:{run_id}")
+    rule = str(attribution.get("rule", ""))
+    required_rule_terms = (
+        "policy-attributable",
+        "policy failure",
+        "semantic",
+        "temporal",
+        "lifecycle",
+        "deployment",
+        "evidence",
+    )
+    if not all(term in rule for term in required_rule_terms):
+        failures.append(f"failure_attribution_rule_missing:{path}:{run_id}")
+    return failures
+
+
+def _expected_failure_interpretation(
+    *,
+    status: str,
+    claim_valid: bool,
+    failure_layer: str,
+) -> str | None:
+    if claim_valid:
+        return "policy_behavior_allowed"
+    if status == "blocked":
+        return "integration_precondition_blocker_not_policy_failure"
+    if status == "failed":
+        return "integration_runtime_or_evidence_failure_not_policy_failure"
+    if status == "completed" and failure_layer:
+        return "controlled_contract_diagnostic_not_policy_failure"
+    if status == "completed":
+        return "completed_diagnostic_pending_evidence_gate_not_policy_failure"
+    if status == "planned":
+        return "planned_not_launched_not_policy_failure"
+    return None
+
+
+def _release_hygiene_failures(*, repo_root: Path, canonical_paper: Path) -> list[str]:
+    root = repo_root.resolve()
+    canonical = (
+        (root / canonical_paper).resolve()
+        if not canonical_paper.is_absolute()
+        else canonical_paper.resolve()
+    )
+    failures = _duplicate_manuscript_pdf_failures(root=root, canonical_paper=canonical)
+    failures.extend(_package_metadata_failures(repo_root=root))
+    failures.extend(_install_reproducibility_failures(repo_root=root))
+    failures.extend(_ci_workflow_failures(repo_root=root))
+    failures.extend(_cli_documentation_failures(repo_root=root))
+    failures.extend(_community_template_failures(repo_root=root))
+    failures.extend(_repository_inventory_failures(repo_root=root))
+    failures.extend(_baseline_report_failures(repo_root=root))
+    for path in _iter_public_scan_files(root):
+        try:
+            text = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
+        rel_path = path.relative_to(root)
+        for label, pattern in FORBIDDEN_TEXT_PATTERNS:
+            if pattern.search(text):
+                failures.append(f"public_hygiene:{label}:{rel_path}")
+        failures.extend(_cvm_acronym_definition_failures(path=path, text=text, root=root))
+        failures.extend(_public_local_reference_failures(path=path, text=text, root=root))
+        failures.extend(_public_image_alt_failures(path=path, text=text, root=root))
+    for archive_path in _iter_public_scan_archives(root):
+        failures.extend(_archive_hygiene_failures(archive_path, root=root))
+    return failures
+
+
+def _baseline_report_failures(*, repo_root: Path) -> list[str]:
+    root = repo_root.resolve()
+    path = root / "artifacts" / "cvm" / "reports" / "baseline_report.md"
+    if not path.exists():
+        return []
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    failures: list[str] = []
+    relative = path.relative_to(root)
+    for label, pattern in BASELINE_REPORT_FORBIDDEN_PATTERNS:
+        if pattern.search(text):
+            failures.append(f"baseline_report_forbidden:{relative}:{label}")
+    for term in BASELINE_REPORT_REQUIRED_TERMS:
+        if not _contains_claim_term(text, term):
+            failures.append(f"baseline_report_missing_term:{relative}:{term}")
+    return failures
+
+
+def _repository_inventory_failures(*, repo_root: Path) -> list[str]:
+    root = repo_root.resolve()
+    path = root / "artifacts" / "cvm" / "reports" / "repository_inventory.md"
+    if not path.exists():
+        return []
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    normalized = re.sub(r"\s+", " ", text)
+    match = REPOSITORY_INVENTORY_TEST_COUNT_RE.search(normalized)
+    failures: list[str] = []
+    if match is None:
+        failures.append(f"repository_inventory_test_count_missing:{path.relative_to(root)}")
+    else:
+        reported_count = int(match.group("count"))
+        actual_count = len(list((root / "tests").glob("test_*.py")))
+        if reported_count != actual_count:
+            failures.append(
+                f"repository_inventory_test_count_mismatch:{path.relative_to(root)}:"
+                f"{actual_count}:{reported_count}"
+            )
+    pdf_path = root / "alpabridge.pdf"
+    pdf_size_match = REPOSITORY_INVENTORY_PDF_SIZE_RE.search(normalized)
+    if pdf_path.is_file():
+        if pdf_size_match is None:
+            failures.append(f"repository_inventory_pdf_size_missing:{path.relative_to(root)}")
+        else:
+            reported_pdf_size = int(pdf_size_match.group("size"))
+            actual_pdf_size = pdf_path.stat().st_size
+            if reported_pdf_size != actual_pdf_size:
+                failures.append(
+                    f"repository_inventory_pdf_size_mismatch:{path.relative_to(root)}:"
+                    f"{actual_pdf_size}:{reported_pdf_size}"
+                )
+    if "test_report.md" not in text:
+        failures.append(
+            f"repository_inventory_missing_test_report_reference:{path.relative_to(root)}"
+        )
+    if re.search(r"\b\d+\s+passing\s+dependency-light\s+conformance\s+tests\b", normalized):
+        failures.append(f"repository_inventory_stale_pass_count:{path.relative_to(root)}")
+    return failures
+
+
+def _cvm_acronym_definition_failures(*, path: Path, text: str, root: Path) -> list[str]:
+    try:
+        relative = path.relative_to(root)
+    except ValueError:
+        relative = path
+    is_public_prose = path.suffix.lower() == ".md" or relative.as_posix() == "paper/cvm/main.tex"
+    if not is_public_prose or not CVM_ACRONYM_RE.search(text):
+        return []
+    if _contains_claim_term(text, CVM_DEFINITION_TERM):
+        return []
+    return [f"public_hygiene:cvm_acronym_undefined:{relative}"]
+
+
+def _community_template_failures(*, repo_root: Path) -> list[str]:
+    root = repo_root.resolve()
+    github_dir = root / ".github"
+    if not github_dir.exists():
+        return []
+    failures: list[str] = []
+    for relative_path, terms in COMMUNITY_DOC_REQUIREMENTS:
+        path = root / relative_path
+        if not path.is_file():
+            failures.append(f"community_doc_missing:{relative_path}")
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        for term in terms:
+            if not _contains_claim_term(text, term):
+                failures.append(f"community_doc_term_missing:{relative_path}:{term}")
+    return failures
+
+
+def _ci_workflow_failures(*, repo_root: Path) -> list[str]:
+    path = repo_root / ".github" / "workflows" / "ci.yml"
+    if not path.exists():
+        return ["ci_workflow_missing:.github/workflows/ci.yml"]
+    if not path.is_file():
+        return ["ci_workflow_source_invalid:.github/workflows/ci.yml"]
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    failures: list[str] = []
+    for token in REQUIRED_CI_WORKFLOW_TOKENS:
+        if token not in text:
+            failures.append(f"ci_workflow_gate_missing:.github/workflows/ci.yml:{token}")
+    if "permissions:\n  contents: read" not in text:
+        failures.append("ci_workflow_permissions_not_minimal:.github/workflows/ci.yml")
+    if "pull_request:" not in text or 'branches: ["main"]' not in text:
+        failures.append("ci_workflow_trigger_missing:.github/workflows/ci.yml")
+    return failures
+
+
+def _package_metadata_failures(*, repo_root: Path) -> list[str]:
+    path = repo_root / "pyproject.toml"
+    if not path.exists():
+        return []
+    if not path.is_file():
+        return ["package_metadata_source_invalid:pyproject.toml"]
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    project = _toml_section_text(text, "project")
+    urls = _toml_section_text(text, "project.urls")
+    failures: list[str] = []
+    if not project.strip():
+        return ["package_metadata_project_section_missing:pyproject.toml"]
+    if "authors" not in project or "Alba Maria Tellez Fernandez" not in project:
+        failures.append("package_metadata_author_missing:pyproject.toml")
+    if 'readme = "README.md"' not in project:
+        failures.append("package_metadata_readme_missing:pyproject.toml")
+    if 'license = "BSD-3-Clause"' not in project:
+        failures.append("package_metadata_license_missing:pyproject.toml")
+    for keyword in REQUIRED_PROJECT_KEYWORDS:
+        if f'"{keyword}"' not in project:
+            failures.append(f"package_metadata_keyword_missing:pyproject.toml:{keyword}")
+    for classifier in REQUIRED_PROJECT_CLASSIFIERS:
+        if f'"{classifier}"' not in project:
+            failures.append(f"package_metadata_classifier_missing:pyproject.toml:{classifier}")
+    if not urls.strip():
+        failures.append("package_metadata_urls_missing:pyproject.toml")
+    else:
+        for key in REQUIRED_PROJECT_URLS:
+            if re.search(rf"(?m)^\s*{re.escape(key)}\s*=", urls) is None:
+                failures.append(f"package_metadata_url_missing:pyproject.toml:{key}")
+    return failures
+
+
+def _install_reproducibility_failures(*, repo_root: Path) -> list[str]:
+    root = repo_root.resolve()
+    if not (root / "pyproject.toml").exists():
+        return []
+    failures: list[str] = []
+    lock_path = root / "uv.lock"
+    if not lock_path.is_file():
+        failures.append("install_lock_missing:uv.lock")
+    else:
+        lock_text = lock_path.read_text(encoding="utf-8", errors="ignore")
+        if 'name = "alpabridge"' not in lock_text or 'source = { editable = "." }' not in lock_text:
+            failures.append("install_lock_project_missing:uv.lock")
+    for relative_path in ("README.md", "docs/getting-started.md"):
+        path = root / relative_path
+        if not path.is_file():
+            failures.append(f"install_doc_missing:{relative_path}")
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        for token in REQUIRED_INSTALL_DOC_TOKENS:
+            if token not in text:
+                failures.append(f"install_doc_token_missing:{relative_path}:{token}")
+    return failures
+
+
+def _toml_section_text(text: str, section: str) -> str:
+    match = re.search(
+        rf"(?ms)^\[{re.escape(section)}\]\s*$\n?(.*?)(?=^\[|\Z)",
+        text,
+    )
+    return "" if match is None else match.group(1)
+
+
+def _cli_documentation_failures(*, repo_root: Path) -> list[str]:
+    root = repo_root.resolve()
+    cli_doc = root / "docs" / "cli.md"
+    pyproject = root / "pyproject.toml"
+    makefile = root / "Makefile"
+    source_paths = (cli_doc, pyproject, makefile)
+    if not any(path.exists() for path in source_paths):
+        return []
+    failures: list[str] = []
+    if not cli_doc.is_file():
+        return ["cli_doc_missing:docs/cli.md"]
+    text = cli_doc.read_text(encoding="utf-8", errors="ignore")
+    if not pyproject.is_file():
+        failures.append("cli_doc_source_missing:pyproject.toml")
+    else:
+        for command in _project_script_names(pyproject):
+            if f"`{command}`" not in text:
+                failures.append(f"cli_doc_missing_console_script:docs/cli.md:{command}")
+    if not makefile.is_file():
+        failures.append("cli_doc_source_missing:Makefile")
+    else:
+        for target in _make_phony_targets(makefile):
+            if f"`make {target}`" not in text:
+                failures.append(f"cli_doc_missing_make_target:docs/cli.md:{target}")
+    return failures
+
+
+def _project_script_names(path: Path) -> list[str]:
+    names: list[str] = []
+    in_scripts = False
+    for line in path.read_text(encoding="utf-8", errors="ignore").splitlines():
+        stripped = line.strip()
+        if stripped == "[project.scripts]":
+            in_scripts = True
+            continue
+        if in_scripts and stripped.startswith("[") and stripped.endswith("]"):
+            break
+        if not in_scripts:
+            continue
+        match = re.match(r"([A-Za-z0-9_.-]+)\s*=", stripped)
+        if match is not None:
+            names.append(match.group(1))
+    return sorted(dict.fromkeys(names))
+
+
+def _make_phony_targets(path: Path) -> list[str]:
+    targets: list[str] = []
+    for line in path.read_text(encoding="utf-8", errors="ignore").splitlines():
+        if not line.startswith(".PHONY:"):
+            continue
+        targets.extend(token for token in line.split(":", 1)[1].split() if token)
+    return list(dict.fromkeys(targets))
+
+
+def _duplicate_manuscript_pdf_failures(*, root: Path, canonical_paper: Path) -> list[str]:
+    failures: list[str] = []
+    for name in DUPLICATE_MANUSCRIPT_PDFS:
+        path = (root / name).resolve()
+        if path.is_file() and path != canonical_paper:
+            failures.append(f"duplicate_manuscript_pdf:{path.relative_to(root)}")
+    return failures
+
+
+def _iter_public_scan_files(root: Path) -> list[Path]:
+    files: list[Path] = []
+    for item in PUBLIC_SCAN_PATHS:
+        path = root / item
+        if not path.exists():
+            continue
+        if path.is_file():
+            if path.suffix.lower() not in TEXT_SKIP_SUFFIXES:
+                files.append(path)
+            continue
+        files.extend(
+            candidate
+            for candidate in sorted(path.rglob("*"))
+            if candidate.is_file()
+            and candidate.suffix.lower() not in TEXT_SKIP_SUFFIXES
+            and not _is_raw_local_execution_artifact(candidate, root=root)
+        )
+    return sorted(set(files))
+
+
+def _iter_public_scan_archives(root: Path) -> list[Path]:
+    archives: list[Path] = []
+    for item in PUBLIC_SCAN_PATHS:
+        path = root / item
+        if not path.exists():
+            continue
+        if path.is_file():
+            if path.name.endswith(".tar.gz"):
+                archives.append(path)
+            continue
+        archives.extend(
+            candidate
+            for candidate in sorted(path.rglob("*.tar.gz"))
+            if not _is_raw_local_execution_artifact(candidate, root=root)
+        )
+    return sorted(set(archives))
+
+
+def _is_raw_local_execution_artifact(path: Path, *, root: Path) -> bool:
+    try:
+        relative = path.relative_to(root)
+    except ValueError:
+        return False
+    parts = relative.parts
+    if any(part in PUBLIC_SCAN_SKIP_NAMES or part.endswith(".egg-info") for part in parts):
+        return True
+    return any(_parts_start_with(parts, skipped) for skipped in PUBLIC_SCAN_SKIP_PARTS)
+
+
+def _parts_start_with(parts: tuple[str, ...], prefix: tuple[str, ...]) -> bool:
+    return len(parts) >= len(prefix) and parts[: len(prefix)] == prefix
+
+
+def _public_local_reference_failures(*, path: Path, text: str, root: Path) -> list[str]:
+    if path.suffix.lower() not in {".md", ".html", ".htm"}:
+        return []
+    failures: list[str] = []
+    rel_path = path.relative_to(root)
+    for target in _public_local_reference_targets(text):
+        resolved = _resolve_public_local_reference(path=path, target=target, root=root)
+        if resolved is None:
+            continue
+        target_path, cleaned_target = resolved
+        try:
+            target_path.relative_to(root)
+        except ValueError:
+            failures.append(f"public_local_reference_outside_root:{rel_path}:{cleaned_target}")
+            continue
+        if not target_path.exists():
+            failures.append(f"public_local_reference_missing:{rel_path}:{cleaned_target}")
+    return failures
+
+
+def _public_local_reference_targets(text: str) -> list[str]:
+    targets: list[str] = []
+    targets.extend(match.group(1) for match in MARKDOWN_LINK_RE.finditer(text))
+    targets.extend(match.group(1) for match in HTML_LOCAL_REF_RE.finditer(text))
+    return targets
+
+
+def _resolve_public_local_reference(
+    *, path: Path, target: str, root: Path
+) -> tuple[Path, str] | None:
+    cleaned = target.strip().strip("<>")
+    if not cleaned or cleaned.startswith("#"):
+        return None
+    if re.match(r"^[A-Za-z][A-Za-z0-9+.-]*:", cleaned) or cleaned.startswith("//"):
+        return None
+    cleaned = cleaned.split("#", 1)[0].split("?", 1)[0]
+    if not cleaned:
+        return None
+    cleaned = unquote(cleaned)
+    target_path = root / cleaned.lstrip("/") if cleaned.startswith("/") else path.parent / cleaned
+    return target_path.resolve(), cleaned
+
+
+def _public_image_alt_failures(*, path: Path, text: str, root: Path) -> list[str]:
+    if path.suffix.lower() not in {".md", ".html", ".htm"}:
+        return []
+    rel_path = path.relative_to(root)
+    failures: list[str] = []
+    for alt_text, target in MARKDOWN_IMAGE_RE.findall(text):
+        if not alt_text.strip():
+            failures.append(
+                f"public_image_alt_missing:{rel_path}:{target.strip() or '<empty-target>'}"
+            )
+    for tag in HTML_IMAGE_TAG_RE.findall(text):
+        alt_match = HTML_ALT_ATTR_RE.search(tag)
+        if alt_match is None or not alt_match.group(2).strip():
+            src_match = re.search(r"\bsrc\s*=\s*(['\"])(.*?)\1", tag, re.IGNORECASE)
+            src = src_match.group(2).strip() if src_match else "<missing-src>"
+            failures.append(f"public_image_alt_missing:{rel_path}:{src}")
+    return failures
+
+
+def _archive_hygiene_failures(path: Path, *, root: Path) -> list[str]:
+    failures: list[str] = []
+    rel_path = path.relative_to(root)
+    try:
+        with tarfile.open(path, "r:gz") as archive:
+            for member in archive.getmembers():
+                failures.extend(
+                    _archive_member_metadata_failures(
+                        member=member,
+                        archive_path=rel_path,
+                    )
+                )
+                if (
+                    not member.isfile()
+                    or Path(member.name).suffix.lower() not in ARCHIVE_TEXT_SUFFIXES
+                ):
+                    continue
+                handle = archive.extractfile(member)
+                if handle is None:
+                    continue
+                try:
+                    text = handle.read().decode("utf-8")
+                except UnicodeDecodeError:
+                    continue
+                if "<bundle_tmp>" in text:
+                    failures.append(
+                        f"public_hygiene_archive:bundle_tmp_path:{rel_path}:{member.name}"
+                    )
+                for label, pattern in FORBIDDEN_TEXT_PATTERNS:
+                    if pattern.search(text):
+                        failures.append(f"public_hygiene_archive:{label}:{rel_path}:{member.name}")
+    except tarfile.TarError:
+        failures.append(f"invalid_public_archive:{rel_path}")
+    return failures
+
+
+def _archive_member_metadata_failures(*, member: tarfile.TarInfo, archive_path: Path) -> list[str]:
+    failures: list[str] = []
+    member_path = Path(member.name)
+    if member_path.is_absolute() or ".." in member_path.parts:
+        failures.append(f"public_archive_unsafe_member_path:{archive_path}:{member.name}")
+    if member.mtime != DETERMINISTIC_ARCHIVE_MTIME:
+        failures.append(
+            f"public_archive_nondeterministic_metadata:{archive_path}:{member.name}:mtime"
+        )
+    if member.uid != 0:
+        failures.append(
+            f"public_archive_nondeterministic_metadata:{archive_path}:{member.name}:uid"
+        )
+    if member.gid != 0:
+        failures.append(
+            f"public_archive_nondeterministic_metadata:{archive_path}:{member.name}:gid"
+        )
+    if member.uname:
+        failures.append(
+            f"public_archive_nondeterministic_metadata:{archive_path}:{member.name}:uname"
+        )
+    if member.gname:
+        failures.append(
+            f"public_archive_nondeterministic_metadata:{archive_path}:{member.name}:gname"
+        )
+    return failures
+
+
+def _summary_int(summary: object, key: str) -> int:
+    if not isinstance(summary, dict):
+        return 0
+    value = summary.get(key)
+    return int(value) if isinstance(value, int) else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

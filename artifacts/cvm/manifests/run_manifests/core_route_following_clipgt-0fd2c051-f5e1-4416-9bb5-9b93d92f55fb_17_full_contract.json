@@ -1,0 +1,187 @@
+{
+  "adapter_config": "full_contract",
+  "attempted": true,
+  "blocked": false,
+  "claim_valid": false,
+  "completed": true,
+  "config_path": "configs/cvm/core.yaml",
+  "config_sha256": "73d15603170d33f8fe04961fcde2bd36cf14bd043b27f2dda42e83b7b61bcd95",
+  "contract_expectations": {
+    "claim_valid_requires_route_waypoints": true,
+    "evidence_gate": "claim_valid_false_until_audit_aggregation",
+    "route_source": "alpasim_waypoints",
+    "source_horizon_seconds": 5.0,
+    "target_runtime_frequency_hz": 4,
+    "target_runtime_samples": 20
+  },
+  "created_at": "2026-07-18T21:18:16.568539+00:00",
+  "detail": "Closed-loop launch completed; claim validity remains gated by audit aggregation.",
+  "execution_mode": "closed_loop",
+  "failure_attribution": {
+    "category": "diagnostic_rollout_pending_claim_gate",
+    "claim_valid_policy_benchmark": false,
+    "failure_code": "",
+    "failure_layer": "",
+    "integration_failure_attributable": false,
+    "integration_or_evidence_invalid": true,
+    "interpretation": "completed_diagnostic_pending_evidence_gate_not_policy_failure",
+    "policy_attributable": false,
+    "policy_behavior_attributable": false,
+    "policy_failure_attributable": false,
+    "rule": "A behavior event, including a policy failure, is policy-attributable only after semantic, temporal, lifecycle, deployment, and evidence gates pass; otherwise the row remains an integration, precondition, evidence, or diagnostic record and cannot be counted as a policy failure. Passing the gate permits policy-behavior attribution; policy failure also requires the retained failure layer to be policy."
+  },
+  "failure_code": "",
+  "failure_layer": "",
+  "matrix": "core",
+  "planned_launch": {
+    "baseport": 6000,
+    "command": [
+      ".venv/bin/python",
+      "-m",
+      "wod2sim.cli.commands.run_alpasim_local_external",
+      "--mode",
+      "both",
+      "--model",
+      "route_following",
+      "--scene-preset",
+      "front_camera_50scene_public2602",
+      "--scene-id",
+      "clipgt-0fd2c051-f5e1-4416-9bb5-9b93d92f55fb",
+      "--run-dir",
+      "artifacts/cvm/results/core/run_dirs/core_route_following_clipgt-0fd2c051-f5e1-4416-9bb5-9b93d92f55fb_17_full_contract",
+      "--allow-existing-run-dir",
+      "--baseport",
+      "6000",
+      "--port",
+      "6789",
+      "--timeout",
+      "900",
+      "--topology",
+      "1gpu",
+      "--driver-warmup-seconds",
+      "10.0",
+      "--alpasim-root",
+      "workspace/alpasim-clean",
+      "--wizard-arg",
+      "scenes.local_usdz_dir=data/nre-artifacts/local-usdzs-front-camera-15",
+      "--wizard-arg",
+      "eval.video.render_video=false"
+    ],
+    "cwd": ".",
+    "driver_env": {},
+    "local_usdz_dir": "data/nre-artifacts/local-usdzs-front-camera-15",
+    "logs": {
+      "stderr": "artifacts/cvm/logs/experiments/core/core_route_following_clipgt-0fd2c051-f5e1-4416-9bb5-9b93d92f55fb_17_full_contract.stderr.log",
+      "stdout": "artifacts/cvm/logs/experiments/core/core_route_following_clipgt-0fd2c051-f5e1-4416-9bb5-9b93d92f55fb_17_full_contract.stdout.log"
+    },
+    "missing_inputs": [],
+    "mode": "both",
+    "port": 6789,
+    "readiness_command": [
+      ".venv/bin/python",
+      "-m",
+      "wod2sim.cli.commands.check_alpasim_readiness",
+      "--alpasim-root",
+      "workspace/alpasim-clean",
+      "--scene-preset",
+      "front_camera_50scene_public2602",
+      "--scene-id",
+      "clipgt-0fd2c051-f5e1-4416-9bb5-9b93d92f55fb",
+      "--local-usdz-dir",
+      "data/nre-artifacts/local-usdzs-front-camera-15"
+    ],
+    "run_dir": "artifacts/cvm/results/core/run_dirs/core_route_following_clipgt-0fd2c051-f5e1-4416-9bb5-9b93d92f55fb_17_full_contract",
+    "run_status": "artifacts/cvm/results/core/run_dirs/core_route_following_clipgt-0fd2c051-f5e1-4416-9bb5-9b93d92f55fb_17_full_contract/run-status.json",
+    "scene_preset": "front_camera_50scene_public2602",
+    "schema": "cvm_closed_loop_launch_plan_v1",
+    "supported": true,
+    "timeout_seconds": 900,
+    "topology": "1gpu",
+    "unsupported_reasons": []
+  },
+  "policy": "route_following",
+  "provenance": {
+    "alpasim": {
+      "dirty": true,
+      "dirty_diff_sha256": "69ec8a093ef0bc2b6a5dfa76dd0c9c9327e0eda76ef0c6faca343f0ae2b5126d",
+      "git_sha": "049f70fbfe8207e1efd4831a6c3e78a38703d473",
+      "path": "workspace/alpasim-clean",
+      "present": true,
+      "status_paths": [
+        "Dockerfile",
+        "pyproject.toml",
+        "src/driver/src/alpasim_driver/main.py",
+        "src/driver/src/alpasim_driver/models/__init__.py",
+        "src/driver/src/alpasim_driver/models/base.py",
+        "src/driver/src/alpasim_driver/tests/test_service_flow.py",
+        "src/wizard/alpasim_wizard/deployment/docker_compose.py",
+        "Dockerfile.amd64",
+        "__init__.py",
+        "src/wizard/configs/deploy/local_arm_external_driver.yaml"
+      ]
+    },
+    "checkpoint": {
+      "available": "false",
+      "path": "",
+      "sha256": ""
+    },
+    "config": {
+      "path": "configs/cvm/core.yaml",
+      "sha256": "73d15603170d33f8fe04961fcde2bd36cf14bd043b27f2dda42e83b7b61bcd95"
+    },
+    "docker_image": {
+      "available": true,
+      "id": "sha256:7ba4dbee3391aeb473aff739350e57e01f3019b84f7177e0e7e2503bce8e8732",
+      "repo_digests": [],
+      "tag": "alpasim-base:0.66.0"
+    },
+    "gpu_runtime": {
+      "available": "true",
+      "driver": "592.27",
+      "gpu": "NVIDIA GeForce RTX 5080 Laptop GPU"
+    },
+    "launch_plan_schema": "cvm_closed_loop_launch_plan_v1",
+    "patches": {
+      "src/wod2sim/alpasim_overrides/Dockerfile.amd64": "088de1456fb80df5c88f22bb710df29a66992b1ce157033aea6b4ef61d6e0714",
+      "src/wod2sim/alpasim_overrides/__init__.py": "59efd2872774597c1995ea2d6d92aafc626390182175f0a94ca5f9ba4af02890",
+      "src/wod2sim/alpasim_overrides/local_checkout.patch": "b6b240423a202916e7b90443a1d2293b01aca26b1de1c8271f7b1722011f7876",
+      "src/wod2sim/alpasim_overrides/route_waypoints.patch": "b4ee8ecc4aab297426ab5ddfc79507b62b07cd64ceb543bacba985b536bfeb9d",
+      "src/wod2sim/alpasim_overrides/src/driver/src/alpasim_driver/models/__init__.py": "c27efe9481527156b9280f7dd6788f6926d92a7156b74942b01f14d173db2537",
+      "src/wod2sim/alpasim_overrides/src/wizard/alpasim_wizard/deployment/docker_compose.py": "d3210f973f53cbbdc0ca9634686cdee46d8113e88e5a7b242ee5d775b0bc0191",
+      "src/wod2sim/alpasim_overrides/src/wizard/configs/deploy/local_arm_external_driver.yaml": "2d8e5ab7e69ca7377b9427c96f4da600ec90802bc2a2e8d15ed825c5833ec240"
+    },
+    "python": {
+      "executable": ".venv/bin/python",
+      "version": "Python 3.12.12"
+    },
+    "repository": {
+      "dirty": true,
+      "dirty_diff_sha256": "28586952e7a807eb26d70d392779dc9138713acdc6cd19843f44d02dca7d4059",
+      "git_sha": "326cde606d06417658d32c8af1c4c731340f580f"
+    }
+  },
+  "run_id": "core_route_following_clipgt-0fd2c051-f5e1-4416-9bb5-9b93d92f55fb_17_full_contract",
+  "scenario_category": "available_front_camera_26_02_unclassified",
+  "scene": {
+    "asset_availability": "local_usdz_present",
+    "categories_verified": false,
+    "category": "available_front_camera_26_02_unclassified",
+    "expected_interaction_feature": "unverified",
+    "expected_route_feature": "unverified",
+    "license_gating_status": "gated_asset_referenced_not_redistributed",
+    "scenario_category": "available_front_camera_26_02_unclassified",
+    "scene_id": "clipgt-0fd2c051-f5e1-4416-9bb5-9b93d92f55fb",
+    "selection_rationale": "twelfth locally cached public-2602 front-camera scene",
+    "source_manifest": "artifacts/cvm/manifests/scene_manifest.yaml"
+  },
+  "scene_id": "clipgt-0fd2c051-f5e1-4416-9bb5-9b93d92f55fb",
+  "schema": "cvm_run_manifest_v1",
+  "seed": "17",
+  "status": "completed",
+  "terminal_status": "completed",
+  "timestamps": {
+    "ended_at": "2026-07-18T23:10:23",
+    "source": "run_status",
+    "started_at": "2026-07-18T23:08:14"
+  }
+}

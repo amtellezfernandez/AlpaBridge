@@ -1,0 +1,21 @@
+{
+  "attempted": 30,
+  "blocked": 15,
+  "blocker_counts": {
+    "direct_actor_oracle_proxy_missing": 15
+  },
+  "blockers": [],
+  "claim_valid": false,
+  "completed": 30,
+  "config": "configs/cvm/core.yaml",
+  "created_at": "2026-07-18T21:18:19.088449+00:00",
+  "expected_runs": 45,
+  "failed": 0,
+  "failure_code_counts": {
+    "direct_actor_oracle_proxy_missing": 15
+  },
+  "matrix": "core",
+  "planned": 0,
+  "rows": 45,
+  "schema": "cvm_matrix_summary_v1"
+}
