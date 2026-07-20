@@ -103,8 +103,7 @@ def main() -> int:
     validation_errors = _validate_run_rows(rows, args.inputs)
     if validation_errors:
         raise SystemExit(
-            "Invalid contract-validation aggregate inputs:\n"
-            + "\n".join(validation_errors[:20])
+            "Invalid contract-validation aggregate inputs:\n" + "\n".join(validation_errors[:20])
         )
     duplicate_completed = _duplicate_completed_run_ids(rows)
     if duplicate_completed:
@@ -135,7 +134,9 @@ def main() -> int:
 
     _write_csv(args.output / "runs.csv", rows, _fields(rows))
     _write_csv(args.output / "failures.csv", failures, _fields(rows))
-    _write_csv(args.output / "closed_loop_metrics.csv", closed_loop_evidence, _fields(closed_loop_evidence))
+    _write_csv(
+        args.output / "closed_loop_metrics.csv", closed_loop_evidence, _fields(closed_loop_evidence)
+    )
     _write_csv(
         args.output / "semantic_ablation_pairs.csv",
         semantic_pair_rows,
@@ -334,9 +335,7 @@ def _external_compatibility_summary(path: Path) -> dict[str, Any]:
         "driver_latency_mean_ms": round(sum(drive_latencies_ms) / len(drive_latencies_ms), 3)
         if drive_latencies_ms
         else None,
-        "driver_latency_max_ms": round(max(drive_latencies_ms), 3)
-        if drive_latencies_ms
-        else None,
+        "driver_latency_max_ms": round(max(drive_latencies_ms), 3) if drive_latencies_ms else None,
         "score": _external_score(results),
         "claim_boundary": (
             "External evaluator conformance evidence checks interface portability only. It is "
@@ -353,7 +352,7 @@ def _diagnostic_experiment_summary(path: Path) -> dict[str, Any]:
         raise SystemExit(f"Missing diagnostic experiment artifact: {path}") from exc
     except json.JSONDecodeError as exc:
         raise SystemExit(f"Invalid diagnostic experiment JSON: {path}: {exc}") from exc
-    if not isinstance(payload, dict) or payload.get("schema") != "wod2sim_diagnostic_experiment_v1":
+    if not isinstance(payload, dict) or payload.get("schema") != "wod2sim_diagnostic_experiment_v3":
         raise SystemExit(f"Invalid diagnostic experiment schema: {path}")
 
     required_numbers = (
@@ -367,15 +366,20 @@ def _diagnostic_experiment_summary(path: Path) -> dict[str, Any]:
         "classification.status_only.classification_correct",
         "classification.status_only.faults_detected",
         "classification.status_only.false_positives",
-        "classification.paired_mcnemar.exact_two_sided_p",
-        "timing.wod2sim_decision_us.p50",
-        "timing.correct_fault_diagnosis_us.p50",
-        "online_guard_overhead.paired_incremental_us.p50",
-        "online_guard_overhead.paired_incremental_p50_percent",
-        "online_guard_overhead.incremental_p50_as_source_driver_p50_percent",
+        "classification.paired_comparison.discordant_pairs",
+        "timing.contract_gate_decision_us.p50",
+        "timing.contract_gate_decision_us.p95",
+        "timing.fault_case_detector_us.p50",
+        "timing.fault_case_detector_us.p95",
+        "adapter_guard_path_timing.guarded_drive_path_us.p50",
+        "adapter_guard_path_timing.guarded_drive_path_us.p95",
+        "adapter_guard_path_timing.paired_incremental_us.p50",
+        "adapter_guard_path_timing.paired_incremental_us.p95",
+        "adapter_guard_path_timing.paired_incremental_us.samples",
+        "adapter_guard_path_timing.input_cases",
+        "source_trace.session_count",
         "source_trace.drive_count",
-        "source_trace.latency_ms.p50",
-        "source_trace.latency_ms.p95",
+        "source_trace.explicit_finite_drive_count",
     )
     for dotted_path in required_numbers:
         value = _nested_value(payload, dotted_path)
@@ -390,12 +394,23 @@ def _diagnostic_experiment_summary(path: Path) -> dict[str, Any]:
     cases = payload.get("cases")
     if total != faults + controls or not isinstance(cases, list) or len(cases) != total:
         raise SystemExit(f"Diagnostic experiment denominator mismatch: {path}")
+    pair_counts = Counter(str(case.get("pair_id", "")) for case in cases if isinstance(case, dict))
+    if len(pair_counts) != faults or any(
+        not pair_id or count != 2 for pair_id, count in pair_counts.items()
+    ):
+        raise SystemExit(f"Diagnostic experiment pairing mismatch: {path}")
+    source_sessions = int(_nested_value(payload, "source_trace.session_count"))
+    source_drives = int(_nested_value(payload, "source_trace.drive_count"))
+    finite_drives = int(_nested_value(payload, "source_trace.explicit_finite_drive_count"))
+    telemetry_schemas = _nested_value(payload, "source_trace.telemetry_schemas")
+    if (
+        source_sessions != faults
+        or finite_drives != source_drives
+        or telemetry_schemas != ["wod2sim_challenge_telemetry_v2"]
+    ):
+        raise SystemExit(f"Diagnostic experiment source-evidence mismatch: {path}")
 
     result = dict(payload)
-    paired = result["classification"]["paired_mcnemar"]
-    paired["exact_two_sided_p_below_0_001"] = int(
-        float(paired["exact_two_sided_p"]) < 0.001
-    )
     result["artifact_sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
     return result
 
@@ -535,7 +550,9 @@ def _core_policy_results(
                 "configured_rows": len(policy_rows),
                 "attempted_runs": sum(row.get("attempted") == "true" for row in policy_rows),
                 "completed_runs": sum(row.get("completed") == "true" for row in policy_rows),
-                "audit_valid_runs": sum(row.get("audit_valid") == "true" for row in policy_evidence),
+                "audit_valid_runs": sum(
+                    row.get("audit_valid") == "true" for row in policy_evidence
+                ),
                 "route_valid_runs": sum(
                     row.get("route_contract_ok") == "true" for row in policy_evidence
                 ),
@@ -572,15 +589,20 @@ def _release_scope_summary(
         row
         for row in rows
         if row.get("policy") in OPTIONAL_GATED_POLICIES
-        or row.get("failure_code") in {"direct_actor_oracle_proxy_missing", "token_checkpoint_missing"}
+        or row.get("failure_code")
+        in {"direct_actor_oracle_proxy_missing", "token_checkpoint_missing"}
     ]
     direct_actor_rows = [row for row in rows if row.get("policy") == "direct_actor_planner"]
     return {
         "public_core_policy_names": list(PUBLIC_CORE_POLICIES),
         "optional_gated_policy_names": list(OPTIONAL_GATED_POLICIES),
         "public_core_configured_rows": len(public_core_rows),
-        "public_core_attempted_runs": sum(row.get("attempted") == "true" for row in public_core_rows),
-        "public_core_completed_runs": sum(row.get("completed") == "true" for row in public_core_rows),
+        "public_core_attempted_runs": sum(
+            row.get("attempted") == "true" for row in public_core_rows
+        ),
+        "public_core_completed_runs": sum(
+            row.get("completed") == "true" for row in public_core_rows
+        ),
         "public_core_audit_valid_runs": sum(
             row.get("audit_valid") == "true" for row in public_core_evidence
         ),
@@ -588,7 +610,9 @@ def _release_scope_summary(
         "optional_gated_configured_rows": len(optional_rows),
         "optional_gated_blocked_rows": sum(row.get("status") == "blocked" for row in optional_rows),
         "direct_actor_configured_rows": len(direct_actor_rows),
-        "direct_actor_blocked_rows": sum(row.get("status") == "blocked" for row in direct_actor_rows),
+        "direct_actor_blocked_rows": sum(
+            row.get("status") == "blocked" for row in direct_actor_rows
+        ),
         "public_learned_checkpoint_bundled": False,
         "restricted_scene_assets_bundled": False,
         "scope_rule": (
@@ -642,9 +666,7 @@ def _failure_attribution_summary(
         and row.get("sensor_pipeline_ok") == "true"
     ]
     integration_invalid_closed_loop = [
-        row
-        for row in closed_loop_evidence
-        if row not in contract_valid_closed_loop
+        row for row in closed_loop_evidence if row not in contract_valid_closed_loop
     ]
     policy_behavior_run_ids = {
         str(row.get("run_id", ""))
@@ -652,9 +674,7 @@ def _failure_attribution_summary(
         if str(row.get("run_id", ""))
     }
     claim_valid_policy_rows = [
-        row
-        for row in rows
-        if row.get("claim_valid") == "true" and row.get("status") == "completed"
+        row for row in rows if row.get("claim_valid") == "true" and row.get("status") == "completed"
     ]
     policy_failure_rows = [
         row for row in claim_valid_policy_rows if row.get("failure_layer") == "policy"
@@ -716,11 +736,7 @@ def _load_existing_evidence(path: Path) -> dict[str, dict[str, str]]:
     if not path.is_file():
         return {}
     with path.open(newline="", encoding="utf-8") as handle:
-        return {
-            row.get("run_id", ""): row
-            for row in csv.DictReader(handle)
-            if row.get("run_id")
-        }
+        return {row.get("run_id", ""): row for row in csv.DictReader(handle) if row.get("run_id")}
 
 
 def _closed_loop_evidence(
@@ -811,7 +827,10 @@ def _manifest_scene_evidence(row: dict[str, str]) -> dict[str, str]:
     categories_verified = scene.get("categories_verified")
     return {
         "scenario_category": str(
-            manifest.get("scenario_category") or scene.get("scenario_category") or scene.get("category") or ""
+            manifest.get("scenario_category")
+            or scene.get("scenario_category")
+            or scene.get("category")
+            or ""
         ),
         "categories_verified": "true" if categories_verified is True else "false",
         "asset_availability": str(scene.get("asset_availability", "")),
@@ -850,11 +869,13 @@ def _run_dir_for(row: dict[str, str]) -> Path | None:
 
 
 def _safe_filename(value: str) -> str:
-    return "".join(character if character.isalnum() or character in "._-" else "_" for character in value)
+    return "".join(
+        character if character.isalnum() or character in "._-" else "_" for character in value
+    )
 
 
 def _closed_loop_metric_summary(
-    evidence_rows: list[dict[str, Any]]
+    evidence_rows: list[dict[str, Any]],
 ) -> dict[str, dict[str, float | int]]:
     summary: dict[str, dict[str, float | int]] = {}
     for metric in CLOSED_LOOP_METRICS:
@@ -879,9 +900,7 @@ def _closed_loop_metric_summary(
 
 def _integration_effectiveness_summary(evidence_rows: list[dict[str, Any]]) -> dict[str, Any]:
     full_contract_rows = [
-        row
-        for row in evidence_rows
-        if row.get("adapter_config") in FULL_CONTRACT_ADAPTERS
+        row for row in evidence_rows if row.get("adapter_config") in FULL_CONTRACT_ADAPTERS
     ]
     full_contract_audit_valid = [
         row for row in full_contract_rows if row.get("audit_valid") == "true"
@@ -889,9 +908,7 @@ def _integration_effectiveness_summary(evidence_rows: list[dict[str, Any]]) -> d
     semantic_rows = [row for row in evidence_rows if row.get("matrix") == "semantic_ablation"]
     semantic_pairs = _semantic_ablation_pairs(semantic_rows)
     command_proxy_rows = [
-        row
-        for row in semantic_rows
-        if row.get("adapter_config") == "command_only_route"
+        row for row in semantic_rows if row.get("adapter_config") == "command_only_route"
     ]
     command_proxy_rejected = [
         row
@@ -917,9 +934,7 @@ def _integration_effectiveness_summary(evidence_rows: list[dict[str, Any]]) -> d
         "full_contract_completed_runs": len(full_contract_rows),
         "full_contract_audit_valid_runs": len(full_contract_audit_valid),
         "semantic_ablation_completed_pairs": semantic_pairs["completed_pairs"],
-        "semantic_ablation_comparison_eligible_pairs": semantic_pairs[
-            "comparison_eligible_pairs"
-        ],
+        "semantic_ablation_comparison_eligible_pairs": semantic_pairs["comparison_eligible_pairs"],
         "semantic_ablation_command_proxy_completed_runs": len(command_proxy_rows),
         "semantic_ablation_command_proxy_metric_runs": len(command_proxy_metric_rows),
         "semantic_ablation_command_proxy_rejected_runs": len(command_proxy_rejected),
@@ -1064,9 +1079,7 @@ def _semantic_ablation_pair_rows(evidence_rows: list[dict[str, Any]]) -> list[di
             full_value = _metric_float(full, metric)
             command_value = _metric_float(command_only, metric)
             row[f"full_{metric}"] = "" if full_value is None else f"{full_value:.6g}"
-            row[f"command_only_{metric}"] = (
-                "" if command_value is None else f"{command_value:.6g}"
-            )
+            row[f"command_only_{metric}"] = "" if command_value is None else f"{command_value:.6g}"
             row[f"delta_{metric}"] = (
                 ""
                 if full_value is None or command_value is None
@@ -1077,7 +1090,7 @@ def _semantic_ablation_pair_rows(evidence_rows: list[dict[str, Any]]) -> list[di
 
 
 def _semantic_ablation_delta_summary(
-    pair_rows: list[dict[str, Any]]
+    pair_rows: list[dict[str, Any]],
 ) -> dict[str, dict[str, float | int]]:
     summary: dict[str, dict[str, float | int]] = {}
     for metric in SEMANTIC_PAIR_METRICS:
@@ -1276,22 +1289,16 @@ def _write_tables(output: Path, summary: dict[str, Any], rows: list[dict[str, st
     )
     fault_total = sum(row.get("matrix") == "fault_injection" for row in rows)
     fault_detected = sum(
-        row.get("matrix") == "fault_injection" and row.get("detected") == "true"
-        for row in rows
+        row.get("matrix") == "fault_injection" and row.get("detected") == "true" for row in rows
     )
     fault_localized = sum(
-        row.get("matrix") == "fault_injection"
-        and row.get("correctly_localized") == "true"
+        row.get("matrix") == "fault_injection" and row.get("correctly_localized") == "true"
         for row in rows
     )
     effectiveness = summary.get("integration_effectiveness", {})
     full_contract_completed = _summary_int(effectiveness, "full_contract_completed_runs")
-    full_contract_audit_valid = _summary_int(
-        effectiveness, "full_contract_audit_valid_runs"
-    )
-    semantic_completed_pairs = _summary_int(
-        effectiveness, "semantic_ablation_completed_pairs"
-    )
+    full_contract_audit_valid = _summary_int(effectiveness, "full_contract_audit_valid_runs")
+    semantic_completed_pairs = _summary_int(effectiveness, "semantic_ablation_completed_pairs")
     semantic_eligible_pairs = _summary_int(
         effectiveness, "semantic_ablation_comparison_eligible_pairs"
     )
@@ -1301,9 +1308,7 @@ def _write_tables(output: Path, summary: dict[str, Any], rows: list[dict[str, st
     command_proxy_rejected = _summary_int(
         effectiveness, "semantic_ablation_command_proxy_rejected_runs"
     )
-    status_only_accepted = _summary_int(
-        effectiveness, "status_only_baseline_accepted_runs"
-    )
+    status_only_accepted = _summary_int(effectiveness, "status_only_baseline_accepted_runs")
     status_only_denominator = _summary_int(
         effectiveness, "status_only_baseline_acceptance_denominator"
     )
@@ -1329,21 +1334,13 @@ def _write_tables(output: Path, summary: dict[str, Any], rows: list[dict[str, st
     scenario_category_coverage_claimed = (
         1 if scenario_coverage.get("scenario_category_coverage_claimed") is True else 0
     )
-    contract_valid_closed_loop = _summary_int(
-        attribution, "contract_valid_closed_loop_rows"
-    )
+    contract_valid_closed_loop = _summary_int(attribution, "contract_valid_closed_loop_rows")
     integration_invalid_closed_loop = _summary_int(
         attribution, "integration_or_evidence_invalid_closed_loop_rows"
     )
-    claim_valid_policy_benchmark = _summary_int(
-        attribution, "claim_valid_policy_benchmark_rows"
-    )
-    policy_behavior_attributable = _summary_int(
-        attribution, "policy_behavior_attributable_rows"
-    )
-    policy_failure_attributable = _summary_int(
-        attribution, "policy_failure_attributable_rows"
-    )
+    claim_valid_policy_benchmark = _summary_int(attribution, "claim_valid_policy_benchmark_rows")
+    policy_behavior_attributable = _summary_int(attribution, "policy_behavior_attributable_rows")
+    policy_failure_attributable = _summary_int(attribution, "policy_failure_attributable_rows")
     integration_failure_attributable = _summary_int(
         attribution, "integration_failure_attributable_rows"
     )
@@ -1353,9 +1350,7 @@ def _write_tables(output: Path, summary: dict[str, Any], rows: list[dict[str, st
     release_scope = summary.get("release_scope", {})
     external = summary.get("external_compatibility", {})
     diagnostic = summary.get("diagnostic_experiment", {})
-    diagnostic_design = (
-        diagnostic.get("design", {}) if isinstance(diagnostic, dict) else {}
-    )
+    diagnostic_design = diagnostic.get("design", {}) if isinstance(diagnostic, dict) else {}
     diagnostic_classification = (
         diagnostic.get("classification", {}) if isinstance(diagnostic, dict) else {}
     )
@@ -1370,21 +1365,20 @@ def _write_tables(output: Path, summary: dict[str, Any], rows: list[dict[str, st
         else {}
     )
     diagnostic_paired = (
-        diagnostic_classification.get("paired_mcnemar", {})
+        diagnostic_classification.get("paired_comparison", {})
         if isinstance(diagnostic_classification, dict)
         else {}
     )
-    diagnostic_source = (
-        diagnostic.get("source_trace", {}) if isinstance(diagnostic, dict) else {}
+    diagnostic_source = diagnostic.get("source_trace", {}) if isinstance(diagnostic, dict) else {}
+    diagnostic_adapter = (
+        diagnostic.get("adapter_guard_path_timing", {}) if isinstance(diagnostic, dict) else {}
     )
     public_core_configured = _summary_int(release_scope, "public_core_configured_rows")
     public_core_completed = _summary_int(release_scope, "public_core_completed_runs")
     public_core_attempted = _summary_int(release_scope, "public_core_attempted_runs")
     public_core_audit_valid = _summary_int(release_scope, "public_core_audit_valid_runs")
     public_core_blocked = _summary_int(release_scope, "public_core_blocked_rows")
-    optional_gated_configured = _summary_int(
-        release_scope, "optional_gated_configured_rows"
-    )
+    optional_gated_configured = _summary_int(release_scope, "optional_gated_configured_rows")
     optional_gated_blocked = _summary_int(release_scope, "optional_gated_blocked_rows")
     direct_actor_configured = _summary_int(release_scope, "direct_actor_configured_rows")
     direct_actor_blocked = _summary_int(release_scope, "direct_actor_blocked_rows")
@@ -1539,45 +1533,48 @@ def _write_tables(output: Path, summary: dict[str, Any], rows: list[dict[str, st
         + f"\\newcommand{{\\CVMWODDiagnosticFalsePositives}}{{{_summary_int(diagnostic_wod2sim, 'false_positives')}}}\n"
         + f"\\newcommand{{\\CVMStatusDiagnosticFaultDetected}}{{{_summary_int(diagnostic_status, 'faults_detected')}}}\n"
         + f"\\newcommand{{\\CVMStatusDiagnosticFalsePositives}}{{{_summary_int(diagnostic_status, 'false_positives')}}}\n"
-        + f"\\newcommand{{\\CVMDiagnosticMcNemarPBelowZeroZeroOne}}{{{_summary_int(diagnostic_paired, 'exact_two_sided_p_below_0_001')}}}\n"
-        + "\\newcommand{\\CVMDiagnosticMcNemarP}{"
+        + f"\\newcommand{{\\CVMDiagnosticDiscordantPairs}}{{{_summary_int(diagnostic_paired, 'discordant_pairs')}}}\n"
+        + f"\\newcommand{{\\CVMProtocolTraceSessions}}{{{_summary_int(diagnostic_source, 'session_count')}}}\n"
+        + f"\\newcommand{{\\CVMProtocolTraceDriveRPCs}}{{{_summary_int(diagnostic_source, 'drive_count')}}}\n"
+        + f"\\newcommand{{\\CVMProtocolFiniteDriveRecords}}{{{_summary_int(diagnostic_source, 'explicit_finite_drive_count')}}}\n"
+        + "\\newcommand{\\CVMDetectorDecisionMedianUs}{"
+        + _paper_diagnostic_metric(summary, "timing.contract_gate_decision_us.p50")
+        + "}\n"
+        + "\\newcommand{\\CVMDetectorDecisionNinetyFifthUs}{"
+        + _paper_diagnostic_metric(summary, "timing.contract_gate_decision_us.p95")
+        + "}\n"
+        + "\\newcommand{\\CVMFaultDetectorMedianUs}{"
+        + _paper_diagnostic_metric(summary, "timing.fault_case_detector_us.p50")
+        + "}\n"
+        + "\\newcommand{\\CVMFaultDetectorNinetyFifthUs}{"
+        + _paper_diagnostic_metric(summary, "timing.fault_case_detector_us.p95")
+        + "}\n"
+        + "\\newcommand{\\CVMAdapterDriveMedianUs}{"
         + _paper_diagnostic_metric(
             summary,
-            "classification.paired_mcnemar.exact_two_sided_p",
-            precision=6,
+            "adapter_guard_path_timing.guarded_drive_path_us.p50",
         )
         + "}\n"
-        + f"\\newcommand{{\\CVMExternalTraceDriveRPCs}}{{{_summary_int(diagnostic_source, 'drive_count')}}}\n"
-        + "\\newcommand{\\CVMDiagnosticDecisionMedianUs}{"
-        + _paper_diagnostic_metric(summary, "timing.wod2sim_decision_us.p50")
-        + "}\n"
-        + "\\newcommand{\\CVMStatusDecisionMedianUs}{"
-        + _paper_diagnostic_metric(summary, "timing.status_only_decision_us.p50")
-        + "}\n"
-        + "\\newcommand{\\CVMDiagnosisMedianUs}{"
-        + _paper_diagnostic_metric(summary, "timing.correct_fault_diagnosis_us.p50")
-        + "}\n"
-        + "\\newcommand{\\CVMGuardOverheadMedianUs}{"
-        + _paper_diagnostic_metric(summary, "online_guard_overhead.paired_incremental_us.p50")
-        + "}\n"
-        + "\\newcommand{\\CVMGuardOverheadRelativePercent}{"
+        + "\\newcommand{\\CVMAdapterDriveNinetyFifthUs}{"
         + _paper_diagnostic_metric(
             summary,
-            "online_guard_overhead.paired_incremental_p50_percent",
+            "adapter_guard_path_timing.guarded_drive_path_us.p95",
         )
         + "}\n"
-        + "\\newcommand{\\CVMGuardOverheadTracePercent}{"
+        + "\\newcommand{\\CVMAdapterGuardIncrementMedianUs}{"
         + _paper_diagnostic_metric(
             summary,
-            "online_guard_overhead.incremental_p50_as_source_driver_p50_percent",
+            "adapter_guard_path_timing.paired_incremental_us.p50",
         )
         + "}\n"
-        + "\\newcommand{\\CVMExternalTraceLatencyMedianMs}{"
-        + _paper_diagnostic_metric(summary, "source_trace.latency_ms.p50")
+        + "\\newcommand{\\CVMAdapterGuardIncrementNinetyFifthUs}{"
+        + _paper_diagnostic_metric(
+            summary,
+            "adapter_guard_path_timing.paired_incremental_us.p95",
+        )
         + "}\n"
-        + "\\newcommand{\\CVMExternalTraceLatencyNinetyFifthMs}{"
-        + _paper_diagnostic_metric(summary, "source_trace.latency_ms.p95")
-        + "}\n"
+        + f"\\newcommand{{\\CVMAdapterTimingSamples}}{{{_summary_int(diagnostic_adapter.get('paired_incremental_us', {}), 'samples')}}}\n"
+        + f"\\newcommand{{\\CVMAdapterInputCases}}{{{_summary_int(diagnostic_adapter, 'input_cases')}}}\n"
         + f"\\newcommand{{\\CVMFailedRuns}}{{{summary['failed_runs']}}}\n"
         + f"\\newcommand{{\\CVMBlockedRuns}}{{{summary['blocked_runs']}}}\n"
         + f"\\newcommand{{\\CVMSyntheticRuns}}{{{summary['synthetic_completed_runs']}}}\n"

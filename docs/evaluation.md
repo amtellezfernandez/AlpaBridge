@@ -32,6 +32,8 @@ behavior attribution; it does not automatically make the event a policy failure.
 - Camera, ego-motion, route, and structured hazards form a stable policy signal.
 - Five-second policy trajectories preserve native-rate samples, use origin-anchored
   endpoint interpolation when resampled, and recompute runtime headings.
+- Final protocol serialization rejects empty trajectories, point/heading count
+  mismatches, and non-finite coordinates or headings.
 - A replay-identity adapter preserves logged trajectory points through the shared
   output contract.
 - Late session messages and repeated close events do not corrupt a batch.
@@ -49,23 +51,38 @@ inspectable, but they are not an AlpaSim rollout or policy result.
 
 ## Controlled Diagnostic Evaluation
 
-Run `make cvm-diagnostics` to evaluate the hashed retained external-driver
-trace. The experiment creates 15 single-fault mutations across the five
-contracts and 15 valid prefix controls. Mutation and diagnosis are separate:
-the detector receives mutated events and runtime context, while the scorer
-retains the expected label.
+Run `make cvm-diagnostics` to regenerate 15 separate sessions through the
+current adapter. The trace contains 405 events and 120 drive calls, all with an
+explicit finite serialized-trajectory result. Each valid session is paired with
+one predefined single-fault mutation across the five contracts. Mutation and
+detection are separate: the detector receives events and runtime context, while
+the scorer retains the expected label.
 
 The current artifact reports WOD2Sim at 30/30 correct classifications, 15/15
 fault localizations, and 0/15 control false positives. The executable
-completion-and-metrics gate is correct on 15/30 and detects no faults; exact
-paired McNemar `p=0.000061`. Wilson intervals retain the finite-sample
-uncertainty.
+completion-and-metrics gate is correct on 15/30 and detects no faults. All 15
+discordant pairs favor WOD2Sim on this declared suite. These are exact
+descriptive counts; no population confidence interval or hypothesis test is
+reported because neither sessions nor fault operators are independently
+sampled from a defined population. The completion gate is not a substitute for
+another integration framework.
 
-Post-trace diagnosis latency is measured after JSON parsing over 3,000 fault
-decisions. Online guard overhead is measured separately with 200 randomized,
-paired route-following iterations; guarded and unchecked trajectories must be
-identical. The current medians are 234.855 us for fault diagnosis and 14.552 us
-for the camera/context plus freshness guard increment.
+Post-parse detector execution latency is measured over 3,000 fault-case calls:
+11.441 us median and 21.915 us p95. The guarded in-process adapter Drive path is
+257.390 us median and 449.371 us p95. Across 1,000 randomized paired measurements
+rotating over 15 valid sessions, its camera-set and freshness-check
+increment is 25.630 us median and 112.659 us p95; guarded and unchecked
+trajectories and headings are identical. Context-length validation remains
+active in both arms. The adapter measurement includes input
+assembly, prediction, serialization, finite-output validation, reasoning
+parsing, and in-memory telemetry. The measurements exclude gRPC transport, file
+I/O, simulator work, and human investigation. They do not establish end-to-end
+runtime overhead or time-to-diagnosis.
+
+The retained evaluator-owned AlpaSim trace remains separate interface-conformance
+evidence: it records 197 drive calls meeting the 100-ms target. Its earlier
+telemetry schema does not include the explicit finite-output field and is not
+used as the mutation source.
 
 ## Policy Evaluation
 
@@ -119,8 +136,10 @@ integration-effectiveness evidence. Synthetic lifecycle/fault rows are secondary
 service-harness conformance diagnostics only, and blocked rows are retained as
 denominator/context rather than success metrics.
 Controlled trace mutations add case/control classification, an executable
-status-only comparator, post-trace diagnosis latency, and online guard overhead
-for the dependency-light path.
+status-only comparator, post-parse detector execution latency, and a paired
+guard-path increment on the dependency-light path. They do not support human
+time-to-diagnosis, end-to-end runtime, or superiority over another integration
+framework.
 The public release core is the dependency-light adapter path. Direct-actor,
 learned-checkpoint, restricted-scene, and complete-benchmark dependencies are
 optional gated extensions, not release-core dependencies.

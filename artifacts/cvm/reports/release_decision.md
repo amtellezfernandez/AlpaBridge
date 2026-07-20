@@ -17,11 +17,13 @@ benchmark release.
   route evidence.
 - The controlled diagnostic comparison is claim-ready for its declared case
   set: 30/30 WOD2Sim classifications versus 15/30 status-only, 15/15 fault
-  localizations, 0/15 control false positives, and exact paired
-  `p=0.000061`.
-- Post-trace diagnosis latency and the camera/context plus freshness guard
-  overhead are claim-ready for the dependency-light measured path: medians
-  `234.855 us` and `14.552 us`, respectively.
+  localizations, 0/15 control false positives, and 15/15 discordant pairs
+  favoring WOD2Sim. The counts are descriptive for the designed suite.
+- Post-parse detector execution is claim-ready only as a software
+  microbenchmark: median `11.441 us` and p95 `21.915 us` over 3,000 fault-case
+  calls. The guarded in-process adapter Drive path is `257.390 us` median and
+  `449.371 us` p95. Its paired guard-path increment is `25.630 us` median and
+  `112.659 us` p95 over 1,000 pairs across 15 valid sessions.
 - Only 14/15 semantic pairs are comparison-eligible; their score deltas are
   descriptive and do not support a systematic policy-effect claim.
 - The paper PDF, generated tables, figures, aggregate summaries, manifests, and
@@ -36,6 +38,7 @@ benchmark release.
 - Official Waymo or challenge leaderboard compatibility.
 - Complete public policy benchmark status.
 - Ranking against a complete external integration framework.
+- End-to-end runtime overhead or human time-to-diagnosis.
 
 ## Verification Gate
 

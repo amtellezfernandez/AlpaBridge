@@ -7,8 +7,10 @@ from tempfile import TemporaryDirectory
 from types import SimpleNamespace
 
 import numpy as np
+import pytest
 
 from wod2sim.challenge.e2e_driver import (
+    CHALLENGE_TELEMETRY_SCHEMA,
     WOD2SimChallengeAdapter,
     prediction_to_proto_trajectory,
     run_self_test,
@@ -154,8 +156,10 @@ def test_challenge_adapter_writes_drive_telemetry() -> None:
     drive_rows = [row for row in rows if row["event"] == "drive"]
     assert len(trajectory.poses) == 50
     assert len(drive_rows) == 1
+    assert drive_rows[0]["schema"] == CHALLENGE_TELEMETRY_SCHEMA
     assert drive_rows[0]["route_source"] == "alpasim_waypoints"
     assert drive_rows[0]["latency_target_ms"] == 100.0
+    assert drive_rows[0]["speed_mps"] == pytest.approx(5.0)
     assert drive_rows[0]["trajectory_finite"] is True
     assert summary["drive_count"] == 1
     assert summary["latency_ms"]["p95"] is not None
@@ -181,6 +185,35 @@ def test_challenge_adapter_rejects_unknown_session() -> None:
         raise AssertionError("missing session unexpectedly predicted")
 
 
+def test_challenge_adapter_selects_freshest_accepted_camera_alias() -> None:
+    adapter = WOD2SimChallengeAdapter(
+        model_name="constant_velocity",
+        camera_ids=("CAM_F0", "camera_front_wide_120fov"),
+    )
+    adapter.start_session(SimpleNamespace(session_uuid="session-alias", random_seed=5))
+    for camera_id, timestamp_us, image_byte in (
+        ("CAM_F0", 1_000_000, b"\x10"),
+        ("camera_front_wide_120fov", 1_100_000, b"\x20"),
+    ):
+        adapter.submit_image_observation(
+            SimpleNamespace(
+                session_uuid="session-alias",
+                camera_image=SimpleNamespace(
+                    logical_id=camera_id,
+                    frame_end_us=timestamp_us,
+                    image_bytes=image_byte,
+                ),
+            )
+        )
+
+    prediction_input = adapter.prediction_input(
+        "session-alias",
+        time_now_us=1_100_000,
+    )
+
+    assert prediction_input.camera_images["front"][0].timestamp_us == 1_100_000
+
+
 def test_prediction_to_proto_trajectory_rotates_ego_relative_offsets() -> None:
     prediction = ModelPrediction(
         trajectory_xy=np.asarray([[1.0, 0.0], [2.0, 0.0]], dtype=np.float32),
@@ -200,3 +233,72 @@ def test_prediction_to_proto_trajectory_rotates_ego_relative_offsets() -> None:
         [[10.0, 20.0], [10.0, 21.0]],
         atol=1e-6,
     )
+
+
+@pytest.mark.parametrize(
+    ("trajectory", "headings", "message"),
+    (
+        (np.empty((0, 2)), np.empty((0,)), "at least one point"),
+        (np.asarray([[1.0, 0.0], [2.0, 0.0]]), np.asarray([0.0]), "one value"),
+        (np.asarray([[np.nan, 0.0]]), np.asarray([0.0]), "finite"),
+        (np.asarray([[1.0, 0.0]]), np.asarray([np.inf]), "finite"),
+    ),
+)
+def test_prediction_to_proto_trajectory_rejects_invalid_outputs(
+    trajectory: np.ndarray,
+    headings: np.ndarray,
+    message: str,
+) -> None:
+    prediction = ModelPrediction(
+        trajectory_xy=trajectory,
+        headings=headings,
+    )
+
+    with pytest.raises(ValueError, match=message):
+        prediction_to_proto_trajectory(
+            prediction,
+            current_pose=None,
+            time_now_us=10_000,
+            common_pb2=_FakeCommonPb2,
+        )
+
+
+def test_prediction_to_proto_trajectory_rejects_nonfinite_world_pose() -> None:
+    prediction = ModelPrediction(
+        trajectory_xy=np.asarray([[1.0, 0.0]], dtype=np.float64),
+        headings=np.asarray([0.0], dtype=np.float64),
+    )
+
+    with pytest.raises(ValueError, match="current pose"):
+        prediction_to_proto_trajectory(
+            prediction,
+            current_pose=_pose_at(10_000, x=np.nan, y=0.0, yaw=0.0),
+            time_now_us=10_000,
+            common_pb2=_FakeCommonPb2,
+        )
+
+
+def test_prediction_to_proto_trajectory_rejects_nonfinite_transformed_output() -> None:
+    prediction = ModelPrediction(
+        trajectory_xy=np.asarray(
+            [
+                [np.finfo(np.float64).max, 0.0],
+                [np.finfo(np.float64).max, 0.0],
+            ],
+            dtype=np.float64,
+        ),
+        headings=np.asarray([0.0, 0.0], dtype=np.float64),
+    )
+
+    with pytest.raises(ValueError, match="serialized trajectory"):
+        prediction_to_proto_trajectory(
+            prediction,
+            current_pose=_pose_at(
+                10_000,
+                x=np.finfo(np.float64).max,
+                y=0.0,
+                yaw=0.0,
+            ),
+            time_now_us=10_000,
+            common_pb2=_FakeCommonPb2,
+        )

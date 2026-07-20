@@ -23,6 +23,7 @@ from wod2sim.simulator.baseline_drivers import (
 )
 
 LOGGER = logging.getLogger("wod2sim_challenge_driver")
+CHALLENGE_TELEMETRY_SCHEMA = "wod2sim_challenge_telemetry_v2"
 
 
 @dataclass
@@ -51,7 +52,7 @@ class ChallengeTelemetry:
 
     def record(self, row: dict[str, Any]) -> None:
         payload = {
-            "schema": "wod2sim_challenge_telemetry_v1",
+            "schema": CHALLENGE_TELEMETRY_SCHEMA,
             "created_ns": time.time_ns(),
             **row,
         }
@@ -228,11 +229,9 @@ class WOD2SimChallengeAdapter:
                 "route_source": signal.get("route_source"),
                 "route_waypoint_count": signal.get("route_waypoint_count"),
                 "camera_count": signal.get("camera_count"),
+                "speed_mps": float(prediction_input.speed),
                 "trajectory_points": len(getattr(trajectory, "poses", []) or []),
-                "trajectory_finite": bool(
-                    np.isfinite(np.asarray(prediction.trajectory_xy)).all()
-                    and np.isfinite(np.asarray(prediction.headings)).all()
-                ),
+                "trajectory_finite": _proto_trajectory_is_finite(trajectory),
             }
         )
         return trajectory
@@ -313,7 +312,17 @@ def prediction_to_proto_trajectory(
 ) -> Any:
     trajectory_xy = np.asarray(prediction.trajectory_xy, dtype=np.float64).reshape(-1, 2)
     headings = np.asarray(prediction.headings, dtype=np.float64).reshape(-1)
+    if trajectory_xy.shape[0] < 1:
+        raise ValueError("prediction trajectory must contain at least one point")
+    if headings.shape != (trajectory_xy.shape[0],):
+        raise ValueError(
+            "prediction headings must contain one value per trajectory point"
+        )
+    if not np.isfinite(trajectory_xy).all() or not np.isfinite(headings).all():
+        raise ValueError("prediction trajectory and headings must contain only finite values")
     origin_x, origin_y, origin_z, yaw0 = _pose_origin_and_yaw(current_pose)
+    if not all(math.isfinite(value) for value in (origin_x, origin_y, origin_z, yaw0)):
+        raise ValueError("current pose must contain only finite values")
     cos_yaw = math.cos(yaw0)
     sin_yaw = math.sin(yaw0)
     count = max(1, int(trajectory_xy.shape[0]))
@@ -331,6 +340,8 @@ def prediction_to_proto_trajectory(
             y_local = origin_y + sin_yaw * float(offset[0]) + cos_yaw * float(offset[1])
             heading_index = min(offset_index, headings.shape[0] - 1)
             heading = yaw0 + (float(headings[heading_index]) if headings.shape[0] else 0.0)
+        if not all(math.isfinite(value) for value in (x_local, y_local, heading)):
+            raise ValueError("serialized trajectory must contain only finite values")
         timestamp_us = int(time_now_us) + index * step_us
         trajectory.poses.append(
             common_pb2.PoseAtTime(
@@ -342,6 +353,31 @@ def prediction_to_proto_trajectory(
             )
         )
     return trajectory
+
+
+def _proto_trajectory_is_finite(trajectory: Any) -> bool:
+    poses = list(getattr(trajectory, "poses", []) or [])
+    if not poses:
+        return False
+    for pose_at_time in poses:
+        pose = getattr(pose_at_time, "pose", None)
+        vec = getattr(pose, "vec", None)
+        quat = getattr(pose, "quat", None)
+        values = (
+            getattr(vec, "x", None),
+            getattr(vec, "y", None),
+            getattr(vec, "z", None),
+            getattr(quat, "w", None),
+            getattr(quat, "x", None),
+            getattr(quat, "y", None),
+            getattr(quat, "z", None),
+        )
+        if not all(
+            isinstance(value, (int, float)) and math.isfinite(float(value))
+            for value in values
+        ):
+            return False
+    return True
 
 
 def _normalize_model_name(model_name: str) -> str:
@@ -434,13 +470,17 @@ def _selected_camera_frames(
     camera_images: dict[str, list[ChallengeCameraFrame]],
     candidates: tuple[str, ...],
 ) -> list[ChallengeCameraFrame]:
-    for camera_id in candidates:
+    candidate_frames: list[tuple[int, int, ChallengeCameraFrame]] = []
+    for priority, camera_id in enumerate(candidates):
         frames = camera_images.get(camera_id)
         if frames:
-            return frames[-1:]
-    for frames in camera_images.values():
-        if frames:
-            return frames[-1:]
+            frame = frames[-1]
+            candidate_frames.append((int(frame.timestamp_us), -priority, frame))
+    if candidate_frames:
+        return [max(candidate_frames, key=lambda item: (item[0], item[1]))[2]]
+    fallback_frames = [frames[-1] for frames in camera_images.values() if frames]
+    if fallback_frames:
+        return [max(fallback_frames, key=lambda frame: int(frame.timestamp_us))]
     return [ChallengeCameraFrame(timestamp_us=0, image=np.zeros((1,), dtype=np.uint8))]
 
 

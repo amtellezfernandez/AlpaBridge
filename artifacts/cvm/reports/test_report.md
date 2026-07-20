@@ -1,110 +1,55 @@
 # Release Test Report
 
-This report records the validation commands for the contract-validation matrix
-(CVM) release surface. Raw command logs are intentionally not tracked; rerun
-these commands from the repository root to reproduce the checks. The latest
-refresh used the locked `uv run python` environment.
+This report records the final controlled validation of the contract-validation
+matrix (CVM) release surface on 2026-07-20. Commands ran from the repository
+root in the locked `uv run python` environment.
+
+## Release Gates
 
 | Command | Result |
 |---|---|
-| `./scripts/build_cvm_paper.sh` | Latest controlled pass rebuilt the 4-page root `wod2sim.pdf` at 189158 bytes with the official PaperPlaza `ieeeconf` A4 class. |
-| `uv run python scripts/run_diagnostic_experiment.py` | Passed: 15 faults and 15 controls, WOD2Sim 30/30 versus status-only 15/30, exact paired `p=0.000061`, plus tracked diagnosis and guard timing. |
-| `uv run python scripts/validate_cvm_submission.py` | Passed, including metadata-backed title/author/affiliation/abstract checks, output-PDF title/author/subject checks, official `ieeeconf` A4 source-layout checks, parsed PDF A4 MediaBox checks, LaTeX log warnings, canonical-to-paper generated asset sync, generated-table row/source-field value sync, package metadata checks, CI workflow gate checks, community-template claim-boundary checks, public local-reference and image-alt checks, CLI command-documentation drift checks, README visual/graph explanation checks, evaluation-status checks, venue-style benchmark-label checks, unstable generated citation-slug hygiene checks, README attribution-count sync, paper-number macro value sync, claim-evidence-matrix count sync, contract-test audit coverage checks, embedded PDF font descriptors, manifest-level failure-attribution checks, summary-level attribution and scenario-coverage partition checks, generic credential-leak checks, and README/paper claim-boundary checks. |
-| `make paper-verify PYTHON='uv run python'` | Passed: rebuilt the 4-page root `wod2sim.pdf` and ran submission validation. |
-| `make conformance PYTHON='uv run python'` | Latest controlled pass: 338 passed, 14 skipped, 15 subtests passed. |
-| `make demo PYTHON='uv run python'` | Passed: synthetic demo valid with `valid_claim_evidence=false`. |
-| `make cvm-check PYTHON='uv run python'` | Latest controlled pass: ruff clean, 338 passed, 14 skipped, 15 subtests passed, validation passed. |
-| `make cvm-eval PYTHON='uv run python'` | Expected exit 2: current aggregate retains 30 completed dependency-light public-core rows, 30 completed semantic-ablation rows, and 33 optional gated blockers. |
-| `uv run python -m pytest -q tests/` | Latest controlled pass: 338 passed, 14 skipped, 15 subtests passed. |
-| `uv run python -m pytest --cov` | Latest controlled pass: 338 passed, 14 skipped, total coverage 64.67% against the configured 33.0% minimum. |
-| `.venv/bin/python -m build` | Latest controlled pass built source distribution and wheel with network-enabled build isolation. |
-| `uv run pre-commit run --all-files` | Passed without modifying files. |
-| `qpdf --check wod2sim.pdf && pdfinfo wod2sim.pdf && pdffonts wod2sim.pdf` | Latest controlled pass: 4 pages, portrait A4, 189158 bytes, embedded Type 1 fonts, and no syntax or stream encoding errors reported by `qpdf`. |
-| PaperPlaza public PDF test | Passed for the final initial contributed-paper PDF: 4 A4 pages, searchable, no critical issues, no margin problems, embedded/subset fonts, and no Type 3 fonts. |
-| `git diff --check` | Run as final whitespace validation. |
+| `make verify PYTHON='uv run python'` | Passed: lint, conformance, coverage, install smoke, package build, paper build, and submission validation. |
+| `WOD2SIM_CORE_CONFORMANCE=1 uv run python -m pytest -q tests/` | 358 passed, 14 skipped, and 15 subtests passed. |
+| `uv run python -m pytest --cov` | 358 passed, 14 skipped; total coverage 65.32% against the configured 33.0% minimum. |
+| `uv run python scripts/run_diagnostic_experiment.py` | Passed: 15 faults plus 15 valid controls; WOD2Sim classified 30/30 and localized 15/15 with 0/15 control false positives; the status-only gate classified 15/30 and detected no faults. Counts are descriptive for the designed suite. |
+| `uv run python scripts/run_cvm_matrix.py --config configs/cvm/fault_injection.yaml --output artifacts/cvm/results/fault_injection --resume --execute` | Passed: 15/15 label-withheld fault rows completed. |
+| `uv run python scripts/aggregate_cvm.py --inputs artifacts/cvm/results --output artifacts/cvm/results` | Passed and regenerated summary/table macros from the current diagnostic schema. |
+| `./scripts/build_cvm_paper.sh` | Passed: rebuilt the 5-page, 187020-byte A4 `wod2sim.pdf`. |
+| `uv run python scripts/validate_cvm_submission.py` | Passed all source, artifact, claim-boundary, metadata, PDF, and reference-resolution checks. |
+| `uv build` | Built `dist/wod2sim-0.1.0.tar.gz` and `dist/wod2sim-0.1.0-py3-none-any.whl`. |
+| `qpdf --check wod2sim.pdf` | No syntax or stream encoding errors. |
+| `pdfinfo wod2sim.pdf` | 5 portrait A4 pages, 187020 bytes, expected title/author/subject metadata. |
+| `pdffonts wod2sim.pdf` | All listed fonts are embedded and subset; no Type 3 fonts. |
+| `git diff --check` | Passed. |
 
-Targeted contract selections:
+The current five-page revision was not uploaded to the public PaperPlaza PDF
+checker from this environment. An earlier four-page draft passed that external
+check; the current revision is supported by the local structural, font,
+MediaBox, metadata, and LaTeX-log gates above.
+
+## Targeted Selections
 
 | Selection | Result |
 |---|---|
-| `tests -k "semantic or route"` | 17 passed, 335 deselected. |
-| `tests -k "temporal or resampl"` | 13 passed, 339 deselected, 15 subtests passed. |
-| `tests -k "lifecycle or session"` | 15 passed, 337 deselected. |
-| `tests -k "plugin or entry_point"` | 6 passed, 346 deselected. |
-| `tests -k "deployment or readiness or launch"` | 23 passed, 329 deselected. |
-| `tests -k "evidence or audit or benchmark"` | 30 passed, 322 deselected. |
-| `tests -k "fault"` | 8 passed, 344 deselected. |
+| `tests -k "semantic or route"` | 18 passed, 354 deselected. |
+| `tests -k "temporal or resampl"` | 15 passed, 357 deselected, 15 subtests passed. |
+| `tests -k "lifecycle or session"` | 20 passed, 352 deselected. |
+| `tests -k "plugin or entry_point"` | 6 passed, 366 deselected. |
+| `tests -k "deployment or readiness or launch"` | 23 passed, 349 deselected. |
+| `tests -k "evidence or audit or benchmark"` | 32 passed, 340 deselected. |
+| `tests -k "fault"` | 13 passed, 359 deselected. |
 
-The release claim boundary is intentionally narrower than the test suite:
-passing tests support contract behavior and artifact hygiene, while policy
-quality and official benchmark claims require separate completed evidence.
-The submission validator now fails if a CVM run manifest omits or contradicts
-the integration-vs-policy `failure_attribution` record.
-It requires the attribution rule to name semantic, temporal, lifecycle,
-deployment, and evidence gates before any policy-behavior or policy-failure
-claim.
-It also fails if README or paper text drops the failure-attribution boundary,
-or if the aggregate summary no longer partitions policy-attributable and
-non-policy-attributed rows over the complete CVM denominator.
-It also validates the public `frames.csv` schema so frame-level timing, route,
-trajectory, latency, lifecycle-warning, and policy-status fields cannot
-silently disappear from regenerated artifacts.
-It now rejects a paper PDF if any discovered font lacks an embedded
-`/FontFile`, `/FontFile2`, or `/FontFile3` descriptor.
-It rejects a paper PDF whose parsed MediaBox is not portrait A4.
-It rejects generated PDF title, author, or subject drift from
-`paper/cvm/metadata.json`.
-It also rejects title, author, affiliation, PDF-subject, abstract word-count, or
-abstract-source drift against `paper/cvm/metadata.json`.
-It requires the official PaperPlaza `ieeeconf` A4 class and conference commands,
-and rejects unsupported manuscript-source page, margin, font-scaling, page-style,
-and negative-spacing overrides.
-It rejects unresolved citations/references, multiply defined labels, and
-overfull or underfull `\hbox` warnings in the generated LaTeX log.
-It rejects drift between canonical generated artifacts under `artifacts/cvm`
-and the paper-side copies under `paper/cvm/generated` and `paper/cvm/figures`.
-It rejects `paper_numbers.tex` macro drift from `summary.json`,
-`lifecycle_stress.csv`, and `fault_injection.csv`, including controlled
-diagnostic comparison and timing fields.
-It rejects generated table row drift from `summary.json`,
-`lifecycle_stress.csv`, and `fault_injection.csv`, including missing or
-non-integer source fields.
-It rejects missing public-core policy rows in `main_results.tex`, including
-audit, route, sensor, service-crash, and blocker columns, and preserves tracked public
-closed-loop metrics when ignored raw run directories are absent.
-It rejects package metadata that drops the author, README, BSD-3-Clause license
-expression, research keywords, publication classifiers, or repository,
-documentation, paper, and citation URLs.
-It rejects CI workflow drift that drops package, conformance, coverage, smoke,
-wheel-install, paper-validation, PDF-structure, artifact-upload, or minimal
-permission gates.
-It rejects missing or repository-escaping local links and image references from
-public Markdown/HTML files while allowing external URLs.
-It rejects public Markdown/HTML images, including remote images, without
-non-empty alt text.
-It rejects `docs/cli.md` drift from console scripts declared in
-`pyproject.toml` and `.PHONY` Make targets.
-It rejects README visual sections that omit the adapter-boundary disclaimer,
-runtime graph explanations, or the statement that graphs do not evaluate
-policy quality.
-It rejects evaluation-guide status text that omits completed local diagnostic
-closed-loop rows or misstates them as public policy benchmark evidence.
-It rejects GitHub contribution, pull-request, issue, and security templates
-that drop the claim boundary or restricted-asset hygiene.
-It rejects venue-style benchmark labels from public release text.
-It rejects unstable generated citation slugs from public release text.
-It rejects README failure-attribution count drift from
-`artifacts/cvm/results/summary.json`.
-It rejects aggregate-count drift between
-`artifacts/cvm/reports/claim_evidence_matrix.md` and
-`artifacts/cvm/results/summary.json`.
-It rejects repository-inventory drift from the actual top-level
-`tests/test_*.py` file count and keeps runtime pass/skip counts in
-`test_report.md`.
-It rejects historical `.venv` baseline-report evidence and stale hardening-era
-pass counts from the public baseline report.
-It rejects a missing or incomplete
-`artifacts/cvm/reports/contract_test_audit.md`; that audit must name semantic,
-temporal, lifecycle, deployment/plugin-dependency, evidence, and
-fault-injection coverage, explicit gaps kept out of policy claims, and only
-existing test files.
+## Timing Scope
+
+The frozen diagnostic artifact contains 3,000 fault-case detector samples and
+1,000 paired adapter-path samples over 15 valid sessions. The guarded in-process
+adapter Drive path includes state-to-input assembly, prediction, trajectory
+serialization, finite-output validation, reasoning parsing, and in-memory
+telemetry. It excludes gRPC transport, file I/O, simulator execution, and human
+investigation. Accordingly, these checks do not establish simulator end-to-end
+runtime overhead or human time-to-diagnosis.
+
+Passing tests support contract behavior, artifact integrity, and the declared
+designed-suite results. They do not establish policy quality, population-level
+fault performance, superiority to another integration framework, or human
+debugging-time improvement.

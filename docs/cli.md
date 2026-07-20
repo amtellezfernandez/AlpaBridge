@@ -41,8 +41,8 @@ The contract-validation matrix (CVM) is referenced in the release targets below.
 | `make cvm-check` | Run lint, conformance, and CVM submission validation. |
 | `make cvm-demo` | Write the synthetic CVM demo under `artifacts/cvm/results/demo`. |
 | `make cvm-eval` | Expand the mixed CVM core matrix, preserving completed public-core rows and optional gated blockers. |
-| `make cvm-diagnostics` | Evaluate controlled mutations and valid controls from retained external-driver telemetry, including comparator and timing measurements. |
-| `make cvm-synthetic` | Execute lifecycle stress, independent fault classification, and the controlled diagnostic experiment. |
+| `make cvm-diagnostics` | Generate current-adapter protocol sessions, evaluate paired controlled mutations and valid controls, and record scoped software timings. |
+| `make cvm-synthetic` | Execute lifecycle stress, label-withheld fault localization, and the controlled diagnostic experiment. |
 | `make cvm-aggregate` | Regenerate aggregate CSV/JSON, LaTeX tables, and figures from CVM results. |
 | `make cvm-paper` | Build the paper source and copy the canonical root `wod2sim.pdf`. |
 | `make cvm-validate` | Run the CVM paper and release-surface validator. |

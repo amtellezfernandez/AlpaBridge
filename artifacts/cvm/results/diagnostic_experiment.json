@@ -1,10 +1,43 @@
 {
+  "adapter_guard_path_timing": {
+    "guarded_drive_path_us": {
+      "max": 559.2798,
+      "mean": 292.3468937,
+      "min": 176.04555,
+      "p50": 257.390425,
+      "p95": 449.3707075,
+      "samples": 1000
+    },
+    "input_cases": 15,
+    "paired_incremental_p50_percent": 11.017600602158383,
+    "paired_incremental_us": {
+      "max": 295.4965,
+      "mean": 30.061996999999998,
+      "min": -276.03554999999994,
+      "p50": 25.630224999999996,
+      "p95": 112.65924499999991,
+      "samples": 1000
+    },
+    "pairing": "Guarded and unchecked order is randomized per iteration across 15 deterministic valid adapter sessions; paired differences use per-call batch means. The unchecked path disables only camera-set and sensor-freshness guards; context-length validation remains active in both paths.",
+    "scope": "in-process WOD2SimChallengeAdapter.drive_once_to_proto route-following path; includes state-to-input assembly, prediction, trajectory serialization, finite-output validation, reasoning parsing, and in-memory telemetry, but excludes gRPC transport, file I/O, simulator work, and human investigation",
+    "trajectory_outputs_equal": true,
+    "unchecked_drive_path_us": {
+      "max": 540.9477,
+      "mean": 262.2848967,
+      "min": 157.706,
+      "p50": 232.629825,
+      "p95": 403.1082175,
+      "samples": 1000
+    },
+    "warmup_calls_per_method": 50
+  },
   "cases": [
     {
-      "case_id": "fault:semantic.route_missing",
-      "event_count": 792,
+      "case_id": "fault:01:semantic.route_missing",
+      "event_count": 5,
       "expected_fault_code": "semantic.route_missing",
       "expected_valid": false,
+      "pair_id": "session_pair_01",
       "status_only_classification_correct": false,
       "status_only_fault_detected": false,
       "status_only_localization_correct": false,
@@ -18,10 +51,11 @@
       "wod2sim_valid": false
     },
     {
-      "case_id": "fault:semantic.command_only",
-      "event_count": 989,
+      "case_id": "fault:02:semantic.command_only",
+      "event_count": 9,
       "expected_fault_code": "semantic.command_only",
       "expected_valid": false,
+      "pair_id": "session_pair_02",
       "status_only_classification_correct": false,
       "status_only_fault_detected": false,
       "status_only_localization_correct": false,
@@ -35,10 +69,11 @@
       "wod2sim_valid": false
     },
     {
-      "case_id": "fault:semantic.road_center_reference",
-      "event_count": 989,
+      "case_id": "fault:03:semantic.road_center_reference",
+      "event_count": 12,
       "expected_fault_code": "semantic.road_center_reference",
       "expected_valid": false,
+      "pair_id": "session_pair_03",
       "status_only_classification_correct": false,
       "status_only_fault_detected": false,
       "status_only_localization_correct": false,
@@ -52,10 +87,11 @@
       "wod2sim_valid": false
     },
     {
-      "case_id": "fault:temporal.stale_observation",
-      "event_count": 989,
+      "case_id": "fault:04:temporal.stale_observation",
+      "event_count": 15,
       "expected_fault_code": "temporal.stale_observation",
       "expected_valid": false,
+      "pair_id": "session_pair_04",
       "status_only_classification_correct": false,
       "status_only_fault_detected": false,
       "status_only_localization_correct": false,
@@ -69,10 +105,11 @@
       "wod2sim_valid": false
     },
     {
-      "case_id": "fault:temporal.invalid_sample_count",
-      "event_count": 989,
+      "case_id": "fault:05:temporal.invalid_sample_count",
+      "event_count": 18,
       "expected_fault_code": "temporal.invalid_sample_count",
       "expected_valid": false,
+      "pair_id": "session_pair_05",
       "status_only_classification_correct": false,
       "status_only_fault_detected": false,
       "status_only_localization_correct": false,
@@ -86,10 +123,11 @@
       "wod2sim_valid": false
     },
     {
-      "case_id": "fault:temporal.nan_trajectory",
-      "event_count": 989,
+      "case_id": "fault:06:temporal.nan_trajectory",
+      "event_count": 21,
       "expected_fault_code": "temporal.nan_trajectory",
       "expected_valid": false,
+      "pair_id": "session_pair_06",
       "status_only_classification_correct": false,
       "status_only_fault_detected": false,
       "status_only_localization_correct": false,
@@ -103,10 +141,11 @@
       "wod2sim_valid": false
     },
     {
-      "case_id": "fault:lifecycle.duplicate_close",
-      "event_count": 990,
+      "case_id": "fault:07:lifecycle.duplicate_close",
+      "event_count": 25,
       "expected_fault_code": "lifecycle.duplicate_close",
       "expected_valid": false,
+      "pair_id": "session_pair_07",
       "status_only_classification_correct": false,
       "status_only_fault_detected": false,
       "status_only_localization_correct": false,
@@ -120,10 +159,11 @@
       "wod2sim_valid": false
     },
     {
-      "case_id": "fault:lifecycle.late_image",
-      "event_count": 990,
+      "case_id": "fault:08:lifecycle.late_image",
+      "event_count": 28,
       "expected_fault_code": "lifecycle.late_image",
       "expected_valid": false,
+      "pair_id": "session_pair_08",
       "status_only_classification_correct": false,
       "status_only_fault_detected": false,
       "status_only_localization_correct": false,
@@ -137,10 +177,11 @@
       "wod2sim_valid": false
     },
     {
-      "case_id": "fault:lifecycle.late_route",
-      "event_count": 990,
+      "case_id": "fault:09:lifecycle.late_route",
+      "event_count": 31,
       "expected_fault_code": "lifecycle.late_route",
       "expected_valid": false,
+      "pair_id": "session_pair_09",
       "status_only_classification_correct": false,
       "status_only_fault_detected": false,
       "status_only_localization_correct": false,
@@ -154,10 +195,11 @@
       "wod2sim_valid": false
     },
     {
-      "case_id": "fault:plugin.optional_backend_missing",
-      "event_count": 989,
+      "case_id": "fault:10:plugin.optional_backend_missing",
+      "event_count": 33,
       "expected_fault_code": "plugin.optional_backend_missing",
       "expected_valid": false,
+      "pair_id": "session_pair_10",
       "status_only_classification_correct": false,
       "status_only_fault_detected": false,
       "status_only_localization_correct": false,
@@ -171,10 +213,11 @@
       "wod2sim_valid": false
     },
     {
-      "case_id": "fault:deployment.docker_unavailable",
-      "event_count": 989,
+      "case_id": "fault:11:deployment.docker_unavailable",
+      "event_count": 36,
       "expected_fault_code": "deployment.docker_unavailable",
       "expected_valid": false,
+      "pair_id": "session_pair_11",
       "status_only_classification_correct": false,
       "status_only_fault_detected": false,
       "status_only_localization_correct": false,
@@ -188,10 +231,11 @@
       "wod2sim_valid": false
     },
     {
-      "case_id": "fault:deployment.gpu_runtime_unavailable",
-      "event_count": 989,
+      "case_id": "fault:12:deployment.gpu_runtime_unavailable",
+      "event_count": 39,
       "expected_fault_code": "deployment.gpu_runtime_unavailable",
       "expected_valid": false,
+      "pair_id": "session_pair_12",
       "status_only_classification_correct": false,
       "status_only_fault_detected": false,
       "status_only_localization_correct": false,
@@ -205,10 +249,11 @@
       "wod2sim_valid": false
     },
     {
-      "case_id": "fault:deployment.scene_artifact_missing",
-      "event_count": 989,
+      "case_id": "fault:13:deployment.scene_artifact_missing",
+      "event_count": 42,
       "expected_fault_code": "deployment.scene_artifact_missing",
       "expected_valid": false,
+      "pair_id": "session_pair_13",
       "status_only_classification_correct": false,
       "status_only_fault_detected": false,
       "status_only_localization_correct": false,
@@ -222,10 +267,11 @@
       "wod2sim_valid": false
     },
     {
-      "case_id": "fault:evidence.manifest_missing",
-      "event_count": 989,
+      "case_id": "fault:14:evidence.manifest_missing",
+      "event_count": 45,
       "expected_fault_code": "evidence.manifest_missing",
       "expected_valid": false,
+      "pair_id": "session_pair_14",
       "status_only_classification_correct": false,
       "status_only_fault_detected": false,
       "status_only_localization_correct": false,
@@ -239,10 +285,11 @@
       "wod2sim_valid": false
     },
     {
-      "case_id": "fault:evidence.hash_mismatch",
-      "event_count": 989,
+      "case_id": "fault:15:evidence.hash_mismatch",
+      "event_count": 48,
       "expected_fault_code": "evidence.hash_mismatch",
       "expected_valid": false,
+      "pair_id": "session_pair_15",
       "status_only_classification_correct": false,
       "status_only_fault_detected": false,
       "status_only_localization_correct": false,
@@ -256,10 +303,11 @@
       "wod2sim_valid": false
     },
     {
-      "case_id": "control:trace_prefix_01",
-      "event_count": 7,
+      "case_id": "control:01",
+      "event_count": 6,
       "expected_fault_code": "",
       "expected_valid": true,
+      "pair_id": "session_pair_01",
       "status_only_classification_correct": true,
       "status_only_fault_detected": false,
       "status_only_localization_correct": false,
@@ -271,10 +319,11 @@
       "wod2sim_valid": true
     },
     {
-      "case_id": "control:trace_prefix_02",
-      "event_count": 77,
+      "case_id": "control:02",
+      "event_count": 9,
       "expected_fault_code": "",
       "expected_valid": true,
+      "pair_id": "session_pair_02",
       "status_only_classification_correct": true,
       "status_only_fault_detected": false,
       "status_only_localization_correct": false,
@@ -286,10 +335,11 @@
       "wod2sim_valid": true
     },
     {
-      "case_id": "control:trace_prefix_03",
-      "event_count": 147,
+      "case_id": "control:03",
+      "event_count": 12,
       "expected_fault_code": "",
       "expected_valid": true,
+      "pair_id": "session_pair_03",
       "status_only_classification_correct": true,
       "status_only_fault_detected": false,
       "status_only_localization_correct": false,
@@ -301,10 +351,11 @@
       "wod2sim_valid": true
     },
     {
-      "case_id": "control:trace_prefix_04",
-      "event_count": 217,
+      "case_id": "control:04",
+      "event_count": 15,
       "expected_fault_code": "",
       "expected_valid": true,
+      "pair_id": "session_pair_04",
       "status_only_classification_correct": true,
       "status_only_fault_detected": false,
       "status_only_localization_correct": false,
@@ -316,10 +367,11 @@
       "wod2sim_valid": true
     },
     {
-      "case_id": "control:trace_prefix_05",
-      "event_count": 287,
+      "case_id": "control:05",
+      "event_count": 18,
       "expected_fault_code": "",
       "expected_valid": true,
+      "pair_id": "session_pair_05",
       "status_only_classification_correct": true,
       "status_only_fault_detected": false,
       "status_only_localization_correct": false,
@@ -331,10 +383,11 @@
       "wod2sim_valid": true
     },
     {
-      "case_id": "control:trace_prefix_06",
-      "event_count": 357,
+      "case_id": "control:06",
+      "event_count": 21,
       "expected_fault_code": "",
       "expected_valid": true,
+      "pair_id": "session_pair_06",
       "status_only_classification_correct": true,
       "status_only_fault_detected": false,
       "status_only_localization_correct": false,
@@ -346,10 +399,11 @@
       "wod2sim_valid": true
     },
     {
-      "case_id": "control:trace_prefix_07",
-      "event_count": 427,
+      "case_id": "control:07",
+      "event_count": 24,
       "expected_fault_code": "",
       "expected_valid": true,
+      "pair_id": "session_pair_07",
       "status_only_classification_correct": true,
       "status_only_fault_detected": false,
       "status_only_localization_correct": false,
@@ -361,10 +415,11 @@
       "wod2sim_valid": true
     },
     {
-      "case_id": "control:trace_prefix_08",
-      "event_count": 497,
+      "case_id": "control:08",
+      "event_count": 27,
       "expected_fault_code": "",
       "expected_valid": true,
+      "pair_id": "session_pair_08",
       "status_only_classification_correct": true,
       "status_only_fault_detected": false,
       "status_only_localization_correct": false,
@@ -376,10 +431,11 @@
       "wod2sim_valid": true
     },
     {
-      "case_id": "control:trace_prefix_09",
-      "event_count": 567,
+      "case_id": "control:09",
+      "event_count": 30,
       "expected_fault_code": "",
       "expected_valid": true,
+      "pair_id": "session_pair_09",
       "status_only_classification_correct": true,
       "status_only_fault_detected": false,
       "status_only_localization_correct": false,
@@ -391,10 +447,11 @@
       "wod2sim_valid": true
     },
     {
-      "case_id": "control:trace_prefix_10",
-      "event_count": 637,
+      "case_id": "control:10",
+      "event_count": 33,
       "expected_fault_code": "",
       "expected_valid": true,
+      "pair_id": "session_pair_10",
       "status_only_classification_correct": true,
       "status_only_fault_detected": false,
       "status_only_localization_correct": false,
@@ -406,10 +463,11 @@
       "wod2sim_valid": true
     },
     {
-      "case_id": "control:trace_prefix_11",
-      "event_count": 707,
+      "case_id": "control:11",
+      "event_count": 36,
       "expected_fault_code": "",
       "expected_valid": true,
+      "pair_id": "session_pair_11",
       "status_only_classification_correct": true,
       "status_only_fault_detected": false,
       "status_only_localization_correct": false,
@@ -421,10 +479,11 @@
       "wod2sim_valid": true
     },
     {
-      "case_id": "control:trace_prefix_12",
-      "event_count": 777,
+      "case_id": "control:12",
+      "event_count": 39,
       "expected_fault_code": "",
       "expected_valid": true,
+      "pair_id": "session_pair_12",
       "status_only_classification_correct": true,
       "status_only_fault_detected": false,
       "status_only_localization_correct": false,
@@ -436,10 +495,11 @@
       "wod2sim_valid": true
     },
     {
-      "case_id": "control:trace_prefix_13",
-      "event_count": 847,
+      "case_id": "control:13",
+      "event_count": 42,
       "expected_fault_code": "",
       "expected_valid": true,
+      "pair_id": "session_pair_13",
       "status_only_classification_correct": true,
       "status_only_fault_detected": false,
       "status_only_localization_correct": false,
@@ -451,10 +511,11 @@
       "wod2sim_valid": true
     },
     {
-      "case_id": "control:trace_prefix_14",
-      "event_count": 917,
+      "case_id": "control:14",
+      "event_count": 45,
       "expected_fault_code": "",
       "expected_valid": true,
+      "pair_id": "session_pair_14",
       "status_only_classification_correct": true,
       "status_only_fault_detected": false,
       "status_only_localization_correct": false,
@@ -466,10 +527,11 @@
       "wod2sim_valid": true
     },
     {
-      "case_id": "control:trace_prefix_15",
-      "event_count": 987,
+      "case_id": "control:15",
+      "event_count": 48,
       "expected_fault_code": "",
       "expected_valid": true,
+      "pair_id": "session_pair_15",
       "status_only_classification_correct": true,
       "status_only_fault_detected": false,
       "status_only_localization_correct": false,
@@ -482,26 +544,19 @@
     }
   ],
   "classification": {
-    "paired_mcnemar": {
-      "exact_two_sided_p": 6.103515625e-05,
+    "paired_comparison": {
+      "discordant_pairs": 15,
+      "scope": "Descriptive paired counts for this designed suite; no independence-based significance test is applied.",
       "status_only_only_correct": 0,
       "wod2sim_only_correct": 15
     },
     "status_only": {
       "classification_accuracy": 0.5,
-      "classification_accuracy_wilson95": [
-        0.33154125640533766,
-        0.6684587435946623
-      ],
       "classification_correct": 15,
       "classification_total": 30,
       "control_total": 15,
       "false_positives": 0,
       "fault_recall": 0.0,
-      "fault_recall_wilson95": [
-        0.0,
-        0.20388330103584862
-      ],
       "fault_total": 15,
       "faults_correctly_localized": 0,
       "faults_detected": 0,
@@ -510,19 +565,11 @@
     },
     "wod2sim": {
       "classification_accuracy": 1.0,
-      "classification_accuracy_wilson95": [
-        0.8864866068260312,
-        0.9999999999999999
-      ],
       "classification_correct": 30,
       "classification_total": 30,
       "control_total": 15,
       "false_positives": 0,
       "fault_recall": 1.0,
-      "fault_recall_wilson95": [
-        0.7961166989641515,
-        1.0
-      ],
       "fault_total": 15,
       "faults_correctly_localized": 15,
       "faults_detected": 15,
@@ -530,10 +577,12 @@
       "specificity": 1.0
     }
   },
-  "created_at": "2026-07-19T18:17:34.153927+00:00",
+  "created_at": "2026-07-20T13:15:44.255185+00:00",
   "design": {
+    "adapter_batch_size": 20,
+    "adapter_iterations": 1000,
     "control_cases": 15,
-    "control_construction": "Fifteen increasing prefixes of the retained external trace, each terminated by the retained close event.",
+    "control_construction": "Fifteen unmodified, separately instantiated current-instrumentation adapter sessions, one paired with each fault operator.",
     "fault_cases": 15,
     "fault_codes": [
       "semantic.route_missing",
@@ -552,9 +601,8 @@
       "evidence.manifest_missing",
       "evidence.hash_mismatch"
     ],
-    "fault_construction": "One independent field or context mutation per case; the detector receives only the mutated trace and runtime context.",
-    "guard_batch_size": 20,
-    "guard_iterations": 200,
+    "fault_construction": "One predefined telemetry or runtime-context mutation per source session; the detector receives only the mutated trace and context.",
+    "inference": "No population-level confidence interval or hypothesis test is reported because sessions and mutations form a designed conformance suite.",
     "random_seed": 2027,
     "scoring": "Expected labels are retained by the experiment scorer and are not passed to diagnose_contract_trace.",
     "timing_batch_size": 5,
@@ -568,86 +616,61 @@
     "timer": "time.perf_counter_ns"
   },
   "implementation_sha256": {
-    "src/wod2sim/audit/diagnostic_experiment.py": "f5b6a58a7103a41ce2b408572df8dfbb4366e02653c5c78ea2919edcb6fa0c04",
-    "src/wod2sim/audit/trace_diagnostics.py": "31ce91135b814c87c20517f0dffdb0f7cf0562903fce32b8ea92127bda032f45",
+    "src/wod2sim/audit/diagnostic_experiment.py": "d9d63c4e58aabf96fcb2107629d8adee0082bfc109f3e6af89adbb66ba0f7238",
+    "src/wod2sim/audit/diagnostic_trace_generation.py": "2c14db4f8b72c6901faa2286dcafba5b474ed9abdaf5c02c848b62ece833cdd5",
+    "src/wod2sim/audit/trace_diagnostics.py": "3b36ff32093709ae1ee134af5fac065a9058e7b7d4a79b4fb17e6e04c92dc148",
+    "src/wod2sim/challenge/e2e_driver.py": "0809d759dd0118dc7453c8f55a7aca72bcaf9fa661830db24ec2a8dd63ca768f",
     "src/wod2sim/simulator/baseline_drivers.py": "5b9cc009fe8c8ad56581203838ec2e53a2fc2fff89ac84fb822905714ea6fb44"
   },
-  "online_guard_overhead": {
-    "guarded_prediction_us": {
-      "max": 255.26995,
-      "mean": 77.99196025,
-      "min": 58.90085,
-      "p50": 70.82277500000001,
-      "p95": 113.55179250000012,
-      "samples": 200
-    },
-    "incremental_p50_as_source_driver_p50_percent": 0.8117215447029759,
-    "paired_incremental_p50_percent": 26.648256564550422,
-    "paired_incremental_us": {
-      "max": 203.10184999999998,
-      "mean": 17.0270315,
-      "min": -40.852850000000004,
-      "p50": 14.552,
-      "p95": 43.21734750000005,
-      "samples": 200
-    },
-    "pairing": "Guarded and unchecked order is randomized per iteration; paired differences use per-call batch means.",
-    "scope": "dependency-light route-following prediction; guarded path enables camera shape/context and sensor-freshness checks, while both paths preserve route extraction, trajectory generation, resampling, and reasoning serialization",
-    "trajectory_outputs_equal": true,
-    "unchecked_prediction_us": {
-      "max": 134.8069,
-      "mean": 60.96492875,
-      "min": 45.8704,
-      "p50": 54.6077,
-      "p95": 95.85649500000004,
-      "samples": 200
-    },
-    "warmup_calls_per_method": 50
-  },
-  "schema": "wod2sim_diagnostic_experiment_v1",
+  "schema": "wod2sim_diagnostic_experiment_v3",
   "source_trace": {
-    "drive_count": 197,
-    "event_count": 989,
+    "drive_count": 120,
+    "event_count": 405,
+    "explicit_finite_drive_count": 120,
+    "kind": "dependency-light current-instrumentation adapter sessions; not external simulator rollouts",
     "latency_ms": {
-      "max": 11.966052,
-      "mean": 2.135029,
-      "p50": 1.792733,
-      "p95": 8.995557999999999
+      "max": 0.750275,
+      "mean": 0.24781945000000002,
+      "p50": 0.2428085,
+      "p95": 0.3046141
     },
-    "latency_target_met_count": 197,
+    "latency_target_met_count": 120,
     "latency_target_ms": 100.0,
-    "path": "artifacts/external/alpasim_e2e_challenge_conformance/challenge-driver-fixed.jsonl",
-    "sha256": "f22c4c3b0f7bd5ee5436c050ec9633fbc1beefb21c8327fa50090f40978f286d"
+    "path": "artifacts/cvm/inputs/diagnostic_protocol_sessions.jsonl",
+    "session_count": 15,
+    "sha256": "30a474b851b924694b965db7d6860047115d13d75dfa94a44480ed5c75f7244b",
+    "telemetry_schemas": [
+      "wod2sim_challenge_telemetry_v2"
+    ]
   },
   "timing": {
-    "correct_fault_diagnosis_us": {
-      "max": 1870.3038,
-      "mean": 270.04385493333336,
-      "min": 146.4458,
-      "p50": 234.85469999999998,
-      "p95": 417.82792000000006,
+    "completion_gate_decision_us": {
+      "max": 33.4438,
+      "mean": 0.1393161,
+      "min": 0.0584,
+      "p50": 0.1216,
+      "p95": 0.21422000000000008,
+      "samples": 6000
+    },
+    "contract_gate_decision_us": {
+      "max": 167.5032,
+      "mean": 11.907179266666667,
+      "min": 2.0098,
+      "p50": 10.822099999999999,
+      "p95": 20.78871,
+      "samples": 6000
+    },
+    "fault_case_detector_us": {
+      "max": 130.8612,
+      "mean": 12.759985,
+      "min": 2.386,
+      "p50": 11.4414,
+      "p95": 21.915490000000005,
       "samples": 3000
     },
-    "incremental_decision_p50_us": 207.82010000000002,
+    "incremental_decision_p50_us": 10.700499999999998,
     "pairing": "Method order is randomized within every case and iteration; reported samples are per-call batch means.",
-    "scope": "in-memory post-run classification of parsed telemetry and runtime context",
-    "status_only_correct_fault_diagnoses": 0,
-    "status_only_decision_us": {
-      "max": 66.3014,
-      "mean": 0.193986,
-      "min": 0.0646,
-      "p50": 0.1597,
-      "p95": 0.31681000000000004,
-      "samples": 6000
-    },
-    "warmup_calls_per_case_and_method": 3,
-    "wod2sim_decision_us": {
-      "max": 1870.3038,
-      "mean": 201.57743469999997,
-      "min": 2.1474,
-      "p50": 207.9798,
-      "p95": 385.67570000000006,
-      "samples": 6000
-    }
+    "scope": "in-memory detector execution on already-parsed telemetry and runtime context; excludes JSON parsing, file I/O, and human investigation time",
+    "warmup_calls_per_case_and_method": 3
   }
 }

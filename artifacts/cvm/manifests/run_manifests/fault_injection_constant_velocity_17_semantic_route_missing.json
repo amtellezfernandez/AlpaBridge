@@ -5,7 +5,7 @@
   "claim_valid": false,
   "completed": true,
   "config_path": "configs/cvm/fault_injection.yaml",
-  "config_sha256": "308e17c2ba0db50af22f802d3b886fad0a639820ee8087e9367feb7009cd17cb",
+  "config_sha256": "821c597ba36036674f06142893010f53e37224bc4a7935546583b8575424d565",
   "contract_expectations": {
     "claim_valid_requires_route_waypoints": true,
     "evidence_gate": "claim_valid_false_until_audit_aggregation",
@@ -15,7 +15,7 @@
     "target_runtime_samples": 20
   },
   "created_at": "2026-07-17T17:07:34.725861+00:00",
-  "detail": "Controlled trace mutation was classified from mutated telemetry without passing the expected label to the detector; source=artifacts/external/alpasim_e2e_challenge_conformance/challenge-driver-fixed.jsonl.",
+  "detail": "Controlled trace mutation was classified from mutated telemetry without passing the expected label to the detector; source=artifacts/cvm/inputs/diagnostic_protocol_sessions.jsonl.",
   "execution_mode": "synthetic_fault_injection",
   "failure_attribution": {
     "category": "diagnostic_rollout_pending_claim_gate",
@@ -50,7 +50,7 @@
     },
     "config": {
       "path": "configs/cvm/fault_injection.yaml",
-      "sha256": "308e17c2ba0db50af22f802d3b886fad0a639820ee8087e9367feb7009cd17cb"
+      "sha256": "821c597ba36036674f06142893010f53e37224bc4a7935546583b8575424d565"
     },
     "docker_image": {
       "available": false,
@@ -74,13 +74,13 @@
       "src/wod2sim/alpasim_overrides/src/wizard/configs/deploy/local_arm_external_driver.yaml": "2d8e5ab7e69ca7377b9427c96f4da600ec90802bc2a2e8d15ed825c5833ec240"
     },
     "python": {
-      "executable": ".venv/bin/python",
+      "executable": ".venv/bin/python3",
       "version": "Python 3.12.12"
     },
     "repository": {
-      "dirty": false,
-      "dirty_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "git_sha": "42f8865d543435728970f4e6b672f2ee320726dc"
+      "dirty": true,
+      "dirty_diff_sha256": "729ca07fa8bb54bda182edb2f70f08b2c4ee4a413559f81e7333a26c4c7fc49b",
+      "git_sha": "9b414456f13bba89aa74fe36b9ae2fe371def049"
     }
   },
   "run_id": "fault_injection_constant_velocity_17_semantic_route_missing",

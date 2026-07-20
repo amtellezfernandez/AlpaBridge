@@ -40,8 +40,8 @@ Waymo-to-AlpaSim scene conversion.
 | --- | --- |
 | Can WOD-style adapters run as auditable AlpaSim external drivers? | Yes. The dependency-light public core completes `30/30` closed-loop rows over `15` local scenes. |
 | Does WOD2Sim prevent integration-invalid metrics from becoming policy evidence? | Yes. A defined status-only baseline accepts `15/15` completed metric-bearing command-only rows, while WOD2Sim rejects the same `15/15` as non-claim-valid route evidence. |
-| Does the detector distinguish controlled faults from valid traces? | Yes. On `15` single-fault mutations and `15` valid prefix controls, WOD2Sim classifies `30/30`, localizes `15/15`, and flags `0/15` controls; the executable status-only gate classifies `15/30` and detects no faults (`p=0.000061`, exact paired McNemar). |
-| What diagnostic cost is measured? | Median post-trace fault diagnosis is `234.855 us`. Online camera/context and freshness guards add `14.552 us` median, `0.812%` of the retained external driver-call median, while preserving trajectory output. |
+| Does the detector distinguish controlled faults from valid traces? | Yes, for the declared designed suite. On `15` single-fault mutations paired with `15` separately instantiated valid adapter sessions, WOD2Sim classifies `30/30`, localizes `15/15`, and flags `0/15` controls; the executable completion-and-metrics gate classifies `15/30` and detects no faults. These are exact descriptive counts, not a framework-superiority test. |
+| What diagnostic timing is measured? | Post-parse fault-detector execution over `3,000` calls is `11.441 us` median and `21.915 us` p95. The guarded in-process adapter Drive path is `257.390 us` median and `449.371 us` p95; its paired camera-set and freshness-check increment is `25.630 us` median and `112.659 us` p95 over `1,000` measurements across `15` valid sessions, with identical output. Context-length validation remains active in both arms. The measurements exclude gRPC, simulator work, file I/O, and human investigation, so they are not end-to-end runtime or human time-to-diagnosis. |
 | Are all paired route-loss rows comparison-eligible? | No. `14/15` pairs qualify; one full-contract arm is also route-invalid, and the paired score deltas do not establish a systematic policy effect. |
 | Is this a policy-quality benchmark? | No. The release has `0` claim-valid policy benchmark rows, `0` policy-failure-attributable rows, and no verified scenario-category coverage. |
 
@@ -97,13 +97,19 @@ AlpaSim E2E-style conformance artifact completes `1/1` evaluator-owned rollout,
 records `197` WOD2Sim driver RPCs and `396` image events, and meets the driver
 latency target on `197/197` calls. This is interface-portability evidence, not
 a challenge submission, leaderboard score, policy-quality benchmark, or
-scenario-coverage claim.
+scenario-coverage claim. Its version-one telemetry predates the explicit
+finite-output field, so it is not used as current-schema mutation evidence.
 
-The same hashed external trace drives a controlled diagnostic experiment.
-Mutation construction and diagnosis are separate, and the scorer does not pass
-expected labels to the detector. The tracked JSON records case-level outcomes,
-Wilson intervals, the exact paired test, 3,000 fault-diagnosis measurements,
-6,000 all-case decision measurements, and 200 paired online-guard measurements.
+The controlled diagnostic experiment instead generates `15` separate sessions
+through the current adapter: `405` events, `120` drive calls, and `120/120`
+explicitly finite serialized trajectories. Each unmodified session is paired
+with one predefined mutation. Mutation construction and detection are separate,
+and the scorer does not pass expected labels to the detector. The tracked JSON
+records case-level outcomes, exact paired counts, `3,000` fault-case detector
+measurements, `6,000` all-case detector measurements, and `1,000` paired
+guard-path measurements. No population confidence interval or hypothesis
+test is reported because the cases are designed rather than independently
+sampled.
 
 ## Scenario Coverage Boundary
 
@@ -318,7 +324,10 @@ optional gated extension blockers, and completed closed-loop rows are
 diagnostic integration-effectiveness evidence rather than policy-quality
 benchmark claims. The controlled trace experiment adds `30/30` case
 classification, `15/15` localization, an executable status-only comparator,
-post-trace diagnosis timing, and online guard overhead.
+post-parse detector execution latency, and a paired guard-path increment. These
+software microbenchmarks do not measure end-to-end runtime or human
+time-to-diagnosis, and the status-only comparator is not another integration
+framework.
 Missing restricted scenes, learned checkpoints, and scene-matched actor proxies
 remain explicit release limitations rather than hidden infrastructure
 assumptions.

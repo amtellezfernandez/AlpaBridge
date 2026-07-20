@@ -4,6 +4,7 @@ import argparse
 import csv
 import hashlib
 import json
+import math
 import re
 import subprocess
 import tarfile
@@ -173,8 +174,8 @@ BASELINE_REPORT_REQUIRED_TERMS = (
     "make cvm-check",
     "make paper-verify",
     "make verify",
-    "338 passed, 14 skipped, and 15 subtests passed",
-    "64.67% against the configured 33.0% minimum",
+    "358 passed, 14 skipped, and 15 subtests passed",
+    "65.32% against the configured 33.0% minimum",
 )
 CONTRACT_TEST_AUDIT_REQUIRED_TERMS = (
     "# Contract Test Audit",
@@ -198,6 +199,9 @@ CLAIM_BOUNDARY_README_TERMS = (
     "not policy failure",
     "claim-valid",
     "Integration/precondition/evidence failure",
+    "not a framework-superiority test",
+    "not end-to-end runtime or human time-to-diagnosis",
+    "No population confidence interval or hypothesis test is reported",
 )
 CLAIM_BOUNDARY_SOURCE_TERMS = (
     "Failure Attribution Rule",
@@ -207,6 +211,10 @@ CLAIM_BOUNDARY_SOURCE_TERMS = (
     "\\CVMPolicyBehaviorAttributableRows{}",
     "\\CVMPolicyFailureAttributableRows{}",
     "\\CVMIntegrationFailureAttributableRows{}",
+    "not end-to-end runtime or human diagnosis time",
+    "not end-to-end runtime or time-to-diagnosis measurements",
+    "not evidence of population-level superiority to another integration framework",
+    "do not compute a population confidence interval or hypothesis test",
 )
 README_VISUAL_EXPLANATION_TERMS = (
     "Visual Overview",
@@ -232,8 +240,8 @@ EVALUATION_STATUS_TERMS = (
     "integration-effectiveness evidence",
     "service-harness conformance diagnostics only",
     "controlled trace mutations",
-    "post-trace diagnosis latency",
-    "online guard overhead",
+    "post-parse detector execution latency",
+    "paired guard-path increment",
     "denominator/context rather than success metrics",
     "public release core is the dependency-light adapter path",
     "optional gated extensions, not release-core dependencies",
@@ -525,10 +533,29 @@ PAPER_NUMBER_JSON_FIELDS: tuple[tuple[str, str], ...] = (
         "diagnostic_experiment.classification.status_only.false_positives",
     ),
     (
-        "CVMDiagnosticMcNemarPBelowZeroZeroOne",
-        "diagnostic_experiment.classification.paired_mcnemar.exact_two_sided_p_below_0_001",
+        "CVMDiagnosticDiscordantPairs",
+        "diagnostic_experiment.classification.paired_comparison.discordant_pairs",
     ),
-    ("CVMExternalTraceDriveRPCs", "diagnostic_experiment.source_trace.drive_count"),
+    (
+        "CVMProtocolTraceSessions",
+        "diagnostic_experiment.source_trace.session_count",
+    ),
+    (
+        "CVMProtocolTraceDriveRPCs",
+        "diagnostic_experiment.source_trace.drive_count",
+    ),
+    (
+        "CVMProtocolFiniteDriveRecords",
+        "diagnostic_experiment.source_trace.explicit_finite_drive_count",
+    ),
+    (
+        "CVMAdapterInputCases",
+        "diagnostic_experiment.adapter_guard_path_timing.input_cases",
+    ),
+    (
+        "CVMAdapterTimingSamples",
+        "diagnostic_experiment.adapter_guard_path_timing.paired_incremental_us.samples",
+    ),
 )
 PAPER_NUMBER_FLOAT_FIELDS: tuple[tuple[str, str], ...] = (
     (
@@ -563,44 +590,65 @@ PAPER_NUMBER_FLOAT_FIELDS: tuple[tuple[str, str], ...] = (
         "external_compatibility.driver_latency_max_ms",
     ),
     (
-        "CVMDiagnosticDecisionMedianUs",
-        "diagnostic_experiment.timing.wod2sim_decision_us.p50",
+        "CVMDetectorDecisionMedianUs",
+        "diagnostic_experiment.timing.contract_gate_decision_us.p50",
     ),
     (
-        "CVMStatusDecisionMedianUs",
-        "diagnostic_experiment.timing.status_only_decision_us.p50",
+        "CVMDetectorDecisionNinetyFifthUs",
+        "diagnostic_experiment.timing.contract_gate_decision_us.p95",
     ),
     (
-        "CVMDiagnosisMedianUs",
-        "diagnostic_experiment.timing.correct_fault_diagnosis_us.p50",
+        "CVMFaultDetectorMedianUs",
+        "diagnostic_experiment.timing.fault_case_detector_us.p50",
     ),
     (
-        "CVMGuardOverheadMedianUs",
-        "diagnostic_experiment.online_guard_overhead.paired_incremental_us.p50",
+        "CVMFaultDetectorNinetyFifthUs",
+        "diagnostic_experiment.timing.fault_case_detector_us.p95",
     ),
     (
-        "CVMGuardOverheadRelativePercent",
-        "diagnostic_experiment.online_guard_overhead.paired_incremental_p50_percent",
+        "CVMAdapterDriveMedianUs",
+        "diagnostic_experiment.adapter_guard_path_timing.guarded_drive_path_us.p50",
     ),
     (
-        "CVMGuardOverheadTracePercent",
-        "diagnostic_experiment.online_guard_overhead."
-        "incremental_p50_as_source_driver_p50_percent",
+        "CVMAdapterDriveNinetyFifthUs",
+        "diagnostic_experiment.adapter_guard_path_timing.guarded_drive_path_us.p95",
     ),
     (
-        "CVMExternalTraceLatencyMedianMs",
-        "diagnostic_experiment.source_trace.latency_ms.p50",
+        "CVMAdapterGuardIncrementMedianUs",
+        "diagnostic_experiment.adapter_guard_path_timing.paired_incremental_us.p50",
     ),
     (
-        "CVMExternalTraceLatencyNinetyFifthMs",
-        "diagnostic_experiment.source_trace.latency_ms.p95",
+        "CVMAdapterGuardIncrementNinetyFifthUs",
+        "diagnostic_experiment.adapter_guard_path_timing.paired_incremental_us.p95",
     ),
 )
-PAPER_NUMBER_SIX_DECIMAL_FIELDS: tuple[tuple[str, str], ...] = (
+PAPER_NUMBER_SIX_DECIMAL_FIELDS: tuple[tuple[str, str], ...] = ()
+DIAGNOSTIC_TIMING_TEXT_FIELDS: tuple[tuple[str, str], ...] = (
     (
-        "CVMDiagnosticMcNemarP",
-        "diagnostic_experiment.classification.paired_mcnemar.exact_two_sided_p",
+        "fault_detector_p50",
+        "diagnostic_experiment.timing.fault_case_detector_us.p50",
     ),
+    (
+        "fault_detector_p95",
+        "diagnostic_experiment.timing.fault_case_detector_us.p95",
+    ),
+    (
+        "guard_increment_p50",
+        "diagnostic_experiment.adapter_guard_path_timing.paired_incremental_us.p50",
+    ),
+    (
+        "guard_increment_p95",
+        "diagnostic_experiment.adapter_guard_path_timing.paired_incremental_us.p95",
+    ),
+)
+DIAGNOSTIC_TIMING_CLAIM_PATHS = (
+    "README.md",
+    "docs/evaluation.md",
+    "artifacts/cvm/reports/experiment_report.md",
+    "artifacts/cvm/reports/claim_evidence_matrix.md",
+    "artifacts/cvm/reports/blockers.md",
+    "artifacts/cvm/reports/repository_inventory.md",
+    "artifacts/cvm/reports/release_decision.md",
 )
 GENERATED_TABLE_JSON_FIELDS: tuple[str, ...] = (
     "total_rows",
@@ -841,7 +889,10 @@ FORBIDDEN_TEXT_PATTERNS: tuple[tuple[str, Pattern[str]], ...] = (
             + r")[-\s]+style\s+benchmark\b"
         ),
     ),
-    ("weak_adapter_artifact_label", re.compile(r"\badapter\s+and\s+evaluation\s+artifact\b", re.IGNORECASE)),
+    (
+        "weak_adapter_artifact_label",
+        re.compile(r"\badapter\s+and\s+evaluation\s+artifact\b", re.IGNORECASE),
+    ),
     ("weak_artifact_scaffold_label", re.compile(r"\bartifact\s+scaffold\b", re.IGNORECASE)),
     (
         "stale_target_event_artifact_name",
@@ -876,7 +927,7 @@ def main() -> int:
     parser.add_argument("--figures", default=Path("artifacts/cvm/figures"), type=Path)
     parser.add_argument("--metadata", default=None, type=Path)
     parser.add_argument("--repo-root", default=Path("."), type=Path)
-    parser.add_argument("--max-pages", default=4, type=int)
+    parser.add_argument("--max-pages", default=6, type=int)
     parser.add_argument("--allow-eight-pages", action="store_true")
     args = parser.parse_args()
 
@@ -907,7 +958,9 @@ def main() -> int:
     metadata_path = args.metadata if args.metadata is not None else args.source / "metadata.json"
     metadata, metadata_failures = _load_paper_metadata(metadata_path)
     failures.extend(metadata_failures)
-    source_text = main_tex.read_text(encoding="utf-8", errors="ignore") if main_tex.is_file() else ""
+    source_text = (
+        main_tex.read_text(encoding="utf-8", errors="ignore") if main_tex.is_file() else ""
+    )
     failures.extend(
         _paper_metadata_text_failures(
             metadata=metadata,
@@ -927,9 +980,7 @@ def main() -> int:
     failures.extend(_source_text_failures(source_text=source_text, path=main_tex))
     readme_path = args.repo_root / "README.md"
     readme_text = (
-        readme_path.read_text(encoding="utf-8", errors="ignore")
-        if readme_path.is_file()
-        else ""
+        readme_path.read_text(encoding="utf-8", errors="ignore") if readme_path.is_file() else ""
     )
     failures.extend(
         _claim_boundary_text_failures(
@@ -989,6 +1040,12 @@ def main() -> int:
             )
         )
         failures.extend(
+            _diagnostic_timing_claim_failures(
+                repo_root=args.repo_root,
+                summary_path=args.results / "summary.json",
+            )
+        )
+        failures.extend(
             _generated_artifact_failures(
                 data_hash=data_hash,
                 table_dirs=(args.tables, args.source / "generated"),
@@ -1032,10 +1089,10 @@ def main() -> int:
             tests_dir=args.repo_root / "tests",
         )
     )
-    failures.extend(_manifest_attribution_failures(args.results.parent / "manifests" / "run_manifests"))
     failures.extend(
-        _release_hygiene_failures(repo_root=args.repo_root, canonical_paper=args.paper)
+        _manifest_attribution_failures(args.results.parent / "manifests" / "run_manifests")
     )
+    failures.extend(_release_hygiene_failures(repo_root=args.repo_root, canonical_paper=args.paper))
 
     if failures:
         for failure in failures:
@@ -1097,10 +1154,7 @@ def _pdf_a4_page_size_failures(*, info: str, path: Path) -> list[str]:
     for index, (x0, y0, x1, y1) in enumerate(mediaboxes, start=1):
         width = abs(x1 - x0)
         height = abs(y1 - y0)
-        if not (
-            _within_tolerance(width, A4_WIDTH_PT)
-            and _within_tolerance(height, A4_HEIGHT_PT)
-        ):
+        if not (_within_tolerance(width, A4_WIDTH_PT) and _within_tolerance(height, A4_HEIGHT_PT)):
             failures.append(f"page_size_not_a4:{path}:{index}:{width:.3f}x{height:.3f}")
     return failures
 
@@ -1185,7 +1239,9 @@ def _latex_log_failures(path: Path) -> list[str]:
     if not path.is_file():
         return []
     text = path.read_text(encoding="utf-8", errors="ignore")
-    return [f"latex_log_warning:{pattern}" for pattern in LATEX_LOG_FAILURE_PATTERNS if pattern in text]
+    return [
+        f"latex_log_warning:{pattern}" for pattern in LATEX_LOG_FAILURE_PATTERNS if pattern in text
+    ]
 
 
 def _paper_metadata_text_failures(
@@ -1557,7 +1613,9 @@ def _summary_timestamp_failures(*, results_dir: Path, manifest_dir: Path) -> lis
             failures.append(f"matrix_summary_created_at_missing:{summary_path}")
             continue
         if expected is None:
-            failures.append(f"matrix_summary_manifest_timestamp_missing:{summary_path}:{matrix_name}")
+            failures.append(
+                f"matrix_summary_manifest_timestamp_missing:{summary_path}:{matrix_name}"
+            )
             continue
         if actual != expected:
             failures.append(
@@ -1674,9 +1732,45 @@ def _claim_evidence_matrix_failures(*, matrix_path: Path, summary_path: Path) ->
         expected_value = "/".join(str(value) for value in expected_values)
         expected_line = f"- {label}: {expected_value}."
         if expected_line not in text:
-            failures.append(f"claim_evidence_matrix_count_mismatch:{matrix_path}:{label}:{expected_value}")
+            failures.append(
+                f"claim_evidence_matrix_count_mismatch:{matrix_path}:{label}:{expected_value}"
+            )
     if "`artifacts/cvm/results/summary.json`" not in text:
         failures.append(f"claim_evidence_matrix_missing_summary_artifact:{matrix_path}")
+    return failures
+
+
+def _diagnostic_timing_claim_failures(
+    *,
+    repo_root: Path,
+    summary_path: Path,
+) -> list[str]:
+    try:
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return [f"diagnostic_timing_summary_invalid:{summary_path}"]
+    if not isinstance(summary, dict):
+        return [f"diagnostic_timing_summary_invalid:{summary_path}"]
+
+    expected: list[tuple[str, str]] = []
+    failures: list[str] = []
+    for label, dotted_path in DIAGNOSTIC_TIMING_TEXT_FIELDS:
+        value = _json_path_value(summary, dotted_path)
+        if not isinstance(value, (int, float)) or not math.isfinite(float(value)):
+            failures.append(f"diagnostic_timing_field_missing:{summary_path}:{dotted_path}")
+            continue
+        expected.append((label, f"{float(value):.3f}"))
+
+    for relative_path in DIAGNOSTIC_TIMING_CLAIM_PATHS:
+        path = repo_root / relative_path
+        try:
+            text = path.read_text(encoding="utf-8", errors="ignore")
+        except FileNotFoundError:
+            failures.append(f"diagnostic_timing_claim_missing_file:{path}")
+            continue
+        for label, formatted in expected:
+            if re.search(rf"(?<![0-9.]){re.escape(formatted)}\s*us\b", text) is None:
+                failures.append(f"diagnostic_timing_claim_mismatch:{path}:{label}:{formatted}")
     return failures
 
 
@@ -1784,12 +1878,16 @@ def _paper_number_macro_failures(
     macros, duplicates = _parse_latex_newcommands(paper_numbers_path)
     if not macros and not paper_numbers_path.is_file():
         return [f"missing_paper_numbers:{paper_numbers_path}"]
-    failures.extend(f"paper_numbers_duplicate_macro:{paper_numbers_path}:{name}" for name in duplicates)
+    failures.extend(
+        f"paper_numbers_duplicate_macro:{paper_numbers_path}:{name}" for name in duplicates
+    )
     expected: dict[str, str] = {}
     for macro, dotted_path in PAPER_NUMBER_JSON_FIELDS:
         value = _json_path_value(summary, dotted_path)
         if not isinstance(value, int):
-            failures.append(f"paper_numbers_summary_field_missing:{summary_path}:{macro}:{dotted_path}")
+            failures.append(
+                f"paper_numbers_summary_field_missing:{summary_path}:{macro}:{dotted_path}"
+            )
             continue
         expected[macro] = str(value)
     for macro, dotted_path in PAPER_NUMBER_FLOAT_FIELDS:
@@ -1910,7 +2008,9 @@ def _generated_table_value_failures(
     return failures
 
 
-def _generated_table_summary_field_failures(summary_path: Path, summary: dict[str, object]) -> list[str]:
+def _generated_table_summary_field_failures(
+    summary_path: Path, summary: dict[str, object]
+) -> list[str]:
     failures: list[str] = []
     for dotted_path in GENERATED_TABLE_JSON_FIELDS:
         if not isinstance(_json_path_value(summary, dotted_path), int):
@@ -1966,18 +2066,22 @@ def _expected_main_results_rows(summary: dict[str, object]) -> list[str]:
     if not isinstance(core_policy_results, list):
         return []
     return [
-        _expected_core_policy_row(item)
-        for item in core_policy_results
-        if isinstance(item, dict)
+        _expected_core_policy_row(item) for item in core_policy_results if isinstance(item, dict)
     ]
 
 
 def _expected_core_policy_row(item: dict[str, object]) -> str:
     completed = item.get("completed_runs") if isinstance(item.get("completed_runs"), int) else 0
     attempted = item.get("attempted_runs") if isinstance(item.get("attempted_runs"), int) else 0
-    audit_valid = item.get("audit_valid_runs") if isinstance(item.get("audit_valid_runs"), int) else 0
-    route_valid = item.get("route_valid_runs") if isinstance(item.get("route_valid_runs"), int) else 0
-    sensor_valid = item.get("sensor_valid_runs") if isinstance(item.get("sensor_valid_runs"), int) else 0
+    audit_valid = (
+        item.get("audit_valid_runs") if isinstance(item.get("audit_valid_runs"), int) else 0
+    )
+    route_valid = (
+        item.get("route_valid_runs") if isinstance(item.get("route_valid_runs"), int) else 0
+    )
+    sensor_valid = (
+        item.get("sensor_valid_runs") if isinstance(item.get("sensor_valid_runs"), int) else 0
+    )
     return _table_row(
         _latex_table_text(str(item.get("policy", ""))),
         item.get("configured_rows") if isinstance(item.get("configured_rows"), int) else 0,
@@ -2237,8 +2341,7 @@ def _single_manifest_attribution_failures(
     )
     if expected_interpretation is not None and interpretation != expected_interpretation:
         failures.append(
-            f"failure_attribution_interpretation_mismatch:{path}:{run_id}:"
-            f"{status}:{interpretation}"
+            f"failure_attribution_interpretation_mismatch:{path}:{run_id}:{status}:{interpretation}"
         )
     expected_category = (
         "policy_attributable_behavior"
@@ -2310,7 +2413,11 @@ def _expected_failure_interpretation(
 
 def _release_hygiene_failures(*, repo_root: Path, canonical_paper: Path) -> list[str]:
     root = repo_root.resolve()
-    canonical = (root / canonical_paper).resolve() if not canonical_paper.is_absolute() else canonical_paper.resolve()
+    canonical = (
+        (root / canonical_paper).resolve()
+        if not canonical_paper.is_absolute()
+        else canonical_paper.resolve()
+    )
     failures = _duplicate_manuscript_pdf_failures(root=root, canonical_paper=canonical)
     failures.extend(_package_metadata_failures(repo_root=root))
     failures.extend(_install_reproducibility_failures(repo_root=root))
@@ -2386,10 +2493,13 @@ def _repository_inventory_failures(*, repo_root: Path) -> list[str]:
                     f"{actual_pdf_size}:{reported_pdf_size}"
                 )
     if "test_report.md" not in text:
-        failures.append(f"repository_inventory_missing_test_report_reference:{path.relative_to(root)}")
+        failures.append(
+            f"repository_inventory_missing_test_report_reference:{path.relative_to(root)}"
+        )
     if re.search(r"\b\d+\s+passing\s+dependency-light\s+conformance\s+tests\b", normalized):
         failures.append(f"repository_inventory_stale_pass_count:{path.relative_to(root)}")
     return failures
+
 
 def _cvm_acronym_definition_failures(*, path: Path, text: str, root: Path) -> list[str]:
     try:
@@ -2648,7 +2758,9 @@ def _public_local_reference_targets(text: str) -> list[str]:
     return targets
 
 
-def _resolve_public_local_reference(*, path: Path, target: str, root: Path) -> tuple[Path, str] | None:
+def _resolve_public_local_reference(
+    *, path: Path, target: str, root: Path
+) -> tuple[Path, str] | None:
     cleaned = target.strip().strip("<>")
     if not cleaned or cleaned.startswith("#"):
         return None
@@ -2669,7 +2781,9 @@ def _public_image_alt_failures(*, path: Path, text: str, root: Path) -> list[str
     failures: list[str] = []
     for alt_text, target in MARKDOWN_IMAGE_RE.findall(text):
         if not alt_text.strip():
-            failures.append(f"public_image_alt_missing:{rel_path}:{target.strip() or '<empty-target>'}")
+            failures.append(
+                f"public_image_alt_missing:{rel_path}:{target.strip() or '<empty-target>'}"
+            )
     for tag in HTML_IMAGE_TAG_RE.findall(text):
         alt_match = HTML_ALT_ATTR_RE.search(tag)
         if alt_match is None or not alt_match.group(2).strip():
@@ -2691,7 +2805,10 @@ def _archive_hygiene_failures(path: Path, *, root: Path) -> list[str]:
                         archive_path=rel_path,
                     )
                 )
-                if not member.isfile() or Path(member.name).suffix.lower() not in ARCHIVE_TEXT_SUFFIXES:
+                if (
+                    not member.isfile()
+                    or Path(member.name).suffix.lower() not in ARCHIVE_TEXT_SUFFIXES
+                ):
                     continue
                 handle = archive.extractfile(member)
                 if handle is None:
@@ -2701,7 +2818,9 @@ def _archive_hygiene_failures(path: Path, *, root: Path) -> list[str]:
                 except UnicodeDecodeError:
                     continue
                 if "<bundle_tmp>" in text:
-                    failures.append(f"public_hygiene_archive:bundle_tmp_path:{rel_path}:{member.name}")
+                    failures.append(
+                        f"public_hygiene_archive:bundle_tmp_path:{rel_path}:{member.name}"
+                    )
                 for label, pattern in FORBIDDEN_TEXT_PATTERNS:
                     if pattern.search(text):
                         failures.append(f"public_hygiene_archive:{label}:{rel_path}:{member.name}")
@@ -2716,15 +2835,25 @@ def _archive_member_metadata_failures(*, member: tarfile.TarInfo, archive_path: 
     if member_path.is_absolute() or ".." in member_path.parts:
         failures.append(f"public_archive_unsafe_member_path:{archive_path}:{member.name}")
     if member.mtime != DETERMINISTIC_ARCHIVE_MTIME:
-        failures.append(f"public_archive_nondeterministic_metadata:{archive_path}:{member.name}:mtime")
+        failures.append(
+            f"public_archive_nondeterministic_metadata:{archive_path}:{member.name}:mtime"
+        )
     if member.uid != 0:
-        failures.append(f"public_archive_nondeterministic_metadata:{archive_path}:{member.name}:uid")
+        failures.append(
+            f"public_archive_nondeterministic_metadata:{archive_path}:{member.name}:uid"
+        )
     if member.gid != 0:
-        failures.append(f"public_archive_nondeterministic_metadata:{archive_path}:{member.name}:gid")
+        failures.append(
+            f"public_archive_nondeterministic_metadata:{archive_path}:{member.name}:gid"
+        )
     if member.uname:
-        failures.append(f"public_archive_nondeterministic_metadata:{archive_path}:{member.name}:uname")
+        failures.append(
+            f"public_archive_nondeterministic_metadata:{archive_path}:{member.name}:uname"
+        )
     if member.gname:
-        failures.append(f"public_archive_nondeterministic_metadata:{archive_path}:{member.name}:gname")
+        failures.append(
+            f"public_archive_nondeterministic_metadata:{archive_path}:{member.name}:gname"
+        )
     return failures
 
 

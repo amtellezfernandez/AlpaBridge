@@ -10,7 +10,7 @@ adapter_configs:
 execution:
   mode: synthetic_fault_injection
   expected_runs: 15
-  source_trace: artifacts/external/alpasim_e2e_challenge_conformance/challenge-driver-fixed.jsonl
+  source_trace: artifacts/cvm/inputs/diagnostic_protocol_sessions.jsonl
 faults:
   - semantic.route_missing
   - semantic.command_only

@@ -94,33 +94,46 @@ passes and the retained failure layer is policy.
 
 ## Controlled Trace Diagnostics
 
-The tracked experiment mutates the hashed external AlpaSim driver trace rather
-than copying the configured label into the observed result. Mutation and
-detection are separate functions; `diagnose_contract_trace` receives only the
-mutated events and runtime context.
+The tracked experiment generates 15 separate sessions through the current
+adapter rather than mutating the earlier external AlpaSim trace. The
+current-schema source contains 405 events, 120 drive calls, and 120/120 explicit
+finite serialized-trajectory results. Each clean session passes the detector
+and is paired with one predefined mutation. Mutation and detection are separate
+functions; `diagnose_contract_trace` receives only events and runtime context,
+not the scorer's expected label.
 
-- Cases: 15 single-fault mutations and 15 valid prefix controls.
+- Cases: 15 single-fault mutations and 15 separately instantiated valid
+  session controls.
 - WOD2Sim: 30/30 correctly classified, 15/15 faults detected, 15/15 localized,
   and 0/15 control false positives.
-- Executable status-only gate: 15/30 correctly classified, 0/15 faults
+- Executable completion-and-metrics gate: 15/30 correctly classified, 0/15 faults
   detected, and 0/15 control false positives.
 - Paired comparison: 15 WOD2Sim-only correct cases, 0 status-only-only correct
-  cases, exact two-sided McNemar `p=0.00006103515625`.
-- Uncertainty: WOD2Sim classification Wilson 95% interval
-  `[0.8865, 1.0000]`; fault-recall interval `[0.7961, 1.0000]`.
-- Post-trace timing: 3,000 correct-fault measurements, median `234.855 us`;
-  6,000 all-case WOD2Sim decisions, median `207.980 us`.
-- Online guard ablation: 200 randomized paired measurements, median increment
-  `14.552 us` (`26.648%` of the unchecked dependency-light prediction and
-  `0.812%` of the retained external driver-call median). Guarded and unchecked
-  trajectories are identical.
-- External timing context: 197/197 retained drive calls met the 100-ms target;
+  cases. This exact count is descriptive; no population confidence interval or
+  hypothesis test is reported for the designed cases.
+- Post-parse detector timing: 3,000 fault-case measurements, median
+  `11.441 us` and p95 `21.915 us`; 6,000 all-case measurements, median
+  `10.822 us` and p95 `20.789 us`.
+- In-process adapter Drive-path timing: 1,000 guarded measurements rotating over
+  15 deterministic valid sessions, median `257.390 us` and p95 `449.371 us`.
+  The paired guard-path increment is `25.630 us` median and `112.659 us` p95.
+  Guarded and unchecked trajectories and headings are identical.
+- Separate external timing context: 197/197 retained drive calls met the 100-ms target;
   median `1.793 ms`, p95 `8.996 ms`.
 
 The classifier result is a controlled conformance comparison on
-framework-authored mutations from one retained trace. The runtime result covers
-in-memory post-parse diagnosis and the camera/context plus freshness guards in
-the dependency-light route-following path.
+framework-authored sessions and mutations, not a defect-prevalence estimate or
+a comparison with another integration framework. Detector timing covers
+in-memory execution on already-parsed telemetry. Adapter timing includes input
+assembly, prediction, serialization, finite-output validation, reasoning
+parsing, and in-memory telemetry; the paired increment isolates camera-set and
+freshness checks, while context-length validation remains active in both arms.
+It excludes gRPC, file I/O, simulator work, and human
+investigation, so it is not end-to-end runtime or human time-to-diagnosis.
+
+The retained evaluator-owned external trace remains interface-conformance
+evidence. Its earlier telemetry schema does not record the explicit finite-output
+field required by the current detector, so it is not used as the mutation source.
 
 ## Lifecycle Diagnostics
 
@@ -158,8 +171,8 @@ fabricated.
 The current aggregate supports a bounded integration-effectiveness claim for
 the completed dependency-light public core, route-boundary preservation, a
 functional command-only route baseline comparison, evidence-gate rejection,
-controlled fault classification, post-trace diagnosis latency, and scoped
-online guard overhead.
+controlled fault classification, post-parse detector execution latency, and a
+paired guard-path increment.
 It does not support a complete direct-actor temporal ablation, learned-policy
 result, policy-quality comparison, broad integration-framework ranking, or
 official Waymo benchmark claim.

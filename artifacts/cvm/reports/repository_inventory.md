@@ -27,8 +27,8 @@ host-specific paths, runtime identifiers, and local simulator state.
 - Format: IEEE conference two-column template using the official
   `paper/cvm/ieeeconf.cls`.
 - Page size: A4 verified by `mutool info` mediabox `[ 0 0 595.276 841.89 ]`.
-- Page count: 4.
-- PDF size at audit: 189158 bytes.
+- Page count: 5.
+- PDF size at audit: 187020 bytes.
 - Root PDF is the only tracked manuscript PDF.
 
 ## Commands And Targets
@@ -66,18 +66,21 @@ host-specific paths, runtime identifiers, and local simulator state.
 - Command-only route rows rejected as non-claim-valid: 15/15.
 - Synthetic diagnostic rows: 55.
 - Controlled diagnostic cases: 30 total, with 15 single-fault mutations and 15
-  valid controls.
+  separately instantiated valid current-adapter session controls.
+- Current diagnostic source: 15 sessions, 405 events, 120 drive calls, and
+  120/120 explicit finite serialized outputs.
 - Controlled comparison: WOD2Sim 30/30 correct and 15/15 localized; status-only
   15/30 correct; 0/15 WOD2Sim control false positives.
-- Median measured costs: 234.855 us post-trace fault diagnosis and 14.552 us
-  online guard increment.
+- Fault-case detector execution: 11.441 us median and 21.915 us p95.
+- Guarded in-process adapter Drive path: 257.390 us median and 449.371 us p95.
+- Paired guard-path increment: 25.630 us median and 112.659 us p95.
 - Blocked rows: 33, all `direct_actor_oracle_proxy_missing`.
 - Claim-valid policy benchmark rows: 0.
 - Policy-attributable behavior rows: 42.
 - Policy-attributable failure rows: 0.
 - Completed non-policy diagnostic rows: 73.
 - Non-policy-attributed rows: 106.
-- Aggregate data hash: `b77f17e9299cb3dc69543380ca512b18306c9959d33425a11255018d8009915c`.
+- Aggregate data hash: `0c2398419f8fd3f52d75fd6c5efe82527bf653dd4f9e730d01d308468faac402`.
 - Every public run manifest carries pre-audit `failure_attribution`, including
   policy-failure status, claim-valid benchmark status, failure layer/code, and
   the integration-vs-policy attribution rule. Aggregate `summary.json` upgrades

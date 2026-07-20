@@ -4,8 +4,8 @@
 \overrideIEEEmargins
 
 \usepackage{amsmath}
-\usepackage{balance}
 \usepackage{booktabs}
+\usepackage{flushend}
 \usepackage{graphicx}
 \usepackage[hidelinks]{hyperref}
 \usepackage{microtype}
@@ -35,24 +35,25 @@ Closed-loop driving evaluation can misattribute degraded rollout metrics to poli
 quality when the simulator boundary drops route geometry, changes timing assumptions,
 or produces incomplete evidence. WOD2Sim audits semantic, temporal, lifecycle,
 deployment, and evidence contracts between Waymo Open Motion Dataset-style
-trajectory policies and AlpaSim external drivers. We evaluate a retained
-\CVMExternalTraceDriveRPCs{}-call AlpaSim trace using \CVMDiagnosticFaultCases{}
-single-fault mutations and \CVMDiagnosticControlCases{} valid prefix controls; expected
-labels are withheld from the detector. WOD2Sim classifies
+trajectory policies and AlpaSim external drivers. A retained external AlpaSim rollout
+establishes interface conformance; a separate current-instrumentation suite contains
+\CVMProtocolTraceSessions{} adapter sessions and \CVMProtocolTraceDriveRPCs{} drive
+records. We pair each session with one of \CVMDiagnosticFaultCases{} predefined
+single-fault mutations while withholding labels from the detector. WOD2Sim classifies
 \CVMWODDiagnosticCorrect{}/\CVMDiagnosticCases{} cases correctly, detects and localizes
 \CVMWODDiagnosticLocalized{}/\CVMDiagnosticFaultCases{} faults, and produces
 \CVMWODDiagnosticFalsePositives{}/\CVMDiagnosticControlCases{} control false
-positives. An executable completion-and-metrics gate classifies
-\CVMStatusDiagnosticCorrect{}/\CVMDiagnosticCases{} and detects no faults
-(exact paired McNemar $p=\CVMDiagnosticMcNemarP{}$). Across 3,000 fault decisions,
-median post-trace diagnosis is \CVMDiagnosisMedianUs{}~$\mu$s. In 200 paired
-route-following measurements, online camera/context and freshness checks add
-\CVMGuardOverheadMedianUs{}~$\mu$s median while preserving trajectory output, equivalent
-to \CVMGuardOverheadTracePercent{}\% of the retained driver-call median. Separately,
-the contract gate rejects all \CVMContractInvalidRejectedRuns{} completed,
-metric-bearing command-only rollouts admitted by the status gate. The result is a
-measured failure-attribution method; learned-policy quality and scenario coverage are
-outside this study.
+positives; an executable completion-and-metrics gate classifies
+\CVMStatusDiagnosticCorrect{}/\CVMDiagnosticCases{} and detects no faults. Across 3,000
+fault-case calls after parsing, detector execution has median
+\CVMFaultDetectorMedianUs{}~$\mu$s and p95
+\CVMFaultDetectorNinetyFifthUs{}~$\mu$s. Across \CVMAdapterTimingSamples{} paired measurements on
+\CVMAdapterInputCases{} valid route-following sessions, camera-set and freshness
+checks add \CVMAdapterGuardIncrementMedianUs{}~$\mu$s median and
+\CVMAdapterGuardIncrementNinetyFifthUs{}~$\mu$s p95 while preserving output. These are scoped
+software-path measurements, not end-to-end runtime or human diagnosis time, and not a
+comparison with another integration framework; learned-policy quality and scenario
+coverage remain outside the study.
 \end{abstract}
 
 \section{Introduction}
@@ -79,8 +80,8 @@ threefold:
   policy behavior;
   \item an adapter, audit, and artifact pipeline localizes violations and preserves
   completed, blocked, and invalid rows;
-  \item a controlled trace-mutation study measures localization, post-trace diagnosis
-  time, and online guard overhead against an executable status-only gate.
+  \item a paired protocol-conformance suite measures localization, post-parse detector
+  execution, and a guard-path increment against an executable status-only gate.
 \end{itemize}
 The design targets WOD-style trajectory interfaces, but the present evaluation uses
 only dependency-light constant-velocity and route-following policies. It does not
@@ -156,10 +157,12 @@ $t_k=k/f_{\mathrm{run}}$ over the requested horizon. The current ego origin is p
 before interpolation, source timestamps must be finite and strictly increasing, and the
 output must be a finite $N\times2$ array. Matching grids preserve samples; mismatched
 grids use deterministic interpolation, after which headings are recomputed from
-successive runtime points. Invalid horizons, frequencies, grids, or trajectories fail
-the temporal contract rather than reaching vehicle control. These behaviors are
-covered by dependency-light tests, but the scene-level temporal comparison remains
-blocked and is not reported as a result.
+successive runtime points. The final protocol serializer independently rejects empty
+trajectories, non-finite coordinates or headings, and unequal point/heading counts.
+Invalid horizons, frequencies, grids, or trajectories therefore fail the temporal
+contract rather than reaching vehicle control. These behaviors are covered by
+dependency-light tests, but the scene-level temporal comparison remains blocked and is
+not reported as a result.
 
 \subsection{Artifact Lineage}
 
@@ -211,31 +214,45 @@ unclassified and
 \CVMVerifiedRequiredScenarioCategoryCount{}/\CVMRequiredScenarioCategoryCount{}
 required categories are verified.
 
-The diagnostic experiment starts from a hashed, retained external AlpaSim trace with
-\CVMExternalTraceDriveRPCs{} drive calls. Fifteen single-field or runtime-context
-mutations cover three semantic, three temporal, three lifecycle, one plugin, three
-deployment, and two evidence faults. Fifteen increasing trace prefixes, each terminated
-by the retained close event, serve as valid controls. Mutation construction and
-diagnosis are separate: the detector receives only mutated events and runtime context;
-the scorer retains the expected label. For a paired comparator, define the executable
-status-only gate
+The retained external AlpaSim trace contains \CVMExternalChallengeDriveRPCs{} drive calls
+and establishes service-interface and recorded-latency conformance. It uses an earlier
+telemetry schema that did not record the final finite-output check, so it is not the
+source of the mutation experiment. Instead, the current adapter generates
+\CVMProtocolTraceSessions{} separate sessions containing
+\CVMProtocolTraceDriveRPCs{} drive calls; all
+\CVMProtocolFiniteDriveRecords{} calls explicitly record a finite serialized
+trajectory. The sessions vary accepted camera aliases, route geometry, speed, and valid
+sensor age, and each passes the five contracts before mutation.
+
+Each clean session is paired with a copy containing one predefined single-field or
+runtime-context mutation. The 15 mutations cover three semantic, three temporal, three
+lifecycle, one plugin precondition within deployment, three other deployment, and two
+evidence faults. Mutation construction and detection are separate: the detector
+receives only events and runtime context, while the scorer retains the expected label.
+For a paired comparator, define the executable completion-and-metrics gate
 \begin{equation}
 B_{\mathrm{status}}(r)=
 \mathbf{1}[\text{completed}(r)\land\text{metrics}(r)].
 \end{equation}
-Both methods return a decision for all 30 cases. We report correct classification, fault recall,
-localization, control false positives, Wilson 95\% intervals, and an exact two-sided
-McNemar test over paired correctness.
+Both methods return a decision for all 30 cases. We report exact classification,
+detection, localization, false-positive, and paired-discordance counts. We do not
+compute a population confidence interval or hypothesis test because the sessions and
+fault operators are deliberately constructed rather than sampled independently from a
+defined population.
 
-Post-trace timing uses 200 randomized iterations, five calls per batch, yielding 3,000
-fault-diagnosis and 6,000 all-case WOD2Sim measurements. A second 200-iteration paired
-ablation compares the same route-following prediction with camera shape/context and
-sensor-freshness guards enabled or disabled, randomized within each iteration and
-batched over 20 calls. Both paths retain route extraction, trajectory generation,
-resampling, and reasoning serialization; output trajectories must match exactly.
-Completed simulator rows are separately audited for route source and sensor freshness.
-The same status gate is applied to metric-bearing command-only rows, while WOD2Sim
-additionally requires all five contracts.
+Detector timing uses 200 randomized iterations and five calls per batch, yielding 3,000
+fault-case and 6,000 all-case per-call batch means. The timer starts after telemetry has
+been parsed and excludes file I/O and human investigation. A separate
+\CVMAdapterTimingSamples{}-iteration
+paired ablation rotates over \CVMAdapterInputCases{} deterministic valid sessions and
+compares the in-process adapter Drive path with camera-set and sensor-freshness guards
+enabled or disabled; context-length validation remains in both arms. Order is randomized
+batched by 20. Both paths retain state-to-input assembly, prediction, trajectory
+serialization, finite-output validation, reasoning parsing, and in-memory telemetry;
+output trajectories must match exactly. Completed
+simulator rows are separately audited for route source and sensor freshness. The same
+status gate is applied to metric-bearing command-only rows, while WOD2Sim additionally
+requires all five contracts.
 
 \section{Results}
 
@@ -253,19 +270,19 @@ failures despite successful process completion.
 \resizebox{\columnwidth}{!}{\input{generated/main_results.tex}}
 \end{table}
 
-Controlled-trace results appear in Table~\ref{tab:diagnostic-comparison}. WOD2Sim is
+Designed-suite results appear in Table~\ref{tab:diagnostic-comparison}. WOD2Sim is
 correct on \CVMWODDiagnosticCorrect{} of \CVMDiagnosticCases{} cases, detects and
 localizes all \CVMDiagnosticFaultCases{} faults, and flags none of the
 \CVMDiagnosticControlCases{} controls. The status gate is correct on
 \CVMStatusDiagnosticCorrect{} cases because it accepts every control and every
-completed fault case; it detects no faults. All 15 discordant pairs favor WOD2Sim
-(exact two-sided McNemar $p=\CVMDiagnosticMcNemarP{}$). The Wilson 95\% lower bounds
-are 0.886 for case classification and 0.796 for fault recall, making the finite
-denominators explicit.
+completed fault case; it detects no faults. All
+\CVMDiagnosticDiscordantPairs{} discordant pairs favor WOD2Sim. These are descriptive
+counts for the declared suite, not evidence of population-level superiority to another
+integration framework.
 
 \begin{table}[t]
 \centering
-\caption{Paired controlled-trace diagnostics. FP denotes a valid control classified
+\caption{Paired protocol-conformance diagnostics. FP denotes a valid control classified
 as faulty.}
 \label{tab:diagnostic-comparison}
 \begin{tabular}{lrrrr}
@@ -284,15 +301,26 @@ Status-only & \CVMStatusDiagnosticCorrect{}/\CVMDiagnosticCases{} &
 \end{tabular}
 \end{table}
 
-Median WOD2Sim decision time is \CVMDiagnosticDecisionMedianUs{}~$\mu$s over 6,000
-measurements; correct fault diagnosis is \CVMDiagnosisMedianUs{}~$\mu$s over 3,000 fault
-measurements. The paired online guard increment is \CVMGuardOverheadMedianUs{}~$\mu$s, or
-\CVMGuardOverheadRelativePercent{}\% relative to the deliberately small unchecked
-route-following path. For operational context, it is
-\CVMGuardOverheadTracePercent{}\% of the retained external driver-call median
-(\CVMExternalTraceLatencyMedianMs{}~ms); all
+Post-parse contract-gate execution is \CVMDetectorDecisionMedianUs{}~$\mu$s median and
+\CVMDetectorDecisionNinetyFifthUs{}~$\mu$s p95 over 6,000 measurements. On the 3,000
+fault cases it is \CVMFaultDetectorMedianUs{}~$\mu$s median and
+\CVMFaultDetectorNinetyFifthUs{}~$\mu$s p95. The guarded in-process adapter Drive path
+is \CVMAdapterDriveMedianUs{}~$\mu$s median and
+\CVMAdapterDriveNinetyFifthUs{}~$\mu$s p95. Its paired guard-path increment is
+\CVMAdapterGuardIncrementMedianUs{}~$\mu$s median and
+\CVMAdapterGuardIncrementNinetyFifthUs{}~$\mu$s p95 over
+\CVMAdapterTimingSamples{} measurements; guarded and
+unchecked calls return identical trajectories and headings. These timings describe the
+measured software paths on one host and are not end-to-end runtime or time-to-diagnosis
+measurements. Separately, all
 \CVMExternalChallengeLatencyTargetMet{}/\CVMExternalChallengeLatencyTargetDenominator{}
-retained calls meet the 100-ms target.
+calls in the retained external trace meet its 100-ms target.
+
+Constructing the clean current-schema sessions also exposed a non-injected adapter
+defect: when both accepted front-camera aliases were present, alias priority could select
+an older frame and falsely report staleness. The adapter now selects the freshest
+candidate, with priority only for timestamp ties, and a regression test covers this
+case. This repaired defect is not counted among the 15 injected faults.
 
 The closed-loop invalidation check in Table~\ref{tab:integration-checks} is consistent
 with the mutation study. All
@@ -327,20 +355,23 @@ the contracts pass and the retained failure layer is policy.
 \subsection{Interpretation}
 
 The controlled experiment validates classification and localization for the declared
-mutation set. Its 15 clean prefixes supply a negative class, so the observed
-0/\CVMDiagnosticControlCases{} false-positive count is independently scored rather
-than defined by audit admission. The closed-loop rows test a second path: adding
-route-source validity changes the attribution of all
+mutation set. Its \CVMDiagnosticControlCases{} separately instantiated clean sessions
+supply the paired negative cases, so the observed
+\CVMWODDiagnosticFalsePositives{}/\CVMDiagnosticControlCases{} false-positive count is
+scored from detector output rather than defined by audit admission. The sessions and
+mutations are nevertheless products of the same protocol design and are not independent
+population samples. The closed-loop rows test a second path: adding route-source validity
+changes the attribution of all
 \CVMStatusOnlyAcceptedContractRejectedRuns{} metric-bearing command-only records
 without changing their simulator outcome.
 
-The timing results separate online and post-run costs. The
-\CVMGuardOverheadMedianUs{}~$\mu$s value measures only camera/context and freshness checks
-inside prediction; the \CVMDiagnosisMedianUs{}~$\mu$s value measures in-memory diagnosis
-after telemetry parsing. A missing actor proxy or checkpoint remains a deployment
+The timing microbenchmarks instrument two software paths. Within the in-process adapter,
+camera-set and freshness checks have a median increment of
+\CVMAdapterGuardIncrementMedianUs{}~$\mu$s. Post-parse detector execution has a median
+of \CVMFaultDetectorMedianUs{}~$\mu$s. A missing actor proxy or checkpoint remains a deployment
 precondition, a command proxy a semantic violation, and missing audit state an evidence
-violation. Typed outcomes keep those cases available for debugging while excluding them
-from policy attribution.
+violation. Typed outcomes keep those cases available for debugging while excluding
+them from policy attribution.
 
 \section{Related Work and Limitations}
 
@@ -361,50 +392,58 @@ and artifact-lineage checks. Scenic and driving fuzzers vary scenarios to expose
 behavior, whereas our mutations vary information or preconditions at the integration
 boundary. The approaches can be combined.
 
-The study scope is contract conformance. The mutations are framework-authored and
-applied offline to one retained trace; the valid controls are correlated prefixes of
-that trace. The status-only gate is a concrete completion-and-metrics comparator, not a
-surrogate for CARLA, nuPlan, or another full framework. The repository is not an
-official WOMD interface, does not reconstruct full WOMD worlds, and has no public
-learned checkpoint, scene-matched actor proxy, or verified scenario-category coverage.
-Restricted scenes remain licensed inputs; public artifacts retain the trace, manifests,
-aggregates, hashes, and testable gate logic.
+The study scope is contract conformance. The mutations and clean sessions are
+framework-authored, deterministic software cases rather than natural fault samples or
+external simulator reruns. The retained external trace establishes a separate
+service-conformance result, but its earlier schema omits the explicit finite-output
+field required by the current detector. The status-only gate is a concrete
+completion-and-metrics comparator, not a surrogate for CARLA, nuPlan, or another full
+framework. The repository is not an official WOMD interface, does not reconstruct full
+WOMD worlds, and has no public learned checkpoint, scene-matched actor proxy, or
+verified scenario-category coverage. Restricted scenes remain licensed inputs; public
+artifacts retain telemetry, manifests, aggregates, hashes, and testable gate logic.
 
 \subsection{Threats to Validity}
 
 \emph{Internal validity.} Mutation and detector code share the declared contracts,
 which can favor the expected fault vocabulary. To reduce circularity, construction and
-diagnosis are separate functions, expected labels are withheld from the detector, every
-case is scored afterward, and 15 unmutated controls test false alarms. McNemar's test is
-paired by case; it measures the observed difference against the status gate on this
-designed set, not a population prevalence. Timing order is randomized and paired on one
-host, so hardware and background-load effects remain shared measurement conditions.
+detection are separate functions, expected labels are withheld from the detector, every
+case is scored afterward, and 15 unmutated sessions test false alarms. The exact paired
+counts describe only this designed set; no independence-based significance test is
+applied. Timing order is randomized and paired on one host, so hardware and
+background-load effects remain shared measurement conditions.
 
-\emph{Construct validity.} The online overhead ablation covers camera shape/context and
-freshness checks in dependency-light route following; the diagnosis timer begins after
-JSON parsing. All five contracts, including the plugin precondition within deployment,
-are mutated against retained telemetry and context rather than rerun as physical
-simulator faults. Contract-valid therefore means admitted
-to the stated evidence boundary, not driving safety or simulator correctness.
+\emph{Construct validity.} The guard-path ablation covers camera-set and
+freshness checks in the in-process adapter Drive path over 15 deterministic valid
+sessions. It includes input assembly, prediction, serialization, finite-output
+validation, reasoning parsing, and in-memory telemetry, but excludes gRPC, file I/O,
+simulator work, and human investigation. The detector timer begins after JSON parsing
+and excludes I/O and human investigation. Neither timer supports an end-to-end runtime
+or time-to-diagnosis claim. All five contracts, including the plugin precondition
+within deployment, are mutated against generated telemetry and context rather than
+rerun as physical simulator faults. Contract-valid therefore means admitted to the
+stated evidence boundary, not driving safety or simulator correctness.
 
 \emph{External and conclusion validity.} The scenes were selected by local asset
-availability and remain category-unclassified. The diagnostic cases share one external
-trace, and the closed-loop route pairs have one execution per arm with no effective
-seed control. Accordingly, the reported comparison concerns the declared mutations and
-status gate; the measured latencies concern this host and dependency-light policy path.
-Learned-policy behavior, rare-event coverage, and route-loss effects require separate
-experiments.
+availability and remain category-unclassified. The diagnostic cases use the same
+adapter, generator, and contract vocabulary, and the closed-loop route pairs have one
+execution per arm with no effective seed control. Accordingly, the descriptive
+comparison concerns only the declared mutations and completion gate; the measured
+software timings concern this host and dependency-light policy path. Learned-policy
+behavior, rare-event coverage, route-loss effects, human debugging time, and comparison
+with independently maintained frameworks require separate experiments.
 
-\balance
 \section{Conclusion}
 
 WOD2Sim formulates a closed-loop policy boundary as semantic, temporal, lifecycle,
-deployment, and evidence contracts. On 15 controlled faults and 15 valid controls it
-classifies 30/30 cases, localizes 15/15 faults, and differs from the status-only gate on
-all 15 fault cases. Post-trace diagnosis and online guard costs are measured rather than
-assumed. Together with the retained closed-loop route invalidations, the result shows
-that explicit gates make integration evidence auditable before a rollout is attributed
-to policy behavior.
+deployment, and evidence contracts. On 15 designed faults paired with 15 valid
+current-adapter sessions it classifies 30/30 cases, localizes 15/15 faults, and differs
+descriptively from the completion-and-metrics gate on all 15 fault cases. Post-parse
+detector execution and a paired guard-path increment are measured; human diagnosis,
+end-to-end overhead, learned-policy quality, and framework superiority are not claimed.
+Together with the retained closed-loop route invalidations, the result shows that
+explicit gates make integration evidence auditable before a rollout is attributed to
+policy behavior.
 
 \section*{Acknowledgment}
 

@@ -833,7 +833,9 @@ def _unsupported_launch_reason(plan: dict[str, Any] | None) -> dict[str, str]:
 
 def _execute_fault_row(config: dict[str, Any], row: dict[str, str]) -> dict[str, str]:
     fault = row["adapter_config"]
-    expected_layer = fault.split(".", 1)[0]
+    expected_layer = (
+        "deployment" if fault.startswith("plugin.") else fault.split(".", 1)[0]
+    )
     execution = config.get("execution") if isinstance(config.get("execution"), dict) else {}
     source_trace = str(execution.get("source_trace", ""))
     if not source_trace:

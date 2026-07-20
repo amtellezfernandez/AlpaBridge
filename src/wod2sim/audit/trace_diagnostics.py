@@ -9,6 +9,19 @@ from typing import Any, Mapping, Sequence
 
 EXPECTED_TRAJECTORY_POINTS = 50
 MAX_IMAGE_AGE_US = 100_000
+SUPPORTED_TELEMETRY_SCHEMAS = {
+    "wod2sim_challenge_telemetry_v1",
+    "wod2sim_challenge_telemetry_v2",
+}
+CURRENT_TELEMETRY_SCHEMA = "wod2sim_challenge_telemetry_v2"
+KNOWN_TELEMETRY_EVENTS = {
+    "start_session",
+    "image",
+    "egomotion",
+    "route",
+    "drive",
+    "close_session",
+}
 
 FAULT_CODES = (
     "semantic.route_missing",
@@ -24,6 +37,31 @@ FAULT_CODES = (
     "deployment.docker_unavailable",
     "deployment.gpu_runtime_unavailable",
     "deployment.scene_artifact_missing",
+    "evidence.manifest_missing",
+    "evidence.hash_mismatch",
+)
+
+DIAGNOSTIC_CODES = (
+    "semantic.route_missing",
+    "semantic.command_only",
+    "semantic.road_center_reference",
+    "temporal.missing_observation",
+    "temporal.stale_observation",
+    "temporal.future_observation",
+    "temporal.invalid_sample_count",
+    "temporal.nan_trajectory",
+    "lifecycle.session_not_started",
+    "lifecycle.duplicate_start",
+    "lifecycle.duplicate_close",
+    "lifecycle.late_image",
+    "lifecycle.late_route",
+    "lifecycle.late_drive",
+    "lifecycle.session_not_closed",
+    "plugin.optional_backend_missing",
+    "deployment.docker_unavailable",
+    "deployment.gpu_runtime_unavailable",
+    "deployment.scene_artifact_missing",
+    "evidence.telemetry_incomplete",
     "evidence.manifest_missing",
     "evidence.hash_mismatch",
 )
@@ -77,43 +115,54 @@ def diagnose_contract_trace(
     state = {**DEFAULT_CONTEXT, **dict(context or {})}
     detected: dict[str, ContractDiagnostic] = {}
 
-    route_events = [event for event in events if event.get("event") == "route"]
-    drive_events = [event for event in events if event.get("event") == "drive"]
-    if not route_events:
-        _record(
-            detected,
-            "semantic.route_missing",
-            "No route event was retained before policy execution.",
-        )
-    else:
-        route_sources = {
-            str(event.get("route_source", "") or "")
-            for event in (*route_events, *drive_events)
-            if event.get("route_source") not in (None, "")
-        }
-        if "command_proxy" in route_sources:
-            _record(
-                detected,
-                "semantic.command_only",
-                "A high-level command proxy replaced route geometry.",
-            )
-        if "road_center_reference" in route_sources:
-            _record(
-                detected,
-                "semantic.road_center_reference",
-                "A road-center reference was presented as policy route geometry.",
-            )
-
     latest_image_timestamp: dict[str, int] = {}
     started_sessions: set[str] = set()
+    active_sessions: set[str] = set()
     closed_sessions: set[str] = set()
+    sessions_with_route: set[str] = set()
     for event in events:
         event_name = str(event.get("event", "") or "")
         session_uuid = str(event.get("session_uuid", "") or "")
-        if event_name == "start_session":
-            if session_uuid:
-                started_sessions.add(session_uuid)
+        schema = str(event.get("schema", "") or "")
+        if schema not in SUPPORTED_TELEMETRY_SCHEMAS:
+            _record(
+                detected,
+                "evidence.telemetry_incomplete",
+                f"Telemetry row has unsupported or missing schema {schema or '<missing>'}.",
+            )
+        if not event_name or not session_uuid:
+            _record(
+                detected,
+                "evidence.telemetry_incomplete",
+                "Telemetry rows must retain both event and session_uuid fields.",
+            )
             continue
+        if event_name not in KNOWN_TELEMETRY_EVENTS:
+            _record(
+                detected,
+                "evidence.telemetry_incomplete",
+                f"Telemetry row has unknown event {event_name}.",
+            )
+            continue
+
+        if event_name == "start_session":
+            if session_uuid in started_sessions:
+                _record(
+                    detected,
+                    "lifecycle.duplicate_start",
+                    f"Session {session_uuid} was started more than once.",
+                )
+            started_sessions.add(session_uuid)
+            active_sessions.add(session_uuid)
+            continue
+
+        if session_uuid not in started_sessions:
+            _record(
+                detected,
+                "lifecycle.session_not_started",
+                f"Event {event_name} references session {session_uuid} before its start.",
+            )
+
         if event_name == "close_session":
             if session_uuid in closed_sessions:
                 _record(
@@ -121,38 +170,77 @@ def diagnose_contract_trace(
                     "lifecycle.duplicate_close",
                     f"Session {session_uuid or '<missing>'} was closed more than once.",
                 )
-            if session_uuid:
-                closed_sessions.add(session_uuid)
+            active_sessions.discard(session_uuid)
+            closed_sessions.add(session_uuid)
             continue
-        if session_uuid in closed_sessions and event_name == "image":
-            _record(
-                detected,
-                "lifecycle.late_image",
-                f"An image arrived after session {session_uuid} closed.",
-            )
-        if session_uuid in closed_sessions and event_name == "route":
-            _record(
-                detected,
-                "lifecycle.late_route",
-                f"A route update arrived after session {session_uuid} closed.",
-            )
+
+        if session_uuid in closed_sessions:
+            late_codes = {
+                "image": "lifecycle.late_image",
+                "route": "lifecycle.late_route",
+                "drive": "lifecycle.late_drive",
+            }
+            late_code = late_codes.get(event_name)
+            if late_code:
+                _record(
+                    detected,
+                    late_code,
+                    f"An {event_name} event arrived after session {session_uuid} closed.",
+                )
+            continue
+
+        if event_name == "route":
+            sessions_with_route.add(session_uuid)
+            _diagnose_route_source(event, detected)
+            continue
+
         if event_name == "image":
             timestamp = _as_int(event.get("timestamp_us"))
-            if timestamp is not None:
-                latest_image_timestamp[session_uuid] = max(
-                    timestamp,
-                    latest_image_timestamp.get(session_uuid, timestamp),
+            if timestamp is None:
+                _record(
+                    detected,
+                    "evidence.telemetry_incomplete",
+                    f"Image telemetry for session {session_uuid} lacks an integer timestamp.",
                 )
+            else:
+                latest_image_timestamp[session_uuid] = timestamp
+            continue
+
         if event_name != "drive":
             continue
 
+        _diagnose_route_source(event, detected)
+        if session_uuid not in sessions_with_route:
+            _record(
+                detected,
+                "semantic.route_missing",
+                f"Session {session_uuid} reached Drive before retaining a route event.",
+            )
+
         time_now_us = _as_int(event.get("time_now_us"))
         image_timestamp_us = latest_image_timestamp.get(session_uuid)
-        if (
-            time_now_us is not None
-            and image_timestamp_us is not None
-            and time_now_us - image_timestamp_us > MAX_IMAGE_AGE_US
-        ):
+        if time_now_us is None:
+            _record(
+                detected,
+                "evidence.telemetry_incomplete",
+                f"Drive telemetry for session {session_uuid} lacks an integer runtime timestamp.",
+            )
+        elif image_timestamp_us is None:
+            _record(
+                detected,
+                "temporal.missing_observation",
+                f"Session {session_uuid} reached Drive without a retained image timestamp.",
+            )
+        elif image_timestamp_us > time_now_us:
+            _record(
+                detected,
+                "temporal.future_observation",
+                (
+                    f"Image timestamp {image_timestamp_us} us is later than Drive time "
+                    f"{time_now_us} us for session {session_uuid}."
+                ),
+            )
+        elif time_now_us - image_timestamp_us > MAX_IMAGE_AGE_US:
             _record(
                 detected,
                 "temporal.stale_observation",
@@ -163,10 +251,13 @@ def diagnose_contract_trace(
             )
 
         trajectory_points = _as_int(event.get("trajectory_points"))
-        if (
-            trajectory_points is not None
-            and trajectory_points != EXPECTED_TRAJECTORY_POINTS
-        ):
+        if trajectory_points is None:
+            _record(
+                detected,
+                "evidence.telemetry_incomplete",
+                f"Drive telemetry for session {session_uuid} lacks trajectory_points.",
+            )
+        elif trajectory_points != EXPECTED_TRAJECTORY_POINTS:
             _record(
                 detected,
                 "temporal.invalid_sample_count",
@@ -175,8 +266,16 @@ def diagnose_contract_trace(
                     f"{EXPECTED_TRAJECTORY_POINTS} were required."
                 ),
             )
-        trajectory_finite = event.get("trajectory_finite", True)
-        if trajectory_finite is not True:
+        if "trajectory_finite" not in event:
+            _record(
+                detected,
+                "evidence.telemetry_incomplete",
+                (
+                    f"Drive telemetry for session {session_uuid} uses {schema or '<missing>'} "
+                    "without an explicit trajectory_finite field."
+                ),
+            )
+        elif event.get("trajectory_finite") is not True:
             _record(
                 detected,
                 "temporal.nan_trajectory",
@@ -188,6 +287,12 @@ def diagnose_contract_trace(
             detected,
             "evidence.manifest_missing",
             "The trace contains events without a retained session start.",
+        )
+    for session_uuid in sorted(active_sessions):
+        _record(
+            detected,
+            "lifecycle.session_not_closed",
+            f"Session {session_uuid} has no retained close event.",
         )
     if state["plugin_available"] is not True:
         _record(
@@ -226,7 +331,7 @@ def diagnose_contract_trace(
             "The retained artifact hash does not match the manifest.",
         )
 
-    order = {code: index for index, code in enumerate(FAULT_CODES)}
+    order = {code: index for index, code in enumerate(DIAGNOSTIC_CODES)}
     return sorted(detected.values(), key=lambda item: order[item.code])
 
 
@@ -280,32 +385,20 @@ def mutate_trace(
     return mutated, context
 
 
-def build_control_traces(
+def split_session_traces(
     events: Sequence[Mapping[str, Any]],
-    *,
-    count: int = 15,
 ) -> list[list[dict[str, Any]]]:
-    if count < 1:
-        raise ValueError("control trace count must be positive")
-    drive_indices = [
-        index for index, event in enumerate(events) if event.get("event") == "drive"
-    ]
-    if len(drive_indices) < count:
-        raise ValueError(
-            f"trace has {len(drive_indices)} drive events, fewer than {count} controls"
-        )
-    start_counts = [
-        max(1, round(1 + index * (len(drive_indices) - 1) / max(1, count - 1)))
-        for index in range(count)
-    ]
-    close_event = copy.deepcopy(_last_event(events, "close_session"))
-    controls: list[list[dict[str, Any]]] = []
-    for drive_count in start_counts:
-        end_index = drive_indices[drive_count - 1]
-        prefix = copy.deepcopy([dict(event) for event in events[: end_index + 1]])
-        prefix.append(copy.deepcopy(close_event))
-        controls.append(prefix)
-    return controls
+    session_order: list[str] = []
+    by_session: dict[str, list[dict[str, Any]]] = {}
+    for event in events:
+        session_uuid = str(event.get("session_uuid", "") or "")
+        if not session_uuid:
+            continue
+        if session_uuid not in by_session:
+            session_order.append(session_uuid)
+            by_session[session_uuid] = []
+        by_session[session_uuid].append(copy.deepcopy(dict(event)))
+    return [by_session[session_uuid] for session_uuid in session_order]
 
 
 def trace_runtime_summary(events: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
@@ -323,9 +416,27 @@ def trace_runtime_summary(events: Sequence[Mapping[str, Any]]) -> dict[str, Any]
         and isinstance(event.get("latency_target_ms"), (int, float))
     ]
     target = targets[0] if targets else None
+    schemas = sorted(
+        {
+            str(event.get("schema"))
+            for event in events
+            if event.get("schema") not in (None, "")
+        }
+    )
+    sessions = {
+        str(event.get("session_uuid"))
+        for event in events
+        if event.get("session_uuid") not in (None, "")
+    }
     return {
         "event_count": len(events),
+        "session_count": len(sessions),
         "drive_count": len(latencies),
+        "telemetry_schemas": schemas,
+        "explicit_finite_drive_count": sum(
+            event.get("event") == "drive" and event.get("trajectory_finite") is True
+            for event in events
+        ),
         "latency_target_ms": target,
         "latency_target_met_count": (
             sum(latency <= target for latency in latencies) if target is not None else 0
@@ -339,10 +450,30 @@ def trace_runtime_summary(events: Sequence[Mapping[str, Any]]) -> dict[str, Any]
     }
 
 
+def _diagnose_route_source(
+    event: Mapping[str, Any],
+    detected: dict[str, ContractDiagnostic],
+) -> None:
+    source = str(event.get("route_source", "") or "")
+    if source == "command_proxy":
+        _record(
+            detected,
+            "semantic.command_only",
+            "A high-level command proxy replaced route geometry.",
+        )
+    elif source == "road_center_reference":
+        _record(
+            detected,
+            "semantic.road_center_reference",
+            "A road-center reference was presented as policy route geometry.",
+        )
+
+
 def _record(detected: dict[str, ContractDiagnostic], code: str, detail: str) -> None:
+    layer = "deployment" if code.startswith("plugin.") else code.split(".", 1)[0]
     detected.setdefault(
         code,
-        ContractDiagnostic(layer=code.split(".", 1)[0], code=code, detail=detail),
+        ContractDiagnostic(layer=layer, code=code, detail=detail),
     )
 
 

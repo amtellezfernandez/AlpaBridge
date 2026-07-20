@@ -1,107 +1,57 @@
 # Baseline And Final Audit Report
 
-This report records the command evidence for the contract-validation matrix
-(CVM) release surface. Commands were run from the repository root with the
-locked `uv run python` environment that CI exercises. Temporary raw logs were
-not tracked; rerun the commands below to reproduce the release checks.
+This report records the final command evidence for the contract-validation
+matrix (CVM) release surface. Commands ran from the repository root on
+2026-07-20 with the locked `uv run python` environment used by CI.
 
 ## Current Release Gate Evidence
 
-| Command | Start UTC | End UTC | Duration | Exit | Result |
-|---|---|---|---:|---:|---|
-| `.venv/bin/python -m ruff check ...` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:04Z | 3.7s | 0 | Touched source, scripts, and tests passed lint. |
-| `uv run python -m pytest -q tests/` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:03Z | 3.1s | 0 | 338 passed, 14 skipped, and 15 subtests passed. |
-| `.venv/bin/python scripts/run_diagnostic_experiment.py` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:07Z | 7.0s | 0 | Generated 30 controlled diagnostic cases, comparator statistics, and timing/overhead measurements. |
-| `.venv/bin/python scripts/aggregate_cvm.py --inputs artifacts/cvm/results --output artifacts/cvm/results` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:01Z | 0.2s | 0 | Regenerated aggregate summary and paper macros, including controlled diagnostic fields. |
-| `./scripts/build_cvm_paper.sh` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:02Z | 1.8s | 0 | Rebuilt the 4-page root `wod2sim.pdf` at 189158 bytes using the official PaperPlaza `ieeeconf` A4 class. |
-| `.venv/bin/python scripts/validate_cvm_submission.py` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:01Z | 0.5s | 0 | WOD2Sim paper validation passed. |
-| `pdfinfo wod2sim.pdf`, `pdffonts wod2sim.pdf`, and `qpdf --check wod2sim.pdf` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:01Z | <1s | PDF is 4 pages, portrait A4, 189158 bytes, uses embedded Type 1 fonts, and has no syntax or stream encoding errors reported by `qpdf`. |
-| PaperPlaza public PDF test | 2026-07-19T00:00:00Z | 2026-07-19T00:00:20Z | <20s | 0 | Initial contributed-paper check accepted the final PDF with no critical issues or margin problems. |
-| `.venv/bin/python -m build` | 2026-07-19T00:00:00Z | 2026-07-19T00:00:03Z | 2.4s | 0 | Source distribution and wheel built successfully with network-enabled build isolation. |
+| Command | Result |
+|---|---|
+| `uv run python -m ruff check .` | Passed. |
+| `WOD2SIM_CORE_CONFORMANCE=1 uv run python -m pytest -q tests/` | 358 passed, 14 skipped, and 15 subtests passed. |
+| `uv run python -m pytest --cov` | 358 passed, 14 skipped; 65.32% against the configured 33.0% minimum. |
+| `uv run python scripts/run_diagnostic_experiment.py` | Generated 15 current-adapter controls, 15 label-withheld faults, exact descriptive comparator counts, post-parse detector timing, and paired in-process adapter Drive-path timing. |
+| `uv run python scripts/aggregate_cvm.py --inputs artifacts/cvm/results --output artifacts/cvm/results` | Regenerated the aggregate summary and paper macros from diagnostic schema v3. |
+| `make cvm-check PYTHON='uv run python'` | Passed lint, conformance, and submission validation. |
+| `make paper-verify PYTHON='uv run python'` | Passed the deterministic five-page paper rebuild and submission validation. |
+| `make verify PYTHON='uv run python'` | Passed lint, conformance, coverage, install smoke, package build, paper rebuild, and submission validation. |
+| `uv build` | Built the source distribution and wheel. |
+| `qpdf --check wod2sim.pdf`, `pdfinfo wod2sim.pdf`, and `pdffonts wod2sim.pdf` | The PDF is 5 pages, portrait A4, 187020 bytes, uses embedded subset Type 1 fonts, and has no syntax or stream encoding errors reported by `qpdf`. |
 
 ## Important Warnings
 
-- Current controlled evidence includes
-  338 passed, 14 skipped, and 15 subtests passed; coverage measured 64.67%
-  against the configured 33.0% minimum.
-- The composite release gates are `make cvm-check PYTHON='uv run python'` and
-  `make paper-verify PYTHON='uv run python'`; their component checks are recorded
-  above.
-- The Docker-heavy `make verify` target was not rerun in the final controlled
-  cleanup pass to avoid stressing the WSL environment. Its component gates were
-  run directly where safe: lint, full unit tests, aggregate generation, paper
-  build, submission validation, PDF structure checks, and package build.
-- `make cvm-eval` exits 2 because the mixed core matrix preserves optional
-  direct actor-aware rows without the required scene-matched oracle actor
-  proxy. This is a recorded optional-extension precondition blocker, not a
-  public-core test failure.
-- The local validator uses `mutool` and LaTeX log/source checks, including a
-  parsed MediaBox pass that rejects non-A4 page geometry and a font-descriptor
-  pass that rejects unembedded paper fonts. CI installs Poppler and `qpdf` to
-  run `pdfinfo`, `pdffonts`, and `qpdf --check` on the canonical paper PDF.
-- Learned-policy tests remain skipped unless a legitimate local checkpoint is
+- The current five-page revision was not uploaded to the public PaperPlaza PDF
+  checker from this environment. An earlier four-page draft passed; the current
+  file passes the repository's local structure, MediaBox, font, metadata, and
+  LaTeX-log checks.
+- `make cvm-eval` can exit 2 because the mixed matrix retains optional
+  direct-actor rows without the required scene-matched oracle actor proxy. This
+  is an explicit optional-extension precondition blocker, not a public-core test
+  failure.
+- Learned-policy tests remain skipped unless a legitimate checkpoint is
   configured. No learned-policy result is claimed.
+- The human time-to-diagnosis question cannot be answered from automated
+  repository execution. It requires real participants, controlled tasks, and a
+  separate study protocol.
 
 ## Current Interpretation
 
-The release status is complete with documented limitations for the CVM paper
-package. It supports a completed dependency-light public core, semantic
-route-boundary diagnostics, a defined status-only acceptance baseline,
-contract-gated attribution, and secondary synthetic lifecycle/fault
-conformance diagnostics. It also supports the controlled 30-case comparator,
-post-trace diagnosis latency, and scoped online guard overhead. It does not
-support a policy-quality benchmark, learned-policy result, direct-actor
-temporal ablation, simulator-backed lifecycle/fault stress trial, or official
-Waymo compatibility claim.
+The release supports the completed dependency-light public core, semantic
+route-boundary diagnostics, a defined completion-and-metrics comparator,
+contract-gated attribution, 15 designed fault mutations paired with 15 valid
+current-adapter sessions, post-parse detector timing, and an in-process adapter
+Drive-path timing ablation.
 
-The validator now treats the integration-vs-policy boundary as a release gate:
-blocked, failed, planned, and diagnostic rows cannot be labeled
-policy-failure-attributable unless the corresponding manifest is explicitly
-claim-valid. Aggregate summary logic separately labels completed full-contract
-audit-valid rows as policy-behavior-attributable diagnostic evidence. The
-manifest rule must name semantic, temporal, lifecycle, deployment, and evidence
-gates before policy behavior or policy failure can be attributed to the
-integrated policy.
+The adapter measurement includes state-to-input assembly, prediction,
+trajectory serialization, finite-output validation, reasoning parsing, and
+in-memory telemetry. It excludes gRPC transport, file I/O, simulator work, and
+human investigation. It therefore does not support simulator end-to-end
+runtime overhead or human time-to-diagnosis.
 
-The latest refresh also validates the aggregate-level attribution partition:
-policy-failure rows cannot exceed policy-behavior rows, claim-valid benchmark
-rows cannot exceed policy-behavior-attributable rows, policy-behavior rows must
-match contract-valid closed-loop rows, and policy-attributed plus
-non-policy-attributed rows must cover the full CVM denominator.
-It also validates the scenario-coverage partition: scenario-category coverage
-cannot be claimed while required categories are unverified or any closed-loop
-scene remains unclassified.
-It also checks that the aggregate-status bullets in
-`artifacts/cvm/reports/claim_evidence_matrix.md` match the current
-`artifacts/cvm/results/summary.json` counts.
-It validates every `paper_numbers.tex` macro against `summary.json`,
-`lifecycle_stress.csv`, and `fault_injection.csv` rather than trusting the
-table hash alone.
-It now also validates the generated table row values against the current
-`summary.json`, `lifecycle_stress.csv`, and `fault_injection.csv` source fields,
-so a table cannot drift while keeping a matching artifact hash. The generated
-core policy table now also reports latency-p95 availability and terminal
-service-crash rows from the retained CVM evidence.
-It now rejects package metadata that drops the author, README, BSD-3-Clause
-license expression, research keywords, publication classifiers, or repository,
-documentation, paper, and citation URLs.
-It now rejects CI workflow drift that drops package, conformance, coverage,
-smoke, wheel-install, paper-validation, PDF-structure, artifact-upload, or
-minimal permission gates.
-It now rejects missing or repository-escaping local links and image references
-from public Markdown/HTML files, while allowing external URLs.
-It now requires public Markdown/HTML images, including remote images, to carry
-non-empty alt text.
-It now rejects `docs/cli.md` drift from console scripts declared in
-`pyproject.toml` and `.PHONY` Make targets.
-It now requires the README visual overview to explain the adapter boundary,
-claim-validity disclaimer, runtime graphs, and that the graphs do not evaluate
-policy quality.
-It now requires the evaluation guide to state that completed local closed-loop
-rows are diagnostic integration evidence, not a public policy benchmark.
-It now requires GitHub contribution, pull-request, issue, and security templates
-to preserve the claim boundary and restricted-asset hygiene.
-It now rejects venue-style benchmark labels from public release text.
-It now rejects unstable generated citation slugs from public release text.
-It now validates the README failure-attribution count sentence against
-`artifacts/cvm/results/summary.json`.
+The release does not support a policy-quality benchmark, learned-policy
+performance, a completed direct-actor temporal ablation, natural-fault
+prevalence, comparison against an independently maintained integration
+framework, or official Waymo benchmark compatibility. Counts from the
+controlled mutation suite are exact descriptive results for that designed set;
+no population confidence interval or hypothesis test is reported.

@@ -250,10 +250,7 @@ class RunCVMMatrixTests(unittest.TestCase):
         config = {
             "execution": {
                 "mode": "synthetic_fault_injection",
-                "source_trace": (
-                    "artifacts/external/alpasim_e2e_challenge_conformance/"
-                    "challenge-driver-fixed.jsonl"
-                ),
+                "source_trace": "artifacts/cvm/inputs/diagnostic_protocol_sessions.jsonl",
             }
         }
         row = {

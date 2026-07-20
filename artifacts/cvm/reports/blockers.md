@@ -15,11 +15,18 @@
   full/command-only pairs.
 - Run manifests now record scene metadata and `scenario_category`; local
   closed-loop scenes remain explicitly unclassified.
-- The circular fault harness was replaced: controlled trace mutations are
-  diagnosed without passing expected labels, with 15 valid controls and an
-  executable status-only comparator.
-- Runtime evidence now records post-trace diagnosis latency and paired online
-  camera/context plus freshness-guard overhead.
+- The controlled fault harness now generates 15 separate current-adapter
+  sessions and detects mutations without passing expected labels, with 15 valid
+  controls and an executable status-only comparator.
+- Timing evidence now records post-parse detector execution, the guarded
+  in-process adapter Drive path, and a paired camera-set plus freshness-guard
+  increment, with context-length validation retained in both arms and explicit
+  exclusions for gRPC, simulator work,
+  file I/O, and human investigation.
+- Missing finite-output evidence is no longer treated as valid, and final
+  protocol serialization rejects non-finite or structurally invalid output.
+- A camera-alias freshness defect exposed by the new valid-session generator is
+  fixed and regression-tested.
 
 ## Remaining Blockers
 
@@ -48,8 +55,12 @@
 - Command-only rows rejected as non-claim-valid: 15/15.
 - Controlled diagnostic classifications: WOD2Sim 30/30; status-only 15/30.
 - Controlled fault localization and false positives: 15/15 and 0/15.
-- Median post-trace diagnosis and online guard increment: 234.855 us and
-  14.552 us.
+- Current protocol trace: 15 sessions, 120 drive calls, and 120/120 explicit
+  finite serialized outputs.
+- Fault-case detector execution: 11.441 us median and 21.915 us p95.
+- Guarded in-process adapter Drive path: 257.390 us median and 449.371 us p95.
+- Paired guard-path increment: 25.630 us median and 112.659 us p95 across 1,000
+  pairs rotating over 15 valid sessions.
 - Planned rows: 0.
 - Blocked rows: 33, all `direct_actor_oracle_proxy_missing`.
 
@@ -67,10 +78,11 @@ failures.
 The paper may claim the completed dependency-light public core, semantic
 route-boundary diagnostic, evidence-gate rejection of command-only route rows,
 controlled trace classification/localization against the executable
-status-only gate, post-trace diagnosis latency, and scoped online guard
-overhead. Missing scene-matched actor proxies, learned
+status-only gate, post-parse detector execution, and a paired guard-path
+increments. Missing scene-matched actor proxies, learned
 checkpoints, and redistributable restricted scenes block optional extension or
 benchmark claims, not the public core. It must not claim a complete
 direct-actor temporal ablation, learned-policy performance, simulator-backed
 lifecycle stress reliability, broad integration-framework ranking,
-policy-quality superiority, or official Waymo benchmark compatibility.
+policy-quality superiority, end-to-end runtime overhead, human
+time-to-diagnosis, or official Waymo benchmark compatibility.

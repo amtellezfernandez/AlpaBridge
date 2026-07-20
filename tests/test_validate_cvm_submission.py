@@ -153,24 +153,36 @@ def _write_paper_number_fixture(root: Path, module) -> tuple[Path, Path, Path, P
                     "faults_detected": 0,
                     "false_positives": 0,
                 },
-                "paired_mcnemar": {
-                    "exact_two_sided_p": 0.00006103515625,
-                    "exact_two_sided_p_below_0_001": 1,
+                "paired_comparison": {
+                    "discordant_pairs": 15,
                 },
             },
             "timing": {
-                "wod2sim_decision_us": {"p50": 186.125},
-                "status_only_decision_us": {"p50": 0.210},
-                "correct_fault_diagnosis_us": {"p50": 205.750},
+                "contract_gate_decision_us": {
+                    "p50": 186.125,
+                    "p95": 240.500,
+                },
+                "fault_case_detector_us": {
+                    "p50": 205.750,
+                    "p95": 260.250,
+                },
             },
-            "online_guard_overhead": {
-                "paired_incremental_us": {"p50": 23.125},
-                "paired_incremental_p50_percent": 39.125,
-                "incremental_p50_as_source_driver_p50_percent": 1.081,
+            "adapter_guard_path_timing": {
+                "input_cases": 15,
+                "guarded_drive_path_us": {
+                    "p50": 125.750,
+                    "p95": 180.250,
+                },
+                "paired_incremental_us": {
+                    "p50": 23.125,
+                    "p95": 35.500,
+                    "samples": 1000,
+                },
             },
             "source_trace": {
-                "drive_count": 197,
-                "latency_ms": {"p50": 1.793, "p95": 8.996},
+                "session_count": 15,
+                "drive_count": 120,
+                "explicit_finite_drive_count": 120,
             },
         },
         "core_policy_results": [
@@ -343,9 +355,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             "\\IEEEoverridecommandlockouts\n"
             "\\overrideIEEEmargins\n"
             "\\hypersetup{pdfsubject={WOD2Sim integration-failure attribution paper}}\n"
-            "\\begin{abstract}\n"
-            + body
-            + " \\CVMTotalRows{}\n"
+            "\\begin{abstract}\n" + body + " \\CVMTotalRows{}\n"
             "\\end{abstract}\n"
         )
 
@@ -378,9 +388,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             "\\overrideIEEEmargins\n"
             "% \\usepackage{geometry}\n"
             "% \\vspace{-2em}\n"
-            "\\begin{abstract}\n"
-            + body
-            + "\n\\end{abstract}\n"
+            "\\begin{abstract}\n" + body + "\n\\end{abstract}\n"
         )
 
         failures = module._source_text_failures(source_text=source, path=Path("main.tex"))
@@ -400,9 +408,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             "\\vspace{-1em}\n"
             "\\enlargethispage{1em}\n"
             "\\IEEEoverridecommandlockouts\n"
-            "\\begin{abstract}\n"
-            + body
-            + "\n\\end{abstract}\n"
+            "\\begin{abstract}\n" + body + "\n\\end{abstract}\n"
         )
 
         failures = module._source_text_failures(source_text=source, path=Path("main.tex"))
@@ -437,11 +443,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
 
     def test_pdf_a4_page_size_accepts_portrait_a4_mediabox(self) -> None:
         module = _load_module()
-        info = (
-            "Pages: 5\n"
-            "Mediaboxes (1):\n"
-            "\t1\t(59 0 R):\t[ 0 0 595.276 841.89 ]\n"
-        )
+        info = "Pages: 5\nMediaboxes (1):\n\t1\t(59 0 R):\t[ 0 0 595.276 841.89 ]\n"
 
         failures = module._pdf_a4_page_size_failures(info=info, path=Path("paper.pdf"))
 
@@ -449,11 +451,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
 
     def test_pdf_a4_page_size_rejects_letter_or_missing_mediabox(self) -> None:
         module = _load_module()
-        letter_info = (
-            "Pages: 1\n"
-            "Mediaboxes (1):\n"
-            "\t1\t(59 0 R):\t[ 0 0 612 792 ]\n"
-        )
+        letter_info = "Pages: 1\nMediaboxes (1):\n\t1\t(59 0 R):\t[ 0 0 612 792 ]\n"
 
         letter_failures = module._pdf_a4_page_size_failures(
             info=letter_info,
@@ -479,18 +477,14 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             "  pdfauthor={Researcher Name},\n"
             "  pdfsubject={Contract metadata paper}\n"
             "}\n"
-            "\\begin{abstract}\n"
-            + abstract
-            + "\n\\end{abstract}\n"
+            "\\begin{abstract}\n" + abstract + "\n\\end{abstract}\n"
         )
         metadata = {
             "title": "Contract Title",
             "author": "Researcher Name",
             "affiliation": "Independent Researcher",
             "pdf_subject": "Contract metadata paper",
-            "abstract_source_sha256": module._sha256_text(
-                module._normalize_latex_source(abstract)
-            ),
+            "abstract_source_sha256": module._sha256_text(module._normalize_latex_source(abstract)),
             "abstract_word_count": module.ABSTRACT_MIN_WORDS,
         }
 
@@ -512,9 +506,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             "Independent Researcher\n"
             "\\hypersetup{pdftitle={Contract Title}, pdfauthor={Researcher Name}, "
             "pdfsubject={Contract metadata paper}}\n"
-            "\\begin{abstract}\n"
-            + abstract
-            + "\n\\end{abstract}\n"
+            "\\begin{abstract}\n" + abstract + "\n\\end{abstract}\n"
         )
         metadata = {
             "title": "Different Title",
@@ -575,8 +567,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             "pdf_subject": "Contract metadata paper",
         }
         paper_info = (
-            "Info object (1 0 R):\n"
-            "<</Author(Researcher Name)/Title(Wrong Title)/Creator(LaTeX)>>\n"
+            "Info object (1 0 R):\n<</Author(Researcher Name)/Title(Wrong Title)/Creator(LaTeX)>>\n"
         )
 
         failures = module._pdf_metadata_text_failures(
@@ -598,7 +589,10 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             "## Failure Attribution Boundary\n"
             "integration failure and policy failure are separated before policy behavior. "
             "Rows are not policy failure until claim-valid. "
-            "Integration/precondition/evidence failure is retained separately.\n"
+            "Integration/precondition/evidence failure is retained separately. "
+            "This is not a framework-superiority test. These measurements are "
+            "not end-to-end runtime or human time-to-diagnosis. No population confidence "
+            "interval or hypothesis test is reported.\n"
         )
         source = (
             "\\subsection{Failure Attribution Rule}\n"
@@ -607,7 +601,12 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             "policy-failure attribution. "
             "\\CVMPolicyBehaviorAttributableRows{} "
             "\\CVMPolicyFailureAttributableRows{} "
-            "\\CVMIntegrationFailureAttributableRows{}\n"
+            "\\CVMIntegrationFailureAttributableRows{}. These are not end-to-end runtime "
+            "or human diagnosis time and not end-to-end runtime or time-to-diagnosis "
+            "measurements. They "
+            "are not evidence of population-level superiority to another integration "
+            "framework. We do not compute a population confidence interval or "
+            "hypothesis test.\n"
         )
 
         failures = module._claim_boundary_text_failures(
@@ -639,6 +638,14 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         )
         self.assertIn(
             "claim_boundary_source_missing:main.tex:\\CVMPolicyFailureAttributableRows{}",
+            failures,
+        )
+        self.assertIn(
+            "claim_boundary_readme_missing:README.md:not a framework-superiority test",
+            failures,
+        )
+        self.assertIn(
+            "claim_boundary_source_missing:main.tex:not end-to-end runtime or human diagnosis time",
             failures,
         )
 
@@ -729,8 +736,8 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             "route-boundary ablations. The completed full-contract and "
             "semantic-ablation rollouts are integration-effectiveness evidence. "
             "Synthetic lifecycle/fault rows are service-harness conformance "
-            "diagnostics only. Controlled trace mutations measure post-trace "
-            "diagnosis latency and online guard overhead. Blocked rows are retained as denominator/context "
+            "diagnostics only. Controlled trace mutations measure post-parse "
+            "detector execution latency and a paired guard-path increment. Blocked rows are retained as denominator/context "
             "rather than success metrics. The public release core is the "
             "dependency-light adapter path. Direct-actor, learned-checkpoint, and "
             "restricted-scene dependencies are optional gated extensions, not "
@@ -1054,6 +1061,58 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             failures,
         )
 
+    def test_diagnostic_timing_claims_must_match_summary(self) -> None:
+        module = _load_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            summary_path = root / "summary.json"
+            summary_path.write_text(
+                json.dumps(
+                    {
+                        "diagnostic_experiment": {
+                            "timing": {
+                                "fault_case_detector_us": {
+                                    "p50": 1.111,
+                                    "p95": 2.222,
+                                }
+                            },
+                            "adapter_guard_path_timing": {
+                                "paired_incremental_us": {
+                                    "p50": 3.333,
+                                    "p95": 4.444,
+                                }
+                            },
+                        }
+                    }
+                ),
+                encoding="utf-8",
+            )
+            claim_text = "1.111 us 2.222 us 3.333 us 4.444 us\n"
+            for relative_path in module.DIAGNOSTIC_TIMING_CLAIM_PATHS:
+                path = root / relative_path
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(claim_text, encoding="utf-8")
+
+            self.assertEqual(
+                [],
+                module._diagnostic_timing_claim_failures(
+                    repo_root=root,
+                    summary_path=summary_path,
+                ),
+            )
+
+            stale_path = root / module.DIAGNOSTIC_TIMING_CLAIM_PATHS[0]
+            stale_path.write_text("1.111 us 2.222 us 3.333 us\n", encoding="utf-8")
+            failures = module._diagnostic_timing_claim_failures(
+                repo_root=root,
+                summary_path=summary_path,
+            )
+
+        self.assertIn(
+            f"diagnostic_timing_claim_mismatch:{stale_path}:guard_increment_p95:4.444",
+            failures,
+        )
+
     def test_claim_evidence_matrix_accepts_summary_synced_counts(self) -> None:
         module = _load_module()
         with tempfile.TemporaryDirectory() as tmp:
@@ -1250,9 +1309,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             tests_dir.mkdir()
             audit_path = root / "contract_test_audit.md"
             audit_path.write_text(
-                "# Contract Test Audit\n"
-                "## Semantic Contract\n"
-                "`tests/test_missing.py`\n",
+                "# Contract Test Audit\n## Semantic Contract\n`tests/test_missing.py`\n",
                 encoding="utf-8",
             )
 
@@ -1291,7 +1348,9 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             for name in module.REQUIRED_FIGURES:
                 (figures / name).write_bytes(b"%PDF-1.5\n")
 
-            with patch.object(module, "_mutool_info", return_value=f"Subject(data_hash={data_hash})"):
+            with patch.object(
+                module, "_mutool_info", return_value=f"Subject(data_hash={data_hash})"
+            ):
                 failures = module._generated_artifact_failures(
                     data_hash=data_hash,
                     table_dirs=(tables,),
@@ -1320,7 +1379,9 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
                     figure_dirs=(figures,),
                 )
 
-        self.assertIn(f"generated_table_hash_mismatch:{tables / module.REQUIRED_TABLES[0]}", failures)
+        self.assertIn(
+            f"generated_table_hash_mismatch:{tables / module.REQUIRED_TABLES[0]}", failures
+        )
         self.assertIn(
             f"generated_figure_hash_mismatch:{figures / module.REQUIRED_FIGURES[0]}",
             failures,
@@ -1604,8 +1665,8 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
                 "| `uv run python -m pytest -q tests/test_validate_cvm_submission.py` | Passed. |\n"
                 "| `make paper-verify PYTHON='uv run python'` | Passed. |\n"
                 "| `make cvm-check PYTHON='uv run python'` | Passed with "
-                "338 passed, 14 skipped, and 15 subtests passed. |\n"
-                "| `make verify` | Passed with 64.67% against the configured 33.0% minimum. |\n",
+                "358 passed, 14 skipped, and 15 subtests passed. |\n"
+                "| `make verify` | Passed with 65.32% against the configured 33.0% minimum. |\n",
                 encoding="utf-8",
             )
 
@@ -1695,7 +1756,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             venue_label = "venue-" + "specific row names"
             stale_event_name = "s" + "ii2027"
             third_party_secret = "hf_" + ("B" * 20)
-            credential_assignment = "pass" + "word = \"" + "releaseSecret123" + "\""
+            credential_assignment = "pass" + 'word = "' + "releaseSecret123" + '"'
             (root / "README.md").write_text(
                 "\n".join(
                     [
@@ -1796,7 +1857,9 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         module = _load_module()
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            archive_path = root / "artifacts" / "cvm" / "results" / "public" / "support-bundle.tar.gz"
+            archive_path = (
+                root / "artifacts" / "cvm" / "results" / "public" / "support-bundle.tar.gz"
+            )
             archive_path.parent.mkdir(parents=True)
             payload = json.dumps({"path": "/home/" + "amdev" + "/private"}).encode()
             with tarfile.open(archive_path, "w:gz") as archive:
@@ -1819,7 +1882,9 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         module = _load_module()
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            archive_path = root / "artifacts" / "cvm" / "results" / "public" / "support-bundle.tar.gz"
+            archive_path = (
+                root / "artifacts" / "cvm" / "results" / "public" / "support-bundle.tar.gz"
+            )
             archive_path.parent.mkdir(parents=True)
             payload = json.dumps({"audit_dir": "<bundle_tmp>/demo/audit"}).encode()
             with tarfile.open(archive_path, "w:gz") as archive:
@@ -1843,7 +1908,9 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         module = _load_module()
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            archive_path = root / "artifacts" / "cvm" / "results" / "public" / "support-bundle.tar.gz"
+            archive_path = (
+                root / "artifacts" / "cvm" / "results" / "public" / "support-bundle.tar.gz"
+            )
             archive_path.parent.mkdir(parents=True)
             payload = b"{}\n"
             with tarfile.open(archive_path, "w:gz") as archive:
@@ -1872,7 +1939,9 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         module = _load_module()
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            archive_path = root / "artifacts" / "cvm" / "results" / "public" / "support-bundle.tar.gz"
+            archive_path = (
+                root / "artifacts" / "cvm" / "results" / "public" / "support-bundle.tar.gz"
+            )
             archive_path.parent.mkdir(parents=True)
             payload = b"{}\n"
             with tarfile.open(archive_path, "w:gz") as archive:
@@ -1935,8 +2004,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
                 encoding="utf-8",
             )
             (root / "docs" / "cli.md").write_text(
-                "| `wod2sim-doctor` | Doctor. |\n"
-                "| `make conformance` | Test. |\n",
+                "| `wod2sim-doctor` | Doctor. |\n| `make conformance` | Test. |\n",
                 encoding="utf-8",
             )
 
@@ -2016,7 +2084,9 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
 
         self.assertIn("package_metadata_author_missing:pyproject.toml", failures)
         self.assertIn("package_metadata_license_missing:pyproject.toml", failures)
-        self.assertIn("package_metadata_keyword_missing:pyproject.toml:system-integration", failures)
+        self.assertIn(
+            "package_metadata_keyword_missing:pyproject.toml:system-integration", failures
+        )
         self.assertIn("package_metadata_url_missing:pyproject.toml:Paper", failures)
         self.assertIn("package_metadata_url_missing:pyproject.toml:Citation", failures)
 
@@ -2025,11 +2095,9 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             (root / "docs").mkdir()
-            (root / "pyproject.toml").write_text("[project]\nname = \"wod2sim\"\n", encoding="utf-8")
+            (root / "pyproject.toml").write_text('[project]\nname = "wod2sim"\n', encoding="utf-8")
             (root / "uv.lock").write_text(
-                "[[package]]\n"
-                'name = "wod2sim"\n'
-                'source = { editable = "." }\n',
+                '[[package]]\nname = "wod2sim"\nsource = { editable = "." }\n',
                 encoding="utf-8",
             )
             install_text = (
@@ -2051,14 +2119,13 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             (root / "docs").mkdir()
-            (root / "pyproject.toml").write_text("[project]\nname = \"wod2sim\"\n", encoding="utf-8")
+            (root / "pyproject.toml").write_text('[project]\nname = "wod2sim"\n', encoding="utf-8")
             (root / "uv.lock").write_text(
-                "[[package]]\n"
-                'name = "other-project"\n',
+                '[[package]]\nname = "other-project"\n',
                 encoding="utf-8",
             )
             (root / "README.md").write_text(
-                "uv venv .venv\nuv pip install --python .venv/bin/python -e \".[dev]\"\n",
+                'uv venv .venv\nuv pip install --python .venv/bin/python -e ".[dev]"\n',
                 encoding="utf-8",
             )
 
@@ -2233,7 +2300,9 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             "blocked:blocked:policy_attributable_behavior",
             failures,
         )
-        self.assertIn(f"policy_attributable_mismatch:{manifest_dir / 'blocked.json'}:blocked", failures)
+        self.assertIn(
+            f"policy_attributable_mismatch:{manifest_dir / 'blocked.json'}:blocked", failures
+        )
         self.assertIn(
             f"policy_behavior_attributable_mismatch:{manifest_dir / 'blocked.json'}:blocked",
             failures,
@@ -2246,8 +2315,12 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             f"non_claim_valid_policy_failure_layer:{manifest_dir / 'blocked.json'}:blocked",
             failures,
         )
-        self.assertIn(f"failure_attribution_layer_mismatch:{manifest_dir / 'blocked.json'}:blocked", failures)
-        self.assertIn(f"failure_attribution_rule_missing:{manifest_dir / 'blocked.json'}:blocked", failures)
+        self.assertIn(
+            f"failure_attribution_layer_mismatch:{manifest_dir / 'blocked.json'}:blocked", failures
+        )
+        self.assertIn(
+            f"failure_attribution_rule_missing:{manifest_dir / 'blocked.json'}:blocked", failures
+        )
 
     def test_manifest_scene_metadata_rejects_missing_and_mismatched_fields(self) -> None:
         module = _load_module()

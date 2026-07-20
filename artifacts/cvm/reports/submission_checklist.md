@@ -3,7 +3,7 @@
 The contract-validation matrix (CVM) is the release evidence surface referenced
 in this checklist.
 
-- [x] Target-venue author instructions were rechecked on 2026-07-19: regular
+- [x] Target-venue author instructions were rechecked on 2026-07-20: regular
   papers are single-blind, 4-6 A4 pages, a single PDF no larger than 6 MB, and
   submitted through PaperPlaza; the listed regular-paper deadline is
   2026-08-07.
@@ -66,7 +66,7 @@ Additional release-specific checks:
   `lifecycle_stress.csv`, and `fault_injection.csv` source fields.
 - [x] `paper_numbers.tex` macros are validated against `summary.json`,
   `lifecycle_stress.csv`, and `fault_injection.csv`.
-- [x] Diagnostic case, comparator, timing, and overhead macros are validated
+- [x] Diagnostic case, comparator, and timing macros are validated
   against the tracked diagnostic experiment in `summary.json`.
 - [x] Matrix and aggregate `created_at` timestamps are validated against
   run-manifest evidence timestamps so paper rebuilds do not drift on wall-clock
@@ -98,8 +98,9 @@ Scientific-readiness checks:
 
 - [ ] Evaluate at least one learned policy checkpoint through the complete
   contract stack.
-- [x] Compare against an executable status-only gate and measure both
-  post-trace diagnosis latency and online guard overhead.
+- [x] Compare descriptively against an executable status-only gate and measure
+  post-parse detector execution plus guarded and unchecked in-process adapter
+  Drive paths with a paired guard-path increment.
 - [ ] Compare against a complete independently maintained integration
   framework or a human debugging workflow.
 - [ ] Repeat scene-policy trials with controlled seeds and report uncertainty.
@@ -110,8 +111,11 @@ Scientific-readiness checks:
 
 Current status: the PDF and release package are mechanically ready. The
 controlled mutation study supplies an executable comparator, localization,
-false-positive controls, uncertainty, diagnosis timing, and scoped online
-overhead. Scientific scope remains contract conformance because the package
+false-positive controls, exact paired counts, post-parse detector timing, and a
+guarded in-process adapter Drive-path measurement with a paired guard-path
+increment. It does not claim population inference,
+end-to-end runtime, or human time-to-diagnosis. Scientific scope remains
+contract conformance because the package
 does not include a learned-policy evaluation, external full-framework
 comparator, replicated scene trials, verified scenario coverage, direct-actor
 temporal ablation, or unrestricted replay assets.
