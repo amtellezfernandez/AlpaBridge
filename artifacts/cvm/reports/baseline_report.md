@@ -18,7 +18,7 @@ matrix (CVM) release surface. Commands ran from the repository root on
 | `make paper-verify PYTHON='uv run python'` | Passed the deterministic six-page paper rebuild and submission validation. |
 | `make verify PYTHON='uv run python'` | Passed lint, conformance, coverage, install smoke, package build, paper rebuild, and submission validation. |
 | `uv build` | Built the source distribution and wheel. |
-| `qpdf --check wod2sim.pdf`, `pdfinfo wod2sim.pdf`, and `pdffonts wod2sim.pdf` | The PDF is 6 pages, portrait A4, 206931 bytes, uses embedded subset Type 1 fonts, and has no syntax or stream encoding errors reported by `qpdf`. |
+| `qpdf --check wod2sim.pdf`, `pdfinfo wod2sim.pdf`, and `pdffonts wod2sim.pdf` | The PDF is 6 pages, portrait A4, 206932 bytes, uses embedded subset Type 1 fonts, and has no syntax or stream encoding errors reported by `qpdf`. |
 
 ## Important Warnings
 

@@ -4,6 +4,13 @@ All notable public release changes are tracked here.
 
 ## Unreleased - 2026-07-20
 
+- Rebuilt the executed replay media around the causal boundary mutation:
+  identical raw messages, an explicit `20 waypoints -> LEFT only` ablation,
+  shared meter axes, the measured endpoint miss, and unobstructed paired
+  camera controls.
+- Moved the example to the top of the README, explained why geometry is
+  intentionally removed, and separated that semantic demonstration from the
+  other four contract classes and the limited reactive lifecycle video.
 - Added a hash-validated reactive AlpaSim rollout for NAVSIM EgoStatusMLP:
   197/197 finite outputs over 19.93 simulated seconds through live external
   driver, controller, and physics services.

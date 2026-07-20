@@ -110,7 +110,7 @@
     }
   ],
   "created_at": "2026-07-18T21:18:19.088449+00:00",
-  "data_hash": "e1e64dda92079ac5778c9552556d72ddc4310cbab6eac1125be35dc7fa1436d0",
+  "data_hash": "61081f56763910db643e4b9beee84d3f9973b69cc71cbd349c07afa3cfeebc49",
   "diagnostic_experiment": {
     "adapter_guard_path_timing": {
       "guarded_drive_path_us": {
@@ -1148,7 +1148,7 @@
       }
     },
     "artifact_dir": "artifacts/external/alpasim_protocol_replay",
-    "artifact_sha256": "3b9a878ce239ae07223f2ff1df5a21dfbce705f30646cbfd7fcbab572b5d1b65",
+    "artifact_sha256": "ce5bad33237cebc3a3502689fc2da4e90ab32b40a30d590fe4b69972233f4f91",
     "available": true,
     "claim_boundary": "This is an executed client-to-service gRPC replay of recorded camera, route, egomotion, and Drive messages. It measures transport-inclusive driver RPC latency and contract diagnostics. Recorded inputs are non-reactive, so it does not measure simulator runtime, policy quality, human diagnosis time, or generalization to another integration framework. Route-following demonstrates the consequence of waypoint loss; the published NAVSIM EgoStatusMLP is a policy-signature negative control and does not consume route geometry.",
     "execution_environment": {
@@ -1190,18 +1190,22 @@
     },
     "media": {
       "camera_frames": 60,
-      "duration_seconds": 4.5,
+      "displayed_camera_frames": 18,
+      "duration_seconds": 4.3,
+      "end_drive_index": 47,
+      "maximum_endpoint_separation_m": 1.505999,
       "readme_preview": {
-        "bytes": 2612145,
+        "bytes": 1038344,
         "format": "animated GIF",
         "path": "docs/assets/readme/alpasim-protocol-replay.gif",
-        "sha256": "58ca4794c69958de8b82dbb1f25c3bc781763e9fb969529c296863e7994e894b"
+        "sha256": "40838bf4ae468e750534f0edc71111e090c44f3a0759a946d33c36f408c1618d"
       },
+      "start_drive_index": 30,
       "video": {
-        "bytes": 470872,
+        "bytes": 277239,
         "format": "H.264 MP4",
         "path": "docs/assets/readme/alpasim-protocol-replay.mp4",
-        "sha256": "f4d0c250c19fca80611a0fd74518dc51ad1defe02b39265d1bc03e4382312f4c"
+        "sha256": "ba57a3785af2f9617e8230c4775e78fadabef1dc3f96fb7884770838dd708e4c"
       }
     },
     "policy_family_count": 2,
@@ -1217,6 +1221,7 @@
       "navsim_ego_status_mlp": {
         "endpoint_difference_gt_0_1m": 0,
         "endpoint_difference_gt_1m": 0,
+        "endpoint_difference_max_drive_index": 0,
         "endpoint_difference_max_m": 0.0,
         "endpoint_difference_mean_m": 0.0,
         "endpoint_difference_median_m": 0.0,
@@ -1225,6 +1230,7 @@
       "route_following": {
         "endpoint_difference_gt_0_1m": 56,
         "endpoint_difference_gt_1m": 22,
+        "endpoint_difference_max_drive_index": 47,
         "endpoint_difference_max_m": 1.505999,
         "endpoint_difference_mean_m": 0.708154,
         "endpoint_difference_median_m": 0.386731,

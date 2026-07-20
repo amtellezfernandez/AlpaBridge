@@ -13,11 +13,12 @@
   <a href="CITATION.cff">Citation</a>
 </p>
 
-WOD2Sim preserves the policy information lost at the dataset-to-simulator
-boundary: route geometry, policy-facing scene state, trajectory timing, and run
-provenance. Its purpose is to prevent boundary violations from being reported
-as policy failures. It is a contract-validation integration framework, not a
-new driving policy.
+WOD2Sim validates the dataset-to-simulator boundary before rollout behavior is
+attributed to a driving policy. It checks route meaning, policy-facing scene
+state, trajectory timing, lifecycle state, deployment prerequisites, and
+retained evidence. Its purpose is to prevent boundary violations from being
+reported as policy failures. It is a contract-validation integration framework,
+not a new driving policy.
 
 This repository has one canonical paper PDF: [`wod2sim.pdf`](wod2sim.pdf). The
 paper source lives in [`paper/cvm`](paper/cvm), while the generated evidence,
@@ -37,6 +38,62 @@ The five contracts themselves are not WOD message types: a new simulator binding
 maps its native policy inputs, clocks, lifecycle, deployment state, and evidence
 to the same contract classes. Only the WOD-style/AlpaSim binding is evaluated
 here, so cross-simulator transfer remains a hypothesis rather than a result.
+
+## Executed Camera Replay: Why Geometry Matters
+
+<p align="center">
+  <a href="docs/assets/readme/alpasim-protocol-replay.mp4">
+    <img src="docs/assets/readme/alpasim-protocol-replay.gif" alt="Executed AlpaSim replay showing a deliberate command-only route ablation and a route-preserving adapter, with real paired trajectory outputs and identical recorded camera frames" width="100%">
+  </a>
+</p>
+
+**Why is geometry removed on the left?** It is a deliberate format ablation,
+not missing AlpaSim data and not WOD2Sim's normal behavior. AlpaSim sends the
+same 20 `(x,y)` route waypoints to both arms. The lossy arm derives the
+high-level `LEFT` command, then hides all waypoint coordinates before invoking
+the same route-following policy. This reproduces an integration that remains
+runnable and type-compatible but no longer tells the policy the shape of the
+road. The preserved arm passes all 20 coordinates through the boundary.
+
+**What changes?** Both plots use the same axes in meters and contain real
+returned trajectories from the paired gRPC runs. At the clearest executed call
+(drive index 47), the two five-second endpoints are `1.506 m` apart. The lossy
+output is `1.472 m` laterally from the route at that forward position; the
+preserved output is `0.034 m` away. Across all 60 paired calls, removing the
+coordinates changes `56/60` endpoints by more than `0.1 m` and `22/60` by more
+than `1 m`.
+
+**Why are the camera panels identical?** This experiment replays a recorded
+AlpaSim protocol trace, so the paired camera and ego-state messages are fixed.
+The cameras prove that both arms receive the same recorded scene; they do not
+show a reactive future caused by either output. The trajectory plots are the
+consequence measured here. The left arm is an intentional semantic-failure
+control, not a competing policy or integration framework.
+
+[MP4 video](docs/assets/readme/alpasim-protocol-replay.mp4) |
+[validated manifest](artifacts/external/alpasim_protocol_replay/manifest.json) |
+[reproduction notes](artifacts/external/alpasim_protocol_replay/README.md) |
+[runner](scripts/run_alpasim_replay_demo.sh)
+
+The separate
+[learned AlpaSim camera-and-map video](artifacts/external/alpasim_navsim_reactive_rollout/camera-map.mp4)
+is retained lifecycle evidence, not this geometry comparison. Its map follows
+the reactive ego state, but its public camera fixture repeats one seed frame;
+it must not be interpreted as visual-policy or rendering-quality evidence.
+
+## What WOD2Sim Validates
+
+| Contract | Question answered before policy attribution |
+| --- | --- |
+| Semantic | Did the policy receive the meaning and geometry its input signature requires? |
+| Temporal | Are observations fresh, aligned, and converted to the policy and simulator rates correctly? |
+| Lifecycle | Are session start, state updates, `Drive`, and close ordered and isolated correctly? |
+| Deployment | Are the selected policy, checkpoint, assets, entry points, and runtime dependencies actually available? |
+| Evidence | Are inputs, outputs, diagnostics, metrics, provenance, and hashes complete enough to support the stated claim? |
+
+The route-loss replay demonstrates one semantic failure. The other four
+contracts are separate executable gates; passing this example alone does not
+establish a valid rollout or a policy-quality result.
 
 ## What This Release Proves
 
@@ -155,35 +212,6 @@ merges, so the generated coverage gate reports `0/6` verified required
 scenario categories and `15` unclassified closed-loop scenes. WOD2Sim therefore
 claims contract-valid integration behavior on those rows, not autonomous-driving
 scenario-category coverage.
-
-## Executed Camera Replay Comparison
-
-<p align="center">
-  <a href="docs/assets/readme/alpasim-protocol-replay.mp4">
-    <img src="docs/assets/readme/alpasim-protocol-replay.gif" alt="Executed AlpaSim front-camera protocol replay comparing command-only and route-preserving WOD2Sim adapter formats" width="100%">
-  </a>
-</p>
-
-**Video 1.** Same policy, same recorded scene, and same ego state. On the left,
-20 route points are collapsed to one turn command and the output remains
-straight while the route bends. On the right, the policy retains all 20 points
-and follows the route. Both sides come from live gRPC replay runs; the replay is
-non-reactive, so neither output changes the recorded future camera frames.
-
-[MP4 video](docs/assets/readme/alpasim-protocol-replay.mp4) |
-[validated manifest](artifacts/external/alpasim_protocol_replay/manifest.json) |
-[reproduction notes](artifacts/external/alpasim_protocol_replay/README.md) |
-[runner](scripts/run_alpasim_replay_demo.sh)
-
-### Reactive Learned Rollout
-
-The [raw AlpaSim camera-and-map video](artifacts/external/alpasim_navsim_reactive_rollout/camera-map.mp4)
-comes directly from the retained learned run. The camera panel has no WOD2Sim
-overlay and honestly stays on the recorded public seed; the map above it shows
-the live ego trajectory advancing. Text and metrics remain outside the camera
-image. See the [validated manifest](artifacts/external/alpasim_navsim_reactive_rollout/manifest.json)
-and [reproduction notes](artifacts/external/alpasim_navsim_reactive_rollout/README.md)
-for exact hashes and limitations.
 
 ## Architecture
 

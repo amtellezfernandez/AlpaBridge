@@ -27,8 +27,8 @@ study, format-overhead experiment, or cross-framework comparison.
 The runner downloads the fixture from the exact commit and rejects a hash
 mismatch. Extracted JPEG frames remain untracked under `frames/`. The committed
 MP4 and GIF use the same recorded camera frames on the left and right. The
-camera images contain no overlay; causal labels and trajectory plots are placed
-outside them.
+camera images contain no overlay. Causal labels and meter-scaled trajectory
+plots are placed outside them.
 
 ## Learned Checkpoint
 
@@ -60,10 +60,12 @@ The runner starts four services in this fixed order:
 
 Every service receives the same 60 recorded session, route, egomotion, camera,
 and `Drive` messages over host-loopback gRPC. The full mode retains all 20 route
-points; the reduced mode retains only the derived turn command. The audit
-requires route geometry only when the policy declares it. Calls are paired by
-index, timestamps, and raw route, and endpoint differences are measured in the
-local ego frame.
+points. The reduced mode is an intentional format ablation: it derives the
+`LEFT` command, then removes the waypoint coordinates at the policy boundary.
+The mutation models a runnable but semantically lossy adapter; it is not absent
+source data or a candidate implementation. The audit requires route geometry
+only when the policy declares it. Calls are paired by index, timestamps, and
+raw route, and endpoint differences are measured in the local ego frame.
 
 The client times the complete RPC with `time.perf_counter_ns`. The current run
 used an Intel Core Ultra 9 275HX host under WSL2. The dependency-light image is
@@ -85,7 +87,10 @@ hashes.
 Every arm returns 60/60 finite trajectories, advances more than 1 m, and meets
 the configured 100 ms target. Removing route geometry changes the
 route-following endpoint by more than 0.1 m on 56/60 calls and by more than 1 m
-on 22/60 calls; mean and maximum separation are 0.708 m and 1.506 m.
+on 22/60 calls; mean and maximum separation are 0.708 m and 1.506 m. The media
+ends on drive index 47, where that maximum occurs. At the same forward position,
+the command-only five-second endpoint is 1.472 m laterally from the route and
+the route-preserving endpoint is 0.034 m away.
 
 All 60 NAVSIM full/reduced trajectory pairs are exactly equal. This is the
 expected negative-control result because the published EgoStatusMLP input
@@ -110,8 +115,8 @@ feedback, and human investigation.
   `navsim_ego_status_mlp_command_only_route.json`: learned negative-control
   measurements and trajectories.
 - `*-telemetry.jsonl`: schema-v3 service telemetry used by the contract audit.
-- `docs/assets/readme/alpasim-protocol-replay.mp4`: canonical 4.5-second H.264
-  camera comparison.
+- `docs/assets/readme/alpasim-protocol-replay.mp4`: canonical 4.3-second H.264
+  causal comparison with paired camera controls and shared meter axes.
 - `docs/assets/readme/alpasim-protocol-replay.gif`: same-frame README preview.
 
 Reproduce the complete run with:

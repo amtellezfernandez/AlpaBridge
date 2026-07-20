@@ -805,9 +805,13 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             "command-only arm correctly passes and paired outputs remain exactly "
             "equal. The recorded camera and ego-state sequence is fixed. The replay "
             "is non-reactive and is not a reactive simulator rollout, policy-quality "
-            "comparison, or cross-simulator test. Same policy, same recorded scene, "
-            "and same ego state are shown in live gRPC replay runs; neither output "
-            "changes the recorded future camera frames. "
+            "comparison, or cross-simulator test. This deliberate format ablation is "
+            "not missing AlpaSim data: the same 20 `(x,y)` route waypoints enter both "
+            "arms. It retains the high-level `LEFT` command but hides coordinates "
+            "from the same route-following policy. Both plots use the same axes in "
+            "meters and report a 1.506 m separation. The camera and ego-state "
+            "messages are fixed and do not show a reactive future. This is not a "
+            "competing policy or integration framework. "
             "See alpasim-protocol-replay.mp4, the validated manifest, and "
             "reproduction notes.\n"
         )
@@ -833,6 +837,10 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         )
         self.assertIn(
             "readme_visual_explanation_missing:README.md:non-reactive",
+            failures,
+        )
+        self.assertIn(
+            "readme_visual_explanation_missing:README.md:deliberate format ablation",
             failures,
         )
 

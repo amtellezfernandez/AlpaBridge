@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import platform
 import subprocess
 import sys
@@ -17,11 +18,13 @@ from wod2sim.audit.trace_diagnostics import (
     trace_runtime_summary,
 )
 
-CANVAS_SIZE = (960, 540)
-CAMERA_SIZE = (456, 220)
+CANVAS_SIZE = (1280, 720)
+CAMERA_SIZE = (320, 150)
 SOURCE_FPS = 10
-MEDIA_START_DRIVE = 35
-FINAL_HOLD_FRAMES = 20
+MEDIA_WINDOW_FRAMES = 18
+FINAL_HOLD_FRAMES = 25
+PLOT_X_RANGE_M = (0.0, 60.0)
+PLOT_Y_RANGE_M = (-0.5, 2.5)
 
 
 def _parse_args() -> argparse.Namespace:
@@ -131,6 +134,37 @@ def _route_frame_xy(
     )
 
 
+def _clip_forward_path(
+    points: list[tuple[float, float]],
+    *,
+    maximum_x: float,
+) -> list[tuple[float, float]]:
+    clipped: list[tuple[float, float]] = []
+    for point in points:
+        if point[0] <= maximum_x:
+            clipped.append(point)
+            continue
+        if clipped and point[0] > clipped[-1][0]:
+            previous = clipped[-1]
+            fraction = (maximum_x - previous[0]) / (point[0] - previous[0])
+            clipped.append(
+                (
+                    maximum_x,
+                    previous[1] + fraction * (point[1] - previous[1]),
+                )
+            )
+        break
+    return clipped
+
+
+def _path_y_at_x(points: list[tuple[float, float]], x_value: float) -> float | None:
+    for first, second in zip(points, points[1:]):
+        if first[0] <= x_value <= second[0] and second[0] > first[0]:
+            fraction = (x_value - first[0]) / (second[0] - first[0])
+            return first[1] + fraction * (second[1] - first[1])
+    return None
+
+
 def _draw_path_plot(
     draw: Any,
     box: tuple[int, int, int, int],
@@ -138,27 +172,79 @@ def _draw_path_plot(
     trajectory: list[list[float]],
     *,
     color: tuple[int, int, int],
-    route_visible: bool,
-    route_dashed: bool = False,
-) -> None:
+    route_dashed: bool,
+    endpoint_label: str,
+    label_font: Any,
+    small_font: Any,
+    axis_font: Any,
+) -> float:
     left, top, right, bottom = box
-    draw.rounded_rectangle(box, radius=5, fill=(12, 18, 22), outline=(75, 88, 94), width=1)
-    center_y = (top + bottom) / 2
+    draw.rectangle(box, fill=(12, 18, 22), outline=(75, 88, 94), width=1)
 
     local_route, local_trajectory = _route_frame_xy(route, trajectory)
-    values = [*local_trajectory, *local_route]
-    max_x = max((point[0] for point in values), default=1.0)
-    max_y = max((abs(point[1]) for point in values), default=1.0)
-    x_scale = (right - left - 20) / max(1.0, max_x)
-    y_scale = (bottom - top - 18) / max(4.0, 2.0 * max_y)
+    local_route = _clip_forward_path(
+        local_route,
+        maximum_x=PLOT_X_RANGE_M[1],
+    )
+    local_trajectory = _clip_forward_path(
+        local_trajectory,
+        maximum_x=PLOT_X_RANGE_M[1],
+    )
+    plot_left, plot_top = left + 48, top + 36
+    plot_right, plot_bottom = right - 16, bottom - 36
+    x_scale = (plot_right - plot_left) / (
+        PLOT_X_RANGE_M[1] - PLOT_X_RANGE_M[0]
+    )
+    y_scale = (plot_bottom - plot_top) / (
+        PLOT_Y_RANGE_M[1] - PLOT_Y_RANGE_M[0]
+    )
 
     def project(point: tuple[float, float]) -> tuple[int, int]:
         return (
-            int(left + 8 + max(0.0, point[0]) * x_scale),
-            int(center_y - point[1] * y_scale),
+            int(plot_left + (point[0] - PLOT_X_RANGE_M[0]) * x_scale),
+            int(plot_bottom - (point[1] - PLOT_Y_RANGE_M[0]) * y_scale),
         )
 
-    if route_visible and len(local_route) >= 2:
+    for x_tick in (0, 20, 40, 60):
+        x_pixel, _ = project((float(x_tick), 0.0))
+        draw.line(
+            (x_pixel, plot_top, x_pixel, plot_bottom),
+            fill=(38, 49, 54),
+            width=1,
+        )
+        draw.text(
+            (x_pixel - 7, plot_bottom + 7),
+            str(x_tick),
+            font=axis_font,
+            fill=(145, 157, 161),
+        )
+    for y_tick in (0, 1, 2):
+        _, y_pixel = project((0.0, float(y_tick)))
+        draw.line(
+            (plot_left, y_pixel, plot_right, y_pixel),
+            fill=(38, 49, 54),
+            width=1,
+        )
+        draw.text(
+            (left + 20, y_pixel - 7),
+            str(y_tick),
+            font=axis_font,
+            fill=(145, 157, 161),
+        )
+    draw.text(
+        ((plot_left + plot_right) // 2 - 55, bottom - 18),
+        "forward distance (m)",
+        font=axis_font,
+        fill=(145, 157, 161),
+    )
+    draw.text(
+        (left + 10, top + 8),
+        "lateral position (m)",
+        font=axis_font,
+        fill=(145, 157, 161),
+    )
+
+    if len(local_route) >= 2:
         route_pixels = [project(point) for point in local_route]
         if route_dashed:
             for index in range(0, len(route_pixels) - 1, 2):
@@ -168,12 +254,70 @@ def _draw_path_plot(
                     width=2,
                 )
         else:
-            draw.line(route_pixels, fill=(207, 216, 217), width=2)
+            draw.line(route_pixels, fill=(222, 229, 230), width=3)
+        for x_pixel, y_pixel in route_pixels:
+            draw.ellipse(
+                (x_pixel - 2, y_pixel - 2, x_pixel + 2, y_pixel + 2),
+                fill=(222, 229, 230),
+            )
     if len(local_trajectory) >= 2:
         trajectory_pixels = [project(point) for point in local_trajectory]
-        draw.line(trajectory_pixels, fill=color, width=4)
+        draw.line(trajectory_pixels, fill=color, width=5)
         end_x, end_y = trajectory_pixels[-1]
-        draw.ellipse((end_x - 3, end_y - 3, end_x + 3, end_y + 3), fill=color)
+        draw.ellipse((end_x - 5, end_y - 5, end_x + 5, end_y + 5), fill=color)
+
+    draw.line((right - 244, top + 17, right - 216, top + 17), fill=(222, 229, 230), width=3)
+    draw.text(
+        (right - 208, top + 8),
+        "route",
+        font=small_font,
+        fill=(199, 207, 209),
+    )
+    draw.line((right - 128, top + 17, right - 100, top + 17), fill=color, width=5)
+    draw.text(
+        (right - 92, top + 8),
+        "policy output",
+        font=small_font,
+        fill=color,
+    )
+
+    route_y = (
+        _path_y_at_x(local_route, local_trajectory[-1][0])
+        if local_trajectory
+        else None
+    )
+    endpoint_error = (
+        abs(local_trajectory[-1][1] - route_y)
+        if local_trajectory and route_y is not None
+        else math.nan
+    )
+    if local_trajectory and route_y is not None:
+        endpoint_x = local_trajectory[-1][0]
+        route_pixel = project((endpoint_x, route_y))
+        output_pixel = project(local_trajectory[-1])
+        bracket_x = min(plot_right - 3, output_pixel[0] + 10)
+        draw.line(
+            (bracket_x, route_pixel[1], bracket_x, output_pixel[1]),
+            fill=color,
+            width=3,
+        )
+        draw.line(
+            (bracket_x - 5, route_pixel[1], bracket_x + 5, route_pixel[1]),
+            fill=color,
+            width=2,
+        )
+        draw.line(
+            (bracket_x - 5, output_pixel[1], bracket_x + 5, output_pixel[1]),
+            fill=color,
+            width=2,
+        )
+    draw.text(
+        (left + 60, top + 42),
+        f"{endpoint_label}: {endpoint_error:.2f} m",
+        font=label_font,
+        fill=color,
+    )
+    return endpoint_error
 
 
 def _draw_badge(
@@ -205,121 +349,187 @@ def _render_frame(
     image_module, image_draw, image_enhance, image_font = _load_pillow()
     source = image_module.open(source_frame).convert("RGB")
     source = _fit_camera(image_module, source, CAMERA_SIZE)
-    source = image_enhance.Brightness(source).enhance(0.93)
+    source = image_enhance.Brightness(source).enhance(0.96)
     canvas = image_module.new("RGBA", CANVAS_SIZE, (8, 12, 15, 255))
     draw = image_draw.Draw(canvas)
 
-    title_font = _font(image_font, 23, bold=True)
-    subtitle_font = _font(image_font, 14)
-    label_font = _font(image_font, 16, bold=True)
-    body_font = _font(image_font, 13)
-    outcome_font = _font(image_font, 17, bold=True)
-    small_font = _font(image_font, 11)
+    title_font = _font(image_font, 25, bold=True)
+    subtitle_font = _font(image_font, 15)
+    label_font = _font(image_font, 17, bold=True)
+    body_font = _font(image_font, 15)
+    outcome_font = _font(image_font, 18, bold=True)
+    small_font = _font(image_font, 12)
+    axis_font = _font(image_font, 11)
 
-    title = "SAME POLICY + SAME SCENE"
+    title = "SAME ROUTE-FOLLOWING POLICY + SAME ALPASIM MESSAGES"
     title_bounds = draw.textbbox((0, 0), title, font=title_font)
     draw.text(
-        ((CANVAS_SIZE[0] - (title_bounds[2] - title_bounds[0])) // 2, 10),
+        ((CANVAS_SIZE[0] - (title_bounds[2] - title_bounds[0])) // 2, 12),
         title,
         font=title_font,
         fill=(248, 250, 250),
     )
-    subtitle = "Only the route information changes"
+    subtitle = "One boundary changes: waypoint coordinates are dropped or preserved"
     subtitle_bounds = draw.textbbox((0, 0), subtitle, font=subtitle_font)
     draw.text(
-        ((CANVAS_SIZE[0] - (subtitle_bounds[2] - subtitle_bounds[0])) // 2, 42),
+        ((CANVAS_SIZE[0] - (subtitle_bounds[2] - subtitle_bounds[0])) // 2, 46),
         subtitle,
         font=subtitle_font,
         fill=(188, 199, 202),
     )
 
-    left_x, right_x = 14, 490
-    label_y = 70
-    camera_y = 102
+    left_x, right_x = 20, 650
+    panel_width = 610
+    draw.rounded_rectangle(
+        (left_x, 72, left_x + panel_width, 150),
+        radius=6,
+        fill=(30, 20, 18),
+        outline=(193, 93, 66),
+        width=2,
+    )
+    draw.rounded_rectangle(
+        (right_x, 72, right_x + panel_width, 150),
+        radius=6,
+        fill=(15, 29, 27),
+        outline=(67, 157, 143),
+        width=2,
+    )
     draw.text(
-        (left_x + 16, label_y),
-        "ROUTE GEOMETRY REMOVED",
+        (left_x + 18, 82),
+        "LOSSY BOUNDARY: INTENTIONAL TEST ABLATION",
         font=label_font,
         fill=(246, 151, 118),
     )
     draw.text(
-        (right_x + 16, label_y),
-        "ROUTE GEOMETRY PRESERVED",
+        (right_x + 18, 82),
+        "PRESERVED BOUNDARY: WOD2SIM CONTRACT",
         font=label_font,
         fill=(109, 214, 190),
     )
-    canvas.alpha_composite(source.convert("RGBA"), (left_x, camera_y))
-    canvas.alpha_composite(source.convert("RGBA"), (right_x, camera_y))
+    draw.text(
+        (left_x + 18, 113),
+        "20 (x,y) waypoints  ->  DROP COORDINATES  ->  LEFT only",
+        font=body_font,
+        fill=(239, 225, 220),
+    )
+    draw.text(
+        (right_x + 18, 113),
+        "20 (x,y) waypoints  ->  PRESERVE  ->  20 (x,y) waypoints",
+        font=body_font,
+        fill=(220, 238, 234),
+    )
+
+    full_route = full_drive["route_waypoints_xy"]
+    full_endpoint = full_drive["trajectory_ego_xy"][-1]
+    command_endpoint = command_drive["trajectory_ego_xy"][-1]
+    endpoint_separation = math.dist(full_endpoint, command_endpoint)
+    draw.text(
+        (left_x + 16, 164),
+        "POLICY CANNOT SEE THE CURVE",
+        font=outcome_font,
+        fill=(246, 151, 118),
+    )
+    draw.text(
+        (right_x + 16, 164),
+        "POLICY RECEIVES THE CURVE",
+        font=outcome_font,
+        fill=(109, 214, 190),
+    )
+    plot_top = 190
+    plot_bottom = 455
+    command_error = _draw_path_plot(
+        draw,
+        (left_x + 16, plot_top, left_x + panel_width - 16, plot_bottom),
+        full_route,
+        command_drive["trajectory_ego_xy"],
+        color=(235, 103, 73),
+        route_dashed=True,
+        endpoint_label="5 s endpoint miss",
+        label_font=label_font,
+        small_font=small_font,
+        axis_font=axis_font,
+    )
+    full_error = _draw_path_plot(
+        draw,
+        (right_x + 16, plot_top, right_x + panel_width - 16, plot_bottom),
+        full_route,
+        full_drive["trajectory_ego_xy"],
+        color=(71, 207, 174),
+        route_dashed=False,
+        endpoint_label="5 s endpoint miss",
+        label_font=label_font,
+        small_font=small_font,
+        axis_font=axis_font,
+    )
+    separation_text = (
+        f"Returned endpoints are {endpoint_separation:.2f} m apart "
+        f"({command_error:.2f} m vs {full_error:.2f} m from route)"
+    )
+    separation_bounds = draw.textbbox((0, 0), separation_text, font=label_font)
+    draw.text(
+        (
+            (CANVAS_SIZE[0] - (separation_bounds[2] - separation_bounds[0])) // 2,
+            466,
+        ),
+        separation_text,
+        font=label_font,
+        fill=(238, 242, 242),
+    )
+
+    camera_y = 522
+    left_camera_x, right_camera_x = 255, 705
+    draw.text(
+        (left_camera_x + 45, 498),
+        "LOSSY ARM CAMERA",
+        font=small_font,
+        fill=(192, 202, 204),
+    )
+    draw.text(
+        (right_camera_x + 36, 498),
+        "PRESERVED ARM CAMERA",
+        font=small_font,
+        fill=(192, 202, 204),
+    )
+    canvas.alpha_composite(source.convert("RGBA"), (left_camera_x, camera_y))
+    canvas.alpha_composite(source.convert("RGBA"), (right_camera_x, camera_y))
     draw = image_draw.Draw(canvas)
     draw.rectangle(
-        (left_x, camera_y, left_x + CAMERA_SIZE[0] - 1, camera_y + CAMERA_SIZE[1] - 1),
+        (
+            left_camera_x,
+            camera_y,
+            left_camera_x + CAMERA_SIZE[0] - 1,
+            camera_y + CAMERA_SIZE[1] - 1,
+        ),
         outline=(193, 93, 66),
         width=2,
     )
     draw.rectangle(
-        (right_x, camera_y, right_x + CAMERA_SIZE[0] - 1, camera_y + CAMERA_SIZE[1] - 1),
+        (
+            right_camera_x,
+            camera_y,
+            right_camera_x + CAMERA_SIZE[0] - 1,
+            camera_y + CAMERA_SIZE[1] - 1,
+        ),
         outline=(67, 157, 143),
         width=2,
     )
-
-    command_route = command_drive["route_waypoints_xy"]
-    full_route = full_drive["route_waypoints_xy"]
     draw.text(
-        (left_x + 16, 334),
-        f"{len(command_route)} route points collapsed to one turn command",
-        font=body_font,
-        fill=(222, 214, 211),
+        (624, camera_y + 56),
+        "=",
+        font=_font(image_font, 34, bold=True),
+        fill=(220, 227, 228),
     )
+    footer = (
+        "Identical recorded frames control the input. This replay is non-reactive; "
+        "the plots show the returned trajectories."
+    )
+    footer_bounds = draw.textbbox((0, 0), footer, font=small_font)
     draw.text(
-        (right_x + 16, 334),
-        f"All {len(full_route)} route points remain available to the policy",
-        font=body_font,
-        fill=(207, 224, 220),
-    )
-
-    plot_top = 362
-    plot_bottom = 474
-    _draw_path_plot(
-        draw,
-        (left_x + 16, plot_top, left_x + CAMERA_SIZE[0] - 16, plot_bottom),
-        full_route,
-        command_drive["trajectory_ego_xy"],
-        color=(235, 103, 73),
-        route_visible=True,
-        route_dashed=True,
-    )
-    _draw_path_plot(
-        draw,
-        (right_x + 16, plot_top, right_x + CAMERA_SIZE[0] - 16, plot_bottom),
-        full_route,
-        full_drive["trajectory_ego_xy"],
-        color=(71, 207, 174),
-        route_visible=True,
-    )
-    draw.line((left_x + 28, 355, left_x + 52, 355), fill=(112, 119, 121), width=2)
-    draw.text((left_x + 60, 348), "route the policy cannot see", font=small_font, fill=(157, 164, 166))
-    draw.line((left_x + 282, 355, left_x + 306, 355), fill=(235, 103, 73), width=4)
-    draw.text((left_x + 314, 348), "output", font=small_font, fill=(235, 103, 73))
-    draw.line((right_x + 28, 355, right_x + 52, 355), fill=(207, 216, 217), width=2)
-    draw.text((right_x + 60, 348), "route input", font=small_font, fill=(207, 216, 217))
-    draw.line((right_x + 282, 355, right_x + 306, 355), fill=(71, 207, 174), width=4)
-    draw.text((right_x + 314, 348), "output", font=small_font, fill=(71, 207, 174))
-
-    draw.text(
-        (left_x + 16, 488),
-        "STRAIGHT OUTPUT MISSES THE BEND",
-        font=outcome_font,
-        fill=(246, 151, 118),
-    )
-    draw.text(
-        (right_x + 16, 488),
-        "OUTPUT FOLLOWS THE ROUTE",
-        font=outcome_font,
-        fill=(109, 214, 190),
-    )
-    draw.text(
-        (left_x + 16, 516),
-        "The camera and ego-state stream are identical on both sides.",
+        (
+            (CANVAS_SIZE[0] - (footer_bounds[2] - footer_bounds[0])) // 2,
+            687,
+        ),
+        footer,
         font=small_font,
         fill=(157, 169, 173),
     )
@@ -365,8 +575,23 @@ def _render_media(
         if frame_name not in frame_by_name:
             raise ValueError(f"missing camera frame for Drive RPC: {frame_name!r}")
         paired_frames.append(frame_by_name[frame_name])
-    start_drive = MEDIA_START_DRIVE if count > MEDIA_START_DRIVE else 0
-    displayed_drive_indices = list(range(start_drive, count))
+    endpoint_separations = [
+        math.dist(
+            full_drive["trajectory_ego_xy"][-1],
+            command_drive["trajectory_ego_xy"][-1],
+        )
+        for full_drive, command_drive in zip(
+            full_drives,
+            command_drives,
+            strict=True,
+        )
+    ]
+    end_drive = max(
+        range(count),
+        key=endpoint_separations.__getitem__,
+    )
+    start_drive = max(0, end_drive - MEDIA_WINDOW_FRAMES + 1)
+    displayed_drive_indices = list(range(start_drive, end_drive + 1))
     video_output.parent.mkdir(parents=True, exist_ok=True)
     preview_output.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="wod2sim-replay-video-") as temp_dir:
@@ -379,9 +604,9 @@ def _render_media(
             )
             rendered.save(temp / f"frame-{output_index:04d}.png", format="PNG")
         final_frame = _render_frame(
-            paired_frames[count - 1],
-            full_drives[count - 1],
-            command_drives[count - 1],
+            paired_frames[end_drive],
+            full_drives[end_drive],
+            command_drives[end_drive],
         )
         displayed_count = len(displayed_drive_indices)
         for offset in range(FINAL_HOLD_FRAMES):
@@ -460,6 +685,11 @@ def _render_media(
             len(displayed_drive_indices) + FINAL_HOLD_FRAMES
         )
         / SOURCE_FPS,
+        "end_drive_index": end_drive,
+        "maximum_endpoint_separation_m": round(
+            endpoint_separations[end_drive],
+            6,
+        ),
         "start_drive_index": start_drive,
     }
 

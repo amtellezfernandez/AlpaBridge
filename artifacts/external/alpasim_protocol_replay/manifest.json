@@ -308,7 +308,7 @@
     }
   },
   "claim_scope": "Executed client-to-service gRPC protocol replay with recorded camera, route, egomotion, and Drive messages. The replay is non-reactive: adapter outputs do not change the recorded camera or ego-state sequence.",
-  "created_at": "2026-07-20T15:37:21.479065+00:00",
+  "created_at": "2026-07-20T18:02:24.176525+00:00",
   "execution_environment": {
     "cpu_model": "Intel(R) Core(TM) Ultra 9 275HX",
     "docker_image_id": "sha256:4fbbcb9406cb65796a28a8532f2126fdc224cde4feaed9a546d5e818fdaa5586",
@@ -348,20 +348,22 @@
   },
   "media": {
     "camera_frames": 60,
-    "displayed_camera_frames": 25,
-    "duration_seconds": 4.5,
+    "displayed_camera_frames": 18,
+    "duration_seconds": 4.3,
+    "end_drive_index": 47,
+    "maximum_endpoint_separation_m": 1.505999,
     "readme_preview": {
-      "bytes": 2612145,
+      "bytes": 1038344,
       "format": "animated GIF",
       "path": "docs/assets/readme/alpasim-protocol-replay.gif",
-      "sha256": "58ca4794c69958de8b82dbb1f25c3bc781763e9fb969529c296863e7994e894b"
+      "sha256": "40838bf4ae468e750534f0edc71111e090c44f3a0759a946d33c36f408c1618d"
     },
-    "start_drive_index": 35,
+    "start_drive_index": 30,
     "video": {
-      "bytes": 470872,
+      "bytes": 277239,
       "format": "H.264 MP4",
       "path": "docs/assets/readme/alpasim-protocol-replay.mp4",
-      "sha256": "f4d0c250c19fca80611a0fd74518dc51ad1defe02b39265d1bc03e4382312f4c"
+      "sha256": "ba57a3785af2f9617e8230c4775e78fadabef1dc3f96fb7884770838dd708e4c"
     }
   },
   "reproduction": "scripts/run_alpasim_replay_demo.sh",
@@ -380,7 +382,7 @@
     },
     "renderer": {
       "path": "scripts/generate_alpasim_replay_video.py",
-      "sha256": "a0abc4a3b53a793c15ab6f1b2370e15ee351141af8847b188a40002078e76b04"
+      "sha256": "2f8a577a8572eb73416f7fef986b449226532bd905d56e4f4d360db2cb746290"
     },
     "runner": {
       "path": "scripts/run_alpasim_replay_demo.sh",

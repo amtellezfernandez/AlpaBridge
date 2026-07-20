@@ -646,6 +646,20 @@ def _protocol_replay_summary(path: Path) -> dict[str, Any]:
     }
     if media["camera_frames"] != len(full_camera_names):
         raise SystemExit(f"Protocol replay camera denominator mismatch: {manifest_path}")
+    route_divergence = trajectory_divergence["route_following"]
+    if (
+        media["end_drive_index"]
+        != route_divergence["endpoint_difference_max_drive_index"]
+        or abs(
+            media["maximum_endpoint_separation_m"]
+            - route_divergence["endpoint_difference_max_m"]
+        )
+        > 1e-6
+    ):
+        raise SystemExit(
+            f"Protocol replay media selection is not the maximum divergence: "
+            f"{manifest_path}"
+        )
 
     return {
         "artifact_dir": str(path),
@@ -709,13 +723,15 @@ def _paired_endpoint_divergence(
                 )
             endpoints.append((float(endpoint[0]), float(endpoint[1])))
         distances.append(math.dist(endpoints[0], endpoints[1]))
+    maximum_distance = max(distances)
     return {
         "paired_calls": len(distances),
         "endpoint_difference_gt_0_1m": sum(value > 0.1 for value in distances),
         "endpoint_difference_gt_1m": sum(value > 1.0 for value in distances),
         "endpoint_difference_mean_m": round(sum(distances) / len(distances), 6),
         "endpoint_difference_median_m": round(statistics.median(distances), 6),
-        "endpoint_difference_max_m": round(max(distances), 6),
+        "endpoint_difference_max_m": round(maximum_distance, 6),
+        "endpoint_difference_max_drive_index": distances.index(maximum_distance),
     }
 
 
@@ -755,18 +771,40 @@ def _validated_replay_media(
     if not isinstance(value, dict):
         raise SystemExit(f"Missing protocol replay media: {manifest_path}")
     camera_frames = value.get("camera_frames")
+    displayed_camera_frames = value.get("displayed_camera_frames")
     duration_seconds = value.get("duration_seconds")
+    start_drive_index = value.get("start_drive_index")
+    end_drive_index = value.get("end_drive_index")
+    maximum_endpoint_separation_m = value.get("maximum_endpoint_separation_m")
     if (
         not isinstance(camera_frames, int)
         or camera_frames < 1
+        or not isinstance(displayed_camera_frames, int)
+        or displayed_camera_frames < 1
+        or displayed_camera_frames > camera_frames
         or not isinstance(duration_seconds, (int, float))
         or not math.isfinite(float(duration_seconds))
         or float(duration_seconds) <= 0
+        or not isinstance(start_drive_index, int)
+        or not isinstance(end_drive_index, int)
+        or start_drive_index < 0
+        or end_drive_index < start_drive_index
+        or end_drive_index >= camera_frames
+        or displayed_camera_frames != end_drive_index - start_drive_index + 1
+        or not isinstance(maximum_endpoint_separation_m, (int, float))
+        or not math.isfinite(float(maximum_endpoint_separation_m))
+        or float(maximum_endpoint_separation_m) <= 0
     ):
         raise SystemExit(f"Invalid protocol replay media counts: {manifest_path}")
     normalized: dict[str, Any] = {
         "camera_frames": camera_frames,
+        "displayed_camera_frames": displayed_camera_frames,
         "duration_seconds": float(duration_seconds),
+        "start_drive_index": start_drive_index,
+        "end_drive_index": end_drive_index,
+        "maximum_endpoint_separation_m": float(
+            maximum_endpoint_separation_m
+        ),
     }
     for key, expected_format in (
         ("video", "H.264 MP4"),

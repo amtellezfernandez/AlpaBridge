@@ -16,11 +16,11 @@ root in the locked `uv run python` environment.
 | `./scripts/run_alpasim_replay_demo.sh` | Passed: four live gRPC arms returned 60/60 finite, nonstationary outputs. Route loss isolated `semantic.command_only` and changed 56/60 route-following endpoints; the official NAVSIM negative control had no fault and 60/60 exact output matches. Generated media and evidence hashes validate. |
 | `uv run python scripts/run_cvm_matrix.py --config configs/cvm/fault_injection.yaml --output artifacts/cvm/results/fault_injection --resume --execute` | Passed: 15/15 label-withheld fault rows completed. |
 | `uv run python scripts/aggregate_cvm.py --inputs artifacts/cvm/results --output artifacts/cvm/results` | Passed and regenerated summary/table macros from the current diagnostic schema. |
-| `./scripts/build_cvm_paper.sh` | Passed: rebuilt the 6-page, 206931-byte A4 `wod2sim.pdf`. |
+| `./scripts/build_cvm_paper.sh` | Passed: rebuilt the 6-page, 206932-byte A4 `wod2sim.pdf`. |
 | `uv run python scripts/validate_cvm_submission.py` | Passed all source, artifact, claim-boundary, metadata, PDF, and reference-resolution checks. |
 | `uv build` | Built `dist/wod2sim-0.1.0.tar.gz` and `dist/wod2sim-0.1.0-py3-none-any.whl`. |
 | `qpdf --check wod2sim.pdf` | No syntax or stream encoding errors. |
-| `pdfinfo wod2sim.pdf` | 6 portrait A4 pages, 206931 bytes, expected title/author/subject metadata. |
+| `pdfinfo wod2sim.pdf` | 6 portrait A4 pages, 206932 bytes, expected title/author/subject metadata. |
 | `pdffonts wod2sim.pdf` | All listed fonts are embedded and subset; no Type 3 fonts. |
 | `git diff --check` | Passed. |
 

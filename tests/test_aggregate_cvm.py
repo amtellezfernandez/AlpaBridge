@@ -353,6 +353,13 @@ class AggregateCVMTests(unittest.TestCase):
 
         self.assertTrue(summary["available"])
         self.assertEqual(60, summary["media"]["camera_frames"])
+        self.assertEqual(18, summary["media"]["displayed_camera_frames"])
+        self.assertEqual(30, summary["media"]["start_drive_index"])
+        self.assertEqual(47, summary["media"]["end_drive_index"])
+        self.assertEqual(
+            1.505999,
+            summary["media"]["maximum_endpoint_separation_m"],
+        )
         full = summary["arms"]["full_contract"]
         command = summary["arms"]["command_only_route"]
         learned_full = summary["arms"]["navsim_ego_status_mlp_full_contract"]
@@ -386,7 +393,9 @@ class AggregateCVMTests(unittest.TestCase):
             "navsim_ego_status_mlp"
         ]
         self.assertEqual(60, route_divergence["paired_calls"])
-        self.assertGreater(route_divergence["endpoint_difference_gt_0_1m"], 0)
+        self.assertEqual(56, route_divergence["endpoint_difference_gt_0_1m"])
+        self.assertEqual(22, route_divergence["endpoint_difference_gt_1m"])
+        self.assertEqual(47, route_divergence["endpoint_difference_max_drive_index"])
         self.assertEqual(60, learned_divergence["paired_calls"])
         self.assertEqual(0, learned_divergence["endpoint_difference_gt_0_1m"])
         self.assertEqual(0.0, learned_divergence["endpoint_difference_max_m"])
