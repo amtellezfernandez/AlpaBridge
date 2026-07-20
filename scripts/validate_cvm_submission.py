@@ -206,6 +206,9 @@ CLAIM_BOUNDARY_README_TERMS = (
     "not a framework-superiority test",
     "not end-to-end runtime or human time-to-diagnosis",
     "No population confidence interval or hypothesis test is reported",
+    "policy interface, not WOMD scenes",
+    "does not measure how often this fault occurs",
+    "Waymax",
 )
 CLAIM_BOUNDARY_SOURCE_TERMS = (
     "Failure Attribution Rule",
@@ -221,7 +224,7 @@ CLAIM_BOUNDARY_SOURCE_TERMS = (
     "do not compute a population confidence interval or hypothesis test",
 )
 README_VISUAL_EXPLANATION_TERMS = (
-    "Executed Camera Replay",
+    "Executed Ablation: Route Geometry vs. Command Only",
     "same official AlpaSim integration log",
     "four live WOD2Sim gRPC services",
     "route-retaining and command-only service modes",

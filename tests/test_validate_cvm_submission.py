@@ -695,7 +695,9 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             "Integration/precondition/evidence failure is retained separately. "
             "This is not a framework-superiority test. These measurements are "
             "not end-to-end runtime or human time-to-diagnosis. No population confidence "
-            "interval or hypothesis test is reported.\n"
+            "interval or hypothesis test is reported. WOD2Sim targets a policy interface, "
+            "not WOMD scenes. The ablation does not measure how often this fault occurs. "
+            "Waymax is a future binding target.\n"
         )
         source = (
             "\\subsection{Failure Attribution Rule}\n"
@@ -798,7 +800,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
     def test_readme_visual_explanation_accepts_executed_replay_terms(self) -> None:
         module = _load_module()
         readme = (
-            "## Executed Camera Replay\n"
+            "## Executed Ablation: Route Geometry vs. Command Only\n"
             "The same official AlpaSim integration log runs through four live "
             "WOD2Sim gRPC services under route-retaining and command-only service "
             "modes. The route arm reports semantic.command_only; the learned "
@@ -827,7 +829,7 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
         module = _load_module()
 
         failures = module._readme_visual_explanation_failures(
-            readme_text="## Executed Camera Replay\nNice camera output.\n",
+            readme_text="## Executed Ablation: Route Geometry vs. Command Only\nNice camera output.\n",
             readme_path=Path("README.md"),
         )
 
