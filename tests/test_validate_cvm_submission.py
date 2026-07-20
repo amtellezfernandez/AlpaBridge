@@ -135,6 +135,31 @@ def _write_paper_number_fixture(root: Path, module) -> tuple[Path, Path, Path, P
             "driver_latency_mean_ms": 2.135,
             "driver_latency_max_ms": 11.966,
         },
+        "protocol_replay": {
+            "media": {"camera_frames": 60},
+            "arms": {
+                "full_contract": {
+                    "diagnostic_count": 0,
+                    "drive_calls": 60,
+                    "finite_drive_outputs": 60,
+                    "drive_calls_within_target": 60,
+                    "drive_rpc_latency_ms": {
+                        "p50": 1.786,
+                        "p95": 2.191,
+                    },
+                },
+                "command_only_route": {
+                    "diagnostic_count": 1,
+                    "drive_calls": 60,
+                    "finite_drive_outputs": 60,
+                    "drive_calls_within_target": 60,
+                    "drive_rpc_latency_ms": {
+                        "p50": 1.835,
+                        "p95": 2.338,
+                    },
+                },
+            },
+        },
         "diagnostic_experiment": {
             "design": {
                 "total_cases": 30,
@@ -692,16 +717,18 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
             failures,
         )
 
-    def test_readme_visual_explanation_accepts_graph_and_claim_boundary_terms(self) -> None:
+    def test_readme_visual_explanation_accepts_executed_replay_terms(self) -> None:
         module = _load_module()
         readme = (
-            "## Visual Overview\n"
-            "The images show the adapter boundary, not a benchmark result. "
-            "The terminal panel is a command-manifest example and "
-            "`valid_claim_evidence` remains false. The metrics dashboard explains "
-            "RPC timing, service queue depth, rollout duration, step duration, "
-            "CPU utilization, GPU utilization, GPU memory, and service replica counts. "
-            "These graphs do not evaluate policy quality.\n"
+            "## Executed Camera Replay\n"
+            "One official Apache-licensed AlpaSim integration recording uses live "
+            "gRPC adapter modes with camera, egomotion, route messages. A "
+            "RPC-completion check accepts both, while the contract audit accepts "
+            "one and reports semantic.command_only for the other. The replay is "
+            "non-reactive: outputs do not change the recorded future frames. It is "
+            "not a reactive simulator rollout or a policy-quality comparison. "
+            "See alpasim-protocol-replay.mp4, the validated manifest, and "
+            "reproduction notes.\n"
         )
 
         failures = module._readme_visual_explanation_failures(
@@ -711,20 +738,20 @@ class ValidateCVMSubmissionTests(unittest.TestCase):
 
         self.assertEqual([], failures)
 
-    def test_readme_visual_explanation_rejects_missing_graph_context(self) -> None:
+    def test_readme_visual_explanation_rejects_unproven_replay_context(self) -> None:
         module = _load_module()
 
         failures = module._readme_visual_explanation_failures(
-            readme_text="## Visual Overview\nNice screenshots.\n",
+            readme_text="## Executed Camera Replay\nNice camera output.\n",
             readme_path=Path("README.md"),
         )
 
         self.assertIn(
-            "readme_visual_explanation_missing:README.md:not a benchmark result",
+            "readme_visual_explanation_missing:README.md:live gRPC adapter modes",
             failures,
         )
         self.assertIn(
-            "readme_visual_explanation_missing:README.md:RPC timing",
+            "readme_visual_explanation_missing:README.md:non-reactive",
             failures,
         )
 

@@ -84,6 +84,25 @@ evidence: it records 197 drive calls meeting the 100-ms target. Its earlier
 telemetry schema does not include the explicit finite-output field and is not
 used as the mutation source.
 
+## Executed Protocol Replay
+
+`scripts/run_alpasim_replay_demo.sh` replays one hash-pinned official AlpaSim
+integration recording through two live current-schema WOD2Sim gRPC services.
+Both arms receive identical session, camera, egomotion, route, and `Drive`
+messages. The full-contract arm retains route geometry; the diagnostic arm
+reduces that geometry to a command proxy.
+
+Each arm returns 60/60 finite trajectories and meets the 100 ms latency target.
+The full-contract trace has no diagnostic. The command-only service also
+completes, but the contract audit reports `semantic.command_only`. Full-contract
+client-to-service latency is 1.786 ms median and 2.191 ms p95; command-only
+latency is 1.835 ms median and 2.338 ms p95.
+
+These are loopback transport-inclusive service measurements, not a reactive
+simulator runtime or format-overhead comparison. The recorded future camera and
+ego-state sequence is unchanged by service output, the arms run once in a fixed
+order, and no human time-to-diagnosis study is performed.
+
 ## Policy Evaluation
 
 A report using WOD2Sim should declare:
@@ -140,6 +159,10 @@ status-only comparator, post-parse detector execution latency, and a paired
 guard-path increment on the dependency-light path. They do not support human
 time-to-diagnosis, end-to-end runtime, or superiority over another integration
 framework.
+The separate current-schema replay adds bounded client-to-service gRPC latency
+and a real-camera diagnostic video. It remains non-reactive and does not extend
+the claim to simulator runtime, format overhead, or empirical generalization
+across frameworks.
 The public release core is the dependency-light adapter path. Direct-actor,
 learned-checkpoint, restricted-scene, and complete-benchmark dependencies are
 optional gated extensions, not release-core dependencies.

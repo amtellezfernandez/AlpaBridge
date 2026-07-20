@@ -41,7 +41,8 @@ Waymo-to-AlpaSim scene conversion.
 | Can WOD-style adapters run as auditable AlpaSim external drivers? | Yes. The dependency-light public core completes `30/30` closed-loop rows over `15` local scenes. |
 | Does WOD2Sim prevent integration-invalid metrics from becoming policy evidence? | Yes. A defined status-only baseline accepts `15/15` completed metric-bearing command-only rows, while WOD2Sim rejects the same `15/15` as non-claim-valid route evidence. |
 | Does the detector distinguish controlled faults from valid traces? | Yes, for the declared designed suite. On `15` single-fault mutations paired with `15` separately instantiated valid adapter sessions, WOD2Sim classifies `30/30`, localizes `15/15`, and flags `0/15` controls; the executable completion-and-metrics gate classifies `15/30` and detects no faults. These are exact descriptive counts, not a framework-superiority test. |
-| What diagnostic timing is measured? | Post-parse fault-detector execution over `3,000` calls is `11.441 us` median and `21.915 us` p95. The guarded in-process adapter Drive path is `257.390 us` median and `449.371 us` p95; its paired camera-set and freshness-check increment is `25.630 us` median and `112.659 us` p95 over `1,000` measurements across `15` valid sessions, with identical output. Context-length validation remains active in both arms. The measurements exclude gRPC, simulator work, file I/O, and human investigation, so they are not end-to-end runtime or human time-to-diagnosis. |
+| What diagnostic timing is measured? | Post-parse fault-detector execution over `3,000` calls is `11.441 us` median and `21.915 us` p95. The guarded in-process adapter Drive path is `257.390 us` median and `449.371 us` p95; its paired camera-set and freshness-check increment is `25.630 us` median and `112.659 us` p95 over `1,000` measurements across `15` valid sessions, with identical output. These microbenchmarks exclude gRPC, simulator work, file I/O, and human investigation; they are not end-to-end runtime or human time-to-diagnosis. |
+| Is transport-inclusive service timing measured? | Yes, in a bounded non-reactive protocol replay. Each arm completes `60/60` live gRPC `Drive` calls with finite output. Full-contract latency is `1.786 ms` median and `2.191 ms` p95; command-only latency is `1.835 ms` median and `2.338 ms` p95. This measures loopback client-to-service time, not simulator runtime, human diagnosis time, or overhead attributable to either format. |
 | Are all paired route-loss rows comparison-eligible? | No. `14/15` pairs qualify; one full-contract arm is also route-invalid, and the paired score deltas do not establish a systematic policy effect. |
 | Is this a policy-quality benchmark? | No. The release has `0` claim-valid policy benchmark rows, `0` policy-failure-attributable rows, and no verified scenario-category coverage. |
 
@@ -100,6 +101,16 @@ a challenge submission, leaderboard score, policy-quality benchmark, or
 scenario-coverage claim. Its version-one telemetry predates the explicit
 finite-output field, so it is not used as current-schema mutation evidence.
 
+The current-schema protocol replay is also separate from the CVM benchmark
+gate. It replays the same official AlpaSim integration log through two live
+WOD2Sim gRPC services. Each arm completes `60/60` `Drive` calls with finite
+output and meets the 100 ms target. The route-preserving arm has no contract
+diagnostic; the command-only arm still completes but is rejected with
+`semantic.command_only`. Its recorded camera and ego-state sequence is fixed,
+so returned trajectories do not alter later observations. This is
+client-to-service transport and diagnostic evidence, not a reactive simulator
+rollout or a policy-quality comparison.
+
 The controlled diagnostic experiment instead generates `15` separate sessions
 through the current adapter: `405` events, `120` drive calls, and `120/120`
 explicitly finite serialized trajectories. Each unmodified session is paired
@@ -121,42 +132,26 @@ scenario categories and `15` unclassified closed-loop scenes. WOD2Sim therefore
 claims contract-valid integration behavior on those rows, not autonomous-driving
 scenario-category coverage.
 
-## Visual Overview
-
-<table>
-  <tr>
-    <td width="50%">
-      <img src="docs/assets/readme/wod-style-input-boundary.svg" alt="Illustrative WOD-style input boundary with route geometry, scene signal, and trajectory target" width="100%">
-      <br>
-      <strong>Input side.</strong> WOD-style policies consume logged agent
-      tracks, route context, and vector map geometry. This local illustration
-      is not copied from or derived from restricted dataset assets.
-    </td>
-    <td width="50%">
-      <img src="docs/assets/readme/alpasim-rollout-diagnostic.svg" alt="Synthetic AlpaSim rollout diagnostic view with route map, audit panel, and camera stream diagnostic tile" width="100%">
-      <br>
-      <strong>Simulator side.</strong> AlpaSim runs the adapted policy in a
-      reactive scene, while WOD2Sim records the command, trajectory outputs, and
-      audit artifacts needed to review the rollout.
-    </td>
-  </tr>
-</table>
+## Executed Camera Replay
 
 <p align="center">
-  <img src="docs/assets/readme/integration-terminal.svg" alt="WOD2Sim terminal manifest showing a constant_velocity command plan and invalid claim evidence before execution" width="92%">
+  <a href="docs/assets/readme/alpasim-protocol-replay.mp4">
+    <img src="docs/assets/readme/alpasim-protocol-replay.gif" alt="Executed AlpaSim front-camera protocol replay comparing command-only and route-preserving WOD2Sim adapter formats" width="100%">
+  </a>
 </p>
 
-<p align="center">
-  <img src="docs/assets/readme/evidence-metrics.png" alt="AlpaSim runtime metrics dashboard with RPC timing, queue depth, rollout duration, CPU use, GPU use, and GPU memory" width="92%">
-</p>
+**Video 1.** One official Apache-licensed AlpaSim integration recording is sent
+through both live gRPC adapter modes. The camera, egomotion, route messages, and
+policy are held fixed. Both services return finite trajectories, so a
+RPC-completion check accepts both; the contract audit accepts the
+route-preserving arm and rejects the command-only arm as
+`semantic.command_only`. The replay is non-reactive: outputs do not change the
+recorded future frames.
 
-**Figure 1.** The images show the adapter boundary, not a benchmark result. The
-terminal panel is a command-manifest example: `valid_claim_evidence` remains
-false until an executed AlpaSim rollout is audited. The metrics dashboard
-explains the runtime graph family: RPC timing, service queue depth, rollout
-duration, step duration, CPU utilization, GPU utilization, GPU memory, and
-service replica counts. These graphs diagnose execution health and capacity;
-they do not evaluate policy quality.
+[MP4 video](docs/assets/readme/alpasim-protocol-replay.mp4) |
+[validated manifest](artifacts/external/alpasim_protocol_replay/manifest.json) |
+[reproduction notes](artifacts/external/alpasim_protocol_replay/README.md) |
+[runner](scripts/run_alpasim_replay_demo.sh)
 
 ## Architecture
 
@@ -175,7 +170,7 @@ flowchart LR
     H --> I[Manifest, audit,<br/>summary, hashes]
 ```
 
-**Figure 2.** WOD2Sim sits inside the closed loop. It translates AlpaSim state
+**Figure 1.** WOD2Sim sits inside the closed loop. It translates AlpaSim state
 into the policy contract, converts the returned five-second trajectory to the
 runtime rate, and records boundary validity before any rollout behavior can be
 attributed to the policy.

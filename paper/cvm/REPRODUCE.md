@@ -3,7 +3,8 @@
 Current status: buildable WOD2Sim paper package with a completed
 dependency-light public core, completed semantic closed-loop ablation rows,
 secondary public synthetic lifecycle/fault conformance diagnostics, and
-explicit optional gated direct-actor blockers.
+explicit optional gated direct-actor blockers. A separate public protocol replay
+records current-schema client-to-service gRPC timing and contract diagnostics.
 
 ## Quality Gates
 
@@ -66,6 +67,32 @@ These rows are service-harness diagnostics only; they are not closed-loop scene
 rollouts, are not effectiveness metrics for simulator-backed integration, and
 remain `claim_valid=false`.
 
+## Paired AlpaSim Protocol Replay
+
+Run the same official recorded AlpaSim integration protocol through the
+route-preserving and command-only live services:
+
+```bash
+ALPASIM_ROOT=/path/to/alpasim ./scripts/run_alpasim_replay_demo.sh
+```
+
+The runner hash-checks the upstream ASL fixture, rebuilds the challenge-driver
+image, executes both arms, and regenerates the JSON/JSONL evidence, H.264 video,
+and README preview. The aggregate refuses changed evidence or media hashes and
+re-runs the trace diagnostics.
+
+The replay records 60 `Drive` calls per arm. Both return 60/60 finite
+trajectories and meet the 100 ms target; the full-contract trace has no
+diagnostic, while the command-only trace isolates `semantic.command_only`.
+Measured client-to-service latency is 1.786 ms median / 2.191 ms p95 for the
+full-contract arm and 1.835 ms / 2.338 ms for the command-only arm.
+
+This recording is non-reactive: service outputs do not alter later camera or
+ego-state messages. The values therefore include loopback gRPC and service
+execution but exclude simulator stepping and closed-loop feedback. One ordered
+execution per arm does not support a format-overhead claim or human
+time-to-diagnosis result.
+
 ## Aggregate, Figures, And Paper
 
 ```bash
@@ -95,6 +122,9 @@ the title, author block, PDF subject, or abstract text intentionally changes.
 - Claim-valid benchmark matrix: 0.
 - External interface conformance: 1/1 rollout, 197 driver RPCs, 396 image
   events, and 197/197 latency-target hits.
+- Current-schema protocol replay: 60/60 finite `Drive` outputs per arm,
+  60/60 latency-target hits per arm, zero full-contract diagnostics, and one
+  command-only `semantic.command_only` diagnostic.
 
 The current aggregate supports a completed dependency-light public core,
 completed full-contract integration checks, and bounded semantic
@@ -102,7 +132,8 @@ route-boundary confound evidence. It does not support a complete public
 benchmark. Blocked rows remain optional gated extension denominator/context
 only. The aggregate does not support direct-actor temporal ablation,
 learned-policy result, scenario-category coverage, restricted scene
-redistribution, or policy-quality comparison.
+redistribution, policy-quality comparison, human diagnosis time, or empirical
+generalization to another integration framework.
 
 Failure attribution is explicit in `artifacts/cvm/results/summary.json` under
 `failure_attribution`. A behavior row is policy-attributable only after route,
