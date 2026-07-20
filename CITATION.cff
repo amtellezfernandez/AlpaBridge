@@ -1,6 +1,6 @@
 cff-version: 1.2.0
-message: "If you use AlpaBridge, please cite this software release."
-title: "AlpaBridge: An External-Driver Adapter for Trajectory Policies in AlpaSim"
+message: "If you use AlpaBridge in academic work, please cite the paper and this software release."
+title: "AlpaBridge: Separating Integration Failures from Policy Failures in Closed-Loop Driving Simulation"
 authors:
   - family-names: "Tellez Fernandez"
     given-names: "Alba Maria"

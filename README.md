@@ -1,4 +1,4 @@
-# AlpaBridge
+# AlpaBridge: Separating Integration Failures from Policy Failures in Closed-Loop Driving Simulation
 
 <p align="center">
   <a href="https://github.com/amtellezfernandez/AlpaBridge/actions/workflows/ci.yml"><img src="https://github.com/amtellezfernandez/AlpaBridge/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
