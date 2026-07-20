@@ -70,6 +70,24 @@ median/p95 and 3.104/3.958 ms. EgoStatusMLP full/reduced latency is
 from one ordered execution per arm; the recording is non-reactive and excludes
 simulator stepping, output feedback, format overhead, and human investigation.
 
+## Reactive Learned Rollout
+
+The separate hash-validated AlpaSim artifact closes NAVSIM EgoStatusMLP through
+the external driver, controller, and physics services for one public-fixture
+scene. It passes 1/1 rollout with 197/197 finite outputs and 198 live trajectory
+render requests. Driver-internal latency is 1.982 ms median and 3.362 ms p95;
+AlpaSim records 3.206 ms mean `Drive` RPC time. The run completes 19.93
+simulated seconds in 16.51 active wall-clock seconds, or 18.90 seconds including
+setup.
+
+The checkpoint is camera-blind. The video-model endpoint repeats the fixture's
+recorded seed frame, and the USDZ adds a declared synthetic flat physics
+surface. The retained behavior record includes `wrong_lane=1`; it is not used
+as policy quality. A camera-validating same-scene control completes four calls
+before rejecting the advancing but unchanged frame. The result supports the
+live lifecycle and exact-configuration timing only, not reactive imagery,
+visual-policy behavior, comparative overhead, or population generalization.
+
 ## Failure Attribution
 
 - Contract-valid closed-loop rows: 42.
@@ -176,6 +194,7 @@ field required by the current detector, so it is not used as the mutation source
 - `artifacts/cvm/results/fault_injection.csv`
 - `artifacts/cvm/results/diagnostic_experiment.json`
 - `artifacts/cvm/results/diagnostic_experiment_cases.csv`
+- `artifacts/external/alpasim_navsim_reactive_rollout/manifest.json`
 - `artifacts/cvm/manifests/run_manifests/*.json`
 - `artifacts/cvm/tables/*.tex`
 - `artifacts/cvm/figures/*.pdf`
@@ -196,7 +215,9 @@ functional command-only route baseline comparison, evidence-gate rejection,
 controlled fault classification, post-parse detector execution latency, and a
 paired guard-path increment. The separate protocol replay supports
 client-to-service timing, a route-loss trajectory consequence for route
-following, and a learned command-native negative control.
+following, and a learned command-native negative control. The separate reactive
+artifact supports one camera-blind learned driver/controller/physics lifecycle
+and exact-configuration timing.
 It does not support a complete direct-actor temporal ablation, learned-policy
 quality result, visual-policy result, broad integration-framework ranking, or
 official Waymo benchmark claim.

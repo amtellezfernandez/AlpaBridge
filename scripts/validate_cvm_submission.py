@@ -178,7 +178,7 @@ BASELINE_REPORT_REQUIRED_TERMS = (
     "make cvm-check",
     "make paper-verify",
     "make verify",
-    "367 passed, 14 skipped, and 15 subtests passed",
+    "373 passed, 14 skipped, and 15 subtests passed",
     "65.31% against the configured 33.0% minimum",
 )
 CONTRACT_TEST_AUDIT_REQUIRED_TERMS = (
@@ -497,6 +497,35 @@ PAPER_NUMBER_JSON_FIELDS: tuple[tuple[str, str], ...] = (
         "CVMExternalChallengeLatencyTargetDenominator",
         "external_compatibility.latency_target_denominator",
     ),
+    ("CVMReactiveLearnedRollouts", "navsim_reactive_rollout.rollouts"),
+    (
+        "CVMReactiveLearnedPassedRollouts",
+        "navsim_reactive_rollout.passed_rollouts",
+    ),
+    (
+        "CVMReactiveLearnedDriveRPCs",
+        "navsim_reactive_rollout.drive_rpc_count",
+    ),
+    (
+        "CVMReactiveLearnedFiniteDriveOutputs",
+        "navsim_reactive_rollout.finite_drive_outputs",
+    ),
+    (
+        "CVMReactiveLearnedLatencyTargetMet",
+        "navsim_reactive_rollout.latency_target_met_count",
+    ),
+    (
+        "CVMReactiveLearnedCameraEvents",
+        "navsim_reactive_rollout.camera_event_count",
+    ),
+    (
+        "CVMReactiveLearnedRenderRPCs",
+        "navsim_reactive_rollout.render_call_count",
+    ),
+    (
+        "CVMReactiveNegativeControlDrives",
+        "navsim_reactive_rollout.negative_control.drive_calls_before_rejection",
+    ),
     (
         "CVMReplayDriveRPCsPerArm",
         "protocol_replay.arms.full_contract.drive_calls",
@@ -681,6 +710,39 @@ PAPER_NUMBER_FLOAT_FIELDS: tuple[tuple[str, str], ...] = (
         "external_compatibility.driver_latency_max_ms",
     ),
     (
+        "CVMReactiveLearnedLatencyMedianMs",
+        "navsim_reactive_rollout.internal_driver_latency_ms.p50",
+    ),
+    (
+        "CVMReactiveLearnedLatencyNinetyFifthMs",
+        "navsim_reactive_rollout.internal_driver_latency_ms.p95",
+    ),
+    (
+        "CVMReactiveLearnedServiceDriveMeanMs",
+        "navsim_reactive_rollout.service_drive_rpc.mean_ms",
+    ),
+    (
+        "CVMReactiveSimulatedSeconds",
+        "navsim_reactive_rollout.runtime.simulated_s",
+    ),
+    (
+        "CVMReactiveActiveWallSeconds",
+        "navsim_reactive_rollout.runtime.active_wall_clock_s",
+    ),
+    (
+        "CVMReactiveTotalWallSeconds",
+        "navsim_reactive_rollout.runtime.total_wall_clock_s",
+    ),
+    (
+        "CVMReactiveDistanceTraveledM",
+        "navsim_reactive_rollout.behavior_metrics_not_used_as_policy_quality_claims."
+        "dist_traveled_m",
+    ),
+    (
+        "CVMReactiveWrongLane",
+        "navsim_reactive_rollout.behavior_metrics_not_used_as_policy_quality_claims.wrong_lane",
+    ),
+    (
         "CVMReplayFullLatencyMedianMs",
         "protocol_replay.arms.full_contract.drive_rpc_latency_ms.p50",
     ),
@@ -824,6 +886,13 @@ GENERATED_TABLE_JSON_FIELDS: tuple[str, ...] = (
     "protocol_replay.arms.navsim_ego_status_mlp_command_only_route.drive_calls",
     "protocol_replay.arms.navsim_ego_status_mlp_command_only_route.finite_drive_outputs",
     "protocol_replay.arms.navsim_ego_status_mlp_command_only_route.nonstationary_drive_outputs",
+    "navsim_reactive_rollout.rollouts",
+    "navsim_reactive_rollout.passed_rollouts",
+    "navsim_reactive_rollout.drive_rpc_count",
+    "navsim_reactive_rollout.finite_drive_outputs",
+    "navsim_reactive_rollout.camera_event_count",
+    "navsim_reactive_rollout.render_call_count",
+    "navsim_reactive_rollout.negative_control.drive_calls_before_rejection",
 )
 PAPER_NUMBER_LIFECYCLE_ADAPTERS: tuple[tuple[str, str], ...] = (
     ("Full", "full_lifecycle_hardening"),
@@ -1170,6 +1239,12 @@ def main() -> int:
     else:
         failures.extend(_summary_attribution_failures(args.results / "summary.json"))
         failures.extend(_summary_scenario_coverage_failures(args.results / "summary.json"))
+        failures.extend(
+            _reactive_artifact_failures(
+                repo_root=args.repo_root,
+                summary_path=args.results / "summary.json",
+            )
+        )
         failures.extend(
             _summary_timestamp_failures(
                 results_dir=args.results,
@@ -1915,6 +1990,87 @@ def _diagnostic_timing_claim_failures(
         for label, formatted in expected:
             if re.search(rf"(?<![0-9.]){re.escape(formatted)}\s*us\b", text) is None:
                 failures.append(f"diagnostic_timing_claim_mismatch:{path}:{label}:{formatted}")
+    return failures
+
+
+def _reactive_artifact_failures(*, repo_root: Path, summary_path: Path) -> list[str]:
+    try:
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return [f"reactive_artifact_summary_invalid:{summary_path}"]
+    reactive = summary.get("navsim_reactive_rollout") if isinstance(summary, dict) else None
+    if not isinstance(reactive, dict) or reactive.get("available") is not True:
+        return [f"reactive_artifact_summary_missing:{summary_path}"]
+
+    artifact_dir = repo_root / "artifacts/external/alpasim_navsim_reactive_rollout"
+    manifest_path = artifact_dir / "manifest.json"
+    try:
+        manifest_bytes = manifest_path.read_bytes()
+        manifest = json.loads(manifest_bytes)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return [f"reactive_artifact_manifest_invalid:{manifest_path}"]
+    failures: list[str] = []
+    if (
+        not isinstance(manifest, dict)
+        or manifest.get("schema") != "wod2sim_alpasim_navsim_reactive_evidence_v1"
+    ):
+        failures.append(f"reactive_artifact_manifest_schema:{manifest_path}")
+        return failures
+    actual_manifest_hash = hashlib.sha256(manifest_bytes).hexdigest()
+    if reactive.get("artifact_sha256") != actual_manifest_hash:
+        failures.append(
+            f"reactive_artifact_summary_hash_mismatch:{manifest_path}:"
+            f"{reactive.get('artifact_sha256')}:{actual_manifest_hash}"
+        )
+
+    files = manifest.get("files")
+    if not isinstance(files, dict):
+        failures.append(f"reactive_artifact_file_manifest_missing:{manifest_path}")
+        return failures
+    for name, item in files.items():
+        path = artifact_dir / name
+        if not isinstance(item, dict) or not path.is_file():
+            failures.append(f"reactive_artifact_file_missing:{path}")
+            continue
+        actual_hash = hashlib.sha256(path.read_bytes()).hexdigest()
+        if item.get("sha256") != actual_hash:
+            failures.append(
+                f"reactive_artifact_file_hash_mismatch:{path}:"
+                f"{item.get('sha256')}:{actual_hash}"
+            )
+        if item.get("bytes") != path.stat().st_size:
+            failures.append(f"reactive_artifact_file_size_mismatch:{path}")
+
+    for key, dotted_path in (
+        ("drive_calls", "drive_rpc_count"),
+        ("finite_drive_outputs", "finite_drive_outputs"),
+        ("camera_events", "camera_event_count"),
+    ):
+        manifest_value = _json_path_value(manifest, f"execution.{key}")
+        if manifest_value != reactive.get(dotted_path):
+            failures.append(
+                f"reactive_artifact_summary_count_mismatch:{manifest_path}:{key}:"
+                f"{manifest_value}:{reactive.get(dotted_path)}"
+            )
+    manifest_render_calls = _json_path_value(manifest, "execution.renderer.render_calls")
+    if manifest_render_calls != reactive.get("render_call_count"):
+        failures.append(
+            f"reactive_artifact_summary_count_mismatch:{manifest_path}:render_calls:"
+            f"{manifest_render_calls}:{reactive.get('render_call_count')}"
+        )
+
+    exclusions = _json_path_value(manifest, "claim_boundary.does_not_support")
+    required_exclusions = (
+        "reactive camera rendering or visual-policy evaluation",
+        "learned-policy quality or benchmark superiority",
+        "runtime overhead versus another integration",
+        "human time-to-diagnosis",
+        "cross-simulator transfer or population generalization",
+    )
+    if not isinstance(exclusions, list) or any(
+        exclusion not in exclusions for exclusion in required_exclusions
+    ):
+        failures.append(f"reactive_artifact_claim_boundary_incomplete:{manifest_path}")
     return failures
 
 

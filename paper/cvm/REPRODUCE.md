@@ -4,7 +4,9 @@ Current status: buildable WOD2Sim paper package with a completed
 dependency-light public core, completed semantic closed-loop ablation rows,
 secondary public synthetic lifecycle/fault conformance diagnostics, and
 explicit optional gated direct-actor blockers. A separate public protocol replay
-records current-schema client-to-service gRPC timing and contract diagnostics.
+records current-schema client-to-service gRPC timing and contract diagnostics;
+one public-fixture learned rollout records live external-driver/controller/
+physics feedback.
 
 ## Quality Gates
 
@@ -99,6 +101,41 @@ execution but exclude simulator stepping and closed-loop feedback. One ordered
 execution per arm does not support a format-overhead claim or human
 time-to-diagnosis result.
 
+## Reactive AlpaSim NAVSIM Rollout
+
+The retained learned run is under
+`artifacts/external/alpasim_navsim_reactive_rollout`. Reconstruct the exact
+public fixture derivative from its pinned upstream source:
+
+```bash
+uv run python scripts/prepare_alpasim_public_video_fixture.py
+```
+
+The script verifies upstream SHA-256
+`0ee95b5bc3a69693cd5a3da3a7d430b673f15371f6844f641866302b5deab2f6`,
+adds only the declared flat `mesh.ply`, `mesh_ground.ply`, and derivation record,
+and verifies derived SHA-256
+`069fd063a64c82112ec971b585b7eb08d09f9233a4f2ac5e816e19af7185d70d`.
+Run `scripts/serve_alpasim_seed_video_model.py` from the pinned AlpaSim
+environment on port 6790 and the WOD2Sim challenge driver with model
+`navsim_ego_status_mlp` and the checkpoint pinned in the manifest. The retained
+expanded user and network configs use external driver `localhost:6789`,
+external renderer `localhost:6790`, and managed controller and physics
+services.
+
+The run completes 1/1 rollout, 197/197 finite outputs, and 19.93 simulated
+seconds. The artifact contains the raw camera-and-map MP4, both service
+telemetry streams, AlpaSim summary and runtime logs, the exact configs, and a
+same-scene frozen-camera negative control. Repackage only with
+`scripts/package_alpasim_navsim_reactive_evidence.py`; it rejects count,
+provenance, hash, and diagnostic drift.
+
+The learned policy is camera-blind. The video-model endpoint repeats the
+recorded public seed frame, and the declared ground is synthetic and flat.
+Accordingly, this supports live policy/controller/physics lifecycle and timing
+for the exact configuration, not visual-policy behavior, policy quality,
+comparative overhead, human diagnosis time, or cross-simulator transfer.
+
 ## Aggregate, Figures, And Paper
 
 ```bash
@@ -133,6 +170,9 @@ the title, author block, PDF subject, or abstract text intentionally changes.
   `semantic.command_only` diagnostic and 56/60 route-following endpoint
   changes, while the NAVSIM negative control has no diagnostic and 60/60 exact
   output matches.
+- Reactive NAVSIM rollout: 1/1 pass, 197/197 finite outputs, 198 camera events,
+  198 renderer requests, 19.93 simulated seconds, and a route-following
+  frozen-camera control rejected after four completed calls.
 
 The current aggregate supports a completed dependency-light public core,
 completed full-contract integration checks, and bounded semantic
@@ -141,7 +181,8 @@ benchmark. Blocked rows remain optional gated extension denominator/context
 only. The aggregate does not support direct-actor temporal ablation,
 learned-policy quality, visual-policy behavior, scenario-category coverage,
 restricted scene redistribution, human diagnosis time, or empirical
-generalization to another integration framework.
+generalization to another integration framework. It reports exact runtime for
+the single reactive configuration, not comparative runtime overhead.
 
 Failure attribution is explicit in `artifacts/cvm/results/summary.json` under
 `failure_attribution`. A behavior row is policy-attributable only after route,

@@ -163,6 +163,9 @@ def main() -> int:
     protocol_replay = _protocol_replay_summary(
         args.output.parent.parent / "external" / "alpasim_protocol_replay"
     )
+    navsim_reactive_rollout = _navsim_reactive_summary(
+        args.output.parent.parent / "external" / "alpasim_navsim_reactive_rollout"
+    )
     diagnostic_experiment = _diagnostic_experiment_summary(
         args.inputs / "diagnostic_experiment.json"
     )
@@ -173,6 +176,7 @@ def main() -> int:
         semantic_pair_rows=semantic_pair_rows,
         external_compatibility=external_compatibility,
         protocol_replay=protocol_replay,
+        navsim_reactive_rollout=navsim_reactive_rollout,
         diagnostic_experiment=diagnostic_experiment,
         created_at=_input_created_at(args.inputs),
     )
@@ -794,6 +798,277 @@ def _require_artifact_hash(path: Path, expected: object, *, label: str) -> None:
         raise SystemExit(f"{label} sha256 mismatch: {path}: expected {expected}, got {actual}")
 
 
+def _navsim_reactive_summary(path: Path) -> dict[str, Any]:
+    """Validate and summarize the bounded learned-policy reactive rollout."""
+    manifest_path = path / "manifest.json"
+    if not manifest_path.is_file():
+        return {
+            "artifact_dir": str(path),
+            "available": False,
+            "claim_boundary": (
+                "No learned-policy reactive rollout artifact is present. No reactive "
+                "lifecycle or simulator-service timing claim is available."
+            ),
+        }
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"Invalid NAVSIM reactive manifest JSON: {manifest_path}: {exc}") from exc
+    if (
+        not isinstance(manifest, dict)
+        or manifest.get("schema") != "wod2sim_alpasim_navsim_reactive_evidence_v1"
+    ):
+        raise SystemExit(f"Invalid NAVSIM reactive manifest schema: {manifest_path}")
+
+    files = manifest.get("files")
+    expected_files = {
+        "camera-map.mp4",
+        "driver-telemetry.jsonl",
+        "generated-network-config.yaml",
+        "generated-user-config.yaml",
+        "metrics_results.txt",
+        "negative-control-driver-telemetry.jsonl",
+        "negative-control-runtime.log",
+        "negative-control-video-model-telemetry.jsonl",
+        "results-summary.json",
+        "runtime.log",
+        "video-model-telemetry.jsonl",
+    }
+    if not isinstance(files, dict) or set(files) != expected_files:
+        raise SystemExit(f"Invalid NAVSIM reactive file manifest: {manifest_path}")
+    for name, item in files.items():
+        if not isinstance(item, dict):
+            raise SystemExit(f"Invalid NAVSIM reactive file record: {manifest_path}:{name}")
+        artifact_path = path / name
+        _require_artifact_hash(
+            artifact_path,
+            item.get("sha256"),
+            label=f"NAVSIM reactive {name}",
+        )
+        if item.get("bytes") != artifact_path.stat().st_size:
+            raise SystemExit(f"NAVSIM reactive file size mismatch: {artifact_path}")
+    media = manifest.get("media")
+    camera_map = media.get("camera_map") if isinstance(media, dict) else None
+    if (
+        not isinstance(camera_map, dict)
+        or camera_map.get("path")
+        != "artifacts/external/alpasim_navsim_reactive_rollout/camera-map.mp4"
+        or camera_map.get("sha256") != files["camera-map.mp4"]["sha256"]
+        or camera_map.get("bytes") != files["camera-map.mp4"]["bytes"]
+        or camera_map.get("codec") != "h264"
+        or camera_map.get("width") != 900
+        or camera_map.get("height") != 1000
+        or camera_map.get("frames") != 199
+        or camera_map.get("r_frame_rate") != "10/1"
+        or not math.isclose(
+            float(camera_map.get("duration_s", math.nan)),
+            19.9,
+            rel_tol=0.0,
+            abs_tol=1e-12,
+        )
+    ):
+        raise SystemExit(f"Invalid NAVSIM reactive media manifest: {manifest_path}")
+
+    run = manifest.get("run")
+    checkpoint = run.get("checkpoint") if isinstance(run, dict) else None
+    fixture = manifest.get("fixture")
+    if (
+        not isinstance(run, dict)
+        or run.get("alpasim_commit") != "9177bd0bec547d7516cc77d1864e943780ef7e7a"
+        or run.get("model") != "navsim_ego_status_mlp"
+        or run.get("model_input_contract")
+        != "velocity_xy+acceleration_xy+discrete_command"
+        or run.get("status") != "pass"
+        or not isinstance(run.get("wod2sim_commit"), str)
+        or not isinstance(checkpoint, dict)
+        or checkpoint.get("revision") != PROTOCOL_REPLAY_LEARNED_POLICY["checkpoint_revision"]
+        or checkpoint.get("sha256") != PROTOCOL_REPLAY_LEARNED_POLICY["checkpoint_sha256"]
+        or checkpoint.get("url") != PROTOCOL_REPLAY_LEARNED_POLICY["checkpoint_url"]
+    ):
+        raise SystemExit(f"Invalid NAVSIM reactive run provenance: {manifest_path}")
+    if (
+        not isinstance(fixture, dict)
+        or fixture.get("alpasim_source_sha256")
+        != "0ee95b5bc3a69693cd5a3da3a7d430b673f15371f6844f641866302b5deab2f6"
+        or fixture.get("derived_sha256")
+        != "069fd063a64c82112ec971b585b7eb08d09f9233a4f2ac5e816e19af7185d70d"
+        or _nested_value(fixture, "derived_surface.recorded_payloads_changed") is not False
+    ):
+        raise SystemExit(f"Invalid NAVSIM reactive fixture provenance: {manifest_path}")
+
+    driver_events = load_telemetry_trace(path / "driver-telemetry.jsonl")
+    driver_counts = Counter(str(event.get("event", "")) for event in driver_events)
+    expected_driver_counts = {
+        "close_session": 1,
+        "drive": 197,
+        "egomotion": 197,
+        "image": 198,
+        "route": 197,
+        "start_session": 1,
+    }
+    if dict(sorted(driver_counts.items())) != expected_driver_counts:
+        raise SystemExit(f"NAVSIM reactive driver denominator mismatch: {manifest_path}")
+    drive_events = [event for event in driver_events if event.get("event") == "drive"]
+    if (
+        {event.get("session_uuid") for event in driver_events} != {run.get("rollout_id")}
+        or {event.get("model") for event in drive_events} != {"navsim_ego_status_mlp"}
+        or {event.get("checkpoint_sha256") for event in drive_events}
+        != {PROTOCOL_REPLAY_LEARNED_POLICY["checkpoint_sha256"]}
+        or {event.get("model_input_contract") for event in drive_events}
+        != {"velocity_xy+acceleration_xy+discrete_command"}
+        or any(
+            event.get("trajectory_finite") is not True
+            or event.get("trajectory_includes_current_pose") is not True
+            or event.get("latency_target_met") is not True
+            for event in drive_events
+        )
+    ):
+        raise SystemExit(f"NAVSIM reactive driver contract mismatch: {manifest_path}")
+
+    execution = manifest.get("execution")
+    renderer = execution.get("renderer") if isinstance(execution, dict) else None
+    service_rpc = execution.get("service_drive_rpc") if isinstance(execution, dict) else None
+    internal_latency = (
+        execution.get("internal_driver_latency_ms") if isinstance(execution, dict) else None
+    )
+    if (
+        not isinstance(execution, dict)
+        or execution.get("event_count") != len(driver_events)
+        or execution.get("drive_calls") != len(drive_events)
+        or execution.get("finite_drive_outputs") != len(drive_events)
+        or execution.get("latency_target_met_count") != len(drive_events)
+        or execution.get("camera_events") != driver_counts["image"]
+        or not isinstance(internal_latency, dict)
+        or not isinstance(renderer, dict)
+        or renderer.get("kind") != "video_model"
+        or renderer.get("camera_contract") != "recorded_seed_frame_replay"
+        or not isinstance(service_rpc, dict)
+        or service_rpc.get("count") != len(drive_events)
+    ):
+        raise SystemExit(f"NAVSIM reactive execution manifest drift: {manifest_path}")
+    latency_values = [float(event["latency_ms"]) for event in drive_events]
+    expected_latencies = {
+        "min": min(latency_values),
+        "mean": statistics.fmean(latency_values),
+        "p50": statistics.median(latency_values),
+        "p95": statistics.quantiles(latency_values, n=100, method="inclusive")[94],
+        "max": max(latency_values),
+    }
+    if any(
+        not isinstance(internal_latency.get(metric), (int, float))
+        or not math.isclose(
+            float(internal_latency[metric]),
+            expected,
+            rel_tol=0.0,
+            abs_tol=1e-12,
+        )
+        for metric, expected in expected_latencies.items()
+    ):
+        raise SystemExit(f"NAVSIM reactive latency manifest drift: {manifest_path}")
+
+    video_events = load_telemetry_trace(path / "video-model-telemetry.jsonl")
+    video_counts = Counter(str(event.get("event", "")) for event in video_events)
+    if dict(sorted(video_counts.items())) != {
+        "close_session": 1,
+        "render_video_chunk": 198,
+        "server_started": 1,
+        "start_session": 1,
+    } or renderer.get("render_calls") != video_counts["render_video_chunk"]:
+        raise SystemExit(f"NAVSIM reactive renderer denominator mismatch: {manifest_path}")
+
+    try:
+        results = json.loads((path / "results-summary.json").read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"Invalid NAVSIM reactive result JSON: {path}: {exc}") from exc
+    rollouts = results.get("rollouts") if isinstance(results, dict) else None
+    result_telemetry = results.get("telemetry") if isinstance(results, dict) else None
+    if (
+        not isinstance(rollouts, list)
+        or len(rollouts) != 1
+        or not isinstance(rollouts[0], dict)
+        or rollouts[0].get("status") != "pass"
+        or rollouts[0].get("rollout_id") != run.get("rollout_id")
+        or not isinstance(result_telemetry, dict)
+        or result_telemetry.get("driver_drive_rpc_duration_count") != len(drive_events)
+        or not math.isclose(
+            float(service_rpc.get("mean_ms", math.nan)),
+            float(result_telemetry.get("driver_drive_rpc_duration_mean_s", math.nan)) * 1000.0,
+            rel_tol=0.0,
+            abs_tol=1e-12,
+        )
+    ):
+        raise SystemExit(f"NAVSIM reactive result denominator mismatch: {manifest_path}")
+
+    behavior = manifest.get("behavior_metrics_not_used_as_policy_quality_claims")
+    result_metrics = results.get("metrics_results") if isinstance(results, dict) else None
+    if not isinstance(behavior, dict) or not isinstance(result_metrics, list) or len(result_metrics) != 1:
+        raise SystemExit(f"Missing NAVSIM reactive behavior metrics: {manifest_path}")
+    for name, value in behavior.items():
+        expected = rollouts[0].get("score") if name == "score" else result_metrics[0].get(name)
+        if (
+            not isinstance(value, (int, float))
+            or not isinstance(expected, (int, float))
+            or not math.isclose(float(value), float(expected), rel_tol=0.0, abs_tol=1e-12)
+        ):
+            raise SystemExit(f"NAVSIM reactive behavior metric drift: {manifest_path}:{name}")
+    if behavior.get("wrong_lane") != 1.0:
+        raise SystemExit(f"NAVSIM reactive wrong-lane result was not retained: {manifest_path}")
+
+    negative = manifest.get("negative_control")
+    negative_events = load_telemetry_trace(path / "negative-control-driver-telemetry.jsonl")
+    negative_counts = Counter(str(event.get("event", "")) for event in negative_events)
+    negative_log = (path / "negative-control-runtime.log").read_text(
+        encoding="utf-8", errors="replace"
+    )
+    if (
+        not isinstance(negative, dict)
+        or negative.get("result") != "rejected_frozen_camera_stream"
+        or negative.get("drive_calls_before_rejection") != 4
+        or negative_counts["drive"] != 4
+        or str(negative.get("diagnostic", "")) not in negative_log
+    ):
+        raise SystemExit(f"NAVSIM reactive negative control mismatch: {manifest_path}")
+
+    required_exclusions = {
+        "reactive camera rendering or visual-policy evaluation",
+        "learned-policy quality or benchmark superiority",
+        "runtime overhead versus another integration",
+        "human time-to-diagnosis",
+        "cross-simulator transfer or population generalization",
+    }
+    claim_boundary = manifest.get("claim_boundary")
+    exclusions = (
+        set(claim_boundary.get("does_not_support", []))
+        if isinstance(claim_boundary, dict)
+        else set()
+    )
+    if not required_exclusions.issubset(exclusions):
+        raise SystemExit(f"NAVSIM reactive claim boundary is incomplete: {manifest_path}")
+
+    return {
+        "artifact_dir": str(path),
+        "artifact_sha256": hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
+        "available": True,
+        "rollouts": 1,
+        "passed_rollouts": 1,
+        "drive_rpc_count": len(drive_events),
+        "finite_drive_outputs": execution["finite_drive_outputs"],
+        "latency_target_met_count": execution["latency_target_met_count"],
+        "camera_event_count": driver_counts["image"],
+        "render_call_count": video_counts["render_video_chunk"],
+        "run": run,
+        "fixture": fixture,
+        "internal_driver_latency_ms": internal_latency,
+        "service_drive_rpc": service_rpc,
+        "runtime": execution.get("runtime"),
+        "renderer": renderer,
+        "behavior_metrics_not_used_as_policy_quality_claims": behavior,
+        "media": media,
+        "negative_control": negative,
+        "claim_boundary": claim_boundary,
+    }
+
+
 def _diagnostic_experiment_summary(path: Path) -> dict[str, Any]:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
@@ -909,6 +1184,7 @@ def _summary(
     semantic_pair_rows: list[dict[str, Any]],
     external_compatibility: dict[str, Any],
     protocol_replay: dict[str, Any],
+    navsim_reactive_rollout: dict[str, Any],
     diagnostic_experiment: dict[str, Any],
     created_at: str,
 ) -> dict[str, Any]:
@@ -935,6 +1211,7 @@ def _summary(
             rows,
             diagnostic_experiment=diagnostic_experiment,
             protocol_replay=protocol_replay,
+            navsim_reactive_rollout=navsim_reactive_rollout,
         ),
         "planned_runs": status_counts.get("planned", 0),
         "attempted_runs": sum(row.get("attempted") == "true" for row in rows),
@@ -966,6 +1243,7 @@ def _summary(
         "failure_attribution": failure_attribution_summary,
         "external_compatibility": external_compatibility,
         "protocol_replay": protocol_replay,
+        "navsim_reactive_rollout": navsim_reactive_rollout,
         "diagnostic_experiment": diagnostic_experiment,
         "semantic_ablation_deltas": semantic_delta_summary,
         "failed_runs": status_counts.get("failed", 0),
@@ -1179,11 +1457,13 @@ def _hash_rows(
     *,
     diagnostic_experiment: dict[str, Any] | None = None,
     protocol_replay: dict[str, Any] | None = None,
+    navsim_reactive_rollout: dict[str, Any] | None = None,
 ) -> str:
     evidence = {
         "rows": rows,
         "diagnostic_experiment": diagnostic_experiment or {},
         "protocol_replay": protocol_replay or {},
+        "navsim_reactive_rollout": navsim_reactive_rollout or {},
     }
     payload = json.dumps(evidence, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(payload).hexdigest()
@@ -1807,6 +2087,10 @@ def _write_tables(output: Path, summary: dict[str, Any], rows: list[dict[str, st
     release_scope = summary.get("release_scope", {})
     external = summary.get("external_compatibility", {})
     replay = summary.get("protocol_replay", {})
+    reactive = summary.get("navsim_reactive_rollout", {})
+    reactive_negative = (
+        reactive.get("negative_control", {}) if isinstance(reactive, dict) else {}
+    )
     replay_arms = replay.get("arms", {}) if isinstance(replay, dict) else {}
     replay_full = replay_arms.get("full_contract", {}) if isinstance(replay_arms, dict) else {}
     replay_command = (
@@ -2041,6 +2325,44 @@ def _write_tables(output: Path, summary: dict[str, Any], rows: list[dict[str, st
         + "\\newcommand{\\CVMExternalChallengeDriverLatencyMaxMs}{"
         + _paper_external_metric(summary, "driver_latency_max_ms")
         + "}\n"
+        + f"\\newcommand{{\\CVMReactiveLearnedRollouts}}{{{_summary_int(reactive, 'rollouts')}}}\n"
+        + f"\\newcommand{{\\CVMReactiveLearnedPassedRollouts}}{{{_summary_int(reactive, 'passed_rollouts')}}}\n"
+        + f"\\newcommand{{\\CVMReactiveLearnedDriveRPCs}}{{{_summary_int(reactive, 'drive_rpc_count')}}}\n"
+        + f"\\newcommand{{\\CVMReactiveLearnedFiniteDriveOutputs}}{{{_summary_int(reactive, 'finite_drive_outputs')}}}\n"
+        + f"\\newcommand{{\\CVMReactiveLearnedLatencyTargetMet}}{{{_summary_int(reactive, 'latency_target_met_count')}}}\n"
+        + f"\\newcommand{{\\CVMReactiveLearnedCameraEvents}}{{{_summary_int(reactive, 'camera_event_count')}}}\n"
+        + f"\\newcommand{{\\CVMReactiveLearnedRenderRPCs}}{{{_summary_int(reactive, 'render_call_count')}}}\n"
+        + f"\\newcommand{{\\CVMReactiveNegativeControlDrives}}{{{_summary_int(reactive_negative, 'drive_calls_before_rejection')}}}\n"
+        + "\\newcommand{\\CVMReactiveLearnedLatencyMedianMs}{"
+        + _paper_reactive_metric(summary, "internal_driver_latency_ms.p50")
+        + "}\n"
+        + "\\newcommand{\\CVMReactiveLearnedLatencyNinetyFifthMs}{"
+        + _paper_reactive_metric(summary, "internal_driver_latency_ms.p95")
+        + "}\n"
+        + "\\newcommand{\\CVMReactiveLearnedServiceDriveMeanMs}{"
+        + _paper_reactive_metric(summary, "service_drive_rpc.mean_ms")
+        + "}\n"
+        + "\\newcommand{\\CVMReactiveSimulatedSeconds}{"
+        + _paper_reactive_metric(summary, "runtime.simulated_s")
+        + "}\n"
+        + "\\newcommand{\\CVMReactiveActiveWallSeconds}{"
+        + _paper_reactive_metric(summary, "runtime.active_wall_clock_s")
+        + "}\n"
+        + "\\newcommand{\\CVMReactiveTotalWallSeconds}{"
+        + _paper_reactive_metric(summary, "runtime.total_wall_clock_s")
+        + "}\n"
+        + "\\newcommand{\\CVMReactiveDistanceTraveledM}{"
+        + _paper_reactive_metric(
+            summary,
+            "behavior_metrics_not_used_as_policy_quality_claims.dist_traveled_m",
+        )
+        + "}\n"
+        + "\\newcommand{\\CVMReactiveWrongLane}{"
+        + _paper_reactive_metric(
+            summary,
+            "behavior_metrics_not_used_as_policy_quality_claims.wrong_lane",
+        )
+        + "}\n"
         + f"\\newcommand{{\\CVMReplayDriveRPCsPerArm}}{{{_summary_int(replay_full, 'drive_calls')}}}\n"
         + f"\\newcommand{{\\CVMReplayCameraFrames}}{{{_summary_int(replay_media, 'camera_frames')}}}\n"
         + f"\\newcommand{{\\CVMReplayFullFiniteDriveOutputs}}{{{_summary_int(replay_full, 'finite_drive_outputs')}}}\n"
@@ -2246,6 +2568,19 @@ def _paper_replay_metric(
 ) -> str:
     replay = summary.get("protocol_replay")
     value = _nested_value(replay, dotted_path)
+    if not isinstance(value, (int, float)) or not math.isfinite(float(value)):
+        return "n/a"
+    return f"{float(value):.{precision}f}"
+
+
+def _paper_reactive_metric(
+    summary: dict[str, Any],
+    dotted_path: str,
+    *,
+    precision: int = 3,
+) -> str:
+    reactive = summary.get("navsim_reactive_rollout")
+    value = _nested_value(reactive, dotted_path)
     if not isinstance(value, (int, float)) or not math.isfinite(float(value)):
         return "n/a"
     return f"{float(value):.{precision}f}"

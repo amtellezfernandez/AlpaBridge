@@ -33,6 +33,10 @@ by the Waymo Open Motion Dataset setting: logged observations, route intent,
 and ego-relative trajectory outputs. This repository does not claim official
 Waymo challenge compatibility, leaderboard submission support, or a redistributable
 Waymo-to-AlpaSim scene conversion.
+The five contracts themselves are not WOD message types: a new simulator binding
+maps its native policy inputs, clocks, lifecycle, deployment state, and evidence
+to the same contract classes. Only the WOD-style/AlpaSim binding is evaluated
+here, so cross-simulator transfer remains a hypothesis rather than a result.
 
 ## What This Release Proves
 
@@ -43,6 +47,7 @@ Waymo-to-AlpaSim scene conversion.
 | Does the detector distinguish controlled faults from valid traces? | Yes, for the declared designed suite. On `15` single-fault mutations paired with `15` separately instantiated valid adapter sessions, WOD2Sim classifies `30/30`, localizes `15/15`, and flags `0/15` controls; the executable completion-and-metrics gate classifies `15/30` and detects no faults. These are exact descriptive counts, not a framework-superiority test. |
 | What diagnostic timing is measured? | Post-parse fault-detector execution over `3,000` calls is `28.096 us` median and `55.774 us` p95. The guarded in-process adapter Drive path is `617.549 us` median and `897.100 us` p95; its paired camera-set and freshness-check increment is `68.871 us` median and `309.613 us` p95 over `1,000` measurements across `15` valid sessions, with identical output. These microbenchmarks exclude gRPC, simulator work, file I/O, and human investigation; they are not end-to-end runtime or human time-to-diagnosis. |
 | Is transport-inclusive service timing measured? | Yes, in a bounded non-reactive protocol replay. Four arms spanning route following and NAVSIM's official learned EgoStatusMLP seed-0 checkpoint each complete `60/60` live gRPC `Drive` calls with finite, nonstationary output. Route-following full/reduced median/p95 latency is `3.769/4.833 ms` and `3.104/3.958 ms`; learned full/reduced is `4.715/5.945 ms` and `4.943/6.963 ms`. This is loopback client-to-service time, not simulator runtime, human diagnosis time, or format overhead. |
+| Does a published learned checkpoint complete a reactive AlpaSim external-driver loop? | Yes, for one bounded camera-blind run. NAVSIM EgoStatusMLP completes `197/197` finite `Drive` outputs over `19.93` simulated seconds while AlpaSim controller and physics feed each result into the next ego state. Driver-internal median/p95 is `1.982/3.362 ms`; AlpaSim observes `3.206 ms` mean RPC time. The public camera fixture repeats one recorded seed frame and uses a declared flat ground surface, so this is lifecycle and exact-configuration timing evidence, not visual-policy, rendering-quality, policy-quality, comparative-overhead, or population evidence. |
 | Does the semantic check generalize beyond one policy? | Its applicability is validated across two policy signatures in the same AlpaSim binding. Removing geometry flags route following and changes `56/60` endpoints; it correctly does not flag command-native EgoStatusMLP, whose `60/60` paired outputs are identical. This is a policy-signature negative control, not Waymax or cross-simulator evidence. |
 | Are all paired route-loss rows comparison-eligible? | No. `14/15` pairs qualify; one full-contract arm is also route-invalid, and the paired score deltas do not establish a systematic policy effect. |
 | Is this a policy-quality benchmark? | No. The release has `0` claim-valid policy benchmark rows, `0` policy-failure-attributable rows, and no verified scenario-category coverage. |
@@ -117,6 +122,19 @@ do not alter later observations. This is client-to-service transport,
 within-boundary policy-family replication, and diagnostic evidence, not a
 reactive simulator rollout, policy-quality comparison, or cross-simulator test.
 
+The learned reactive rollout is a separate artifact. It runs the same pinned
+EgoStatusMLP checkpoint against AlpaSim's external driver, controller, physics,
+and official `video_model` boundary for one scene. It completes `1/1` rollout,
+with `197/197` finite outputs and `198` live trajectory render requests. The ego
+travels `61.863 m` in `19.93` simulated seconds; the retained behavior record
+also reports `wrong_lane=1`, which is not hidden or used as a policy-quality
+claim. The public USDZ lacks collision geometry, so the manifest declares the
+added flat `z=0` surface. Its camera server repeats the fixture's recorded seed
+frame. A same-scene route-following control completes four calls, then rejects
+the fifth advancing-but-unchanged image as a frozen camera stream. This proves
+the camera limitation is enforced for a model that requires freshness; it does
+not make the camera rendering reactive.
+
 The controlled diagnostic experiment instead generates `15` separate sessions
 through the current adapter: `405` events, `120` drive calls, and `120/120`
 explicitly finite serialized trajectories. Each unmodified session is paired
@@ -138,7 +156,7 @@ scenario categories and `15` unclassified closed-loop scenes. WOD2Sim therefore
 claims contract-valid integration behavior on those rows, not autonomous-driving
 scenario-category coverage.
 
-## Executed Camera Replay
+## Executed Camera Replay Comparison
 
 <p align="center">
   <a href="docs/assets/readme/alpasim-protocol-replay.mp4">
@@ -156,6 +174,16 @@ non-reactive, so neither output changes the recorded future camera frames.
 [validated manifest](artifacts/external/alpasim_protocol_replay/manifest.json) |
 [reproduction notes](artifacts/external/alpasim_protocol_replay/README.md) |
 [runner](scripts/run_alpasim_replay_demo.sh)
+
+### Reactive Learned Rollout
+
+The [raw AlpaSim camera-and-map video](artifacts/external/alpasim_navsim_reactive_rollout/camera-map.mp4)
+comes directly from the retained learned run. The camera panel has no WOD2Sim
+overlay and honestly stays on the recorded public seed; the map above it shows
+the live ego trajectory advancing. Text and metrics remain outside the camera
+image. See the [validated manifest](artifacts/external/alpasim_navsim_reactive_rollout/manifest.json)
+and [reproduction notes](artifacts/external/alpasim_navsim_reactive_rollout/README.md)
+for exact hashes and limitations.
 
 ## Architecture
 
@@ -193,17 +221,20 @@ they are not release-core dependencies:
 - `direct_actor_planner` evaluates continuous candidates using a scene-matched actor proxy.
 - All adapters share route propagation, sensor checks, launch tooling, and audits.
 
-The separate protocol-replay driver includes `navsim_ego_status_mlp`, which
+The separate protocol-replay and reactive external drivers include
+`navsim_ego_status_mlp`, which
 reproduces NAVSIM v1.1's published EgoStatusMLP architecture for inference from
-an externally downloaded checkpoint. It is replay evidence, not a release-core
-model-registry entry.
+an externally downloaded checkpoint. It is bounded replay and one-scene
+reactive lifecycle evidence, not a release-core model-registry entry.
 
 The protocol replay downloads and verifies NAVSIM's official, public
 EgoStatusMLP seed-0 checkpoint without redistributing it. The baseline is
 learned and command-native, not visual or multimodal; it acts as a negative
 control for policy-specific route requirements rather than as a policy-quality
 result. This release does not redistribute restricted scene assets and does
-not provide a complete public benchmark. Other learned
+not provide a complete public benchmark. The reactive run uses the checkpoint's
+camera-blind input contract; its repeated frame is not valid evidence for a
+visual policy. Other learned
 checkpoints, scene-matched direct-actor proxies, and redistributable scene
 subsets remain optional gated inputs. They do not block the dependency-light
 public core, which is the narrower executable release surface. Claim-valid
@@ -337,8 +368,10 @@ time-to-diagnosis, and the status-only comparator is not another integration
 framework.
 Missing restricted scenes, other learned-policy checkpoints, and scene-matched
 actor proxies remain explicit release limitations rather than hidden
-infrastructure assumptions. The one replay checkpoint supports only the
-declared policy-signature test within the AlpaSim boundary.
+infrastructure assumptions. The pinned checkpoint supports the declared
+policy-signature replay and one bounded reactive AlpaSim lifecycle run. It does
+not establish policy quality, responsive camera synthesis, comparative runtime
+overhead, human diagnosis time, or cross-simulator generalization.
 The detailed test-to-contract traceability map is tracked in
 [`artifacts/cvm/reports/contract_test_audit.md`](artifacts/cvm/reports/contract_test_audit.md).
 

@@ -28,6 +28,11 @@ benchmark release.
   and policy-specific semantic applicability: route loss changes 56/60
   route-following endpoints, while NAVSIM EgoStatusMLP is an exact 60/60
   command-native negative control.
+- The separate reactive NAVSIM rollout is claim-ready only for its bounded
+  lifecycle and exact-configuration timing: 1/1 rollout passes with 197/197
+  finite outputs over 19.93 simulated seconds. The repeated camera seed and
+  declared flat surface are explicit; the camera-validating control rejects
+  the frozen stream after four completed calls.
 - Only 14/15 semantic pairs are comparison-eligible; their score deltas are
   descriptive and do not support a systematic policy-effect claim.
 - The paper PDF, generated tables, figures, aggregate summaries, manifests, and
@@ -43,7 +48,7 @@ benchmark release.
 - Official Waymo or challenge leaderboard compatibility.
 - Complete public policy benchmark status.
 - Ranking against a complete external integration framework.
-- End-to-end runtime overhead or human time-to-diagnosis.
+- Comparative runtime overhead or human time-to-diagnosis.
 - Cross-simulator empirical generalization.
 
 ## Verification Gate

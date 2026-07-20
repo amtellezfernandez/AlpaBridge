@@ -53,10 +53,13 @@ a completion gate classifies \CVMStatusDiagnosticCorrect{}/\CVMDiagnosticCases{}
 detects no faults. Post-parse detection is \CVMFaultDetectorMedianUs{}~$\mu$s median and
 \CVMFaultDetectorNinetyFifthUs{}~$\mu$s p95. Camera-set and freshness checks add
 \CVMAdapterGuardIncrementMedianUs{}~$\mu$s median and
-\CVMAdapterGuardIncrementNinetyFifthUs{}~$\mu$s p95. The non-reactive replay measures
-loopback client-to-service latency, not simulator runtime, format overhead, policy
-quality, or human diagnosis time. Scenario coverage and cross-framework transfer remain
-outside the study.
+\CVMAdapterGuardIncrementNinetyFifthUs{}~$\mu$s p95. A reactive AlpaSim
+rollout closes the camera-blind learned policy through controller and physics for
+\CVMReactiveLearnedFiniteDriveOutputs{}/\CVMReactiveLearnedDriveRPCs{} finite outputs
+over \CVMReactiveSimulatedSeconds{} simulated seconds. Its camera repeats one recorded
+seed on a declared flat surface; this supports lifecycle and service timing only, not
+visual-policy quality, comparative overhead, human diagnosis time, scenario coverage,
+or cross-framework transfer.
 \end{abstract}
 
 \section{Introduction}
@@ -86,16 +89,17 @@ threefold:
   \item a paired protocol-conformance suite measures localization, post-parse detector
   execution, and a guard-path increment against an executable status-only gate, while
   a recorded-message gRPC replay tests policy-specific semantic applicability across
-  route-dependent and command-native learned policies and measures client-to-service
-  latency.
+  route-dependent and command-native learned policies; a separate learned-policy
+  rollout tests live external-driver, controller, and physics feedback.
 \end{itemize}
 The five contract classes concern information, clocks, service state, deployment, and
-evidence rather than a specific protobuf schema. The design can therefore be bound to
-other trajectory-policy/simulator interfaces. This is a structural generalization
-hypothesis. The present evaluation covers one WOD-style/AlpaSim binding: its matrix uses
-dependency-light constant-velocity and route-following policies, and its protocol replay
-adds one published NAVSIM learned baseline with a different input signature. It does not
-cover a second independently maintained simulator framework.
+evidence rather than WOD records or a specific protobuf schema. A new binding maps its
+native policy inputs, clocks, service states, and artifacts to these contracts; the
+WOD-style/AlpaSim adapter is one instantiation, not the definition. This is a structural
+generalization hypothesis. Empirically, the present study still covers one simulator
+binding: its matrix uses dependency-light policies, while the replay and one reactive
+run add a published NAVSIM learned baseline. It does not cover a second independently
+maintained simulator framework.
 
 \subsection{Failure Attribution Rule}
 
@@ -248,6 +252,17 @@ protocol replay rather than a simulator rollout. It includes client serializatio
 transport, service dispatch, adapter execution, and response serialization, but not
 simulator stepping or feedback. Arm timing differences are not overhead estimates.
 
+To test live feedback separately, one run uses the current public AlpaSim fixture and
+the same pinned EgoStatusMLP checkpoint. AlpaSim's external driver, controller, and
+physics services remain live; each returned trajectory affects the next ego state.
+Because the fixture has no collision mesh, the artifact declares an added flat $z=0$
+surface. AlpaSim calls its official \texttt{video\_model} boundary, while the external
+endpoint repeats the fixture's recorded seed frame and logs every requested live
+trajectory. This is valid for the camera-blind checkpoint, whose input signature
+excludes pixels, but not for a visual policy. A same-scene route-following control
+declares camera freshness required and is expected to reject the repeated image rather
+than complete.
+
 The retained external AlpaSim trace contains \CVMExternalChallengeDriveRPCs{} drive calls
 and establishes service-interface and recorded-latency conformance. It uses an earlier
 telemetry schema that did not record the final finite-output check, so it is not the
@@ -381,6 +396,24 @@ These are descriptive values from one ordered run per arm, using different runti
 images for the dependency-light and learned services; no format or policy overhead is
 inferred.
 
+The learned reactive arm completes
+\CVMReactiveLearnedPassedRollouts{}/\CVMReactiveLearnedRollouts{} rollout with
+\CVMReactiveLearnedFiniteDriveOutputs{}/\CVMReactiveLearnedDriveRPCs{} finite outputs
+and \CVMReactiveLearnedLatencyTargetMet{}/\CVMReactiveLearnedDriveRPCs{} below its
+100-ms internal target. Driver-internal median/p95 is
+\CVMReactiveLearnedLatencyMedianMs{}/\CVMReactiveLearnedLatencyNinetyFifthMs{}~ms;
+AlpaSim observes \CVMReactiveLearnedServiceDriveMeanMs{}~ms mean \texttt{Drive} RPC
+time. The run advances \CVMReactiveDistanceTraveledM{}~m over
+\CVMReactiveSimulatedSeconds{} simulated seconds in
+\CVMReactiveActiveWallSeconds{} active wall-clock seconds
+(\CVMReactiveTotalWallSeconds{} including setup). These are measurements of this exact
+configuration, not overhead versus another integration. The retained behavior record
+includes \texttt{wrong\_lane}=\CVMReactiveWrongLane{} and is not used as a
+policy-quality result. In the camera-validating control,
+\CVMReactiveNegativeControlDrives{} calls complete before WOD2Sim rejects the next
+unchanged frame as stale. Thus the static camera limitation is detected rather than
+silently accepted for a model that requires camera freshness.
+
 Constructing the clean sessions exposed two non-injected adapter defects. Camera-alias
 priority could select an older frame and falsely report staleness; the adapter now
 selects the freshest candidate. In the real replay, AlpaSim's dynamic-speed field became
@@ -481,10 +514,12 @@ field required by the current detector. The status-only gate is a concrete
 completion-and-metrics comparator, not a surrogate for CARLA, nuPlan, or another full
 framework. The repository is not an official WOMD interface, does not reconstruct full
 WOMD worlds, and has no scene-matched actor proxy or verified scenario-category
-coverage. One official NAVSIM learned checkpoint is hash-pinned for the replay but is
-not redistributed, visual, multimodal, or evaluated for policy quality. Restricted
-scenes remain licensed inputs; public artifacts retain telemetry, manifests,
-aggregates, hashes, and testable gate logic.
+coverage. One official NAVSIM learned checkpoint is hash-pinned for the replay and one
+reactive external-driver rollout, but is not redistributed. It is camera-blind rather
+than visual or multimodal and is not evaluated for policy quality. The public reactive
+fixture repeats a recorded seed frame and uses a declared synthetic flat physics
+surface. Restricted scenes remain licensed inputs; public artifacts retain telemetry,
+manifests, aggregates, hashes, and testable gate logic.
 
 \subsection{Threats to Validity}
 
@@ -505,10 +540,13 @@ and excludes I/O and human investigation. Neither microbenchmark timer supports 
 end-to-end runtime or time-to-diagnosis claim. The recorded-message replay adds gRPC
 transport and service dispatch, but excludes simulator stepping and feedback; it
 therefore supports client-to-service latency, not end-to-end runtime or human
-diagnosis time. All five contracts, including the plugin precondition within deployment,
-are mutated against generated telemetry and context rather than rerun as physical
-simulator faults. Contract-valid therefore means admitted to the stated evidence
-boundary, not driving safety or simulator correctness.
+diagnosis time. The separate learned rollout includes simulator stepping and feedback
+and therefore supports the reported duration and service timing for that configuration.
+Its repeated camera seed and flat ground exclude reactive visual behavior, rendering
+quality, and comparative overhead. All five contracts, including the plugin
+precondition within deployment, are mutated against generated telemetry and context
+rather than rerun as physical simulator faults. Contract-valid therefore means admitted
+to the stated evidence boundary, not driving safety or simulator correctness.
 
 \emph{External and conclusion validity.} The scenes were selected by local asset
 availability and remain category-unclassified. The diagnostic cases use the same
@@ -516,10 +554,12 @@ adapter, generator, and contract vocabulary, and the closed-loop route pairs hav
 execution per arm with no effective seed control. Accordingly, the descriptive
 comparison concerns only the declared mutations and completion gate; the measured
 software timings concern this host and the declared paths. The learned replay measures
-input-signature invariance under route removal, not reactive behavior, safety, policy
-quality, or cross-dataset generalization. Rare-event coverage, human debugging time, and comparison with
-independently maintained frameworks require separate experiments. The contract taxonomy
-may transfer structurally, but cross-simulator empirical generalization remains untested.
+input-signature invariance under route removal; the reactive learned run covers one
+scene with synthetic ground and non-reactive pixels. Neither establishes safety, policy
+quality, or cross-dataset generalization. Rare-event coverage, human debugging time,
+and comparison with independently maintained frameworks require separate experiments.
+The contract taxonomy may transfer structurally, but cross-simulator empirical
+generalization remains untested.
 
 \section{Conclusion}
 
@@ -531,10 +571,13 @@ detector execution, a paired guard-path increment, and current-schema client-to-
 latency are measured. The semantic decision is also replicated across route following
 and a published learned command-native policy: only the route-dependent policy is
 rejected when geometry is removed, and the learned negative control remains invariant.
-Full simulator runtime, human diagnosis, learned-policy quality, format overhead,
-cross-framework generalization, and framework superiority are not claimed. Together
-with the retained closed-loop route invalidations, the result shows that explicit gates
-make integration evidence auditable before a rollout is attributed to policy behavior.
+A separate learned rollout completes the live AlpaSim driver/controller/physics loop
+under its declared camera-blind input contract, while a camera-validating control
+rejects the repeated frame. Comparative runtime overhead, human diagnosis,
+learned-policy quality, visual behavior, cross-framework generalization, and framework
+superiority are not claimed. Together with the retained closed-loop route invalidations,
+the result shows that explicit gates make integration evidence auditable before a
+rollout is attributed to policy behavior.
 
 \section*{Acknowledgment}
 

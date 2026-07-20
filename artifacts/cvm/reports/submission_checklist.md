@@ -9,6 +9,9 @@ in this checklist.
   2026-08-07.
 - [x] Paper is 4-6 A4 pages, or justified <=8-page paid version.
 - [x] PDF is <=6 MB.
+- [x] Optional camera-comparison video is an H.264 MP4 under the venue's
+  10 MB attachment limit (`docs/assets/readme/alpasim-protocol-replay.mp4`,
+  470,872 bytes); all labels are outside the camera panels.
 - [x] PDF MediaBox is parsed and validated as portrait A4.
 - [x] PDF fonts are embedded according to the `mutool` descriptor validation.
 - [x] IEEE conference template is unmodified.
@@ -96,8 +99,9 @@ Additional release-specific checks:
 
 Scientific-readiness checks:
 
-- [ ] Evaluate at least one learned policy checkpoint through the complete
-  contract stack.
+- [x] Evaluate at least one learned policy checkpoint through the complete
+  contract stack. One camera-blind NAVSIM rollout completes 197/197 finite
+  outputs; static pixels and flat ground bound it to lifecycle evidence.
 - [x] Compare descriptively against an executable status-only gate and measure
   post-parse detector execution plus guarded and unchecked in-process adapter
   Drive paths with a paired guard-path increment.
@@ -116,6 +120,6 @@ guarded in-process adapter Drive-path measurement with a paired guard-path
 increment. It does not claim population inference,
 end-to-end runtime, or human time-to-diagnosis. Scientific scope remains
 contract conformance because the package
-does not include a learned-policy evaluation, external full-framework
+does not include a learned-policy quality evaluation, external full-framework
 comparator, replicated scene trials, verified scenario coverage, direct-actor
-temporal ablation, or unrestricted replay assets.
+temporal ablation, responsive camera rendering, or unrestricted replay assets.

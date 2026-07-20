@@ -4,6 +4,14 @@ All notable public release changes are tracked here.
 
 ## Unreleased - 2026-07-20
 
+- Added a hash-validated reactive AlpaSim rollout for NAVSIM EgoStatusMLP:
+  197/197 finite outputs over 19.93 simulated seconds through live external
+  driver, controller, and physics services.
+- Added deterministic reconstruction of the public fixture's declared flat
+  physics surface, a telemetry-recording seed-frame video-model server, raw
+  camera-and-map run media, and a frozen-camera negative control.
+- Added aggregate, validator, and regression gates for every retained reactive
+  evidence hash and claim exclusion.
 - Added an inference adapter and four-arm replay for NAVSIM's official
   EgoStatusMLP seed-0 checkpoint.
 - Made route-geometry diagnostics conditional on each policy's declared input

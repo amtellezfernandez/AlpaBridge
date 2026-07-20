@@ -6,6 +6,11 @@ is evaluated as a policy runtime.
 `WOD-style` refers to the policy-interface shape used by logged driving tasks,
 not to an official Waymo challenge submission package. Reports should state the
 actual task specification, scene source, and asset revision they use.
+The five contracts are framework-neutral classes, not WOD protobuf fields. A
+second binding must map its own semantic inputs, clocks, service lifecycle,
+deployment state, and evidence into those classes. This release evaluates only
+the WOD-style/AlpaSim binding; cross-simulator transfer is not an empirical
+result.
 
 ## Failure Attribution Rule
 
@@ -110,6 +115,35 @@ simulator runtime or format-overhead comparison. The recorded future camera and
 ego-state sequence is unchanged by service output, the arms run once in a fixed
 order, and no human time-to-diagnosis study is performed.
 
+## Reactive Learned External-Driver Rollout
+
+The separate artifact under
+`artifacts/external/alpasim_navsim_reactive_rollout` closes a published,
+hash-pinned NAVSIM EgoStatusMLP checkpoint through AlpaSim's external driver,
+controller, and physics services. The run completes 1/1 rollout with 197/197
+finite trajectories and 197/197 calls below the 100 ms internal target.
+Driver-internal latency is 1.982 ms median and 3.362 ms p95; AlpaSim observes
+3.206 ms mean `Drive` RPC time. It simulates 19.93 seconds in 16.51 active
+wall-clock seconds, or 18.90 seconds including setup and warmup.
+
+The evidence boundary is intentionally narrow. EgoStatusMLP is camera-blind and
+declares velocity, acceleration, and command inputs. The public AlpaSim fixture
+lacks collision geometry, so the derived USDZ adds and declares a flat `z=0`
+surface without changing its recorded camera, map, or trajectory payloads.
+AlpaSim uses its official `video_model` boundary, but the external endpoint
+repeats the fixture's recorded seed frame while logging all 198 requested live
+trajectories. The ego travels 61.863 m; `wrong_lane=1` is retained but not used
+as a policy-quality claim.
+
+A same-scene route-following negative control requires camera freshness. Four
+`Drive` calls complete; the next advancing timestamp with unchanged image bytes
+is rejected as a frozen camera stream. The successful learned run therefore
+supports one-scene reactive policy/controller/physics lifecycle and timing for
+that exact camera-blind configuration. It does not support reactive camera
+rendering, visual-policy evaluation, NuRec quality, learned-policy superiority,
+comparative runtime overhead, human diagnosis time, or cross-simulator
+generalization.
+
 ## Policy Evaluation
 
 A report using WOD2Sim should declare:
@@ -170,6 +204,11 @@ The separate current-schema replay adds bounded client-to-service gRPC latency
 and a real-camera diagnostic video. It remains non-reactive and does not extend
 the claim to simulator runtime, format overhead, or empirical generalization
 across frameworks.
+The separate learned rollout adds one-scene reactive external-driver,
+controller, and physics feedback plus exact-configuration service and wall-clock
+timing. Its camera pixels remain a repeated public seed and its ground is
+synthetic and flat, so the evidence does not extend to visual behavior,
+policy quality, comparative overhead, or population coverage.
 The public release core is the dependency-light adapter path. Direct-actor,
 learned-checkpoint, restricted-scene, and complete-benchmark dependencies are
 optional gated extensions, not release-core dependencies.
@@ -178,4 +217,5 @@ The release does not redistribute a checkpoint or scene subset and does not
 provide verified scene-category coverage, direct-actor temporal ablation
 results, a visual learned-policy evaluation, or a claim-ready closed-loop
 policy benchmark. The official NAVSIM checkpoint is downloaded and hash-checked
-only for the bounded protocol replay.
+for the bounded protocol replay and reactive lifecycle run; it is not
+redistributed.
