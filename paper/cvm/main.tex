@@ -34,9 +34,9 @@ Email: amtellezfernandez@gmail.com.}%
 Closed-loop driving evaluation can misattribute degraded metrics to policy quality when
 a simulator boundary drops route geometry, changes timing, or produces incomplete
 evidence. WOD2Sim audits five contracts between Waymo Open Motion Dataset-style
-trajectory policies and AlpaSim external drivers. An official protocol is replayed
-through route-following and NAVSIM EgoStatusMLP services under full and command-only
-route modes. All four return
+trajectory policies and AlpaSim external drivers. A controlled route-format ablation
+replays one protocol through route-following and NAVSIM EgoStatusMLP with and without
+route geometry. All four return
 \CVMReplayDriveRPCsPerArm{}/\CVMReplayDriveRPCsPerArm{} finite, nonstationary
 trajectories. Geometry removal triggers
 \texttt{semantic.command\_only} for route following and changes
@@ -65,9 +65,10 @@ or cross-framework transfer.
 \section{Introduction}
 
 Dataset-trained trajectory policies and closed-loop simulators expose different
-failure surfaces. A policy designed around the Waymo Open Motion Dataset (WOMD)
-interface~\cite{ettinger2021womd} may assume logged observations, local route
-geometry, and a fixed trajectory horizon. A simulator service must also accept
+failure surfaces. A trajectory policy developed from the Waymo Open Motion Dataset
+(WOMD) setting~\cite{ettinger2021womd} may assume logged agent and map observations,
+a declared intent representation, and a fixed trajectory horizon. A simulator service
+must also accept
 incremental messages, meet the runtime clock, remain alive across session events, and
 retain enough evidence to explain a result. AlpaSim exposes this difference through
 its external-driver boundary~\cite{alpasim2025}.
@@ -250,7 +251,10 @@ measure Euclidean separation between output endpoints in the local ego frame. Be
 returned trajectories do not alter recorded future observations, this is a non-reactive
 protocol replay rather than a simulator rollout. It includes client serialization,
 transport, service dispatch, adapter execution, and response serialization, but not
-simulator stepping or feedback. Arm timing differences are not overhead estimates.
+simulator stepping or feedback. This is a controlled route-format ablation for causal
+sensitivity and semantic-gate validation, not an estimate of fault prevalence or a
+comparison with another integration framework. Arm timing differences are not overhead
+estimates.
 
 To test live feedback separately, one run uses the current public AlpaSim fixture and
 the same pinned EgoStatusMLP checkpoint. AlpaSim's external driver, controller, and
@@ -520,6 +524,9 @@ than visual or multimodal and is not evaluated for policy quality. The public re
 fixture repeats a recorded seed frame and uses a declared synthetic flat physics
 surface. Restricted scenes remain licensed inputs; public artifacts retain telemetry,
 manifests, aggregates, hashes, and testable gate logic.
+The study does not measure how often route geometry or another policy input is lost in
+production integrations; the designed ablation establishes consequence and detection
+for the executed boundary only.
 
 \subsection{Threats to Validity}
 

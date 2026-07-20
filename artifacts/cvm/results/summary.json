@@ -110,7 +110,7 @@
     }
   ],
   "created_at": "2026-07-18T21:18:19.088449+00:00",
-  "data_hash": "61081f56763910db643e4b9beee84d3f9973b69cc71cbd349c07afa3cfeebc49",
+  "data_hash": "d4ccca09dff4da1debb10633c366e4572d52e93a90240cfc07c4b2db21d53842",
   "diagnostic_experiment": {
     "adapter_guard_path_timing": {
       "guarded_drive_path_us": {
@@ -1148,7 +1148,7 @@
       }
     },
     "artifact_dir": "artifacts/external/alpasim_protocol_replay",
-    "artifact_sha256": "ce5bad33237cebc3a3502689fc2da4e90ab32b40a30d590fe4b69972233f4f91",
+    "artifact_sha256": "70dd3909c4fcb0a654ecc063257eff8457963b516684840fe485fed494d759ea",
     "available": true,
     "claim_boundary": "This is an executed client-to-service gRPC replay of recorded camera, route, egomotion, and Drive messages. It measures transport-inclusive driver RPC latency and contract diagnostics. Recorded inputs are non-reactive, so it does not measure simulator runtime, policy quality, human diagnosis time, or generalization to another integration framework. Route-following demonstrates the consequence of waypoint loss; the published NAVSIM EgoStatusMLP is a policy-signature negative control and does not consume route geometry.",
     "execution_environment": {
@@ -1195,17 +1195,17 @@
       "end_drive_index": 47,
       "maximum_endpoint_separation_m": 1.505999,
       "readme_preview": {
-        "bytes": 1038344,
+        "bytes": 1044751,
         "format": "animated GIF",
         "path": "docs/assets/readme/alpasim-protocol-replay.gif",
-        "sha256": "40838bf4ae468e750534f0edc71111e090c44f3a0759a946d33c36f408c1618d"
+        "sha256": "a9587c715a62fb480203641e2f8536b40dcd4ffdcdf4841512a4e07dd84f9511"
       },
       "start_drive_index": 30,
       "video": {
-        "bytes": 277239,
+        "bytes": 274456,
         "format": "H.264 MP4",
         "path": "docs/assets/readme/alpasim-protocol-replay.mp4",
-        "sha256": "ba57a3785af2f9617e8230c4775e78fadabef1dc3f96fb7884770838dd708e4c"
+        "sha256": "dd5edb54065195930858aad4de4a5897dfa1860c95f3d23966152820495cb460"
       }
     },
     "policy_family_count": 2,

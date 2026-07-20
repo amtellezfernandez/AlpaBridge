@@ -361,7 +361,7 @@ def _render_frame(
     small_font = _font(image_font, 12)
     axis_font = _font(image_font, 11)
 
-    title = "SAME ROUTE-FOLLOWING POLICY + SAME ALPASIM MESSAGES"
+    title = "CONTROLLED ROUTE-FORMAT ABLATION"
     title_bounds = draw.textbbox((0, 0), title, font=title_font)
     draw.text(
         ((CANVAS_SIZE[0] - (title_bounds[2] - title_bounds[0])) // 2, 12),
@@ -369,7 +369,7 @@ def _render_frame(
         font=title_font,
         fill=(248, 250, 250),
     )
-    subtitle = "One boundary changes: waypoint coordinates are dropped or preserved"
+    subtitle = "Same policy + same AlpaSim messages; only the adapter format changes"
     subtitle_bounds = draw.textbbox((0, 0), subtitle, font=subtitle_font)
     draw.text(
         ((CANVAS_SIZE[0] - (subtitle_bounds[2] - subtitle_bounds[0])) // 2, 46),
