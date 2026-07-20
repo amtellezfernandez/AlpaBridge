@@ -31,7 +31,7 @@ host-specific paths, runtime identifiers, and local simulator state.
   `paper/cvm/ieeeconf.cls`.
 - Page size: A4 verified by `mutool info` mediabox `[ 0 0 595.276 841.89 ]`.
 - Page count: 6.
-- PDF size at audit: 207255 bytes.
+- PDF size at audit: 207253 bytes.
 - Root PDF is the only tracked manuscript PDF.
 
 ## Commands And Targets

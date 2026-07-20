@@ -18,8 +18,8 @@ from wod2sim.audit.trace_diagnostics import (
     trace_runtime_summary,
 )
 
-CANVAS_SIZE = (1280, 720)
-CAMERA_SIZE = (320, 150)
+CANVAS_SIZE = (1280, 832)
+CAMERA_SIZE = (540, 253)
 SOURCE_FPS = 10
 MEDIA_WINDOW_FRAMES = 18
 FINAL_HOLD_FRAMES = 25
@@ -477,16 +477,39 @@ def _render_frame(
     )
 
     camera_y = 522
-    left_camera_x, right_camera_x = 255, 705
+    camera_gap = 90
+    left_camera_x = (CANVAS_SIZE[0] - 2 * CAMERA_SIZE[0] - camera_gap) // 2
+    right_camera_x = left_camera_x + CAMERA_SIZE[0] + camera_gap
+    left_camera_label = "LOSSY ARM CAMERA"
+    right_camera_label = "PRESERVED ARM CAMERA"
+    left_camera_label_bounds = draw.textbbox(
+        (0, 0), left_camera_label, font=small_font
+    )
+    right_camera_label_bounds = draw.textbbox(
+        (0, 0), right_camera_label, font=small_font
+    )
     draw.text(
-        (left_camera_x + 45, 498),
-        "LOSSY ARM CAMERA",
+        (
+            left_camera_x
+            + (CAMERA_SIZE[0] - (left_camera_label_bounds[2] - left_camera_label_bounds[0]))
+            // 2,
+            498,
+        ),
+        left_camera_label,
         font=small_font,
         fill=(192, 202, 204),
     )
     draw.text(
-        (right_camera_x + 36, 498),
-        "PRESERVED ARM CAMERA",
+        (
+            right_camera_x
+            + (
+                CAMERA_SIZE[0]
+                - (right_camera_label_bounds[2] - right_camera_label_bounds[0])
+            )
+            // 2,
+            498,
+        ),
+        right_camera_label,
         font=small_font,
         fill=(192, 202, 204),
     )
@@ -513,10 +536,16 @@ def _render_frame(
         outline=(67, 157, 143),
         width=2,
     )
+    equals_font = _font(image_font, 34, bold=True)
+    equals_bounds = draw.textbbox((0, 0), "=", font=equals_font)
     draw.text(
-        (624, camera_y + 56),
+        (
+            (CANVAS_SIZE[0] - (equals_bounds[2] - equals_bounds[0])) // 2,
+            camera_y
+            + (CAMERA_SIZE[1] - (equals_bounds[3] - equals_bounds[1])) // 2,
+        ),
         "=",
-        font=_font(image_font, 34, bold=True),
+        font=equals_font,
         fill=(220, 227, 228),
     )
     footer = (
@@ -527,7 +556,7 @@ def _render_frame(
     draw.text(
         (
             (CANVAS_SIZE[0] - (footer_bounds[2] - footer_bounds[0])) // 2,
-            687,
+            camera_y + CAMERA_SIZE[1] + 17,
         ),
         footer,
         font=small_font,
