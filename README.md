@@ -1,4 +1,4 @@
-# AlpaBridge
+# AlpaBridge: An External-Driver Adapter for Trajectory Policies in AlpaSim
 
 <p align="center">
   <a href="https://github.com/amtellezfernandez/AlpaBridge/actions/workflows/ci.yml"><img src="https://github.com/amtellezfernandez/AlpaBridge/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
