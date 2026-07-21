@@ -11,3 +11,11 @@ runs/
 dist/
 build/
 *.egg-info/
+
+# Secrets and credentials should never be baked into an image
+.env
+.env.*
+*.pem
+*.key
+*credentials*
+.netrc

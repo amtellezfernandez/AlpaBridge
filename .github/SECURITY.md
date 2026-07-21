@@ -7,8 +7,10 @@ affect another maintained branch are applied there separately.
 
 ## Reporting a Vulnerability
 
-Please report suspected vulnerabilities privately by emailing the repository owner
-instead of opening a public issue. Include:
+Please report suspected vulnerabilities privately using GitHub's [private
+vulnerability reporting](https://github.com/amtellezfernandez/AlpaBridge/security/advisories/new)
+(Security tab → "Report a vulnerability") instead of opening a public issue.
+Include:
 
 - the affected commit or release
 - the command or workflow that exposes the issue

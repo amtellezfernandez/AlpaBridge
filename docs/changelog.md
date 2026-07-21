@@ -4,6 +4,20 @@ All notable adapter-release changes are tracked here.
 
 ## Unreleased - 2026-07-21
 
+- Pre-public-release security pass: pinned the remaining unpinned GitHub
+  Actions (`checkout`, `setup-python`, `upload-artifact`) to full commit
+  SHAs, matching the existing `setup-uv` convention. Enabled GitHub's
+  private vulnerability reporting for this repo and pointed
+  `SECURITY.md` at it instead of an unlisted email address. Added
+  defensive `.gitignore`/`.dockerignore` entries for common secret file
+  patterns (`.env`, `*.pem`, `*.key`, `*credentials*`, `.netrc`) as
+  belt-and-suspenders, since none were currently tracked. A parallel
+  four-way review (secrets/PII, CI/workflow, source code, retained
+  evidence artifacts + packaging) found no must-fix issues in any of
+  those areas — redaction claims on the private-checkpoint rollout
+  evidence were independently re-verified against the actual file
+  contents, not just the docs' claims.
+
 - Tightened README prose throughout, mainly the Demo and Scope sections:
   cut repeated hedging phrases ("not a mockup," "genuinely," "honestly,"
   restating the same reassurance in three different forms) down to one

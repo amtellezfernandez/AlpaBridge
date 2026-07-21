@@ -10,3 +10,11 @@ dist/
 runs/
 workspace/
 .uv-cache/
+
+# Secrets and credentials should never be tracked
+.env
+.env.*
+*.pem
+*.key
+*credentials*
+.netrc
