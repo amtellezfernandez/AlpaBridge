@@ -1,0 +1,158 @@
+{
+  "schema": "wod2sim_alpasim_dynamic_camera_evidence_v1",
+  "run": {
+    "model": "token_dagger_bc",
+    "model_input_contract": "camera_front_wide_120fov+route_waypoints+discrete_command",
+    "scene_id": "clipgt-81b0e06d-96e6-4832-99c1-a4084b54ca97",
+    "rollout_id": "9865c414-581a-11f1-8736-a9806c3c5917",
+    "status": "pass",
+    "checkpoint": {
+      "name": "token_dagger_bc (private behavior-cloned checkpoint)",
+      "distributed_in_repo": false,
+      "note": "Not a public checkpoint. Its filesystem path is redacted in source-launch-metadata.json and external-driver-config.yaml; reproducing this exact run requires the maintainer's private checkpoint, which this repository does not ship."
+    },
+    "wod2sim_commit": "e39357d7cdeda9118ea3aa4938b026a0b2781068",
+    "alpasim_commit": null
+  },
+  "execution": {
+    "n_sim_steps": 200,
+    "inference_batches": 100,
+    "camera_config": {
+      "logical_id": "camera_front_wide_120fov",
+      "width": 1920,
+      "height": 1080,
+      "frame_interval_us": 100000
+    },
+    "renderer": {
+      "kind": "sensorsim",
+      "note": "Live neural scene render (not the repeated-frame video_model fixture used by the NAVSIM reactive rollout).",
+      "warmup_s": 92.211
+    },
+    "runtime": {
+      "simulated_s": 19.9,
+      "session_wall_clock_s": 17.66,
+      "realtime_factor": 1.13,
+      "total_wall_clock_s_incl_setup": 135.4
+    }
+  },
+  "behavior_metrics_not_used_as_policy_quality_claims": {
+    "collision_any": 0.0,
+    "collision_at_fault": 0.0,
+    "collision_front": 0.0,
+    "collision_lateral": 0.0,
+    "collision_rear": 0.0,
+    "dist_to_gt_location": 145.44,
+    "dist_to_gt_trajectory": 1.27,
+    "dist_traveled_m": 27.57,
+    "duration_frac_20s": 0.91,
+    "img_is_black": 0.0,
+    "offroad": 0.0,
+    "offroad_or_collision": 0.0,
+    "offroad_or_collision_at_fault": 0.0,
+    "plan_deviation": 0.41,
+    "progress": 0.16,
+    "progress_rel": 0.16,
+    "safety_monitor_triggered": 0.0,
+    "wrong_lane": 0.0
+  },
+  "files": {
+    "camera-map.mp4": {
+      "bytes": 881356,
+      "sha256": "2ce090aea8a2fd54c4d5fab76488893b8d2a935db0f3b087ff672d0b30a21882"
+    },
+    "camera.mp4": {
+      "bytes": 1005005,
+      "sha256": "a6a4dd552d9afa747d1e5ac05b4f900510ae2e9e24dd625312e2b3bbf0689801"
+    },
+    "driver.stdout.log": {
+      "bytes": 1109,
+      "sha256": "f375e3b706962225796a79f7fbde08184f9931fe9bc73c8c405f3f26cd56c0e1"
+    },
+    "external-driver-config.yaml": {
+      "bytes": 580,
+      "sha256": "5257c396e0f79f3d622fdc81fd66c291f4df2baa1d4f69ef408346f6e2a83407"
+    },
+    "generated-network-config.yaml": {
+      "bytes": 204,
+      "sha256": "ab4952344a5ba9b38510a1f80a8f8b79d428caf6e18f6fd08c331f657b38836a"
+    },
+    "generated-user-config.yaml": {
+      "bytes": 1041,
+      "sha256": "af8298d5838c6889e61bc33b3eecce865be3984d11d9ef6d0b156d603f537ef3"
+    },
+    "metrics_results.txt": {
+      "bytes": 4989,
+      "sha256": "92df5b7c9fd15b8c9f2d755e706f990abfc583eacd47cb6de2cb280d6d9668da"
+    },
+    "run_metadata.yaml": {
+      "bytes": 317,
+      "sha256": "93e4a94ce83225eb625ffd7f6cf0f3c64af63e67c4c79809a53b469427e9a9ba"
+    },
+    "runtime.log": {
+      "bytes": 139189,
+      "sha256": "b8caebfd24bbe3b7bd15b29e9d3fd1180feb9aa22d1830ddf9f2e4791ca4b387"
+    },
+    "source-launch-metadata.json": {
+      "bytes": 1271,
+      "sha256": "7646640045ba54481448c06fac4b745a3296662359bbc803c79cddbf08399d0e"
+    }
+  },
+  "media": {
+    "camera": {
+      "bytes": 1005005,
+      "codec": "h264",
+      "content": "camera-only crop of the same rollout; live sensorsim render, not a repeated frame",
+      "duration_s": 20.0,
+      "height": 430,
+      "path": "artifacts/external/alpasim_dynamic_camera_rollout/camera.mp4",
+      "r_frame_rate": "10/1",
+      "sha256": "a6a4dd552d9afa747d1e5ac05b4f900510ae2e9e24dd625312e2b3bbf0689801",
+      "width": 840
+    },
+    "camera_map": {
+      "bytes": 881356,
+      "codec": "h264",
+      "content": "AlpaSim map output stacked over the live sensorsim camera render",
+      "duration_s": 20.0,
+      "height": 1000,
+      "path": "artifacts/external/alpasim_dynamic_camera_rollout/camera-map.mp4",
+      "r_frame_rate": "10/1",
+      "sha256": "2ce090aea8a2fd54c4d5fab76488893b8d2a935db0f3b087ff672d0b30a21882",
+      "width": 900
+    },
+    "readme_preview_gif": {
+      "path": "docs/assets/readme/alpasim-dynamic-camera.gif",
+      "sha256": "51176a87f6f05172fe29287227bc4a35c9865a4734620226ac15b7e7bda59666",
+      "height": 430,
+      "width": 840,
+      "r_frame_rate": "6/1",
+      "duration_s": 20.0
+    }
+  },
+  "claim_boundary": {
+    "supports": [
+      "one-scene reactive external-driver lifecycle completion with a live, non-repeated camera render",
+      "live learned-policy/controller/physics/sensorsim feedback for a camera-consuming model",
+      "visual contrast with the NAVSIM reactive rollout's static-camera fixture"
+    ],
+    "does_not_support": [
+      "learned-policy quality or benchmark superiority",
+      "reproducibility by a third party without the maintainer's private checkpoint",
+      "representative scenario coverage or population generalization",
+      "runtime overhead versus another integration",
+      "cross-simulator transfer"
+    ]
+  },
+  "redactions": {
+    "run_metadata.yaml": ["run_dir (local checkout path)", "run_user (local username)"],
+    "source-launch-metadata.json": [
+      "driver_config_template",
+      "driver_config_path",
+      "checkpoint",
+      "driver_command[0] and --config-path",
+      "wizard_command[0] and wizard.log_dir"
+    ],
+    "external-driver-config.yaml": ["model.checkpoint_path", "output_dir"],
+    "reason": "These fields pointed into a separate private repository checkout on the maintainer's machine and are not needed to interpret the retained evidence."
+  }
+}

@@ -1,0 +1,76 @@
+enable_autoresume: false
+endpoints:
+  controller:
+    n_concurrent_rollouts: 4
+    skip: false
+  driver:
+    n_concurrent_rollouts: 1
+    skip: false
+  physics:
+    n_concurrent_rollouts: 4
+    skip: false
+  renderer:
+    n_concurrent_rollouts: 4
+    skip: false
+  sensorsim_cache_size: '5'
+  trafficsim:
+    n_concurrent_rollouts: 4
+    skip: true
+nr_workers: 1
+renderer:
+  kind: video_model
+  video_model_config:
+    chunk_frames: 1
+    first_chunk_frames: 1
+    fps: 10
+    text_prompt_negative: ''
+    text_prompt_positive: Wide-angle urban street scene from a low, dashboard-level
+      viewpoint. A straight two-lane road with a faded center line and curbside parking
+      on both sides. Parked sedans and SUVs in neutral colors line the curbs. On the
+      right, a white stucco mid-rise building with blue fabric awnings, rectangular
+      windows, and small storefronts at street level. On the left, a low commercial
+      strip with dark trim, glass fronts, signage, and shaded sidewalks. Mature green
+      trees punctuate both sides. Clear blue sky with sparse soft clouds. Bright midday
+      sunlight, natural colors, realistic materials, crisp shadows, clean asphalt
+      texture.
+scene_provider:
+  kind: usdz
+  trajdata:
+    cache_location: trajdata_cache
+    dataset:
+      extra_params:
+        num_timesteps_after: 80
+        num_timesteps_before: 30
+    desired_dt: 0.1
+    load_vector_map: true
+    num_workers: 4
+    rebuild_cache: false
+    rebuild_maps: false
+  usdz:
+    artifact_cache_size: 10
+    data_dir: /mnt/nre-data
+scenes:
+  - scene_id: clipgt-0b10bce8-61f1-4350-8577-cf3c9493ffc3
+simulation_config:
+  assert_zero_decision_delay: true
+  cameras:
+    - frame_interval_us: 100000
+      height: 320
+      logical_id: camera_front_wide_120fov
+      shutter_duration_us: 30000
+      width: 512
+  control_timestep_us: 100000
+  ego_mask_rig_config_id: hyperion_8_1
+  force_gt_duration_us: 1700000
+  min_traffic_duration_us: 3000000
+  n_rollouts: 1
+  n_sim_steps: 200
+  physics_update_mode: EGO_ONLY
+  planner_delay_us: 0
+  pose_reporting_interval_us: 0
+  render_bundling: NONE
+  route_generator_type: MAP
+  route_start_offset_m: 40.0
+  send_recording_ground_truth: false
+  skip_driver_during_force_gt: false
+smooth_trajectories: true

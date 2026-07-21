@@ -1,0 +1,39 @@
+{
+  "model": "token_dagger_iter2",
+  "scene_preset": "fresh_3scene",
+  "scene_ids": [
+    "clipgt-81b0e06d-96e6-4832-99c1-a4084b54ca97"
+  ],
+  "port": 6789,
+  "baseport": 6000,
+  "timeout": 900,
+  "topology": "1gpu",
+  "wizard_dry_run": false,
+  "wizard_args": [],
+  "driver_config_template": "[redacted: private path]/token_dagger_bc.yaml",
+  "driver_config_path": "[redacted: private path]/external-driver-config.yaml",
+  "wizard_driver": "spotlight_reflex",
+  "wizard_deploy_target": "local_external_driver",
+  "checkpoint": "[redacted: private checkpoint path, not distributed in this repository]",
+  "oracle_actor_proxy": null,
+  "driver_env": {},
+  "driver_command": [
+    "[redacted: private path]/python",
+    "-m",
+    "alpasim_driver.main",
+    "--config-path=[redacted: private path]",
+    "--config-name=external-driver-config.yaml"
+  ],
+  "wizard_command": [
+    "[redacted: private path]/alpasim_wizard",
+    "deploy=local_external_driver",
+    "topology=1gpu",
+    "driver=spotlight_reflex",
+    "wizard.log_dir=[redacted: private path]",
+    "wizard.baseport=6000",
+    "wizard.timeout=900",
+    "wizard.external_services.driver=[localhost:6789]",
+    "wizard.dry_run=false",
+    "scenes.scene_ids=[\"clipgt-81b0e06d-96e6-4832-99c1-a4084b54ca97\"]"
+  ]
+}

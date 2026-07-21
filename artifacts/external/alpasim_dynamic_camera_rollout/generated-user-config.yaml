@@ -1,0 +1,42 @@
+artifact_cache_size: 10
+enable_autoresume: false
+endpoints:
+  controller:
+    n_concurrent_rollouts: 4
+    skip: false
+  do_shutdown: true
+  driver:
+    n_concurrent_rollouts: 4
+  physics:
+    n_concurrent_rollouts: 4
+    skip: false
+  sensorsim:
+    n_concurrent_rollouts: 4
+  sensorsim_cache_size: '5'
+  trafficsim:
+    n_concurrent_rollouts: 4
+    skip: true
+nr_workers: 1
+scenes:
+  - scene_id: clipgt-81b0e06d-96e6-4832-99c1-a4084b54ca97
+simulation_config:
+  assert_zero_decision_delay: true
+  cameras:
+    - first_frame_offset_us: -30000
+      frame_interval_us: 100000
+      height: 1080
+      logical_id: camera_front_wide_120fov
+      shutter_duration_us: 30000
+      width: 1920
+  control_timestep_us: 100000
+  ego_mask_rig_config_id: hyperion_8_1
+  force_gt_duration_us: 1700000
+  min_traffic_duration_us: 3000000
+  n_rollouts: 1
+  n_sim_steps: 200
+  physics_update_mode: EGO_ONLY
+  planner_delay_us: 0
+  pose_reporting_interval_us: 0
+  route_generator_type: MAP
+  send_recording_ground_truth: false
+  time_start_offset_us: 100000

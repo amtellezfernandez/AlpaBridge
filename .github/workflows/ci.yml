@@ -1,0 +1,116 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+
+      - name: Install package
+        run: |
+          uv sync --extra dev
+
+      - name: Run static checks
+        run: |
+          make lint PYTHON='uv run python'
+
+      - name: Run core conformance tier
+        run: |
+          make conformance PYTHON='uv run python'
+
+      - name: Run tests with coverage
+        run: |
+          make coverage PYTHON='uv run python'
+
+      - name: Run strict installed doctor
+        run: |
+          uv run alpabridge-doctor --strict-installed --json
+
+      - name: Run fresh-checkout bootstrap smoke
+        run: |
+          make smoke PYTHON='uv run python'
+
+      - name: Build package
+        run: |
+          uv run python -m build
+
+      - name: Smoke test built wheel install
+        run: |
+          uv venv /tmp/alpabridge-wheel-smoke
+          uv pip install --python /tmp/alpabridge-wheel-smoke/bin/python dist/*.whl
+          /tmp/alpabridge-wheel-smoke/bin/alpabridge-doctor --strict-installed --json
+          /tmp/alpabridge-wheel-smoke/bin/alpabridge-build-oracle-proxy --help > /dev/null
+          /tmp/alpabridge-wheel-smoke/bin/alpabridge-audit-run --help > /dev/null
+          /tmp/alpabridge-wheel-smoke/bin/alpabridge-support-bundle --help > /dev/null
+          /tmp/alpabridge-wheel-smoke/bin/python - <<'PY'
+          from pathlib import Path
+          from alpabridge.cli.commands.run_alpasim_local_external import MODEL_PRESETS, SCENE_PRESETS
+          from alpabridge.cli.commands.setup_alpasim_local_plugin import ALPASIM_OVERRIDE_ROOT
+
+          assert tuple(MODEL_PRESETS) == (
+              "constant_velocity",
+              "route_following",
+              "token_dagger_bc",
+              "direct_actor_planner",
+          ), tuple(MODEL_PRESETS)
+          assert ALPASIM_OVERRIDE_ROOT.is_dir(), ALPASIM_OVERRIDE_ROOT
+          assert all(Path(spec["config_file"]).is_file() for spec in MODEL_PRESETS.values())
+          assert all(Path(path).is_file() for path in SCENE_PRESETS.values())
+          print("wheel config and override payload OK")
+          PY
+          /tmp/alpabridge-wheel-smoke/bin/python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+
+          wheel_path = next(Path("dist").glob("*.whl"))
+          with ZipFile(wheel_path) as archive:
+              bad_paths = [
+                  name
+                  for name in archive.namelist()
+                  if "__pycache__/" in name or name.endswith((".pyc", ".pyo"))
+              ]
+          assert not bad_paths, bad_paths
+          print("wheel artifact hygiene OK")
+          PY
+          printf 'command-materialization-smoke' > /tmp/alpabridge-token-checkpoint.pt
+          /tmp/alpabridge-wheel-smoke/bin/alpabridge-batch \
+            --mode print \
+            --model token_dagger_bc \
+            --checkpoint /tmp/alpabridge-token-checkpoint.pt \
+            --scene-limit 1 \
+            --batch-dir /tmp/alpabridge-wheel-batch
+          test -f /tmp/alpabridge-wheel-batch/batch-status.json
+
+      - name: Check tracked-file hygiene
+        run: |
+          if git ls-files | grep -E '(__pycache__/|\.pyc$|\.egg-info/)'; then
+            echo "Tracked generated artifacts detected"
+            exit 1
+          fi
+          test -z "$(git status --porcelain)"
+
+      - name: Upload package artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: alpabridge-dist
+          path: dist/*

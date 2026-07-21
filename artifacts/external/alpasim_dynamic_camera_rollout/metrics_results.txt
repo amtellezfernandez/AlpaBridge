@@ -1,0 +1,45 @@
+────────────────────────────────────────────────────────────────────── Modifiers applied: ──────────────────────────────────────────────────────────────────────
+RemoveTimestepsBeforeEvent([(col("eval_relevant")) > (dyn float: 0)]) ±(18 rows, 1 trajectories)
+'offroad_or_collision': AddCombinedEvent([([(col("collision_any")) > (dyn float: 0)]) | ([(col("offroad")) > (dyn float: 0)])]) ±(0 rows, 0 trajectories)
+'collision_at_fault': AddCombinedEvent([([(col("collision_front")) > (dyn float: 0)]) | ([(col("collision_lateral")) > (dyn int: 0)])]) ±(0 rows, 0 
+trajectories)
+'offroad_or_collision_at_fault': AddCombinedEvent([([(col("collision_at_fault")) > (dyn float: 0)]) | ([(col("offroad")) > (dyn float: 0)])]) ±(0 rows, 0 
+trajectories)
+'duration_frac_20s': AddCombinedEvent([([(col("timestamps_us")) - (col("timestamps_us").min().over([col("trajectory_uid")]))]) / (dyn float: 20000000)]) ±(0 
+rows, 0 trajectories)
+RemoveTrajectoryWithEvent([(col("img_is_black")) > (dyn float: 0)]) ±(0 rows, 0 trajectories)
+RemoveTimestepsAfterEvent([(col("offroad_or_collision")) > (dyn float: 0)]) ±(0 rows, 0 trajectories)
+RemoveTimestepsAfterEvent([(col("dist_to_gt_trajectory")) >= (dyn float: 4)]) ±(0 rows, 0 trajectories)
+─────────────────────────────────────────────────────────────────────────── Results ────────────────────────────────────────────────────────────────────────────
+              Run: LR-47876a78-2888-48a7-b5ae-0ad946d3c547               
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━┓
+┃ Metric Name                         ┃ Metric Value ┃ Time Aggregation ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━┩
+│ avg_dist_between_incidents          │     inf      │                  │
+│ avg_dist_between_incidents_at_fault │     inf      │                  │
+│ collision_any                       │     0.00     │       max        │
+│ collision_at_fault                  │     0.00     │       max        │
+│ collision_front                     │     0.00     │       max        │
+│ collision_lateral                   │     0.00     │       max        │
+│ collision_rear                      │     0.00     │       max        │
+│ dist_to_gt_location                 │    145.44    │       max        │
+│ dist_to_gt_trajectory               │     1.27     │       max        │
+│ dist_traveled_m                     │    27.57     │       last       │
+│ duration_frac_20s                   │     0.91     │       last       │
+│ eval_relevant                       │     1.00     │       max        │
+│ img_is_black                        │     0.00     │       max        │
+│ min_ade@0.5s(gt)                    │     N/A      │       mean       │
+│ min_ade@1.0s(gt)                    │     N/A      │       mean       │
+│ min_ade@2.5s(gt)                    │     N/A      │       mean       │
+│ min_ade@5.0s(gt)                    │     N/A      │       mean       │
+│ offroad                             │     0.00     │       max        │
+│ offroad_or_collision                │     0.00     │       max        │
+│ offroad_or_collision_at_fault       │     0.00     │       max        │
+│ plan_deviation                      │     0.41     │       mean       │
+│ progress                            │     0.16     │       last       │
+│ progress_rel                        │     0.16     │       min        │
+│ safety_monitor_triggered            │     0.00     │       max        │
+│ wrong_lane                          │     0.00     │       max        │
+└─────────────────────────────────────┴──────────────┴──────────────────┘
+                    n_clips: 1.0, n_rollouts/clip: 1                     
+                     Std deviation is over rollouts.                     

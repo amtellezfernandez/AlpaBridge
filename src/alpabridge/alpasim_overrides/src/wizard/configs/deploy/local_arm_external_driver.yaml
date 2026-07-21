@@ -1,0 +1,33 @@
+# @package _global_
+# Deploy target: ARM64 workstation with external driver process.
+# Starts from the standard local external-driver stack, then applies the ARM-specific
+# sensorsim/runtime overrides without depending on the incomplete upstream local_arm profile.
+
+defaults:
+  - local_external_driver
+  - _self_
+
+services:
+  sensorsim:
+    environments:
+      - OMP_NUM_THREADS=1
+      - TORCH_CUDA_ARCH_LIST=9.0+PTX
+    command:
+      - "${defines.sensorsim_entrypoint}"
+      - "serve-grpc"
+      - "--port={port}"
+      - "--host=0.0.0.0"
+      - "--artifact-glob=/mnt/nre-data/{sceneset}/**/*.usdz"
+      - "--egocar-hood-dir=/mnt/ego-hoods"
+      - "--no-enable-nrend"
+      - "--download-cache-dir /tmp/nre-cache-dir"
+      - "--cache-size=${defines.nre_cache_size}"
+      - "--max-workers=4"
+      - "--enable-editing-actors"
+      - "--use-gsplat"
+
+runtime:
+  endpoints:
+    trafficsim:
+      skip: true
+    startup_timeout_s: 600

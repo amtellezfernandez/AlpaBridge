@@ -1,0 +1,551 @@
+from __future__ import annotations
+
+import math
+import sys
+import unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from alpabridge.simulator.environment import (
+    DEFAULT_EGO_RADIUS_M,
+    Actor,
+    Obstacle,
+    Scenario,
+    actor_to_obstacle_at_time,
+    min_segment_clearance,
+    min_time_swept_clearance,
+    moving_obstacle_segment_clearance,
+    obstacle_signed_distance,
+    scenario_at_tick,
+)
+from alpabridge.simulator.maneuver_candidates import (
+    DEFAULT_MANEUVER_CONFIG,
+    ManeuverCandidateConfig,
+    SimulatorBackedScoreConfig,
+    _min_obstacle_clearance,
+    _min_obstacle_clearance_with_config,
+    generate_maneuver_candidates,
+)
+from alpabridge.simulator.perception import perceive_scene
+from alpabridge.simulator.trajectory_selector import (
+    TrajectoryCandidate,
+    TrajectoryReference,
+    score_candidate,
+    speed_scale,
+    trajectory_region_score,
+)
+from alpabridge.simulator.world_model import update_world_state
+
+SELECTOR_3S_INDEX = DEFAULT_MANEUVER_CONFIG.selector.index_3s
+SELECTOR_5S_INDEX = DEFAULT_MANEUVER_CONFIG.selector.index_5s
+
+
+def straight_trajectory(lateral_offset: float = 0.0, longitudinal_offset: float = 0.0) -> list[tuple[float, float]]:
+    return [(float(index + 1) + longitudinal_offset, lateral_offset) for index in range(20)]
+
+
+class TrajectorySelectorGeometryTests(unittest.TestCase):
+    def test_segment_clearance_detects_swept_collision_between_endpoints(self) -> None:
+        obstacle = Obstacle(x=0.0, y=0.0, radius=1.0)
+        clearance = min_segment_clearance((-2.0, 0.0), (2.0, 0.0), [obstacle])
+        self.assertLess(clearance, 0.0)
+
+    def test_segment_clearance_uses_closest_approach_not_endpoint_distance(self) -> None:
+        obstacle = Obstacle(x=2.0, y=1.0, radius=0.4)
+        clearance = min_segment_clearance((0.0, 0.0), (4.0, 0.0), [obstacle])
+        self.assertAlmostEqual(clearance, 0.6, places=6)
+
+    def test_segment_clearance_shrinks_by_ego_radius(self) -> None:
+        obstacle = Obstacle(x=2.0, y=1.0, radius=0.4)
+        point_clearance = min_segment_clearance((0.0, 0.0), (4.0, 0.0), [obstacle])
+        capsule_clearance = min_segment_clearance(
+            (0.0, 0.0),
+            (4.0, 0.0),
+            [obstacle],
+            ego_radius=DEFAULT_EGO_RADIUS_M,
+        )
+        self.assertAlmostEqual(capsule_clearance, point_clearance - DEFAULT_EGO_RADIUS_M, places=6)
+
+    def test_capsule_obstacle_signed_distance_uses_length_and_heading(self) -> None:
+        obstacle = Obstacle(x=0.0, y=0.0, radius=0.4, length=4.0, heading=0.0)
+        signed_distance = obstacle_signed_distance((2.2, 0.0), obstacle)
+        self.assertAlmostEqual(signed_distance, 0.2, places=6)
+
+    def test_time_swept_clearance_detects_actor_crossing_between_tick_endpoints(self) -> None:
+        scenario = Scenario(
+            width=20.0,
+            height=20.0,
+            lane_center=[(0.0, 0.0), (10.0, 0.0)],
+            lane_half_width=4.0,
+            obstacles=[],
+            start=(0.0, 0.0),
+            goal=(10.0, 0.0),
+            seed=100,
+            actors=[
+                Actor(
+                    actor_id="crossing_0",
+                    kind="vehicle",
+                    x=0.6,
+                    y=1.0,
+                    width=1.0,
+                    length=1.0,
+                    heading=-math.pi / 2.0,
+                    speed=8.0,
+                    vx=0.0,
+                    vy=-8.0,
+                    behavior="linear",
+                    role="crossing_actor",
+                )
+            ],
+        )
+
+        clearance = min_time_swept_clearance(scenario, (0.0, 0.0), (1.35, 0.0), 0.0, 1.0)
+
+        self.assertLess(clearance, 0.0)
+
+    def test_relative_motion_clearance_detects_two_body_crossing(self) -> None:
+        clearance = moving_obstacle_segment_clearance(
+            ego_start=(0.0, 0.0),
+            ego_end=(1.0, 0.0),
+            obstacle_start=(1.0, 1.0),
+            obstacle_end=(0.0, -1.0),
+            obstacle_radius=0.2,
+        )
+
+        self.assertLess(clearance, 0.0)
+
+    def test_relative_motion_clearance_matches_expected_separation_when_parallel(self) -> None:
+        clearance = moving_obstacle_segment_clearance(
+            ego_start=(0.0, 0.0),
+            ego_end=(1.0, 0.0),
+            obstacle_start=(0.0, 2.0),
+            obstacle_end=(1.0, 2.0),
+            obstacle_radius=0.5,
+        )
+
+        self.assertAlmostEqual(clearance, 1.5, places=6)
+
+    def test_time_swept_clearance_adapts_for_nonlinear_actor_motion(self) -> None:
+        scenario = Scenario(
+            width=20.0,
+            height=20.0,
+            lane_center=[(0.0, 0.0), (10.0, 0.0)],
+            lane_half_width=4.0,
+            obstacles=[],
+            start=(0.0, 0.0),
+            goal=(10.0, 0.0),
+            seed=103,
+            actors=[
+                Actor(
+                    actor_id="erratic_0",
+                    kind="pedestrian",
+                    x=0.4,
+                    y=-0.35,
+                    width=0.8,
+                    length=0.8,
+                    heading=0.0,
+                    speed=0.0,
+                    vx=0.9,
+                    vy=0.15,
+                    behavior="erratic_pedestrian",
+                    role="erratic_crossing",
+                )
+            ],
+        )
+
+        coarse = min_time_swept_clearance(
+            scenario,
+            (0.0, 0.0),
+            (1.0, 0.0),
+            0.0,
+            1.0,
+            samples=1,
+            max_depth=0,
+        )
+        refined = min_time_swept_clearance(
+            scenario,
+            (0.0, 0.0),
+            (1.0, 0.0),
+            0.0,
+            1.0,
+            samples=1,
+        )
+
+        self.assertLessEqual(refined, coarse)
+
+    def test_actor_projection_preserves_capsule_dimensions(self) -> None:
+        actor = Actor(
+            actor_id="vehicle_0",
+            kind="vehicle",
+            x=0.0,
+            y=0.0,
+            width=2.0,
+            length=4.6,
+            heading=math.pi / 2.0,
+            speed=0.0,
+            vx=0.0,
+            vy=0.0,
+            behavior="linear",
+            role="lead_vehicle",
+        )
+
+        obstacle = actor_to_obstacle_at_time(actor, 0.0)
+
+        assert obstacle is not None
+        self.assertAlmostEqual(obstacle.radius, 1.0)
+        self.assertAlmostEqual(obstacle.length or 0.0, 4.6)
+        self.assertAlmostEqual(obstacle.heading, math.pi / 2.0)
+
+    def test_perception_preserves_obstacle_shape_metadata(self) -> None:
+        scenario = Scenario(
+            width=20.0,
+            height=20.0,
+            lane_center=[(0.0, 0.0), (10.0, 0.0)],
+            lane_half_width=4.0,
+            obstacles=[Obstacle(x=3.0, y=0.0, radius=0.5, length=4.0, heading=math.pi / 2.0)],
+            start=(0.0, 0.0),
+            goal=(10.0, 0.0),
+            seed=104,
+        )
+
+        perception = perceive_scene(scenario, scenario.start)
+
+        self.assertEqual(len(perception.visible_obstacles), 1)
+        observed = perception.visible_obstacles[0]
+        self.assertAlmostEqual(observed.length or 0.0, 4.0)
+        self.assertAlmostEqual(observed.heading, math.pi / 2.0)
+
+    def test_speed_scale_is_clipped_piecewise_linear(self) -> None:
+        self.assertEqual(speed_scale(0.0), 0.5)
+        self.assertEqual(speed_scale(1.4), 0.5)
+        self.assertEqual(speed_scale(11.0), 1.0)
+        self.assertEqual(speed_scale(15.0), 1.0)
+        expected_midpoint = 0.5 + 0.5 * (6.2 - 1.4) / (11.0 - 1.4)
+        self.assertAlmostEqual(speed_scale(6.2), expected_midpoint)
+
+    def test_candidate_inside_5s_selection_region_gets_full_reference_score(self) -> None:
+        reference = straight_trajectory()
+        candidate = straight_trajectory(lateral_offset=1.7)
+        score, inside = trajectory_region_score(candidate, reference, 91.0, 11.0, SELECTOR_5S_INDEX)
+        self.assertTrue(inside)
+        self.assertEqual(score, 91.0)
+
+    def test_candidate_outside_selection_region_decays_and_floors(self) -> None:
+        reference = straight_trajectory()
+        candidate = straight_trajectory(lateral_offset=100.0)
+        score, inside = trajectory_region_score(candidate, reference, 91.0, 11.0, SELECTOR_5S_INDEX)
+        self.assertFalse(inside)
+        self.assertEqual(score, 4.0)
+
+    def test_3s_and_5s_indices_use_distinct_thresholds(self) -> None:
+        reference = straight_trajectory()
+        candidate = straight_trajectory()
+        candidate[SELECTOR_3S_INDEX] = (reference[SELECTOR_3S_INDEX][0], 0.6)
+        candidate[SELECTOR_5S_INDEX] = (reference[SELECTOR_5S_INDEX][0], 0.6)
+
+        score_3s, inside_3s = trajectory_region_score(candidate, reference, 80.0, 1.4, SELECTOR_3S_INDEX)
+        score_5s, inside_5s = trajectory_region_score(candidate, reference, 80.0, 1.4, SELECTOR_5S_INDEX)
+
+        self.assertFalse(inside_3s)
+        self.assertLess(score_3s, 80.0)
+        self.assertTrue(inside_5s)
+        self.assertEqual(score_5s, 80.0)
+
+    def test_invalid_selection_region_index_raises(self) -> None:
+        with self.assertRaises(ValueError):
+            trajectory_region_score(straight_trajectory(), straight_trajectory(), 80.0, 5.0, 7)
+
+    def test_score_candidate_selects_best_3s_and_5s_references(self) -> None:
+        candidate = TrajectoryCandidate("candidate", straight_trajectory(lateral_offset=0.4))
+        references = [
+            TrajectoryReference("low", straight_trajectory(lateral_offset=3.0), 70.0),
+            TrajectoryReference("high", straight_trajectory(lateral_offset=0.4), 95.0),
+        ]
+        score = score_candidate(candidate, references, 11.0)
+        self.assertEqual(score.reference_3s_label, "high")
+        self.assertEqual(score.reference_5s_label, "high")
+        self.assertEqual(score.combined_score, 95.0)
+
+
+class ManeuverLibraryTests(unittest.TestCase):
+    def test_every_candidate_has_20_finite_points(self) -> None:
+        candidates = generate_maneuver_candidates((0.0, 0.0), (1.0, 0.0), 2.0)
+        self.assertEqual(len(candidates), 9)
+        for candidate in candidates:
+            self.assertEqual(len(candidate.trajectory), 20)
+            for point in candidate.trajectory:
+                self.assertTrue(math.isfinite(point[0]))
+                self.assertTrue(math.isfinite(point[1]))
+
+    def test_stop_trajectory_remains_at_current_point(self) -> None:
+        candidates = generate_maneuver_candidates((2.0, -1.0), (1.0, 0.0), 2.0)
+        stop = next(candidate for candidate in candidates if candidate.name == "stop")
+        self.assertTrue(all(point == (2.0, -1.0) for point in stop.trajectory))
+
+    def test_lateral_maneuvers_have_expected_sign(self) -> None:
+        generated_candidates = generate_maneuver_candidates((0.0, 0.0), (1.0, 0.0), 2.0)
+        candidates = {candidate.name: candidate for candidate in generated_candidates}
+        self.assertGreater(candidates["nudge_left"].trajectory[-1][1], 0.0)
+        self.assertLess(candidates["nudge_right"].trajectory[-1][1], 0.0)
+        self.assertGreater(candidates["evasive_left"].trajectory[-1][1], candidates["nudge_left"].trajectory[-1][1])
+        self.assertLess(candidates["evasive_right"].trajectory[-1][1], candidates["nudge_right"].trajectory[-1][1])
+
+    def test_world_geometry_summary_is_label_free(self) -> None:
+        base = Scenario(
+            width=40.0,
+            height=20.0,
+            lane_center=[(0.0, 0.0), (20.0, 0.0)],
+            lane_half_width=4.0,
+            obstacles=[Obstacle(x=5.0, y=1.0, radius=1.0, kind="unknown", label="alpha")],
+            start=(0.0, 0.0),
+            goal=(20.0, 0.0),
+            seed=125,
+            cluster="novel_object",
+            tags={"source": "label_a"},
+        )
+        relabeled = Scenario(
+            width=base.width,
+            height=base.height,
+            lane_center=base.lane_center,
+            lane_half_width=base.lane_half_width,
+            obstacles=[Obstacle(x=5.0, y=1.0, radius=1.0, kind="construction_foam", label="beta")],
+            start=base.start,
+            goal=base.goal,
+            seed=base.seed,
+            cluster="different_cluster",
+            tags={"source": "label_b"},
+        )
+
+        base_state = update_world_state(base, base.start, perceive_scene(base, base.start))
+        relabeled_state = update_world_state(relabeled, relabeled.start, perceive_scene(relabeled, relabeled.start))
+
+        self.assertGreater(base_state.route_blockage, 0.45)
+        self.assertTrue(base_state.corridor_blocked)
+        self.assertEqual(base_state.preferred_escape_side, "right")
+        self.assertAlmostEqual(base_state.obstacle_pressure, relabeled_state.obstacle_pressure)
+        self.assertAlmostEqual(base_state.route_blockage, relabeled_state.route_blockage)
+        self.assertEqual(base_state.corridor_blocked, relabeled_state.corridor_blocked)
+        self.assertAlmostEqual(base_state.left_clearance, relabeled_state.left_clearance)
+        self.assertAlmostEqual(base_state.right_clearance, relabeled_state.right_clearance)
+        self.assertEqual(base_state.preferred_escape_side, relabeled_state.preferred_escape_side)
+
+    def test_world_geometry_uses_obstacle_length_for_route_blockage(self) -> None:
+        compact = Scenario(
+            width=40.0,
+            height=20.0,
+            lane_center=[(0.0, 0.0), (30.0, 0.0)],
+            lane_half_width=3.0,
+            obstacles=[Obstacle(x=6.0, y=2.7, radius=0.5, length=1.0, heading=0.0)],
+            start=(0.0, 0.0),
+            goal=(30.0, 0.0),
+            seed=130,
+        )
+        elongated = Scenario(
+            width=40.0,
+            height=20.0,
+            lane_center=[(0.0, 0.0), (30.0, 0.0)],
+            lane_half_width=3.0,
+            obstacles=[Obstacle(x=6.0, y=2.7, radius=0.5, length=5.0, heading=math.pi / 2.0)],
+            start=(0.0, 0.0),
+            goal=(30.0, 0.0),
+            seed=131,
+        )
+
+        compact_state = update_world_state(compact, compact.start, perceive_scene(compact, compact.start))
+        elongated_state = update_world_state(elongated, elongated.start, perceive_scene(elongated, elongated.start))
+
+        self.assertGreater(elongated_state.route_blockage, compact_state.route_blockage)
+
+    def test_forecast_clearance_keeps_static_obstacle_with_same_label_as_moving_actor(self) -> None:
+        scenario = Scenario(
+            width=20.0,
+            height=20.0,
+            lane_center=[(0.0, 0.0), (10.0, 0.0)],
+            lane_half_width=4.0,
+            obstacles=[Obstacle(x=1.0, y=0.0, radius=1.0, kind="barrier", label="shared_role")],
+            start=(0.0, 0.0),
+            goal=(10.0, 0.0),
+            seed=7,
+            actors=[
+                Actor(
+                    actor_id="moving_0",
+                    kind="vehicle",
+                    x=0.0,
+                    y=10.0,
+                    width=1.0,
+                    length=1.0,
+                    heading=-math.pi / 2.0,
+                    speed=1.0,
+                    vx=0.0,
+                    vy=-1.0,
+                    behavior="linear",
+                    role="shared_role",
+                )
+            ],
+        )
+        active = scenario_at_tick(scenario, 0)
+
+        self.assertLess(_min_obstacle_clearance([(1.0, 0.0)], active), 0.0)
+
+    def test_default_clearance_does_not_use_privileged_actor_forecast(self) -> None:
+        scenario = Scenario(
+            width=20.0,
+            height=20.0,
+            lane_center=[(0.0, 0.0), (10.0, 0.0)],
+            lane_half_width=4.0,
+            obstacles=[],
+            start=(0.0, 0.0),
+            goal=(10.0, 0.0),
+            seed=8,
+            actors=[
+                Actor(
+                    actor_id="crossing_0",
+                    kind="vehicle",
+                    x=0.0,
+                    y=1.0,
+                    width=1.0,
+                    length=1.0,
+                    heading=-math.pi / 2.0,
+                    speed=4.0,
+                    vx=0.0,
+                    vy=-4.0,
+                    behavior="linear",
+                    role="crossing_actor",
+                )
+            ],
+        )
+        active = scenario_at_tick(scenario, 0)
+
+        self.assertGreater(_min_obstacle_clearance([(0.0, 0.0)], active), 0.0)
+
+    def test_privileged_forecast_clearance_uses_future_position_for_moving_actor(self) -> None:
+        scenario = Scenario(
+            width=20.0,
+            height=20.0,
+            lane_center=[(0.0, 0.0), (10.0, 0.0)],
+            lane_half_width=4.0,
+            obstacles=[],
+            start=(0.0, 0.0),
+            goal=(10.0, 0.0),
+            seed=8,
+            actors=[
+                Actor(
+                    actor_id="crossing_0",
+                    kind="vehicle",
+                    x=0.0,
+                    y=1.0,
+                    width=1.0,
+                    length=1.0,
+                    heading=-math.pi / 2.0,
+                    speed=4.0,
+                    vx=0.0,
+                    vy=-4.0,
+                    behavior="linear",
+                    role="crossing_actor",
+                )
+            ],
+        )
+        active = scenario_at_tick(scenario, 0)
+        config = ManeuverCandidateConfig(
+            scoring=SimulatorBackedScoreConfig(use_privileged_actor_forecast=True)
+        )
+
+        self.assertLess(_min_obstacle_clearance_with_config([(0.0, 0.0)], active, config), 0.0)
+
+    def test_privileged_forecast_clearance_uses_interpolated_actor_motion(self) -> None:
+        scenario = Scenario(
+            width=20.0,
+            height=20.0,
+            lane_center=[(0.0, 0.0), (10.0, 0.0)],
+            lane_half_width=4.0,
+            obstacles=[],
+            start=(0.0, 0.0),
+            goal=(10.0, 0.0),
+            seed=18,
+            actors=[
+                Actor(
+                    actor_id="crossing_1",
+                    kind="vehicle",
+                    x=0.0,
+                    y=1.0,
+                    width=1.0,
+                    length=1.0,
+                    heading=-math.pi / 2.0,
+                    speed=8.0,
+                    vx=0.0,
+                    vy=-8.0,
+                    behavior="linear",
+                    role="crossing_actor",
+                )
+            ],
+        )
+        active = scenario_at_tick(scenario, 0)
+        config = ManeuverCandidateConfig(
+            scoring=SimulatorBackedScoreConfig(use_privileged_actor_forecast=True)
+        )
+
+        self.assertLess(_min_obstacle_clearance_with_config([(0.0, 0.0)], active, config), 0.0)
+
+    def test_trajectory_clearance_uses_origin_to_first_point_segment(self) -> None:
+        scenario = Scenario(
+            width=20.0,
+            height=20.0,
+            lane_center=[(0.0, 0.0), (10.0, 0.0)],
+            lane_half_width=4.0,
+            obstacles=[Obstacle(x=0.0, y=0.36, radius=0.02)],
+            start=(0.0, 0.0),
+            goal=(10.0, 0.0),
+            seed=19,
+        )
+        active = scenario_at_tick(scenario, 0)
+        candidates = generate_maneuver_candidates(active.start, (1.0, 0.0), 1.0)
+        maintain = next(candidate for candidate in candidates if candidate.name == "maintain")
+
+        without_origin = _min_obstacle_clearance_with_config(maintain.trajectory[:1], active, DEFAULT_MANEUVER_CONFIG)
+        with_origin = _min_obstacle_clearance_with_config(
+            maintain.trajectory[:1],
+            active,
+            DEFAULT_MANEUVER_CONFIG,
+            origin=active.start,
+        )
+
+        self.assertGreater(without_origin, 0.0)
+        self.assertLess(with_origin, 0.0)
+
+    def test_forecast_clearance_replaces_current_moving_actor_obstacle(self) -> None:
+        scenario = Scenario(
+            width=20.0,
+            height=20.0,
+            lane_center=[(0.0, 0.0), (10.0, 0.0)],
+            lane_half_width=4.0,
+            obstacles=[],
+            start=(0.0, 0.0),
+            goal=(10.0, 0.0),
+            seed=9,
+            actors=[
+                Actor(
+                    actor_id="departing_0",
+                    kind="vehicle",
+                    x=0.0,
+                    y=0.0,
+                    width=1.0,
+                    length=1.0,
+                    heading=math.pi / 2.0,
+                    speed=40.0,
+                    vx=0.0,
+                    vy=40.0,
+                    behavior="linear",
+                    role="departing_actor",
+                )
+            ],
+        )
+        active = scenario_at_tick(scenario, 0)
+
+        self.assertLess(_min_obstacle_clearance([(0.0, 0.0)], active), 0.0)
+
+if __name__ == "__main__":
+    unittest.main()

@@ -1,0 +1,10 @@
+[2026-05-25 11:17:13,390][alpasim_plugins.plugins][WARNING] - Failed to load alpasim.models:alpamayo1: No module named 'alpamayo_r1'
+[2026-05-25 11:17:13,390][alpasim_plugins.plugins][WARNING] - Failed to load alpasim.models:alpamayo1_5: No module named 'alpamayo1_5'
+[2026-05-25 11:17:13,390][alpasim_plugins.plugins][WARNING] - Failed to load alpasim.models:vam: No module named 'vam'
+[2026-05-25 11:17:13,552][__main__][INFO] - Initialized token_dagger_bc model with 1 cameras, context_length=1
+[2026-05-25 11:17:13,554][__main__][INFO] - Starting token_dagger_bc driver on 0.0.0.0:6789 (external IP: 172.22.210.70:6789)
+[2026-05-25 11:18:13,577][__main__][INFO] - Starting token_dagger_bc session 9865c414-581a-11f1-8736-a9806c3c5917
+[2026-05-25 11:19:58,348][__main__][INFO] - Inference batches: 100 processed, 100 total items, avg size 1.0
+[2026-05-25 11:20:44,526][__main__][INFO] - Closing session 9865c414-581a-11f1-8736-a9806c3c5917
+[2026-05-25 11:20:44,582][__main__][INFO] - shut_down requested, scheduling deferred shutdown
+[2026-05-25 11:20:44,682][__main__][INFO] - Executing deferred shutdown

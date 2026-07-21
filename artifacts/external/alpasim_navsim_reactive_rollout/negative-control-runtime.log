@@ -1,0 +1,139 @@
+17:18:11.283 [W0] INFO:	Worker 0 starting (num_workers=1, num_consumers=1)
+17:18:11.307 [W0] INFO:	GPU monitoring initialized: 1 GPU(s) detected
+17:18:11.307 [W0] INFO:	Worker 0 ready with num_consumers=1
+17:18:11.307 [W0] INFO:	Event loop idle profiler installed
+17:18:11.471 [W0] INFO:	gc.freeze(): 381588 objects frozen to permanent generation (381213 tracked before, 0 tracked after)
+17:18:11.471 [W0] INFO:	GC pressure profiler installed (thresholds=(700, 10, 10), stall_threshold=0.100s, census=False)
+17:18:11.559 [W0] INFO:	Clipping n_sim_steps from 200 to 197 because only 197 complete policy steps fit between first_policy_timestamp_us=2056234117255 and scene end=2056253882550
+17:18:11.649 [W0] INFO:	Filtering traffic objects with min duration 3000000 us
+17:18:11.650 [W0] INFO:	Number of traffic objects before filtering: 54
+17:18:11.650 [W0] INFO:	Number of traffic objects after filtering: 41
+17:18:11.653 [W0] INFO:	Loading USDZ map data into memory. This will take a few seconds...
+17:18:12.704 [W0] INFO:	Successfully loaded map from clipgt/map_data
+17:18:12.722 [W0] WARNING:	Unable to find a preferable lane id, returning the first one
+17:18:12.737 [W0] INFO:	Parsed 10 camera(s) from clipgt/calibration_estimate.parquet: ['camera_cross_left_120fov', 'camera_cross_right_120fov', 'camera_front_fisheye_200fov', 'camera_front_tele_30fov', 'camera_front_wide_120fov', 'camera_left_fisheye_200fov', 'camera_rear_fisheye_200fov', 'camera_rear_left_70fov', 'camera_rear_right_70fov', 'camera_right_fisheye_200fov']
+17:18:12.745 [W0] INFO:	Extracting 20 clipgt files from mock-video.usdz
+17:18:12.769 [W0] INFO:	Created HD map archive: 571012 bytes (0.54 MB)
+17:18:12.771 [W0] INFO:	Starting video model session with 1 camera(s)...
+17:18:12.781 [W0] INFO:	Video model session started: seed-replay-0
+17:18:14.499 [W0] INFO:	Session STARTING: uuid=fc19558c-845e-11f1-855f-8378a45bfef7 scene=clipgt-0b10bce8-61f1-4350-8577-cf3c9493ffc3 steps=197
+17:18:14.500 [W0] INFO:	Event-based simulation loop timer started
+17:18:14.501 [W0] INFO:	sim_time 2_056_233_882_550us: InitialStepEvent @ 2_056_233_882_550us
+17:18:14.502 [W0] INFO:	sim_time 2_056_234_017_255us: VideoModelPrefetchEvent(chunk_start=2_056_234_117_255, size=1)
+17:18:14.503 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=True, dynamic_actors=3
+17:18:14.510 [W0] INFO:	SCENE_LOAD_TIMING scene=clipgt-0b10bce8-61f1-4350-8577-cf3c9493ffc3 phase=first_prefetch_total elapsed=0.007s
+17:18:14.510 [W0] INFO:	sim_time 2_056_234_117_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:18:14.671 [W0] INFO:	sim_time 2_056_234_117_255us: PolicyEvent @ 2_056_234_117_255us
+17:18:14.673 [W0] INFO:	Draining 2 outstanding tasks
+17:18:14.698 [W0] INFO:	sim_time 2_056_234_117_255us: ControllerEvent @ 2_056_234_117_255us
+17:18:14.733 [W0] INFO:	sim_time 2_056_234_117_255us: PhysicsEvent @ 2_056_234_117_255us
+17:18:14.734 [W0] INFO:	sim_time 2_056_234_117_255us: TrafficEvent @ 2_056_234_117_255us
+17:18:14.734 [W0] INFO:	sim_time 2_056_234_117_255us: PhysicsEvent @ 2_056_234_117_255us
+17:18:14.735 [W0] INFO:	sim_time 2_056_234_117_255us: StepEvent @ 2_056_234_117_255us
+17:18:14.737 [W0] INFO:	sim_time 2_056_234_117_255us: VideoModelPrefetchEvent(chunk_start=2_056_234_217_255, size=1)
+17:18:14.737 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:18:14.748 [W0] INFO:	sim_time 2_056_234_217_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:18:14.846 [W0] INFO:	sim_time 2_056_234_217_255us: PolicyEvent @ 2_056_234_217_255us
+17:18:14.856 [W0] INFO:	Draining 2 outstanding tasks
+17:18:14.874 [W0] INFO:	sim_time 2_056_234_217_255us: ControllerEvent @ 2_056_234_217_255us
+17:18:14.882 [W0] INFO:	sim_time 2_056_234_217_255us: PhysicsEvent @ 2_056_234_217_255us
+17:18:14.882 [W0] INFO:	sim_time 2_056_234_217_255us: TrafficEvent @ 2_056_234_217_255us
+17:18:14.882 [W0] INFO:	sim_time 2_056_234_217_255us: PhysicsEvent @ 2_056_234_217_255us
+17:18:14.883 [W0] INFO:	sim_time 2_056_234_217_255us: StepEvent @ 2_056_234_217_255us
+17:18:14.884 [W0] INFO:	sim_time 2_056_234_217_255us: VideoModelPrefetchEvent(chunk_start=2_056_234_317_255, size=1)
+17:18:14.885 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:18:14.890 [W0] INFO:	sim_time 2_056_234_317_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:18:14.979 [W0] INFO:	sim_time 2_056_234_317_255us: PolicyEvent @ 2_056_234_317_255us
+17:18:14.979 [W0] INFO:	Draining 2 outstanding tasks
+17:18:14.998 [W0] INFO:	sim_time 2_056_234_317_255us: ControllerEvent @ 2_056_234_317_255us
+17:18:15.006 [W0] INFO:	sim_time 2_056_234_317_255us: PhysicsEvent @ 2_056_234_317_255us
+17:18:15.007 [W0] INFO:	sim_time 2_056_234_317_255us: TrafficEvent @ 2_056_234_317_255us
+17:18:15.007 [W0] INFO:	sim_time 2_056_234_317_255us: PhysicsEvent @ 2_056_234_317_255us
+17:18:15.008 [W0] INFO:	sim_time 2_056_234_317_255us: StepEvent @ 2_056_234_317_255us
+17:18:15.010 [W0] INFO:	sim_time 2_056_234_317_255us: VideoModelPrefetchEvent(chunk_start=2_056_234_417_255, size=1)
+17:18:15.010 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:18:15.023 [W0] INFO:	sim_time 2_056_234_417_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:18:15.123 [W0] INFO:	sim_time 2_056_234_417_255us: PolicyEvent @ 2_056_234_417_255us
+17:18:15.123 [W0] INFO:	Draining 2 outstanding tasks
+17:18:15.143 [W0] INFO:	sim_time 2_056_234_417_255us: ControllerEvent @ 2_056_234_417_255us
+17:18:15.151 [W0] INFO:	sim_time 2_056_234_417_255us: PhysicsEvent @ 2_056_234_417_255us
+17:18:15.151 [W0] INFO:	sim_time 2_056_234_417_255us: TrafficEvent @ 2_056_234_417_255us
+17:18:15.152 [W0] INFO:	sim_time 2_056_234_417_255us: PhysicsEvent @ 2_056_234_417_255us
+17:18:15.152 [W0] INFO:	sim_time 2_056_234_417_255us: StepEvent @ 2_056_234_417_255us
+17:18:15.153 [W0] INFO:	sim_time 2_056_234_417_255us: VideoModelPrefetchEvent(chunk_start=2_056_234_517_255, size=1)
+17:18:15.154 [W0] INFO:	Requesting video chunk: chunk_size=1, is_first=False, dynamic_actors=3
+17:18:15.160 [W0] INFO:	sim_time 2_056_234_517_255us: VideoModelFrameEvent(camera_front_wide_120fov, submit=True)
+17:18:15.232 [W0] INFO:	sim_time 2_056_234_517_255us: PolicyEvent @ 2_056_234_517_255us
+17:18:15.232 [W0] INFO:	Draining 2 outstanding tasks
+17:18:15.250 [W0] ERROR:	Error during event handling. Pending events in queue (7):
+Traceback (most recent call last):
+  File "/repo/src/runtime/alpasim_runtime/event_loop.py", line 556, in run
+    await event.handle(state, event_queue)
+  File "/repo/src/runtime/alpasim_runtime/events/base.py", line 161, in handle
+    await self.run(rollout_state, queue)
+  File "/repo/src/runtime/alpasim_runtime/events/policy.py", line 133, in run
+    drive_trajectory_noisy, terminate_session = await svc.driver.drive(
+                                                ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/repo/src/runtime/alpasim_runtime/services/driver_service.py", line 259, in drive
+    response = await profiled_rpc_call(
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/repo/src/runtime/alpasim_runtime/telemetry/rpc_wrapper.py", line 117, in profiled_rpc_call
+    return await _profiled_rpc_call_once(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/repo/src/runtime/alpasim_runtime/telemetry/rpc_wrapper.py", line 171, in _profiled_rpc_call_once
+    result = await fut
+             ^^^^^^^^^
+  File "/repo/.venv/lib/python3.12/site-packages/grpc/aio/_call.py", line 329, in __await__
+    raise _create_rpc_error(
+grpc.aio._call.AioRpcError: <AioRpcError of RPC that terminated with:
+	status = StatusCode.INVALID_ARGUMENT
+	details = "RouteFollowingAlpaSimModel detected a frozen camera stream: ego pose changed from (0.1786, -0.0025, -0.002999) to (0.2308, -0.0024, -0.003765), and the latest camera timestamp advanced from 2056234417255 to 2056234517255, but the newest camera frame content did not change. The vehicle is moving while camera imagery is effectively frozen; check the upstream AlpaSim/sensorsim camera pipeline."
+	debug_error_string = "INVALID_ARGUMENT:RouteFollowingAlpaSimModel detected a frozen camera stream: ego pose changed from (0.1786, -0.0025, -0.002999) to (0.2308, -0.0024, -0.003765), and the latest camera timestamp advanced from 2056234417255 to 2056234517255, but the newest camera frame content did not change. The vehicle is moving while camera imagery is effectively frozen; check the upstream AlpaSim/sensorsim camera pipeline."
+>
+17:18:15.250 [W0] ERROR:	  - ControllerEvent @ 2_056_234_517_255us
+17:18:15.251 [W0] ERROR:	  - PhysicsEvent @ 2_056_234_517_255us
+17:18:15.251 [W0] ERROR:	  - TrafficEvent @ 2_056_234_517_255us
+17:18:15.251 [W0] ERROR:	  - PhysicsEvent @ 2_056_234_517_255us
+17:18:15.251 [W0] ERROR:	  - StepEvent @ 2_056_234_517_255us
+17:18:15.251 [W0] ERROR:	  - VideoModelPrefetchEvent(chunk_start=2_056_234_617_255, size=1)
+17:18:15.251 [W0] ERROR:	  - SimulationEndEvent @ 2_056_253_817_255us
+17:18:15.257 [W0] WARNING:	Rollout FAILED: job=9b262e87764f437cbdbcf4c731cb0053 scene=clipgt-0b10bce8-61f1-4350-8577-cf3c9493ffc3 uuid=fc19558c-845e-11f1-855f-8378a45bfef7 retryable=False error=<AioRpcError of RPC that terminated with:
+	status = StatusCode.INVALID_ARGUMENT
+	details = "RouteFollowingAlpaSimModel detected a frozen camera stream: ego pose changed from (0.1786, -0.0025, -0.002999) to (0.2308, -0.0024, -0.003765), and the latest camera timestamp advanced from 2056234417255 to 2056234517255, but the newest camera frame content did not change. The vehicle is moving while camera imagery is effectively frozen; check the upstream AlpaSim/sensorsim camera pipeline."
+	debug_error_string = "INVALID_ARGUMENT:RouteFollowingAlpaSimModel detected a frozen camera stream: ego pose changed from (0.1786, -0.0025, -0.002999) to (0.2308, -0.0024, -0.003765), and the latest camera timestamp advanced from 2056234417255 to 2056234517255, but the newest camera frame content did not change. The vehicle is moving while camera imagery is effectively frozen; check the upstream AlpaSim/sensorsim camera pipeline."
+>
+Traceback (most recent call last):
+  File "/repo/src/runtime/alpasim_runtime/worker/main.py", line 139, in run_single_rollout
+    eval_result = await create_event_rollout(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/repo/src/runtime/alpasim_runtime/event_loop.py", line 556, in run
+    await event.handle(state, event_queue)
+  File "/repo/src/runtime/alpasim_runtime/events/base.py", line 161, in handle
+    await self.run(rollout_state, queue)
+  File "/repo/src/runtime/alpasim_runtime/events/policy.py", line 133, in run
+    drive_trajectory_noisy, terminate_session = await svc.driver.drive(
+                                                ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/repo/src/runtime/alpasim_runtime/services/driver_service.py", line 259, in drive
+    response = await profiled_rpc_call(
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/repo/src/runtime/alpasim_runtime/telemetry/rpc_wrapper.py", line 117, in profiled_rpc_call
+    return await _profiled_rpc_call_once(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/repo/src/runtime/alpasim_runtime/telemetry/rpc_wrapper.py", line 171, in _profiled_rpc_call_once
+    result = await fut
+             ^^^^^^^^^
+  File "/repo/.venv/lib/python3.12/site-packages/grpc/aio/_call.py", line 329, in __await__
+    raise _create_rpc_error(
+grpc.aio._call.AioRpcError: <AioRpcError of RPC that terminated with:
+	status = StatusCode.INVALID_ARGUMENT
+	details = "RouteFollowingAlpaSimModel detected a frozen camera stream: ego pose changed from (0.1786, -0.0025, -0.002999) to (0.2308, -0.0024, -0.003765), and the latest camera timestamp advanced from 2056234417255 to 2056234517255, but the newest camera frame content did not change. The vehicle is moving while camera imagery is effectively frozen; check the upstream AlpaSim/sensorsim camera pipeline."
+	debug_error_string = "INVALID_ARGUMENT:RouteFollowingAlpaSimModel detected a frozen camera stream: ego pose changed from (0.1786, -0.0025, -0.002999) to (0.2308, -0.0024, -0.003765), and the latest camera timestamp advanced from 2056234417255 to 2056234517255, but the newest camera frame content did not change. The vehicle is moving while camera imagery is effectively frozen; check the upstream AlpaSim/sensorsim camera pipeline."
+>
+
+17:18:15.258 [W0] INFO:	Received shutdown signal
+17:18:15.261 [W0] INFO:	Exporting GPU metrics for 1 GPU(s)
+17:18:15.265 [W0] INFO:	Metrics written to /mnt/log_dir/telemetry/metrics_worker_0.prom
+17:18:15.265 [W0] INFO:	Worker 0 exiting
+17:18:15.269 [W0] INFO:	Merged 1 Prometheus files into /mnt/log_dir/telemetry/metrics.prom
+17:18:15.269 [W0] INFO:	Loading metrics from: /mnt/log_dir/telemetry/metrics.prom
+17:18:16.963 [W0] INFO:	Metrics plot saved to: /mnt/log_dir/metrics_plot.png
