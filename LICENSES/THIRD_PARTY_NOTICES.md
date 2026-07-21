@@ -60,7 +60,7 @@ its camera-only crop `camera.mp4` in the same directory, and their five
 derived previews
 ([full frame](../docs/assets/readme/alpasim-dynamic-camera-full.gif),
 [camera-only](../docs/assets/readme/alpasim-dynamic-camera.gif),
-[single frame used in the README's before/after example](../docs/assets/readme/example-input.png),
+[single frame used in the README's before/after example](../docs/assets/readme/example-before-after.png),
 [motion-shadow comparison](../docs/assets/readme/alpasim-motion-shadow.gif) —
 a per-frame blend of the real camera-only crop with itself at a `0.6`s and
 `1.2`s delay, no synthetic content added)

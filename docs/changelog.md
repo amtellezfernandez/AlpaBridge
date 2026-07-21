@@ -4,6 +4,21 @@ All notable adapter-release changes are tracked here.
 
 ## Unreleased - 2026-07-21
 
+- Fixed the Mermaid diagram's text legibility: node styles had no
+  explicit `color`, so GitHub's dark-theme Mermaid rendering fell back to
+  a washed-out light text color on the light node fills. Added explicit
+  `color:#0f172a` to every node style; verified in both light and dark
+  rendering via `mermaid-cli`.
+- Merged the "before" and "after" example images into one combined
+  figure (`scripts/render_readme_example.py` now renders a single
+  three-column `example-before-after.png` — camera frame, input fields,
+  output trajectory — instead of two independently-sized matplotlib
+  figures placed side by side, which never shared a height or baseline
+  and read as mismatched).
+- Restructured the Demo section's two rollout paragraphs into Map/Camera
+  bullet points mirroring the image's actual left/right layout, instead
+  of one dense paragraph covering both per rollout.
+
 - Pre-public-release security pass: pinned the remaining unpinned GitHub
   Actions (`checkout`, `setup-python`, `upload-artifact`) to full commit
   SHAs, matching the existing `setup-uv` convention. Enabled GitHub's

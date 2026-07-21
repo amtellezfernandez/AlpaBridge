@@ -3,12 +3,11 @@
 
 Builds a synthetic-but-structurally-real PredictionInput (the same shape
 `tests/test_alpasim_integration.py::_baseline_prediction_input` uses), runs
-the real, shipped `route_following` preset against it, and renders:
-
-- docs/assets/readme/example-input.png: the actual input fields the adapter
-  reads, next to a real camera frame reused from a retained evidence video.
-- docs/assets/readme/example-output.png: the real trajectory_xy the model
-  returned, plotted.
+the real, shipped `route_following` preset against it, and renders one
+combined figure, docs/assets/readme/example-before-after.png: a real camera
+frame reused from a retained evidence video, the actual input fields the
+adapter reads, and the real trajectory_xy the model returned, plotted — all
+three columns in a single figure so they share one height and baseline.
 
 No AlpaSim, GPU, Docker, or checkpoint is required. The `viz` extra brings
 in matplotlib; extracting the camera frame needs `ffmpeg` on PATH (skipped
@@ -91,14 +90,20 @@ def _extract_camera_frame(dest: Path, *, timestamp_s: float = 8.0) -> bool:
     return result.returncode == 0 and dest.is_file()
 
 
-def render_input_panel(prediction_input: SimpleNamespace, route_waypoints: list[dict[str, float]]) -> None:
+def render_example_panel(
+    prediction_input: SimpleNamespace,
+    route_waypoints: list[dict[str, float]],
+    trajectory_xy: np.ndarray,
+) -> None:
+    """One combined before/after figure, three columns, matched height/baseline."""
     frame_path = OUT_DIR / "_example-camera-frame.png"
     have_frame = _extract_camera_frame(frame_path)
 
-    fig, axes = plt.subplots(1, 2, figsize=(8.4, 2.6), gridspec_kw={"width_ratios": [1.1, 1]})
+    fig, (ax_img, ax_text, ax_plot) = plt.subplots(
+        1, 3, figsize=(11.6, 3.2), gridspec_kw={"width_ratios": [1.05, 1.0, 1.05]}
+    )
     fig.patch.set_facecolor("white")
 
-    ax_img, ax_text = axes
     if have_frame:
         ax_img.imshow(plt.imread(frame_path), aspect="auto")
     ax_img.set_axis_off()
@@ -116,40 +121,41 @@ def render_input_panel(prediction_input: SimpleNamespace, route_waypoints: list[
         f"scene_id         = \"{prediction_input.scene_id}\"",
     ]
     ax_text.text(
-        0, 1, "\n".join(lines),
-        family="monospace", fontsize=9.5, va="top", ha="left",
+        0, 0.85, "\n".join(lines),
+        family="monospace", fontsize=9, va="top", ha="left",
         transform=ax_text.transAxes, color="#1a2321",
     )
     ax_text.set_title("what AlpaBridge reads from AlpaSim", fontsize=9, color="#333")
 
-    fig.suptitle("Before: one AlpaSim Drive() request", fontsize=11, color=ACCENT, fontweight="bold", y=1.02)
-    fig.tight_layout(rect=(0, 0, 1, 0.98))
-    out_path = OUT_DIR / "example-input.png"
+    ax_plot.plot(trajectory_xy[:, 1], trajectory_xy[:, 0], color=ACCENT, linewidth=2.5, marker="o", markersize=3)
+    ax_plot.scatter([0], [0], color="#92400e", zorder=5)
+    ax_plot.annotate(
+        "ego", (0, 0), xytext=(6, -10), textcoords="offset points",
+        fontsize=8.5, color="#92400e",
+    )
+    ax_plot.set_xlabel("lateral (m)", fontsize=9)
+    ax_plot.set_ylabel("longitudinal (m)", fontsize=9)
+    ax_plot.tick_params(labelsize=8)
+    ax_plot.grid(True, alpha=0.25)
+    ax_plot.set_aspect("equal", adjustable="datalim")
+    ax_plot.set_title("route_following's trajectory_xy", fontsize=9, color="#333")
+
+    fig.suptitle(
+        "One AlpaSim Drive() request, in and out: camera + state in, trajectory_xy out",
+        fontsize=11.5, color=ACCENT, fontweight="bold", y=1.03,
+    )
+    fig.tight_layout(rect=(0, 0, 1, 0.97))
+    out_path = OUT_DIR / "example-before-after.png"
     fig.savefig(out_path, dpi=160, facecolor="white", bbox_inches="tight", pad_inches=0.15)
     plt.close(fig)
     if frame_path.exists():
         frame_path.unlink()
-    print(f"wrote {out_path}")
 
+    stale = [OUT_DIR / "example-input.png", OUT_DIR / "example-output.png"]
+    for path in stale:
+        if path.exists():
+            path.unlink()
 
-def render_output_panel(trajectory_xy: np.ndarray) -> None:
-    fig, ax = plt.subplots(figsize=(4.2, 3.4))
-    fig.patch.set_facecolor("white")
-    ax.plot(trajectory_xy[:, 1], trajectory_xy[:, 0], color=ACCENT, linewidth=2.5, marker="o", markersize=3)
-    ax.scatter([0], [0], color="#92400e", zorder=5)
-    ax.annotate(
-        "ego", (0, 0), xytext=(6, -12), textcoords="offset points",
-        fontsize=8.5, color="#92400e",
-    )
-    ax.set_xlabel("lateral (m)")
-    ax.set_ylabel("longitudinal (m)")
-    ax.set_title("After: route_following's trajectory_xy", fontsize=11, color=ACCENT, fontweight="bold")
-    ax.grid(True, alpha=0.25)
-    ax.set_aspect("equal", adjustable="datalim")
-    fig.tight_layout()
-    out_path = OUT_DIR / "example-output.png"
-    fig.savefig(out_path, dpi=160, facecolor="white", bbox_inches="tight", pad_inches=0.15)
-    plt.close(fig)
     print(f"wrote {out_path}")
 
 
@@ -165,8 +171,7 @@ def main() -> int:
     assert trajectory_xy.shape[0] > 1, "trajectory_xy must have more than one point"
     print(f"real trajectory_xy from RouteFollowingAlpaSimModel: shape={trajectory_xy.shape}")
 
-    render_input_panel(prediction_input, route_waypoints)
-    render_output_panel(trajectory_xy)
+    render_example_panel(prediction_input, route_waypoints, trajectory_xy)
     return 0
 
 
