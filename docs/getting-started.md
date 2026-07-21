@@ -1,0 +1,88 @@
+# Getting Started
+
+AlpaBridge is an external-driver adapter for an existing AlpaSim checkout. It
+does not install AlpaSim, download gated scenes, or ship policy checkpoints.
+
+## Requirements
+
+- Python 3.10 or newer.
+- For live rollouts: x86_64 Linux, Docker, NVIDIA Container Toolkit, and a GPU.
+- A local [AlpaSim](https://github.com/NVlabs/alpasim) checkout with scene assets.
+- Optional gated extensions: a Token BC/DAgger checkpoint for learned runs or
+  a scene-matched actor proxy for direct-planner runs.
+
+The dependency-light public core uses `constant_velocity` and
+`route_following`; it does not require a learned checkpoint or direct-planner
+actor proxy.
+
+## Install
+
+```bash
+uv sync --extra dev
+uv run alpabridge-doctor --strict-installed --json
+```
+
+`uv sync` uses the tracked `uv.lock` dependency snapshot.
+
+## Connect AlpaSim
+
+Inspect the changes before applying them:
+
+```bash
+alpabridge-setup --alpasim-root /path/to/alpasim --check-only
+```
+
+Apply the tracked override layer and validate the environment:
+
+```bash
+alpabridge-setup --alpasim-root /path/to/alpasim
+alpabridge-ready --alpasim-root /path/to/alpasim --scene-preset fresh_3scene
+```
+
+## Materialize Commands
+
+Dependency-light baseline:
+
+```bash
+alpabridge-launch \
+  --mode print \
+  --alpasim-root /path/to/alpasim \
+  --model constant_velocity \
+  --scene-preset fresh_3scene
+```
+
+Token BC/DAgger:
+
+```bash
+alpabridge-launch \
+  --mode print \
+  --alpasim-root /path/to/alpasim \
+  --model token_dagger_bc \
+  --checkpoint /path/to/token_dagger_bc.pt \
+  --scene-preset fresh_3scene
+```
+
+Direct actor planner:
+
+```bash
+alpabridge-build-oracle-proxy \
+  --alpasim-root /path/to/alpasim \
+  --run-dir /path/to/completed-scene-matched-run \
+  --output /tmp/alpabridge-actor-proxy.json
+
+alpabridge-launch \
+  --mode print \
+  --alpasim-root /path/to/alpasim \
+  --model direct_actor_planner \
+  --oracle-actor-proxy /tmp/alpabridge-actor-proxy.json \
+  --scene-preset fresh_3scene
+```
+
+The oracle actor proxy must come from the same scene family you plan to run.
+Adapters reject proxy frames whose `scene_id` does not match the current
+prediction scene, so a timestamp-only proxy from another rollout is diagnostic
+input, not valid direct-planner evidence.
+
+`--mode print` writes the driver config, driver command, wizard command, launch
+metadata, and planned run status without starting Docker or a rollout. Review
+those files before changing the mode to `both`.

@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use AlpaBridge, please cite this software release."
+title: "AlpaBridge: An External-Driver Adapter for Trajectory Policies in AlpaSim"
+authors:
+  - family-names: "Tellez Fernandez"
+    given-names: "Alba Maria"
+    orcid: "https://orcid.org/0009-0000-1379-3562"
+repository-code: "https://github.com/amtellezfernandez/AlpaBridge"
+license: "BSD-3-Clause"
+version: "0.1.0"
+date-released: "2026-07-20"
+type: software

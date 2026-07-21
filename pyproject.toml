@@ -1,0 +1,121 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "alpabridge"
+version = "0.1.0"
+description = "External-driver adapter and run tooling for trajectory policies in AlpaSim"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "BSD-3-Clause"
+license-files = ["LICENSE", "LICENSES/*"]
+authors = [
+    { name = "Alba Maria Tellez Fernandez" },
+]
+keywords = [
+    "alpasim",
+    "autonomous-driving",
+    "closed-loop-simulation",
+    "system-integration",
+    "trajectory-policies",
+]
+dependencies = [
+    "numpy>=1.26",
+    "PyYAML>=6",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+[project.optional-dependencies]
+dev = [
+    "build>=1.0",
+    "pre-commit>=3.7",
+    "pytest>=7.4",
+    "pytest-cov>=5.0",
+    "ruff>=0.6",
+]
+alpasim = [
+    "huggingface_hub>=0.30",
+    "pyarrow>=16",
+]
+viz = ["Pillow>=10", "matplotlib>=3.8"]
+
+[project.entry-points."alpasim.models"]
+constant_velocity = "alpabridge.simulator.baseline_drivers:ConstantVelocityAlpaSimModel"
+route_following = "alpabridge.simulator.baseline_drivers:RouteFollowingAlpaSimModel"
+token_dagger_bc = "alpabridge.simulator.alpasim_token_bc:TokenBCAlpaSimModel"
+direct_actor_planner = "alpabridge.simulator.alpasim_direct_actor_planner:DirectActorPlannerAlpaSimModel"
+
+[project.entry-points."alpasim.configs"]
+alpabridge = "alpabridge.simulator.alpasim_configs"
+
+[project.scripts]
+alpabridge-doctor = "alpabridge.cli.commands.alpabridge_doctor:main"
+alpabridge-setup = "alpabridge.cli.commands.setup_alpasim_local_plugin:main"
+alpabridge-ready = "alpabridge.cli.commands.check_alpasim_readiness:main"
+alpabridge-launch = "alpabridge.cli.commands.run_alpasim_local_external:main"
+alpabridge-batch = "alpabridge.cli.commands.run_alpasim_scene_batch:main"
+alpabridge-build-local-cache = "alpabridge.cli.commands.build_alpasim_local_usdz_cache:main"
+alpabridge-build-oracle-proxy = "alpabridge.cli.commands.build_alpasim_oracle_actor_proxy:main"
+alpabridge-audit-run = "alpabridge.cli.commands.audit_run:main"
+alpabridge-support-bundle = "alpabridge.cli.commands.support_bundle:main"
+alpabridge-reproduce = "alpabridge.cli.commands.reproduce_closed_loop:main"
+alpabridge-promote-batch-summary = "alpabridge.cli.commands.promote_batch_summary:main"
+alpabridge-benchmark-summary = "alpabridge.cli.commands.benchmark_summary:main"
+alpabridge-batch-summary = "alpabridge.cli.commands.batch_summary:main"
+alpabridge-benchmark-readiness = "alpabridge.cli.commands.benchmark_readiness:main"
+alpabridge-evidence = "alpabridge.neutral.alpasim_metrics:main"
+alpabridge-challenge-driver = "alpabridge.challenge.e2e_driver:main"
+
+[project.urls]
+Homepage = "https://github.com/amtellezfernandez/AlpaBridge"
+Repository = "https://github.com/amtellezfernandez/AlpaBridge"
+Issues = "https://github.com/amtellezfernandez/AlpaBridge/issues"
+Documentation = "https://github.com/amtellezfernandez/AlpaBridge/tree/main/docs"
+Citation = "https://github.com/amtellezfernandez/AlpaBridge/blob/main/CITATION.cff"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"alpabridge.simulator.alpasim_configs" = ["**/*.yaml"]
+"alpabridge.simulator" = ["alpasim_scene_presets/*.yaml"]
+"alpabridge.alpasim_overrides" = ["**/*"]
+
+[tool.setuptools.exclude-package-data]
+"*" = ["__pycache__/*", "*.pyc", "*.pyo"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "temporal: temporal adapter and trajectory-resampling tests",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["alpabridge"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 33
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["F", "I"]

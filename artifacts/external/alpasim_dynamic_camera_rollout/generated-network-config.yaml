@@ -1,0 +1,14 @@
+controller:
+  addresses:
+    - localhost:6002
+driver:
+  addresses:
+    - localhost:6789
+physics:
+  addresses:
+    - localhost:6001
+sensorsim:
+  addresses:
+    - localhost:6000
+trafficsim:
+  addresses: []

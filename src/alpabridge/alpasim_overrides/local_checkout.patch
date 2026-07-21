@@ -1,0 +1,294 @@
+diff --git a/Dockerfile b/Dockerfile
+index b082361..6937d64 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -43,7 +43,20 @@ WORKDIR /repo
+ 
+ RUN --mount=type=secret,id=netrc,target=/root/.netrc \
+     --mount=type=cache,target=/root/.cache/uv \
+-    sh -c 'if [ -f /root/.netrc ]; then export NETRC=/root/.netrc; fi && uv sync --extra all'
++    sh -c '\
++      if [ -f /root/.netrc ]; then export NETRC=/root/.netrc; fi && \
++      if [ "${TARGETARCH}" = "arm64" ]; then \
++        uv pip install --python /repo/.venv/bin/python \
++          -e /repo/src/plugins \
++          -e /repo/src/grpc \
++          -e /repo/src/utils \
++          -e /repo/src/controller \
++          -e /repo/src/eval \
++          -e /repo/src/runtime \
++          -e /repo/src/physics; \
++      else \
++        uv sync --extra all; \
++      fi'
+ 
+ ENV UV_CACHE_DIR=/tmp/uv-cache
+ ENV UV_NO_SYNC=1
+diff --git a/pyproject.toml b/pyproject.toml
+index b903230..bec7c6d 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -35,6 +35,22 @@ all = [
+   "alpasim_wizard",
+ ]
+ 
++# Core packages needed inside headless local-external-driver Docker images.
++# This intentionally excludes:
++# - alpasim-tools: pulls PyQt5, which does not resolve on Linux aarch64
++# - alpasim_driver / alpasim_plugins: the external driver runs on the host, not in
++#   the runtime containers, and its dependency stack pulls x86-only packages such as
++#   tensordict through the upstream learned-driver models.
++# - alpasim_wizard: the wizard is launched on the host, not in the runtime image.
++docker_local = [
++  "alpasim_controller",
++  "alpasim_eval",
++  "alpasim_grpc",
++  "alpasim-runtime",
++  "alpasim_utils",
++  "alpasim-physics",
++]
++
+ # -- Plugin extras --
+ transfuser = ["alpasim_transfuser"]
+ 
+diff --git a/src/driver/src/alpasim_driver/main.py b/src/driver/src/alpasim_driver/main.py
+index b619b7a..e46b247 100644
+--- a/src/driver/src/alpasim_driver/main.py
++++ b/src/driver/src/alpasim_driver/main.py
+@@ -760,7 +760,11 @@ class EgoDriverService(EgodriverServiceServicer):
+         self, request: DriveSessionCloseRequest, context: grpc.aio.ServicerContext
+     ) -> Empty:
+         if request.session_uuid not in self._sessions:
+-            raise KeyError(f"Session {request.session_uuid} does not exist.")
++            logger.warning(
++                "close_session for unknown session %s; treating as idempotent",
++                request.session_uuid,
++            )
++            return Empty()
+ 
+         logger.info(f"Closing session {request.session_uuid}")
+         del self._sessions[request.session_uuid]
+@@ -784,7 +788,14 @@ class EgoDriverService(EgodriverServiceServicer):
+     ) -> Empty:
+         grpc_image = request.camera_image
+         image = Image.open(BytesIO(grpc_image.image_bytes))
+-        session = self._sessions[request.session_uuid]
++        session = self._sessions.get(request.session_uuid)
++        if session is None:
++            logger.warning(
++                "submit_image_observation for unknown session %s at %s; ignoring late frame",
++                request.session_uuid,
++                grpc_image.frame_end_us,
++            )
++            return Empty()
+         if grpc_image.logical_id not in session.desired_cameras_logical_ids:
+             raise ValueError(f"Camera {grpc_image.logical_id} not in desired cameras")
+ 
+@@ -808,7 +819,15 @@ class EgoDriverService(EgodriverServiceServicer):
+     async def submit_egomotion_observation(
+         self, request: RolloutEgoTrajectory, context: grpc.aio.ServicerContext
+     ) -> Empty:
+-        session = self._sessions[request.session_uuid]
++        session = self._sessions.get(request.session_uuid)
++        if session is None:
++            last_ts = request.trajectory.poses[-1].timestamp_us if request.trajectory.poses else "unknown"
++            logger.warning(
++                "submit_egomotion_observation for unknown session %s at %s; ignoring late egomotion",
++                request.session_uuid,
++                last_ts,
++            )
++            return Empty()
+ 
+         session.add_egoposes(request.trajectory)
+ 
+@@ -826,15 +845,22 @@ class EgoDriverService(EgodriverServiceServicer):
+         self, request: RouteRequest, context: grpc.aio.ServicerContext
+     ) -> Empty:
+         logger.debug("submit_route: waypoint count=%s", len(request.route.waypoints))
++        session = self._sessions.get(request.session_uuid)
++        if session is None:
++            logger.warning(
++                "submit_route for unknown session %s; ignoring late route update",
++                request.session_uuid,
++            )
++            return Empty()
+         if self._cfg.route is not None:
+-            self._sessions[request.session_uuid].update_command_from_route(
++            session.update_command_from_route(
+                 request.route,
+                 self._cfg.route.use_waypoint_commands,
+                 self._cfg.route.command_distance_threshold,
+                 self._cfg.route.min_lookahead_distance,
+             )
+         else:
+-            self._sessions[request.session_uuid].update_command_from_route(
++            session.update_command_from_route(
+                 request.route,
+                 use_waypoint_commands=False,
+             )
+@@ -856,4 +882,9 @@ class EgoDriverService(EgodriverServiceServicer):
+         self, request: DriveRequest, context: grpc.aio.ServicerContext
+     ) -> DriveResponse:
+         if request.session_uuid not in self._sessions:
+-            raise KeyError(f"Session {request.session_uuid} not found")
++            logger.warning(
++                "drive for unknown session %s at %s; returning empty trajectory",
++                request.session_uuid,
++                request.time_query_us,
++            )
++            return DriveResponse(trajectory=Trajectory())
+diff --git a/src/driver/src/alpasim_driver/models/__init__.py b/src/driver/src/alpasim_driver/models/__init__.py
+index 7d0aa0b..9e09e33 100644
+--- a/src/driver/src/alpasim_driver/models/__init__.py
++++ b/src/driver/src/alpasim_driver/models/__init__.py
+@@ -1,10 +1,19 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # Copyright (c) 2025-2026 NVIDIA Corporation
+ 
+-"""Model abstraction layer for trajectory prediction models."""
++"""Model abstraction layer for trajectory prediction models.
++
++This override keeps the base abstractions importable in minimal local-driver
++environments where heavyweight built-in backends (VAM/Alpamayo) are not
++installed. Those backends remain available through their entry points when
++their optional dependencies are present.
++"""
++
++from __future__ import annotations
++
++from importlib import import_module
++from typing import Any
+ 
+-from .alpamayo1_5_model import Alpamayo15Model
+-from .alpamayo1_model import Alpamayo1Model
+ from .base import (
+     BaseTrajectoryModel,
+     CameraFrame,
+@@ -14,7 +23,12 @@ from .base import (
+     PredictionInput,
+ )
+ from .manual_model import ManualModel
+-from .vam_model import VAMModel
++
++_LAZY_IMPORTS = {
++    "Alpamayo15Model": ".alpamayo1_5_model",
++    "Alpamayo1Model": ".alpamayo1_model",
++    "VAMModel": ".vam_model",
++}
+ 
+ __all__ = [
+     "Alpamayo15Model",
+@@ -28,3 +42,13 @@ __all__ = [
+     "PredictionInput",
+     "VAMModel",
+ ]
++
++
++def __getattr__(name: str) -> Any:
++    module_name = _LAZY_IMPORTS.get(name)
++    if module_name is None:
++        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
++    module = import_module(module_name, __name__)
++    value = getattr(module, name)
++    globals()[name] = value
++    return value
+diff --git a/src/wizard/alpasim_wizard/deployment/docker_compose.py b/src/wizard/alpasim_wizard/deployment/docker_compose.py
+index 02c11d6..fa7d6e2 100644
+--- a/src/wizard/alpasim_wizard/deployment/docker_compose.py
++++ b/src/wizard/alpasim_wizard/deployment/docker_compose.py
+@@ -81,7 +81,6 @@ class DockerComposeDeployment:
+         ret: dict[str, Any] = {}
+         use_host_network = self.context.cfg.wizard.debug_flags.use_localhost
+         if use_host_network:
+-            # Tell Docker to use the host network
+             ret["network_mode"] = "host"
+         else:
+             ret["networks"] = ["microservices_network"]
+@@ -104,15 +103,8 @@ class DockerComposeDeployment:
+         if container.command:
+             ret["entrypoint"] = "bash"
+             command = container.command
+-            # Escaping:
+-            # We use \$ to declare fields that should not be interpreted by
+-            # 'our' OmegaConf parser, but by downstream parsers in the service.
+-            # Furhtermore, for docker-compose, we need to escape $ as $$
+             command = command.replace(r"\$", "$$")
+-            # Set permissive umask so files written to bind-mounted volumes
+-            # are accessible by the host user (containers run as root).
+             command = "umask 0000\n" + command
+-            # Use literal scalar string for multi-line commands to get | format in YAML
+             if "\n" in command:
+                 command = LiteralStr(command)
+             ret["command"] = ["-c", command]
+@@ -123,10 +115,6 @@ class DockerComposeDeployment:
+ 
+         addresses = container.get_all_addresses()
+         if addresses and use_host_network:
+-            # Only expose ports to host when using host network mode.
+-            # With bridge network, containers communicate internally via container
+-            # names as DNS hostnames on the shared network, so no port mapping is
+-            # needed. Omitting ports avoids conflicts with other workloads.
+             ports = [f"{addr.port}:{addr.port}" for addr in addresses]
+             ret["ports"] = ports
+ 
+@@ -155,47 +143,40 @@ class DockerComposeDeployment:
+         Returns:
+             Filename of the generated docker-compose.yaml
+         """
+-        # Build services in execution order
+         services = {}
+ 
+-        # Simulation services (runtime should start last)
+         for c in container_set.sim or []:
+             if c.command == "noop":
+-                # Special logic to support sensorsim/physics combined process
+                 continue
+             service = self._to_docker_compose_service(c)
+             services[c.uuid] = service
+ 
+-        # Add runtime services last
+         for c in container_set.runtime or []:
+             service = self._to_docker_compose_service(c)
+-            # Runtime needs host PID namespace for process monitoring
+             service["pid"] = "host"
+-            # Runtime needs access to all GPUs for telemetry/resource monitoring
+-            service["deploy"] = {
+-                "resources": {
+-                    "reservations": {
+-                        "devices": [
+-                            {
+-                                "driver": "nvidia",
+-                                "count": "all",
+-                                "capabilities": ["gpu"],
+-                            }
+-                        ]
++            if any(container.gpu is not None for container in container_set.sim or []):
++                service["deploy"] = {
++                    "resources": {
++                        "reservations": {
++                            "devices": [
++                                {
++                                    "driver": "nvidia",
++                                    "count": "all",
++                                    "capabilities": ["gpu"],
++                                }
++                            ]
++                        }
+                     }
+                 }
+-            }
+             services[c.uuid] = service
+ 
+-        # Create compose structure with ordered services
+         compose: dict[str, Any] = {
+             "networks": {"microservices_network": {"driver": "bridge"}},
+-            "services": services,  # Services maintain insertion order in Python 3.7+
++            "services": services,
+         }
+         if Path.home().joinpath(".netrc").exists():
+             compose["secrets"] = {"netrc": {"file": "${HOME}/.netrc"}}
+ 
+-        # Write to file
+         filename = "docker-compose.yaml"
+         log_dir = Path(self.context.cfg.wizard.log_dir)
+         logger.info("Writing docker compose YAML to %s/%s", log_dir, filename)
