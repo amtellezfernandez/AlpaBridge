@@ -465,9 +465,12 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
             _preflight_alpasim_base_image()
 
     def test_install_torch_for_alpasim_uses_pip_directly(self) -> None:
-        with patch("alpabridge.cli.commands.setup_alpasim_local_plugin._ensure_venv_pip") as ensure_pip, patch(
+        with patch(
+            "alpabridge.cli.commands.setup_alpasim_local_plugin._ensure_venv_pip"
+        ) as ensure_pip, patch(
             "alpabridge.cli.commands.setup_alpasim_local_plugin._run"
         ) as run:
+            run.return_value = subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr="")
             _install_torch_for_alpasim(
                 uv_bin="/usr/bin/uv",
                 venv_python=Path("/tmp/alpasim/.venv/bin/python"),
@@ -478,7 +481,10 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
             venv_python=Path("/tmp/alpasim/.venv/bin/python"),
             cwd=Path("/tmp/alpasim"),
         )
-        run.assert_called_once_with(
+        self.assertEqual(run.call_count, 2)
+        install_call, verify_call = run.call_args_list
+        self.assertEqual(
+            install_call.args[0],
             [
                 "/tmp/alpasim/.venv/bin/python",
                 "-m",
@@ -487,9 +493,38 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
                 "--index-url",
                 setup_cmd.TORCH_INDEX_URL,
                 setup_cmd.TORCH_PACKAGE,
+                "torchvision",
             ],
-            cwd=Path("/tmp/alpasim"),
         )
+        self.assertEqual(install_call.kwargs["cwd"], Path("/tmp/alpasim"))
+        self.assertEqual(
+            verify_call.args[0],
+            ["/tmp/alpasim/.venv/bin/python", "-c", "import torchvision"],
+        )
+        self.assertEqual(verify_call.kwargs["cwd"], Path("/tmp/alpasim"))
+        self.assertTrue(verify_call.kwargs.get("capture_output"))
+
+    def test_install_torch_for_alpasim_fails_fast_on_torchvision_mismatch(self) -> None:
+        # `_run` itself raises `SystemExit(returncode)` on a nonzero exit (after
+        # writing stdout/stderr) -- simulate that same contract for the second
+        # (verification) call to prove a torchvision import failure propagates
+        # instead of being swallowed.
+        with patch("alpabridge.cli.commands.setup_alpasim_local_plugin._ensure_venv_pip") as ensure_pip, patch(
+            "alpabridge.cli.commands.setup_alpasim_local_plugin._run"
+        ) as run:
+            run.side_effect = [
+                subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr=""),
+                SystemExit(1),
+            ]
+            with self.assertRaises(SystemExit) as ctx:
+                _install_torch_for_alpasim(
+                    uv_bin="/usr/bin/uv",
+                    venv_python=Path("/tmp/alpasim/.venv/bin/python"),
+                    cwd=Path("/tmp/alpasim"),
+                )
+        self.assertEqual(ctx.exception.code, 1)
+        ensure_pip.assert_called_once()
+        self.assertEqual(run.call_count, 2)
 
     def test_driver_env_expands_run_dir_and_oracle_actor_proxy(self) -> None:
         env = _driver_env(

@@ -416,9 +416,27 @@ def _install_torch_for_alpasim(*, uv_bin: str, venv_python: Path, cwd: Path) -> 
             "--index-url",
             TORCH_INDEX_URL,
             TORCH_PACKAGE,
+            "torchvision",
         ],
         cwd=cwd,
     )
+    _verify_torch_torchvision_pair(venv_python=venv_python, cwd=cwd)
+
+
+def _verify_torch_torchvision_pair(*, venv_python: Path, cwd: Path) -> None:
+    """`torch` and `torchvision` must come from matching CUDA builds or
+    torchvision fails at import time with `operator torchvision::nms does not
+    exist` -- a real, repeated failure mode on this project's checkouts
+    (something installed earlier, e.g. the checkout's own setup script,
+    pulls in a `torchvision` resolved against a different `torch` than the
+    pin above). Pinning both together above is the fix; this re-imports
+    `torchvision` immediately after to catch a mismatch at setup time rather
+    than at the first live rollout. Uses `_run` (not a direct `subprocess.run`
+    call) so this stays covered by the same mocking seam the rest of this
+    module's subprocess calls already use.
+    """
+    print(f"Verifying torch/torchvision compatibility in {venv_python}...")
+    _run([str(venv_python), "-c", "import torchvision"], cwd=cwd, capture_output=True)
 
 
 def _ensure_venv_pip(*, venv_python: Path, cwd: Path) -> None:
