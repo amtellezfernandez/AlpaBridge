@@ -1,16 +1,16 @@
 diff --git a/src/driver/src/alpasim_driver/main.py b/src/driver/src/alpasim_driver/main.py
-index b619b7a..c401046 100644
+index 03546df..9c2fa92 100644
 --- a/src/driver/src/alpasim_driver/main.py
 +++ b/src/driver/src/alpasim_driver/main.py
-@@ -170,6 +170,7 @@ class Session:
-     poses: list[PoseAtTime] = field(default_factory=list)
+@@ -157,6 +157,7 @@ class Session:
      dynamic_states: list[tuple[int, DynamicState]] = field(default_factory=list)
      current_command: DriveCommand = DriveCommand.STRAIGHT  # Default to straight
+     inference_count: int = 0
 +    current_route: Route | None = None
- 
+
      @staticmethod
      def create(
-@@ -373,6 +374,9 @@ class Session:
+@@ -360,6 +361,9 @@ class Session:
              min_lookahead_distance: Minimum forward distance (meters) to consider
                  a waypoint as the target for command derivation.
          """
@@ -19,11 +19,11 @@ index b619b7a..c401046 100644
 +
          if not use_waypoint_commands or len(route.waypoints) < 1:
              return
- 
-@@ -397,6 +401,13 @@ class Session:
+
+@@ -384,6 +388,13 @@ class Session:
              self.current_command.name,
          )
- 
+
 +    def route_waypoints_for_prediction(self) -> list[Vec3] | None:
 +        """Return the latest route waypoints in the current rig frame."""
 +
@@ -31,13 +31,13 @@ index b619b7a..c401046 100644
 +            return None
 +        return list(self.current_route.waypoints)
 +
- 
+
  def async_log_call(func: Callable) -> Callable:
      """Helper to add logging for gRPC calls (sync or async)."""
-@@ -725,13 +736,16 @@ class EgoDriverService(EgodriverServiceServicer):
-         inputs = []
-         for job in batch:
+@@ -704,16 +715,19 @@ class EgoDriverService(EgodriverServiceServicer):
              speed, acceleration = self._get_speed_and_acceleration(job.session)
+             inference_seed = job.session.seed + job.session.inference_count
+             job.session.inference_count += 1
 -            inputs.append(
 -                PredictionInput(
 -                    camera_images=self._prepare_camera_images(job.session),
@@ -45,30 +45,33 @@ index b619b7a..c401046 100644
 -                    speed=speed,
 -                    acceleration=acceleration,
 -                    ego_pose_history=job.session.poses,
+-                    inference_seed=inference_seed,
 -                )
--            )
 +            prediction_input = PredictionInput(
 +                camera_images=self._prepare_camera_images(job.session),
 +                command=job.command,
 +                speed=speed,
 +                acceleration=acceleration,
 +                ego_pose_history=job.session.poses,
++                inference_seed=inference_seed,
 +                route_waypoints=job.session.route_waypoints_for_prediction(),
-+            )
+             )
 +            prediction_input.session_uuid = job.session.uuid
 +            prediction_input.runtime_random_seed = job.session.seed
 +            prediction_input.debug_scene_id = job.session.debug_scene_id
 +            inputs.append(prediction_input)
          return self._model.predict_batch(inputs)
+
+     @async_log_call
 diff --git a/src/driver/src/alpasim_driver/models/base.py b/src/driver/src/alpasim_driver/models/base.py
-index a03afd0..36209c0 100644
+index 362b4d4..df46b61 100644
 --- a/src/driver/src/alpasim_driver/models/base.py
 +++ b/src/driver/src/alpasim_driver/models/base.py
-@@ -53,6 +53,7 @@ class PredictionInput:
-     speed: float  # m/s
+@@ -54,6 +54,7 @@ class PredictionInput:
      acceleration: float  # m/s²
      ego_pose_history: list[Any]  # list[PoseAtTime]
+     inference_seed: int  # Session seed plus the zero-based inference count
 +    route_waypoints: list[Any] | None = None  # list[Vec3] in current rig frame
- 
- 
+
+
  @dataclass
