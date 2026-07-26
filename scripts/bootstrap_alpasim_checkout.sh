@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ALPASIM_ROOT="${ALPASIM_ROOT:-$ROOT/workspace/alpasim}"
 ALPASIM_UPSTREAM_URL="${ALPASIM_UPSTREAM_URL:-https://github.com/NVlabs/alpasim.git}"
-ALPASIM_UPSTREAM_REF="${ALPASIM_UPSTREAM_REF:-v2026.4}"
+ALPASIM_UPSTREAM_REF="${ALPASIM_UPSTREAM_REF:-v2026.5}"
 STAMP="$(date +%Y%m%d_%H%M%S)"
 
 if [[ -d "$ALPASIM_ROOT/.git" && -f "$ALPASIM_ROOT/pyproject.toml" && -d "$ALPASIM_ROOT/src/driver" && -d "$ALPASIM_ROOT/src/wizard" ]]; then

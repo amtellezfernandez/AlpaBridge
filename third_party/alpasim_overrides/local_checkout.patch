@@ -126,6 +126,19 @@ index b619b7a..e46b247 100644
                  request.route,
                  use_waypoint_commands=False,
              )
+@@ -856,6 +882,11 @@ class EgoDriverService(EgodriverServiceServicer):
+         self, request: DriveRequest, context: grpc.aio.ServicerContext
+     ) -> DriveResponse:
+         if request.session_uuid not in self._sessions:
+-            raise KeyError(f"Session {request.session_uuid} not found")
++            logger.warning(
++                "drive for unknown session %s at %s; returning empty trajectory",
++                request.session_uuid,
++                request.time_query_us,
++            )
++            return DriveResponse(trajectory=Trajectory())
+ 
+         session = self._sessions[request.session_uuid]
 diff --git a/src/driver/src/alpasim_driver/models/__init__.py b/src/driver/src/alpasim_driver/models/__init__.py
 index 7d0aa0b..9e09e33 100644
 --- a/src/driver/src/alpasim_driver/models/__init__.py
@@ -182,10 +195,9 @@ index 7d0aa0b..9e09e33 100644
 +    globals()[name] = value
 +    return value
 diff --git a/src/wizard/alpasim_wizard/deployment/docker_compose.py b/src/wizard/alpasim_wizard/deployment/docker_compose.py
-index 02c11d6..fa7d6e2 100644
 --- a/src/wizard/alpasim_wizard/deployment/docker_compose.py
 +++ b/src/wizard/alpasim_wizard/deployment/docker_compose.py
-@@ -81,7 +81,6 @@ class DockerComposeDeployment:
+@@ -107,7 +107,6 @@
          ret: dict[str, Any] = {}
          use_host_network = self.context.cfg.wizard.debug_flags.use_localhost
          if use_host_network:
@@ -193,7 +205,7 @@ index 02c11d6..fa7d6e2 100644
              ret["network_mode"] = "host"
          else:
              ret["networks"] = ["microservices_network"]
-@@ -104,15 +103,8 @@ class DockerComposeDeployment:
+@@ -130,15 +129,8 @@
          if container.command:
              ret["entrypoint"] = "bash"
              command = container.command
@@ -209,18 +221,7 @@ index 02c11d6..fa7d6e2 100644
              if "\n" in command:
                  command = LiteralStr(command)
              ret["command"] = ["-c", command]
-@@ -123,10 +115,6 @@ class DockerComposeDeployment:
- 
-         addresses = container.get_all_addresses()
-         if addresses and use_host_network:
--            # Only expose ports to host when using host network mode.
--            # With bridge network, containers communicate internally via container
--            # names as DNS hostnames on the shared network, so no port mapping is
--            # needed. Omitting ports avoids conflicts with other workloads.
-             ports = [f"{addr.port}:{addr.port}" for addr in addresses]
-             ret["ports"] = ports
- 
-@@ -155,47 +143,40 @@ class DockerComposeDeployment:
+@@ -181,47 +173,40 @@
          Returns:
              Filename of the generated docker-compose.yaml
          """
@@ -230,7 +231,7 @@ index 02c11d6..fa7d6e2 100644
 -        # Simulation services (runtime should start last)
          for c in container_set.sim or []:
              if c.command == "noop":
--                # Special logic to support sensorsim/physics combined process
+-                # Special logic to support renderer/physics combined process.
                  continue
              service = self._to_docker_compose_service(c)
              services[c.uuid] = service
@@ -274,7 +275,7 @@ index 02c11d6..fa7d6e2 100644
 -            "services": services,  # Services maintain insertion order in Python 3.7+
 +            "services": services,
          }
-         if Path.home().joinpath(".netrc").exists():
+         if _netrc_secret_file() is not None:
              compose["secrets"] = {"netrc": {"file": "${HOME}/.netrc"}}
  
 -        # Write to file

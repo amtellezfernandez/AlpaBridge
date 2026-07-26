@@ -786,33 +786,22 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
         self.assertIn("--array-job-dir=/mnt/log_dir", normalized)
         self.assertNotIn("--array-job-dir=/mnt/array_job_dir", normalized)
 
-    def test_packaged_and_tracked_docker_compose_overrides_stay_in_sync(self) -> None:
-        packaged = (
-            ROOT
-            / "src"
-            / "alpabridge"
-            / "alpasim_overrides"
-            / "src"
-            / "wizard"
-            / "alpasim_wizard"
-            / "deployment"
-            / "docker_compose.py"
-        )
-        tracked = (
-            ROOT
-            / "third_party"
-            / "alpasim_overrides"
-            / "src"
-            / "wizard"
-            / "alpasim_wizard"
-            / "deployment"
-            / "docker_compose.py"
-        )
+    def test_packaged_and_tracked_alpasim_overrides_stay_in_sync(self) -> None:
+        packaged_root = ROOT / "src" / "alpabridge" / "alpasim_overrides"
+        tracked_root = ROOT / "third_party" / "alpasim_overrides"
 
-        self.assertEqual(
-            packaged.read_text(encoding="utf-8"),
-            tracked.read_text(encoding="utf-8"),
-        )
+        relative_paths = [
+            Path("src/wizard/alpasim_wizard/deployment/docker_compose.py"),
+            Path("route_waypoints.patch"),
+            Path("local_checkout.patch"),
+        ]
+
+        for relative_path in relative_paths:
+            with self.subTest(relative_path=relative_path):
+                self.assertEqual(
+                    (packaged_root / relative_path).read_text(encoding="utf-8"),
+                    (tracked_root / relative_path).read_text(encoding="utf-8"),
+                )
 
     def test_setup_script_also_copies_driver_model_override(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
