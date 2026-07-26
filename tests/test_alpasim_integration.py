@@ -28,6 +28,8 @@ from alpabridge.simulator.alpasim_contract import (
     BaseTrajectoryModel,
     DriveCommand,
     ModelPrediction,
+    corrected_speed_mps,
+    pose_history_speed_mps,
     resample_trajectory,
 )
 from alpabridge.simulator.alpasim_direct_actor_planner import (
@@ -294,6 +296,93 @@ class AlpaSimIntegrationTests(unittest.TestCase):
         expected = np.asarray([[2.0, 0.0], [4.0, 0.0], [6.0, 0.0], [8.0, 0.0]], dtype=np.float32)
         np.testing.assert_allclose(resampled, expected, atol=1e-6)
         self.assertNotEqual(float(resampled[0, 0]), float(trajectory[0, 0]))
+
+    def test_pose_history_speed_mps_computes_from_last_two_dated_poses(self) -> None:
+        ego_pose_history = [
+            SimpleNamespace(timestamp_us=0, x=0.0, y=0.0),
+            SimpleNamespace(timestamp_us=500_000, x=5.0, y=0.0),
+        ]
+
+        speed = pose_history_speed_mps(ego_pose_history)
+
+        self.assertAlmostEqual(speed, 10.0, places=6)
+
+    def test_pose_history_speed_mps_requires_two_dated_poses(self) -> None:
+        self.assertIsNone(pose_history_speed_mps([]))
+        self.assertIsNone(pose_history_speed_mps([SimpleNamespace(timestamp_us=0, x=0.0, y=0.0)]))
+
+    def test_corrected_speed_mps_falls_back_to_pose_speed_when_reported_speed_is_zero(
+        self,
+    ) -> None:
+        # Reproduces AlpaSim's own EgoDriverService._get_speed_and_acceleration
+        # gap (src/driver/src/alpasim_driver/main.py): its docstring promises a
+        # pose-based fallback when the simulator's dynamic state reports zero
+        # speed, but the shipped v2026.4/v2026.5 implementation never performs
+        # it, so a lagging DynamicState can report a stopped vehicle even
+        # while ego_pose_history clearly shows forward motion.
+        prediction_input = SimpleNamespace(
+            speed=0.0,
+            ego_pose_history=[
+                SimpleNamespace(timestamp_us=0, x=0.0, y=0.0),
+                SimpleNamespace(timestamp_us=500_000, x=5.0, y=0.0),
+            ],
+        )
+
+        self.assertAlmostEqual(corrected_speed_mps(prediction_input), 10.0, places=6)
+
+    def test_corrected_speed_mps_trusts_nonzero_reported_speed(self) -> None:
+        prediction_input = SimpleNamespace(
+            speed=3.0,
+            ego_pose_history=[
+                SimpleNamespace(timestamp_us=0, x=0.0, y=0.0),
+                SimpleNamespace(timestamp_us=500_000, x=5.0, y=0.0),
+            ],
+        )
+
+        self.assertEqual(corrected_speed_mps(prediction_input), 3.0)
+
+    def test_corrected_speed_mps_ignores_pose_jitter_while_stationary(self) -> None:
+        prediction_input = SimpleNamespace(
+            speed=0.0,
+            ego_pose_history=[
+                SimpleNamespace(timestamp_us=0, x=0.0, y=0.0),
+                SimpleNamespace(timestamp_us=500_000, x=0.05, y=0.0),
+            ],
+        )
+
+        self.assertEqual(corrected_speed_mps(prediction_input), 0.0)
+
+    def test_extract_alpasim_signal_uses_corrected_speed_for_dynamics_risk(self) -> None:
+        stationary_reading = extract_alpasim_signal(
+            SimpleNamespace(
+                speed=0.0,
+                acceleration=0.0,
+                camera_images={},
+                ego_pose_history=[
+                    SimpleNamespace(timestamp_us=0, x=0.0, y=0.0),
+                    SimpleNamespace(timestamp_us=500_000, x=0.0, y=0.0),
+                ],
+            )
+        )
+        moving_but_reported_stationary = extract_alpasim_signal(
+            SimpleNamespace(
+                speed=0.0,
+                acceleration=0.0,
+                camera_images={},
+                ego_pose_history=[
+                    SimpleNamespace(timestamp_us=0, x=0.0, y=0.0),
+                    SimpleNamespace(timestamp_us=500_000, x=5.0, y=0.0),
+                ],
+            )
+        )
+
+        # dynamics_risk scores low speed as risky (e.g. stalled in traffic), so
+        # the corrected (truly moving) reading should score as less risky than
+        # the genuinely-stationary one, not be conflated with it.
+        self.assertLess(
+            moving_but_reported_stationary["dynamics_risk"],
+            stationary_reading["dynamics_risk"],
+        )
 
     @pytest.mark.temporal
     def test_headings_are_recomputed_on_runtime_grid(self) -> None:

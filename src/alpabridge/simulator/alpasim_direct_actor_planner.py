@@ -17,6 +17,7 @@ from .alpasim_contract import (
     ModelPrediction,
     PredictionInput,
     SensorFreshnessGuard,
+    corrected_speed_mps,
     prediction_scene_id,
     resample_trajectory,
 )
@@ -251,7 +252,7 @@ class DirectActorPlannerAlpaSimModel(BaseTrajectoryModel):
                 )
         self._prediction_counter += 1
         command = self._encode_command(prediction_input.command)
-        speed_mps = max(0.0, float(prediction_input.speed))
+        speed_mps = corrected_speed_mps(prediction_input)
         try:
             sensor_freshness = self._sensor_freshness_guard.validate(prediction_input)
         except RuntimeError as exc:
