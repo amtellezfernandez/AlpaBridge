@@ -1,0 +1,24 @@
+diff --git a/src/driver/src/alpasim_driver/schema.py b/src/driver/src/alpasim_driver/schema.py
+--- a/src/driver/src/alpasim_driver/schema.py
++++ b/src/driver/src/alpasim_driver/schema.py
+@@ -4,6 +4,7 @@
+ """Configuration schema for driver service supporting multiple model backends."""
+ 
+ from dataclasses import dataclass, field
++from typing import Any
+ 
+ from omegaconf import MISSING
+ 
+@@ -27,6 +28,12 @@
+     tokenizer_path: str | None = None  # Only required for VAM
+     use_classifier_free_guidance_nav: bool = False  # A1.5 only
+     force_determinism: bool = False  # Alpamayo 1 only
++    # Free-form pass-through for third-party model plugins. OmegaConf's
++    # structured-config validation rejects unknown top-level keys on this
++    # dataclass, but a plain dict field like this one accepts arbitrary
++    # nested keys, so a plugin can take e.g. model.extra.my_param without
++    # ModelConfig needing to know about it in advance.
++    extra: dict[str, Any] = field(default_factory=dict)
+ 
+ 
+ @dataclass

@@ -1,0 +1,28 @@
+diff --git a/pyproject.toml b/pyproject.toml
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -37,6 +37,24 @@
+   "alpasim-trafficsim",
+ ]
+ 
++# Core packages needed inside headless local-external-driver Docker images.
++# This intentionally excludes:
++# - alpasim-tools: pulls PyQt5, which does not resolve on Linux aarch64
++# - alpasim_driver / alpasim_plugins: the external driver runs on the host, not in
++#   the runtime containers, and its dependency stack pulls x86-only packages such as
++#   tensordict through the upstream learned-driver models.
++# - alpasim_wizard: the wizard is launched on the host, not in the runtime image.
++# - alpasim-trafficsim: disabled by default (trafficsim=disabled); add it back if
++#   your deployment enables trafficsim=catk.
++docker_local = [
++  "alpasim_controller",
++  "alpasim_eval",
++  "alpasim_grpc",
++  "alpasim-runtime",
++  "alpasim_utils",
++  "alpasim-physics",
++]
++
+ # -- Plugin extras --
+ transfuser = ["alpasim_transfuser"]
+ 

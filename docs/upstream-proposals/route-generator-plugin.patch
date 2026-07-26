@@ -1,0 +1,111 @@
+diff --git a/src/plugins/alpasim_plugins/plugins.py b/src/plugins/alpasim_plugins/plugins.py
+--- a/src/plugins/alpasim_plugins/plugins.py
++++ b/src/plugins/alpasim_plugins/plugins.py
+@@ -107,6 +107,7 @@
+ mpc_controllers = PluginRegistry("alpasim.mpc")
+ scorers = PluginRegistry("alpasim.scorers")
+ tools = PluginRegistry("alpasim.tools")
++route_generators = PluginRegistry("alpasim.route_generators")
+ 
+ 
+ def get_plugin_info() -> dict[str, list[str]]:
+@@ -121,5 +122,6 @@
+         "alpasim.scorers",
+         "alpasim.tools",
+         "alpasim.configs",
++        "alpasim.route_generators",
+     ]
+     return {group: PluginRegistry(group).get_names() for group in groups}
+diff --git a/src/runtime/alpasim_runtime/config.py b/src/runtime/alpasim_runtime/config.py
+--- a/src/runtime/alpasim_runtime/config.py
++++ b/src/runtime/alpasim_runtime/config.py
+@@ -315,6 +315,10 @@
+ 
+     route_generator_type: RouteGeneratorType = RouteGeneratorType.MAP
+     route_start_offset_m: float = 0.0
++    # Name of an "alpasim.route_generators" entry point to use instead of the
++    # built-in MAP/RECORDED generators. When set, route_generator_type is
++    # ignored. None (default) preserves existing behavior exactly.
++    route_generator_plugin: str | None = None
+ 
+     # Whether to send optional messages to the driver
+     send_recording_ground_truth: bool = False
+diff --git a/src/runtime/alpasim_runtime/route_generator.py b/src/runtime/alpasim_runtime/route_generator.py
+--- a/src/runtime/alpasim_runtime/route_generator.py
++++ b/src/runtime/alpasim_runtime/route_generator.py
+@@ -7,6 +7,7 @@
+ from typing import final
+ 
+ import numpy as np
++from alpasim_plugins.plugins import route_generators as route_generator_registry
+ from alpasim_runtime.config import RouteGeneratorType
+ from alpasim_utils.geometry import Polyline, Pose
+ from trajdata.maps import VectorMap
+@@ -41,6 +42,7 @@
+         vector_map: VectorMap,
+         route_generator_type: RouteGeneratorType,
+         route_start_offset_m: float = 0.0,
++        route_generator_plugin: str | None = None,
+     ) -> "RouteGenerator | None":
+         """
+         Factory method to create a RouteGenerator
+@@ -49,9 +51,18 @@
+           vector_map: the map data
+           route_generator_type: the type of route generator to create
+           route_start_offset_m: approximate distance ahead of the ego projection where routes start
++          route_generator_plugin: name of an "alpasim.route_generators" entry point to use
++            instead of the built-in types below. When set, route_generator_type is ignored.
+         Returns:
+           A route generator of the specified type, or None if route generation is disabled
+         """
++        if route_generator_plugin is not None:
++            plugin_cls = route_generator_registry.get(route_generator_plugin)
++            return plugin_cls.from_context(
++                recorded_waypoints_in_local,
++                vector_map,
++                route_start_offset_m=route_start_offset_m,
++            )
+         if route_generator_type == RouteGeneratorType.NONE:
+             return None
+         elif route_generator_type == RouteGeneratorType.RECORDED:
+diff --git a/src/runtime/alpasim_runtime/unbound_rollout.py b/src/runtime/alpasim_runtime/unbound_rollout.py
+--- a/src/runtime/alpasim_runtime/unbound_rollout.py
++++ b/src/runtime/alpasim_runtime/unbound_rollout.py
+@@ -186,6 +186,7 @@
+     planner_delay_us: int
+     route_generator_type: RouteGeneratorType
+     route_start_offset_m: float
++    route_generator_plugin: str | None
+     send_recording_ground_truth: bool
+     nre_runid: str
+     nre_version: str
+@@ -323,6 +324,7 @@
+             pose_reporting_interval_us=simulation_config.pose_reporting_interval_us,
+             route_generator_type=simulation_config.route_generator_type,
+             route_start_offset_m=simulation_config.route_start_offset_m,
++            route_generator_plugin=simulation_config.route_generator_plugin,
+             send_recording_ground_truth=simulation_config.send_recording_ground_truth,
+             vehicle_config=vehicle,
+             vector_map=vector_map,
+diff --git a/src/runtime/alpasim_runtime/event_loop.py b/src/runtime/alpasim_runtime/event_loop.py
+--- a/src/runtime/alpasim_runtime/event_loop.py
++++ b/src/runtime/alpasim_runtime/event_loop.py
+@@ -161,6 +161,7 @@
+             vector_map=self.unbound.vector_map,
+             route_generator_type=self.unbound.route_generator_type,
+             route_start_offset_m=self.unbound.route_start_offset_m,
++            route_generator_plugin=self.unbound.route_generator_plugin,
+         )
+ 
+         self._runtime_evaluator = RuntimeEvaluator(
+diff --git a/src/runtime/tests/test_event_loop.py b/src/runtime/tests/test_event_loop.py
+--- a/src/runtime/tests/test_event_loop.py
++++ b/src/runtime/tests/test_event_loop.py
+@@ -112,6 +112,7 @@
+         planner_delay_us=0,
+         vector_map=None,
+         route_generator_type="RECORDED",
++        route_generator_plugin=None,
+         route_start_offset_m=0.0,
+         rollout_uuid="rollout",
+         scene_id="scene",

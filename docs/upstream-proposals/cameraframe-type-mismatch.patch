@@ -1,0 +1,22 @@
+diff --git a/src/driver/src/alpasim_driver/main.py b/src/driver/src/alpasim_driver/main.py
+--- a/src/driver/src/alpasim_driver/main.py
++++ b/src/driver/src/alpasim_driver/main.py
+@@ -62,6 +62,7 @@
+ from .models import DriveCommand
+ from .models.base import (
+     BaseTrajectoryModel,
++    CameraFrame,
+     CameraImages,
+     ModelInputValidationError,
+     ModelPrediction,
+@@ -646,7 +647,9 @@
+         for cam_id in self._model.camera_ids:
+             frame_cache = session.frame_caches[cam_id]
+             entries = frame_cache.latest_frame_entries(self._context_length)
+-            camera_images[cam_id] = [(e.timestamp_us, e.image) for e in entries]
++            camera_images[cam_id] = [
++                CameraFrame(timestamp_us=e.timestamp_us, image=e.image) for e in entries
++            ]
+ 
+         return camera_images
+ 
