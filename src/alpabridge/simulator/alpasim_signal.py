@@ -5,6 +5,7 @@ from typing import Any
 
 import numpy as np
 
+from .alpasim_contract import corrected_speed_mps
 from .environment import Actor, Obstacle, Scenario
 
 
@@ -66,7 +67,9 @@ def extract_alpasim_signal(prediction_input: Any) -> dict[str, Any]:
     route_waypoints = route_waypoints_from_input(prediction_input)
     route_source = "alpasim_waypoints" if len(route_waypoints) >= 2 else "command_proxy"
     visibility_risk = visibility_risk_from_cameras(prediction_input.camera_images)
-    dynamics_risk_value = dynamics_risk(float(prediction_input.speed), float(prediction_input.acceleration))
+    dynamics_risk_value = dynamics_risk(
+        corrected_speed_mps(prediction_input), float(prediction_input.acceleration)
+    )
     return {
         "structured_hazards": structured_hazards,
         "route_waypoints": route_waypoints,

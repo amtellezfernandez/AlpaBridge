@@ -1,8 +1,7 @@
 diff --git a/src/driver/src/alpasim_driver/main.py b/src/driver/src/alpasim_driver/main.py
-index b619b7a..c401046 100644
 --- a/src/driver/src/alpasim_driver/main.py
 +++ b/src/driver/src/alpasim_driver/main.py
-@@ -170,6 +170,7 @@ class Session:
+@@ -171,6 +171,7 @@
      poses: list[PoseAtTime] = field(default_factory=list)
      dynamic_states: list[tuple[int, DynamicState]] = field(default_factory=list)
      current_command: DriveCommand = DriveCommand.STRAIGHT  # Default to straight
@@ -10,7 +9,7 @@ index b619b7a..c401046 100644
  
      @staticmethod
      def create(
-@@ -373,6 +374,9 @@ class Session:
+@@ -374,6 +375,9 @@
              min_lookahead_distance: Minimum forward distance (meters) to consider
                  a waypoint as the target for command derivation.
          """
@@ -20,7 +19,7 @@ index b619b7a..c401046 100644
          if not use_waypoint_commands or len(route.waypoints) < 1:
              return
  
-@@ -397,6 +401,13 @@ class Session:
+@@ -398,6 +402,13 @@
              self.current_command.name,
          )
  
@@ -34,41 +33,28 @@ index b619b7a..c401046 100644
  
  def async_log_call(func: Callable) -> Callable:
      """Helper to add logging for gRPC calls (sync or async)."""
-@@ -725,13 +736,16 @@ class EgoDriverService(EgodriverServiceServicer):
-         inputs = []
-         for job in batch:
-             speed, acceleration = self._get_speed_and_acceleration(job.session)
--            inputs.append(
--                PredictionInput(
--                    camera_images=self._prepare_camera_images(job.session),
--                    command=job.command,
--                    speed=speed,
--                    acceleration=acceleration,
--                    ego_pose_history=job.session.poses,
--                )
--            )
-+            prediction_input = PredictionInput(
-+                camera_images=self._prepare_camera_images(job.session),
-+                command=job.command,
-+                speed=speed,
-+                acceleration=acceleration,
-+                ego_pose_history=job.session.poses,
-+                route_waypoints=job.session.route_waypoints_for_prediction(),
-+            )
-+            prediction_input.session_uuid = job.session.uuid
-+            prediction_input.runtime_random_seed = job.session.seed
-+            prediction_input.debug_scene_id = job.session.debug_scene_id
-+            inputs.append(prediction_input)
+@@ -723,6 +734,10 @@
+                     speed=speed,
+                     acceleration=acceleration,
+                     ego_pose_history=job.session.poses,
++                    route_waypoints=job.session.route_waypoints_for_prediction(),
++                    session_uuid=job.session.uuid,
++                    runtime_random_seed=job.session.seed,
++                    debug_scene_id=job.session.debug_scene_id,
+                 )
+             )
          return self._model.predict_batch(inputs)
 diff --git a/src/driver/src/alpasim_driver/models/base.py b/src/driver/src/alpasim_driver/models/base.py
-index a03afd0..36209c0 100644
 --- a/src/driver/src/alpasim_driver/models/base.py
 +++ b/src/driver/src/alpasim_driver/models/base.py
-@@ -53,6 +53,7 @@ class PredictionInput:
+@@ -53,6 +53,10 @@
      speed: float  # m/s
      acceleration: float  # m/s²
      ego_pose_history: list[Any]  # list[PoseAtTime]
 +    route_waypoints: list[Any] | None = None  # list[Vec3] in current rig frame
++    session_uuid: str | None = None
++    runtime_random_seed: int | None = None
++    debug_scene_id: str | None = None
  
  
  @dataclass

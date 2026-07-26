@@ -357,6 +357,58 @@ def _current_pose_timestamp_us(prediction_input: Any) -> int | None:
     return None
 
 
+def pose_history_speed_mps(ego_pose_history: Any) -> float | None:
+    """Estimate ground speed (m/s) from the last two dated poses in history.
+
+    Independent of any simulator-reported dynamic state - derived purely from
+    positions and timestamps already present on the prediction input.
+    """
+    parsed: list[tuple[int, float, float]] = []
+    for pose in list(ego_pose_history or []):
+        signature = _pose_like_to_signature(pose)
+        timestamp = getattr(pose, "timestamp_us", None)
+        if signature is None or timestamp is None:
+            continue
+        try:
+            parsed.append((int(timestamp), signature[0], signature[1]))
+        except (TypeError, ValueError):
+            continue
+    if len(parsed) < 2:
+        return None
+    (t0, x0, y0), (t1, x1, y1) = parsed[-2], parsed[-1]
+    dt_s = (t1 - t0) / 1_000_000.0
+    if dt_s <= 1e-6:
+        return None
+    return float(math.hypot(x1 - x0, y1 - y0) / dt_s)
+
+
+def corrected_speed_mps(
+    prediction_input: Any,
+    *,
+    zero_threshold_mps: float = 0.1,
+    motion_threshold_mps: float = 0.5,
+) -> float:
+    """Return the reported speed, replaced by a pose-derived estimate when it
+    reads as ~zero despite ego_pose_history showing real motion.
+
+    Works around a defect in AlpaSim's own driver
+    (``EgoDriverService._get_speed_and_acceleration`` in
+    ``src/driver/src/alpasim_driver/main.py``): its docstring promises this
+    exact fallback ("Falls back to finite differences from ego positions if
+    dynamic state reports zero speed and acceleration") but the shipped
+    implementation never performs it, so a lagging/stale ``DynamicState``
+    reads as a stopped vehicle even while poses advance. Confirmed present,
+    unchanged, in AlpaSim v2026.4 and v2026.5.
+    """
+    reported = max(0.0, float(getattr(prediction_input, "speed", 0.0) or 0.0))
+    if reported >= zero_threshold_mps:
+        return reported
+    pose_speed = pose_history_speed_mps(getattr(prediction_input, "ego_pose_history", None))
+    if pose_speed is not None and pose_speed >= motion_threshold_mps:
+        return pose_speed
+    return reported
+
+
 def _pose_like_to_signature(pose: Any) -> tuple[float, float, float] | None:
     raw_pose = getattr(pose, "pose", None)
     if raw_pose is not None:

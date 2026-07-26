@@ -24,6 +24,7 @@ from .alpasim_contract import (
     ModelPrediction,
     PredictionInput,
     SensorFreshnessGuard,
+    corrected_speed_mps,
     resample_trajectory,
 )
 from .alpasim_signal import extract_alpasim_signal, scenario_from_command
@@ -252,7 +253,7 @@ class TokenBCAlpaSimModel(BaseTrajectoryModel):
                     f"for {camera_id}, got {len(frames)}"
                 )
         command = self._encode_command(prediction_input.command)
-        speed_mps = max(0.25, float(prediction_input.speed))
+        speed_mps = max(0.25, corrected_speed_mps(prediction_input))
         try:
             sensor_freshness = self._sensor_freshness_guard.validate(prediction_input)
         except RuntimeError as exc:
