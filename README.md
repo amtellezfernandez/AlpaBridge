@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <strong>One interface, six policy backends and growing — from dependency-light baselines to a real, published video-action model.</strong><br>
+  <strong>One interface, six policy backends and growing — from simple no-setup baselines to a real, published video-action model.</strong><br>
   <a href="docs/getting-started.md">Get started</a> |
   <a href="docs/README.md">Documentation</a> |
   <a href="docs/cli.md">CLI reference</a> |
@@ -17,15 +17,15 @@
 AlpaBridge is a platform for running driving policies through
 [NVIDIA AlpaSim](https://github.com/NVlabs/alpasim)'s live simulation loop
 and evaluating how they actually drive — not just how they score against a
-logged benchmark. It already serves six policies behind the same interface,
-from dependency-light baselines to a real, published 318-million-parameter
-video-action model (see [Policy Backends](#policy-backends) below). Adding
-the next one — a new checkpoint, a VLA policy, a world-model policy — means
-implementing one contract and registering it, not rebuilding the harness.
-Which evaluator exercises that policy is just as interchangeable — AlpaSim's
-own local wizard, the AlpaSim E2E Challenge, or your own harness, all
-through the same driver interface (see [Evaluation
-Paths](#evaluation-paths) below).
+logged benchmark. It already serves six policies through the same
+interface, from simple, no-setup baselines to a real, published
+318-million-parameter video-action model (see [Policy
+Backends](#policy-backends) below). Adding the next one — a new checkpoint,
+a vision-language driving model, a world-model policy — means implementing
+one contract and registering it, not rebuilding the serving code. Which
+evaluator runs that policy is just as interchangeable — AlpaSim's own local
+wizard, the AlpaSim E2E Challenge, or your own evaluator, all through the
+same driver interface (see [Evaluation Paths](#evaluation-paths) below).
 
 Whichever policy is selected, AlpaSim sends AlpaBridge the live camera
 image, the car's own motion, the current command, and the route. AlpaBridge
@@ -114,7 +114,7 @@ evidence of the run.
 
 ### Policy Backends
 
-Every policy — dependency-light baseline or real published checkpoint —
+Every policy — simple no-setup baseline or real published checkpoint —
 implements the same
 [`BaseTrajectoryModel`](src/alpabridge/simulator/alpasim_contract.py)
 contract, and is servable either in-process (loaded inside AlpaSim,
@@ -136,7 +136,7 @@ AlpaSim setup.
 
 #### Bring Your Own Policy
 
-Implement the contract — the required shape, in outline:
+Implement the contract. Here's the required shape, in outline:
 
 ```python
 from alpabridge.simulator.alpasim_contract import BaseTrajectoryModel, ModelPrediction
@@ -195,8 +195,8 @@ Then register it, matching the table above:
   mechanism the four in-process presets use (see `pyproject.toml`'s
   `[project.entry-points."alpasim.models"]`). Entry-point groups are a
   standard Python packaging mechanism, discovered across every installed
-  package rather than tied to one — so this can live in your own package
-  alongside AlpaBridge, not inside a fork of it.
+  package, not just one — so this can live in your own package alongside
+  AlpaBridge, not inside a fork of it.
 - **Standalone driver**: add one
   `register_policy(DriverPolicy("my_policy", my_factory))` call in
   [`policy_registry.py`](src/alpabridge/driver/policy_registry.py). As of
@@ -206,7 +206,8 @@ Then register it, matching the table above:
 
 Either way, nothing about the serving code itself (timing, retries,
 evidence capture, the gRPC service) changes — that's the same for every
-policy in the table above, including a future VLA or world-model one. Once
+policy in the table above, including a future vision-language or
+world-model one. Once
 registered for the standalone driver, test it the same way as any built-in:
 
 ```bash
@@ -221,7 +222,8 @@ datasets](docs/womd-targeting.md) for what that would take.
 
 ### Evaluation Paths
 
-Which policy runs is one axis; what evaluates it is a separate one. The
+Which policy runs is one choice; which evaluator runs it is a separate,
+independent choice. The
 [standalone driver](#run-as-a-standalone-driver) implements AlpaSim's own
 general, versioned external-driver gRPC interface
 (`egodriver.EgodriverService`) — not something built for any one evaluator
@@ -233,7 +235,7 @@ table above can be selected:
 | In-process rollout (`alpabridge-launch` / `alpabridge-reproduce`) | AlpaSim's own driver process loads your policy directly | Tested — see [Integration Test Results](#integration-test-results) |
 | AlpaSim's local wizard, standalone driver | Any AlpaSim checkout's dev preset, pointed at a running `alpabridge-driver` | Tested — see [Integration Test Results](#integration-test-results) |
 | AlpaSim E2E Challenge, standalone driver | NVIDIA's official hosted evaluator — same driver, packaged as a locked-down container | Tested locally — see [AlpaSim E2E compatibility](docs/challenge-compatibility.md) |
-| Your own evaluator, standalone driver | Any client speaking the same `egodriver.EgodriverService` interface | Not yet demonstrated — no code change needed, just a client |
+| Your own evaluator, standalone driver | Any client speaking the same `egodriver.EgodriverService` interface | Tested — a plain gRPC client (not AlpaSim's wizard) drives one full session in [`tests/test_driver_grpc_client.py`](tests/test_driver_grpc_client.py) |
 
 The AlpaSim E2E Challenge is the one we've documented most, because it's
 the one with a public, external leaderboard to point at — not because the
@@ -278,10 +280,11 @@ access, images, model inputs, and the scenes you picked.
 ## Get Scene Data
 
 Using [Run As A Standalone Driver](#run-as-a-standalone-driver) instead —
-including the AlpaSim E2E Challenge? You can skip this section: that path
-supplies its own scenes, no local scene data needed. This step is only for
-the in-process path above (`alpabridge-launch` / `alpabridge-reproduce` with
-`--scene-preset`).
+any of the three standalone-driver rows in [Evaluation
+Paths](#evaluation-paths) above? You can skip this section: all three
+supply their own scenes, no local scene data needed. This step is only for
+the in-process rollout path above (`alpabridge-launch` /
+`alpabridge-reproduce` with `--scene-preset`).
 
 Real scene files for that path come from a **gated** Hugging Face dataset:
 [request
@@ -357,12 +360,9 @@ uv run alpabridge-driver --model vavam \
   --tokenizer-checkpoint /path/to/tokenizer.jit
 ```
 
-In a second terminal, point an AlpaSim checkout at the driver — using
-AlpaSim's own `e2e_challenge=dev` preset here only because it's AlpaSim's
-convenient built-in way to run a local wizard against an external driver,
-not because the Challenge is what this path is for (see [Evaluation
-Paths](#evaluation-paths) above for the other ways to connect to the same
-driver):
+In a second terminal, point an AlpaSim checkout at the driver, using
+AlpaSim's own local dev preset (see [Evaluation Paths](#evaluation-paths)
+above for the other ways to connect to the same driver):
 
 ```bash
 ALPASIM_DRIVER_HOST=localhost ALPASIM_DRIVER_PORT=6789 \
