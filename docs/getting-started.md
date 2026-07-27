@@ -59,12 +59,18 @@ This is specific to that one catalog (NVIDIA's NuRec/PhysicalAI dataset):
 `--scene-preset` picks one of six fixed scene lists from it. `--scene-id`
 (on `alpabridge-launch`, `alpabridge-ready`, and `alpabridge-build-local-cache`)
 lets you target one specific scene from that same catalog instead of
-fetching or running a whole preset — it still has to be a scene the
-catalog already knows about, so it's not a way to plug in scene content of
-your own. `--source-usdz-dir` (on `alpabridge-build-local-cache`) only
-changes where the USDZ files are copied from (a local directory instead of
-downloading) — same constraint applies. Registering genuinely new scene
-content is an AlpaSim-side change, outside what this repo's tooling does.
+fetching or running a whole preset. `--source-usdz-dir` (on
+`alpabridge-build-local-cache`) only changes where the USDZ files are
+copied from (a local directory instead of downloading), not what scenes
+are known about.
+
+Have your own, already-complete USDZ file (built outside this repo, e.g.
+with NVIDIA's NuRec reconstruction pipeline)? `alpabridge-register-custom-scene`
+adds it to AlpaSim's own scene catalog CSV for you — the one manual step
+that would otherwise block `--scene-id`/`--source-usdz-dir` from accepting
+it. It only edits the catalog; it can't create, validate, or repair a
+USDZ's own content (mesh, map, ground-truth data) — a USDZ missing those is
+an upstream reconstruction problem, not something a catalog row fixes.
 
 ## Materialize Commands
 
