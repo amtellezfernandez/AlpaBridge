@@ -70,6 +70,7 @@ jobs:
           assert tuple(MODEL_PRESETS) == (
               "constant_velocity",
               "route_following",
+              "mpc_planner",
               "token_dagger_bc",
               "direct_actor_planner",
           ), tuple(MODEL_PRESETS)
