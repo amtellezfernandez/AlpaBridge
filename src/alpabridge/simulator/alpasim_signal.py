@@ -13,9 +13,10 @@ def scenario_from_command(command: str, signal: dict[str, Any] | None = None) ->
     signal = signal or {}
     lateral_goal = {"left": 16.0, "straight": 0.0, "right": -16.0}[command]
     route_waypoints = route_waypoints_from_signal(signal)
-    real_route = len(route_waypoints) >= 2
+    filtered_points = filtered_route_points(route_waypoints)
+    real_route = len(filtered_points) >= 2
     if real_route:
-        lane_center = _lane_center_from_route_waypoints(route_waypoints)
+        lane_center = filtered_points
         lane_half_width = float(signal.get("route_lane_half_width_m", 3.5))
         goal = lane_center[-1]
         max_x = max(abs(point[0]) for point in lane_center)
@@ -65,7 +66,9 @@ def scenario_from_command(command: str, signal: dict[str, Any] | None = None) ->
 def extract_alpasim_signal(prediction_input: Any) -> dict[str, Any]:
     structured_hazards = structured_hazards_from_input(prediction_input)
     route_waypoints = route_waypoints_from_input(prediction_input)
-    route_source = "alpasim_waypoints" if len(route_waypoints) >= 2 else "command_proxy"
+    route_source = (
+        "alpasim_waypoints" if len(filtered_route_points(route_waypoints)) >= 2 else "command_proxy"
+    )
     visibility_risk = visibility_risk_from_cameras(prediction_input.camera_images)
     dynamics_risk_value = dynamics_risk(
         corrected_speed_mps(prediction_input), float(prediction_input.acceleration)
@@ -137,7 +140,27 @@ def _route_waypoint_from_item(item: Any) -> dict[str, float] | None:
     return {"x": round(x_f, 6), "y": round(y_f, 6), "z": round(z_f, 6)}
 
 
-def _lane_center_from_route_waypoints(route_waypoints: list[dict[str, float]]) -> list[tuple[float, float]]:
+def filtered_route_points(route_waypoints: list[dict[str, float]]) -> list[tuple[float, float]]:
+    """Filter raw route waypoints down to the subset actually usable as
+    route geometry: drop points behind the ego (x < -5.0), drop points
+    beyond sensor range (140.0 m), and drop points too close to the
+    previous kept point (< 0.5 m) to avoid degenerate segments. Starts
+    from the ego origin.
+
+    This is the single source of truth for that filter - it used to be
+    hand-copied into both this module and baseline_drivers.py's own
+    ``_route_points``, which meant a caller could report
+    ``route_source: "alpasim_waypoints"`` (computed from the raw,
+    unfiltered waypoint count) while the actually-driven trajectory
+    silently fell back to synthetic geometry because filtering left too
+    few real points to drive on. Callers now derive both the driven
+    geometry and the route_source decision from this same filtered list,
+    so they can't disagree.
+
+    Returns whatever survives filtering, with no fallback baked in -
+    callers decide what "not enough real route" means for them (a
+    synthetic lane center, a command-proxy label, or something else).
+    """
     points: list[tuple[float, float]] = [(0.0, 0.0)]
     for waypoint in route_waypoints:
         x = float(waypoint["x"])
@@ -149,8 +172,6 @@ def _lane_center_from_route_waypoints(route_waypoints: list[dict[str, float]]) -
         if math.dist(points[-1], (x, y)) < 0.5:
             continue
         points.append((x, y))
-    if len(points) < 2:
-        return [(0.0, 0.0), (24.0, 0.0)]
     return points
 
 
