@@ -360,7 +360,13 @@ def build_report(
     checks = {
         "python_supported": sys.version_info >= (3, 10),
         "public_model_surface_curated": tuple(PUBLIC_RELEASE_MODELS)
-        == ("constant_velocity", "route_following", "token_dagger_bc", "direct_actor_planner"),
+        == (
+            "constant_velocity",
+            "route_following",
+            "mpc_planner",
+            "token_dagger_bc",
+            "direct_actor_planner",
+        ),
         "public_model_registry_curated": tuple(MODEL_PRESETS) == tuple(PUBLIC_RELEASE_MODELS),
         "scene_presets_present": not missing_scene_presets,
         "public_model_configs_present": not missing_model_configs,

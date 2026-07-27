@@ -180,7 +180,7 @@ shape can be wired in as a new model preset.
 
 | Dataset / source | Where | Status |
 | --- | --- | --- |
-| None (kinematic baselines) | `constant_velocity`, `route_following` | Public, dependency-light, no checkpoint required. |
+| None (dependency-light baselines) | `constant_velocity`, `route_following`, `mpc_planner` | Public, dependency-light, no checkpoint required. |
 | A private token-based BC/DAgger checkpoint | `token_dagger_bc` | Public adapter, private checkpoint (not distributed here). |
 | Scene-matched actor state | `direct_actor_planner` | Public adapter, requires a local oracle actor proxy. |
 | NAVSIM `EgoStatusMLP` (trained on OpenScene, a compact re-release of nuPlan) | [reactive rollout evidence](../artifacts/external/alpasim_navsim_reactive_rollout/) | Public, hash-pinned checkpoint; demonstrated outside the standard `--model` preset flow; camera-blind. |

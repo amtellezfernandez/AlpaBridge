@@ -590,9 +590,25 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
                 preset["driver_env"]["ALPABRIDGE_BASELINE_LOG_PATH"],
             )
 
+    def test_mpc_planner_preset_needs_no_private_artifacts(self) -> None:
+        preset = MODEL_PRESETS["mpc_planner"]
+        self.assertFalse(preset.get("checkpoint_required", False))
+        self.assertFalse(preset.get("requires_oracle_actor_proxy", False))
+        self.assertFalse(preset["force_cuda"])
+        self.assertEqual(
+            "{run_dir}/driver/mpc-planner-log.jsonl",
+            preset["driver_env"]["ALPABRIDGE_MPC_PLANNER_LOG_PATH"],
+        )
+
     def test_public_release_models_match_curated_surface(self) -> None:
         self.assertEqual(
-            ("constant_velocity", "route_following", "token_dagger_bc", "direct_actor_planner"),
+            (
+                "constant_velocity",
+                "route_following",
+                "mpc_planner",
+                "token_dagger_bc",
+                "direct_actor_planner",
+            ),
             PUBLIC_RELEASE_MODELS,
         )
 

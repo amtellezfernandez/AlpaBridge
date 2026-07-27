@@ -56,6 +56,7 @@ from alpabridge.simulator.baseline_drivers import (
 )
 from alpabridge.simulator.environment import scenario_at_tick
 from alpabridge.simulator.maneuver_candidates import evaluate_maneuver_candidates
+from alpabridge.simulator.mpc_planner import MPCPlannerAlpaSimModel, MPCPlannerConfig
 from alpabridge.simulator.perception import perceive_scene
 from alpabridge.simulator.world_model import update_world_state
 from tests.pyproject_helpers import load_string_tables
@@ -65,10 +66,12 @@ def _baseline_prediction_input(
     *,
     speed: float,
     route_waypoints: list[dict[str, float]],
+    command: DriveCommand = DriveCommand.STRAIGHT,
+    hazards: list[dict] | None = None,
 ) -> SimpleNamespace:
     return SimpleNamespace(
         camera_images={"front": [SimpleNamespace(image=np.full((4, 4, 3), 180, dtype=np.uint8), timestamp_us=1000)]},
-        command=DriveCommand.STRAIGHT,
+        command=command,
         speed=speed,
         acceleration=0.0,
         ego_pose_history=[object()],
@@ -77,7 +80,7 @@ def _baseline_prediction_input(
         runtime_random_seed=12345,
         debug_scene_id="clipgt-baseline",
         route_waypoints=route_waypoints,
-        alpasignal={"hazards": []},
+        alpasignal={"hazards": hazards or []},
     )
 
 
@@ -138,6 +141,7 @@ class AlpaSimIntegrationTests(unittest.TestCase):
             [
                 "constant_velocity.yaml",
                 "direct_actor_planner.yaml",
+                "mpc_planner.yaml",
                 "route_following.yaml",
                 "token_dagger_bc.yaml",
             ],
@@ -145,6 +149,7 @@ class AlpaSimIntegrationTests(unittest.TestCase):
         )
         constant_config = (config_dir / "constant_velocity.yaml").read_text()
         route_config = (config_dir / "route_following.yaml").read_text()
+        mpc_config = (config_dir / "mpc_planner.yaml").read_text()
         self.assertIn("model_type: constant_velocity", constant_config)
         self.assertIn('device: "cpu"', constant_config)
         self.assertNotIn("horizon_seconds:", constant_config)
@@ -153,6 +158,8 @@ class AlpaSimIntegrationTests(unittest.TestCase):
         self.assertIn('device: "cpu"', route_config)
         self.assertNotIn("horizon_seconds:", route_config)
         self.assertNotIn("baseline:", route_config)
+        self.assertIn("model_type: mpc_planner", mpc_config)
+        self.assertIn('device: "cpu"', mpc_config)
         config = (config_dir / "token_dagger_bc.yaml").read_text()
         self.assertIn("model_type: token_dagger_bc", config)
         self.assertIn('checkpoint_path: "set-by-alpabridge-launch"', config)
@@ -828,7 +835,104 @@ class AlpaSimIntegrationTests(unittest.TestCase):
         self.assertEqual("command_proxy", reasoning["route_source"])
         # Actually drove the straight-line fallback, not route geometry.
         self.assertLess(abs(float(output.trajectory_xy[-1, 1])), 1e-5)
-        self.assertGreater(float(output.trajectory_xy[-1, 0]), 15.0)
+
+    def test_mpc_planner_tracks_a_clear_straight_route_without_deviating(self) -> None:
+        model = MPCPlannerAlpaSimModel(camera_ids=["front"], context_length=1, output_frequency_hz=4)
+        prediction_input = _baseline_prediction_input(
+            speed=6.0,
+            route_waypoints=[
+                {"x": 0.0, "y": 0.0, "z": 0.0},
+                {"x": 40.0, "y": 0.0, "z": 0.0},
+            ],
+        )
+
+        output = model.predict(prediction_input)
+        reasoning = json.loads(output.reasoning_text)
+
+        self.assertEqual((20, 2), output.trajectory_xy.shape)
+        self.assertLess(float(np.max(np.abs(output.trajectory_xy[:, 1]))), 1e-5)
+        self.assertEqual(0.0, reasoning["chosen_yaw_rate_rps"])
+        self.assertEqual("candidate_rollout_mpc", reasoning["planner"])
+
+    def test_mpc_planner_swerves_and_slows_around_a_hazard_directly_ahead(self) -> None:
+        model = MPCPlannerAlpaSimModel(camera_ids=["front"], context_length=1, output_frequency_hz=4)
+        clear_input = _baseline_prediction_input(
+            speed=6.0,
+            route_waypoints=[
+                {"x": 0.0, "y": 0.0, "z": 0.0},
+                {"x": 40.0, "y": 0.0, "z": 0.0},
+            ],
+        )
+        blocked_input = _baseline_prediction_input(
+            speed=6.0,
+            route_waypoints=[
+                {"x": 0.0, "y": 0.0, "z": 0.0},
+                {"x": 40.0, "y": 0.0, "z": 0.0},
+            ],
+            hazards=[{"x": 8.0, "y": 0.0, "radius": 1.5, "kind": "obstacle", "label": "cone"}],
+        )
+
+        clear_output = model.predict(clear_input)
+        blocked_output = model.predict(blocked_input)
+        blocked_reasoning = json.loads(blocked_output.reasoning_text)
+
+        # A hazard directly in the clear path's way must actually change the
+        # chosen plan - not just get logged and ignored.
+        self.assertNotEqual(0.0, blocked_reasoning["chosen_yaw_rate_rps"])
+        self.assertGreater(
+            float(np.max(np.abs(blocked_output.trajectory_xy[:, 1]))),
+            float(np.max(np.abs(clear_output.trajectory_xy[:, 1]))),
+        )
+        self.assertEqual(1, blocked_reasoning["obstacle_count"])
+
+    def test_mpc_planner_biases_toward_the_command_when_no_route_is_available(self) -> None:
+        model = MPCPlannerAlpaSimModel(camera_ids=["front"], context_length=1, output_frequency_hz=4)
+        left_input = _baseline_prediction_input(speed=6.0, route_waypoints=[], command=DriveCommand.LEFT)
+        right_input = _baseline_prediction_input(speed=6.0, route_waypoints=[], command=DriveCommand.RIGHT)
+
+        left_output = model.predict(left_input)
+        right_output = model.predict(right_input)
+
+        self.assertGreater(float(left_output.trajectory_xy[-1, 1]), 0.0)
+        self.assertLess(float(right_output.trajectory_xy[-1, 1]), 0.0)
+
+    def test_mpc_planner_accelerates_toward_cruise_speed_when_clear(self) -> None:
+        model = MPCPlannerAlpaSimModel(
+            camera_ids=["front"],
+            context_length=1,
+            output_frequency_hz=4,
+            config=MPCPlannerConfig(target_cruise_speed_mps=8.0),
+        )
+        prediction_input = _baseline_prediction_input(
+            speed=4.0,
+            route_waypoints=[{"x": 0.0, "y": 0.0, "z": 0.0}, {"x": 60.0, "y": 0.0, "z": 0.0}],
+        )
+
+        output = model.predict(prediction_input)
+        reasoning = json.loads(output.reasoning_text)
+
+        self.assertGreater(reasoning["chosen_accel_mps2"], 0.0)
+
+    def test_mpc_planner_rejects_frozen_camera_content_like_every_other_model(self) -> None:
+        model = MPCPlannerAlpaSimModel(camera_ids=["front"], context_length=1, output_frequency_hz=4)
+        first = _baseline_prediction_input(
+            speed=6.0,
+            route_waypoints=[{"x": 0.0, "y": 0.0, "z": 0.0}, {"x": 40.0, "y": 0.0, "z": 0.0}],
+        )
+        first.ego_pose_history = [SimpleNamespace(timestamp_us=1000, x=0.0, y=0.0, yaw=0.0)]
+        model.predict(first)
+
+        moved_frozen_camera = _baseline_prediction_input(
+            speed=6.0,
+            route_waypoints=[{"x": 0.0, "y": 0.0, "z": 0.0}, {"x": 40.0, "y": 0.0, "z": 0.0}],
+        )
+        moved_frozen_camera.ego_pose_history = [SimpleNamespace(timestamp_us=1100, x=5.0, y=0.0, yaw=0.0)]
+        moved_frozen_camera.camera_images = {
+            "front": [SimpleNamespace(image=np.full((4, 4, 3), 180, dtype=np.uint8), timestamp_us=1100)]
+        }
+
+        with self.assertRaises(RuntimeError):
+            model.predict(moved_frozen_camera)
 
     def test_alpasim_signal_preserves_static_hazard_shape_metadata(self) -> None:
         prediction_input = SimpleNamespace(

@@ -67,8 +67,8 @@ tested usage this pattern is based on.
 Matching the [Policy Backends](../README.md#policy-backends) table:
 
 - **Inside AlpaSim**: declare an `alpasim.models` entry point — the same
-  mechanism `constant_velocity`, `route_following`, `token_dagger_bc`, and
-  `direct_actor_planner` use (see `pyproject.toml`'s
+  mechanism `constant_velocity`, `route_following`, `mpc_planner`,
+  `token_dagger_bc`, and `direct_actor_planner` use (see `pyproject.toml`'s
   `[project.entry-points."alpasim.models"]`). Entry-point groups are a
   standard Python packaging mechanism, discovered across every installed
   package, not just one — so this can live in your own package alongside

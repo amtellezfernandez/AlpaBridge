@@ -18,9 +18,9 @@ commands for presets the README doesn't spell out (`token_dagger_bc`,
 - Optional gated extensions: a Token BC/DAgger checkpoint for learned runs or
   a scene-matched actor proxy for direct-planner runs.
 
-The simple, no-setup public core uses `constant_velocity` and
-`route_following`; neither needs a learned checkpoint or direct-planner
-actor proxy.
+The simple, no-setup public core uses `constant_velocity`,
+`route_following`, and `mpc_planner`; none of them needs a learned
+checkpoint or direct-planner actor proxy.
 
 ## Install
 

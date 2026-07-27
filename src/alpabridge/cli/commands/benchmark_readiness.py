@@ -21,6 +21,7 @@ DEFAULT_MODEL_FAMILIES = {
     "route_following": "route_following",
     "token_dagger_bc": "token_dagger_bc",
     "direct_actor_planner": "route_following",
+    "mpc_planner": "route_following",
 }
 DEFAULT_REQUIRED_METRICS = (
     "collision_any",
@@ -77,7 +78,8 @@ def _parse_args() -> argparse.Namespace:
         help=(
             "Map a summary run_config.model value to a benchmark family. Defaults include "
             "constant_velocity=replay_or_constant_velocity, route_following=route_following, "
-            "token_dagger_bc=token_dagger_bc, and direct_actor_planner=route_following."
+            "token_dagger_bc=token_dagger_bc, direct_actor_planner=route_following, and "
+            "mpc_planner=route_following."
         ),
     )
     parser.add_argument(

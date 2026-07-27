@@ -22,9 +22,9 @@ src/alpabridge/driver/policy_registry.py
 
 Any policy registered in `policy_registry.py` is servable behind this
 interface — built-ins include `constant_velocity`, `route_following`,
-`token_dagger_bc`, `navsim_ego_status_mlp`, and `vavam` (a real published
-video-action policy, not a dependency-light baseline). The driver itself
-reuses:
+`mpc_planner`, `token_dagger_bc`, `navsim_ego_status_mlp`, and `vavam` (a
+real published video-action policy, not a dependency-light baseline). The
+driver itself reuses:
 
 - `SensorFreshnessGuard`, trajectory validation, and resampling from the shared
   AlpaBridge adapter layer.
