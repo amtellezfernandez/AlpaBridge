@@ -17,24 +17,18 @@
 AlpaBridge is a platform for running driving policies through
 [NVIDIA AlpaSim](https://github.com/NVlabs/alpasim)'s live simulation loop
 and evaluating how they actually drive — not just how they score against a
-logged benchmark. It already serves six policies through the same
-interface, from simple, no-setup baselines to a real, published
-318-million-parameter video-action model (see [Policy
-Backends](#policy-backends) below).
+logged benchmark. Bring your own policy, or pick one of six built-ins, from
+simple no-setup baselines to a real, published 318-million-parameter
+video-action model (see [Policy Backends](#policy-backends) below).
 
-Whichever policy is selected, AlpaSim sends AlpaBridge the live camera
-image, the car's own motion, the current command, and the route. AlpaBridge
-hands these to the policy in a simple format, takes the trajectory it
-returns, converts it into the format AlpaSim needs, and lets AlpaSim move
-the car forward using it.
+AlpaSim sends AlpaBridge the live camera image, the car's own motion, the
+current command, and the route. AlpaBridge passes these to your policy,
+takes the trajectory it returns, converts it into the format AlpaSim needs,
+and lets AlpaSim move the car forward.
 
 AlpaBridge also sets up your AlpaSim checkout, checks it's ready to run,
 runs many scenes in a row, retries failures, keeps a record of each run, and
 packages logs for support.
-
-Bring your own policy checkpoint, or pick one of the built-ins — AlpaSim
-provides the simulator, and AlpaBridge connects either one to it the same
-way.
 
 ## Demo
 
@@ -138,47 +132,30 @@ Want to run your own policy? See [Bring Your Own
 Policy](docs/custom-policies.md). Want to evaluate through the AlpaSim E2E
 Challenge, or your own evaluator? See [Evaluators](docs/evaluators.md).
 
-## Install
+## Install & Connect AlpaSim
 
-You don't need a GPU to install or plan a run:
-
-```bash
-uv sync
-uv run alpabridge-doctor --strict-installed --json
-```
-
-A real AlpaSim rollout needs x86_64 Linux, Docker, the NVIDIA Container
-Toolkit, a GPU, a local AlpaSim checkout, and local scene files.
-
-## Connect AlpaSim
-
-Check what AlpaBridge would change in your AlpaSim checkout:
+Install AlpaBridge and point it at your AlpaSim checkout — none of this
+needs a GPU:
 
 ```bash
-uv run alpabridge-setup \
-  --alpasim-root /path/to/alpasim \
-  --check-only
+uv sync                                                      # install
+uv run alpabridge-setup --alpasim-root /path/to/alpasim      # connect the checkout
+uv run alpabridge-ready --alpasim-root /path/to/alpasim \
+  --scene-preset fresh_3scene                                # check it's ready to run
 ```
 
-Apply the changes, then check that everything is ready:
-
-```bash
-uv run alpabridge-setup --alpasim-root /path/to/alpasim
-uv run alpabridge-ready \
-  --alpasim-root /path/to/alpasim \
-  --scene-preset fresh_3scene
-```
-
-The setup command checks that your AlpaSim checkout looks as expected before
-it changes anything. The readiness command checks your machine, Docker and GPU
-access, images, model inputs, and the scenes you picked.
+`alpabridge-setup` applies AlpaBridge's changes to the checkout — add
+`--check-only` first to preview them without applying anything.
+`alpabridge-ready` then checks your machine, Docker/GPU access, and the
+scenes you picked. A real rollout needs x86_64 Linux, Docker, the NVIDIA
+Container Toolkit, a GPU, and local scene files.
 
 ## Get Scene Data
 
-Evaluating through a [standalone driver](docs/evaluators.md) instead? You
-can skip this section: that path supplies its own scenes, no local scene
-data needed. This step is only for running a policy inside AlpaSim itself
-below (`alpabridge-launch` / `alpabridge-reproduce` with `--scene-preset`).
+Only needed for running a policy inside AlpaSim itself below
+(`alpabridge-launch` / `alpabridge-reproduce` with `--scene-preset`) — skip
+this if you're using a [standalone driver](docs/evaluators.md) instead,
+since that path supplies its own scenes.
 
 Real scene files for that path come from a **gated** Hugging Face dataset:
 [request
