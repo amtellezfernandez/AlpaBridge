@@ -1,7 +1,14 @@
 # Getting Started
 
 AlpaBridge is an external-driver adapter for an existing AlpaSim checkout. It
-does not install AlpaSim, download gated scenes, or ship policy checkpoints.
+does not install AlpaSim or ship policy checkpoints. It also doesn't bundle
+gated scene data, but it does provide a tool to download it with your own
+access (see Get Scene Data below) — this repo never redistributes it itself.
+
+For the fastest path from zero to a running rollout, start with the [main
+README](../README.md#install--connect-alpasim) instead; this doc adds launch
+commands for presets the README doesn't spell out (`token_dagger_bc`,
+`direct_actor_planner`).
 
 ## Requirements
 
@@ -18,11 +25,13 @@ actor proxy.
 ## Install
 
 ```bash
-uv sync --extra dev
+uv sync
 uv run alpabridge-doctor --strict-installed --json
 ```
 
-`uv sync` uses the tracked `uv.lock` dependency snapshot.
+`uv sync` uses the tracked `uv.lock` dependency snapshot. Contributing to
+AlpaBridge itself (not just using it) needs the dev tooling instead: `uv sync
+--extra dev` — see [Contributing](../.github/CONTRIBUTING.md).
 
 ## Connect AlpaSim
 
@@ -38,6 +47,13 @@ Apply the tracked override layer and validate the environment:
 alpabridge-setup --alpasim-root /path/to/alpasim
 alpabridge-ready --alpasim-root /path/to/alpasim --scene-preset fresh_3scene
 ```
+
+## Get Scene Data
+
+`alpabridge-ready` above reports whether the scenes your preset needs are
+already cached locally. If they aren't, see the [main README's Get Scene
+Data](../README.md#get-scene-data) section — real scene files come from a
+gated Hugging Face dataset, fetched with `alpabridge-build-local-cache`.
 
 ## Materialize Commands
 
