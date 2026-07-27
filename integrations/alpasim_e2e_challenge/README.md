@@ -85,44 +85,8 @@ This harness can produce external-driver compatibility evidence:
 It is not policy-quality evidence until an actual local conformance run or
 official submission returns metrics that are retained with provenance.
 
-## Real Closed-Loop Rollout (vavam)
-
-A full local closed-loop rollout was run against the `+e2e_challenge=dev`
-preset with `vavam` (the real 318M-parameter public checkpoint, on a real
-GPU) - not a self-test, not synthetic inputs. Result: the driver served all
-197 `Drive` RPCs over the full 19.91s simulated scene with no protocol
-errors or crashes. The vehicle tracked the route closely for the portion of
-the rollout the eval kept (`dist_to_gt_trajectory` max 1.57m, stayed
-on-road), then had a front collision partway through, after which the
-eval's own modifiers stop scoring (`progress_rel_to_total: 0.41`).
-
-That result supports two different claims, and it's worth keeping them
-separate:
-
-- **The integration works end to end**: the gRPC service, session
-  handling, pose-aware inference caching, and image preprocessing all held
-  up through a real rollout with no technical failures.
-- **The policy itself is unevaluated**: one scene, one seed, a base
-  checkpoint not fine-tuned or scored for driving quality here. The
-  collision says something about this checkpoint on this scene, not about
-  the harness.
-
-Two real things were found and fixed only by running this for real, not by
-synthetic testing:
-
-- `resize_and_center_crop` (now in `image_ops.py`) scaled by height alone
-  and only cropped width - correct only when the source is at least as wide
-  as the target already. The real camera feed (568x320) is a hair narrower
-  than VAVAM's 1600x900 target aspect ratio, so it failed on the very first
-  real frame. Fixed to scale-to-cover (larger of both ratios) and crop both
-  dimensions - this exact bug is also present in the official reference
-  sample's own resize helper.
-- Real measured latency (not modeled): on the tested GPU, cache hits
-  (`PoseReanchoredInferenceCache`, see `inference_rate_cache.py`) are
-  sub-millisecond; the periodic real-inference calls land around
-  118-137ms - at or slightly over the challenge's stated 100ms/call
-  figure. Without the cache, every one of the 197 calls would pay that
-  cost; with it, only roughly 1 in 5 does. Whether the official evaluator
-  scores per-call latency, an aggregate throughput budget, or something
-  else isn't documented publicly - this describes what was measured, not a
-  compliance claim.
+For evidence from a real closed-loop rollout run through this harness
+(including two bugs only a real GPU run surfaced), see [AlpaSim E2E
+compatibility](../../docs/challenge-compatibility.md#a-second-run-with-a-real-policy-instead-of-a-baseline)
+and the framework-level summary in the [project
+README](../../README.md#integration-test-results).
