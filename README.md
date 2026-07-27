@@ -27,13 +27,6 @@ failures, keeping a record of each run, and packaging logs for support.
 AlpaBridge is not a simulator, and it does not come with its own driving
 policy — you bring the policy.
 
-|  |  |
-| --- | --- |
-| **Tested** | 294 automated tests, no lint errors, checked on every push |
-| **Installable** | One command (`uv sync`) builds a real, installable package, tested fresh on every merge |
-| **Self-checking** | `alpabridge-doctor` checks the install, the commands, and the AlpaSim checkout before anything runs |
-| **Auditable** | Every run saves its full settings, a record of what happened, driver events, and a bundle of logs for support |
-
 ## Demo
 
 Two real AlpaSim runs, each shown as a map view next to its camera feed.
