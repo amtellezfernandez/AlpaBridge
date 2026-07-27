@@ -1,4 +1,4 @@
-# AlpaBridge: Connect a Driving Policy to NVIDIA AlpaSim
+# AlpaBridge: A Platform for Evaluating Driving Policies in NVIDIA AlpaSim
 
 <p align="center">
   <a href="https://github.com/amtellezfernandez/AlpaBridge/actions/workflows/ci.yml"><img src="https://github.com/amtellezfernandez/AlpaBridge/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
@@ -7,26 +7,35 @@
 </p>
 
 <p align="center">
-  <strong>Run your driving policy through AlpaSim's live simulation loop.</strong><br>
+  <strong>One interface, six policy backends and growing — from dependency-light baselines to a real, published video-action model.</strong><br>
   <a href="docs/getting-started.md">Get started</a> |
   <a href="docs/README.md">Documentation</a> |
   <a href="docs/cli.md">CLI reference</a> |
   <a href="docs/design.md">Architecture</a>
 </p>
 
-AlpaBridge connects your driving policy to
-[NVIDIA AlpaSim](https://github.com/NVlabs/alpasim). AlpaSim sends AlpaBridge
-the live camera image, the car's own motion, the current command, and the
-route. AlpaBridge hands these to your policy in a simple format, takes the
-trajectory your policy returns, converts it into the format AlpaSim needs,
-and lets AlpaSim move the car forward using it.
+AlpaBridge is a platform for running driving policies through
+[NVIDIA AlpaSim](https://github.com/NVlabs/alpasim)'s live simulation loop
+and evaluating how they actually drive — not just how they score against a
+logged benchmark. It already serves six policies behind the same interface,
+from dependency-light baselines to a real, published 318-million-parameter
+video-action model (see [Policy Backends](#policy-backends) below). Adding
+the next one — a new checkpoint, a VLA policy, a world-model policy — means
+implementing one contract and registering it, not rebuilding the harness.
+
+Whichever policy is selected, AlpaSim sends AlpaBridge the live camera
+image, the car's own motion, the current command, and the route. AlpaBridge
+hands these to the policy in a simple format, takes the trajectory it
+returns, converts it into the format AlpaSim needs, and lets AlpaSim move
+the car forward using it.
 
 AlpaBridge also sets up your AlpaSim checkout, checks it's ready to run,
 runs many scenes in a row, retries failures, keeps a record of each run, and
 packages logs for support.
 
-Bring your own policy checkpoint — AlpaSim provides the simulator, and
-AlpaBridge connects the two.
+Bring your own policy checkpoint, or pick one of the built-ins — AlpaSim
+provides the simulator, and AlpaBridge connects either one to it the same
+way.
 
 ## Demo
 
@@ -99,22 +108,35 @@ the car currently sees and knows, and returns a trajectory. AlpaBridge
 handles everything else: talking to AlpaSim, timing, retries, and saving
 evidence of the run.
 
-### Model Presets
+### Policy Backends
 
-AlpaBridge ships four built-in policies:
+Every policy — dependency-light baseline or real published checkpoint —
+implements the same
+[`BaseTrajectoryModel`](src/alpabridge/simulator/alpasim_contract.py)
+contract, and is servable either in-process (loaded inside AlpaSim,
+registered in `pyproject.toml`) or through the [standalone
+driver](#run-as-a-standalone-driver) (registered in
+[`policy_registry.py`](src/alpabridge/driver/policy_registry.py)):
 
-| Preset | Purpose | Extra input |
-| --- | --- | --- |
-| `constant_velocity` | Simple baseline, no setup needed | None |
-| `route_following` | Simple baseline that follows the route | None |
-| `token_dagger_bc` | Wraps a compatible trained model | A checkpoint file |
-| `direct_actor_planner` | Planner that uses other cars' real positions | An actor-state file |
+| Policy | Purpose | Extra input | Served via |
+| --- | --- | --- | --- |
+| `constant_velocity` | Dependency-light baseline | None | In-process, standalone |
+| `route_following` | Dependency-light baseline that follows the route | None | In-process, standalone |
+| `token_dagger_bc` | Wraps a compatible trained checkpoint | A checkpoint file | In-process, standalone |
+| `direct_actor_planner` | Planner using other cars' real positions | An actor-state file | In-process only |
+| `navsim_ego_status_mlp` | Public NAVSIM EgoStatusMLP checkpoint | A checkpoint file | Standalone only |
+| `vavam` | Public 318M-parameter video-action model ([Valeo VideoActionModel](https://github.com/valeoai/VideoActionModel)) | A checkpoint + tokenizer checkpoint | Standalone only |
 
 The first two need no checkpoint, so they're the easiest way to test your
-AlpaSim setup. All four still need real local scene files — see [Get Scene
-Data](#get-scene-data) below. Both real runs above use AlpaSim scenes that
-already have a preset in this repo. Other datasets (nuScenes, nuPlan,
-Argoverse 2) aren't covered here yet — see [compatible
+AlpaSim setup. Adding a new one — including a future VLA or world-model
+policy — is a matter of implementing the contract and registering it in one
+of those two places; nothing about the serving code (timing, retries,
+evidence capture) changes.
+
+The in-process presets (the first four) still need real local scene files —
+see [Get Scene Data](#get-scene-data) below. Both real runs above use
+AlpaSim scenes that already have a preset in this repo. Other datasets
+(nuScenes, nuPlan, Argoverse 2) aren't covered here yet — see [compatible
 datasets](docs/womd-targeting.md) for what that would take.
 
 ## Install
@@ -241,13 +263,15 @@ ALPASIM_DRIVER_HOST=localhost ALPASIM_DRIVER_PORT=6789 \
   uv run alpasim_wizard +e2e_challenge=dev
 ```
 
-Any policy listed in
-[`src/alpabridge/driver/policy_registry.py`](src/alpabridge/driver/policy_registry.py)
-can be picked with `--model`, the same way as the presets above. That's the
-four presets above, plus `navsim_ego_status_mlp` and `vavam` — the public
-[Valeo VideoActionModel](https://github.com/valeoai/VideoActionModel), a
-real 318-million-parameter checkpoint. It needs `torch` and the `vam`
-package, neither installed by default.
+Any policy marked "standalone" in [Policy Backends](#policy-backends) above
+can be picked with `--model` this way. `vavam` additionally needs
+[`torch`](https://pytorch.org/get-started/locally/) (pick the build for
+your hardware — CPU or a specific CUDA version) and the public `vam`
+package:
+
+```bash
+pip install git+https://github.com/valeoai/VideoActionModel@v1.0.0
+```
 
 NVIDIA's AlpaSim E2E Challenge is one evaluator that connects this way. For a
 locked-down container built for that submission format, see [AlpaSim E2E
