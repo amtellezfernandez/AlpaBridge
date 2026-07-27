@@ -86,10 +86,14 @@ Optional models use the same external-driver boundary:
 - `token_dagger_bc`: a learned token policy with a compatible local checkpoint;
 - `direct_actor_planner`: a candidate planner with a scene-matched actor proxy.
 
-The challenge-style driver also supports the public NAVSIM EgoStatusMLP
-architecture for the retained integration run. It is not registered as a
-general release-core preset because its checkpoint and framework dependencies
-are external.
+The standalone driver (`alpabridge-driver`, see the README's [Policy
+Backends](../README.md#policy-backends) table and
+[`policy_registry.py`](../src/alpabridge/driver/policy_registry.py)) also
+serves the public NAVSIM EgoStatusMLP architecture and `vavam` (the public
+[Valeo VideoActionModel](https://github.com/valeoai/VideoActionModel)).
+Neither is registered as a general in-process `alpasim.models` preset,
+because their checkpoint and framework dependencies (`torch`, `vam`) are
+external and heavier than the release-core baselines.
 
 ## Trajectory Conversion
 
