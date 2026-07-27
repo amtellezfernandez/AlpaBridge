@@ -80,6 +80,17 @@ Matching the [Policy Backends](../README.md#policy-backends) table:
   [Contributing](../.github/CONTRIBUTING.md) — there's no external plugin
   hook for this path yet.
 
+Two registrations, not one, because the two paths configure a policy from
+genuinely different sources: in-process, AlpaSim calls `from_config(model_cfg,
+...)` with a Hydra config object loaded from YAML — real models read several
+config-specific fields there. The standalone driver has no Hydra runtime at
+all; its configuration is plain CLI flags. A generic bridge between the two
+would mean faking an entire Hydra config per model, more fragile than
+writing both factories directly. Where policies genuinely share a
+construction shape — `constant_velocity` and `route_following` do, in the
+standalone driver's registry — one factory is parameterized by class instead
+of copied; that kind of duplication is worth removing, this one isn't.
+
 Either way, nothing about the serving code itself (timing, retries,
 evidence capture, the gRPC service) changes — that's the same for every
 policy in the [Policy Backends](../README.md#policy-backends) table,

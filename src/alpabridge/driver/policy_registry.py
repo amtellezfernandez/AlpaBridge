@@ -8,6 +8,22 @@ and it becomes selectable the same way as any built-in model. Any
 ``BaseTrajectoryModel``-compatible policy can be evaluated through the same
 interface this way, for research and benchmarking as much as for competition
 (the AlpaSim E2E challenge is one deployment target among others).
+
+Why this registry exists separately from the in-process ``alpasim.models``
+entry points (see ``pyproject.toml``), instead of one shared registration
+point: the two paths configure a policy from genuinely different sources.
+In-process, AlpaSim calls ``SomeModel.from_config(model_cfg, ...)`` with a
+Hydra config object loaded from a YAML file - and real models read many
+config-specific fields there (``TokenBCAlpaSimModel.from_config`` alone
+reads six, several with their own env-var overrides). The standalone
+driver has no Hydra runtime at all - its configuration is plain CLI flags
+(``PolicyContext`` below). A generic bridge from one to the other would
+mean faking an entire Hydra config per model, which is more fragile than
+just writing the two factories directly - so this registry constructs
+each policy's plain constructor itself rather than routing through
+``from_config``. Where policies genuinely share a construction shape (the
+two dependency-light baselines below), one factory is parameterized by
+class instead of copied - that duplication was accidental, this one isn't.
 """
 
 from __future__ import annotations
@@ -68,26 +84,31 @@ def _resample_config(adapter: PolicyContext) -> SimpleNamespace:
     )
 
 
+def _baseline_factory(model_cls: type) -> PolicyFactory:
+    """Both dependency-light baselines share this exact construction shape -
+    one real factory, parameterized by class, instead of two copies."""
+
+    def factory(adapter: PolicyContext) -> Any:
+        return model_cls(
+            camera_ids=[adapter.model_camera_id],
+            context_length=1,
+            output_frequency_hz=adapter.output_frequency_hz,
+            config=_resample_config(adapter),
+        )
+
+    return factory
+
+
 def _build_constant_velocity(adapter: PolicyContext) -> Any:
     from alpabridge.simulator.baseline_drivers import ConstantVelocityAlpaSimModel
 
-    return ConstantVelocityAlpaSimModel(
-        camera_ids=[adapter.model_camera_id],
-        context_length=1,
-        output_frequency_hz=adapter.output_frequency_hz,
-        config=_resample_config(adapter),
-    )
+    return _baseline_factory(ConstantVelocityAlpaSimModel)(adapter)
 
 
 def _build_route_following(adapter: PolicyContext) -> Any:
     from alpabridge.simulator.baseline_drivers import RouteFollowingAlpaSimModel
 
-    return RouteFollowingAlpaSimModel(
-        camera_ids=[adapter.model_camera_id],
-        context_length=1,
-        output_frequency_hz=adapter.output_frequency_hz,
-        config=_resample_config(adapter),
-    )
+    return _baseline_factory(RouteFollowingAlpaSimModel)(adapter)
 
 
 def _build_token_dagger_bc(adapter: PolicyContext) -> Any:
