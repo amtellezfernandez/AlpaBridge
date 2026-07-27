@@ -270,10 +270,9 @@ make test    # 294 tests, no AlpaSim/GPU/checkpoint required
 make verify  # + Ruff, coverage, fresh-checkout install smoke test, wheel/sdist build
 ```
 
-Every push runs the same steps in CI: lint checks, the tests that need no
-extra dependencies, coverage, a fresh install, building an installable
-package, and a quick test that installs it and runs the real commands. None
-of this needs AlpaSim scenes, a GPU, or a checkpoint.
+None of this needs AlpaSim scenes, a GPU, or a checkpoint, and the same
+checks run in CI on every push. See
+[Contributing](.github/CONTRIBUTING.md) for the rest of the `make` targets.
 
 ## Scope
 
