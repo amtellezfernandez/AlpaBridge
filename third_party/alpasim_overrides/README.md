@@ -24,11 +24,19 @@ not as an implicit runtime dependency on some separate legacy package.
 
 ## Contents
 
-- `route_waypoints.patch` — tracked patch for route-waypoint adapter behavior
-- `local_checkout.patch` — local checkout patch material
+- `route_waypoints.patch`, `local_checkout.patch` — `git format-patch`-style
+  patches against the pinned AlpaSim release. Each is self-labeling: its
+  `Subject:` line and commit body are the description, so there's no
+  separate, driftable prose summary of what it changes to keep in sync -
+  read the patch file itself (`head -20 <patch>`).
 - `Dockerfile.amd64` — runtime image customization for supported hosts
 - `src/wizard/**` — tracked wizard/deployment overrides
 - `src/driver/**` — tracked external-driver override files
+
+A file only ever appears as *either* a patch hunk *or* a full tracked copy
+here, never both - `alpabridge-setup` applies patches first and then copies
+full-file overrides on top, so a hunk touching the same file as a copy would
+be silently discarded (the copy always wins).
 
 ## Boundary Rule
 
