@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 import sys
 import unittest
@@ -29,6 +30,7 @@ from alpabridge.simulator.alpasim_contract import (
     DriveCommand,
     ModelPrediction,
     SensorFreshnessGuard,
+    _yaw_from_quat_like,
     corrected_speed_mps,
     pose_history_speed_mps,
     resample_trajectory,
@@ -2193,6 +2195,73 @@ class AlpaSimIntegrationTests(unittest.TestCase):
         diagnostics = guard.validate(_frame("session-b", 1000, 50.0, 182))
 
         self.assertEqual("ok_initial", diagnostics["status"])
+
+    def test_yaw_from_quat_matches_the_full_formula_not_a_pure_yaw_approximation(self) -> None:
+        # This used to hardcode atan2(2wz, 1-2z^2), which silently assumes
+        # x=y=0 (no roll/pitch at all) - correct only for a pure-yaw pose.
+        # AlpaSim's own real implementation (utils_rs's Pose.yaw(), exposed
+        # via alpasim_utils.geometry.quat_to_yaw) uses the full formula:
+        # atan2(2*(wz+xy), 1-2*(y^2+z^2)). A combined ~10 degree roll+pitch
+        # (a plausible hard-brake-while-cornering moment) pushed the old
+        # formula's error past 0.01 rad - the exact threshold
+        # SensorFreshnessGuard's pose-changed check uses.
+        true_yaw = 0.3
+        # Quaternion for yaw=0.3, pitch=10deg, roll=10deg (ZYX Euler), i.e.
+        # x/y are genuinely non-zero, not sensor noise.
+        quat = SimpleNamespace(x=0.0728743, y=0.0988240, z=0.1407922, w=0.9823954)
+
+        yaw = _yaw_from_quat_like(quat)
+
+        self.assertAlmostEqual(true_yaw, yaw, places=4)
+
+    def test_yaw_from_quat_still_supports_a_quat_stub_with_no_x_y_attributes(self) -> None:
+        # Some quat-like objects in this codebase only ever expose z/w
+        # (a pure-yaw assumption baked into the caller, not this function) -
+        # x/y must default to 0.0, not raise, preserving the old behavior
+        # exactly for that case.
+        half = 0.15
+        stub_quat = SimpleNamespace(z=math.sin(half), w=math.cos(half))
+
+        self.assertAlmostEqual(0.3, _yaw_from_quat_like(stub_quat), places=6)
+
+    def test_sensor_freshness_guard_pose_changed_detection_uses_the_correct_yaw(self) -> None:
+        # End-to-end: with the old simplified formula, this exact
+        # roll+pitch pair could compute a yaw delta on the wrong side of
+        # the 0.01 rad "did the pose change" threshold.
+        guard = SensorFreshnessGuard("test-model")
+
+        def _pose_frame(timestamp_us: int, quat: SimpleNamespace, image_value: int) -> SimpleNamespace:
+            return SimpleNamespace(
+                session_uuid="session-a",
+                camera_images={
+                    "front": [
+                        SimpleNamespace(timestamp_us=timestamp_us, image=np.full((4, 4, 3), image_value, dtype=np.uint8))
+                    ]
+                },
+                ego_pose_history=[
+                    SimpleNamespace(
+                        timestamp_us=timestamp_us,
+                        pose=SimpleNamespace(
+                            vec=SimpleNamespace(x=0.0, y=0.0, z=0.0),
+                            quat=quat,
+                        ),
+                    )
+                ],
+            )
+
+        level_quat = SimpleNamespace(x=0.0, y=0.0, z=math.sin(0.15), w=math.cos(0.15))
+        tilted_quat = SimpleNamespace(x=0.0728743, y=0.0988240, z=0.1407922, w=0.9823954)
+
+        guard.validate(_pose_frame(1000, level_quat, 180))
+        diagnostics = guard.validate(_pose_frame(1100, tilted_quat, 181))
+
+        # Both quaternions encode the same true yaw (0.3 rad), and x/y
+        # position is unchanged - the pose must correctly read as static.
+        # With the old formula, the tilted quat's yaw would compute as
+        # ~0.28 (a ~0.02 rad drop from the level quat's 0.30), tripping
+        # _pose_changed's dheading > 0.01 check on a roll/pitch-only
+        # tilt that never actually changed the car's heading over ground.
+        self.assertEqual("ok_pose_static", diagnostics["status"])
 
     def test_direct_actor_planner_log_includes_sensor_freshness(self) -> None:
         with TemporaryDirectory() as tmp:
