@@ -30,6 +30,7 @@ from alpabridge.simulator.alpasim_contract import (
     DriveCommand,
     ModelPrediction,
     SensorFreshnessGuard,
+    _pose_like_to_signature,
     _yaw_from_quat_like,
     corrected_speed_mps,
     pose_history_speed_mps,
@@ -2067,6 +2068,30 @@ class AlpaSimIntegrationTests(unittest.TestCase):
         self.assertAlmostEqual(4.0, pose["world_y"])
         self.assertAlmostEqual(0.5, pose["world_heading"])
 
+    def test_prediction_ego_pose_world_degrades_gracefully_for_a_malformed_quat(self) -> None:
+        # Regression test: a quat object present but missing z/w (e.g. a
+        # malformed or partial pose message) used to crash this same
+        # world-pose parsing path (shared, after this session's dedup,
+        # with alpasim_contract.py's _pose_like_to_signature) with an
+        # uncaught TypeError from float(None), instead of degrading to
+        # "no rotation known" the way an entirely absent quat already did.
+        prediction_input = SimpleNamespace(
+            ego_pose_history=[
+                SimpleNamespace(
+                    timestamp_us=456,
+                    pose=SimpleNamespace(
+                        vec=SimpleNamespace(x=3.0, y=4.0, z=0.0),
+                        quat=SimpleNamespace(some_other_field=1.0),
+                    ),
+                ),
+            ]
+        )
+
+        pose = _prediction_ego_pose_world(prediction_input)
+
+        self.assertIsNotNone(pose)
+        assert pose is not None
+        self.assertEqual(0.0, pose["world_heading"])
 
     def test_direct_actor_planner_rejects_stale_camera_stream_when_ego_pose_moves(self) -> None:
         model = DirectActorPlannerAlpaSimModel(camera_ids=["front"], context_length=1, output_frequency_hz=4)
@@ -2223,6 +2248,18 @@ class AlpaSimIntegrationTests(unittest.TestCase):
         stub_quat = SimpleNamespace(z=math.sin(half), w=math.cos(half))
 
         self.assertAlmostEqual(0.3, _yaw_from_quat_like(stub_quat), places=6)
+
+    def test_yaw_from_quat_defaults_to_identity_instead_of_raising_on_missing_fields(self) -> None:
+        # Regression test: this function used to return None when z/w were
+        # both absent, which crashed _pose_like_to_signature's final
+        # round(float(yaw), 6) with an uncaught TypeError - a quat object
+        # present but missing fields must degrade to "no rotation known"
+        # (yaw=0.0), the same as an entirely absent quat, not raise.
+        self.assertEqual(0.0, _yaw_from_quat_like(None))
+        self.assertEqual(0.0, _yaw_from_quat_like(SimpleNamespace(some_other_field=1.0)))
+
+        pose = SimpleNamespace(x=1.0, y=2.0, quat=SimpleNamespace(some_other_field=1.0))
+        self.assertEqual((1.0, 2.0, 0.0), _pose_like_to_signature(pose))
 
     def test_sensor_freshness_guard_pose_changed_detection_uses_the_correct_yaw(self) -> None:
         # End-to-end: with the old simplified formula, this exact

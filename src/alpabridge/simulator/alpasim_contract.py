@@ -456,7 +456,7 @@ def _pose_like_to_signature(pose: Any) -> tuple[float, float, float] | None:
     yaw = _first_float_attr(pose, ("yaw", "heading", "heading_rad", "world_heading"))
     if yaw is None:
         quat = getattr(pose, "quat", getattr(pose, "quaternion", None))
-        yaw = _yaw_from_quat_like(quat) if quat is not None else 0.0
+        yaw = _yaw_from_quat_like(quat)
     return (round(float(x), 4), round(float(y), 4), round(float(yaw), 6))
 
 
@@ -496,25 +496,30 @@ def _jsonable_pose_signature(
     return [float(pose[0]), float(pose[1]), float(pose[2])]
 
 
-def _yaw_from_quat_like(quat: Any) -> float | None:
-    if quat is None:
-        return None
-    z = _first_float_attr(quat, ("z",))
+def _yaw_from_quat_like(quat: Any) -> float:
+    """Extract yaw from a quat-like object, defaulting any missing/absent
+    component to identity (w=1, x=y=z=0) rather than raising or returning
+    None - a quat present but missing a field must degrade to "no rotation
+    known", the same way a wholly absent quat already does, not crash
+    whatever converts this into a pose signature downstream.
+
+    Full formula, matching AlpaSim's own real implementation (utils_rs's
+    Pose.yaw(), via alpasim_utils.geometry.quat_to_yaw):
+    atan2(2*(w*z + x*y), 1 - 2*(y*y + z*z)). Dropping x/y unconditionally
+    (this function's previous shortcut) was only ever exactly correct
+    when the pose had no roll/pitch component at all; a combined
+    roll+pitch of ~10 degrees each (a plausible hard-brake-while-cornering
+    moment) already pushes the resulting yaw error past the 0.01 rad
+    threshold SensorFreshnessGuard's pose-changed check uses.
+    """
     w = _first_float_attr(quat, ("w",))
-    if z is None or w is None:
-        return None
-    # Full yaw-from-quaternion formula, matching AlpaSim's own real
-    # implementation (utils_rs's Pose.yaw(), via alpasim_utils.geometry.
-    # quat_to_yaw): atan2(2*(w*z + x*y), 1 - 2*(y*y + z*z)). x/y default to
-    # 0.0 when absent (e.g. a quat-like stub that only ever carries z/w),
-    # which reduces to the pure-yaw-only case this used to hardcode -
-    # dropping x/y unconditionally was only ever exactly correct when the
-    # pose had no roll/pitch component at all; a combined roll+pitch of
-    # ~10 degrees each (a plausible hard-brake-while-cornering moment)
-    # already pushes the resulting yaw error past the 0.01 rad threshold
-    # SensorFreshnessGuard's pose-changed check uses.
-    x = _first_float_attr(quat, ("x",)) or 0.0
-    y = _first_float_attr(quat, ("y",)) or 0.0
+    x = _first_float_attr(quat, ("x",))
+    y = _first_float_attr(quat, ("y",))
+    z = _first_float_attr(quat, ("z",))
+    w = 1.0 if w is None else w
+    x = 0.0 if x is None else x
+    y = 0.0 if y is None else y
+    z = 0.0 if z is None else z
     return math.atan2(2.0 * (w * z + x * y), 1.0 - 2.0 * (y * y + z * z))
 
 

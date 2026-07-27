@@ -24,6 +24,7 @@ from .alpasim_contract import (
     ModelPrediction,
     PredictionInput,
     SensorFreshnessGuard,
+    _yaw_from_quat_like,
     corrected_speed_mps,
     resample_trajectory,
 )
@@ -1919,7 +1920,7 @@ def _pose_like_to_world_pose(pose: Any) -> dict[str, float] | None:
     yaw = _first_float_attr(pose, ("yaw", "heading", "heading_rad", "world_heading"))
     if yaw is None:
         quat = getattr(pose, "quat", getattr(pose, "quaternion", None))
-        yaw = _yaw_from_quat_like(quat) if quat is not None else 0.0
+        yaw = _yaw_from_quat_like(quat)
 
     vx = _first_float_attr(pose, ("vx", "world_vx", "velocity_x_mps"))
     vy = _first_float_attr(pose, ("vy", "world_vy", "velocity_y_mps"))
@@ -2240,14 +2241,6 @@ def _first_float_attr(obj: Any, names: tuple[str, ...]) -> float | None:
         except (TypeError, ValueError):
             continue
     return None
-
-
-def _yaw_from_quat_like(quat: Any) -> float:
-    w = float(getattr(quat, "w", 1.0))
-    x = float(getattr(quat, "x", 0.0))
-    y = float(getattr(quat, "y", 0.0))
-    z = float(getattr(quat, "z", 0.0))
-    return math.atan2(2.0 * (w * z + x * y), 1.0 - 2.0 * (y * y + z * z))
 
 
 def _wrap_angle(value: float) -> float:
