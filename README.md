@@ -26,7 +26,7 @@ not a simulator and does not introduce a new driving policy.
 
 |  |  |
 | --- | --- |
-| **Tested** | 243 automated tests, ruff-clean, enforced in CI on every push |
+| **Tested** | 294 automated tests, ruff-clean, enforced in CI on every push |
 | **Installable** | One command (`uv sync`), builds a real wheel, smoke-tested fresh on every merge |
 | **Self-checking** | `alpabridge-doctor` verifies the install, entry points, and AlpaSim checkout before anything runs |
 | **Auditable** | Every run retains its expanded config, provenance, driver events, and a support bundle |
@@ -94,8 +94,6 @@ evidence](artifacts/external/alpasim_navsim_reactive_rollout/#camera-freshness-c
 </details>
 
 ## How It Works
-
-In practice:
 
 ### A Real Example
 
@@ -224,14 +222,13 @@ scene data or private checkpoints.
 
 ## Integration Test Results
 
-Four real, retained AlpaSim runs back the claims above:
+Three real, retained AlpaSim runs back the claims above:
 
 | Run | Result | What it proves |
 | --- | --- | --- |
 | [Dynamic-camera external driver](artifacts/external/alpasim_dynamic_camera_rollout/) | `pass`, `200` sim steps, live `sensorsim` camera render | The camera feed actually changes frame to frame — not a repeated-frame fixture. |
 | [Reactive NAVSIM external driver](artifacts/external/alpasim_navsim_reactive_rollout/) | `197/197` finite outputs over one `19.93` s rollout | A public checkpoint, the driver, controller, and physics all complete one full feedback loop. |
-| [E2E challenge-style conformance](artifacts/external/alpasim_e2e_challenge_conformance/) | `1/1` rollout completed, `197` `Drive` calls | The driver connects to AlpaSim's official challenge service and returns correctly-timed trajectories. |
-| [External driver service, real video-action policy](docs/challenge-compatibility.md#a-second-run-with-a-real-policy-instead-of-a-baseline) | `197/197` `Drive` calls, `19.91` s rollout, no protocol errors | The standalone driver service and its pose-reanchored inference cache hold up end to end with a real 318M-parameter policy, not just dependency-light baselines. |
+| [E2E challenge-style conformance](artifacts/external/alpasim_e2e_challenge_conformance/) | `197/197` `Drive` calls with a dependency-light baseline, and again with the real 318M-parameter `vavam` policy ([details](docs/challenge-compatibility.md#a-second-run-with-a-real-policy-instead-of-a-baseline)) | The driver connects to AlpaSim's official challenge service and holds up under a real, non-toy policy, not just a baseline. |
 
 These are integration checks, not model benchmarks: they prove the
 plumbing works, not that any one policy drives well.
@@ -239,7 +236,7 @@ plumbing works, not that any one policy drives well.
 ## Verify
 
 ```bash
-make test    # 243 tests, no AlpaSim/GPU/checkpoint required
+make test    # 294 tests, no AlpaSim/GPU/checkpoint required
 make verify  # + Ruff, coverage, fresh-checkout install smoke test, wheel/sdist build
 ```
 
