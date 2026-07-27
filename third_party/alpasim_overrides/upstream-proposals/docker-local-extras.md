@@ -56,7 +56,7 @@ diff --git a/pyproject.toml b/pyproject.toml
 ```bash
 cd <clone of amtellezfernandez/alpasim tracking upstream main>
 git checkout -b feat/docker-local-extras
-git am docs/upstream-proposals/docker-local-extras.patch  # patch is git-am-ready, own Subject/body
+git am third_party/alpasim_overrides/upstream-proposals/docker-local-extras.patch  # patch is git-am-ready, own Subject/body
 git push fork feat/docker-local-extras
 gh pr create --repo NVlabs/alpasim --base main \
   --head amtellezfernandez:feat/docker-local-extras \

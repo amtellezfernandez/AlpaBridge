@@ -38,6 +38,21 @@ here, never both - `alpabridge-setup` applies patches first and then copies
 full-file overrides on top, so a hunk touching the same file as a copy would
 be silently discarded (the copy always wins).
 
+## `upstream-proposals/`
+
+Draft PRs for changes AlpaBridge would rather see fixed in AlpaSim itself
+than keep patching around locally - the natural next step for anything
+above once it's well-understood, not a separate tracking mechanism. Each
+proposal is one `.md` (why, the change, verification performed, how to
+open it) plus one `git am`-ready `.patch`, verified against upstream
+AlpaSim's actual current `main` (not the pinned release above - a PR
+targets `main`). Not yet opened as real PRs; `git am` the patch into your
+own AlpaSim fork and push when ready. A proposal whose fix is already one
+of the patches/copies above stays there permanently regardless of PR
+status (AlpaBridge still needs it against the pinned release); once
+merged upstream, note that in the proposal's `.md` rather than deleting
+it, so the "why did we carry this" history survives.
+
 ## Boundary Rule
 
 These files are not the main simulator implementation and not the policy-adapter model stack.
