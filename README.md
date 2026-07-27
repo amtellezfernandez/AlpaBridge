@@ -110,10 +110,11 @@ AlpaBridge ships four built-in policies:
 | `direct_actor_planner` | Planner that uses other cars' real positions | An actor-state file |
 
 The first two need no checkpoint, so they're the easiest way to test your
-AlpaSim setup. Both real runs above use AlpaSim scenes that already have a
-preset in this repo. Other datasets (nuScenes, nuPlan, Argoverse 2) aren't
-covered here yet — see [compatible datasets](docs/womd-targeting.md) for
-what that would take.
+AlpaSim setup. All four still need real local scene files — see [Get Scene
+Data](#get-scene-data) below. Both real runs above use AlpaSim scenes that
+already have a preset in this repo. Other datasets (nuScenes, nuPlan,
+Argoverse 2) aren't covered here yet — see [compatible
+datasets](docs/womd-targeting.md) for what that would take.
 
 ## Install
 
@@ -149,6 +150,24 @@ uv run alpabridge-ready \
 The setup command checks that your AlpaSim checkout looks as expected before
 it changes anything. The readiness command checks your machine, Docker and GPU
 access, images, model inputs, and the scenes you picked.
+
+## Get Scene Data
+
+Real rollouts need real scene files on disk first. These come from a gated
+Hugging Face dataset — [request access
+here](https://huggingface.co/datasets/nvidia/PhysicalAI-Autonomous-Vehicles-NuRec)
+if you don't have it yet — then download only the scenes your preset needs:
+
+```bash
+export HF_TOKEN=your-huggingface-token
+uv run alpabridge-build-local-cache \
+  --alpasim-root /path/to/alpasim \
+  --scene-preset fresh_3scene
+```
+
+Already have the scene files locally? Point at them with `--source-usdz-dir`
+instead, and nothing is downloaded. `alpabridge-ready` (above) reports
+whether the scenes a preset needs are already cached.
 
 ## Plan Or Execute
 
