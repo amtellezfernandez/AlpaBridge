@@ -2,7 +2,7 @@
 set -euo pipefail
 
 IMAGE="${IMAGE:-alpasim-e2e-alpabridge:latest}"
-MODEL="${ALPABRIDGE_CHALLENGE_MODEL:-route_following}"
+MODEL="${ALPABRIDGE_DRIVER_MODEL:-route_following}"
 BASE_PORT="${ALPASIM_DRIVER_BASE_PORT:-${ALPASIM_DRIVER_PORT:-6789}}"
 CONTAINER_PORT="${ALPASIM_DRIVER_CONTAINER_PORT:-6789}"
 REPLICAS="${ALPASIM_DRIVER_REPLICAS:-1}"
@@ -37,8 +37,8 @@ docker_args() {
     -e "ALPASIM_DRIVER_PORT=${CONTAINER_PORT}"
     -e "ALPASIM_CONTESTANT_REPLICA_INDEX=${idx}"
     -e "ALPASIM_CONTESTANT_REPLICAS=${REPLICAS}"
-    -e "ALPABRIDGE_CHALLENGE_MODEL=${MODEL}"
-    -e ALPABRIDGE_CHALLENGE_TELEMETRY_PATH=/tmp/alpabridge/challenge-driver.jsonl
+    -e "ALPABRIDGE_DRIVER_MODEL=${MODEL}"
+    -e ALPABRIDGE_DRIVER_TELEMETRY_PATH=/tmp/alpabridge/driver.jsonl
   )
 
   if [[ -n "$GPUS" && "$GPUS" != "none" ]]; then

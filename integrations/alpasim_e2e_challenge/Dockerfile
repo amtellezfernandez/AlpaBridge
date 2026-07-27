@@ -8,9 +8,9 @@ ENV XDG_CACHE_HOME=/tmp/.cache
 ENV ALPASIM_DRIVER_HOST=0.0.0.0
 ENV ALPASIM_DRIVER_PORT=6789
 ENV ALPASIM_DRIVER_GRPC_WORKERS=8
-ENV ALPABRIDGE_CHALLENGE_MODEL=route_following
-ENV ALPABRIDGE_CHALLENGE_TELEMETRY_PATH=/tmp/alpabridge/challenge-driver.jsonl
-ENV ALPABRIDGE_CHALLENGE_LATENCY_TARGET_MS=100.0
+ENV ALPABRIDGE_DRIVER_MODEL=route_following
+ENV ALPABRIDGE_DRIVER_TELEMETRY_PATH=/tmp/alpabridge/driver.jsonl
+ENV ALPABRIDGE_DRIVER_LATENCY_TARGET_MS=100.0
 
 RUN pip install --no-cache-dir \
     "grpcio==1.62.3" \
@@ -39,4 +39,4 @@ WORKDIR /app
 USER alpasim
 EXPOSE 6789
 
-CMD ["alpabridge-challenge-driver"]
+CMD ["alpabridge-driver"]

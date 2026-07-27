@@ -75,7 +75,7 @@ alpabridge-benchmark-summary = "alpabridge.cli.commands.benchmark_summary:main"
 alpabridge-batch-summary = "alpabridge.cli.commands.batch_summary:main"
 alpabridge-benchmark-readiness = "alpabridge.cli.commands.benchmark_readiness:main"
 alpabridge-evidence = "alpabridge.neutral.alpasim_metrics:main"
-alpabridge-challenge-driver = "alpabridge.challenge.e2e_driver:main"
+alpabridge-driver = "alpabridge.driver.driver_service:main"
 
 [project.urls]
 Homepage = "https://github.com/amtellezfernandez/AlpaBridge"

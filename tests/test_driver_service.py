@@ -9,9 +9,9 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from alpabridge.challenge.e2e_driver import (
-    CHALLENGE_TELEMETRY_SCHEMA,
-    AlpaBridgeChallengeAdapter,
+from alpabridge.driver.driver_service import (
+    DRIVER_TELEMETRY_SCHEMA,
+    AlpaBridgeDriverService,
     prediction_to_proto_trajectory,
     run_self_test,
 )
@@ -54,8 +54,8 @@ def _pose_at(timestamp_us: int, *, x: float, y: float, yaw: float = 0.0) -> Simp
     )
 
 
-def test_challenge_adapter_preserves_route_geometry_for_route_following() -> None:
-    adapter = AlpaBridgeChallengeAdapter(model_name="route_following", camera_ids=("front",))
+def test_driver_service_preserves_route_geometry_for_route_following() -> None:
+    adapter = AlpaBridgeDriverService(model_name="route_following", camera_ids=("front",))
     adapter.start_session(SimpleNamespace(session_uuid="session-a", random_seed=7))
     adapter.submit_image_observation(
         SimpleNamespace(
@@ -96,8 +96,8 @@ def test_challenge_adapter_preserves_route_geometry_for_route_following() -> Non
     assert float(prediction.trajectory_xy[-1, 1]) > 10.0
 
 
-def test_challenge_adapter_applies_command_only_route_at_shared_boundary() -> None:
-    adapter = AlpaBridgeChallengeAdapter(
+def test_driver_service_applies_command_only_route_at_shared_boundary() -> None:
+    adapter = AlpaBridgeDriverService(
         model_name="route_following",
         camera_ids=("front",),
         route_contract_mode="command_only_route",
@@ -135,8 +135,8 @@ def test_challenge_adapter_applies_command_only_route_at_shared_boundary() -> No
     assert prediction_input.command == DriveCommand.LEFT
 
 
-def test_challenge_adapter_maps_challenge_camera_id_to_internal_contract_key() -> None:
-    adapter = AlpaBridgeChallengeAdapter(model_name="constant_velocity")
+def test_driver_service_maps_external_camera_id_to_internal_contract_key() -> None:
+    adapter = AlpaBridgeDriverService(model_name="constant_velocity")
     adapter.start_session(SimpleNamespace(session_uuid="session-cam", random_seed=3))
     adapter.submit_image_observation(
         SimpleNamespace(
@@ -153,10 +153,10 @@ def test_challenge_adapter_maps_challenge_camera_id_to_internal_contract_key() -
     assert prediction.trajectory_xy.shape == (50, 2)
 
 
-def test_challenge_adapter_writes_drive_telemetry() -> None:
+def test_driver_service_writes_drive_telemetry() -> None:
     with TemporaryDirectory() as tmp:
         telemetry_path = Path(tmp) / "telemetry.jsonl"
-        adapter = AlpaBridgeChallengeAdapter(
+        adapter = AlpaBridgeDriverService(
             model_name="route_following",
             camera_ids=("CAM_F0",),
             telemetry_path=telemetry_path,
@@ -195,7 +195,7 @@ def test_challenge_adapter_writes_drive_telemetry() -> None:
     drive_rows = [row for row in rows if row["event"] == "drive"]
     assert len(trajectory.poses) == 51
     assert len(drive_rows) == 1
-    assert drive_rows[0]["schema"] == CHALLENGE_TELEMETRY_SCHEMA
+    assert drive_rows[0]["schema"] == DRIVER_TELEMETRY_SCHEMA
     assert drive_rows[0]["route_source"] == "alpasim_waypoints"
     assert drive_rows[0]["latency_target_ms"] == 100.0
     assert drive_rows[0]["speed_mps"] == pytest.approx(5.0)
@@ -208,8 +208,8 @@ def test_challenge_adapter_writes_drive_telemetry() -> None:
     assert summary["latency_ms"]["p95"] is not None
 
 
-def test_challenge_adapter_uses_pose_speed_when_recorded_dynamic_speed_is_zero() -> None:
-    adapter = AlpaBridgeChallengeAdapter(
+def test_driver_service_uses_pose_speed_when_recorded_dynamic_speed_is_zero() -> None:
+    adapter = AlpaBridgeDriverService(
         model_name="constant_velocity",
         camera_ids=("CAM_F0",),
     )
@@ -248,26 +248,49 @@ def test_challenge_adapter_uses_pose_speed_when_recorded_dynamic_speed_is_zero()
 
 @pytest.mark.parametrize(
     "model_name",
-    ("token_dagger_bc", "navsim_ego_status_mlp"),
+    ("token_dagger_bc", "navsim_ego_status_mlp", "vavam"),
 )
-def test_learned_challenge_adapter_requires_checkpoint(model_name: str) -> None:
+def test_learned_policy_driver_service_requires_checkpoint(model_name: str) -> None:
     with pytest.raises(ValueError, match="requires a checkpoint"):
-        AlpaBridgeChallengeAdapter(model_name=model_name)
+        AlpaBridgeDriverService(model_name=model_name)
 
 
-def test_learned_challenge_adapter_records_pinned_checkpoint_hash(
+def test_vavam_driver_service_requires_tokenizer_checkpoint(tmp_path: Path) -> None:
+    checkpoint = tmp_path / "vavam.pt"
+    checkpoint.write_bytes(b"placeholder")
+
+    with pytest.raises(ValueError, match="requires a tokenizer checkpoint"):
+        AlpaBridgeDriverService(model_name="vavam", checkpoint_path=checkpoint)
+
+
+def test_vavam_driver_service_dispatches_to_vavam_model(tmp_path: Path) -> None:
+    checkpoint = tmp_path / "vavam.pt"
+    tokenizer_checkpoint = tmp_path / "vavam_tokenizer.jit"
+    checkpoint.write_bytes(b"placeholder")
+    tokenizer_checkpoint.write_bytes(b"placeholder")
+
+    with pytest.raises(ImportError, match="requires torch"):
+        AlpaBridgeDriverService(
+            model_name="vavam",
+            checkpoint_path=checkpoint,
+            tokenizer_checkpoint_path=tokenizer_checkpoint,
+            device="cpu",
+        )
+
+
+def test_learned_policy_driver_service_records_pinned_checkpoint_hash(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     checkpoint = tmp_path / "policy.pt"
     checkpoint.write_bytes(b"pinned learned policy checkpoint")
     monkeypatch.setattr(
-        AlpaBridgeChallengeAdapter,
+        AlpaBridgeDriverService,
         "_build_model",
         lambda _self: object(),
     )
 
-    adapter = AlpaBridgeChallengeAdapter(
+    adapter = AlpaBridgeDriverService(
         model_name="token_dagger_bc",
         checkpoint_path=checkpoint,
         device="cpu",
@@ -280,7 +303,7 @@ def test_learned_challenge_adapter_records_pinned_checkpoint_hash(
     assert adapter.device == "cpu"
 
 
-def test_challenge_self_test_reports_non_benchmark_latency_summary() -> None:
+def test_driver_self_test_reports_non_benchmark_latency_summary() -> None:
     summary = run_self_test(model_name="route_following", iterations=3)
 
     assert summary["benchmark_result"] is False
@@ -289,8 +312,8 @@ def test_challenge_self_test_reports_non_benchmark_latency_summary() -> None:
     assert summary["route_sources"] == ["alpasim_waypoints"]
 
 
-def test_challenge_adapter_rejects_unknown_session() -> None:
-    adapter = AlpaBridgeChallengeAdapter(model_name="constant_velocity", camera_ids=("front",))
+def test_driver_service_rejects_unknown_session() -> None:
+    adapter = AlpaBridgeDriverService(model_name="constant_velocity", camera_ids=("front",))
 
     try:
         adapter.predict("missing-session", time_now_us=0)
@@ -300,8 +323,8 @@ def test_challenge_adapter_rejects_unknown_session() -> None:
         raise AssertionError("missing session unexpectedly predicted")
 
 
-def test_challenge_adapter_selects_freshest_accepted_camera_alias() -> None:
-    adapter = AlpaBridgeChallengeAdapter(
+def test_driver_service_selects_freshest_accepted_camera_alias() -> None:
+    adapter = AlpaBridgeDriverService(
         model_name="constant_velocity",
         camera_ids=("CAM_F0", "camera_front_wide_120fov"),
     )
