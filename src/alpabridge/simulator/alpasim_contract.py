@@ -73,7 +73,13 @@ class SensorFreshnessGuard:
             and session_uuid != self._last_session_uuid
         ):
             self._reset_session_state()
-        self._last_session_uuid = session_uuid
+        if session_uuid is not None:
+            # A None reading (session identity unknown for this call) must not
+            # overwrite the last known session_uuid - otherwise it erases the
+            # guard's ability to detect the next real session transition
+            # (last_session_uuid is None afterwards, so the "did the session
+            # change" check above can never fire again).
+            self._last_session_uuid = session_uuid
         camera_timestamp_us = _latest_camera_timestamp_us(prediction_input)
         camera_fingerprint = _latest_camera_fingerprint(prediction_input)
         pose_signature = _current_pose_signature(prediction_input)
@@ -216,6 +222,19 @@ def resample_trajectory(
     horizon_seconds: float,
     source_timestamps: np.ndarray | None = None,
 ) -> np.ndarray:
+    """Resample a predicted trajectory onto AlpaSim's runtime output grid.
+
+    ``source_timestamps``, when given, must be strictly increasing and lie in
+    ``(0, horizon_seconds]`` - one timestamp per row of ``trajectory_xy``. If
+    the last timestamp is short of ``horizon_seconds`` (the model's native
+    horizon is shorter than requested), points beyond it are NOT
+    extrapolated by heading/velocity - ``np.interp`` silently holds the
+    trajectory's last position constant out to ``horizon_seconds``. Callers
+    whose model horizon can fall short of the requested horizon (see
+    ``vavam_model.py``'s ``_fit_to_horizon``) should fit/pad the trajectory
+    themselves before calling this, and report that they did so, rather than
+    relying on this silent hold-position behavior.
+    """
     try:
         output_frequency = float(output_frequency_hz)
         horizon = float(horizon_seconds)
