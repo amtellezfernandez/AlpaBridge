@@ -24,7 +24,7 @@
 | `alpabridge-benchmark-readiness` | Check whether a requested public benchmark matrix is complete. |
 | `alpabridge-promote-batch-summary` | Copy a validated local summary to an explicit destination. |
 | `alpabridge-evidence` | Inspect AlpaSim runtime metrics. |
-| `alpabridge-challenge-driver` | Serve or self-test the AlpaSim E2E-style external driver. |
+| `alpabridge-driver` | Serve or self-test the general external driver service (any registered policy). |
 
 ## Development Targets
 

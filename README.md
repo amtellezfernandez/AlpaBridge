@@ -131,6 +131,32 @@ scenes this repo already ships presets for; runs on other datasets (nuScenes,
 nuPlan, Argoverse 2) aren't recorded here yet — see
 [compatible datasets](docs/womd-targeting.md) for what that would take.
 
+### External Driver Service
+
+The same trajectory-policy interface also runs standalone, as a driver
+process an external evaluator connects to over gRPC, for cases where loading
+AlpaBridge in-process inside AlpaSim isn't an option. Any
+`BaseTrajectoryModel`-compatible policy is servable this way — register it in
+[`src/alpabridge/driver/policy_registry.py`](src/alpabridge/driver/policy_registry.py)
+and it's selectable the same way as any built-in, with no changes to the
+driver itself. Built in: `constant_velocity`, `route_following`,
+`token_dagger_bc`, `navsim_ego_status_mlp`, and `vavam` (the public
+[Valeo VideoActionModel](https://github.com/valeoai/VideoActionModel), a real
+318M-parameter checkpoint, not a dependency-light baseline).
+
+```bash
+uv run alpabridge-driver --model vavam \
+  --checkpoint /path/to/vavam.ckpt \
+  --tokenizer-checkpoint /path/to/tokenizer.jit
+```
+
+NVIDIA's AlpaSim E2E Challenge is one evaluator that connects to a driver
+this way — its submission format is exactly this interface
+(`egodriver.EgodriverService`) — but it's one deployment target this
+framework can sit behind, not what the framework was built for. See
+[AlpaSim E2E compatibility](docs/challenge-compatibility.md) for that
+specific path.
+
 ## Install
 
 Installation and command planning do not require a GPU:
@@ -198,13 +224,14 @@ scene data or private checkpoints.
 
 ## Integration Test Results
 
-Three real, retained AlpaSim runs back the claims above:
+Four real, retained AlpaSim runs back the claims above:
 
 | Run | Result | What it proves |
 | --- | --- | --- |
 | [Dynamic-camera external driver](artifacts/external/alpasim_dynamic_camera_rollout/) | `pass`, `200` sim steps, live `sensorsim` camera render | The camera feed actually changes frame to frame — not a repeated-frame fixture. |
 | [Reactive NAVSIM external driver](artifacts/external/alpasim_navsim_reactive_rollout/) | `197/197` finite outputs over one `19.93` s rollout | A public checkpoint, the driver, controller, and physics all complete one full feedback loop. |
 | [E2E challenge-style conformance](artifacts/external/alpasim_e2e_challenge_conformance/) | `1/1` rollout completed, `197` `Drive` calls | The driver connects to AlpaSim's official challenge service and returns correctly-timed trajectories. |
+| [External driver service, real video-action policy](docs/challenge-compatibility.md#a-second-run-with-a-real-policy-instead-of-a-baseline) | `197/197` `Drive` calls, `19.91` s rollout, no protocol errors | The standalone driver service and its pose-reanchored inference cache hold up end to end with a real 318M-parameter policy, not just dependency-light baselines. |
 
 These are integration checks, not model benchmarks: they prove the
 plumbing works, not that any one policy drives well.
