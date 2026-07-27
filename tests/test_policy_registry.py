@@ -32,6 +32,33 @@ def test_register_policy_rejects_duplicate_name() -> None:
         register_policy(DriverPolicy("route_following", factory=lambda adapter: None))
 
 
+def test_build_policy_constructs_a_real_correctly_configured_baseline() -> None:
+    from types import SimpleNamespace
+
+    from alpabridge.simulator.baseline_drivers import (
+        ConstantVelocityAlpaSimModel,
+        RouteFollowingAlpaSimModel,
+    )
+
+    adapter = SimpleNamespace(
+        model_camera_id="front",
+        checkpoint_path=None,
+        tokenizer_checkpoint_path=None,
+        device="cpu",
+        output_frequency_hz=10,
+        horizon_seconds=5.0,
+    )
+
+    constant_velocity = build_policy("constant_velocity", adapter)
+    route_following = build_policy("route_following", adapter)
+
+    assert isinstance(constant_velocity, ConstantVelocityAlpaSimModel)
+    assert isinstance(route_following, RouteFollowingAlpaSimModel)
+    for policy in (constant_velocity, route_following):
+        assert policy.camera_ids == ["front"]
+        assert policy.output_frequency_hz == 10
+
+
 def test_build_policy_enforces_checkpoint_requirements_before_constructing() -> None:
     from types import SimpleNamespace
 
