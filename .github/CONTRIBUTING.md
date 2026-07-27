@@ -54,9 +54,8 @@ Keep this branch focused on:
 - run audits, summaries, support bundles, and bounded integration evidence;
 - public tests and operator documentation.
 
-Keep the in-process `alpasim.models` entry points aligned with the
-README's [Policy Backends](../README.md#policy-backends) table's
-"In-process" rows:
+Keep the `alpasim.models` entry points aligned with the README's [Policy
+Backends](../README.md#policy-backends) table's "Inside AlpaSim" column:
 
 - `constant_velocity`;
 - `route_following`;

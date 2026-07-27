@@ -20,12 +20,7 @@ and evaluating how they actually drive — not just how they score against a
 logged benchmark. It already serves six policies through the same
 interface, from simple, no-setup baselines to a real, published
 318-million-parameter video-action model (see [Policy
-Backends](#policy-backends) below). Adding the next one — a new checkpoint,
-a vision-language driving model, a world-model policy — means implementing
-one contract and registering it, not rebuilding the serving code. Which
-evaluator runs that policy is just as interchangeable — AlpaSim's own local
-wizard, the AlpaSim E2E Challenge, or your own evaluator, all through the
-same driver interface (see [Evaluation Paths](#evaluation-paths) below).
+Backends](#policy-backends) below).
 
 Whichever policy is selected, AlpaSim sends AlpaBridge the live camera
 image, the car's own motion, the current command, and the route. AlpaBridge
@@ -117,130 +112,37 @@ evidence of the run.
 Every policy — simple no-setup baseline or real published checkpoint —
 implements the same
 [`BaseTrajectoryModel`](src/alpabridge/simulator/alpasim_contract.py)
-contract, and is servable either in-process (loaded inside AlpaSim,
-registered in `pyproject.toml`) or through the [standalone
-driver](#run-as-a-standalone-driver) (registered in
-[`policy_registry.py`](src/alpabridge/driver/policy_registry.py)):
+contract. Each one runs one of two ways: loaded inside AlpaSim itself
+(registered in `pyproject.toml`), or served by the [standalone
+driver](docs/evaluators.md) (registered in
+[`policy_registry.py`](src/alpabridge/driver/policy_registry.py)) — some
+policies support both:
 
-| Policy | Purpose | Extra input | Served via |
-| --- | --- | --- | --- |
-| `constant_velocity` | Dependency-light baseline | None | In-process, standalone |
-| `route_following` | Dependency-light baseline that follows the route | None | In-process, standalone |
-| `token_dagger_bc` | Wraps a compatible trained checkpoint | A checkpoint file | In-process, standalone |
-| `direct_actor_planner` | Planner using other cars' real positions | An actor-state file | In-process only |
-| `navsim_ego_status_mlp` | Public NAVSIM EgoStatusMLP checkpoint | A checkpoint file | Standalone only |
-| `vavam` | Public 318M-parameter video-action model ([Valeo VideoActionModel](https://github.com/valeoai/VideoActionModel)) | A checkpoint + tokenizer checkpoint | Standalone only |
+| Policy | Purpose | Extra input | Inside AlpaSim | Standalone driver |
+| --- | --- | --- | --- | --- |
+| `constant_velocity` | Simple baseline, no setup needed | None | ✓ | ✓ |
+| `route_following` | Simple baseline that follows the route | None | ✓ | ✓ |
+| `token_dagger_bc` | Wraps a compatible trained checkpoint | A checkpoint file | ✓ | ✓ |
+| `direct_actor_planner` | Planner using other cars' real positions | An actor-state file | ✓ | |
+| `navsim_ego_status_mlp` | Public NAVSIM EgoStatusMLP checkpoint | A checkpoint file | | ✓ |
+| `vavam` | Public 318M-parameter video-action model ([Valeo VideoActionModel](https://github.com/valeoai/VideoActionModel)) | A checkpoint + tokenizer checkpoint | | ✓ |
 
 The first two need no checkpoint, so they're the easiest way to test your
 AlpaSim setup.
 
-#### Bring Your Own Policy
+Want to run your own policy instead of a built-in? Implement one contract
+and register it — see [Bring Your Own Policy](docs/custom-policies.md).
 
-Implement the contract. Here's the required shape, in outline:
-
-```python
-from alpabridge.simulator.alpasim_contract import BaseTrajectoryModel, ModelPrediction
-
-class MyPolicy(BaseTrajectoryModel):
-    camera_ids = ["camera_front_wide_120fov"]
-    context_length = 1
-    output_frequency_hz = 4
-
-    @classmethod
-    def from_config(cls, model_cfg, device, camera_ids, context_length, output_frequency_hz):
-        return cls()  # load your checkpoint here
-
-    def _encode_command(self, command):
-        ...  # map DriveCommand to whatever your policy expects
-
-    def predict(self, prediction_input) -> ModelPrediction:
-        trajectory_xy = ...  # your model's output, an (N, 2) array
-        headings = ...       # heading at each point; see baseline_drivers.py for one way
-        return ModelPrediction(trajectory_xy=trajectory_xy, headings=headings)
-```
-
-**Slow inference?** If your real forward pass can't keep up with how often
-the driver calls `predict` — the exact problem `vavam` has, since its
-native rate is 2 Hz against the driver's 10 Hz — reuse the same throttling
-cache instead of writing your own pose-tracking logic:
-
-```python
-from alpabridge.simulator.inference_rate_cache import PoseReanchoredInferenceCache
-
-class MyPolicy(BaseTrajectoryModel):
-    def __init__(self):
-        self._inference_cache = PoseReanchoredInferenceCache(min_interval_s=0.5)  # your model's real cadence
-
-    def predict(self, prediction_input) -> ModelPrediction:
-        def _infer():
-            return self._run_real_forward_pass(prediction_input)  # your heavy model call, an (N, 2) array
-
-        trajectory_xy, was_cached = self._inference_cache.get(prediction_input, _infer)
-        headings = self._compute_headings_from_trajectory(trajectory_xy)
-        return ModelPrediction(trajectory_xy=trajectory_xy, headings=headings)
-```
-
-`_infer()` only runs when the cache is empty or older than `min_interval_s`;
-otherwise the cache reprojects the last real prediction onto the car's
-*current* position instead of replaying it unchanged. It's a general
-building block, not vavam-specific — see
-[`inference_rate_cache.py`](src/alpabridge/simulator/inference_rate_cache.py)
-for the reprojection math, and
-[`vavam_model.py`](src/alpabridge/simulator/vavam_model.py) for the real,
-tested usage this pattern is based on.
-
-Then register it, matching the table above:
-
-- **In-process**: declare an `alpasim.models` entry point — the same
-  mechanism the four in-process presets use (see `pyproject.toml`'s
-  `[project.entry-points."alpasim.models"]`). Entry-point groups are a
-  standard Python packaging mechanism, discovered across every installed
-  package, not just one — so this can live in your own package alongside
-  AlpaBridge, not inside a fork of it.
-- **Standalone driver**: add one
-  `register_policy(DriverPolicy("my_policy", my_factory))` call in
-  [`policy_registry.py`](src/alpabridge/driver/policy_registry.py). As of
-  today this means changing this repo — see
-  [Contributing](.github/CONTRIBUTING.md) — there's no external plugin hook
-  for this path yet.
-
-Either way, nothing about the serving code itself (timing, retries,
-evidence capture, the gRPC service) changes — that's the same for every
-policy in the table above, including a future vision-language or
-world-model one. Once
-registered for the standalone driver, test it the same way as any built-in:
-
-```bash
-uv run alpabridge-driver --self-test --model my_policy
-```
-
-The in-process presets (the first four) still need real local scene files —
+The policies that run inside AlpaSim still need real local scene files —
 see [Get Scene Data](#get-scene-data) below. Both real runs above use
 AlpaSim scenes that already have a preset in this repo. Other datasets
 (nuScenes, nuPlan, Argoverse 2) aren't covered here yet — see [compatible
 datasets](docs/womd-targeting.md) for what that would take.
 
-### Evaluation Paths
-
-Which policy runs is one choice; which evaluator runs it is a separate,
-independent choice. The
-[standalone driver](#run-as-a-standalone-driver) implements AlpaSim's own
-general, versioned external-driver gRPC interface
-(`egodriver.EgodriverService`) — not something built for any one evaluator
-— so anything that speaks it can connect, the same way any policy in the
-table above can be selected:
-
-| Evaluator | What it is | Status |
-| --- | --- | --- |
-| In-process rollout (`alpabridge-launch` / `alpabridge-reproduce`) | AlpaSim's own driver process loads your policy directly | Tested — see [Integration Test Results](#integration-test-results) |
-| AlpaSim's local wizard, standalone driver | Any AlpaSim checkout's dev preset, pointed at a running `alpabridge-driver` | Tested — see [Integration Test Results](#integration-test-results) |
-| AlpaSim E2E Challenge, standalone driver | NVIDIA's official hosted evaluator — same driver, packaged as a locked-down container | Tested locally — see [AlpaSim E2E compatibility](docs/challenge-compatibility.md) |
-| Your own evaluator, standalone driver | Any client speaking the same `egodriver.EgodriverService` interface | Tested — a plain gRPC client (not AlpaSim's wizard) drives one full session in [`tests/test_driver_grpc_client.py`](tests/test_driver_grpc_client.py) |
-
-The AlpaSim E2E Challenge is the one we've documented most, because it's
-the one with a public, external leaderboard to point at — not because the
-driver is built around it. A different evaluator speaking the same
-protocol is exactly as supported as the Challenge is.
+Want to evaluate through something other than `alpabridge-launch` — the
+AlpaSim E2E Challenge, or your own evaluator? See
+[Evaluators](docs/evaluators.md) for the standalone driver those connect
+to.
 
 ## Install
 
@@ -279,12 +181,10 @@ access, images, model inputs, and the scenes you picked.
 
 ## Get Scene Data
 
-Using [Run As A Standalone Driver](#run-as-a-standalone-driver) instead —
-any of the three standalone-driver rows in [Evaluation
-Paths](#evaluation-paths) above? You can skip this section: all three
-supply their own scenes, no local scene data needed. This step is only for
-the in-process rollout path above (`alpabridge-launch` /
-`alpabridge-reproduce` with `--scene-preset`).
+Evaluating through a [standalone driver](docs/evaluators.md) instead? You
+can skip this section: that path supplies its own scenes, no local scene
+data needed. This step is only for running a policy inside AlpaSim itself
+below (`alpabridge-launch` / `alpabridge-reproduce` with `--scene-preset`).
 
 Real scene files for that path come from a **gated** Hugging Face dataset:
 [request
@@ -336,52 +236,10 @@ exact commands used, simulator records, driver events, summaries, and a
 normalized audit — without saving any gated scene data or private
 checkpoints.
 
-## Run As A Standalone Driver
-
-Everything above runs AlpaBridge inside AlpaSim itself. AlpaBridge can also
-run on its own, as a separate process. An AlpaSim checkout then connects to
-it over the network (using gRPC). External evaluators use this path, since
-they only know how to connect to an already-running driver, not how to load
-a plugin. This skips the `Connect AlpaSim` step above completely — AlpaSim
-just points at the driver's address.
-
-First, check that the driver works on its own — no AlpaSim checkout, GPU, or
-checkpoint needed:
-
-```bash
-uv run alpabridge-driver --self-test --model route_following
-```
-
-To run the real loop, start the driver in one terminal:
-
-```bash
-uv run alpabridge-driver --model vavam \
-  --checkpoint /path/to/vavam.ckpt \
-  --tokenizer-checkpoint /path/to/tokenizer.jit
-```
-
-In a second terminal, point an AlpaSim checkout at the driver, using
-AlpaSim's own local dev preset (see [Evaluation Paths](#evaluation-paths)
-above for the other ways to connect to the same driver):
-
-```bash
-ALPASIM_DRIVER_HOST=localhost ALPASIM_DRIVER_PORT=6789 \
-  uv run alpasim_wizard +e2e_challenge=dev
-```
-
-Any policy marked "standalone" in [Policy Backends](#policy-backends) above
-can be picked with `--model` this way. `vavam` additionally needs
-[`torch`](https://pytorch.org/get-started/locally/) (pick the build for
-your hardware — CPU or a specific CUDA version) and the public `vam`
-package:
-
-```bash
-pip install git+https://github.com/valeoai/VideoActionModel@v1.0.0
-```
-
-For a locked-down container built for the AlpaSim E2E Challenge's specific
-submission format, see [AlpaSim E2E
-compatibility](docs/challenge-compatibility.md).
+Evaluating through the AlpaSim E2E Challenge, or your own evaluator,
+instead of the presets above? AlpaBridge can also run as a standalone
+driver a different evaluator connects to — see
+[Evaluators](docs/evaluators.md).
 
 ## Integration Test Results
 
@@ -417,6 +275,8 @@ targeting](docs/womd-targeting.md).
 - [CLI reference](docs/cli.md)
 - [Architecture and adapter behavior](docs/design.md)
 - [Getting started](docs/getting-started.md)
+- [Bring your own policy](docs/custom-policies.md)
+- [Evaluators](docs/evaluators.md)
 - [Reproducible runs](docs/reproduction.md)
 - [AlpaSim E2E compatibility](docs/challenge-compatibility.md)
 - [WOMD targeting and compatible datasets](docs/womd-targeting.md)

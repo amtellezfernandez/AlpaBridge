@@ -91,9 +91,9 @@ Backends](../README.md#policy-backends) table and
 [`policy_registry.py`](../src/alpabridge/driver/policy_registry.py)) also
 serves the public NAVSIM EgoStatusMLP architecture and `vavam` (the public
 [Valeo VideoActionModel](https://github.com/valeoai/VideoActionModel)).
-Neither is registered as a general in-process `alpasim.models` preset,
-because their checkpoint and framework dependencies (`torch`, `vam`) are
-external and heavier than the release-core baselines.
+Neither is registered as a general `alpasim.models` preset that runs
+inside AlpaSim, because their checkpoint and framework dependencies
+(`torch`, `vam`) are external and heavier than the release-core baselines.
 
 ## Trajectory Conversion
 
