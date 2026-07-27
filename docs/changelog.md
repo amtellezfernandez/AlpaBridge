@@ -2,6 +2,128 @@
 
 All notable adapter-release changes are tracked here.
 
+## Unreleased - 2026-07-28
+
+- Added `mpc_planner`, a fourth built-in policy backend and the first
+  built-in that plans rather than uses closed-form kinematics: it
+  forward-simulates a handful of candidate `(yaw_rate, acceleration)`
+  control sequences through a simple unicycle model, scores each on
+  route-tracking, hazard clearance, speed, and smoothness, and picks the
+  cheapest — using only real-time, non-privileged signal, no learned
+  model. Registered through both the `alpasim.models` entry point and
+  `policy_registry.py`, with its own Hydra config, CLI preset, audit-log
+  reader, and doctor/readiness surface entries, matching every other
+  dependency-light baseline. Building it surfaced several real bugs (see
+  below), since it was the first built-in to actually exercise some of
+  this code's edge cases.
+
+- Fixed `_yaw_from_quat_like` (the adapter's quaternion-to-yaw
+  extraction, used by `SensorFreshnessGuard`'s pose-changed check): it
+  hardcoded the pure-yaw shortcut `atan2(2wz, 1-2z²)`, which silently
+  assumes no roll/pitch. AlpaSim's own real implementation
+  (`utils_rs`'s `Pose.yaw()`) uses the full formula
+  `atan2(2*(wz+xy), 1-2*(y²+z²))`. A combined ~10° roll+pitch (a
+  plausible hard-brake-while-cornering moment) pushed the old formula's
+  error past `SensorFreshnessGuard`'s own `0.01` rad pose-changed
+  threshold — quantified with a direct numeric repro before and after.
+  Also found and consolidated a second, independent copy of the same
+  function in `alpasim_token_bc.py` (already correct, but silently able
+  to re-diverge), and fixed a related crash: a quat object present but
+  missing every field used to return `None` and crash
+  `_pose_like_to_signature`'s final `round()` call.
+
+- Fixed several places where a non-finite value (`NaN`/`inf`) silently
+  passed as if benign instead of being rejected: hazards and oracle-actor
+  proxy entries with `NaN` position/radius/velocity fields used to reach
+  collision-cost math and, in one traced case, make Python's
+  `min(inf, nan) == inf` read as *maximum* safety clearance for an
+  actor at an unknown position — the worst possible wrong answer for a
+  collision-avoidance planner. Added `math.isfinite` validation at the
+  JSON-parsing choke points instead. Separately, consolidated four
+  near-duplicate int-coercion helpers (across `promote_batch_summary.py`,
+  `benchmark_readiness.py`, `benchmark_summary.py`, `batch_summary.py`),
+  all missing `OverflowError` handling on `int(float('inf'))`, into one
+  shared `alpabridge/cli/numeric.py`.
+
+- Fixed `has_intervention()` flagging every single frame of every
+  `constant_velocity`/`route_following` run as a driver intervention:
+  its non-intervention whitelist only ever listed `maintain` and
+  `direct_actor_planner`, not each baseline's own `action_mode` name.
+  Also added the missing `mpc_planner` audit-export reader, which would
+  have hit the same whitelist bug immediately.
+
+- Fixed `SensorFreshnessGuard` losing track of a known session identity
+  when a later `validate()` call came in unlabeled (`session_uuid=None`),
+  and fixed `route_source` telemetry being able to disagree with the
+  geometry actually driven, by giving both the telemetry and the driven
+  path a single shared source of route-waypoint filtering.
+
+- Fixed the CI wheel-smoke test's drift from the readiness CLI's actual
+  image-tag check (`check_alpasim_readiness.py` printed a hardcoded
+  `alpasim-base:0.66.0` regardless of `ALPASIM_BASE_IMAGE_TAG`
+  overrides), and, separately, the wheel-smoke test's own hardcoded
+  `MODEL_PRESETS` tuple assertion, which wasn't updated when
+  `mpc_planner` was added — CI was red on every push for a few commits
+  until this was caught and fixed.
+
+- Restructured the tests for the two pieces of adapter logic confirmed,
+  by direct comparison against AlpaSim's real source, to independently
+  duplicate math AlpaSim itself implements (`_yaw_from_quat_like` vs.
+  `utils_rs`'s `Pose.yaw()`; `segment_point_distance` vs.
+  `Polyline.project_point`) to mirror AlpaSim's own test style in
+  `src/utils/tests/test_utils_rs.py` / `test_polyline.py` — plain
+  classes/functions, bare asserts, the same geometric test cases — so a
+  maintainer of both projects has a familiar layout to compare against.
+  Deliberately did not add `scipy` as a dependency just to match
+  AlpaSim's own validation-library choice for one test.
+
+- Added `VAVAM`, a public 318M-parameter video-action model policy
+  backend ([Valeo VideoActionModel](https://github.com/valeoai/VideoActionModel)),
+  with pose-reanchored inference caching for its slower-than-realtime
+  inference rate, and generalized the AlpaSim E2E challenge driver into
+  a reusable policy-serving framework rather than a single-purpose
+  script. Retained real, hash-validated rollout evidence.
+
+- Adopted the standard NVIDIA-org convention for AlpaSim override
+  patches (`git format-patch`-generated, `git am`-applyable, self-
+  labeling `Subject:`/body instead of a separate hand-maintained prose
+  summary), after researching how other NVIDIA-org projects patch
+  vendored dependencies. Drafted nine upstream proposals for
+  `NVlabs/alpasim` itself in the same rigorous format (one `.md` covering
+  why/what/verification/how-to-open plus a matching `.patch` per
+  proposal) — prepared for a future PR, not submitted — and re-verified
+  every one applies cleanly against AlpaSim's actual current upstream
+  `main`. Consolidated the proposals directly into
+  `third_party/alpasim_overrides/`, since every tracked override is, in
+  that sense, already an implicit upstream proposal.
+
+- Bumped the pinned AlpaSim release to `v2026.5`, fixed the override
+  patches that broke against it, rebased `route_waypoints.patch` against
+  AlpaSim's actual current `main`, and added automatic torch/torchvision
+  compatibility verification during `alpabridge-setup`.
+
+- Fixed AlpaBridge smuggling extra fields through `PredictionInput` and
+  added a workaround for an AlpaSim zero-speed bug.
+
+- Added `alpabridge-register-custom-scene` to close the gap for
+  registering your own complete USDZ scene into AlpaSim's catalog, and
+  collapsed real duplication in `policy_registry.py` (documenting, in
+  the same pass, why the rest of its apparent repetition isn't actually
+  duplication).
+
+- Repositioned the README around capability rather than gaps: reframed
+  Policy Backends by what each policy can do instead of what it lacks,
+  added an Evaluation Paths section (evaluators are as pluggable as
+  policies), a concrete Bring-Your-Own-Policy walkthrough, and split
+  audience-specific content (how to run vs. advanced/developer material)
+  out of the main README into dedicated docs. Fixed several accuracy
+  regressions caught along the way (a stale GPU-requirement claim,
+  "in-process"/"dependency-light" terminology drift, inconsistent
+  command-invocation style across docs).
+
+- Routine dependency bumps: `actions/checkout`, `actions/setup-python`,
+  and `astral-sh/setup-uv` to their latest pinned versions (Dependabot).
+
 ## Unreleased - 2026-07-21
 
 - Fixed the Mermaid diagram's text legibility: node styles had no
