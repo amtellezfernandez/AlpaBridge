@@ -128,10 +128,51 @@ driver](#run-as-a-standalone-driver) (registered in
 | `vavam` | Public 318M-parameter video-action model ([Valeo VideoActionModel](https://github.com/valeoai/VideoActionModel)) | A checkpoint + tokenizer checkpoint | Standalone only |
 
 The first two need no checkpoint, so they're the easiest way to test your
-AlpaSim setup. Adding a new one — including a future VLA or world-model
-policy — is a matter of implementing the contract and registering it in one
-of those two places; nothing about the serving code (timing, retries,
-evidence capture) changes.
+AlpaSim setup.
+
+#### Bring Your Own Policy
+
+Implement the contract — the required shape, in outline:
+
+```python
+from alpabridge.simulator.alpasim_contract import BaseTrajectoryModel, ModelPrediction
+
+class MyPolicy(BaseTrajectoryModel):
+    camera_ids = ["camera_front_wide_120fov"]
+    context_length = 1
+    output_frequency_hz = 4
+
+    @classmethod
+    def from_config(cls, model_cfg, device, camera_ids, context_length, output_frequency_hz):
+        return cls()  # load your checkpoint here
+
+    def _encode_command(self, command):
+        ...  # map DriveCommand to whatever your policy expects
+
+    def predict(self, prediction_input) -> ModelPrediction:
+        trajectory_xy = ...  # your model's output, an (N, 2) array
+        headings = ...       # heading at each point; see baseline_drivers.py for one way
+        return ModelPrediction(trajectory_xy=trajectory_xy, headings=headings)
+```
+
+Then register it, matching the table above:
+
+- **In-process**: declare an `alpasim.models` entry point — the same
+  mechanism the four in-process presets use (see `pyproject.toml`'s
+  `[project.entry-points."alpasim.models"]`). Entry-point groups are a
+  standard Python packaging mechanism, discovered across every installed
+  package rather than tied to one — so this can live in your own package
+  alongside AlpaBridge, not inside a fork of it.
+- **Standalone driver**: add one
+  `register_policy(DriverPolicy("my_policy", my_factory))` call in
+  [`policy_registry.py`](src/alpabridge/driver/policy_registry.py). As of
+  today this means changing this repo — see
+  [Contributing](.github/CONTRIBUTING.md) — there's no external plugin hook
+  for this path yet.
+
+Either way, nothing about the serving code itself (timing, retries,
+evidence capture, the gRPC service) changes — that's the same for every
+policy in the table above, including a future VLA or world-model one.
 
 The in-process presets (the first four) still need real local scene files —
 see [Get Scene Data](#get-scene-data) below. Both real runs above use
