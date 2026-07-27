@@ -223,6 +223,11 @@ class MPCPlannerAlpaSimModel(BaseTrajectoryModel):
             "chosen_cost": round(best_cost, 4),
             "planner_latency_ms": round(planner_latency_ms, 3),
             "sensor_freshness": sensor_freshness,
+            # Full signal, not just the summary fields above - alpasim_export.py
+            # needs the raw structured_hazards/route_waypoints to reconstruct a
+            # Scenario for audit export, the same way it does for every other
+            # baseline/planner log.
+            "alpasim_signal": signal,
             "result": "ok",
         }
         self._append_log(payload)
