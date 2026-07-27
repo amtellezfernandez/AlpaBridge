@@ -110,7 +110,7 @@ Also checked:
 ```bash
 cd <clone of amtellezfernandez/alpasim tracking upstream main>
 git checkout -b feat/lazy-model-imports
-git am third_party/alpasim_overrides/upstream-proposals/lazy-model-imports.patch  # patch is git-am-ready, own Subject/body
+git am third_party/alpasim_overrides/lazy-model-imports.patch  # patch is git-am-ready, own Subject/body
 git push fork feat/lazy-model-imports
 gh pr create --repo NVlabs/alpasim --base main \
   --head amtellezfernandez:feat/lazy-model-imports \

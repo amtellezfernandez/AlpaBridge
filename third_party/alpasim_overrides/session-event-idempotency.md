@@ -131,7 +131,7 @@ Same process as PR #127 and the route-waypoints proposal:
 ```bash
 cd <clone of amtellezfernandez/alpasim tracking upstream main>
 git checkout -b fix/idempotent-session-events
-git am third_party/alpasim_overrides/upstream-proposals/session-event-idempotency.patch  # patch is git-am-ready, own Subject/body
+git am third_party/alpasim_overrides/session-event-idempotency.patch  # patch is git-am-ready, own Subject/body
 git push fork fix/idempotent-session-events
 gh pr create --repo NVlabs/alpasim --base main \
   --head amtellezfernandez:fix/idempotent-session-events \
