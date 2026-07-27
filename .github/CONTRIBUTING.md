@@ -36,6 +36,12 @@ make smoke
 make build
 ```
 
+`make test` runs the full test suite (294 tests as of this writing) and
+needs no AlpaSim checkout, GPU, or checkpoint. `make verify` adds Ruff, a
+coverage check, a fresh-checkout install, and a wheel/sdist build. CI runs
+the same steps on every push, plus an install-from-wheel smoke test that
+exercises the real console-script entry points.
+
 Install the pre-commit hook with `pre-commit install` when useful.
 
 ## Scope

@@ -91,7 +91,8 @@ Made by
 script builds one input, shaped the same way as in
 [`tests/test_alpasim_integration.py`](tests/test_alpasim_integration.py),
 runs the built-in `route_following` policy, and plots the trajectory it
-returns. Run the script yourself to see the same thing.
+returns. Run the script yourself to see the same thing (needs the `viz`
+extra: `uv sync --extra viz`).
 
 **In practice:** you write one function for your policy — it takes in what
 the car currently sees and knows, and returns a trajectory. AlpaBridge
@@ -121,7 +122,7 @@ datasets](docs/womd-targeting.md) for what that would take.
 You don't need a GPU to install or plan a run:
 
 ```bash
-uv sync --extra dev
+uv sync
 uv run alpabridge-doctor --strict-installed --json
 ```
 
@@ -164,7 +165,8 @@ Real scene files for that path come from a **gated** Hugging Face dataset:
 access](https://huggingface.co/datasets/nvidia/PhysicalAI-Autonomous-Vehicles-NuRec)
 first if you don't have it yet, and expect that approval to take some time —
 it's a manual review, not instant. Once you have access and an `HF_TOKEN`,
-downloading the scenes your preset needs is one command:
+downloading the scenes your preset needs is one command (needs the
+`alpasim` extra: `uv sync --extra alpasim`):
 
 ```bash
 export HF_TOKEN=your-huggingface-token
@@ -263,17 +265,6 @@ Three real, saved AlpaSim runs back this up:
 
 These check that the pieces connect and work together — they don't score
 how well any one policy drives.
-
-## Verify
-
-```bash
-make test    # 294 tests, no AlpaSim/GPU/checkpoint required
-make verify  # + Ruff, coverage, fresh-checkout install smoke test, wheel/sdist build
-```
-
-None of this needs AlpaSim scenes, a GPU, or a checkpoint, and the same
-checks run in CI on every push. See
-[Contributing](.github/CONTRIBUTING.md) for the rest of the `make` targets.
 
 ## Scope
 
