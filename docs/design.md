@@ -13,6 +13,39 @@ AlpaSim messages
   -> AlpaSim trajectory response
 ```
 
+## One Interface, Different Kinds Of Policy Internals
+
+AlpaSim owns the rollout: it steps the episode, drives the controller and
+physics, and collects metrics. Each step, it calls into whatever policy is
+configured through exactly one method:
+
+```python
+def predict(self, prediction_input: PredictionInput) -> ModelPrediction: ...
+```
+
+AlpaBridge doesn't care what happens inside that call. The built-in
+backends already span three different shapes of "how the action gets
+decided":
+
+- a single reactive forward pass through a learned checkpoint
+  (`token_dagger_bc`, `vavam`);
+- a privileged planner that searches over candidate trajectories against
+  ground-truth actor state (`direct_actor_planner`);
+- closed-form kinematics with no learned component at all
+  (`constant_velocity`, `route_following`).
+
+Nothing about the contract assumes any one of these. A policy that
+internally runs a world model to imagine several futures before picking one,
+or a classical MPC optimizer, or a pipeline that chains a perception model
+into a planner into a controller, is still just one `predict()` call from
+AlpaBridge's side — the same serving code (timing, resampling, output
+validation, evidence capture) applies unchanged, because none of that
+internal complexity is visible outside the method boundary. This is a
+consequence of the existing contract, not a separate capability that would
+need to be built: the same boundary that already carries a BC checkpoint, an
+oracle-planner, and a public video-action model doesn't get more permissive
+or more restrictive for whatever runs inside a future policy.
+
 ## Input Assembly
 
 The driver receives camera images, ego motion, high-level commands, route
