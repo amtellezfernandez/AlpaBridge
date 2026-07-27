@@ -36,7 +36,7 @@ gRPC service requires the AlpaSim gRPC package from the AlpaSim challenge
 checkout:
 
 ```bash
-alpabridge-driver --model route_following
+uv run alpabridge-driver --model route_following
 ```
 
 ## Intended Use

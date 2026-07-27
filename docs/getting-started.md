@@ -38,14 +38,14 @@ AlpaBridge itself (not just using it) needs the dev tooling instead: `uv sync
 Inspect the changes before applying them:
 
 ```bash
-alpabridge-setup --alpasim-root /path/to/alpasim --check-only
+uv run alpabridge-setup --alpasim-root /path/to/alpasim --check-only
 ```
 
 Apply the tracked override layer and validate the environment:
 
 ```bash
-alpabridge-setup --alpasim-root /path/to/alpasim
-alpabridge-ready --alpasim-root /path/to/alpasim --scene-preset fresh_3scene
+uv run alpabridge-setup --alpasim-root /path/to/alpasim
+uv run alpabridge-ready --alpasim-root /path/to/alpasim --scene-preset fresh_3scene
 ```
 
 ## Get Scene Data
@@ -71,7 +71,7 @@ content is an AlpaSim-side change, outside what this repo's tooling does.
 Simple, no-setup baseline:
 
 ```bash
-alpabridge-launch \
+uv run alpabridge-launch \
   --mode print \
   --alpasim-root /path/to/alpasim \
   --model constant_velocity \
@@ -81,7 +81,7 @@ alpabridge-launch \
 Token BC/DAgger:
 
 ```bash
-alpabridge-launch \
+uv run alpabridge-launch \
   --mode print \
   --alpasim-root /path/to/alpasim \
   --model token_dagger_bc \
@@ -92,12 +92,12 @@ alpabridge-launch \
 Direct actor planner:
 
 ```bash
-alpabridge-build-oracle-proxy \
+uv run alpabridge-build-oracle-proxy \
   --alpasim-root /path/to/alpasim \
   --run-dir /path/to/completed-scene-matched-run \
   --output /tmp/alpabridge-actor-proxy.json
 
-alpabridge-launch \
+uv run alpabridge-launch \
   --mode print \
   --alpasim-root /path/to/alpasim \
   --model direct_actor_planner \

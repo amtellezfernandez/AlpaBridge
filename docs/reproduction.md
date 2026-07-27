@@ -8,7 +8,7 @@ workflow in one manifest.
 A dry plan requires no AlpaSim runtime:
 
 ```bash
-alpabridge-reproduce \
+uv run alpabridge-reproduce \
   --model constant_velocity \
   --scene-id example-scene \
   --run-dir /tmp/alpabridge/run \
@@ -22,7 +22,7 @@ closed-loop execution occurred.
 ## Execute
 
 ```bash
-alpabridge-reproduce \
+uv run alpabridge-reproduce \
   --execute \
   --alpasim-root /path/to/alpasim \
   --model constant_velocity \
