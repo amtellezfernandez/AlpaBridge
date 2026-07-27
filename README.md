@@ -155,6 +155,36 @@ class MyPolicy(BaseTrajectoryModel):
         return ModelPrediction(trajectory_xy=trajectory_xy, headings=headings)
 ```
 
+**Slow inference?** If your real forward pass can't keep up with how often
+the driver calls `predict` — the exact problem `vavam` has, since its
+native rate is 2 Hz against the driver's 10 Hz — reuse the same throttling
+cache instead of writing your own pose-tracking logic:
+
+```python
+from alpabridge.simulator.inference_rate_cache import PoseReanchoredInferenceCache
+
+class MyPolicy(BaseTrajectoryModel):
+    def __init__(self):
+        self._inference_cache = PoseReanchoredInferenceCache(min_interval_s=0.5)  # your model's real cadence
+
+    def predict(self, prediction_input) -> ModelPrediction:
+        def _infer():
+            return self._run_real_forward_pass(prediction_input)  # your heavy model call, an (N, 2) array
+
+        trajectory_xy, was_cached = self._inference_cache.get(prediction_input, _infer)
+        headings = self._compute_headings_from_trajectory(trajectory_xy)
+        return ModelPrediction(trajectory_xy=trajectory_xy, headings=headings)
+```
+
+`_infer()` only runs when the cache is empty or older than `min_interval_s`;
+otherwise the cache reprojects the last real prediction onto the car's
+*current* position instead of replaying it unchanged. It's a general
+building block, not vavam-specific — see
+[`inference_rate_cache.py`](src/alpabridge/simulator/inference_rate_cache.py)
+for the reprojection math, and
+[`vavam_model.py`](src/alpabridge/simulator/vavam_model.py) for the real,
+tested usage this pattern is based on.
+
 Then register it, matching the table above:
 
 - **In-process**: declare an `alpasim.models` entry point — the same
@@ -172,7 +202,12 @@ Then register it, matching the table above:
 
 Either way, nothing about the serving code itself (timing, retries,
 evidence capture, the gRPC service) changes — that's the same for every
-policy in the table above, including a future VLA or world-model one.
+policy in the table above, including a future VLA or world-model one. Once
+registered for the standalone driver, test it the same way as any built-in:
+
+```bash
+uv run alpabridge-driver --self-test --model my_policy
+```
 
 The in-process presets (the first four) still need real local scene files —
 see [Get Scene Data](#get-scene-data) below. Both real runs above use
