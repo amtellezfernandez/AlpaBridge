@@ -56,6 +56,11 @@ def _clean_alpabridge_dist(module) -> FakeDist:
             value="alpabridge.simulator.baseline_drivers:RouteFollowingAlpaSimModel",
         ),
         SimpleNamespace(
+            name="mpc_planner",
+            group="alpasim.models",
+            value="alpabridge.simulator.mpc_planner:MPCPlannerAlpaSimModel",
+        ),
+        SimpleNamespace(
             name="token_dagger_bc",
             group="alpasim.models",
             value="alpabridge.simulator.alpasim_token_bc:TokenBCAlpaSimModel",
@@ -82,7 +87,13 @@ class AlpaBridgeDoctorTests(unittest.TestCase):
         self.assertTrue(report["valid"])
         self.assertEqual("alpabridge_doctor_v1", report["schema"])
         self.assertEqual(
-            ["constant_velocity", "route_following", "token_dagger_bc", "direct_actor_planner"],
+            [
+                "constant_velocity",
+                "route_following",
+                "mpc_planner",
+                "token_dagger_bc",
+                "direct_actor_planner",
+            ],
             report["public_models"],
         )
         self.assertTrue(report["checks"]["public_model_registry_curated"])
@@ -393,6 +404,11 @@ class AlpaBridgeDoctorTests(unittest.TestCase):
                     name="route_following",
                     group="alpasim.models",
                     value="alpabridge.simulator.baseline_drivers:RouteFollowingAlpaSimModel",
+                ),
+                SimpleNamespace(
+                    name="mpc_planner",
+                    group="alpasim.models",
+                    value="alpabridge.simulator.mpc_planner:MPCPlannerAlpaSimModel",
                 ),
                 duplicated_token,
                 duplicated_token,

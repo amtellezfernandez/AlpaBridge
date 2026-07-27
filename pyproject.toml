@@ -55,6 +55,7 @@ constant_velocity = "alpabridge.simulator.baseline_drivers:ConstantVelocityAlpaS
 route_following = "alpabridge.simulator.baseline_drivers:RouteFollowingAlpaSimModel"
 token_dagger_bc = "alpabridge.simulator.alpasim_token_bc:TokenBCAlpaSimModel"
 direct_actor_planner = "alpabridge.simulator.alpasim_direct_actor_planner:DirectActorPlannerAlpaSimModel"
+mpc_planner = "alpabridge.simulator.mpc_planner:MPCPlannerAlpaSimModel"
 
 [project.entry-points."alpasim.configs"]
 alpabridge = "alpabridge.simulator.alpasim_configs"

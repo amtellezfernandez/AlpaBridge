@@ -58,7 +58,7 @@ installed.
 
 | Adapter property | Evidence in the core tier |
 | --- | --- |
-| Public model registry is curated | Entry-point and installed-doctor tests expose `constant_velocity`, `route_following`, `token_dagger_bc`, and `direct_actor_planner`; only the first two are dependency-light public-core models. |
+| Public model registry is curated | Entry-point and installed-doctor tests expose `constant_velocity`, `route_following`, `mpc_planner`, `token_dagger_bc`, and `direct_actor_planner`; only the first three are dependency-light public-core models. |
 | Route geometry reaches policy code | Signal tests require `route_source=alpasim_waypoints` when route waypoints are present. |
 | Command-proxy fallback is visible | Audit, batch-summary, and benchmark-summary tests retain route provenance. |
 | Scene signal is behavior-neutral by default | Signal tests keep brightness/dynamics risk diagnostic-only unless structured hazards are present. |

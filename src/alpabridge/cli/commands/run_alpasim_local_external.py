@@ -27,6 +27,7 @@ LOCAL_USDZ_CACHE_MANIFEST = "alpabridge-local-usdz-cache-manifest.json"
 PUBLIC_RELEASE_MODELS = (
     "constant_velocity",
     "route_following",
+    "mpc_planner",
     "token_dagger_bc",
     "direct_actor_planner",
 )
@@ -45,6 +46,14 @@ MODEL_PRESETS = {
         "force_cuda": False,
         "driver_env": {
             "ALPABRIDGE_BASELINE_LOG_PATH": "{run_dir}/driver/baseline-log.jsonl",
+        },
+    },
+    "mpc_planner": {
+        "config_file": CONFIG_ROOT / "mpc_planner.yaml",
+        "checkpoint": None,
+        "force_cuda": False,
+        "driver_env": {
+            "ALPABRIDGE_MPC_PLANNER_LOG_PATH": "{run_dir}/driver/mpc-planner-log.jsonl",
         },
     },
     "token_dagger_bc": {

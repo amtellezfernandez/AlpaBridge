@@ -59,6 +59,7 @@ README's [Policy Backends](../README.md#policy-backends) table:
 
 - `constant_velocity`;
 - `route_following`;
+- `mpc_planner`;
 - `token_dagger_bc`;
 - `direct_actor_planner`.
 

@@ -111,6 +111,21 @@ def _build_route_following(adapter: PolicyContext) -> Any:
     return _baseline_factory(RouteFollowingAlpaSimModel)(adapter)
 
 
+def _build_mpc_planner(adapter: PolicyContext) -> Any:
+    from alpabridge.simulator.mpc_planner import MPCPlannerAlpaSimModel, MPCPlannerConfig
+
+    resample = _resample_config(adapter)
+    return MPCPlannerAlpaSimModel(
+        camera_ids=[adapter.model_camera_id],
+        context_length=1,
+        output_frequency_hz=adapter.output_frequency_hz,
+        config=MPCPlannerConfig(
+            horizon_seconds=resample.horizon_seconds,
+            point_count=resample.point_count,
+        ),
+    )
+
+
 def _build_token_dagger_bc(adapter: PolicyContext) -> Any:
     from alpabridge.simulator.alpasim_token_bc import TokenBCAlpaSimModel
 
@@ -148,6 +163,7 @@ def _build_vavam(adapter: PolicyContext) -> Any:
 
 register_policy(DriverPolicy("constant_velocity", _build_constant_velocity))
 register_policy(DriverPolicy("route_following", _build_route_following))
+register_policy(DriverPolicy("mpc_planner", _build_mpc_planner))
 register_policy(
     DriverPolicy("token_dagger_bc", _build_token_dagger_bc, requires_checkpoint=True)
 )

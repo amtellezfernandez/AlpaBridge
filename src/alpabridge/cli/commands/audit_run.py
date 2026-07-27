@@ -11,6 +11,7 @@ from alpabridge.audit import export_alpasim_audit_log, summarize_audit_log
 DRIVER_LOG_SPECS = (
     ("constant_velocity", "baseline", "driver/baseline-log.jsonl"),
     ("route_following", "baseline", "driver/baseline-log.jsonl"),
+    ("mpc_planner", "mpc_planner", "driver/mpc-planner-log.jsonl"),
     ("token_dagger_bc", "selection", "driver/selection-log.jsonl"),
     ("direct_actor_planner", "direct_planner", "driver/direct-planner-log.jsonl"),
 )

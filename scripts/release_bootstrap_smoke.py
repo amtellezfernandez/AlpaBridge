@@ -270,9 +270,21 @@ def run_release_bootstrap_smoke(*, source_root: Path, keep_temp: bool, installer
             installed_summary["valid"]
             and source_summary["valid"]
             and installed_summary["public_models"]
-            == ["constant_velocity", "route_following", "token_dagger_bc", "direct_actor_planner"]
+            == [
+                "constant_velocity",
+                "route_following",
+                "mpc_planner",
+                "token_dagger_bc",
+                "direct_actor_planner",
+            ]
             and source_summary["public_models"]
-            == ["constant_velocity", "route_following", "token_dagger_bc", "direct_actor_planner"]
+            == [
+                "constant_velocity",
+                "route_following",
+                "mpc_planner",
+                "token_dagger_bc",
+                "direct_actor_planner",
+            ]
             and installed_summary["public_model_registry_curated"]
             and source_summary["public_model_registry_curated"]
             and (reproduce_dir / "evidence" / "closed-loop-reproduction-manifest.json").is_file()

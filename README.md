@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <strong>One interface, six policy backends and growing — from simple no-setup baselines to a real, published video-action model.</strong><br>
+  <strong>One interface, seven policy backends and growing — from simple no-setup baselines to a real, published video-action model.</strong><br>
   <a href="docs/getting-started.md">Get started</a> |
   <a href="docs/README.md">Documentation</a> |
   <a href="docs/cli.md">CLI reference</a> |
@@ -17,7 +17,7 @@
 AlpaBridge is a platform for running driving policies through
 [NVIDIA AlpaSim](https://github.com/NVlabs/alpasim)'s live simulation loop
 and evaluating how they actually drive — not just how they score against a
-logged benchmark. Bring your own policy, or pick one of six built-ins, from
+logged benchmark. Bring your own policy, or pick one of seven built-ins, from
 simple no-setup baselines to a real, published 318-million-parameter
 video-action model (see [Policy Backends](#policy-backends) below).
 
@@ -108,22 +108,27 @@ evidence of the run.
 
 ### Policy Backends
 
-AlpaBridge ships six built-in policies:
+AlpaBridge ships seven built-in policies:
 
 | Policy | Purpose | Extra input |
 | --- | --- | --- |
 | `constant_velocity` | Simple baseline, no setup needed | None |
 | `route_following` | Simple baseline that follows the route | None |
+| `mpc_planner` | Simple baseline that plans by forward-simulating a handful of candidate paths and picking the lowest-cost one — no learned model | None |
 | `token_dagger_bc` | Adapter for your own trained BC/DAgger checkpoint — bring a proprietary or research model | A checkpoint file |
 | `direct_actor_planner` | Privileged planner using ground-truth actor-state data — an oracle-style research baseline | An actor-state file |
 | `navsim_ego_status_mlp` | Public NAVSIM checkpoint, validated end-to-end with retained rollout evidence | A checkpoint file |
 | `vavam` | Public 318M-parameter video-action model, validated end-to-end with retained rollout evidence ([Valeo VideoActionModel](https://github.com/valeoai/VideoActionModel)) | A checkpoint + tokenizer checkpoint |
 
-The first two need no checkpoint, so they're the fastest way to confirm
-your AlpaSim setup works. `token_dagger_bc` and `direct_actor_planner` show
-the platform adapting to your own proprietary models and privileged
-planners; `navsim_ego_status_mlp` and `vavam` are public checkpoints with
-retained end-to-end evidence. The last two policies only run through the
+The first three need no checkpoint, so they're the fastest way to confirm
+your AlpaSim setup works — and between them already show two different
+"how does the action get decided" shapes: closed-form kinematics
+(`constant_velocity`, `route_following`) versus a real, if small,
+receding-horizon search (`mpc_planner`). `token_dagger_bc` and
+`direct_actor_planner` show the platform adapting to your own proprietary
+models and privileged planners; `navsim_ego_status_mlp` and `vavam` are
+public checkpoints with retained end-to-end evidence. The last two
+policies only run through the
 [standalone driver](docs/extending.md#evaluators); everything else works
 with the steps below too.
 

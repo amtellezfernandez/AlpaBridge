@@ -24,27 +24,31 @@ def predict(self, prediction_input: PredictionInput) -> ModelPrediction: ...
 ```
 
 AlpaBridge doesn't care what happens inside that call. The built-in
-backends already span three different shapes of "how the action gets
+backends already span four different shapes of "how the action gets
 decided":
 
 - a single reactive forward pass through a learned checkpoint
   (`token_dagger_bc`, `vavam`);
 - a privileged planner that searches over candidate trajectories against
   ground-truth actor state (`direct_actor_planner`);
-- closed-form kinematics with no learned component at all
+- a non-privileged receding-horizon search: forward-simulate several
+  candidate control sequences through a simple dynamics model, score each
+  against real-time (not oracle) route/hazard/speed signal, act on the
+  lowest-cost one (`mpc_planner`);
+- closed-form kinematics with no search or learned component at all
   (`constant_velocity`, `route_following`).
 
 Nothing about the contract assumes any one of these. A policy that
-internally runs a world model to imagine several futures before picking one,
-or a classical MPC optimizer, or a pipeline that chains a perception model
-into a planner into a controller, is still just one `predict()` call from
-AlpaBridge's side — the same serving code (timing, resampling, output
-validation, evidence capture) applies unchanged, because none of that
-internal complexity is visible outside the method boundary. This is a
-consequence of the existing contract, not a separate capability that would
-need to be built: the same boundary that already carries a BC checkpoint, an
-oracle-planner, and a public video-action model doesn't get more permissive
-or more restrictive for whatever runs inside a future policy.
+internally runs a *learned* world model to imagine several futures, or a
+pipeline that chains a perception model into a planner into a controller,
+is still just one `predict()` call from AlpaBridge's side — the same
+serving code (timing, resampling, output validation, evidence capture)
+applies unchanged, because none of that internal complexity is visible
+outside the method boundary. `mpc_planner` already demonstrates the
+"imagine several futures, score them, act on the best one" shape end to
+end - the only thing a learned world model would add is replacing its
+hand-written kinematics rollout with a learned one, not a new integration
+point.
 
 ## Input Assembly
 
@@ -112,7 +116,13 @@ inside a running rollout. Skip it with `--skip-camera-rig-check` if needed.
 The dependency-light models are:
 
 - `constant_velocity`: a straight-line smoke baseline;
-- `route_following`: a waypoint-following baseline.
+- `route_following`: a waypoint-following baseline;
+- `mpc_planner`: forward-simulates a handful of candidate (yaw rate,
+  acceleration) control sequences through a simple ego dynamics model and
+  picks the lowest-cost rollout against real-time route/hazard/speed
+  signal - a real, small receding-horizon search, not a closed-form
+  formula like the other two. See
+  [`mpc_planner.py`](../src/alpabridge/simulator/mpc_planner.py).
 
 Optional models use the same external-driver boundary. Both show the
 adapter handling proprietary artifacts - a privately trained checkpoint, an

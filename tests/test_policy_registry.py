@@ -16,6 +16,7 @@ def test_available_policy_names_includes_all_built_in_policies() -> None:
     assert set(names) == {
         "constant_velocity",
         "route_following",
+        "mpc_planner",
         "token_dagger_bc",
         "navsim_ego_status_mlp",
         "vavam",
@@ -39,6 +40,7 @@ def test_build_policy_constructs_a_real_correctly_configured_baseline() -> None:
         ConstantVelocityAlpaSimModel,
         RouteFollowingAlpaSimModel,
     )
+    from alpabridge.simulator.mpc_planner import MPCPlannerAlpaSimModel
 
     adapter = SimpleNamespace(
         model_camera_id="front",
@@ -51,12 +53,16 @@ def test_build_policy_constructs_a_real_correctly_configured_baseline() -> None:
 
     constant_velocity = build_policy("constant_velocity", adapter)
     route_following = build_policy("route_following", adapter)
+    mpc_planner = build_policy("mpc_planner", adapter)
 
     assert isinstance(constant_velocity, ConstantVelocityAlpaSimModel)
     assert isinstance(route_following, RouteFollowingAlpaSimModel)
-    for policy in (constant_velocity, route_following):
+    assert isinstance(mpc_planner, MPCPlannerAlpaSimModel)
+    for policy in (constant_velocity, route_following, mpc_planner):
         assert policy.camera_ids == ["front"]
         assert policy.output_frequency_hz == 10
+    assert mpc_planner._config.horizon_seconds == 5.0
+    assert mpc_planner._config.point_count == 50
 
 
 def test_build_policy_enforces_checkpoint_requirements_before_constructing() -> None:
