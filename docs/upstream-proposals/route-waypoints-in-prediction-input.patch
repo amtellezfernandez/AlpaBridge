@@ -1,7 +1,21 @@
+From 15c06b57f56d9674b6a3fc090508211cce104c24 Mon Sep 17 00:00:00 2001
+From: AlpaBridge maintainers <alpabridge@users.noreply.github.com>
+Date: Mon, 27 Jul 2026 21:29:43 +0200
+Subject: [PATCH] driver: forward route waypoints and session identifiers into
+ PredictionInput
+
+EgoDriverService.update_command_from_route reduces a full route down to a derived DriveCommand (LEFT/STRAIGHT/RIGHT) and discards the actual waypoint geometry before PredictionInput is built, even though the driver already has it (received via submit_route). A route-following policy that reasons over geometry rather than a coarse command has no way to get at that data. Forward the retained route and a few session-identifying fields (session_uuid, runtime_random_seed, debug_scene_id) needed for auditable telemetry.
+---
+ src/driver/src/alpasim_driver/main.py              | 14 ++++++++++++++
+ src/driver/src/alpasim_driver/models/base.py       |  3 +++
+ .../alpasim_driver/tests/test_inference_seeding.py |  9 ++++++++-
+ 3 files changed, 25 insertions(+), 1 deletion(-)
+
 diff --git a/src/driver/src/alpasim_driver/main.py b/src/driver/src/alpasim_driver/main.py
+index 03546df..e5440d0 100644
 --- a/src/driver/src/alpasim_driver/main.py
 +++ b/src/driver/src/alpasim_driver/main.py
-@@ -157,6 +157,7 @@
+@@ -157,6 +157,7 @@ class Session:
      dynamic_states: list[tuple[int, DynamicState]] = field(default_factory=list)
      current_command: DriveCommand = DriveCommand.STRAIGHT  # Default to straight
      inference_count: int = 0
@@ -9,7 +23,7 @@ diff --git a/src/driver/src/alpasim_driver/main.py b/src/driver/src/alpasim_driv
  
      @staticmethod
      def create(
-@@ -360,6 +361,9 @@
+@@ -360,6 +361,9 @@ class Session:
              min_lookahead_distance: Minimum forward distance (meters) to consider
                  a waypoint as the target for command derivation.
          """
@@ -19,7 +33,7 @@ diff --git a/src/driver/src/alpasim_driver/main.py b/src/driver/src/alpasim_driv
          if not use_waypoint_commands or len(route.waypoints) < 1:
              return
  
-@@ -384,6 +388,13 @@
+@@ -384,6 +388,13 @@ class Session:
              self.current_command.name,
          )
  
@@ -33,7 +47,7 @@ diff --git a/src/driver/src/alpasim_driver/main.py b/src/driver/src/alpasim_driv
  
  def async_log_call(func: Callable) -> Callable:
      """Helper to add logging for gRPC calls (sync or async)."""
-@@ -712,6 +723,9 @@
+@@ -712,6 +723,9 @@ class EgoDriverService(EgodriverServiceServicer):
                      acceleration=acceleration,
                      ego_pose_history=job.session.poses,
                      inference_seed=inference_seed,
@@ -44,9 +58,10 @@ diff --git a/src/driver/src/alpasim_driver/main.py b/src/driver/src/alpasim_driv
              )
          return self._model.predict_batch(inputs)
 diff --git a/src/driver/src/alpasim_driver/models/base.py b/src/driver/src/alpasim_driver/models/base.py
+index 362b4d4..33036e7 100644
 --- a/src/driver/src/alpasim_driver/models/base.py
 +++ b/src/driver/src/alpasim_driver/models/base.py
-@@ -54,6 +54,9 @@
+@@ -54,6 +54,9 @@ class PredictionInput:
      acceleration: float  # m/s²
      ego_pose_history: list[Any]  # list[PoseAtTime]
      inference_seed: int  # Session seed plus the zero-based inference count
@@ -57,9 +72,10 @@ diff --git a/src/driver/src/alpasim_driver/models/base.py b/src/driver/src/alpas
  
  @dataclass
 diff --git a/src/driver/src/alpasim_driver/tests/test_inference_seeding.py b/src/driver/src/alpasim_driver/tests/test_inference_seeding.py
+index e6098ce..8cdf51d 100644
 --- a/src/driver/src/alpasim_driver/tests/test_inference_seeding.py
 +++ b/src/driver/src/alpasim_driver/tests/test_inference_seeding.py
-@@ -38,7 +38,14 @@
+@@ -38,7 +38,14 @@ def test_run_batch_assigns_consecutive_per_session_inference_seeds() -> None:
      service._model = _CapturingModel()
      service._get_speed_and_acceleration = lambda session: (0.0, 0.0)
      service._prepare_camera_images = lambda session: {}

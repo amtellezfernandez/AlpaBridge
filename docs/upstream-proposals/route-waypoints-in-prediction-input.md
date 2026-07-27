@@ -151,9 +151,7 @@ Same process as PR #127:
 gh repo fork NVlabs/alpasim --remote=false   # already forked as amtellezfernandez/alpasim
 cd <a clone of amtellezfernandez/alpasim tracking upstream main>
 git checkout -b feat/route-waypoints-in-prediction-input
-git apply <this diff>
-git add -A
-git commit -m "driver: forward route waypoints and session identifiers into PredictionInput"
+git am docs/upstream-proposals/route-waypoints-in-prediction-input.patch  # patch is git-am-ready, own Subject/body
 git push fork feat/route-waypoints-in-prediction-input
 gh pr create --repo NVlabs/alpasim --base main \
   --head amtellezfernandez:feat/route-waypoints-in-prediction-input \

@@ -1,4 +1,16 @@
+From 45b9a9ac2e5e60cb8a289ab269dca5035a1fe045 Mon Sep 17 00:00:00 2001
+From: AlpaBridge maintainers <alpabridge@users.noreply.github.com>
+Date: Mon, 27 Jul 2026 21:29:43 +0200
+Subject: [PATCH] driver: lazily import optional model backends in
+ models/__init__.py
+
+models/__init__ eagerly imports all four built-in model backends (VAM, Alpamayo 1/1.5) at package-import time, so the package fails to import in a minimal driver environment that doesn't have their optional dependencies installed. Import them lazily via __getattr__ instead, keeping base abstractions importable everywhere; the built-in backends stay available through their entry points when their deps are present.
+---
+ .../src/alpasim_driver/models/__init__.py     | 32 ++++++++++++++++---
+ 1 file changed, 28 insertions(+), 4 deletions(-)
+
 diff --git a/src/driver/src/alpasim_driver/models/__init__.py b/src/driver/src/alpasim_driver/models/__init__.py
+index 7d0aa0b..9e09e33 100644
 --- a/src/driver/src/alpasim_driver/models/__init__.py
 +++ b/src/driver/src/alpasim_driver/models/__init__.py
 @@ -1,10 +1,19 @@

@@ -66,9 +66,7 @@ diff --git a/src/driver/src/alpasim_driver/main.py b/src/driver/src/alpasim_driv
 ```bash
 cd <clone of amtellezfernandez/alpasim tracking upstream main>
 git checkout -b fix/camera-frame-type
-git apply docs/upstream-proposals/cameraframe-type-mismatch.patch
-git add -A
-git commit -m "driver: construct real CameraFrame instances instead of plain tuples"
+git am docs/upstream-proposals/cameraframe-type-mismatch.patch  # patch is git-am-ready, own Subject/body
 git push fork fix/camera-frame-type
 gh pr create --repo NVlabs/alpasim --base main \
   --head amtellezfernandez:fix/camera-frame-type \

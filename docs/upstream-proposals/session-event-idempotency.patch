@@ -1,7 +1,19 @@
+From f934edeec3ed1588c32fea62d83a99a52fee316f Mon Sep 17 00:00:00 2001
+From: AlpaBridge maintainers <alpabridge@users.noreply.github.com>
+Date: Mon, 27 Jul 2026 21:29:43 +0200
+Subject: [PATCH] driver: treat late/duplicate session events as idempotent,
+ not fatal
+
+Five EgoDriverService RPC handlers (close_session, submit_image_observation, submit_egomotion_observation, submit_route, drive) raise KeyError when request.session_uuid isn't in self._sessions, so a message that arrives after a session ended (or before it's registered) crashes the service instead of being a normal, ignorable race. Log-and-no-op on an unknown session in all five instead.
+---
+ src/driver/src/alpasim_driver/main.py | 47 +++++++++++++++++++++++----
+ 1 file changed, 41 insertions(+), 6 deletions(-)
+
 diff --git a/src/driver/src/alpasim_driver/main.py b/src/driver/src/alpasim_driver/main.py
+index 03546df..fd23409 100644
 --- a/src/driver/src/alpasim_driver/main.py
 +++ b/src/driver/src/alpasim_driver/main.py
-@@ -747,7 +747,11 @@
+@@ -747,7 +747,11 @@ class EgoDriverService(EgodriverServiceServicer):
          self, request: DriveSessionCloseRequest, context: grpc.aio.ServicerContext
      ) -> Empty:
          if request.session_uuid not in self._sessions:
@@ -14,7 +26,7 @@ diff --git a/src/driver/src/alpasim_driver/main.py b/src/driver/src/alpasim_driv
  
          logger.info(f"Closing session {request.session_uuid}")
          del self._sessions[request.session_uuid]
-@@ -771,7 +775,14 @@
+@@ -771,7 +775,14 @@ class EgoDriverService(EgodriverServiceServicer):
      ) -> Empty:
          grpc_image = request.camera_image
          image = Image.open(BytesIO(grpc_image.image_bytes))
@@ -30,7 +42,7 @@ diff --git a/src/driver/src/alpasim_driver/main.py b/src/driver/src/alpasim_driv
          if grpc_image.logical_id not in session.desired_cameras_logical_ids:
              raise ValueError(f"Camera {grpc_image.logical_id} not in desired cameras")
  
-@@ -795,7 +806,19 @@
+@@ -795,7 +806,19 @@ class EgoDriverService(EgodriverServiceServicer):
      async def submit_egomotion_observation(
          self, request: RolloutEgoTrajectory, context: grpc.aio.ServicerContext
      ) -> Empty:
@@ -51,7 +63,7 @@ diff --git a/src/driver/src/alpasim_driver/main.py b/src/driver/src/alpasim_driv
  
          session.add_egoposes(request.trajectory)
  
-@@ -813,15 +836,22 @@
+@@ -813,15 +836,22 @@ class EgoDriverService(EgodriverServiceServicer):
          self, request: RouteRequest, context: grpc.aio.ServicerContext
      ) -> Empty:
          logger.debug("submit_route: waypoint count=%s", len(request.route.waypoints))
@@ -76,7 +88,7 @@ diff --git a/src/driver/src/alpasim_driver/main.py b/src/driver/src/alpasim_driv
                  request.route,
                  use_waypoint_commands=False,
              )
-@@ -843,7 +873,12 @@
+@@ -843,7 +873,12 @@ class EgoDriverService(EgodriverServiceServicer):
          self, request: DriveRequest, context: grpc.aio.ServicerContext
      ) -> DriveResponse:
          if request.session_uuid not in self._sessions:

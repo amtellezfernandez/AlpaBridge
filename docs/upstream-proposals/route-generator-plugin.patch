@@ -1,7 +1,24 @@
+From 0438422ed50ffbe31fdd3e14d7a38c880d5159f3 Mon Sep 17 00:00:00 2001
+From: AlpaBridge maintainers <alpabridge@users.noreply.github.com>
+Date: Mon, 27 Jul 2026 21:29:43 +0200
+Subject: [PATCH] runtime: make RouteGenerator selectable via the
+ alpasim.route_generators plugin registry
+
+RouteGeneratorType is a closed Enum and RouteGenerator.create() hardcodes dispatch to one of two built-in subclasses, so there's no way to plug in a custom route source (an external routing service, a different map format, a hand-authored scenario route) without editing this file directly. The codebase already has a generic, entry-point-based mechanism for exactly this (PluginRegistry, used by four other extension points) - register route generators through it the same way.
+---
+ src/plugins/alpasim_plugins/plugins.py         |  2 ++
+ src/runtime/alpasim_runtime/config.py          |  4 ++++
+ src/runtime/alpasim_runtime/event_loop.py      |  1 +
+ src/runtime/alpasim_runtime/route_generator.py | 11 +++++++++++
+ src/runtime/alpasim_runtime/unbound_rollout.py |  2 ++
+ src/runtime/tests/test_event_loop.py           |  1 +
+ 6 files changed, 21 insertions(+)
+
 diff --git a/src/plugins/alpasim_plugins/plugins.py b/src/plugins/alpasim_plugins/plugins.py
+index 54de743..9aad21a 100644
 --- a/src/plugins/alpasim_plugins/plugins.py
 +++ b/src/plugins/alpasim_plugins/plugins.py
-@@ -107,6 +107,7 @@
+@@ -107,6 +107,7 @@ models = PluginRegistry("alpasim.models")
  mpc_controllers = PluginRegistry("alpasim.mpc")
  scorers = PluginRegistry("alpasim.scorers")
  tools = PluginRegistry("alpasim.tools")
@@ -9,7 +26,7 @@ diff --git a/src/plugins/alpasim_plugins/plugins.py b/src/plugins/alpasim_plugin
  
  
  def get_plugin_info() -> dict[str, list[str]]:
-@@ -121,5 +122,6 @@
+@@ -121,5 +122,6 @@ def get_plugin_info() -> dict[str, list[str]]:
          "alpasim.scorers",
          "alpasim.tools",
          "alpasim.configs",
@@ -17,9 +34,10 @@ diff --git a/src/plugins/alpasim_plugins/plugins.py b/src/plugins/alpasim_plugin
      ]
      return {group: PluginRegistry(group).get_names() for group in groups}
 diff --git a/src/runtime/alpasim_runtime/config.py b/src/runtime/alpasim_runtime/config.py
+index e665ba4..2bcdda1 100644
 --- a/src/runtime/alpasim_runtime/config.py
 +++ b/src/runtime/alpasim_runtime/config.py
-@@ -315,6 +315,10 @@
+@@ -315,6 +315,10 @@ class SimulationConfig:
  
      route_generator_type: RouteGeneratorType = RouteGeneratorType.MAP
      route_start_offset_m: float = 0.0
@@ -30,10 +48,23 @@ diff --git a/src/runtime/alpasim_runtime/config.py b/src/runtime/alpasim_runtime
  
      # Whether to send optional messages to the driver
      send_recording_ground_truth: bool = False
+diff --git a/src/runtime/alpasim_runtime/event_loop.py b/src/runtime/alpasim_runtime/event_loop.py
+index 0729978..90fb3f3 100644
+--- a/src/runtime/alpasim_runtime/event_loop.py
++++ b/src/runtime/alpasim_runtime/event_loop.py
+@@ -161,6 +161,7 @@ class EventBasedRollout:
+             vector_map=self.unbound.vector_map,
+             route_generator_type=self.unbound.route_generator_type,
+             route_start_offset_m=self.unbound.route_start_offset_m,
++            route_generator_plugin=self.unbound.route_generator_plugin,
+         )
+ 
+         self._runtime_evaluator = RuntimeEvaluator(
 diff --git a/src/runtime/alpasim_runtime/route_generator.py b/src/runtime/alpasim_runtime/route_generator.py
+index 5e3eb75..d4b63f9 100644
 --- a/src/runtime/alpasim_runtime/route_generator.py
 +++ b/src/runtime/alpasim_runtime/route_generator.py
-@@ -7,6 +7,7 @@
+@@ -7,6 +7,7 @@ from abc import ABC, abstractmethod
  from typing import final
  
  import numpy as np
@@ -41,7 +72,7 @@ diff --git a/src/runtime/alpasim_runtime/route_generator.py b/src/runtime/alpasi
  from alpasim_runtime.config import RouteGeneratorType
  from alpasim_utils.geometry import Polyline, Pose
  from trajdata.maps import VectorMap
-@@ -41,6 +42,7 @@
+@@ -41,6 +42,7 @@ class RouteGenerator(ABC):
          vector_map: VectorMap,
          route_generator_type: RouteGeneratorType,
          route_start_offset_m: float = 0.0,
@@ -49,7 +80,7 @@ diff --git a/src/runtime/alpasim_runtime/route_generator.py b/src/runtime/alpasi
      ) -> "RouteGenerator | None":
          """
          Factory method to create a RouteGenerator
-@@ -49,9 +51,18 @@
+@@ -49,9 +51,18 @@ class RouteGenerator(ABC):
            vector_map: the map data
            route_generator_type: the type of route generator to create
            route_start_offset_m: approximate distance ahead of the ego projection where routes start
@@ -69,9 +100,10 @@ diff --git a/src/runtime/alpasim_runtime/route_generator.py b/src/runtime/alpasi
              return None
          elif route_generator_type == RouteGeneratorType.RECORDED:
 diff --git a/src/runtime/alpasim_runtime/unbound_rollout.py b/src/runtime/alpasim_runtime/unbound_rollout.py
+index 6dea6d4..aefbe61 100644
 --- a/src/runtime/alpasim_runtime/unbound_rollout.py
 +++ b/src/runtime/alpasim_runtime/unbound_rollout.py
-@@ -186,6 +186,7 @@
+@@ -186,6 +186,7 @@ class UnboundRollout:
      planner_delay_us: int
      route_generator_type: RouteGeneratorType
      route_start_offset_m: float
@@ -79,7 +111,7 @@ diff --git a/src/runtime/alpasim_runtime/unbound_rollout.py b/src/runtime/alpasi
      send_recording_ground_truth: bool
      nre_runid: str
      nre_version: str
-@@ -323,6 +324,7 @@
+@@ -323,6 +324,7 @@ class UnboundRollout:
              pose_reporting_interval_us=simulation_config.pose_reporting_interval_us,
              route_generator_type=simulation_config.route_generator_type,
              route_start_offset_m=simulation_config.route_start_offset_m,
@@ -87,21 +119,11 @@ diff --git a/src/runtime/alpasim_runtime/unbound_rollout.py b/src/runtime/alpasi
              send_recording_ground_truth=simulation_config.send_recording_ground_truth,
              vehicle_config=vehicle,
              vector_map=vector_map,
-diff --git a/src/runtime/alpasim_runtime/event_loop.py b/src/runtime/alpasim_runtime/event_loop.py
---- a/src/runtime/alpasim_runtime/event_loop.py
-+++ b/src/runtime/alpasim_runtime/event_loop.py
-@@ -161,6 +161,7 @@
-             vector_map=self.unbound.vector_map,
-             route_generator_type=self.unbound.route_generator_type,
-             route_start_offset_m=self.unbound.route_start_offset_m,
-+            route_generator_plugin=self.unbound.route_generator_plugin,
-         )
- 
-         self._runtime_evaluator = RuntimeEvaluator(
 diff --git a/src/runtime/tests/test_event_loop.py b/src/runtime/tests/test_event_loop.py
+index 29bdf1a..79e6ad6 100644
 --- a/src/runtime/tests/test_event_loop.py
 +++ b/src/runtime/tests/test_event_loop.py
-@@ -112,6 +112,7 @@
+@@ -112,6 +112,7 @@ def test_initial_ego_context_uses_all_gt_samples_through_first_policy(
          planner_delay_us=0,
          vector_map=None,
          route_generator_type="RECORDED",
