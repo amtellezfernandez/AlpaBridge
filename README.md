@@ -71,6 +71,10 @@ flowchart LR
     style E fill:#eef6f5,stroke:#0f766e,stroke-width:1.5px,color:#0f172a
 ```
 
+This shows the simplest case: one policy, AlpaSim driving it directly. Both
+sides are actually swappable — any policy, checked by any evaluator — see
+the diagram in [Evaluators](docs/evaluators.md) for the full picture.
+
 <details>
 <summary>One camera per run, and the frozen-camera guard</summary>
 
