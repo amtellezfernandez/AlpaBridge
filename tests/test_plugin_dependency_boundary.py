@@ -155,6 +155,40 @@ class PluginDependencyBoundaryTests(unittest.TestCase):
         self.assertIn("requires torch", payload["error"])
         self.assertIn("alpasim extra", payload["error"])
 
+    def test_vavam_missing_torch_has_actionable_error(self) -> None:
+        result = _run_python(
+            """
+            import importlib.abc
+            import json
+            import sys
+
+            class TorchBlocker(importlib.abc.MetaPathFinder):
+                def find_spec(self, fullname, path=None, target=None):
+                    if fullname.split(".", 1)[0] == "torch":
+                        raise ModuleNotFoundError(f"blocked optional backend: {fullname}")
+                    return None
+
+            sys.meta_path.insert(0, TorchBlocker())
+
+            from alpabridge.simulator.vavam_model import VAVAMAlpaSimModel
+
+            try:
+                VAVAMAlpaSimModel(
+                    "missing-vavam-checkpoint.pt",
+                    "missing-vavam-tokenizer.jit",
+                    device="cpu",
+                )
+            except ImportError as exc:
+                print(json.dumps({"error": str(exc)}, sort_keys=True))
+            else:
+                raise AssertionError("VAVAMAlpaSimModel unexpectedly loaded without torch")
+            """
+        )
+        payload = json.loads(result.stdout)
+
+        self.assertIn("requires torch", payload["error"])
+        self.assertIn("alpasim extra", payload["error"])
+
 
 def _run_python(source: str) -> subprocess.CompletedProcess[str]:
     env = os.environ.copy()

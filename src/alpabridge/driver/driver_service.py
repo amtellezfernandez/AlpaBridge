@@ -17,35 +17,32 @@ from typing import Any
 
 import numpy as np
 
+from alpabridge.driver.policy_registry import available_policy_names, build_policy
 from alpabridge.simulator.alpasim_contract import DriveCommand, ModelPrediction
-from alpabridge.simulator.baseline_drivers import (
-    ConstantVelocityAlpaSimModel,
-    RouteFollowingAlpaSimModel,
-)
 
-LOGGER = logging.getLogger("alpabridge_challenge_driver")
-CHALLENGE_TELEMETRY_SCHEMA = "alpabridge_challenge_telemetry_v3"
+LOGGER = logging.getLogger("alpabridge_driver_service")
+DRIVER_TELEMETRY_SCHEMA = "alpabridge_driver_telemetry_v3"
 
 
 @dataclass
-class ChallengeCameraFrame:
+class DriverCameraFrame:
     timestamp_us: int
     image: np.ndarray
 
 
 @dataclass
-class ChallengeSessionState:
+class DriverSessionState:
     session_uuid: str
     random_seed: int = 0
     debug_scene_id: str | None = None
-    camera_images: dict[str, list[ChallengeCameraFrame]] = field(default_factory=dict)
+    camera_images: dict[str, list[DriverCameraFrame]] = field(default_factory=dict)
     ego_pose_history: list[Any] = field(default_factory=list)
     dynamic_states: list[tuple[int, Any]] = field(default_factory=list)
     route_waypoints: list[dict[str, float]] = field(default_factory=list)
     command: Any = DriveCommand.STRAIGHT
 
 
-class ChallengeTelemetry:
+class DriverTelemetry:
     def __init__(self, path: str | Path | None) -> None:
         self._path = Path(path).expanduser() if path else None
         self._rows: list[dict[str, Any]] = []
@@ -53,7 +50,7 @@ class ChallengeTelemetry:
 
     def record(self, row: dict[str, Any]) -> None:
         payload = {
-            "schema": CHALLENGE_TELEMETRY_SCHEMA,
+            "schema": DRIVER_TELEMETRY_SCHEMA,
             "created_ns": time.time_ns(),
             **row,
         }
@@ -79,7 +76,7 @@ class ChallengeTelemetry:
             }
         )
         return {
-            "schema": "alpabridge_challenge_telemetry_summary_v1",
+            "schema": "alpabridge_driver_telemetry_summary_v1",
             "event_count": len(rows),
             "drive_count": len(drive_rows),
             "latency_ms": {
@@ -93,8 +90,8 @@ class ChallengeTelemetry:
         }
 
 
-class AlpaBridgeChallengeAdapter:
-    """Reuse AlpaBridge policy contracts behind an AlpaSim E2E-style driver service."""
+class AlpaBridgeDriverService:
+    """Serve any registered policy behind AlpaSim's external-driver gRPC interface."""
 
     def __init__(
         self,
@@ -106,6 +103,7 @@ class AlpaBridgeChallengeAdapter:
         telemetry_path: str | Path | None = None,
         latency_target_ms: float = 100.0,
         checkpoint_path: str | Path | None = None,
+        tokenizer_checkpoint_path: str | Path | None = None,
         device: str = "cpu",
         route_contract_mode: str | None = None,
     ) -> None:
@@ -129,6 +127,11 @@ class AlpaBridgeChallengeAdapter:
         self.checkpoint_sha256 = (
             _sha256_file(self.checkpoint_path) if self.checkpoint_path is not None else None
         )
+        self.tokenizer_checkpoint_path = (
+            Path(tokenizer_checkpoint_path).expanduser().resolve()
+            if tokenizer_checkpoint_path
+            else None
+        )
         self.device = str(device)
         self.route_geometry_required = self.model_name in {
             "route_following",
@@ -140,8 +143,8 @@ class AlpaBridgeChallengeAdapter:
             else os.getenv("ALPABRIDGE_ROUTE_CONTRACT_MODE", "full_contract")
         )
         self._lock = threading.RLock()
-        self._sessions: dict[str, ChallengeSessionState] = {}
-        self._telemetry = ChallengeTelemetry(telemetry_path)
+        self._sessions: dict[str, DriverSessionState] = {}
+        self._telemetry = DriverTelemetry(telemetry_path)
         self._model = self._build_model()
 
     def start_session(self, request: Any) -> None:
@@ -149,7 +152,7 @@ class AlpaBridgeChallengeAdapter:
         debug_info = getattr(request, "debug_info", None)
         debug_scene_id = getattr(debug_info, "scene_id", None) if debug_info is not None else None
         with self._lock:
-            self._sessions[session_uuid] = ChallengeSessionState(
+            self._sessions[session_uuid] = DriverSessionState(
                 session_uuid=session_uuid,
                 random_seed=int(getattr(request, "random_seed", 0) or 0),
                 debug_scene_id=str(debug_scene_id) if debug_scene_id else None,
@@ -172,7 +175,7 @@ class AlpaBridgeChallengeAdapter:
         session = self._session(str(request.session_uuid))
         grpc_image = request.camera_image
         camera_id = str(getattr(grpc_image, "logical_id", "") or self.camera_candidates[0])
-        frame = ChallengeCameraFrame(
+        frame = DriverCameraFrame(
             timestamp_us=int(getattr(grpc_image, "frame_end_us", 0) or 0),
             image=_image_array_from_bytes(getattr(grpc_image, "image_bytes", b"")),
         )
@@ -296,7 +299,7 @@ class AlpaBridgeChallengeAdapter:
             if not camera_images:
                 camera_images = {
                     self.model_camera_id: [
-                        ChallengeCameraFrame(timestamp_us=int(time_now_us), image=np.zeros((1,), dtype=np.uint8))
+                        DriverCameraFrame(timestamp_us=int(time_now_us), image=np.zeros((1,), dtype=np.uint8))
                     ]
                 }
             else:
@@ -337,46 +340,9 @@ class AlpaBridgeChallengeAdapter:
             return session.ego_pose_history[-1] if session.ego_pose_history else None
 
     def _build_model(self) -> Any:
-        kwargs = {
-            "camera_ids": [self.model_camera_id],
-            "context_length": 1,
-            "output_frequency_hz": self.output_frequency_hz,
-            "config": SimpleNamespace(
-                horizon_seconds=self.horizon_seconds,
-                point_count=int(round(self.output_frequency_hz * self.horizon_seconds)),
-            ),
-        }
-        if self.model_name == "constant_velocity":
-            return ConstantVelocityAlpaSimModel(**kwargs)
-        if self.model_name == "route_following":
-            return RouteFollowingAlpaSimModel(**kwargs)
-        if self.model_name == "token_dagger_bc":
-            if self.checkpoint_path is None:
-                raise ValueError("token_dagger_bc requires a checkpoint path")
-            from alpabridge.simulator.alpasim_token_bc import TokenBCAlpaSimModel
+        return build_policy(self.model_name, self)
 
-            return TokenBCAlpaSimModel(
-                checkpoint_path=self.checkpoint_path,
-                device=self.device,
-                camera_ids=[self.model_camera_id],
-                context_length=1,
-                output_frequency_hz=self.output_frequency_hz,
-            )
-        if self.model_name == "navsim_ego_status_mlp":
-            if self.checkpoint_path is None:
-                raise ValueError("navsim_ego_status_mlp requires a checkpoint path")
-            from alpabridge.simulator.navsim_ego_status_mlp import (
-                NavsimEgoStatusMLPModel,
-            )
-
-            return NavsimEgoStatusMLPModel(
-                checkpoint_path=self.checkpoint_path,
-                device=self.device,
-                camera_ids=[self.model_camera_id],
-            )
-        raise ValueError(f"Unsupported challenge model: {self.model_name}")
-
-    def _session(self, session_uuid: str) -> ChallengeSessionState:
+    def _session(self, session_uuid: str) -> DriverSessionState:
         with self._lock:
             session = self._sessions.get(str(session_uuid))
         if session is None:
@@ -473,16 +439,9 @@ def _proto_trajectory_is_finite(trajectory: Any) -> bool:
 
 def _normalize_model_name(model_name: str) -> str:
     value = model_name.strip().lower().replace("-", "_")
-    if value not in {
-        "constant_velocity",
-        "route_following",
-        "token_dagger_bc",
-        "navsim_ego_status_mlp",
-    }:
-        raise ValueError(
-            "Challenge compatibility supports constant_velocity, route_following, "
-            "token_dagger_bc, and navsim_ego_status_mlp"
-        )
+    valid = available_policy_names()
+    if value not in valid:
+        raise ValueError(f"Supported policies: {', '.join(valid)}")
     return value
 
 
@@ -504,13 +463,15 @@ def run_self_test(
     iterations: int = 32,
     latency_target_ms: float = 100.0,
     checkpoint_path: str | Path | None = None,
+    tokenizer_checkpoint_path: str | Path | None = None,
     device: str = "cpu",
 ) -> dict[str, Any]:
-    adapter = AlpaBridgeChallengeAdapter(
+    adapter = AlpaBridgeDriverService(
         model_name=model_name,
         latency_target_ms=latency_target_ms,
         telemetry_path=None,
         checkpoint_path=checkpoint_path,
+        tokenizer_checkpoint_path=tokenizer_checkpoint_path,
         device=device,
     )
     session_uuid = "alpabridge-self-test"
@@ -518,13 +479,15 @@ def run_self_test(
         SimpleNamespace(
             session_uuid=session_uuid,
             random_seed=17,
-            debug_info=SimpleNamespace(scene_id="challenge-self-test"),
+            debug_info=SimpleNamespace(scene_id="driver-self-test"),
         )
     )
     adapter.submit_image_observation(
         SimpleNamespace(
             session_uuid=session_uuid,
-            camera_image=SimpleNamespace(logical_id="CAM_F0", frame_end_us=1_000_000, image_bytes=b"\x80"),
+            camera_image=SimpleNamespace(
+                logical_id="CAM_F0", frame_end_us=1_000_000, image_bytes=_self_test_image_bytes()
+            ),
         )
     )
     adapter.submit_egomotion_observation(
@@ -564,10 +527,10 @@ def run_self_test(
             "model": adapter.model_name,
             "checkpoint_sha256": adapter.checkpoint_sha256,
             "claim": (
-                "learned_policy_challenge_adapter_self_test"
+                "learned_policy_driver_self_test"
                 if adapter.model_name
                 in {"token_dagger_bc", "navsim_ego_status_mlp"}
-                else "dependency_light_challenge_adapter_self_test"
+                else "dependency_light_driver_self_test"
             ),
             "benchmark_result": False,
             "latency_target_ms": latency_target_ms,
@@ -588,10 +551,10 @@ def _route_waypoints_from_proto(route: Any) -> list[dict[str, float]]:
 
 
 def _selected_camera_frames(
-    camera_images: dict[str, list[ChallengeCameraFrame]],
+    camera_images: dict[str, list[DriverCameraFrame]],
     candidates: tuple[str, ...],
-) -> list[ChallengeCameraFrame]:
-    candidate_frames: list[tuple[int, int, ChallengeCameraFrame]] = []
+) -> list[DriverCameraFrame]:
+    candidate_frames: list[tuple[int, int, DriverCameraFrame]] = []
     for priority, camera_id in enumerate(candidates):
         frames = camera_images.get(camera_id)
         if frames:
@@ -602,7 +565,7 @@ def _selected_camera_frames(
     fallback_frames = [frames[-1] for frames in camera_images.values() if frames]
     if fallback_frames:
         return [max(fallback_frames, key=lambda frame: int(frame.timestamp_us))]
-    return [ChallengeCameraFrame(timestamp_us=0, image=np.zeros((1,), dtype=np.uint8))]
+    return [DriverCameraFrame(timestamp_us=0, image=np.zeros((1,), dtype=np.uint8))]
 
 
 def _command_from_waypoints(waypoints: list[dict[str, float]]) -> Any:
@@ -842,6 +805,21 @@ class _SelfTestCommonPb2:
             self.poses: list[Any] = []
 
 
+def _self_test_image_bytes() -> bytes:
+    try:
+        from io import BytesIO
+
+        from PIL import Image
+
+        rng = np.random.default_rng(0)
+        pixels = rng.integers(0, 256, size=(90, 160, 3), dtype=np.uint8)
+        buffer = BytesIO()
+        Image.fromarray(pixels).save(buffer, format="PNG")
+        return buffer.getvalue()
+    except ImportError:
+        return b"\x80"
+
+
 def _self_test_pose(timestamp_us: int, *, x: float, y: float, yaw: float) -> Any:
     half = yaw * 0.5
     return SimpleNamespace(
@@ -858,10 +836,10 @@ def _load_grpc_modules() -> tuple[Any, Any, Any, Any]:
         import grpc
         from alpasim_grpc import API_VERSION_MESSAGE
         from alpasim_grpc.v0 import common_pb2, egodriver_pb2, egodriver_pb2_grpc
-    except ImportError as exc:  # pragma: no cover - depends on AlpaSim challenge runtime.
+    except ImportError as exc:  # pragma: no cover - depends on an AlpaSim checkout.
         raise SystemExit(
-            "alpabridge.challenge.e2e_driver requires the AlpaSim gRPC package. "
-            "Install or copy AlpaSim src/grpc into the challenge driver image."
+            "alpabridge.driver.driver_service requires the AlpaSim gRPC package. "
+            "Install or copy AlpaSim src/grpc into the driver image."
         ) from exc
     return grpc, API_VERSION_MESSAGE, common_pb2, egodriver_pb2, egodriver_pb2_grpc
 
@@ -874,8 +852,8 @@ def _build_service_class(
     egodriver_pb2: Any,
     egodriver_pb2_grpc: Any,
 ) -> type:
-    class AlpaBridgeChallengeService(egodriver_pb2_grpc.EgodriverServiceServicer):
-        def __init__(self, adapter: AlpaBridgeChallengeAdapter) -> None:
+    class AlpaBridgeDriverServicer(egodriver_pb2_grpc.EgodriverServiceServicer):
+        def __init__(self, adapter: AlpaBridgeDriverService) -> None:
             self._adapter = adapter
             self._server = None
 
@@ -916,14 +894,14 @@ def _build_service_class(
                 context.abort(grpc.StatusCode.NOT_FOUND, str(exc))
                 raise AssertionError("unreachable") from exc
             except Exception as exc:
-                LOGGER.exception("AlpaBridge challenge Drive failed")
+                LOGGER.exception("AlpaBridge driver Drive failed")
                 context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(exc))
                 raise AssertionError("unreachable") from exc
             return egodriver_pb2.DriveResponse(trajectory=trajectory)
 
         def get_version(self, request: Any, context: Any) -> Any:
             return common_pb2.VersionId(
-                version_id=f"alpabridge-challenge-{self._adapter.model_name}",
+                version_id=f"alpabridge-driver-{self._adapter.model_name}",
                 git_hash=os.environ.get("ALPABRIDGE_GIT_HASH", "local"),
                 grpc_api_version=api_version_message,
             )
@@ -933,44 +911,49 @@ def _build_service_class(
                 threading.Thread(target=lambda: self._server.stop(grace=0.0), daemon=True).start()
             return common_pb2.Empty()
 
-    return AlpaBridgeChallengeService
+    return AlpaBridgeDriverServicer
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Serve AlpaBridge as an AlpaSim E2E-style gRPC driver.")
+    parser = argparse.ArgumentParser(description="Serve an AlpaBridge policy behind AlpaSim's external-driver gRPC interface.")
     parser.add_argument(
         "--model",
-        choices=(
-            "constant_velocity",
-            "route_following",
-            "token_dagger_bc",
-            "navsim_ego_status_mlp",
-        ),
-        default=os.getenv("ALPABRIDGE_CHALLENGE_MODEL", "route_following"),
+        choices=available_policy_names(),
+        default=os.getenv("ALPABRIDGE_DRIVER_MODEL", "route_following"),
     )
     parser.add_argument(
         "--checkpoint",
         type=Path,
         default=(
-            Path(os.environ["ALPABRIDGE_CHALLENGE_CHECKPOINT"])
-            if os.environ.get("ALPABRIDGE_CHALLENGE_CHECKPOINT")
+            Path(os.environ["ALPABRIDGE_DRIVER_CHECKPOINT"])
+            if os.environ.get("ALPABRIDGE_DRIVER_CHECKPOINT")
             else None
         ),
         help=(
-            "Learned checkpoint path required by token_dagger_bc or "
-            "navsim_ego_status_mlp."
+            "Learned checkpoint path required by token_dagger_bc, "
+            "navsim_ego_status_mlp, or vavam."
         ),
     )
     parser.add_argument(
+        "--tokenizer-checkpoint",
+        type=Path,
+        default=(
+            Path(os.environ["ALPABRIDGE_DRIVER_TOKENIZER_CHECKPOINT"])
+            if os.environ.get("ALPABRIDGE_DRIVER_TOKENIZER_CHECKPOINT")
+            else None
+        ),
+        help="VQ tokenizer checkpoint path required by vavam.",
+    )
+    parser.add_argument(
         "--device",
-        default=os.getenv("ALPABRIDGE_CHALLENGE_DEVICE", "cpu"),
+        default=os.getenv("ALPABRIDGE_DRIVER_DEVICE", "cpu"),
         help="Torch device for learned policies. Recorded replay defaults to CPU.",
     )
     parser.add_argument("--host", default=os.getenv("ALPASIM_DRIVER_HOST", "0.0.0.0"))
     parser.add_argument("--port", type=int, default=int(os.getenv("ALPASIM_DRIVER_PORT", "6789")))
     parser.add_argument("--workers", type=int, default=int(os.getenv("ALPASIM_DRIVER_GRPC_WORKERS", "8")))
-    parser.add_argument("--telemetry-path", default=os.getenv("ALPABRIDGE_CHALLENGE_TELEMETRY_PATH", "/tmp/alpabridge/challenge-driver.jsonl"))
-    parser.add_argument("--latency-target-ms", type=float, default=float(os.getenv("ALPABRIDGE_CHALLENGE_LATENCY_TARGET_MS", "100.0")))
+    parser.add_argument("--telemetry-path", default=os.getenv("ALPABRIDGE_DRIVER_TELEMETRY_PATH", "/tmp/alpabridge/driver.jsonl"))
+    parser.add_argument("--latency-target-ms", type=float, default=float(os.getenv("ALPABRIDGE_DRIVER_LATENCY_TARGET_MS", "100.0")))
     parser.add_argument("--self-test", action="store_true", help="Run a dependency-light adapter self-test without alpasim_grpc.")
     parser.add_argument("--self-test-iterations", type=int, default=32)
     args = parser.parse_args()
@@ -987,6 +970,7 @@ def main() -> None:
                     iterations=args.self_test_iterations,
                     latency_target_ms=args.latency_target_ms,
                     checkpoint_path=args.checkpoint,
+                    tokenizer_checkpoint_path=args.tokenizer_checkpoint,
                     device=args.device,
                 ),
                 indent=2,
@@ -995,11 +979,12 @@ def main() -> None:
         )
         return
     grpc, api_version_message, common_pb2, egodriver_pb2, egodriver_pb2_grpc = _load_grpc_modules()
-    adapter = AlpaBridgeChallengeAdapter(
+    adapter = AlpaBridgeDriverService(
         model_name=args.model,
         telemetry_path=args.telemetry_path,
         latency_target_ms=args.latency_target_ms,
         checkpoint_path=args.checkpoint,
+        tokenizer_checkpoint_path=args.tokenizer_checkpoint,
         device=args.device,
     )
     service_cls = _build_service_class(
@@ -1024,7 +1009,7 @@ def main() -> None:
     signal.signal(signal.SIGTERM, stop)
     signal.signal(signal.SIGINT, stop)
     server.start()
-    LOGGER.info("AlpaBridge challenge driver listening on %s:%d", args.host, bound_port)
+    LOGGER.info("AlpaBridge driver listening on %s:%d", args.host, bound_port)
     server.wait_for_termination()
 
 

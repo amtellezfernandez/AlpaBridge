@@ -42,7 +42,7 @@ EXPECTED_CONSOLE_SCRIPTS = (
     "alpabridge-batch-summary",
     "alpabridge-benchmark-readiness",
     "alpabridge-evidence",
-    "alpabridge-challenge-driver",
+    "alpabridge-driver",
 )
 EXPECTED_WRAPPERS = {
     "alpabridge-doctor": "scripts/alpabridge_doctor.py",
@@ -59,7 +59,7 @@ EXPECTED_WRAPPERS = {
     "alpabridge-benchmark-summary": "scripts/benchmark_summary.py",
     "alpabridge-batch-summary": "scripts/batch_summary.py",
     "alpabridge-benchmark-readiness": "scripts/benchmark_readiness.py",
-    "alpabridge-challenge-driver": "scripts/challenge_e2e_driver.py",
+    "alpabridge-driver": "scripts/driver_service.py",
 }
 PUBLIC_MODEL_CONFIGS = {
     model: Path(MODEL_PRESETS[model]["config_file"]).resolve()
