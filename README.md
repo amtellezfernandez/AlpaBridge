@@ -129,32 +129,6 @@ scenes this repo already ships presets for; runs on other datasets (nuScenes,
 nuPlan, Argoverse 2) aren't recorded here yet — see
 [compatible datasets](docs/womd-targeting.md) for what that would take.
 
-### External Driver Service
-
-The same trajectory-policy interface also runs standalone, as a driver
-process an external evaluator connects to over gRPC, for cases where loading
-AlpaBridge in-process inside AlpaSim isn't an option. Any
-`BaseTrajectoryModel`-compatible policy is servable this way — register it in
-[`src/alpabridge/driver/policy_registry.py`](src/alpabridge/driver/policy_registry.py)
-and it's selectable the same way as any built-in, with no changes to the
-driver itself. Built in: `constant_velocity`, `route_following`,
-`token_dagger_bc`, `navsim_ego_status_mlp`, and `vavam` (the public
-[Valeo VideoActionModel](https://github.com/valeoai/VideoActionModel), a real
-318M-parameter checkpoint, not a dependency-light baseline).
-
-```bash
-uv run alpabridge-driver --model vavam \
-  --checkpoint /path/to/vavam.ckpt \
-  --tokenizer-checkpoint /path/to/tokenizer.jit
-```
-
-NVIDIA's AlpaSim E2E Challenge is one evaluator that connects to a driver
-this way — its submission format is exactly this interface
-(`egodriver.EgodriverService`) — but it's one deployment target this
-framework can sit behind, not what the framework was built for. See
-[AlpaSim E2E compatibility](docs/challenge-compatibility.md) for that
-specific path.
-
 ## Install
 
 Installation and command planning do not require a GPU:
@@ -219,6 +193,50 @@ For independent scene timeouts and retries, use `alpabridge-batch`. The toolchai
 retains expanded configuration, model inputs, commands, simulator provenance,
 driver events, summaries, and normalized audit output without committing gated
 scene data or private checkpoints.
+
+## Run As A Standalone Driver
+
+Everything above runs AlpaBridge in-process inside AlpaSim. It can also run
+as a standalone driver an AlpaSim checkout connects to over gRPC — the path
+external evaluators use, since they only support connecting to an
+already-running driver rather than loading a plugin. This skips the
+`Connect AlpaSim` override-patch step above entirely: AlpaSim just points at
+the driver over the network.
+
+Check the driver on its own first — no AlpaSim checkout, GPU, or checkpoint
+required:
+
+```bash
+uv run alpabridge-driver --self-test --model route_following
+```
+
+For a real closed loop, start the driver in one terminal:
+
+```bash
+uv run alpabridge-driver --model vavam \
+  --checkpoint /path/to/vavam.ckpt \
+  --tokenizer-checkpoint /path/to/tokenizer.jit
+```
+
+and, from an AlpaSim checkout in another terminal, point its external-driver
+preset at it:
+
+```bash
+ALPASIM_DRIVER_HOST=localhost ALPASIM_DRIVER_PORT=6789 \
+  uv run alpasim_wizard +e2e_challenge=dev
+```
+
+Any policy registered in
+[`src/alpabridge/driver/policy_registry.py`](src/alpabridge/driver/policy_registry.py)
+is selectable with `--model`, the same way as an in-process preset: the four
+presets above, plus `navsim_ego_status_mlp` and `vavam` (the public [Valeo
+VideoActionModel](https://github.com/valeoai/VideoActionModel), a real
+318M-parameter checkpoint — needs `torch` and the `vam` package, not
+installed by default).
+
+NVIDIA's AlpaSim E2E Challenge is one evaluator that connects this way;
+building a hardened container specifically for that submission format is
+covered in [AlpaSim E2E compatibility](docs/challenge-compatibility.md).
 
 ## Integration Test Results
 
