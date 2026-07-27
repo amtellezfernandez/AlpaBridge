@@ -47,6 +47,8 @@ from alpabridge.simulator.alpasim_token_bc import (
     _adapter_maneuver_config,
     _candidate_axis_signals,
     _GeomMLP,
+    _normalize_oracle_actor_hazard,
+    _normalize_oracle_world_actor,
     _prediction_ego_pose_world,
     _prediction_timestamp_us,
 )
@@ -1931,6 +1933,29 @@ class AlpaSimIntegrationTests(unittest.TestCase):
         self.assertEqual("legacy_relative_proxy_unsupported", signal["oracle_actor_proxy_miss_reason"])
         self.assertEqual("legacy_relative", signal["oracle_actor_proxy_frame_space"])
         self.assertEqual([], signal.get("structured_hazards", []))
+
+    def test_normalize_oracle_world_actor_rejects_non_finite_position(self) -> None:
+        # A NaN/inf oracle actor position must be dropped here - the single
+        # place raw oracle-proxy JSON enters the system - not laundered
+        # downstream. min_time_swept_clearance's running min(...) silently
+        # keeps its prior (often +inf, "perfectly safe") value when handed
+        # a NaN candidate, so an unrejected bad actor would read as maximum
+        # clearance instead of being flagged.
+        self.assertIsNone(_normalize_oracle_world_actor({"world_x": float("nan"), "world_y": 0.0}, 0))
+        self.assertIsNone(_normalize_oracle_world_actor({"world_x": 5.0, "world_y": float("inf")}, 0))
+        self.assertIsNone(
+            _normalize_oracle_world_actor({"world_x": 5.0, "world_y": 0.0, "world_vx": float("nan")}, 0)
+        )
+        well_formed = _normalize_oracle_world_actor({"world_x": 5.0, "world_y": 2.0}, 0)
+        self.assertIsNotNone(well_formed)
+        self.assertEqual(5.0, well_formed["world_x"])
+
+    def test_normalize_oracle_actor_hazard_rejects_non_finite_position(self) -> None:
+        self.assertIsNone(_normalize_oracle_actor_hazard({"x": float("nan"), "y": 0.0}, 0))
+        self.assertIsNone(_normalize_oracle_actor_hazard({"x": 5.0, "y": float("inf")}, 0))
+        well_formed = _normalize_oracle_actor_hazard({"x": 5.0, "y": 2.0}, 0)
+        self.assertIsNotNone(well_formed)
+        self.assertEqual(5.0, well_formed["x"])
 
     def test_token_bc_alpasim_adapter_keeps_empty_world_proxy_frames_in_world_space(self) -> None:
         with TemporaryDirectory() as tmp:
