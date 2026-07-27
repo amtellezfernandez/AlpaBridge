@@ -169,6 +169,9 @@ class AlpaBridgeDriverService:
     def close_session(self, session_uuid: str) -> None:
         with self._lock:
             self._sessions.pop(str(session_uuid), None)
+        inference_cache = getattr(self._model, "_inference_cache", None)
+        if inference_cache is not None:
+            inference_cache.forget(str(session_uuid))
         self._telemetry.record({"event": "close_session", "session_uuid": str(session_uuid)})
 
     def submit_image_observation(self, request: Any) -> None:

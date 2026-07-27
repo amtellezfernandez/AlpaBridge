@@ -77,7 +77,11 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--force",
         action="store_true",
-        help="Replace an existing row for this scene_id instead of failing.",
+        help=(
+            "Update an existing row for this scene_id instead of failing. Only the "
+            "uuid/artifact_repository/nre_version_string fields change; any other "
+            "existing column value for this scene_id is preserved."
+        ),
     )
     parser.add_argument(
         "--dry-run",
@@ -130,7 +134,12 @@ def main() -> int:
             f"scene_id {scene_id!r} already has a row in {catalog_path} - pass --force to replace it."
         )
 
-    new_row = {name: "" for name in fieldnames}
+    # Start from the existing row when replacing, not a blank one - --force
+    # updates this scene's fields, it doesn't drop unrelated columns
+    # (path, hf_revision, or any project-specific extra column) that were
+    # already set for it.
+    base_row = dict(rows[existing_index]) if existing_index is not None else {}
+    new_row = {name: base_row.get(name, "") for name in fieldnames}
     new_row.update(
         {
             "scene_id": scene_id,

@@ -186,3 +186,28 @@ def test_inference_cache_always_infers_without_session_context() -> None:
     cache.get(prediction_input, infer)
 
     assert len(calls) == 2
+
+
+def test_forget_evicts_a_session_so_it_no_longer_leaks_memory() -> None:
+    cache = PoseReanchoredInferenceCache(min_interval_s=0.5)
+    calls = []
+
+    def infer() -> np.ndarray:
+        calls.append(1)
+        return np.array([[5.0, 0.0]])
+
+    cache.get(_prediction_input("s", 0, 0.0, 0.0, 0.0), infer)
+    assert "s" in cache._cache
+
+    cache.forget("s")
+    assert "s" not in cache._cache
+
+    # Forgotten session must infer again, not reuse a phantom entry.
+    _, reused = cache.get(_prediction_input("s", 200_000, 1.0, 0.0, 0.0), infer)
+    assert reused is False
+    assert len(calls) == 2
+
+
+def test_forget_on_an_unknown_session_is_a_no_op() -> None:
+    cache = PoseReanchoredInferenceCache(min_interval_s=0.5)
+    cache.forget("never-registered")  # must not raise

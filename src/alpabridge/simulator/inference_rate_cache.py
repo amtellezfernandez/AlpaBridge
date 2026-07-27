@@ -97,6 +97,16 @@ class PoseReanchoredInferenceCache:
         self._cache: dict[str, CachedInference] = {}
         self._lock = threading.Lock()
 
+    def forget(self, session_uuid: str) -> None:
+        """Drop a session's cached inference, if any.
+
+        Without this, a long-running driver process serving many sessions
+        over its lifetime leaks one entry per session forever - callers
+        should invoke this when a session closes (see
+        ``AlpaBridgeDriverService.close_session``)."""
+        with self._lock:
+            self._cache.pop(str(session_uuid), None)
+
     def get(
         self, prediction_input: Any, infer: Callable[[], np.ndarray]
     ) -> tuple[np.ndarray, bool]:
@@ -107,7 +117,8 @@ class PoseReanchoredInferenceCache:
         cached prediction is older than ``min_interval_s``).
         """
         session_uuid, time_now_us, current_xy, current_yaw = cache_context(prediction_input)
-        cached = self._cache.get(session_uuid) if session_uuid is not None else None
+        with self._lock:
+            cached = self._cache.get(session_uuid) if session_uuid is not None else None
         if (
             cached is not None
             and (time_now_us - cached.anchor_time_us) / 1_000_000.0 < self._min_interval_s
