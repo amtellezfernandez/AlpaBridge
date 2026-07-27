@@ -170,8 +170,9 @@ you picked.
 
 ## Get Scene Data
 
-Only needed for the in-process path above (`alpabridge-launch` /
-`alpabridge-reproduce` with `--scene-preset`) — the [standalone
+Only needed for running a policy inside AlpaSim itself above
+(`alpabridge-launch` / `alpabridge-reproduce` with `--scene-preset`) — the
+[standalone
 driver](docs/extending.md#evaluators) supplies its own scenes instead.
 
 Real scene files come from a **gated** Hugging Face dataset of real driving

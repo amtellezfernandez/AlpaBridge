@@ -18,8 +18,8 @@ commands for presets the README doesn't spell out (`token_dagger_bc`,
 - Optional gated extensions: a Token BC/DAgger checkpoint for learned runs or
   a scene-matched actor proxy for direct-planner runs.
 
-The dependency-light public core uses `constant_velocity` and
-`route_following`; it does not require a learned checkpoint or direct-planner
+The simple, no-setup public core uses `constant_velocity` and
+`route_following`; neither needs a learned checkpoint or direct-planner
 actor proxy.
 
 ## Install
@@ -68,7 +68,7 @@ content is an AlpaSim-side change, outside what this repo's tooling does.
 
 ## Materialize Commands
 
-Dependency-light baseline:
+Simple, no-setup baseline:
 
 ```bash
 alpabridge-launch \
