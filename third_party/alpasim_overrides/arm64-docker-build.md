@@ -122,7 +122,7 @@ This was verified with a real, complete `docker build` on real ARM64/Blackwell h
 ```bash
 cd <clone of amtellezfernandez/alpasim tracking upstream main>
 git checkout -b feat/arm64-docker-sync
-git am third_party/alpasim_overrides/upstream-proposals/arm64-docker-build.patch  # patch is git-am-ready, own Subject/body
+git am third_party/alpasim_overrides/arm64-docker-build.patch  # patch is git-am-ready, own Subject/body
 git push fork feat/arm64-docker-sync
 gh pr create --repo NVlabs/alpasim --base main \
   --head amtellezfernandez:feat/arm64-docker-sync \

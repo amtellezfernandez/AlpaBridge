@@ -25,33 +25,36 @@ not as an implicit runtime dependency on some separate legacy package.
 ## Contents
 
 - `route_waypoints.patch`, `local_checkout.patch` — `git format-patch`-style
-  patches against the pinned AlpaSim release. Each is self-labeling: its
-  `Subject:` line and commit body are the description, so there's no
-  separate, driftable prose summary of what it changes to keep in sync -
-  read the patch file itself (`head -20 <patch>`).
+  patches against the pinned AlpaSim release, applied by `alpabridge-setup`.
+  Each is self-labeling: its `Subject:` line and commit body are the
+  description, so there's no separate, driftable prose summary of what it
+  changes to keep in sync - read the patch file itself (`head -20 <patch>`).
 - `Dockerfile.amd64` — runtime image customization for supported hosts
 - `src/wizard/**` — tracked wizard/deployment overrides
 - `src/driver/**` — tracked external-driver override files
+- everything else (`*.md` + `.patch` pairs, e.g. `arm64-docker-build.md`) —
+  proposals for fixing something in AlpaSim itself rather than continuing to
+  patch around it locally. Every override above is, in that sense, already
+  an implicit upstream proposal - these are just the ones written up for a
+  real PR. Each is one `.md` (why, the change, verification performed, how
+  to open it) plus a `git am`-ready `.patch`, verified against upstream
+  AlpaSim's actual current `main` - not the pinned release the applied
+  overrides above target, since a PR is opened against `main`. That's also
+  why a proposal isn't necessarily redundant with a same-named override
+  above even when both touch the same underlying fix: the proposal may
+  carry content (a newer AlpaSim feature, an added upstream test) that
+  doesn't exist yet at the pinned release. None of these are opened as
+  real PRs yet; `git am` the patch into your own AlpaSim fork and push
+  when ready. Once something merges upstream, note that in the proposal's
+  `.md` rather than deleting it, so the "why did we carry this" history
+  survives (see `docker-compose-gpu-conditional-OBSOLETE.md` for the
+  pattern - a proposal that turned out moot, kept so it isn't
+  re-investigated).
 
 A file only ever appears as *either* a patch hunk *or* a full tracked copy
 here, never both - `alpabridge-setup` applies patches first and then copies
 full-file overrides on top, so a hunk touching the same file as a copy would
 be silently discarded (the copy always wins).
-
-## `upstream-proposals/`
-
-Draft PRs for changes AlpaBridge would rather see fixed in AlpaSim itself
-than keep patching around locally - the natural next step for anything
-above once it's well-understood, not a separate tracking mechanism. Each
-proposal is one `.md` (why, the change, verification performed, how to
-open it) plus one `git am`-ready `.patch`, verified against upstream
-AlpaSim's actual current `main` (not the pinned release above - a PR
-targets `main`). Not yet opened as real PRs; `git am` the patch into your
-own AlpaSim fork and push when ready. A proposal whose fix is already one
-of the patches/copies above stays there permanently regardless of PR
-status (AlpaBridge still needs it against the pinned release); once
-merged upstream, note that in the proposal's `.md` rather than deleting
-it, so the "why did we carry this" history survives.
 
 ## Boundary Rule
 
