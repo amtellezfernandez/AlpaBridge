@@ -14,7 +14,12 @@ try:
 except ImportError:  # pragma: no cover - exercised in dependency-light installs.
     torch = None
 
-from .alpasim_contract import BaseTrajectoryModel, DriveCommand, ModelPrediction, resample_trajectory
+from .alpasim_contract import (
+    BaseTrajectoryModel,
+    DriveCommand,
+    ModelPrediction,
+    resample_trajectory,
+)
 from .image_ops import resize_and_center_crop
 from .inference_rate_cache import PoseReanchoredInferenceCache
 
