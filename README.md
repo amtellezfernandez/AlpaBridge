@@ -193,6 +193,13 @@ Already have the scene files locally? Point at them with `--source-usdz-dir`
 instead, and nothing is downloaded. `alpabridge-ready` (above) reports
 whether the scenes a preset needs are already cached.
 
+This is scoped to that one catalog — `--source-usdz-dir` only changes where
+the files are copied from, not which scenes exist. Bringing genuinely new
+scene content of your own is an AlpaSim-side change, not something this
+tooling does; see [Getting Started](docs/getting-started.md#get-scene-data)
+for `--scene-id`, the one way to pick a specific scene from the catalog
+instead of a whole preset.
+
 ## Plan Or Execute
 
 This is what actually drives a scene: `--model` picks the policy (from
