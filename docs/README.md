@@ -4,6 +4,7 @@
 | --- | --- |
 | [Getting started](getting-started.md) | Install AlpaBridge, connect an AlpaSim checkout, and materialize a run. |
 | [Design](design.md) | External-driver architecture, policy presets, trajectory conversion, and validation. |
+| [Extending AlpaBridge](extending.md) | Write your own policy, or evaluate through something other than the built-in presets. |
 | [WOMD targeting](womd-targeting.md) | WOMD/Waymax scope, real camera/LiDAR data formats, and compatible datasets. |
 | [Reproduction](reproduction.md) | Plan or execute a run and retain its configuration and evidence. |
 | [AlpaSim E2E compatibility](challenge-compatibility.md) | Package and run the evaluator-owned external-driver path. |

@@ -65,7 +65,7 @@ README's [Policy Backends](../README.md#policy-backends) table:
 Standalone-driver-only policies (`navsim_ego_status_mlp`, `vavam`, and any
 new ones) go in
 [`src/alpabridge/driver/policy_registry.py`](../src/alpabridge/driver/policy_registry.py)
-instead — see [Bring Your Own Policy](../docs/custom-policies.md) for which
+instead — see [Extending AlpaBridge](../docs/extending.md) for which
 serving path a new policy needs.
 
 Do not add a dataset claim merely because a policy interface resembles WOMD.
