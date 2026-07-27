@@ -113,7 +113,7 @@ flowchart LR
 
     subgraph Evaluator [" Evaluator — pick one "]
         direction TB
-        E1["AlpaSim, in-process<br/>alpabridge-launch"]
+        E1["Inside AlpaSim<br/>alpabridge-launch"]
         E2["AlpaSim's local wizard<br/>standalone driver"]
         E3["AlpaSim E2E Challenge<br/>standalone driver"]
         E4["Your own evaluator<br/>standalone driver"]
