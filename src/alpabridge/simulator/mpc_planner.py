@@ -55,7 +55,7 @@ from .alpasim_signal import (
     signal_actors,
     signal_obstacles,
 )
-from .baseline_drivers import _cfg_float, _cfg_int, _cfg_value
+from .baseline_drivers import _cfg_float, _cfg_int, _cfg_value, _encode_command
 from .environment import Actor, Obstacle, segment_point_distance
 
 
@@ -75,6 +75,14 @@ class MPCPlannerConfig:
     collision_weight: float = 4000.0
     speed_weight: float = 3.0
     smoothness_weight: float = 1.0
+
+    def __post_init__(self) -> None:
+        if not self.yaw_rates_rps or not self.accels_mps2:
+            raise ValueError(
+                "MPCPlannerConfig.yaw_rates_rps and accels_mps2 must each have at "
+                "least one candidate - an empty set leaves _select_candidate with "
+                "no rollout to choose from."
+            )
 
 
 class MPCPlannerAlpaSimModel(BaseTrajectoryModel):
@@ -147,12 +155,7 @@ class MPCPlannerAlpaSimModel(BaseTrajectoryModel):
         return self._output_frequency_hz
 
     def _encode_command(self, command: DriveCommand) -> str:
-        return {
-            DriveCommand.LEFT: "left",
-            DriveCommand.STRAIGHT: "straight",
-            DriveCommand.RIGHT: "right",
-            DriveCommand.UNKNOWN: "straight",
-        }[command]
+        return _encode_command(command)
 
     def predict(self, prediction_input: PredictionInput) -> ModelPrediction:
         self._validate_cameras(prediction_input.camera_images)

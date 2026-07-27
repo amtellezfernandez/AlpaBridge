@@ -934,6 +934,40 @@ class AlpaSimIntegrationTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             model.predict(moved_frozen_camera)
 
+    def test_mpc_planner_config_rejects_an_empty_candidate_set(self) -> None:
+        # An empty yaw_rates_rps/accels_mps2 would leave _select_candidate's
+        # search loop with nothing to choose from - reject it at
+        # construction instead of failing deep inside a rollout.
+        with self.assertRaises(ValueError):
+            MPCPlannerConfig(yaw_rates_rps=())
+        with self.assertRaises(ValueError):
+            MPCPlannerConfig(accels_mps2=())
+
+    def test_structured_hazards_from_input_drops_non_finite_coordinates(self) -> None:
+        # A garbled hazard message (NaN/inf x, y, radius, vx, or vy) must be
+        # dropped entirely, not passed through as a hazard that silently
+        # contributes zero cost to any downstream collision/clearance check
+        # (NaN comparisons are always False, so an un-validated NaN hazard
+        # would be indistinguishable from "no hazard here").
+        prediction_input = SimpleNamespace(
+            camera_images={"front": [SimpleNamespace(image=np.full((4, 4, 3), 180, dtype=np.uint8))]},
+            speed=6.0,
+            acceleration=0.0,
+            ego_pose_history=[object()],
+            structured_hazards=[
+                {"x": float("nan"), "y": 0.0, "radius": 1.0, "kind": "obstacle", "label": "nan_x"},
+                {"x": 5.0, "y": float("inf"), "radius": 1.0, "kind": "obstacle", "label": "inf_y"},
+                {"x": 5.0, "y": 0.0, "radius": float("nan"), "kind": "obstacle", "label": "nan_radius"},
+                {"x": 5.0, "y": 0.0, "radius": 1.0, "vx": float("nan"), "kind": "vehicle", "label": "nan_vx"},
+                {"x": 8.0, "y": 0.0, "radius": 1.0, "kind": "obstacle", "label": "well_formed"},
+            ],
+        )
+
+        signal = extract_alpasim_signal(prediction_input)
+
+        self.assertEqual(1, len(signal["structured_hazards"]))
+        self.assertEqual("well_formed", signal["structured_hazards"][0]["label"])
+
     def test_alpasim_signal_preserves_static_hazard_shape_metadata(self) -> None:
         prediction_input = SimpleNamespace(
             camera_images={"front": [SimpleNamespace(image=np.full((4, 4, 3), 180, dtype=np.uint8))]},

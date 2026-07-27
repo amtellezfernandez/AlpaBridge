@@ -296,14 +296,26 @@ def _hazard_from_item(item: Any, index: int) -> dict[str, float | str] | None:
         vy = getattr(item, "vy", getattr(item, "velocity_y_mps", getattr(item, "lateral_velocity_mps", 0.0)))
     if x is None:
         return None
+    x_f, y_f, radius_f, vx_f, vy_f = float(x), float(y), float(radius), float(vx), float(vy)
+    if not (
+        math.isfinite(x_f)
+        and math.isfinite(y_f)
+        and math.isfinite(radius_f)
+        and math.isfinite(vx_f)
+        and math.isfinite(vy_f)
+    ):
+        # A garbled hazard message must be dropped, not silently reach a
+        # cost/collision check as a zero-effect NaN - the same reason
+        # _route_waypoint_from_item rejects non-finite waypoints above.
+        return None
     hazard = {
-        "x": float(x),
-        "y": float(y),
-        "radius": max(0.25, float(radius)),
+        "x": x_f,
+        "y": y_f,
+        "radius": max(0.25, radius_f),
         "kind": str(kind),
         "label": str(label),
-        "vx": float(vx),
-        "vy": float(vy),
+        "vx": vx_f,
+        "vy": vy_f,
     }
     if width is not None:
         hazard["width"] = max(0.25, float(width))
