@@ -49,6 +49,34 @@ class PromoteBatchSummaryTests(unittest.TestCase):
         self.assertFalse(report["promoted"])
         self.assertTrue(any(error.startswith("output_exists:") for error in report["errors"]))
 
+    def test_promote_summary_reports_a_clean_failure_for_a_non_finite_scene_count(self) -> None:
+        # Regression test: _int_value used to have no exception handling at
+        # all on its float branch, so a NaN (or inf) planned_scene_count -
+        # json.loads accepts both non-standard literals by default - would
+        # crash promote_summary() with an uncaught ValueError/OverflowError
+        # instead of the intended clean "planned_scene_count_mismatch"
+        # validation failure.
+        module = importlib.import_module("alpabridge.cli.commands.promote_batch_summary")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            source = root / "alpabridge-batch-summary.json"
+            output = root / "public.json"
+            summary = _summary(scene_count=2)
+            summary["aggregate"]["planned_scene_count"] = float("nan")
+            _write_json(source, summary)
+
+            report = module.promote_summary(
+                summary_path=source,
+                output_path=output,
+                expected_scene_count=2,
+                model="token_dagger_bc",
+                scene_preset="front_camera_10scene_smoke",
+            )
+
+        self.assertFalse(report["promoted"])
+        self.assertIn("planned_scene_count_mismatch", report["errors"])
+        self.assertFalse(output.exists())
+
     def test_main_fails_for_mismatched_scene_preset(self) -> None:
         module = importlib.import_module("alpabridge.cli.commands.promote_batch_summary")
         with tempfile.TemporaryDirectory() as tmpdir:

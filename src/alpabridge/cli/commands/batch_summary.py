@@ -9,6 +9,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from alpabridge.cli.numeric import int_or_zero as _int_or_zero
+from alpabridge.cli.numeric import optional_int as _optional_int
+
 SUMMARY_SCHEMA = "alpabridge_closed_loop_batch_summary_v1"
 STATUS_NAME = "batch-status.json"
 MANIFEST_NAME = "batch-manifest.json"
@@ -820,18 +823,6 @@ def _counter_dict(value: Any) -> dict[str, int]:
     for key, raw in value.items():
         counter[str(key)] = _int_or_zero(raw)
     return counter
-
-
-def _optional_int(value: Any) -> int | None:
-    try:
-        return None if value is None else int(value)
-    except (TypeError, ValueError):
-        return None
-
-
-def _int_or_zero(value: Any) -> int:
-    parsed = _optional_int(value)
-    return 0 if parsed is None else parsed
 
 
 def _float_or_none(value: Any) -> float | None:

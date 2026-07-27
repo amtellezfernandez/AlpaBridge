@@ -19,6 +19,7 @@ from alpabridge.cli.commands.run_alpasim_local_external import (
     _scene_catalog_paths,
     _scene_ids,
     _validate_alpasim_checkout,
+    alpasim_base_image_tag,
 )
 
 
@@ -111,7 +112,7 @@ def main() -> None:
     print(f"  HF_TOKEN: {token_state}")
     print("  docker: accessible")
     print("  gpu runtime: accessible")
-    print(f"  image: {'skipped' if args.skip_image else 'alpasim-base:0.66.0'}")
+    print(f"  image: {'skipped' if args.skip_image else alpasim_base_image_tag()}")
     print(f"  local AlpaSim env: {'skipped' if args.skip_local_env else 'checked'}")
     print(f"  scene artifacts: {'skipped' if args.skip_scene_artifacts else 'checked'}")
     print(f"  camera rig compatibility: {'skipped' if args.skip_camera_rig_check else 'checked'}")

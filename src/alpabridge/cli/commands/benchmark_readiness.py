@@ -7,6 +7,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from alpabridge.cli.numeric import int_or_zero as _int_or_zero
+
 BATCH_SUMMARY_SCHEMA = "alpabridge_closed_loop_batch_summary_v1"
 READINESS_SCHEMA = "alpabridge_benchmark_readiness_v1"
 
@@ -379,13 +381,6 @@ def _counter_dict(value: Any) -> dict[str, int]:
     if not isinstance(value, dict):
         return {}
     return {str(key): _int_or_zero(raw) for key, raw in value.items()}
-
-
-def _int_or_zero(value: Any) -> int:
-    try:
-        return 0 if value is None else int(value)
-    except (TypeError, ValueError):
-        return 0
 
 
 def _print_human_report(report: dict[str, Any]) -> None:

@@ -23,6 +23,15 @@ SCENE_PRESET_ROOT = package_path("simulator", "alpasim_scene_presets")
 CONFIG_ROOT = package_path("simulator", "alpasim_configs", "driver")
 RUN_STATUS_FILENAME = "run-status.json"
 LOCAL_USDZ_CACHE_MANIFEST = "alpabridge-local-usdz-cache-manifest.json"
+DEFAULT_ALPASIM_BASE_IMAGE_TAG = "alpasim-base:0.66.0"
+
+
+def alpasim_base_image_tag() -> str:
+    """The image tag every GPU/image preflight check and status report must
+    agree on - a single source of truth for `ALPASIM_BASE_IMAGE_TAG`'s
+    default, instead of independently repeating the literal (which once
+    already let a status line drift out of sync with the real check)."""
+    return os.getenv("ALPASIM_BASE_IMAGE_TAG", DEFAULT_ALPASIM_BASE_IMAGE_TAG)
 
 PUBLIC_RELEASE_MODELS = (
     "constant_velocity",
@@ -761,7 +770,7 @@ def _preflight_docker_access() -> None:
 
 
 def _preflight_alpasim_base_image() -> None:
-    image_tag = os.getenv("ALPASIM_BASE_IMAGE_TAG", "alpasim-base:0.66.0")
+    image_tag = alpasim_base_image_tag()
     result = subprocess.run(
         ["docker", "image", "inspect", image_tag],
         stdout=subprocess.DEVNULL,
@@ -788,7 +797,7 @@ def _alpasim_checkout_provenance(alpasim_root: Path) -> dict[str, Any]:
 
 
 def _alpasim_base_image_provenance() -> dict[str, Any]:
-    image_tag = os.getenv("ALPASIM_BASE_IMAGE_TAG", "alpasim-base:0.66.0")
+    image_tag = alpasim_base_image_tag()
     provenance: dict[str, Any] = {
         "tag": image_tag,
         "present": False,
@@ -865,7 +874,7 @@ def _preflight_nvidia_container_runtime() -> None:
     if os.getenv("ALPABRIDGE_SKIP_ALPASIM_GPU_RUNTIME_CHECK", "").strip() == "1":
         return
 
-    image_tag = os.getenv("ALPASIM_BASE_IMAGE_TAG", "alpasim-base:0.66.0")
+    image_tag = alpasim_base_image_tag()
     result = subprocess.run(
         [
             "docker",
