@@ -1,4 +1,16 @@
+From c8afbf2a1e4a73e0eb37fc8ebe61a705f03e11d6 Mon Sep 17 00:00:00 2001
+From: AlpaBridge maintainers <alpabridge@users.noreply.github.com>
+Date: Mon, 27 Jul 2026 21:29:43 +0200
+Subject: [PATCH] driver: add a free-form pass-through field for third-party
+ model config
+
+model_type is resolved dynamically via the alpasim.models plugin registry, so a third party can register a whole new model class without touching driver code - but that model has no way to receive its own configuration, since OmegaConf's structured-config validation rejects any key not already declared on ModelConfig. Add a plain dict[str, Any] field; OmegaConf's strictness applies to a dataclass's declared fields, not to the contents of a dict-typed field, so this stays open to arbitrary keys without loosening validation on every other field.
+---
+ src/driver/src/alpasim_driver/schema.py | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
 diff --git a/src/driver/src/alpasim_driver/schema.py b/src/driver/src/alpasim_driver/schema.py
+index a38276a..29375b1 100644
 --- a/src/driver/src/alpasim_driver/schema.py
 +++ b/src/driver/src/alpasim_driver/schema.py
 @@ -4,6 +4,7 @@
@@ -9,7 +21,7 @@ diff --git a/src/driver/src/alpasim_driver/schema.py b/src/driver/src/alpasim_dr
  
  from omegaconf import MISSING
  
-@@ -27,6 +28,12 @@
+@@ -27,6 +28,12 @@ class ModelConfig:
      tokenizer_path: str | None = None  # Only required for VAM
      use_classifier_free_guidance_nav: bool = False  # A1.5 only
      force_determinism: bool = False  # Alpamayo 1 only

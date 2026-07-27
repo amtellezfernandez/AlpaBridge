@@ -1,4 +1,16 @@
+From 9ed42c74acc0c0e31941a94e8791c97207da9d7a Mon Sep 17 00:00:00 2001
+From: AlpaBridge maintainers <alpabridge@users.noreply.github.com>
+Date: Mon, 27 Jul 2026 21:29:43 +0200
+Subject: [PATCH] docker: install only the packages a headless runtime image
+ needs on arm64
+
+uv sync --extra all pulls every workspace package, including some that can't build on ARM64 (alpasim-tools needs PyQt5, no aarch64 wheel) and some not needed inside a runtime container at all (alpasim_driver/alpasim_plugins run on the host in an external-driver setup; alpasim_wizard is host-only too). On arm64, install the docker_local extras set explicitly (editable) instead of the wildcard --extra all sync.
+---
+ Dockerfile | 36 +++++++++++++++++++++++++++++-------
+ 1 file changed, 29 insertions(+), 7 deletions(-)
+
 diff --git a/Dockerfile b/Dockerfile
+index 262f373..9d4f296 100644
 --- a/Dockerfile
 +++ b/Dockerfile
 @@ -13,6 +13,7 @@ FROM nvcr.io/nvidia/pytorch:25.08-py3 AS base-arm64

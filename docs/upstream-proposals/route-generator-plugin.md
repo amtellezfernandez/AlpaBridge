@@ -163,9 +163,7 @@ Worth calling out explicitly: `vector_map` (`UnboundRollout.vector_map: VectorMa
 ```bash
 cd <clone of amtellezfernandez/alpasim tracking upstream main>
 git checkout -b feat/route-generator-plugin
-git apply docs/upstream-proposals/route-generator-plugin.patch
-git add -A
-git commit -m "runtime: make RouteGenerator selectable via the alpasim.route_generators plugin registry"
+git am docs/upstream-proposals/route-generator-plugin.patch  # patch is git-am-ready, own Subject/body
 git push fork feat/route-generator-plugin
 gh pr create --repo NVlabs/alpasim --base main \
   --head amtellezfernandez:feat/route-generator-plugin \

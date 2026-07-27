@@ -1,7 +1,19 @@
+From cd13a6fc613dfbb78e0354708c315459a9abf140 Mon Sep 17 00:00:00 2001
+From: AlpaBridge maintainers <alpabridge@users.noreply.github.com>
+Date: Mon, 27 Jul 2026 21:29:43 +0200
+Subject: [PATCH] driver: construct real CameraFrame instances instead of plain
+ tuples
+
+CameraImages is typed as dict[str, list[CameraFrame]], but _prepare_camera_images builds plain positional tuples, so every PredictionInput.camera_images value a model receives is a bare tuple at runtime, not a real CameraFrame - attribute access (frame.timestamp_us, frame.image) raises AttributeError. Construct real CameraFrame instances; since NamedTuple is a tuple subclass, this is purely additive for existing positional-unpacking consumers.
+---
+ src/driver/src/alpasim_driver/main.py | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
 diff --git a/src/driver/src/alpasim_driver/main.py b/src/driver/src/alpasim_driver/main.py
+index 03546df..b2808ca 100644
 --- a/src/driver/src/alpasim_driver/main.py
 +++ b/src/driver/src/alpasim_driver/main.py
-@@ -62,6 +62,7 @@
+@@ -62,6 +62,7 @@ from .frame_cache import FrameCache
  from .models import DriveCommand
  from .models.base import (
      BaseTrajectoryModel,
@@ -9,7 +21,7 @@ diff --git a/src/driver/src/alpasim_driver/main.py b/src/driver/src/alpasim_driv
      CameraImages,
      ModelInputValidationError,
      ModelPrediction,
-@@ -646,7 +647,9 @@
+@@ -646,7 +647,9 @@ class EgoDriverService(EgodriverServiceServicer):
          for cam_id in self._model.camera_ids:
              frame_cache = session.frame_caches[cam_id]
              entries = frame_cache.latest_frame_entries(self._context_length)

@@ -69,9 +69,7 @@ top-level schema strictness preserved: ConfigKeyError
 ```bash
 cd <clone of amtellezfernandez/alpasim tracking upstream main>
 git checkout -b feat/model-config-extra
-git apply docs/upstream-proposals/plugin-config-passthrough.patch
-git add -A
-git commit -m "driver: add a free-form pass-through field for third-party model config"
+git am docs/upstream-proposals/plugin-config-passthrough.patch  # patch is git-am-ready, own Subject/body
 git push fork feat/model-config-extra
 gh pr create --repo NVlabs/alpasim --base main \
   --head amtellezfernandez:feat/model-config-extra \
