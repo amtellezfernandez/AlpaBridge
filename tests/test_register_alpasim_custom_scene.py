@@ -86,21 +86,18 @@ class RegisterAlpaSimCustomSceneTests(unittest.TestCase):
             ):
                 main()
 
-    def test_force_replaces_existing_row_in_place(self) -> None:
+    def test_force_updates_a_row_without_dropping_its_other_columns(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             usdz = root / "my-scene.usdz"
             catalog = root / "sim_scenes.csv"
-            _write_usdz(usdz, scene_id="scene-a", uuid="uuid-a", version_string="v1")
-
-            with patch.object(
-                sys,
-                "argv",
-                ["alpabridge-register-custom-scene", "--usdz", str(usdz), "--catalog-csv", str(catalog)],
-            ):
-                main()
-
             _write_usdz(usdz, scene_id="scene-a", uuid="uuid-a-updated", version_string="v2")
+            catalog.write_text(
+                "scene_id,uuid,path,artifact_repository,nre_version_string,project_note\n"
+                "scene-a,uuid-a,some/custom/path.usdz,local,v1,do not delete me\n",
+                encoding="utf-8",
+            )
+
             with patch.object(
                 sys,
                 "argv",
@@ -121,6 +118,9 @@ class RegisterAlpaSimCustomSceneTests(unittest.TestCase):
         self.assertEqual(1, len(rows))
         self.assertEqual("uuid-a-updated", rows[0]["uuid"])
         self.assertEqual("v2", rows[0]["nre_version_string"])
+        # The fields this command doesn't manage must survive --force untouched.
+        self.assertEqual("some/custom/path.usdz", rows[0]["path"])
+        self.assertEqual("do not delete me", rows[0]["project_note"])
 
     def test_preserves_other_rows_and_existing_columns_when_appending(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

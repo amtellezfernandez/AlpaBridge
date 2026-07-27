@@ -323,6 +323,24 @@ def test_driver_service_rejects_unknown_session() -> None:
         raise AssertionError("missing session unexpectedly predicted")
 
 
+def test_close_session_forgets_the_models_inference_cache_if_it_has_one() -> None:
+    adapter = AlpaBridgeDriverService(model_name="constant_velocity", camera_ids=("front",))
+    forgotten = []
+    adapter._model = SimpleNamespace(
+        _inference_cache=SimpleNamespace(forget=lambda session_uuid: forgotten.append(session_uuid))
+    )
+
+    adapter.close_session("some-session")
+
+    assert forgotten == ["some-session"]
+
+
+def test_close_session_is_safe_for_models_without_an_inference_cache() -> None:
+    adapter = AlpaBridgeDriverService(model_name="constant_velocity", camera_ids=("front",))
+
+    adapter.close_session("some-session")  # constant_velocity has no _inference_cache - must not raise
+
+
 def test_driver_service_selects_freshest_accepted_camera_alias() -> None:
     adapter = AlpaBridgeDriverService(
         model_name="constant_velocity",
