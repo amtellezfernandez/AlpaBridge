@@ -167,13 +167,33 @@ def bookmark(kind: str, frame: dict[str, Any], detail: dict[str, Any], policy: d
     }
 
 
+# action_mode means two different things depending on which policy produced
+# the frame: for token_dagger_bc's selection rows it's a real token choice
+# from TOKEN_ORDER, where "maintain" means no correction was made and any
+# other token is a genuine intervention; for every baseline/planner policy
+# (constant_velocity, route_following, mpc_planner, direct_actor_planner) it's
+# just that policy's own constant name, never a correction event, so it must
+# never be flagged. Whenever alpasim_export.py gains a new _frame_from_*_row
+# reader for another baseline/planner-style policy, its action_mode value
+# needs to be added here too, or every frame of that policy's runs will be
+# misflagged as an intervention (this bit constant_velocity/route_following
+# for an unknown period before being caught by audit).
+_NON_INTERVENTION_ACTION_MODES = {
+    "maintain",
+    "constant_velocity",
+    "route_following",
+    "mpc_planner",
+    "direct_actor_planner",
+}
+
+
 def has_intervention(frame: dict[str, Any]) -> bool:
     step = frame.get("step", {})
     planner = frame.get("planner", {})
     if bool(step.get("intervention")):
         return True
     action_mode = str(step.get("action_mode", "") or "")
-    if action_mode and action_mode not in {"maintain", "direct_actor_planner"}:
+    if action_mode and action_mode not in _NON_INTERVENTION_ACTION_MODES:
         return True
     decision_type = str(step.get("decision_type", "") or "")
     if decision_type and decision_type not in {"geometric_wins", "maintain"}:

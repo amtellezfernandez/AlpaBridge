@@ -19,8 +19,9 @@ def export_alpasim_audit_log(run_dir: Path, output_dir: Path) -> dict[str, Any]:
     baseline_rows = _load_jsonl_if_exists(run_dir / "driver" / "baseline-log.jsonl")
     selection_rows = _load_jsonl_if_exists(run_dir / "driver" / "selection-log.jsonl")
     direct_rows = _load_jsonl_if_exists(run_dir / "driver" / "direct-planner-log.jsonl")
+    mpc_rows = _load_jsonl_if_exists(run_dir / "driver" / "mpc-planner-log.jsonl")
     controller_rows = _load_controller_rows(run_dir / "controller")
-    frames = _build_alpasim_frames(baseline_rows, selection_rows, direct_rows, controller_rows)
+    frames = _build_alpasim_frames(baseline_rows, selection_rows, direct_rows, mpc_rows, controller_rows)
     metrics_evidence = _safe_metrics_evidence(run_dir)
 
     manifest = {
@@ -51,10 +52,13 @@ def _build_alpasim_frames(
     baseline_rows: list[dict[str, Any]],
     selection_rows: list[dict[str, Any]],
     direct_rows: list[dict[str, Any]],
+    mpc_rows: list[dict[str, Any]],
     controller_rows: list[dict[str, float | int]],
 ) -> list[dict[str, Any]]:
     if direct_rows:
         return [_frame_from_direct_row(row, controller_rows) for row in direct_rows]
+    if mpc_rows:
+        return [_frame_from_mpc_row(row, controller_rows) for row in mpc_rows]
     if baseline_rows:
         return [_frame_from_baseline_row(row, controller_rows) for row in baseline_rows]
     if selection_rows:
@@ -196,6 +200,54 @@ def _frame_from_direct_row(row: dict[str, Any], controller_rows: list[dict[str, 
             "planner": row.get("planner"),
             "latency_ms": row.get("planner_latency_ms"),
             "plan": plan,
+        },
+        "controller": controller_row,
+        "trigger_state": {
+            "sensor_freshness": row.get("sensor_freshness"),
+            "sensor_error": row.get("sensor_error"),
+            "result": row.get("result"),
+        },
+        "signal": signal,
+    }
+
+
+def _frame_from_mpc_row(row: dict[str, Any], controller_rows: list[dict[str, float | int]]) -> dict[str, Any]:
+    command = str(row.get("command", "straight"))
+    signal = row.get("alpasim_signal", {}) if isinstance(row.get("alpasim_signal"), dict) else {}
+    scenario = scenario_from_command(command, signal)
+    controller_row = _nearest_controller_row(controller_rows, _signal_timestamp_us(signal))
+    ego_x, ego_y, ego_speed = _ego_state_from_sources(controller_row, signal, scenario)
+    return {
+        "frame_idx": int(row.get("frame_index", 0)),
+        "timestamp_s": round((int(row.get("frame_index", 0)) - 1) * 0.25, 3),
+        "ego": {
+            "x": ego_x,
+            "y": ego_y,
+            "speed": ego_speed if ego_speed is not None else float(row.get("speed_mps", 0.0)),
+        },
+        "route": {
+            "start": list(scenario.start),
+            "goal": list(scenario.goal),
+            "lane_center": [list(point) for point in scenario.lane_center],
+            "route_center": [list(point) for point in route_centerline(scenario)],
+            "lane_half_width": float(scenario.lane_half_width),
+        },
+        "actors": [row_actor for row_actor in signal.get("structured_hazards", []) if _is_moving_hazard(row_actor)],
+        "active_obstacles": [row_actor for row_actor in signal.get("structured_hazards", []) if not _is_moving_hazard(row_actor)],
+        "media": _media_refs_from_row(row, signal),
+        "step": {
+            "action_mode": "mpc_planner",
+            "collision_risk": float(signal.get("dynamics_risk", 0.0) or 0.0),
+            "lane_error": 0.0,
+            "min_obstacle_distance": 0.0,
+            "selected_maneuver": "mpc_planner",
+        },
+        "planner": {
+            "planner": row.get("planner"),
+            "latency_ms": row.get("planner_latency_ms"),
+            "chosen_yaw_rate_rps": row.get("chosen_yaw_rate_rps"),
+            "chosen_accel_mps2": row.get("chosen_accel_mps2"),
+            "chosen_cost": row.get("chosen_cost"),
         },
         "controller": controller_row,
         "trigger_state": {
