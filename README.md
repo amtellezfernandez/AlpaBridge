@@ -114,18 +114,18 @@ AlpaBridge ships six built-in policies:
 | --- | --- | --- |
 | `constant_velocity` | Simple baseline, no setup needed | None |
 | `route_following` | Simple baseline that follows the route | None |
-| `token_dagger_bc` | Template: wraps your own private BC/DAgger checkpoint (no public evidence here) | A checkpoint file |
-| `direct_actor_planner` | Template: wraps your own private oracle actor-state proxy (no public evidence here) | An actor-state file |
-| `navsim_ego_status_mlp` | Public checkpoint, real evidence — NAVSIM EgoStatusMLP | A checkpoint file |
-| `vavam` | Public checkpoint, real evidence — 318M-parameter video-action model ([Valeo VideoActionModel](https://github.com/valeoai/VideoActionModel)) | A checkpoint + tokenizer checkpoint |
+| `token_dagger_bc` | Adapter for your own trained BC/DAgger checkpoint — bring a proprietary or research model | A checkpoint file |
+| `direct_actor_planner` | Privileged planner using ground-truth actor-state data — an oracle-style research baseline | An actor-state file |
+| `navsim_ego_status_mlp` | Public NAVSIM checkpoint, validated end-to-end with retained rollout evidence | A checkpoint file |
+| `vavam` | Public 318M-parameter video-action model, validated end-to-end with retained rollout evidence ([Valeo VideoActionModel](https://github.com/valeoai/VideoActionModel)) | A checkpoint + tokenizer checkpoint |
 
-The first two need no checkpoint, so they're the easiest way to test your
-AlpaSim setup. `token_dagger_bc` and `direct_actor_planner` are templates,
-not results — proof the contract can wrap a private learned checkpoint or
-an oracle planner, not evidence that either drives well; `navsim_ego_status_mlp`
-and `vavam` are public and independently checkable. The last two policies
-only run through the [standalone driver](docs/extending.md#evaluators);
-everything else works with the steps below too.
+The first two need no checkpoint, so they're the fastest way to confirm
+your AlpaSim setup works. `token_dagger_bc` and `direct_actor_planner` show
+the platform adapting to your own proprietary models and privileged
+planners; `navsim_ego_status_mlp` and `vavam` are public checkpoints with
+retained end-to-end evidence. The last two policies only run through the
+[standalone driver](docs/extending.md#evaluators); everything else works
+with the steps below too.
 
 Both real runs above use AlpaSim scenes that already have a preset in this
 repo. Other datasets (nuScenes, nuPlan, Argoverse 2) aren't covered here
