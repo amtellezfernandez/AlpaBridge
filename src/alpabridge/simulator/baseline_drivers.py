@@ -20,7 +20,11 @@ from .alpasim_contract import (
     prediction_scene_id,
     resample_trajectory,
 )
-from .alpasim_signal import extract_alpasim_signal, route_waypoints_from_input
+from .alpasim_signal import (
+    extract_alpasim_signal,
+    filtered_route_points,
+    route_waypoints_from_input,
+)
 
 
 @dataclass(frozen=True)
@@ -207,15 +211,7 @@ class RouteFollowingAlpaSimModel(_BaselineDriverModel):
 
 
 def _route_points(prediction_input: PredictionInput) -> list[tuple[float, float]]:
-    points: list[tuple[float, float]] = [(0.0, 0.0)]
-    for waypoint in route_waypoints_from_input(prediction_input):
-        point = (float(waypoint["x"]), float(waypoint["y"]))
-        if point[0] < -5.0 or math.hypot(point[0], point[1]) > 140.0:
-            continue
-        if math.dist(points[-1], point) < 0.5:
-            continue
-        points.append(point)
-    return points
+    return filtered_route_points(route_waypoints_from_input(prediction_input))
 
 
 class _CommandOnlyRoutePredictionInput:

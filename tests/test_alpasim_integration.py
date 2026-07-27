@@ -781,6 +781,54 @@ class AlpaSimIntegrationTests(unittest.TestCase):
         self.assertAlmostEqual(8.0, scenario.goal[1])
         self.assertLess(scenario.lane_half_width, 6.0)
 
+    def test_route_source_reflects_post_filter_reality_not_raw_waypoint_count(self) -> None:
+        # Two raw waypoints, but both are behind the ego (x < -5.0) and get
+        # dropped by filtered_route_points. route_source must report
+        # "command_proxy" here, not "alpasim_waypoints" - the driven geometry
+        # is actually the synthetic fallback, not real route waypoints.
+        behind_ego_waypoints = [
+            SimpleNamespace(x=-10.0, y=0.0, z=0.0),
+            SimpleNamespace(x=-8.0, y=1.0, z=0.0),
+        ]
+        prediction_input = SimpleNamespace(
+            camera_images={"front": [SimpleNamespace(image=np.full((4, 4, 3), 180, dtype=np.uint8))]},
+            speed=6.0,
+            acceleration=0.0,
+            ego_pose_history=[object()],
+            route_waypoints=behind_ego_waypoints,
+        )
+
+        signal = extract_alpasim_signal(prediction_input)
+        scenario = scenario_from_command("straight", signal)
+
+        self.assertEqual(2, signal["route_waypoint_count"])
+        self.assertEqual("command_proxy", signal["route_source"])
+        self.assertEqual("command_proxy", scenario.tags["route_source"])
+        self.assertEqual("2", scenario.tags["route_waypoint_count"])
+
+    def test_route_following_baseline_reports_command_proxy_when_route_fully_filtered(self) -> None:
+        model = RouteFollowingAlpaSimModel(
+            camera_ids=["front"],
+            context_length=1,
+            output_frequency_hz=4,
+        )
+        prediction_input = _baseline_prediction_input(
+            speed=4.0,
+            route_waypoints=[
+                {"x": -10.0, "y": 0.0, "z": 0.0},
+                {"x": -8.0, "y": 1.0, "z": 0.0},
+            ],
+        )
+
+        output = model.predict(prediction_input)
+        reasoning = json.loads(output.reasoning_text)
+
+        self.assertEqual(2, reasoning["route_waypoint_count"])
+        self.assertEqual("command_proxy", reasoning["route_source"])
+        # Actually drove the straight-line fallback, not route geometry.
+        self.assertLess(abs(float(output.trajectory_xy[-1, 1])), 1e-5)
+        self.assertGreater(float(output.trajectory_xy[-1, 0]), 15.0)
+
     def test_alpasim_signal_preserves_static_hazard_shape_metadata(self) -> None:
         prediction_input = SimpleNamespace(
             camera_images={"front": [SimpleNamespace(image=np.full((4, 4, 3), 180, dtype=np.uint8))]},
