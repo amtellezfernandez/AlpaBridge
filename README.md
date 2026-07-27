@@ -22,6 +22,10 @@ from dependency-light baselines to a real, published 318-million-parameter
 video-action model (see [Policy Backends](#policy-backends) below). Adding
 the next one — a new checkpoint, a VLA policy, a world-model policy — means
 implementing one contract and registering it, not rebuilding the harness.
+Which evaluator exercises that policy is just as interchangeable — AlpaSim's
+own local wizard, the AlpaSim E2E Challenge, or your own harness, all
+through the same driver interface (see [Evaluation
+Paths](#evaluation-paths) below).
 
 Whichever policy is selected, AlpaSim sends AlpaBridge the live camera
 image, the car's own motion, the current command, and the route. AlpaBridge
@@ -215,6 +219,27 @@ AlpaSim scenes that already have a preset in this repo. Other datasets
 (nuScenes, nuPlan, Argoverse 2) aren't covered here yet — see [compatible
 datasets](docs/womd-targeting.md) for what that would take.
 
+### Evaluation Paths
+
+Which policy runs is one axis; what evaluates it is a separate one. The
+[standalone driver](#run-as-a-standalone-driver) implements AlpaSim's own
+general, versioned external-driver gRPC interface
+(`egodriver.EgodriverService`) — not something built for any one evaluator
+— so anything that speaks it can connect, the same way any policy in the
+table above can be selected:
+
+| Evaluator | What it is | Status |
+| --- | --- | --- |
+| In-process rollout (`alpabridge-launch` / `alpabridge-reproduce`) | AlpaSim's own driver process loads your policy directly | Tested — see [Integration Test Results](#integration-test-results) |
+| AlpaSim's local wizard, standalone driver | Any AlpaSim checkout's dev preset, pointed at a running `alpabridge-driver` | Tested — see [Integration Test Results](#integration-test-results) |
+| AlpaSim E2E Challenge, standalone driver | NVIDIA's official hosted evaluator — same driver, packaged as a locked-down container | Tested locally — see [AlpaSim E2E compatibility](docs/challenge-compatibility.md) |
+| Your own evaluator, standalone driver | Any client speaking the same `egodriver.EgodriverService` interface | Not yet demonstrated — no code change needed, just a client |
+
+The AlpaSim E2E Challenge is the one we've documented most, because it's
+the one with a public, external leaderboard to point at — not because the
+driver is built around it. A different evaluator speaking the same
+protocol is exactly as supported as the Challenge is.
+
 ## Install
 
 You don't need a GPU to install or plan a run:
@@ -332,7 +357,12 @@ uv run alpabridge-driver --model vavam \
   --tokenizer-checkpoint /path/to/tokenizer.jit
 ```
 
-In a second terminal, point an AlpaSim checkout at the driver:
+In a second terminal, point an AlpaSim checkout at the driver — using
+AlpaSim's own `e2e_challenge=dev` preset here only because it's AlpaSim's
+convenient built-in way to run a local wizard against an external driver,
+not because the Challenge is what this path is for (see [Evaluation
+Paths](#evaluation-paths) above for the other ways to connect to the same
+driver):
 
 ```bash
 ALPASIM_DRIVER_HOST=localhost ALPASIM_DRIVER_PORT=6789 \
@@ -349,8 +379,8 @@ package:
 pip install git+https://github.com/valeoai/VideoActionModel@v1.0.0
 ```
 
-NVIDIA's AlpaSim E2E Challenge is one evaluator that connects this way. For a
-locked-down container built for that submission format, see [AlpaSim E2E
+For a locked-down container built for the AlpaSim E2E Challenge's specific
+submission format, see [AlpaSim E2E
 compatibility](docs/challenge-compatibility.md).
 
 ## Integration Test Results
