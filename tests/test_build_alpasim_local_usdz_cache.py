@@ -8,7 +8,7 @@ import tempfile
 import unittest
 import zipfile
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import yaml
 
@@ -328,6 +328,100 @@ class BuildAlpaSimLocalUsdzCacheTests(unittest.TestCase):
 
         self.assertEqual(0, returncode)
         self.assertEqual("source_usdz_dir", manifest["cache_mode"])
+        self.assertEqual([], manifest["errors"])
+
+    def test_scene_id_flag_narrows_to_just_that_scene_instead_of_the_whole_preset(self) -> None:
+        from alpabridge.cli.commands import build_alpasim_local_usdz_cache as module
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source_dir = root / "all-usdzs"
+            target_dir = root / "local-usdzs"
+            source_dir.mkdir()
+            _write_usdz(source_dir / "uuid-a.usdz", scene_id="scene-a", uuid="uuid-a")
+
+            scene_ids_spy = Mock(wraps=lambda scene_preset, explicit: explicit)
+
+            with (
+                patch.object(module, "_resolve_alpasim_root", return_value=Path("/tmp/alpasim")),
+                patch.object(module, "_scene_ids", scene_ids_spy),
+                patch.object(module, "_scene_catalog_paths", return_value=[]),
+                patch.object(
+                    sys,
+                    "argv",
+                    [
+                        "alpabridge-build-local-cache",
+                        "--scene-preset",
+                        "front_camera_50scene_public2602",
+                        "--scene-id",
+                        "scene-a",
+                        "--source-usdz-dir",
+                        str(source_dir),
+                        "--local-usdz-dir",
+                        str(target_dir),
+                        "--hf-revision",
+                        "26.02",
+                    ],
+                ),
+            ):
+                returncode = module.main()
+
+            manifest = json.loads(
+                (target_dir / "alpabridge-local-usdz-cache-manifest.json").read_text(encoding="utf-8")
+            )
+
+        scene_ids_spy.assert_called_once_with("front_camera_50scene_public2602", ["scene-a"])
+        self.assertEqual(0, returncode)
+        self.assertEqual(1, manifest["scene_count"])
+        self.assertEqual([], manifest["errors"])
+
+    def test_target_count_is_ignored_when_scene_id_is_given(self) -> None:
+        from alpabridge.cli.commands import build_alpasim_local_usdz_cache as module
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source_dir = root / "all-usdzs"
+            target_dir = root / "local-usdzs"
+            source_dir.mkdir()
+            _write_usdz(source_dir / "uuid-a.usdz", scene_id="scene-a", uuid="uuid-a")
+            _write_usdz(source_dir / "uuid-b.usdz", scene_id="scene-b", uuid="uuid-b")
+
+            with (
+                patch.object(module, "_resolve_alpasim_root", return_value=Path("/tmp/alpasim")),
+                patch.object(
+                    module, "_scene_ids", side_effect=lambda scene_preset, explicit: explicit
+                ),
+                patch.object(module, "_scene_catalog_paths", return_value=[]),
+                patch.object(
+                    sys,
+                    "argv",
+                    [
+                        "alpabridge-build-local-cache",
+                        "--scene-preset",
+                        "front_camera_50scene_public2602",
+                        "--scene-id",
+                        "scene-a",
+                        "--scene-id",
+                        "scene-b",
+                        "--target-count",
+                        "1",
+                        "--source-usdz-dir",
+                        str(source_dir),
+                        "--local-usdz-dir",
+                        str(target_dir),
+                        "--hf-revision",
+                        "26.02",
+                    ],
+                ),
+            ):
+                returncode = module.main()
+
+            manifest = json.loads(
+                (target_dir / "alpabridge-local-usdz-cache-manifest.json").read_text(encoding="utf-8")
+            )
+
+        self.assertEqual(0, returncode)
+        self.assertEqual(2, manifest["scene_count"])
         self.assertEqual([], manifest["errors"])
 
 
