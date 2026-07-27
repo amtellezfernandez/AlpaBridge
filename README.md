@@ -109,40 +109,30 @@ evidence of the run.
 
 ### Policy Backends
 
-Every policy — simple no-setup baseline or real published checkpoint —
-implements the same
-[`BaseTrajectoryModel`](src/alpabridge/simulator/alpasim_contract.py)
-contract. Each one runs one of two ways: loaded inside AlpaSim itself
-(registered in `pyproject.toml`), or served by the [standalone
-driver](docs/evaluators.md) (registered in
-[`policy_registry.py`](src/alpabridge/driver/policy_registry.py)) — some
-policies support both:
+AlpaBridge ships six built-in policies:
 
-| Policy | Purpose | Extra input | Inside AlpaSim | Standalone driver |
-| --- | --- | --- | --- | --- |
-| `constant_velocity` | Simple baseline, no setup needed | None | ✓ | ✓ |
-| `route_following` | Simple baseline that follows the route | None | ✓ | ✓ |
-| `token_dagger_bc` | Wraps a compatible trained checkpoint | A checkpoint file | ✓ | ✓ |
-| `direct_actor_planner` | Planner using other cars' real positions | An actor-state file | ✓ | |
-| `navsim_ego_status_mlp` | Public NAVSIM EgoStatusMLP checkpoint | A checkpoint file | | ✓ |
-| `vavam` | Public 318M-parameter video-action model ([Valeo VideoActionModel](https://github.com/valeoai/VideoActionModel)) | A checkpoint + tokenizer checkpoint | | ✓ |
+| Policy | Purpose | Extra input |
+| --- | --- | --- |
+| `constant_velocity` | Simple baseline, no setup needed | None |
+| `route_following` | Simple baseline that follows the route | None |
+| `token_dagger_bc` | Wraps a compatible trained checkpoint | A checkpoint file |
+| `direct_actor_planner` | Planner using other cars' real positions | An actor-state file |
+| `navsim_ego_status_mlp` | Public NAVSIM EgoStatusMLP checkpoint | A checkpoint file |
+| `vavam` | Public 318M-parameter video-action model ([Valeo VideoActionModel](https://github.com/valeoai/VideoActionModel)) | A checkpoint + tokenizer checkpoint |
 
 The first two need no checkpoint, so they're the easiest way to test your
-AlpaSim setup.
+AlpaSim setup. The last two only run through the [standalone
+driver](docs/evaluators.md); everything else works with the steps below
+too.
 
-Want to run your own policy instead of a built-in? Implement one contract
-and register it — see [Bring Your Own Policy](docs/custom-policies.md).
+Both real runs above use AlpaSim scenes that already have a preset in this
+repo. Other datasets (nuScenes, nuPlan, Argoverse 2) aren't covered here
+yet — see [compatible datasets](docs/womd-targeting.md) for what that
+would take.
 
-The policies that run inside AlpaSim still need real local scene files —
-see [Get Scene Data](#get-scene-data) below. Both real runs above use
-AlpaSim scenes that already have a preset in this repo. Other datasets
-(nuScenes, nuPlan, Argoverse 2) aren't covered here yet — see [compatible
-datasets](docs/womd-targeting.md) for what that would take.
-
-Want to evaluate through something other than `alpabridge-launch` — the
-AlpaSim E2E Challenge, or your own evaluator? See
-[Evaluators](docs/evaluators.md) for the standalone driver those connect
-to.
+Want to run your own policy? See [Bring Your Own
+Policy](docs/custom-policies.md). Want to evaluate through the AlpaSim E2E
+Challenge, or your own evaluator? See [Evaluators](docs/evaluators.md).
 
 ## Install
 
@@ -235,11 +225,6 @@ To run many scenes with their own timeouts and retries, use
 exact commands used, simulator records, driver events, summaries, and a
 normalized audit — without saving any gated scene data or private
 checkpoints.
-
-Evaluating through the AlpaSim E2E Challenge, or your own evaluator,
-instead of the presets above? AlpaBridge can also run as a standalone
-driver a different evaluator connects to — see
-[Evaluators](docs/evaluators.md).
 
 ## Integration Test Results
 

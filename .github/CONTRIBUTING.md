@@ -54,8 +54,8 @@ Keep this branch focused on:
 - run audits, summaries, support bundles, and bounded integration evidence;
 - public tests and operator documentation.
 
-Keep the `alpasim.models` entry points aligned with the README's [Policy
-Backends](../README.md#policy-backends) table's "Inside AlpaSim" column:
+Keep the `pyproject.toml` `alpasim.models` entry points aligned with the
+README's [Policy Backends](../README.md#policy-backends) table:
 
 - `constant_velocity`;
 - `route_following`;
@@ -65,7 +65,8 @@ Backends](../README.md#policy-backends) table's "Inside AlpaSim" column:
 Standalone-driver-only policies (`navsim_ego_status_mlp`, `vavam`, and any
 new ones) go in
 [`src/alpabridge/driver/policy_registry.py`](../src/alpabridge/driver/policy_registry.py)
-instead — see that table for which serving path a new policy needs.
+instead — see [Bring Your Own Policy](../docs/custom-policies.md) for which
+serving path a new policy needs.
 
 Do not add a dataset claim merely because a policy interface resembles WOMD.
 Actual WOMD execution and WOMD-to-AlpaSim scene conversion require separate
