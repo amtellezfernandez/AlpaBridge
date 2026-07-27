@@ -1,0 +1,25 @@
+From 64165633ea8d7f9fd381de31e8328aead244a51f Mon Sep 17 00:00:00 2001
+From: AlpaBridge maintainers <alpabridge@users.noreply.github.com>
+Date: Mon, 27 Jul 2026 21:51:55 +0200
+Subject: [PATCH] utils_rs: fix put_float_field dropping -0.0 as if non-default
+
+put_float_field skips writing a field when it's the proto3 default (0.0), but checks the raw bit pattern (value.to_bits() == 0) rather than numeric equality. (-0.0f32).to_bits() is 0x80000000 (sign bit set), not 0, so a -0.0 value is treated as non-default and gets written explicitly - diverging from protobuf's own semantics (and this repo's generated Python bindings), which use numeric equality where -0.0 == 0.0 is true and correctly omit it.
+
+Switch the check to value == 0.0. NaN is unaffected: NaN == 0.0 is false in both Rust and Python, so a NaN field is still written either way - this only changes behavior for -0.0.
+---
+ src/utils_rs/src/grpc_boundary.rs | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/utils_rs/src/grpc_boundary.rs b/src/utils_rs/src/grpc_boundary.rs
+index e906c1d..60be94e 100644
+--- a/src/utils_rs/src/grpc_boundary.rs
++++ b/src/utils_rs/src/grpc_boundary.rs
+@@ -190,7 +190,7 @@ fn encode_pose(xyz: &[f32], quat_wxyz: &[f32]) -> Vec<u8> {
+ }
+ 
+ fn put_float_field(buf: &mut Vec<u8>, field_number: u32, value: f32) {
+-    if value.to_bits() == 0 {
++    if value == 0.0 {
+         return;
+     }
+     put_key(buf, field_number, WIRE_FIXED32);
