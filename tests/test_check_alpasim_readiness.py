@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import os
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -52,6 +53,45 @@ class CheckAlpaSimReadinessTests(unittest.TestCase):
         self.assertIn("AlpaSim readiness: OK", stdout.getvalue())
         self.assertIn("scene catalogs: /tmp/alpasim/data/scenes/sim_scenes.csv", stdout.getvalue())
         self.assertIn("local USDZ dir: default", stdout.getvalue())
+
+    def test_readiness_script_reports_the_actual_overridden_image_tag(self) -> None:
+        # Regression test: the printed "image:" status line used to be a
+        # hardcoded literal ("alpasim-base:0.66.0") independent of the real
+        # _preflight_alpasim_base_image check, which correctly reads
+        # ALPASIM_BASE_IMAGE_TAG - so an override was validated against the
+        # right tag but reported against the wrong one.
+        with patch.object(
+            check_alpasim_readiness, "_resolve_alpasim_root", return_value=Path("/tmp/alpasim")
+        ), patch.object(
+            check_alpasim_readiness, "_scene_ids", return_value=["scene-1"]
+        ), patch.object(
+            check_alpasim_readiness,
+            "_scene_catalog_paths",
+            return_value=[Path("/tmp/alpasim/data/scenes/sim_scenes.csv")],
+        ), patch.object(check_alpasim_readiness, "_validate_alpasim_checkout"), patch.object(
+            check_alpasim_readiness, "_preflight_alpasim_local_environment"
+        ), patch.object(
+            check_alpasim_readiness, "_preflight_docker_access"
+        ), patch.object(
+            check_alpasim_readiness, "_preflight_platform_compatibility"
+        ), patch.object(
+            check_alpasim_readiness, "_preflight_nvidia_container_runtime"
+        ), patch.object(
+            check_alpasim_readiness, "_preflight_alpasim_base_image"
+        ), patch.object(
+            check_alpasim_readiness, "_preflight_scene_artifacts"
+        ), patch.dict(
+            os.environ, {"ALPASIM_BASE_IMAGE_TAG": "alpasim-base:9.9.9-test"}
+        ), patch(
+            "sys.stdout",
+            new_callable=io.StringIO,
+        ) as stdout, patch(
+            "sys.argv",
+            ["check_alpasim_readiness.py"],
+        ):
+            check_alpasim_readiness.main()
+
+        self.assertIn("image: alpasim-base:9.9.9-test", stdout.getvalue())
 
     def test_readiness_script_can_skip_optional_checks(self) -> None:
         with patch.object(check_alpasim_readiness, "_resolve_alpasim_root", return_value=Path("/tmp/alpasim")), patch.object(

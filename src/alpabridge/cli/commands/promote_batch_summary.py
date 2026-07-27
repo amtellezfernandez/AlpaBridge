@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from alpabridge.cli.commands.batch_summary import SUMMARY_SCHEMA
+from alpabridge.cli.numeric import int_or_zero as _int_value
 
 PROMOTION_SCHEMA = "alpabridge_batch_summary_promotion_v1"
 
@@ -142,21 +143,6 @@ def _summary_errors(
 
 def _dict_or_empty(value: object) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
-
-
-def _int_value(value: object) -> int:
-    if isinstance(value, bool):
-        return int(value)
-    if isinstance(value, int):
-        return value
-    if isinstance(value, float):
-        return int(value)
-    if isinstance(value, str) and value.strip():
-        try:
-            return int(value)
-        except ValueError:
-            return 0
-    return 0
 
 
 def _print_human_summary(report: dict[str, Any]) -> None:

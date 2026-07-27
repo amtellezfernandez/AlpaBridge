@@ -8,6 +8,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from alpabridge.cli.numeric import int_or_zero as _int_value
+from alpabridge.cli.numeric import optional_int as _optional_int
+
 MANIFEST_NAME = "closed-loop-reproduction-manifest.json"
 RUN_AUDIT_NAME = "run-audit.json"
 SUPPORT_BUNDLE_REPORT_NAME = "support-bundle-report.json"
@@ -506,18 +509,6 @@ def _string_list(value: Any) -> list[str]:
 
 def _optional_bool(value: Any) -> bool | None:
     return value if isinstance(value, bool) else None
-
-
-def _int_value(value: Any) -> int:
-    parsed = _optional_int(value)
-    return 0 if parsed is None else parsed
-
-
-def _optional_int(value: Any) -> int | None:
-    try:
-        return None if value is None else int(value)
-    except (TypeError, ValueError):
-        return None
 
 
 def _print_human_summary(summary: dict[str, Any]) -> None:
