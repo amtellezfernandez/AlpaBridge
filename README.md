@@ -67,7 +67,8 @@ flowchart LR
 
 This shows the simplest case: one policy, AlpaSim driving it directly. Both
 sides are actually swappable — any policy, checked by any evaluator — see
-the diagram in [Evaluators](docs/evaluators.md) for the full picture.
+the diagram in [Extending AlpaBridge](docs/extending.md#evaluators) for the
+full picture.
 
 <details>
 <summary>One camera per run, and the frozen-camera guard</summary>
@@ -120,45 +121,61 @@ AlpaBridge ships six built-in policies:
 
 The first two need no checkpoint, so they're the easiest way to test your
 AlpaSim setup. The last two only run through the [standalone
-driver](docs/evaluators.md); everything else works with the steps below
-too.
+driver](docs/extending.md#evaluators); everything else works with the
+steps below too.
 
 Both real runs above use AlpaSim scenes that already have a preset in this
 repo. Other datasets (nuScenes, nuPlan, Argoverse 2) aren't covered here
 yet — see [compatible datasets](docs/womd-targeting.md) for what that
 would take.
 
-Want to run your own policy? See [Bring Your Own
-Policy](docs/custom-policies.md). Want to evaluate through the AlpaSim E2E
-Challenge, or your own evaluator? See [Evaluators](docs/evaluators.md).
+Want to run your own policy, or evaluate through something other than the
+steps below (the AlpaSim E2E Challenge, or your own evaluator)? See
+[Extending AlpaBridge](docs/extending.md).
 
 ## Install & Connect AlpaSim
 
-Install AlpaBridge and point it at your AlpaSim checkout — none of this
-needs a GPU:
+There are two ways to run a policy: **inside AlpaSim itself** (this
+section through [Plan Or Execute](#plan-or-execute) below), or through a
+[**standalone driver**](docs/extending.md#evaluators) — for the AlpaSim
+E2E Challenge or your own evaluator, skip straight there instead.
+
+**Requirements for a real rollout** (installing itself needs none of this):
+
+- x86_64 Linux
+- Docker, plus the NVIDIA Container Toolkit
+- A GPU
+- A local AlpaSim checkout with scene assets (see [Get Scene
+  Data](#get-scene-data) below)
+
+Install AlpaBridge and connect it to your checkout — neither needs a GPU:
 
 ```bash
-uv sync                                                      # install
-uv run alpabridge-setup --alpasim-root /path/to/alpasim      # connect the checkout
+uv sync
+uv run alpabridge-setup --alpasim-root /path/to/alpasim
+```
+
+Then check it's actually ready to run — this step needs Docker and a GPU,
+since it launches a container to probe them:
+
+```bash
 uv run alpabridge-ready --alpasim-root /path/to/alpasim \
-  --scene-preset fresh_3scene                                # check it's ready to run
+  --scene-preset fresh_3scene
 ```
 
 `alpabridge-setup` applies AlpaBridge's changes to the checkout — add
 `--check-only` first to preview them without applying anything.
-`alpabridge-ready` then checks your machine, Docker/GPU access, and the
-scenes you picked. A real rollout needs x86_64 Linux, Docker, the NVIDIA
-Container Toolkit, a GPU, and local scene files.
+`alpabridge-ready` checks your machine, Docker/GPU access, and the scenes
+you picked.
 
 ## Get Scene Data
 
-Only needed for running a policy inside AlpaSim itself below
-(`alpabridge-launch` / `alpabridge-reproduce` with `--scene-preset`) — skip
-this if you're using a [standalone driver](docs/evaluators.md) instead,
-since that path supplies its own scenes.
+Only needed for the in-process path above (`alpabridge-launch` /
+`alpabridge-reproduce` with `--scene-preset`) — the [standalone
+driver](docs/extending.md#evaluators) supplies its own scenes instead.
 
-Real scene files for that path come from a **gated** Hugging Face dataset:
-[request
+Real scene files come from a **gated** Hugging Face dataset of real driving
+scenes, reconstructed for simulation (NVIDIA's "NuRec"): [request
 access](https://huggingface.co/datasets/nvidia/PhysicalAI-Autonomous-Vehicles-NuRec)
 first if you don't have it yet, and expect that approval to take some time —
 it's a manual review, not instant. Once you have access and an `HF_TOKEN`,
@@ -177,6 +194,14 @@ instead, and nothing is downloaded. `alpabridge-ready` (above) reports
 whether the scenes a preset needs are already cached.
 
 ## Plan Or Execute
+
+This is what actually drives a scene: `--model` picks the policy (from
+[Policy Backends](#policy-backends) above) and `--scene-preset` picks which
+of the real scenes fetched in [Get Scene Data](#get-scene-data) to load.
+Running it launches AlpaSim's Docker-based renderer and physics alongside a
+driver process serving that policy, and drives the car through the chosen
+scene(s) in real time — the same closed loop shown in the [Demo](#demo)
+above.
 
 Print the exact driver and simulator commands, without starting anything:
 
@@ -226,14 +251,14 @@ AlpaBridge answers one question: does your policy actually drive live in a
 realistic simulator — not just score well on a recorded log. It connects any
 compatible policy to AlpaSim's live loop: camera, car motion, route, and
 command go in; a five-second trajectory comes out. You don't need a
-checkpoint trained on Waymo's WOMD dataset.
+checkpoint trained on the Waymo Open Motion Dataset (WOMD).
 
-**Out of scope:** turning WOMD scenarios into AlpaSim scenes. A policy
-connected through AlpaBridge drives whatever scenes your AlpaSim checkout
-has, not recorded Waymo intersections. Waymax solves a different problem
-(planning research, with no camera image), so neither one replaces the
-other. For the full comparison — WOMD vs. AlpaSim vs. Waymax, why this
-project uses AlpaSim, and real Waymo camera/LiDAR examples — see [WOMD
+**Out of scope:** turning WOMD's recorded Waymo driving logs into AlpaSim
+scenes. A policy connected through AlpaBridge drives whatever scenes your
+AlpaSim checkout has, not recorded Waymo intersections. Waymax (a separate
+Waymo tool) solves a different problem — planning research on WOMD logs,
+with no camera image — so neither one replaces the other. For the full
+comparison, and real Waymo camera/LiDAR examples, see [WOMD
 targeting](docs/womd-targeting.md).
 
 ## Documentation
@@ -241,8 +266,7 @@ targeting](docs/womd-targeting.md).
 - [CLI reference](docs/cli.md)
 - [Architecture and adapter behavior](docs/design.md)
 - [Getting started](docs/getting-started.md)
-- [Bring your own policy](docs/custom-policies.md)
-- [Evaluators](docs/evaluators.md)
+- [Extending AlpaBridge (your own policy, your own evaluator)](docs/extending.md)
 - [Reproducible runs](docs/reproduction.md)
 - [AlpaSim E2E compatibility](docs/challenge-compatibility.md)
 - [WOMD targeting and compatible datasets](docs/womd-targeting.md)
