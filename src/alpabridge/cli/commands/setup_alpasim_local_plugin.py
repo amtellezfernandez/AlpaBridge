@@ -64,40 +64,6 @@ ALPASIM_EDITABLE_PACKAGES = (
 )
 OVERRIDE_COPY_IGNORED_DIR_NAMES = {"__pycache__"}
 OVERRIDE_COPY_IGNORED_SUFFIXES = {".patch", ".pyc", ".pyo"}
-PATCH_EFFECTIVE_SNIPPETS: dict[str, dict[str, tuple[str, ...]]] = {
-    "local_checkout.patch": {
-        "Dockerfile": (
-            'if [ "${TARGETARCH}" = "arm64" ]; then',
-            "uv pip install --python /repo/.venv/bin/python",
-        ),
-        "pyproject.toml": (
-            "docker_local = [",
-            '"alpasim_controller"',
-            '"alpasim-runtime"',
-        ),
-        "src/driver/src/alpasim_driver/main.py": (
-            "close_session for unknown session %s; treating as idempotent",
-            "submit_image_observation for unknown session %s at %s; ignoring late frame",
-            "submit_egomotion_observation for unknown session %s at %s; ignoring late egomotion",
-            "submit_route for unknown session %s; ignoring late route update",
-        ),
-        "src/driver/src/alpasim_driver/models/__init__.py": (
-            "_LAZY_IMPORTS = {",
-            "def __getattr__(name: str) -> Any:",
-        ),
-    },
-    "route_waypoints.patch": {
-        "src/driver/src/alpasim_driver/main.py": (
-            "current_route: Route | None = None",
-            "def route_waypoints_for_prediction(self) -> list[Vec3] | None:",
-            "route_waypoints=job.session.route_waypoints_for_prediction(),",
-            "prediction_input.runtime_random_seed = job.session.seed",
-        ),
-        "src/driver/src/alpasim_driver/models/base.py": (
-            "route_waypoints: list[Any] | None = None",
-        ),
-    },
-}
 
 
 def _parse_args() -> argparse.Namespace:
@@ -273,9 +239,6 @@ def _should_copy_override_path(source: Path) -> bool:
 
 def _apply_alpasim_patch(alpasim_root: Path, patch_file: Path) -> None:
     relative = patch_file.relative_to(ALPASIM_OVERRIDE_ROOT)
-    if _patch_effectively_present(alpasim_root, patch_file):
-        print(f"AlpaSim patch already satisfied by checkout: {relative}")
-        return
     reverse_check = subprocess.run(
         ["git", "apply", "--reverse", "--check", str(patch_file)],
         cwd=alpasim_root,
@@ -294,15 +257,69 @@ def _apply_alpasim_patch(alpasim_root: Path, patch_file: Path) -> None:
         capture_output=True,
         check=False,
     )
-    if check.returncode != 0:
-        if _patch_effectively_present(alpasim_root, patch_file):
-            print(f"AlpaSim patch already satisfied by checkout: {relative}")
-            return
-        message = check.stderr.strip() or check.stdout.strip() or "git apply --check failed"
-        raise SystemExit(f"Cannot apply AlpaSim patch {relative}: {message}")
+    if check.returncode == 0:
+        _run(["git", "apply", str(patch_file)], cwd=alpasim_root)
+        print(f"Applied AlpaSim patch: {relative}")
+        return
 
-    _run(["git", "apply", str(patch_file)], cwd=alpasim_root)
-    print(f"Applied AlpaSim patch: {relative}")
+    # Plain apply failed - the checkout's context lines have drifted from what
+    # this patch expects (e.g. an upstream release moved on since the patch
+    # was cut). Try a real three-way merge, keyed off the blob hashes recorded
+    # in the patch's own `index` lines, before giving up: this resolves benign
+    # drift the same way `git am --3way`/`git cherry-pick` do, without a
+    # hand-maintained side channel duplicating the patch's own content.
+    #
+    # `--3way --check` is not a reliable predictor here: it can report success
+    # even when the real merge would leave conflict markers in place, so the
+    # real attempt is what actually decides success or failure. On failure we
+    # restore exactly the pre-attempt bytes of the files this patch touches -
+    # not `git checkout HEAD`, which would also discard any uncommitted local
+    # changes the checkout already had on those files before this ran.
+    touched = _patch_touched_files(alpasim_root, patch_file)
+    snapshot = {path: path.read_bytes() for path in touched if path.is_file()}
+    three_way = subprocess.run(
+        ["git", "apply", "--3way", str(patch_file)],
+        cwd=alpasim_root,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if three_way.returncode == 0:
+        print(f"Applied AlpaSim patch via three-way merge: {relative}")
+        return
+
+    for path, original_bytes in snapshot.items():
+        path.write_bytes(original_bytes)
+    if touched:
+        # A failed --3way also stages conflict entries in the index; unstage
+        # them (working tree is already restored above by byte content).
+        subprocess.run(
+            ["git", "reset", "--", *(str(path.relative_to(alpasim_root)) for path in touched)],
+            cwd=alpasim_root,
+            capture_output=True,
+            check=False,
+        )
+    message = three_way.stderr.strip() or three_way.stdout.strip() or "git apply --3way failed"
+    raise SystemExit(
+        f"Cannot apply AlpaSim patch {relative}: {message}\n"
+        f"This AlpaSim checkout ({alpasim_root}) may not be at the pinned release. "
+        "Re-sync it with ./scripts/bootstrap_alpasim_checkout.sh."
+    )
+
+
+def _patch_touched_files(alpasim_root: Path, patch_file: Path) -> list[Path]:
+    numstat = subprocess.run(
+        ["git", "apply", "--numstat", str(patch_file)],
+        cwd=alpasim_root,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    return [
+        alpasim_root / line.split("\t", 2)[-1]
+        for line in numstat.stdout.splitlines()
+        if line.strip()
+    ]
 
 
 def _bootstrap_alpasim_venv(alpasim_root: Path, *, uv_bin: str) -> None:
@@ -348,21 +365,6 @@ def _bootstrap_alpasim_venv(alpasim_root: Path, *, uv_bin: str) -> None:
             ],
             cwd=alpasim_root,
         )
-def _patch_effectively_present(alpasim_root: Path, patch_file: Path) -> bool:
-    checks = PATCH_EFFECTIVE_SNIPPETS.get(patch_file.name)
-    if not checks:
-        return False
-    for relative, snippets in checks.items():
-        target = alpasim_root / relative
-        if not target.is_file():
-            return False
-        try:
-            content = target.read_text(encoding="utf-8")
-        except UnicodeDecodeError:
-            return False
-        if any(snippet not in content for snippet in snippets):
-            return False
-    return True
 
 
 def _compile_alpasim_protos(alpasim_root: Path, *, venv_python: Path) -> None:

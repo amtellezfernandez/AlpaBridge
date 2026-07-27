@@ -61,7 +61,6 @@ from alpabridge.cli.commands.setup_alpasim_local_plugin import (
     _bootstrap_alpasim_venv,
     _compile_alpasim_protos,
     _install_torch_for_alpasim,
-    _patch_effectively_present,
     _should_copy_override_path,
 )
 from alpabridge.cli.commands.setup_alpasim_local_plugin import (
@@ -70,6 +69,37 @@ from alpabridge.cli.commands.setup_alpasim_local_plugin import (
 from alpabridge.cli.commands.setup_alpasim_local_plugin import (
     _validate_alpasim_checkout as validate_setup_checkout,
 )
+
+
+def _git(repo: Path, *args: str) -> None:
+    subprocess.run(["git", *args], cwd=repo, check=True, capture_output=True, text=True)
+
+
+def _init_git_repo(repo: Path, files: dict[str, str]) -> Path:
+    repo.mkdir(parents=True, exist_ok=True)
+    _git(repo, "init", "-q")
+    _git(repo, "config", "user.email", "test@example.com")
+    _git(repo, "config", "user.name", "Test")
+    for relative, content in files.items():
+        path = repo / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
+        _git(repo, "add", relative)
+    _git(repo, "commit", "-q", "-m", "initial")
+    return repo
+
+
+def _make_patch(repo: Path, relative: str, new_content: str) -> str:
+    """Build a real `git diff`-style patch (with valid index blob hashes) for
+    changing `relative` to `new_content`, without disturbing the repo's
+    current committed state."""
+    original = (repo / relative).read_text(encoding="utf-8")
+    (repo / relative).write_text(new_content, encoding="utf-8")
+    result = subprocess.run(
+        ["git", "diff", "--", relative], cwd=repo, check=True, capture_output=True, text=True
+    )
+    (repo / relative).write_text(original, encoding="utf-8")
+    return result.stdout
 
 
 class AlpaSimSetupScriptTests(unittest.TestCase):
@@ -908,57 +938,93 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
             self.assertFalse(_should_copy_override_path(patch_file))
             self.assertTrue(_should_copy_override_path(tracked_file))
 
-    def test_patch_effectively_present_detects_local_checkout_override_state(self) -> None:
+    def test_apply_patch_is_idempotent_on_a_checkout_that_already_has_it(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            alpasim_root = Path(tmp) / "alpasim"
-            files = {
-                "Dockerfile": 'if [ "${TARGETARCH}" = "arm64" ]; then\nuv pip install --python /repo/.venv/bin/python\n',
-                "pyproject.toml": 'docker_local = [\n  "alpasim_controller",\n  "alpasim-runtime",\n]\n',
-                "src/driver/src/alpasim_driver/main.py": "\n".join(
-                    [
-                        "close_session for unknown session %s; treating as idempotent",
-                        "submit_image_observation for unknown session %s at %s; ignoring late frame",
-                        "submit_egomotion_observation for unknown session %s at %s; ignoring late egomotion",
-                        "submit_route for unknown session %s; ignoring late route update",
-                    ]
-                ),
-                "src/driver/src/alpasim_driver/models/__init__.py": "_LAZY_IMPORTS = {}\ndef __getattr__(name: str) -> Any:\n    pass\n",
-            }
-            for relative, content in files.items():
-                path = alpasim_root / relative
-                path.parent.mkdir(parents=True, exist_ok=True)
-                path.write_text(content, encoding="utf-8")
+            alpasim_root = _init_git_repo(Path(tmp) / "alpasim", {"module.py": "a = 1\nb = 2\n"})
+            patch_file = Path(tmp) / "add_c.patch"
+            patch_file.write_text(
+                _make_patch(alpasim_root, "module.py", "a = 1\nb = 2\nc = 3\n"),
+                encoding="utf-8",
+            )
 
-            patch_file = ROOT / "src" / "alpabridge" / "alpasim_overrides" / "local_checkout.patch"
-            self.assertTrue(_patch_effectively_present(alpasim_root, patch_file))
+            with patch("alpabridge.cli.commands.setup_alpasim_local_plugin.ALPASIM_OVERRIDE_ROOT", Path(tmp)):
+                _apply_alpasim_patch(alpasim_root, patch_file)
+                self.assertEqual("a = 1\nb = 2\nc = 3\n", (alpasim_root / "module.py").read_text())
 
-    def test_apply_patch_skips_when_checkout_already_satisfies_override(self) -> None:
+                # A second run against the same already-patched checkout must
+                # not error or re-apply - git's own reverse-check idempotency
+                # dance (no hand-maintained "already applied" side channel).
+                _apply_alpasim_patch(alpasim_root, patch_file)
+                self.assertEqual("a = 1\nb = 2\nc = 3\n", (alpasim_root / "module.py").read_text())
+
+    def test_apply_patch_falls_back_to_three_way_merge_on_context_drift(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            alpasim_root = Path(tmp) / "alpasim"
-            files = {
-                "src/driver/src/alpasim_driver/main.py": "\n".join(
-                    [
-                        "current_route: Route | None = None",
-                        "def route_waypoints_for_prediction(self) -> list[Vec3] | None:",
-                        "route_waypoints=job.session.route_waypoints_for_prediction(),",
-                        "prediction_input.runtime_random_seed = job.session.seed",
-                    ]
-                ),
-                "src/driver/src/alpasim_driver/models/base.py": "route_waypoints: list[Any] | None = None\n",
-            }
-            for relative, content in files.items():
-                path = alpasim_root / relative
-                path.parent.mkdir(parents=True, exist_ok=True)
-                path.write_text(content, encoding="utf-8")
+            alpasim_root = _init_git_repo(Path(tmp) / "alpasim", {"module.py": "a = 1\nb = 2\n"})
+            patch_file = Path(tmp) / "add_c.patch"
+            patch_file.write_text(
+                _make_patch(alpasim_root, "module.py", "a = 1\nb = 2\nc = 3\n"),
+                encoding="utf-8",
+            )
 
-            patch_file = ROOT / "src" / "alpabridge" / "alpasim_overrides" / "route_waypoints.patch"
-            with patch("subprocess.run") as run_subprocess, patch(
-                "alpabridge.cli.commands.setup_alpasim_local_plugin._run"
-            ) as run_apply:
+            # An unrelated upstream change shifts every context line, so a
+            # plain `git apply --check` no longer matches by position/text -
+            # but the patch's recorded blob hash still resolves cleanly via a
+            # three-way merge.
+            (alpasim_root / "unrelated.py").write_text("x = 1\n", encoding="utf-8")
+            _git(alpasim_root, "add", "unrelated.py")
+            _git(alpasim_root, "commit", "-q", "-m", "unrelated upstream change")
+
+            with patch("alpabridge.cli.commands.setup_alpasim_local_plugin.ALPASIM_OVERRIDE_ROOT", Path(tmp)):
                 _apply_alpasim_patch(alpasim_root, patch_file)
 
-            run_subprocess.assert_not_called()
-            run_apply.assert_not_called()
+            self.assertEqual("a = 1\nb = 2\nc = 3\n", (alpasim_root / "module.py").read_text())
+
+    def test_apply_patch_failure_preserves_uncommitted_local_edits(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            alpasim_root = _init_git_repo(Path(tmp) / "alpasim", {"module.py": "a = 1\nb = 2\n"})
+            patch_file = Path(tmp) / "add_c.patch"
+            patch_file.write_text(
+                _make_patch(alpasim_root, "module.py", "a = 1\nb = 2\nc = 3\n"),
+                encoding="utf-8",
+            )
+
+            # An UNCOMMITTED local edit conflicts with the patch. A cleanup
+            # that reset to HEAD instead of the exact pre-attempt bytes would
+            # wrongly discard this edit and revert to the last commit.
+            (alpasim_root / "module.py").write_text("a = 1\nb = 999\n", encoding="utf-8")
+
+            with (
+                patch("alpabridge.cli.commands.setup_alpasim_local_plugin.ALPASIM_OVERRIDE_ROOT", Path(tmp)),
+                self.assertRaisesRegex(SystemExit, "bootstrap_alpasim_checkout.sh"),
+            ):
+                _apply_alpasim_patch(alpasim_root, patch_file)
+
+            self.assertEqual("a = 1\nb = 999\n", (alpasim_root / "module.py").read_text())
+
+    def test_apply_patch_fails_with_actionable_message_on_real_divergence(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            alpasim_root = _init_git_repo(Path(tmp) / "alpasim", {"module.py": "a = 1\nb = 2\n"})
+            patch_file = Path(tmp) / "add_c.patch"
+            patch_file.write_text(
+                _make_patch(alpasim_root, "module.py", "a = 1\nb = 2\nc = 3\n"),
+                encoding="utf-8",
+            )
+
+            # The checkout has actually diverged at the exact line the patch
+            # touches - no clean merge is possible, forward or three-way.
+            (alpasim_root / "module.py").write_text("a = 1\nb = 999\n", encoding="utf-8")
+            _git(alpasim_root, "add", "module.py")
+            _git(alpasim_root, "commit", "-q", "-m", "conflicting upstream change")
+
+            with (
+                patch("alpabridge.cli.commands.setup_alpasim_local_plugin.ALPASIM_OVERRIDE_ROOT", Path(tmp)),
+                self.assertRaisesRegex(SystemExit, "bootstrap_alpasim_checkout.sh"),
+            ):
+                _apply_alpasim_patch(alpasim_root, patch_file)
+
+            # A failed three-way attempt must not leave conflict markers
+            # behind - only the checkout's own (unrelated) pending state.
+            self.assertEqual("a = 1\nb = 999\n", (alpasim_root / "module.py").read_text())
 
     def test_bootstrap_alpasim_venv_uses_minimal_editable_install_plan(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
