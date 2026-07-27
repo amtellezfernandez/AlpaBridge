@@ -81,7 +81,9 @@ The dependency-light models are:
 - `constant_velocity`: a straight-line smoke baseline;
 - `route_following`: a waypoint-following baseline.
 
-Optional models use the same external-driver boundary:
+Optional models use the same external-driver boundary. Both are templates
+proving the contract wraps a private artifact, not public results - neither
+has a public checkpoint or retained evidence in this repo:
 
 - `token_dagger_bc`: a learned token policy with a compatible local checkpoint;
 - `direct_actor_planner`: a candidate planner with a scene-matched actor proxy.
