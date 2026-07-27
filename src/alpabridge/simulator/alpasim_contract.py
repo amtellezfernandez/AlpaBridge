@@ -503,7 +503,19 @@ def _yaw_from_quat_like(quat: Any) -> float | None:
     w = _first_float_attr(quat, ("w",))
     if z is None or w is None:
         return None
-    return math.atan2(2.0 * w * z, 1.0 - 2.0 * z * z)
+    # Full yaw-from-quaternion formula, matching AlpaSim's own real
+    # implementation (utils_rs's Pose.yaw(), via alpasim_utils.geometry.
+    # quat_to_yaw): atan2(2*(w*z + x*y), 1 - 2*(y*y + z*z)). x/y default to
+    # 0.0 when absent (e.g. a quat-like stub that only ever carries z/w),
+    # which reduces to the pure-yaw-only case this used to hardcode -
+    # dropping x/y unconditionally was only ever exactly correct when the
+    # pose had no roll/pitch component at all; a combined roll+pitch of
+    # ~10 degrees each (a plausible hard-brake-while-cornering moment)
+    # already pushes the resulting yaw error past the 0.01 rad threshold
+    # SensorFreshnessGuard's pose-changed check uses.
+    x = _first_float_attr(quat, ("x",)) or 0.0
+    y = _first_float_attr(quat, ("y",)) or 0.0
+    return math.atan2(2.0 * (w * z + x * y), 1.0 - 2.0 * (y * y + z * z))
 
 
 def _pose_changed(
