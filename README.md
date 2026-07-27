@@ -1,4 +1,4 @@
-# AlpaBridge: An External-Driver Adapter for Trajectory Policies in AlpaSim
+# AlpaBridge: Connect a Driving Policy to NVIDIA AlpaSim
 
 <p align="center">
   <a href="https://github.com/amtellezfernandez/AlpaBridge/actions/workflows/ci.yml"><img src="https://github.com/amtellezfernandez/AlpaBridge/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
@@ -7,61 +7,65 @@
 </p>
 
 <p align="center">
-  <strong>Run trajectory policies through AlpaSim's live external-driver loop.</strong><br>
+  <strong>Run your driving policy through AlpaSim's live simulation loop.</strong><br>
   <a href="docs/getting-started.md">Get started</a> |
   <a href="docs/README.md">Documentation</a> |
   <a href="docs/cli.md">CLI reference</a> |
   <a href="docs/design.md">Architecture</a>
 </p>
 
-AlpaBridge is an installable policy adapter and run toolchain for
-[NVIDIA AlpaSim](https://github.com/NVlabs/alpasim). It translates live camera,
-ego-motion, command, and route messages into a compact trajectory-policy
-interface, converts the policy output to AlpaSim's trajectory format, and lets
-AlpaSim's controller and physics advance the next ego state.
+AlpaBridge connects your driving policy to
+[NVIDIA AlpaSim](https://github.com/NVlabs/alpasim). AlpaSim sends it the
+live camera image, the car's own motion, the current command, and the route.
+AlpaBridge hands these to your policy in a simple format, takes the
+trajectory your policy returns, converts it into the format AlpaSim needs,
+and lets AlpaSim move the car forward using it.
 
-It also handles the work around the adapter: checkout setup, runtime readiness,
-scene batching, retries, provenance, run audits, and support bundles. AlpaBridge is
-not a simulator and does not introduce a new driving policy.
+AlpaBridge also handles the work around this: setting up your AlpaSim
+checkout, checking it's ready to run, running many scenes in a row, retrying
+failures, keeping a record of each run, and packaging logs for support.
+AlpaBridge is not a simulator, and it does not come with its own driving
+policy — you bring the policy.
 
 |  |  |
 | --- | --- |
-| **Tested** | 294 automated tests, ruff-clean, enforced in CI on every push |
-| **Installable** | One command (`uv sync`), builds a real wheel, smoke-tested fresh on every merge |
-| **Self-checking** | `alpabridge-doctor` verifies the install, entry points, and AlpaSim checkout before anything runs |
-| **Auditable** | Every run retains its expanded config, provenance, driver events, and a support bundle |
+| **Tested** | 294 automated tests, no lint errors, checked on every push |
+| **Installable** | One command (`uv sync`) builds a real, installable package, tested fresh on every merge |
+| **Self-checking** | `alpabridge-doctor` checks the install, the commands, and the AlpaSim checkout before anything runs |
+| **Auditable** | Every run saves its full settings, a record of what happened, driver events, and a bundle of logs for support |
 
 ## Demo
 
-Two real AlpaSim rollouts, each a map view beside its camera feed,
-labeled in-frame with the real scene/rollout IDs from each run's manifest.
+Two real AlpaSim runs, each shown as a map view next to its camera feed.
+Both are labeled with the real scene and run IDs from that run's records.
 
 <p align="center">
   <img src="docs/assets/readme/alpasim-demo-two-rollouts.gif" alt="Top: dynamic-camera rollout. Left: AlpaSim's 2D map view — the ego (green) following its planned path (orange), a nearby agent as a gray bounding box. Right: AlpaSim's live sensorsim camera render, with a real motion-shadow trail made by blending actual previous frames at reduced opacity, labeled LIVE. Bottom: NAVSIM reactive rollout. Left: AlpaSim's live map view, the ego's planned path (orange) curving through a real intersection and pulling away from the scene's originally logged path (dashed green), labeled with the retained wrong_lane flag and 16.29m divergence. Right: this checkpoint's camera feed, a static fixture frame that never changes, labeled STATIC" width="900">
 </p>
 
-**Top — dynamic-camera rollout**
-([config + hashes](artifacts/external/alpasim_dynamic_camera_rollout/)):
+**Top — moving-camera run**
+([config + files](artifacts/external/alpasim_dynamic_camera_rollout/)):
 
-- **Map:** the ego (green) tracking its planned path (orange); the gray
-  box is the same nearby vehicle visible in the camera panel.
-- **Camera:** AlpaSim's live `sensorsim` render, with a motion-shadow
-  trail — each frame blended with the real frame from `0.6` s and `1.2` s
-  earlier — showing the feed changes frame to frame.
+- **Map:** the car (green) follows its planned path (orange); the gray box
+  is the same nearby vehicle shown in the camera view.
+- **Camera:** AlpaSim's live camera render. Each frame is blended with the
+  real frame from `0.6` s and `1.2` s earlier, so you can see the trail
+  move — proof the image really changes from frame to frame.
 
-**Bottom — NAVSIM rollout**
-([config + hashes](artifacts/external/alpasim_navsim_reactive_rollout/)):
-the closed-loop-vs-log-replay case.
+**Bottom — NAVSIM run**
+([config + files](artifacts/external/alpasim_navsim_reactive_rollout/)):
+shows the difference between driving live and just replaying a recorded log.
 
-- **Map:** the driven path (orange) pulls away from the scene's logged
-  path (dashed green), finishing `16.29` m off (`dist_to_gt_location`)
-  and flagged `wrong_lane` (`collision_any` and `offroad` are both `0`).
-- **Camera:** unchanged frame to frame — this checkpoint (NAVSIM
-  EgoStatusMLP) is camera-blind by architecture, so AlpaSim served the
-  same fixture frame on every request. AlpaBridge's frozen-camera guard
-  exists to catch exactly this case (below).
+- **Map:** the driven path (orange) moves away from the original recorded
+  path (dashed green) by `16.29` m, and gets flagged `wrong_lane` (it does
+  not collide or leave the road).
+- **Camera:** the same picture every time — this policy (NAVSIM
+  EgoStatusMLP) never looks at the camera, so AlpaSim kept sending it the
+  same image on every request. AlpaBridge has a check that catches exactly
+  this case (below).
 
-How it works — AlpaSim owns everything except the amber box:
+The loop, in one diagram — AlpaSim runs everything except the dashed box,
+which is your policy:
 
 ```mermaid
 flowchart LR
@@ -81,14 +85,14 @@ flowchart LR
 <details>
 <summary>One camera per rollout, and the frozen-camera guard</summary>
 
-Every rollout uses one camera because that's what the connected AlpaSim
-vehicle rig has, not an adapter limit — see
-[design.md](docs/design.md#camera-count-is-not-hardcoded).
+Each run uses one camera because that's what the connected AlpaSim car has —
+not a limit of AlpaBridge itself. See
+[design.md](docs/design.md#camera-count-is-not-hardcoded) for more.
 
-Connected to a camera-validating model instead, this same frozen fixture
-tripped AlpaBridge's freshness check: 4 `Drive` calls completed, then the
-5th returned `INVALID_ARGUMENT` because the camera timestamp advanced but
-the image didn't. Details: [NAVSIM
+When we connected a policy that does check the camera, this same frozen
+image tripped AlpaBridge's check: the first 4 `Drive` calls worked, then the
+5th failed with `INVALID_ARGUMENT`, because the camera's timestamp kept
+moving forward but the picture didn't. Details: [NAVSIM
 evidence](artifacts/external/alpasim_navsim_reactive_rollout/#camera-freshness-control).
 
 </details>
@@ -101,49 +105,50 @@ evidence](artifacts/external/alpasim_navsim_reactive_rollout/#camera-freshness-c
   <img src="docs/assets/readme/example-before-after.png" alt="One AlpaSim Drive() request, left to right: the camera frame it carried, the real input fields AlpaBridge reads from it, and the real trajectory_xy array the shipped route_following preset returned" width="900">
 </p>
 
-Generated by
-[`scripts/render_readme_example.py`](scripts/render_readme_example.py): it
-builds a `PredictionInput` (same shape as
-[`tests/test_alpasim_integration.py`](tests/test_alpasim_integration.py)),
-runs the shipped `route_following` preset, and plots the trajectory it
-returned. Run the script yourself to reproduce it.
+Made by
+[`scripts/render_readme_example.py`](scripts/render_readme_example.py). The
+script builds one input the same way
+[`tests/test_alpasim_integration.py`](tests/test_alpasim_integration.py)
+does, runs the built-in `route_following` policy, and plots the trajectory
+it returns. Run the script yourself to see the same thing.
 
-**What this means in practice:** you write one function — observation in,
-trajectory out — for your policy. AlpaBridge handles AlpaSim's message
-protocol, timing conversion, retries, and evidence capture around it.
+**In practice:** you write one function for your policy — it takes in what
+the car currently sees and knows, and returns a trajectory. AlpaBridge
+handles everything else: talking to AlpaSim, timing, retries, and saving
+evidence of the run.
 
 ### Model Presets
 
-The same adapter surface supports four model presets:
+AlpaBridge ships four built-in policies:
 
 | Preset | Purpose | Extra input |
 | --- | --- | --- |
-| `constant_velocity` | Dependency-light smoke baseline | None |
-| `route_following` | Dependency-light waypoint baseline | None |
-| `token_dagger_bc` | Adapter for a compatible learned token checkpoint | Local checkpoint |
-| `direct_actor_planner` | Candidate planner using scene-matched actor state | Local actor proxy |
+| `constant_velocity` | Simple baseline, no setup needed | None |
+| `route_following` | Simple baseline that follows the route | None |
+| `token_dagger_bc` | Wraps a compatible trained model | A checkpoint file |
+| `direct_actor_planner` | Planner that uses other cars' real positions | An actor-state file |
 
-The first two presets are sufficient to test a checkout and execute the public
-adapter without a private checkpoint. Both real rollouts above use AlpaSim
-scenes this repo already ships presets for; runs on other datasets (nuScenes,
-nuPlan, Argoverse 2) aren't recorded here yet — see
-[compatible datasets](docs/womd-targeting.md) for what that would take.
+The first two need no checkpoint, so they're the easiest way to test your
+AlpaSim setup. Both real runs above use scenes this repo already ships
+presets for. Other datasets (nuScenes, nuPlan, Argoverse 2) aren't covered
+here yet — see [compatible datasets](docs/womd-targeting.md) for what that
+would take.
 
 ## Install
 
-Installation and command planning do not require a GPU:
+Installing and planning a run don't need a GPU:
 
 ```bash
 uv sync --extra dev
 uv run alpabridge-doctor --strict-installed --json
 ```
 
-Live AlpaSim rollouts require x86_64 Linux, Docker, NVIDIA Container Toolkit, a
-GPU, a local AlpaSim checkout, and local scene assets.
+Running a real AlpaSim rollout needs: x86_64 Linux, Docker, the NVIDIA
+Container Toolkit, a GPU, a local AlpaSim checkout, and local scene files.
 
 ## Connect AlpaSim
 
-Inspect the tracked override layer:
+Check what AlpaBridge would change in your AlpaSim checkout:
 
 ```bash
 uv run alpabridge-setup \
@@ -151,7 +156,7 @@ uv run alpabridge-setup \
   --check-only
 ```
 
-Apply it and run the readiness checks:
+Apply the changes, then check everything is ready:
 
 ```bash
 uv run alpabridge-setup --alpasim-root /path/to/alpasim
@@ -160,13 +165,13 @@ uv run alpabridge-ready \
   --scene-preset fresh_3scene
 ```
 
-The setup command validates the expected upstream layout before applying any
-tracked file. The readiness command checks the local environment, Docker/GPU
-availability, images, model inputs, and selected scene assets.
+The setup command checks your AlpaSim checkout looks as expected before it
+changes anything. The readiness command checks your machine, Docker and GPU
+access, images, model inputs, and the scenes you picked.
 
 ## Plan Or Execute
 
-Materialize the exact driver and simulator commands without starting a rollout:
+Print the exact commands this would run, without starting anything:
 
 ```bash
 uv run alpabridge-launch \
@@ -176,7 +181,7 @@ uv run alpabridge-launch \
   --scene-preset fresh_3scene
 ```
 
-Execute the setup-to-evidence workflow:
+Actually run it, start to finish:
 
 ```bash
 uv run alpabridge-reproduce \
@@ -189,28 +194,29 @@ uv run alpabridge-reproduce \
   --json
 ```
 
-For independent scene timeouts and retries, use `alpabridge-batch`. The toolchain
-retains expanded configuration, model inputs, commands, simulator provenance,
-driver events, summaries, and normalized audit output without committing gated
-scene data or private checkpoints.
+To run many scenes with their own timeouts and retries, use
+`alpabridge-batch`. Every run saves its full settings, model inputs, the
+exact commands used, simulator records, driver events, summaries, and a
+normalized audit — without saving any gated scene data or private
+checkpoints.
 
 ## Run As A Standalone Driver
 
-Everything above runs AlpaBridge in-process inside AlpaSim. It can also run
-as a standalone driver an AlpaSim checkout connects to over gRPC — the path
-external evaluators use, since they only support connecting to an
-already-running driver rather than loading a plugin. This skips the
-`Connect AlpaSim` override-patch step above entirely: AlpaSim just points at
-the driver over the network.
+Everything above runs AlpaBridge inside AlpaSim itself. AlpaBridge can also
+run on its own, as a separate process that an AlpaSim checkout connects to
+over the network (using gRPC). External evaluators use this path, since they
+only know how to connect to an already-running driver, not load a plugin.
+This skips the `Connect AlpaSim` step above completely — AlpaSim just points
+at the driver's address.
 
-Check the driver on its own first — no AlpaSim checkout, GPU, or checkpoint
-required:
+First, check the driver works on its own — no AlpaSim checkout, GPU, or
+checkpoint needed:
 
 ```bash
 uv run alpabridge-driver --self-test --model route_following
 ```
 
-For a real closed loop, start the driver in one terminal:
+To run a real, live loop, start the driver in one terminal:
 
 ```bash
 uv run alpabridge-driver --model vavam \
@@ -218,38 +224,37 @@ uv run alpabridge-driver --model vavam \
   --tokenizer-checkpoint /path/to/tokenizer.jit
 ```
 
-and, from an AlpaSim checkout in another terminal, point its external-driver
-preset at it:
+Then, in another terminal, from an AlpaSim checkout, point it at the driver:
 
 ```bash
 ALPASIM_DRIVER_HOST=localhost ALPASIM_DRIVER_PORT=6789 \
   uv run alpasim_wizard +e2e_challenge=dev
 ```
 
-Any policy registered in
+Any policy listed in
 [`src/alpabridge/driver/policy_registry.py`](src/alpabridge/driver/policy_registry.py)
-is selectable with `--model`, the same way as an in-process preset: the four
-presets above, plus `navsim_ego_status_mlp` and `vavam` (the public [Valeo
-VideoActionModel](https://github.com/valeoai/VideoActionModel), a real
-318M-parameter checkpoint — needs `torch` and the `vam` package, not
-installed by default).
+can be picked with `--model`, the same way as the presets above. That's the
+four presets above, plus `navsim_ego_status_mlp` and `vavam` (the public
+[Valeo VideoActionModel](https://github.com/valeoai/VideoActionModel), a
+real 318-million-parameter checkpoint. It needs `torch` and the `vam`
+package, which aren't installed by default).
 
-NVIDIA's AlpaSim E2E Challenge is one evaluator that connects this way;
-building a hardened container specifically for that submission format is
+NVIDIA's AlpaSim E2E Challenge is one evaluator that connects this way.
+Building a locked-down container for that specific submission format is
 covered in [AlpaSim E2E compatibility](docs/challenge-compatibility.md).
 
 ## Integration Test Results
 
-Three real, retained AlpaSim runs back the claims above:
+Three real, saved AlpaSim runs back this up:
 
 | Run | Result | What it proves |
 | --- | --- | --- |
-| [Dynamic-camera external driver](artifacts/external/alpasim_dynamic_camera_rollout/) | `pass`, `200` sim steps, live `sensorsim` camera render | The camera feed actually changes frame to frame — not a repeated-frame fixture. |
-| [Reactive NAVSIM external driver](artifacts/external/alpasim_navsim_reactive_rollout/) | `197/197` finite outputs over one `19.93` s rollout | A public checkpoint, the driver, controller, and physics all complete one full feedback loop. |
-| [E2E challenge-style conformance](artifacts/external/alpasim_e2e_challenge_conformance/) | `197/197` `Drive` calls with a dependency-light baseline, and again with the real 318M-parameter `vavam` policy ([details](docs/challenge-compatibility.md#a-second-run-with-a-real-policy-instead-of-a-baseline)) | The driver connects to AlpaSim's official challenge service and holds up under a real, non-toy policy, not just a baseline. |
+| [Dynamic-camera external driver](artifacts/external/alpasim_dynamic_camera_rollout/) | `pass`, `200` sim steps, live `sensorsim` camera render | The camera image really changes every frame — it's not stuck on one picture. |
+| [Reactive NAVSIM external driver](artifacts/external/alpasim_navsim_reactive_rollout/) | `197/197` finite outputs over one `19.93` s rollout | A public checkpoint, the driver, the controller, and the physics all complete one full loop. |
+| [E2E challenge-style conformance](artifacts/external/alpasim_e2e_challenge_conformance/) | `197/197` `Drive` calls with a simple baseline, and again with the real 318M-parameter `vavam` policy ([details](docs/challenge-compatibility.md#a-second-run-with-a-real-policy-instead-of-a-baseline)) | The driver connects to AlpaSim's official challenge service and keeps working with a real policy, not just a simple baseline. |
 
-These are integration checks, not model benchmarks: they prove the
-plumbing works, not that any one policy drives well.
+These check that the pieces connect and work together — they don't score
+how well any one policy drives.
 
 ## Verify
 
@@ -258,26 +263,26 @@ make test    # 294 tests, no AlpaSim/GPU/checkpoint required
 make verify  # + Ruff, coverage, fresh-checkout install smoke test, wheel/sdist build
 ```
 
-Every push runs the same pipeline in CI: lint, the dependency-light
-conformance tier, coverage, a fresh-checkout install, a wheel build, and an
-install-from-wheel smoke test that exercises the real console-script
-entry points. Nothing here requires AlpaSim scenes, a GPU, or a checkpoint.
+Every push runs the same steps in CI: lint checks, the tests that need no
+extra dependencies, coverage, a fresh install, building an installable
+package, and a quick test that installs it and runs the real commands. None
+of this needs AlpaSim scenes, a GPU, or a checkpoint.
 
 ## Scope
 
-AlpaBridge answers one question: does your policy drive, live and
-closed-loop, in a photorealistic simulator — not just on a logged
-benchmark. It adapts any compatible trajectory-policy checkpoint to
-AlpaSim's external-driver loop (camera, ego motion, route, command in; a
-five-second trajectory out); no WOMD-trained checkpoint required.
+AlpaBridge answers one question: does your policy actually drive, live, in a
+realistic simulator — not just score well on a recorded log. It connects any
+compatible policy to AlpaSim's live loop: camera, car motion, route, and
+command go in; a five-second trajectory comes out. No checkpoint trained on
+Waymo's WOMD dataset is required.
 
-**What it doesn't do:** convert WOMD scenarios into AlpaSim scenes. A
-policy connected through AlpaBridge drives whatever scenes the connected
-AlpaSim checkout provides, not recorded Waymo intersections. Waymax
-targets a different problem (vectorized planning/behavior-prediction
-research, no camera render), so neither substitutes for the other. Full
-breakdown — WOMD/AlpaSim/Waymax sources, why AlpaSim and not Waymax, real
-Waymo camera/LiDAR examples: [WOMD targeting](docs/womd-targeting.md).
+**What it doesn't do:** turn WOMD scenarios into AlpaSim scenes. A policy
+connected through AlpaBridge drives whatever scenes your connected AlpaSim
+checkout has, not recorded Waymo intersections. Waymax solves a different
+problem (planning research, with no camera image), so neither one replaces
+the other. For the full comparison — WOMD vs. AlpaSim vs. Waymax, why this
+project uses AlpaSim, and real Waymo camera/LiDAR examples — see [WOMD
+targeting](docs/womd-targeting.md).
 
 ## Documentation
 
@@ -294,11 +299,11 @@ Waymo camera/LiDAR examples: [WOMD targeting](docs/womd-targeting.md).
 
 ## License
 
-AlpaBridge is released under the [BSD 3-Clause License](LICENSE) and is
-citable via [`CITATION.cff`](CITATION.cff). Packaged third-party-derived
-files and run media retain their
+AlpaBridge is released under the [BSD 3-Clause License](LICENSE), and you
+can cite it using [`CITATION.cff`](CITATION.cff). Files and run media that
+come from third parties keep their own
 [third-party notices](LICENSES/THIRD_PARTY_NOTICES.md).
 
-This independent project is not affiliated with, endorsed by, or sponsored by
-Waymo or NVIDIA. It does not redistribute Waymo datasets, AlpaSim binaries,
-gated scene assets, or policy checkpoints.
+This is an independent project — it is not affiliated with, endorsed by, or
+sponsored by Waymo or NVIDIA. It does not include or redistribute Waymo
+datasets, AlpaSim binaries, gated scene files, or policy checkpoints.
