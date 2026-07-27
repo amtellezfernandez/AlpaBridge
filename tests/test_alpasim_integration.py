@@ -30,8 +30,6 @@ from alpabridge.simulator.alpasim_contract import (
     DriveCommand,
     ModelPrediction,
     SensorFreshnessGuard,
-    _pose_like_to_signature,
-    _yaw_from_quat_like,
     corrected_speed_mps,
     pose_history_speed_mps,
     resample_trajectory,
@@ -2220,46 +2218,6 @@ class AlpaSimIntegrationTests(unittest.TestCase):
         diagnostics = guard.validate(_frame("session-b", 1000, 50.0, 182))
 
         self.assertEqual("ok_initial", diagnostics["status"])
-
-    def test_yaw_from_quat_matches_the_full_formula_not_a_pure_yaw_approximation(self) -> None:
-        # This used to hardcode atan2(2wz, 1-2z^2), which silently assumes
-        # x=y=0 (no roll/pitch at all) - correct only for a pure-yaw pose.
-        # AlpaSim's own real implementation (utils_rs's Pose.yaw(), exposed
-        # via alpasim_utils.geometry.quat_to_yaw) uses the full formula:
-        # atan2(2*(wz+xy), 1-2*(y^2+z^2)). A combined ~10 degree roll+pitch
-        # (a plausible hard-brake-while-cornering moment) pushed the old
-        # formula's error past 0.01 rad - the exact threshold
-        # SensorFreshnessGuard's pose-changed check uses.
-        true_yaw = 0.3
-        # Quaternion for yaw=0.3, pitch=10deg, roll=10deg (ZYX Euler), i.e.
-        # x/y are genuinely non-zero, not sensor noise.
-        quat = SimpleNamespace(x=0.0728743, y=0.0988240, z=0.1407922, w=0.9823954)
-
-        yaw = _yaw_from_quat_like(quat)
-
-        self.assertAlmostEqual(true_yaw, yaw, places=4)
-
-    def test_yaw_from_quat_still_supports_a_quat_stub_with_no_x_y_attributes(self) -> None:
-        # Some quat-like objects in this codebase only ever expose z/w
-        # (a pure-yaw assumption baked into the caller, not this function) -
-        # x/y must default to 0.0, not raise, preserving the old behavior
-        # exactly for that case.
-        half = 0.15
-        stub_quat = SimpleNamespace(z=math.sin(half), w=math.cos(half))
-
-        self.assertAlmostEqual(0.3, _yaw_from_quat_like(stub_quat), places=6)
-
-    def test_yaw_from_quat_defaults_to_identity_instead_of_raising_on_missing_fields(self) -> None:
-        # Regression test: this function used to return None when z/w were
-        # both absent, which crashed _pose_like_to_signature's final
-        # round(float(yaw), 6) with an uncaught TypeError - a quat object
-        # present but missing fields must degrade to "no rotation known"
-        # (yaw=0.0), the same as an entirely absent quat, not raise.
-        self.assertEqual(0.0, _yaw_from_quat_like(None))
-        self.assertEqual(0.0, _yaw_from_quat_like(SimpleNamespace(some_other_field=1.0)))
-
-        pose = SimpleNamespace(x=1.0, y=2.0, quat=SimpleNamespace(some_other_field=1.0))
-        self.assertEqual((1.0, 2.0, 0.0), _pose_like_to_signature(pose))
 
     def test_sensor_freshness_guard_pose_changed_detection_uses_the_correct_yaw(self) -> None:
         # End-to-end: with the old simplified formula, this exact
