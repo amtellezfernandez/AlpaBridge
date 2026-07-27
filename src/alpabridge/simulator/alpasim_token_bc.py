@@ -1991,13 +1991,28 @@ def _normalize_oracle_world_actor(item: Any, index: int) -> dict[str, float | st
         world_x = float(item["world_x"])
         world_y = float(item["world_y"])
         radius = max(0.25, float(item.get("radius", item.get("radius_m", 1.25))))
+        world_vx = float(item.get("world_vx", item.get("vx", 0.0)))
+        world_vy = float(item.get("world_vy", item.get("vy", 0.0)))
     except (KeyError, TypeError, ValueError):
+        return None
+    if not (
+        math.isfinite(world_x)
+        and math.isfinite(world_y)
+        and math.isfinite(radius)
+        and math.isfinite(world_vx)
+        and math.isfinite(world_vy)
+    ):
+        # A NaN/inf actor position must be rejected here, not laundered
+        # downstream: min_time_swept_clearance's running min(...) silently
+        # keeps its prior (often +inf, "perfectly safe") value when handed
+        # a NaN candidate, so a bad oracle actor would otherwise read as
+        # maximum clearance instead of being flagged.
         return None
     actor: dict[str, float | str] = {
         "world_x": world_x,
         "world_y": world_y,
-        "world_vx": float(item.get("world_vx", item.get("vx", 0.0))),
-        "world_vy": float(item.get("world_vy", item.get("vy", 0.0))),
+        "world_vx": world_vx,
+        "world_vy": world_vy,
         "world_heading": float(item.get("world_heading", item.get("heading", 0.0))),
         "radius": radius,
         "kind": str(item.get("kind", "oracle_actor")),
@@ -2028,7 +2043,13 @@ def _normalize_oracle_actor_hazard(item: Any, index: int) -> dict[str, float | s
         x = float(item["x"])
         y = float(item.get("y", 0.0))
         radius = max(0.25, float(item.get("radius", item.get("radius_m", 1.25))))
+        vx = float(item.get("vx", item.get("forward_velocity_mps", 0.0)))
+        vy = float(item.get("vy", item.get("lateral_velocity_mps", 0.0)))
     except (KeyError, TypeError, ValueError):
+        return None
+    if not (
+        math.isfinite(x) and math.isfinite(y) and math.isfinite(radius) and math.isfinite(vx) and math.isfinite(vy)
+    ):
         return None
     hazard: dict[str, float | str] = {
         "x": x,
@@ -2036,8 +2057,8 @@ def _normalize_oracle_actor_hazard(item: Any, index: int) -> dict[str, float | s
         "radius": radius,
         "kind": str(item.get("kind", "oracle_actor")),
         "label": str(item.get("label", item.get("id", f"oracle_actor_{index}"))),
-        "vx": float(item.get("vx", item.get("forward_velocity_mps", 0.0))),
-        "vy": float(item.get("vy", item.get("lateral_velocity_mps", 0.0))),
+        "vx": vx,
+        "vy": vy,
         "source": str(item.get("source", "alpasim_oracle_actor_proxy")),
     }
     for source_key, target_key in (
