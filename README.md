@@ -189,16 +189,26 @@ uv run alpabridge-build-local-cache \
   --scene-preset fresh_3scene
 ```
 
+Want one specific scene instead of a whole preset? Use `--scene-id` (repeatable):
+
+```bash
+uv run alpabridge-build-local-cache \
+  --alpasim-root /path/to/alpasim \
+  --scene-preset fresh_3scene \
+  --scene-id clipgt-90d1908c-9fdc-40ea-a5a1-351240aa323e
+```
+
+`--scene-preset` still picks which catalog to search; `--scene-id` narrows
+which of that catalog's scenes are actually fetched.
+
 Already have the scene files locally? Point at them with `--source-usdz-dir`
 instead, and nothing is downloaded. `alpabridge-ready` (above) reports
 whether the scenes a preset needs are already cached.
 
-This is scoped to that one catalog — `--source-usdz-dir` only changes where
-the files are copied from, not which scenes exist. Bringing genuinely new
-scene content of your own is an AlpaSim-side change, not something this
-tooling does; see [Getting Started](docs/getting-started.md#get-scene-data)
-for `--scene-id`, the one way to pick a specific scene from the catalog
-instead of a whole preset.
+This is scoped to that one catalog — `--scene-id` and `--source-usdz-dir`
+only change *which* of the catalog's scenes you fetch and *where from*, not
+what scenes exist. Bringing genuinely new scene content of your own is an
+AlpaSim-side change, not something this tooling does.
 
 ## Plan Or Execute
 

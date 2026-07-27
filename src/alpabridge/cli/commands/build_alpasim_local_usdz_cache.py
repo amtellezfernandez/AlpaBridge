@@ -34,8 +34,24 @@ def _build_parser() -> argparse.ArgumentParser:
         )
     )
     parser.add_argument("--scene-preset", choices=tuple(SCENE_PRESETS), required=True)
+    parser.add_argument(
+        "--scene-id",
+        action="append",
+        default=[],
+        help=(
+            "Fetch only this scene instead of the whole --scene-preset list. Repeatable. "
+            "The scene must still belong to the catalog(s) --scene-preset points at "
+            "(only --scene-preset selects which catalog CSV to search) - this narrows "
+            "which of that catalog's scenes are fetched, it doesn't add scenes outside it."
+        ),
+    )
     parser.add_argument("--alpasim-root", type=Path, default=None)
-    parser.add_argument("--target-count", type=int, default=None)
+    parser.add_argument(
+        "--target-count",
+        type=int,
+        default=None,
+        help="Keep only the first N scenes from --scene-preset's list. Ignored if --scene-id is set.",
+    )
     parser.add_argument("--local-usdz-dir", type=Path, default=None)
     parser.add_argument("--download-dir", type=Path, default=None)
     parser.add_argument(
@@ -63,8 +79,8 @@ def _build_parser() -> argparse.ArgumentParser:
 def main() -> int:
     args = _build_parser().parse_args()
     alpasim_root = _resolve_alpasim_root(args.alpasim_root)
-    scene_ids = _scene_ids(args.scene_preset, [])
-    if args.target_count is not None:
+    scene_ids = _scene_ids(args.scene_preset, args.scene_id)
+    if args.target_count is not None and not args.scene_id:
         if args.target_count <= 0:
             raise SystemExit("--target-count must be positive")
         scene_ids = scene_ids[: args.target_count]
@@ -140,7 +156,7 @@ def main() -> int:
         found = {row["scene_id"] for row in rows}
         missing = [scene_id for scene_id in scene_ids if scene_id not in found]
         raise SystemExit(
-            f"{len(missing)} preset scene(s) are missing from Hugging Face revision "
+            f"{len(missing)} requested scene(s) are missing from Hugging Face revision "
             f"{args.hf_revision}: {', '.join(missing[:8])}"
         )
 
