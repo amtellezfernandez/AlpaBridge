@@ -21,41 +21,30 @@ AlpaBridge hands these to your policy in a simple format, takes the
 trajectory your policy returns, converts it into the format AlpaSim needs,
 and lets AlpaSim move the car forward using it.
 
-AlpaBridge also handles the work around this: setting up your AlpaSim
-checkout, checking it's ready to run, running many scenes in a row, retrying
-failures, keeping a record of each run, and packaging logs for support.
-AlpaBridge is not a simulator, and it does not come with its own driving
-policy — you bring the policy.
+AlpaBridge also sets up your AlpaSim checkout, checks it's ready to run,
+runs many scenes in a row, retries failures, keeps a record of each run, and
+packages logs for support.
+
+Bring your own policy checkpoint — AlpaSim provides the simulator, and
+AlpaBridge connects the two.
 
 ## Demo
 
-Two real AlpaSim runs, each shown as a map view next to its camera feed.
-Both are labeled with the real scene and run IDs from that run's records.
+Two real AlpaSim runs, map view next to camera feed:
 
 <p align="center">
-  <img src="docs/assets/readme/alpasim-demo-two-rollouts.gif" alt="Top: dynamic-camera rollout. Left: AlpaSim's 2D map view — the ego (green) following its planned path (orange), a nearby agent as a gray bounding box. Right: AlpaSim's live sensorsim camera render, with a real motion-shadow trail made by blending actual previous frames at reduced opacity, labeled LIVE. Bottom: NAVSIM reactive rollout. Left: AlpaSim's live map view, the ego's planned path (orange) curving through a real intersection and pulling away from the scene's originally logged path (dashed green), labeled with the retained wrong_lane flag and 16.29m divergence. Right: this checkpoint's camera feed, a static fixture frame that never changes, labeled STATIC" width="900">
+  <img src="docs/assets/readme/alpasim-demo-two-rollouts.gif" alt="Top: moving-camera rollout — left, AlpaSim's map view with the car (green) following its planned path (orange); right, AlpaSim's live camera render, changing frame to frame. Bottom: NAVSIM rollout — left, the driven path (orange) drifting from the original recorded path (dashed green); right, this policy's camera feed, unchanged because the policy never looks at it." width="900">
 </p>
 
-**Top — moving-camera run**
-([config + files](artifacts/external/alpasim_dynamic_camera_rollout/)):
-
-- **Map:** the car (green) follows its planned path (orange); the gray box
-  is the same nearby vehicle shown in the camera view.
-- **Camera:** AlpaSim's live camera render. Each frame is blended with the
-  real frame from `0.6` s and `1.2` s earlier, so you can see the trail
-  move — proof the image really changes from frame to frame.
-
-**Bottom — NAVSIM run**
-([config + files](artifacts/external/alpasim_navsim_reactive_rollout/)):
-shows the difference between driving live and just replaying a recorded log.
-
-- **Map:** the driven path (orange) moves away from the original recorded
-  path (dashed green) by `16.29` m, and gets flagged `wrong_lane` (it does
-  not collide or leave the road).
-- **Camera:** the same picture every time — this policy (NAVSIM
-  EgoStatusMLP) never looks at the camera, so AlpaSim kept sending it the
-  same image on every request. AlpaBridge has a check that catches exactly
-  this case (below).
+- **Top** ([run files](artifacts/external/alpasim_dynamic_camera_rollout/)):
+  the car (green) follows its planned path (orange); the camera panel is
+  AlpaSim's live render, changing frame to frame.
+- **Bottom** ([run files](artifacts/external/alpasim_navsim_reactive_rollout/)):
+  the driven path (orange) drifts from the original recorded path (dashed
+  green) — driving live diverges from replaying a log. The camera never
+  changes: this policy (NAVSIM EgoStatusMLP) doesn't use it, so AlpaSim kept
+  sending the same image. AlpaBridge's frozen-camera check catches exactly
+  this (below).
 
 This diagram shows the loop. AlpaSim runs everything except the dashed box —
 that's your policy:
