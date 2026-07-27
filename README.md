@@ -153,13 +153,14 @@ access, images, model inputs, and the scenes you picked.
 
 ## Get Scene Data
 
-This step is only for the in-process path above (`alpabridge-launch` /
-`alpabridge-reproduce` with `--scene-preset`). It doesn't apply to [Run As A
-Standalone Driver](#run-as-a-standalone-driver) below — the AlpaSim E2E
-Challenge's own dev preset supplies its own scenes.
+Using [Run As A Standalone Driver](#run-as-a-standalone-driver) instead —
+including the AlpaSim E2E Challenge? You can skip this section: that path
+supplies its own scenes, no local scene data needed. This step is only for
+the in-process path above (`alpabridge-launch` / `alpabridge-reproduce` with
+`--scene-preset`).
 
-Real rollouts need real scene files on disk, and those come from a **gated**
-Hugging Face dataset: [request
+Real scene files for that path come from a **gated** Hugging Face dataset:
+[request
 access](https://huggingface.co/datasets/nvidia/PhysicalAI-Autonomous-Vehicles-NuRec)
 first if you don't have it yet, and expect that approval to take some time —
 it's a manual review, not instant. Once you have access and an `HF_TOKEN`,
