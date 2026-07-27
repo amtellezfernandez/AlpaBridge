@@ -55,6 +55,17 @@ already cached locally. If they aren't, see the [main README's Get Scene
 Data](../README.md#get-scene-data) section — real scene files come from a
 gated Hugging Face dataset, fetched with `alpabridge-build-local-cache`.
 
+This is specific to that one catalog (NVIDIA's NuRec/PhysicalAI dataset):
+`--scene-preset` picks one of six fixed scene lists from it, and
+`--scene-id` (on `alpabridge-launch`/`alpabridge-ready`) lets you target a
+specific scene from that same catalog instead of a whole preset — it's not
+a way to plug in scene content of your own. `--source-usdz-dir` (on
+`alpabridge-build-local-cache`) only changes where the USDZ files are
+copied from (a local directory instead of downloading) — the scene still
+has to be one the catalog already knows about. Registering genuinely new
+scene content is an AlpaSim-side change, outside what this repo's tooling
+does.
+
 ## Materialize Commands
 
 Dependency-light baseline:
