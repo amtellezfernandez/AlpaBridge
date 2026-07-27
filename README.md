@@ -208,8 +208,12 @@ whether the scenes a preset needs are already cached.
 
 This is scoped to that one catalog — `--scene-id` and `--source-usdz-dir`
 only change *which* of the catalog's scenes you fetch and *where from*, not
-what scenes exist. Bringing genuinely new scene content of your own is an
-AlpaSim-side change, not something this tooling does.
+what scenes exist. Already have your own, complete USDZ file (e.g. from
+NVIDIA's NuRec pipeline)? `alpabridge-register-custom-scene` adds it to
+AlpaSim's own catalog so `--scene-id`/`--source-usdz-dir` accept it — see
+[Getting Started](docs/getting-started.md#get-scene-data). It can't create
+or repair a USDZ's own content, though; that's an upstream reconstruction
+problem, not a catalog one.
 
 ## Plan Or Execute
 

@@ -17,6 +17,7 @@
 | --- | --- |
 | `alpabridge-build-local-cache` | Build or validate a local scene cache. |
 | `alpabridge-build-oracle-proxy` | Build the scene-matched actor proxy required by the direct planner. |
+| `alpabridge-register-custom-scene` | Add a USDZ scene you already have to an AlpaSim scene catalog CSV. |
 | `alpabridge-audit-run` | Normalize driver logs and check route and sensor inputs. |
 | `alpabridge-support-bundle` | Package selected logs, configs, and audit output. |
 | `alpabridge-batch-summary` | Aggregate a multi-scene batch. |
