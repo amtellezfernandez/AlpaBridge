@@ -64,8 +64,8 @@ shows the difference between driving live and just replaying a recorded log.
   same image on every request. AlpaBridge has a check that catches exactly
   this case (below).
 
-The loop, in one diagram — AlpaSim runs everything except the dashed box,
-which is your policy:
+This diagram shows the loop. AlpaSim runs everything except the dashed box —
+that's your policy:
 
 ```mermaid
 flowchart LR
