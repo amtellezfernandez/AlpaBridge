@@ -28,6 +28,7 @@ from alpabridge.simulator.alpasim_contract import (
     BaseTrajectoryModel,
     DriveCommand,
     ModelPrediction,
+    SensorFreshnessGuard,
     corrected_speed_mps,
     pose_history_speed_mps,
     resample_trajectory,
@@ -2004,6 +2005,31 @@ class AlpaSimIntegrationTests(unittest.TestCase):
         reasoning = json.loads(prediction.reasoning_text or "{}")
         self.assertEqual("session-b", reasoning["session_uuid"])
         self.assertEqual("ok_initial", reasoning["sensor_freshness"]["status"])
+
+    def test_sensor_freshness_guard_still_detects_session_change_after_an_unlabeled_call(
+        self,
+    ) -> None:
+        # A call with no discoverable session_uuid (e.g. a priming/warmup
+        # frame) must not erase the guard's memory of the last *known*
+        # session - otherwise the following real session's first call is
+        # wrongly compared against the previous session's stale pose/camera
+        # state instead of getting a fresh "ok_initial".
+        guard = SensorFreshnessGuard("test-model")
+
+        def _frame(session_uuid: str | None, timestamp_us: int, x: float, image_value: int) -> SimpleNamespace:
+            return SimpleNamespace(
+                session_uuid=session_uuid,
+                camera_images={
+                    "front": [SimpleNamespace(timestamp_us=timestamp_us, image=np.full((4, 4, 3), image_value, dtype=np.uint8))]
+                },
+                ego_pose_history=[SimpleNamespace(timestamp_us=timestamp_us, x=x, y=0.0, yaw=0.0)],
+            )
+
+        guard.validate(_frame("session-a", 1000, 0.0, 180))
+        guard.validate(_frame(None, 1100, 1.0, 181))
+        diagnostics = guard.validate(_frame("session-b", 1000, 50.0, 182))
+
+        self.assertEqual("ok_initial", diagnostics["status"])
 
     def test_direct_actor_planner_log_includes_sensor_freshness(self) -> None:
         with TemporaryDirectory() as tmp:
