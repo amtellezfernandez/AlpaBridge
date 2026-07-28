@@ -302,6 +302,7 @@ def main() -> None:
         dry_run=args.wizard_dry_run,
         scene_catalog_paths=scene_catalog_paths,
         extra_args=args.wizard_arg,
+        camera_group=_camera_group_for_preset(Path(model_preset["config_file"])),
     )
 
     metadata = {
@@ -1055,6 +1056,7 @@ def _wizard_command(
     dry_run: bool,
     scene_catalog_paths: list[Path] | None = None,
     extra_args: list[str] | None = None,
+    camera_group: str | None = None,
 ) -> list[str]:
     cmd = [
         str(alpasim_wizard),
@@ -1068,11 +1070,34 @@ def _wizard_command(
         f"wizard.dry_run={'true' if dry_run else 'false'}",
         f"scenes.scene_ids={json.dumps(scene_ids)}",
     ]
+    if camera_group:
+        # "cameras" isn't in base_config.yaml's own `defaults:` list (unlike
+        # deploy/driver/topology, which are declared there as overridable
+        # placeholders), so Hydra requires `+` to add it rather than `=` to
+        # override an existing entry.
+        cmd.append(f"+cameras={camera_group}")
     if scene_catalog_paths:
         cmd.append(f"scenes.scenes_csv={json.dumps([str(path) for path in scene_catalog_paths])}")
     if extra_args:
         cmd.extend(extra_args)
     return cmd
+
+
+def _camera_group_for_preset(config_file: Path) -> str:
+    """Derive the wizard's ``cameras=<n>cam`` config-group selection from a
+    model preset's declared ``inference.use_cameras`` list.
+
+    AlpaSim's own default (``runtime.simulation_config.cameras`` in
+    base_config.yaml) currently ships 2 cameras; every public AlpaBridge
+    preset declares only 1 (``camera_front_wide_120fov``), and AlpaSim's
+    driver framework hard-rejects any camera frame arriving outside a
+    model's declared ``use_cameras`` - so scene camera count must always be
+    pinned to match the preset, not left to whatever AlpaSim currently
+    defaults to.
+    """
+    payload = yaml.safe_load(config_file.read_text())
+    use_cameras = (payload.get("inference") or {}).get("use_cameras") or []
+    return f"{max(1, len(use_cameras))}cam"
 
 
 def _wizard_deploy_target() -> str:

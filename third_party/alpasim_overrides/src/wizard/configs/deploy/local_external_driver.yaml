@@ -1,0 +1,40 @@
+# @package _global_
+# Deploy target: local workstation with the driving policy running as an
+# external process (not a wizard-managed container) - AlpaBridge's
+# standalone driver, or any other process implementing AlpaSim's
+# egodriver.proto, reachable at wizard.external_services.driver.
+#   uv run alpasim_wizard deploy=local_external_driver topology=1gpu wizard.log_dir=./out
+#
+# Upstream shipped a config by this name (src/wizard/configs/deploy/local_external_driver.yaml)
+# through v2026.4-era releases; NVIDIA's May 2026 wizard restructuring removed it without a
+# replacement, so this restores the same intent against the current wizard schema: drop
+# "driver" from wizard.run_sim_services (required by setup_omegaconf.validate_config whenever
+# wizard.external_services.driver is set - the two are mutually exclusive) and route container
+# networking through localhost so managed services can reach the external driver process.
+#
+# wizard.external_services defaults to None (schema.py), and OmegaConf's CLI-override merge
+# (`OmegaConf.update(cfg, key, value, merge=True)`) cannot merge a dotted sub-key into a None
+# container - it raises "Unexpected type for root: NoneType". AlpaBridge's CLI always appends
+# `wizard.external_services.driver=[localhost:{port}]` as a separate override, so this config
+# must seed external_services as an empty dict here (at compose time, not override time) so
+# that later CLI override has a real dict to merge into.
+
+defaults:
+  - local
+  - _self_
+
+wizard:
+  debug_flags:
+    use_localhost: true
+  run_sim_services: ["renderer", "physics", "trafficsim", "controller", "runtime"]
+  # `driver: []` is a placeholder so AlpaBridge's always-appended CLI override
+  # (`wizard.external_services.driver=[localhost:{port}]`, a plain `=`, not `+=`)
+  # has an existing key to overwrite - Hydra rejects a plain `=` override against
+  # a key that doesn't exist yet ("Could not override ... use +key=... to append").
+  external_services:
+    driver: []
+
+runtime:
+  endpoints:
+    trafficsim:
+      skip: true
