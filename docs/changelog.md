@@ -4,6 +4,42 @@ All notable adapter-release changes are tracked here.
 
 ## Unreleased - 2026-07-28
 
+- Fixed real closed-loop rollouts being completely broken on x86_64 (the
+  primary supported platform) against the currently-pinned AlpaSim release:
+  `alpabridge-launch`/`alpabridge-reproduce --execute` hardcode
+  `deploy=local_external_driver` for the wizard invocation, but that Hydra
+  config doesn't exist anywhere - not in AlpaBridge's own tracked
+  overrides, and not in AlpaSim's current pinned release, which removed it
+  in a May 2026 restructuring sync (confirmed by fetching its last real
+  content from AlpaSim's own git history, from before that removal).
+  AlpaBridge's ARM-specific override (`local_arm_external_driver.yaml`,
+  the one deploy file that did exist) also referenced a
+  `${defines.sensorsim_entrypoint}` variable and a `services.sensorsim` key
+  that don't exist in the current schema (real names are
+  `defines.renderer_entrypoint` and `services.renderer`), so its Blackwell
+  renderer tuning was silently never applied. Restored a proper
+  `local_external_driver.yaml` against the current wizard schema (dropping
+  `driver` from `wizard.run_sim_services`, seeding
+  `wizard.external_services` as a populated dict since Hydra's CLI-override
+  merge can't target a dotted sub-key under a `None` container) and
+  repaired the ARM file's variable/key names. This is exactly the class of
+  bug the test suite structurally cannot catch on its own: CI and all
+  existing tests only ever exercise `--mode print` (command-string
+  construction), never actual Hydra config resolution - caught only by
+  running a real `--execute` rollout end to end against a fresh AlpaSim
+  clone at the exact pinned tag, through to a completed rollout with real
+  aggregate metrics.
+- Fixed a second, unrelated bug hit immediately after the first: AlpaSim's
+  own current default scene camera config (`runtime.simulation_config.cameras`
+  in `base_config.yaml`) now ships 2 cameras, but every public AlpaBridge
+  preset declares only 1 (`camera_front_wide_120fov`) in its
+  `inference.use_cameras`, and AlpaSim's driver framework hard-rejects any
+  camera frame arriving outside a model's declared list
+  (`Camera camera_front_tele_30fov not in desired cameras`). Added
+  `_camera_group_for_preset()`, which derives a `+cameras=<n>cam` wizard
+  override from each preset's own declared camera count, so scene camera
+  config is always pinned to match the policy rather than left to
+  whatever AlpaSim currently defaults to.
 - Added `mpc_planner`, a fourth built-in policy backend and the first
   built-in that plans rather than uses closed-form kinematics: it
   forward-simulates a handful of candidate `(yaw_rate, acceleration)`

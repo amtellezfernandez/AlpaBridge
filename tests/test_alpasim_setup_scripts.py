@@ -26,6 +26,7 @@ from alpabridge.cli.commands.run_alpasim_local_external import (
     MODEL_PRESETS,
     PUBLIC_RELEASE_MODELS,
     _aggregate_status,
+    _camera_group_for_preset,
     _complete_run_status,
     _driver_command,
     _driver_env,
@@ -1165,6 +1166,73 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
             extra_args=["wizard.timeout=1200"],
         )
         self.assertEqual("wizard.timeout=1200", cmd[-1])
+
+    def test_wizard_command_adds_camera_group_override_with_plus_prefix(self) -> None:
+        # "cameras" isn't in base_config.yaml's own `defaults:` list (unlike
+        # deploy/driver/topology), so Hydra requires `+cameras=...` to add it,
+        # not `cameras=...` to override an existing entry - a plain `=`
+        # fails with "Could not override 'cameras'. No match in the defaults
+        # list."
+        cmd = _wizard_command(
+            alpasim_wizard=Path("/tmp/alpasim/.venv/bin/alpasim_wizard"),
+            wizard_driver="constant_velocity",
+            deploy_target="local_external_driver",
+            run_dir=Path("/tmp/run"),
+            scene_ids=["scene-1"],
+            baseport=6000,
+            port=6789,
+            timeout=600,
+            topology="1gpu",
+            dry_run=False,
+            camera_group="1cam",
+        )
+        self.assertIn("+cameras=1cam", cmd)
+
+    def test_wizard_command_omits_camera_override_when_not_given(self) -> None:
+        cmd = _wizard_command(
+            alpasim_wizard=Path("/tmp/alpasim/.venv/bin/alpasim_wizard"),
+            wizard_driver="constant_velocity",
+            deploy_target="local_external_driver",
+            run_dir=Path("/tmp/run"),
+            scene_ids=["scene-1"],
+            baseport=6000,
+            port=6789,
+            timeout=600,
+            topology="1gpu",
+            dry_run=False,
+        )
+        self.assertFalse(any("cameras=" in part for part in cmd))
+
+    def test_camera_group_for_preset_matches_declared_use_cameras_count(self) -> None:
+        # Regression test: AlpaSim's own default `runtime.simulation_config.cameras`
+        # (base_config.yaml) currently ships 2 cameras, and its driver framework
+        # hard-rejects any camera frame outside a model's declared `use_cameras`
+        # - so the scene's camera count must always be pinned to match the
+        # preset, not left to whatever AlpaSim currently defaults to.
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            config_file = Path(tmp_dir) / "two_camera_model.yaml"
+            config_file.write_text(
+                "inference:\n"
+                "  use_cameras:\n"
+                "    - camera_front_wide_120fov\n"
+                "    - camera_front_tele_30fov\n"
+            )
+            self.assertEqual("2cam", _camera_group_for_preset(config_file))
+
+    def test_camera_group_for_preset_defaults_to_1cam_when_use_cameras_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            config_file = Path(tmp_dir) / "no_cameras_declared.yaml"
+            config_file.write_text("model:\n  model_type: constant_velocity\n")
+            self.assertEqual("1cam", _camera_group_for_preset(config_file))
+
+    def test_all_public_model_presets_declare_exactly_one_camera(self) -> None:
+        # Every currently-shipped public preset declares exactly one camera
+        # (camera_front_wide_120fov). If a future preset needs more, this
+        # test should be the thing that catches it, since a mismatched
+        # cameras= override would only surface as a live-rollout failure.
+        for name, preset in MODEL_PRESETS.items():
+            with self.subTest(model=name):
+                self.assertEqual("1cam", _camera_group_for_preset(Path(preset["config_file"])))
 
     def test_wizard_deploy_target_uses_arm_profile_on_arm_hosts(self) -> None:
         with patch.dict(os.environ, {}, clear=False):

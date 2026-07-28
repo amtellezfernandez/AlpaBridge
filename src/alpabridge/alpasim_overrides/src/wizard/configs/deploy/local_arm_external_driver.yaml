@@ -1,19 +1,27 @@
 # @package _global_
 # Deploy target: ARM64 workstation with external driver process.
 # Starts from the standard local external-driver stack, then applies the ARM-specific
-# sensorsim/runtime overrides without depending on the incomplete upstream local_arm profile.
+# renderer/runtime overrides without depending on the incomplete upstream local_arm profile.
+#
+# Renames/entrypoint fixed to match the current wizard schema (base_config.yaml's
+# `services.renderer` key and `defines.renderer_entrypoint` variable) - this file
+# previously referenced a `services.sensorsim` key and a `${defines.sensorsim_entrypoint}`
+# variable that do not exist anywhere in the schema, so the renderer overrides below
+# (Blackwell arch list, extra serve-grpc flags) were silently never applied.
 
 defaults:
   - local_external_driver
   - _self_
 
 services:
-  sensorsim:
+  renderer:
     environments:
       - OMP_NUM_THREADS=1
+      # Blackwell GPUs (compute 10.3) not recognized by PyTorch in NRE image.
+      # Force 9.0+PTX for forward compatibility so slangtorch JIT doesn't crash.
       - TORCH_CUDA_ARCH_LIST=9.0+PTX
     command:
-      - "${defines.sensorsim_entrypoint}"
+      - "${defines.renderer_entrypoint}"
       - "serve-grpc"
       - "--port={port}"
       - "--host=0.0.0.0"
