@@ -4,6 +4,19 @@ All notable adapter-release changes are tracked here.
 
 ## Unreleased - 2026-07-28
 
+- Fixed `constant_velocity`/`route_following` forward-simulating standing
+  still for the first ~1s of every real rollout: `baseline_drivers.py` read
+  `prediction_input.speed` raw instead of going through the existing
+  `corrected_speed_mps()` pose-derived fallback that `direct_actor_planner`/
+  `token_dagger_bc`/`mpc_planner` already use. Confirmed this is a real,
+  currently-occurring gap (not just a theoretical one) directly against live
+  telemetry from this session's own rollouts: AlpaSim's `DynamicState`
+  reported `speed_mps=0.0` for the first several frames of a session while
+  `ego_pose_history` showed ~10.84 m/s of genuine motion (~8-10% of all
+  frames in each run, concentrated at rollout start, matching the
+  lagging/stale-`DynamicState` mechanism `corrected_speed_mps()`'s docstring
+  already describes).
+
 - Fixed a real rollout never terminating on its own: our tracked
   `docker_compose.py` override had fallen out of sync with AlpaSim's own
   current `deploy_all_services` (confirmed by diffing against the real

@@ -198,6 +198,32 @@ class AlpaSimIntegrationTests(unittest.TestCase):
         self.assertEqual(12345, log_row["runtime_random_seed"])
         self.assertEqual("clipgt-baseline", log_row["debug_scene_id"])
 
+    def test_constant_velocity_uses_pose_derived_speed_when_dynamic_state_reports_zero(
+        self,
+    ) -> None:
+        # Regression test: reproduces a real incident found in a live rollout,
+        # not just a synthetic case - AlpaSim's own DynamicState reported
+        # speed_mps=0.0 for the first several frames of a real session while
+        # ego_pose_history showed ~10.8 m/s of genuine motion. baseline_drivers.py
+        # used to read prediction_input.speed raw, so constant_velocity/
+        # route_following would have forward-simulated standing still during
+        # exactly that window.
+        model = ConstantVelocityAlpaSimModel(camera_ids=["front"], context_length=1, output_frequency_hz=4)
+        prediction_input = _baseline_prediction_input(
+            speed=0.0,
+            route_waypoints=[],
+        )
+        prediction_input.ego_pose_history = [
+            SimpleNamespace(timestamp_us=0, x=0.0, y=0.0),
+            SimpleNamespace(timestamp_us=100_000, x=1.084, y=0.0),
+        ]
+        prediction_input.camera_images["front"][0].timestamp_us = 100_000
+
+        output = model.predict(prediction_input)
+
+        # ~10.84 m/s, not 0 - the trajectory should show real forward motion.
+        self.assertGreater(float(output.trajectory_xy[-1, 0]), 5.0)
+
     def test_baseline_models_implement_alpasim_command_encoder(self) -> None:
         model = ConstantVelocityAlpaSimModel(camera_ids=["front"], context_length=1, output_frequency_hz=4)
 

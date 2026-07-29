@@ -16,6 +16,7 @@ from .alpasim_contract import (
     ModelPrediction,
     PredictionInput,
     SensorFreshnessGuard,
+    corrected_speed_mps,
     prediction_runtime_metadata,
     prediction_scene_id,
     resample_trajectory,
@@ -317,8 +318,16 @@ def _straight_trajectory(
 
 
 def _input_speed_mps(prediction_input: PredictionInput) -> float:
+    # Uses corrected_speed_mps rather than prediction_input.speed directly:
+    # AlpaSim's own EgoDriverService._get_speed_and_acceleration can report a
+    # stale/lagging DynamicState as a dead stop for the first ~1s of a real
+    # rollout even while ego_pose_history shows genuine motion (confirmed
+    # directly against real telemetry: ~10 m/s of real pose displacement
+    # reading as speed_mps=0.0 for the first several frames of a session).
+    # Without this, constant_velocity/route_following would forward-simulate
+    # standing still during exactly that window.
     try:
-        speed = float(getattr(prediction_input, "speed", 0.0) or 0.0)
+        speed = corrected_speed_mps(prediction_input)
     except (TypeError, ValueError):
         return 0.0
     return speed if math.isfinite(speed) and speed > 0.0 else 0.0
