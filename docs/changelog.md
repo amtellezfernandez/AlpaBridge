@@ -4,6 +4,20 @@ All notable adapter-release changes are tracked here.
 
 ## Unreleased - 2026-07-28
 
+- Fixed a real rollout never terminating on its own: our tracked
+  `docker_compose.py` override had fallen out of sync with AlpaSim's own
+  current `deploy_all_services` (confirmed by diffing against the real
+  upstream file at the pinned tag) and was missing
+  `--exit-code-from runtime-0`/`--remove-orphans` and the `wizard.dry_run`
+  early-return. Without `--exit-code-from`, `docker compose up` only
+  returns once every service exits on its own - but physics/renderer/
+  controller are long-running servers, not one-shot jobs, so a completed
+  rollout's containers (and the wizard process waiting on them) just sat
+  there indefinitely after the `runtime` container that actually drives
+  the rollout finished. Verified by rerunning the same `constant_velocity`
+  rollout end to end: it now completes, tears down its containers, and
+  the audit/support-bundle steps run automatically, with no manual
+  intervention needed.
 - Fixed real closed-loop rollouts being completely broken on x86_64 (the
   primary supported platform) against the currently-pinned AlpaSim release:
   `alpabridge-launch`/`alpabridge-reproduce --execute` hardcode

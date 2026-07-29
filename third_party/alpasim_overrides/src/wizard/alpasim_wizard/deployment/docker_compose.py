@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import logging
 import os
+import shlex
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -60,7 +61,7 @@ class DockerComposeDeployment:
 
         Note: This does not actually start the services. This can be done using
         ```bash
-        docker compose up
+        docker compose up --exit-code-from runtime-0
         ```
         """
         self.docker_compose_filepath = self.generate_docker_compose_yaml(
@@ -75,11 +76,25 @@ class DockerComposeDeployment:
         """Run docker compose up to deploy all services."""
         log_dir = self.context.cfg.wizard.log_dir
         compose_file = Path(log_dir) / self.docker_compose_filepath
-        logger.info("Running docker compose: %s", compose_file)
+        command = ["docker", "compose", "-f", str(compose_file), "up"]
+        # Without --exit-code-from, `up` only returns once every service has
+        # exited on its own - but physics/renderer/controller are long-running
+        # servers, not one-shot jobs, so they never do, and the whole stack
+        # (and this process) sits there indefinitely after the runtime
+        # container that actually drives the rollout finishes. Matches
+        # upstream's own current deploy_all_services, which this override had
+        # fallen out of sync with.
+        if self.container_set.runtime:
+            command.extend(["--remove-orphans", "--exit-code-from", "runtime-0"])
 
+        if self.context.cfg.wizard.dry_run:
+            logger.info("[DRY-RUN] Would execute: %s", shlex.join(command))
+            return
+
+        logger.info("Running docker compose: %s", compose_file)
         try:
             subprocess.run(
-                ["docker", "compose", "-f", str(compose_file), "up"],
+                command,
                 check=True,
                 cwd=log_dir,
             )
