@@ -29,6 +29,17 @@ Recorded here because it lived only as an uncommitted working-tree change on the
 (`~/arm64_verify_final`, now committed on its `feat/arm64-docker-sync` branch as
 `85d66e0`, unpushed) and would have been lost with that checkout.
 
+**Operational note on that checkout: it cannot be brought up to date by rebase or
+merge.** `~/arm64_verify_final` was `git init`'d over an extracted snapshot rather than
+cloned, so it shares no ancestry with `NVlabs/alpasim`. Measured 2026-08-12: 2 commits
+"ahead", 66 "behind", and a trial `git rebase upstream/main` produced `AA`
+(added-by-both) conflicts on essentially every tracked file — `.gitattributes`,
+`Dockerfile`, `CHANGELOG.md`, `data/scenes/sim_suites.csv`, and so on — because git
+sees two unrelated histories, not a diverged one. Bringing the GB10 to `1e801ca` is
+therefore a **fresh clone plus re-applying these two commits as patches**, which is the
+same re-authoring this proposal already needs. Do not attempt the merge path; it will
+look like a catastrophic conflict rather than the two-file change it actually is.
+
 **Related:** the [`docker_local` extras proposal](./docker-local-extras.md) documents exactly which packages are safe to install on ARM64 and why - this PR is the Docker-side half of the same fix; they're meant to land together (or at least reference each other), though each applies independently.
 
 ## Why
