@@ -39,6 +39,22 @@ All notable adapter-release changes are tracked here.
   `test_packaged_and_tracked_alpasim_overrides_stay_in_sync` derives its file
   list from the two override roots instead of a hand-maintained tuple that had
   omitted `models/__init__.py` — the one file that then drifted.
+- Added `deploy=local_external_driver_video_model`: the first deployment shape that can run
+  on ARM64. Both the policy *and* the renderer are external services, so the wizard manages
+  only `[physics, trafficsim, controller, runtime]` -- all of which build and run natively on
+  aarch64 (verified on GB10). It selects AlpaSim's `runtime.renderer.kind=video_model`
+  (OmniDreams/FlashDreams), which is built from source rather than pulled as the amd64-only
+  NuRec image, and that is the whole reason an ARM target is possible.
+  Two launcher changes fall out of the config, and both are the kind of thing that would
+  only have surfaced *after* an ARM64 image build:
+  - `+cameras=<n>cam` is no longer injected on this deploy. AlpaSim's video-model renderer
+    derives the camera rig and calibration from the recorded USDZ seed frames, and its docs
+    state plainly that a separate override must not be added -- it desynchronises the HD-map
+    conditioning render from the visual seed frame and the generated video drifts. Enforced
+    inside `_wizard_command` rather than at the call site, so no future caller has to
+    remember it. Every other deploy still pins the rig.
+  - The ARM64 preflight no longer blocks this target. That block exists because the
+    NuRec/sensorsim image is amd64-only; this deploy has no sensorsim container at all.
 - **Fixed the actual interface break with AlpaSim `1e801ca`: every policy returned a
   removed API.** Upstream replaced `ModelPrediction`'s `trajectory_xy`/`headings` with
   6-DoF candidates -- `candidate_positions` (K, T, 3) and `candidate_rotations`
