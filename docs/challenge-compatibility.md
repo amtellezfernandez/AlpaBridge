@@ -224,3 +224,39 @@ a build blocker.
 `flashdreams:local`. Follow AlpaSim's instructions verbatim and the second build looks for an
 image that does not exist. Either tag the base `flashdreams:local`, or pass
 `--build-arg FLASHDREAMS_BASE_IMAGE=flashdreams-base:local`.
+
+### End-to-end ARM64 status: everything technical works; the gate is model access
+
+Attempted on GB10 (2026-08-13). The OmniDreams gRPC server starts from the ARM64 image and
+gets all the way to fetching weights — torch, CUDA and the `omnidreams` package all load on
+aarch64, with no architecture error anywhere in the traceback. It then stops here:
+
+```
+httpx.HTTPStatusError: Client error '403 Forbidden' for url
+'https://huggingface.co/nvidia/omni-dreams-models/resolve/main/single_view/2b_res720p_30fps_i2v_hdmap_distilled.pt'
+```
+
+`nvidia/omni-dreams-models` is `gated: auto`. Measured from the GB10: the artifact returns
+**403 with** the host's HF token and **401 without** it, while the repo's metadata API returns
+200 either way. So the token is valid and being sent — the account simply has not been
+granted the gate. That is a licence acceptance on huggingface.co for the account whose token
+is in `~/.cache/huggingface/token`, and nothing in this repo can substitute for it.
+
+Everything up to that point is verified working on aarch64:
+
+| step | state |
+| --- | --- |
+| `flashdreams-base:local` (9.15GB) | built |
+| `flashdreams-alpasim:local` (15GB) | built; `torch 2.12.1+cu130`, CUDA true on GB10 |
+| AlpaSim host venv incl. `alpasim_driver`/`vam`/`lightning` | installs on aarch64 |
+| `alpabridge-doctor` `platform_compatibility` | `ok` for the video-model deploy, `failed` for NuRec |
+| OmniDreams server import + CUDA init | reaches weight download |
+| model weights | **blocked: HF gate not granted** |
+
+**A gap the attempt exposed in this deploy config**, now documented in the config itself: it
+is incomplete without a chunking preset (`--wizard-arg '+chunking=8frame'`). The video model
+generates in blocks, and the preset keeps `chunk_frames`/`first_chunk_frames` aligned with
+`control_timestep_us` and `force_gt_duration_us`. Those are a matched set — `first_chunk_frames`
+is constrained by the server's VAE temporal compression ratio of 4 — and the right values
+depend on the `--num_frames_per_block` the server was started with, so they are deliberately
+not inlined.

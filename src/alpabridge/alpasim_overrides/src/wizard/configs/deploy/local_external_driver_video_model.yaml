@@ -69,3 +69,17 @@ runtime:
   simulation_config:
     planner_delay_us: 0
     assert_zero_decision_delay: true
+
+# NOTE: this deploy is incomplete on its own -- it must be combined with a chunking preset:
+#
+#   alpabridge-launch ... --wizard-arg '+chunking=8frame'
+#
+# The video model generates in blocks, and the preset is what keeps
+# `runtime.renderer.video_model_config.{chunk_frames,first_chunk_frames}` aligned with
+# `runtime.simulation_config.control_timestep_us` (chunk_frames * 33_333 at 30 FPS) and
+# `force_gt_duration_us`. Those values are a matched set: `first_chunk_frames` is
+# constrained by the server's VAE temporal compression ratio of 4, so they cannot be picked
+# independently. They are deliberately NOT inlined here -- the correct values depend on the
+# `--num_frames_per_block` the OmniDreams server was started with, so pinning one here would
+# silently desynchronise any run against a differently-configured server. Upstream ships
+# 8frame / 12frame / 16frame presets; match the preset to the server.
