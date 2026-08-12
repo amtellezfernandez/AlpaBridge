@@ -29,7 +29,14 @@ not as an implicit runtime dependency on some separate legacy package.
   Each is self-labeling: its `Subject:` line and commit body are the
   description, so there's no separate, driftable prose summary of what it
   changes to keep in sync - read the patch file itself (`head -20 <patch>`).
-- `Dockerfile.amd64` — runtime image customization for supported hosts
+- (`Dockerfile.amd64` was removed 2026-08-12. It was a stale single-stage fork of a
+  pre-multi-arch upstream `Dockerfile`, referenced by no code path, and its own header told
+  you to build it as `alpasim-base:0.66.0` — the exact tag AlpaBridge pins. An image built
+  that way has none of `dcgm-exporter`, `datacenter-gpu-manager`, `prometheus`,
+  `TARGETARCH` or the `recipes` extra, and upstream's compose now *always* adds a
+  prometheus service from that image, so it could not run a rollout. Upstream's own
+  `Dockerfile` selects the base by `TARGETARCH`, which makes a separate amd64 file
+  obsolete.)
 - `src/wizard/**` — tracked wizard/deployment overrides
 - `src/driver/**` — tracked external-driver override files
 - everything else (`*.md` + `.patch` pairs, e.g. `arm64-docker-build.md`) —

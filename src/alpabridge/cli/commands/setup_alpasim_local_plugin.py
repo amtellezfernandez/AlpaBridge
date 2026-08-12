@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import shutil
@@ -200,6 +201,41 @@ def _require_uv() -> str:
     )
 
 
+# Override copies AlpaBridge used to ship and no longer does. Setup only ever *copies*, so
+# without this a retired override lives on forever in every checkout that was ever set up --
+# which for a build recipe or a config means the checkout keeps obeying a file AlpaBridge has
+# since disowned. Keyed by the sha256 of the exact content AlpaBridge last shipped: a file
+# whose contents differ is someone else's and is left alone, so this can never delete a
+# user's own work.
+RETIRED_OVERRIDE_COPIES: dict[str, str] = {
+    # Stale single-stage fork of a pre-multi-arch upstream Dockerfile. Referenced by no code
+    # path, and its header said to build it as `alpasim-base:0.66.0` -- the tag AlpaBridge
+    # pins -- producing an image with no dcgm-exporter/prometheus, which upstream's compose
+    # now always needs. Upstream's Dockerfile selects its base by TARGETARCH.
+    "Dockerfile.amd64": "088de1456fb80df5c88f22bb710df29a66992b1ce157033aea6b4ef61d6e0714",
+}
+
+
+def _remove_retired_alpasim_overrides(alpasim_root: Path) -> list[str]:
+    """Delete override copies AlpaBridge has retired, but only where the file is still
+    byte-identical to the version AlpaBridge shipped."""
+    removed: list[str] = []
+    for relative, digest in RETIRED_OVERRIDE_COPIES.items():
+        target = alpasim_root / relative
+        if not target.is_file():
+            continue
+        actual = hashlib.sha256(target.read_bytes()).hexdigest()
+        if actual != digest:
+            print(
+                f"Retired AlpaSim override {relative} was modified locally; leaving it in "
+                "place. Delete it by hand if it is not yours."
+            )
+            continue
+        target.unlink()
+        removed.append(relative)
+    return removed
+
+
 def _apply_local_alpasim_overrides(alpasim_root: Path) -> None:
     if not ALPASIM_OVERRIDE_ROOT.is_dir():
         raise SystemExit(
@@ -222,6 +258,12 @@ def _apply_local_alpasim_overrides(alpasim_root: Path) -> None:
     if copied:
         print("Applied repo-tracked AlpaSim overrides:")
         for relative in copied:
+            print(f"  {relative}")
+
+    removed = _remove_retired_alpasim_overrides(alpasim_root)
+    if removed:
+        print("Removed retired AlpaSim overrides:")
+        for relative in removed:
             print(f"  {relative}")
 
 
