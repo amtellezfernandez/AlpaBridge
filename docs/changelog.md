@@ -39,6 +39,16 @@ All notable adapter-release changes are tracked here.
   `test_packaged_and_tracked_alpasim_overrides_stay_in_sync` derives its file
   list from the two override roots instead of a hand-maintained tuple that had
   omitted `models/__init__.py` — the one file that then drifted.
+- Fixed `alpabridge-setup` writing a stray `__init__.py` into the root of the user's
+  AlpaSim checkout. `alpasim_overrides/__init__.py` is what makes the override payload an
+  importable package inside AlpaBridge, but the copy step treated it as payload, so every
+  setup dropped a file at the AlpaSim repo root -- untracked noise in that checkout, and
+  enough to make Python treat the repo root as a package. Only the root-level marker is
+  excluded; `src/driver/**/models/__init__.py` is a genuine override and still copies.
+  Found by installing the built wheel into a clean venv and running
+  `_apply_local_alpasim_overrides` against a pristine AlpaSim checkout, which is now the
+  standing way to check this path: after the fix that checkout shows only the intended
+  six modified files and three added ones.
 - Assessed the two migrations the AlpaSim release calls for and confirmed both are
   no-ops for AlpaBridge, rather than assuming either way:
   - *"Alpamayo runs now reject camera images smaller than 320x576"* applies to the
