@@ -18,6 +18,7 @@ from alpabridge.cli.commands.check_alpasim_readiness import (
     _scene_catalog_paths,
     _scene_ids,
     _validate_alpasim_checkout,
+    _wizard_deploy_target,
 )
 from alpabridge.cli.commands.run_alpasim_local_external import (
     MODEL_PRESETS,
@@ -232,7 +233,12 @@ def _build_environment_report(
         status, error = _run_check(_preflight_alpasim_local_environment, alpasim_root)
         record("local_alpasim_env", status, error)
 
-    status, error = _run_check(_preflight_platform_compatibility)
+    # Resolve the deploy target the way the launcher does, so readiness reflects the
+    # launch that would actually happen. Without this the doctor reports the ARM64
+    # renderer blocker even for the video-model deploy, which does not have it.
+    status, error = _run_check(
+        _preflight_platform_compatibility, deploy_target=_wizard_deploy_target()
+    )
     record("platform_compatibility", status, error)
 
     if skip_docker:
