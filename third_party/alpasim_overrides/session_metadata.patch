@@ -1,0 +1,74 @@
+From c5f3705ee27c1952113694419ff601171ffb9468 Mon Sep 17 00:00:00 2001
+From: AlpaBridge maintainers <alpabridge@users.noreply.github.com>
+Date: Wed, 12 Aug 2026 12:05:00 +0200
+Subject: [PATCH] driver: expose session identity to PredictionInput
+
+Replaces route_waypoints.patch, whose larger half upstream has since
+implemented itself. As of alpasim main @ 1e801ca (August 2026 public sync),
+PredictionInput natively carries:
+
+- `route` (the latest submitted Route, waypoints in the rig frame), backed by
+  a new `Session.route` field -- what this override previously added as
+  `PredictionInput.route_waypoints` / `Session.current_route` /
+  `Session.route_waypoints_for_prediction()`.
+- `inference_seed` (session seed plus the zero-based inference count) -- a
+  strictly better version of what this override added as
+  `runtime_random_seed`.
+
+AlpaBridge needs no code change to consume either: route_waypoints_from_input
+already probes `route` among its candidate attribute names and unwraps
+`.waypoints`, and prediction_runtime_metadata's seed candidates now include
+`inference_seed`.
+
+What upstream still does not forward, and this patch therefore keeps, is
+session identity. Session has `uuid` and `debug_scene_id` as required fields,
+but neither reaches the model:
+
+- `session_uuid` is load-bearing, not just telemetry: AlpaSimContractValidator
+  uses it to detect a session transition and reset per-session state. Without
+  it the frozen-camera check carries state across a session boundary, which is
+  precisely the check AlpaBridge exists to make trustworthy.
+- `debug_scene_id` is what the audit trail correlates rollout records by.
+
+Both fields are optional with defaults, so upstream's own PredictionInput
+construction sites are unaffected -- unlike the fields upstream added, which
+are required positionally.
+---
+ src/driver/src/alpasim_driver/main.py        | 2 ++
+ src/driver/src/alpasim_driver/models/base.py | 7 +++++++
+ 2 files changed, 9 insertions(+)
+
+diff --git a/src/driver/src/alpasim_driver/main.py b/src/driver/src/alpasim_driver/main.py
+index eb08eac..3bf9e92 100644
+--- a/src/driver/src/alpasim_driver/main.py
++++ b/src/driver/src/alpasim_driver/main.py
+@@ -724,6 +724,8 @@ class EgoDriverService(EgodriverServiceServicer):
+                     inference_seed=inference_seed,
+                     previous_plan=job.session.last_selected_plan,
+                     route=job.session.route,
++                    session_uuid=job.session.uuid,
++                    debug_scene_id=job.session.debug_scene_id,
+                 )
+             )
+ 
+diff --git a/src/driver/src/alpasim_driver/models/base.py b/src/driver/src/alpasim_driver/models/base.py
+index a39a852..f25c6b5 100644
+--- a/src/driver/src/alpasim_driver/models/base.py
++++ b/src/driver/src/alpasim_driver/models/base.py
+@@ -64,6 +64,13 @@ class PredictionInput:
+     # at the route's own timestamp.  None until the first route arrives, and
+     # for scenarios that run without a route.
+     route: Any | None  # Route
++    # AlpaBridge additions. Optional with defaults so upstream's own construction
++    # sites need no change: session identity is what the AlpaBridge contract
++    # validator uses to detect session transitions (and therefore to keep its
++    # frozen-camera check from carrying state across a boundary), and what the
++    # audit trail correlates rollout records by.
++    session_uuid: str | None = None
++    debug_scene_id: str | None = None
+ 
+ 
+ @dataclass
+-- 
+2.43.0
+

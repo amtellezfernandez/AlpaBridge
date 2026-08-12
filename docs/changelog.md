@@ -2,6 +2,47 @@
 
 All notable adapter-release changes are tracked here.
 
+## Unreleased - 2026-08-12
+
+- Re-baselined the AlpaSim overrides onto `NVlabs/alpasim` `main` @ `1e801ca`
+  (the August 2026 public sync). Before this, AlpaBridge did not work against
+  current AlpaSim at all: both applied patches failed to apply, and the driver
+  model-registry override silently removed a driver upstream had just added.
+  - `local_checkout.patch` re-authored. `EgoDriverService` moved from async
+    `grpc.aio.ServicerContext` to sync `grpc.ServicerContext`, gained
+    `@log_call` and a `_sessions_lock`, and renamed
+    `session.desired_cameras_logical_ids` to `session.frame_caches`; upstream
+    also dropped `close_session`'s own existence check, so its bare `del` now
+    raises `KeyError` where it used to raise a descriptive one. The same five
+    session RPCs are guarded as before, now inside `_sessions_lock` where
+    upstream locks that dict, with `drive` returning upstream's own established
+    no-op value (an empty `Trajectory`). The Dockerfile/pyproject hunks follow
+    `--extra all` becoming `--extra all --extra recipes` and `all` gaining
+    `alpasim-trafficsim`.
+  - `route_waypoints.patch` retired and replaced by `session_metadata.patch`.
+    Upstream implemented the route half itself: `PredictionInput` now carries
+    `route` and `inference_seed`, backed by a new `Session.route`. No AlpaBridge
+    consumer changed — `route_waypoints_from_input` already probed `route` and
+    unwrapped `.waypoints`. The remaining patch adds only `session_uuid` and
+    `debug_scene_id`, which upstream still does not forward and which
+    `AlpaSimContractValidator` needs to reset per-session state at a session
+    boundary (without it the frozen-camera check carries state across one).
+  - Added `Alpamayo2Model` to the driver model-registry override. Upstream's
+    August sync added the Alpamayo 2 driver to `models/__init__.py`, but that
+    file is one AlpaBridge ships a full copy of, and the copy step always runs
+    last and wins — so `alpabridge-setup` was un-registering a driver that
+    upstream had just shipped.
+  - `prediction_runtime_metadata` now reads upstream's `inference_seed` for
+    seed telemetry, ahead of the older `runtime_random_seed` name it used to
+    inject itself.
+- Closed the drift gap that hid the registry breakage:
+  `test_packaged_and_tracked_alpasim_overrides_stay_in_sync` derives its file
+  list from the two override roots instead of a hand-maintained tuple that had
+  omitted `models/__init__.py` — the one file that then drifted.
+- Flagged in `third_party/alpasim_overrides/README.md` that the seven upstream
+  proposals are still verified only against `3032e0c`, which predates this
+  release, and must be re-verified before any is opened.
+
 ## Unreleased - 2026-07-28
 
 - Fixed `constant_velocity`/`route_following` forward-simulating standing

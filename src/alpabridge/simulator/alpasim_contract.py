@@ -186,7 +186,14 @@ def prediction_runtime_metadata(prediction_input: Any) -> dict[str, Any]:
     metadata: dict[str, Any] = {}
     for output_key, candidate_names in (
         ("session_uuid", ("session_uuid", "session_id")),
-        ("runtime_random_seed", ("runtime_random_seed", "random_seed", "seed")),
+        # `inference_seed` is AlpaSim's own field as of main @ 1e801ca (session seed
+        # plus the zero-based inference count). It is listed first because it is the
+        # only one of these upstream actually populates; the rest are kept for
+        # checkouts predating it and for non-AlpaSim callers.
+        (
+            "runtime_random_seed",
+            ("inference_seed", "runtime_random_seed", "random_seed", "seed"),
+        ),
         ("debug_scene_id", ("debug_scene_id",)),
     ):
         value = _first_present_attr(prediction_input, candidate_names)
