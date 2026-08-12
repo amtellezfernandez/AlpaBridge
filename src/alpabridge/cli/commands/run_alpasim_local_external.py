@@ -238,7 +238,8 @@ def main() -> None:
     scene_ids = _scene_ids(args.scene_preset, args.scene_id)
     scene_catalog_paths = _scene_catalog_paths(args.scene_preset, alpasim_root)
     local_usdz_dir = _local_usdz_dir_from_wizard_args(args.wizard_arg, base_dir=alpasim_root)
-    _preflight_platform_compatibility()
+    deploy_target = _wizard_deploy_target()
+    _preflight_platform_compatibility(deploy_target=deploy_target)
     if args.mode != "print":
         _preflight_docker_access()
         _preflight_alpasim_base_image()
@@ -292,7 +293,7 @@ def main() -> None:
     wizard_cmd = _wizard_command(
         alpasim_wizard=alpasim_wizard,
         wizard_driver=Path(model_preset["config_file"]).stem,
-        deploy_target=_wizard_deploy_target(),
+        deploy_target=deploy_target,
         run_dir=run_dir,
         scene_ids=scene_ids,
         baseport=args.baseport,
@@ -903,9 +904,14 @@ def _preflight_nvidia_container_runtime() -> None:
     )
 
 
-def _preflight_platform_compatibility() -> None:
+def _preflight_platform_compatibility(deploy_target: str | None = None) -> None:
     machine = platform.machine().lower()
     if machine not in {"aarch64", "arm64"}:
+        return
+    if deploy_target is not None and _uses_video_model_renderer(deploy_target):
+        # This deploy has no NuRec/sensorsim container at all: the renderer is external
+        # and video-model based, and every service the wizard does manage here builds
+        # natively on aarch64. The amd64-only renderer image is not in the picture.
         return
     if os.getenv("ALPABRIDGE_ALLOW_UNSUPPORTED_ALPASIM_ARM", "").strip() == "1":
         return
@@ -1079,7 +1085,13 @@ def _wizard_command(
         f"wizard.dry_run={'true' if dry_run else 'false'}",
         f"scenes.scene_ids={json.dumps(scene_ids)}",
     ]
-    if camera_group:
+    # AlpaSim's video-model renderer takes its camera rig and calibration from the recorded
+    # USDZ seed frames, and its docs are explicit that a separate `+cameras=<...>` override
+    # must not be injected: it desynchronises the HD-map conditioning render from the
+    # visual seed frame and the generated video drifts. The driver preset's own view count
+    # is what has to match instead. Enforced here rather than at the call site so no
+    # future caller has to remember it.
+    if camera_group and not _uses_video_model_renderer(deploy_target):
         # "cameras" isn't in base_config.yaml's own `defaults:` list (unlike
         # deploy/driver/topology, which are declared there as overridable
         # placeholders), so Hydra requires `+` to add it rather than `=` to
@@ -1107,6 +1119,17 @@ def _camera_group_for_preset(config_file: Path) -> str:
     payload = yaml.safe_load(config_file.read_text())
     use_cameras = (payload.get("inference") or {}).get("use_cameras") or []
     return f"{max(1, len(use_cameras))}cam"
+
+
+# Deploy target whose renderer is AlpaSim's video_model (OmniDreams/FlashDreams) running as
+# an external service, rather than a wizard-managed NuRec/sensorsim container. It is the only
+# shape that can run on aarch64, and it takes its camera rig from the recorded USDZ seed
+# frames -- both of which the launcher has to know about.
+VIDEO_MODEL_DEPLOY_TARGET = "local_external_driver_video_model"
+
+
+def _uses_video_model_renderer(deploy_target: str) -> bool:
+    return deploy_target == VIDEO_MODEL_DEPLOY_TARGET
 
 
 def _wizard_deploy_target() -> str:

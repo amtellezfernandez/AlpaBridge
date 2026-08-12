@@ -1,0 +1,71 @@
+# @package _global_
+# Deploy target: local workstation, with BOTH the driving policy and the renderer running as
+# external processes the wizard connects to rather than containers it manages.
+#
+#   ALPABRIDGE_ALPASIM_DEPLOY_TARGET=local_external_driver_video_model \
+#   alpabridge-launch --mode both --model constant_velocity ... \
+#     --wizard-arg 'wizard.external_services.renderer=[localhost:9001]'
+#
+# Why this exists: it is the only deployment shape that can run on ARM64 (NVIDIA GB10).
+# AlpaSim's default NuRec/sensorsim renderer is distributed as a prebuilt image with a
+# single-arch amd64 manifest, so on aarch64 there is nothing to run natively and nothing to
+# rebuild; under emulation it stalls before opening its gRPC port. Every other service in
+# the stack -- runtime, controller, physics, trafficsim -- does build and run natively on
+# aarch64, verified inside a real ARM64 image on GB10.
+#
+# AlpaSim's second renderer (`runtime.renderer.kind: video_model`, OmniDreams served via
+# FlashDreams) is built from source rather than pulled prebuilt, which is what makes an
+# aarch64 target possible at all. Running it as an *external* service additionally means the
+# wizard never has to have an image for it, so the renderer can live on a different host or
+# in a separately built container without this config caring which.
+#
+# Composed from upstream's `deploy/external_video_model.yaml` (renderer side) and
+# AlpaBridge's `deploy/local_external_driver.yaml` (driver side). Both services are removed
+# from `run_sim_services` because `setup_omegaconf.validate_config` treats a service as
+# mutually exclusive between "wizard runs it" and "it is external".
+
+defaults:
+  - local
+  - _self_
+
+wizard:
+  debug_flags:
+    use_localhost: true
+
+  # Neither "driver" nor "renderer": both are external. Compare
+  # local_external_driver.yaml, which drops only "driver".
+  run_sim_services: ["physics", "trafficsim", "controller", "runtime"]
+
+  external_services:
+    # `driver: []` is a placeholder AlpaBridge's CLI overwrites with a plain `=` override
+    # (`wizard.external_services.driver=[localhost:{port}]`); Hydra rejects a plain `=`
+    # against a key that does not exist yet, and OmegaConf cannot merge a dotted sub-key
+    # into a None container, so the key has to exist at compose time.
+    driver: []
+    # The renderer address has no sensible default -- it is wherever you started the
+    # FlashDreams/OmniDreams server. Supply it at launch, e.g.
+    #   --wizard-arg 'wizard.external_services.renderer=[localhost:9001]'
+    renderer: ???
+
+runtime:
+  endpoints:
+    trafficsim:
+      skip: true
+    renderer:
+      n_concurrent_rollouts: 1
+      skip: false
+    startup_timeout_s: 600
+
+  renderer:
+    kind: video_model
+    video_model_config:
+      fps: 30
+      # Scene-appearance conditioning. Deliberately generic: this deploy is used for
+      # adapter/integration runs across whatever scene is selected, not for one location.
+      # Override per run when the scene warrants it.
+      text_prompt_positive: "Wide-angle urban street scene from a low, dashboard-level viewpoint. A straight two-lane road with a faded center line and curbside parking on both sides. Parked sedans and SUVs in neutral colors line the curbs. Mature green trees punctuate both sides. Clear blue sky with sparse soft clouds. Bright midday sunlight, natural colors, realistic materials, crisp shadows, clean asphalt texture."
+      text_prompt_negative: ""
+
+  simulation_config:
+    planner_delay_us: 0
+    assert_zero_decision_delay: true

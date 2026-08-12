@@ -1351,6 +1351,65 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
             with patch("platform.machine", return_value="x86_64"):
                 self.assertEqual("custom_profile", _wizard_deploy_target())
 
+    def test_video_model_deploy_does_not_inject_a_cameras_override(self) -> None:
+        """AlpaSim's video-model renderer takes its camera rig and calibration from the
+        recorded USDZ seed frames, and its docs are explicit that a separate `+cameras=`
+        override must not be injected: it desynchronises the HD-map conditioning render
+        from the visual seed frame and the generated video drifts. Every other deploy
+        target still pins the rig, because AlpaSim's driver framework rejects camera frames
+        outside a model's declared use_cameras."""
+        common = dict(
+            alpasim_wizard=Path("/tmp/alpasim/.venv/bin/alpasim_wizard"),
+            wizard_driver="constant_velocity",
+            run_dir=Path("/tmp/run"),
+            scene_ids=["scene-a"],
+            baseport=6000,
+            port=6789,
+            timeout=900,
+            topology="1gpu",
+            dry_run=False,
+            camera_group="1cam",
+        )
+        video = _wizard_command(deploy_target=launch_cmd.VIDEO_MODEL_DEPLOY_TARGET, **common)
+        nurec = _wizard_command(deploy_target="local_external_driver", **common)
+
+        self.assertFalse([a for a in video if a.startswith("+cameras=")])
+        self.assertIn("+cameras=1cam", nurec)
+
+    def test_platform_preflight_allows_arm_for_the_video_model_deploy(self) -> None:
+        """The ARM64 block exists because the NuRec/sensorsim renderer ships a single-arch
+        amd64 image. The video-model deploy has no sensorsim container at all -- the
+        renderer is external -- and every service the wizard manages there builds natively
+        on aarch64, so the block must not fire for it."""
+        with patch("platform.machine", return_value="aarch64"):
+            _preflight_platform_compatibility(
+                deploy_target=launch_cmd.VIDEO_MODEL_DEPLOY_TARGET
+            )
+            with self.assertRaises(SystemExit):
+                _preflight_platform_compatibility(deploy_target="local_external_driver")
+
+    def test_video_model_deploy_config_is_shipped_and_declares_both_externals(self) -> None:
+        """The config has to remove BOTH driver and renderer from run_sim_services --
+        validate_config treats a service as mutually exclusive between wizard-managed and
+        external -- and seed `driver` so AlpaBridge's plain `=` CLI override has a key."""
+        import yaml
+
+        payload = yaml.safe_load(
+            (
+                ROOT
+                / "src/alpabridge/alpasim_overrides/src/wizard/configs/deploy"
+                / "local_external_driver_video_model.yaml"
+            ).read_text(encoding="utf-8")
+        )
+        services = payload["wizard"]["run_sim_services"]
+        self.assertNotIn("driver", services)
+        self.assertNotIn("renderer", services)
+        self.assertIn("runtime", services)
+        externals = payload["wizard"]["external_services"]
+        self.assertEqual([], externals["driver"])
+        self.assertIn("renderer", externals)
+        self.assertEqual("video_model", payload["runtime"]["renderer"]["kind"])
+
     def test_platform_preflight_rejects_arm_without_override(self) -> None:
         with patch.dict(os.environ, {}, clear=False):
             with patch("platform.machine", return_value="aarch64"):
