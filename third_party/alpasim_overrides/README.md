@@ -105,5 +105,5 @@ needs its verification steps re-run before the PR is opened:
 | `lazy-model-imports.patch` | no | `models/__init__.py` gained `Alpamayo2Model`; must cover it, as the applied override now does |
 | `docker-local-extras.patch` | no | `pyproject.toml`'s `all` gained `alpasim-trafficsim` and a `recipes` extra was added; re-authored content already in `local_checkout.patch` |
 | `arm64-docker-build.patch` | no | Dockerfile install line moved and became `--extra all --extra recipes`; re-authored content already in `local_checkout.patch` |
-| `plugin-config-passthrough.patch` | no | not yet diagnosed |
+| `plugin-config-passthrough.patch` | no | context drift only — `ModelConfig` replaced `use_classifier_free_guidance_nav: bool` with a weight-based field and expanded its docstring. The proposed `extra: dict[str, Any]` pass-through is still absent upstream, so the intent stands; only the hunk context needs refreshing |
 | `route-waypoints-in-prediction-input.patch` | no | superseded upstream — see that `.md`; do not reopen |
