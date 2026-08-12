@@ -2,6 +2,33 @@
 
 **Status:** drafted and verified with a real `docker build` on real ARM64/Blackwell hardware (NVIDIA GB10) against `NVlabs/alpasim` `main` (commit `3032e0c`), not yet opened.
 
+**Needs re-authoring before it is opened (checked 2026-08-12).** The patch no longer
+applies to `main` @ `1e801ca`: the August 2026 sync moved the install line to
+`uv sync --extra all --extra recipes`, added `alpasim-trafficsim` to the `all` extra,
+and upstream has since adopted the multi-stage arch split itself
+(`FROM nvcr.io/nvidia/pytorch:25.08-py3 AS base-arm64` / `FROM base-${TARGETARCH}`),
+so fix #3's scoping analysis must be re-checked against what upstream now does rather
+than against what it did at `3032e0c`. Re-verification requires another real ARM64
+`docker build` (the previous one produced a 33.3GB image); the GB10's root filesystem
+was at 96% / 171G free when this was written, so clear space first.
+
+**One fix to fold in that is not yet in the patch below.** The arm64 CUDA keyring URL
+hardcodes the Ubuntu release, which breaks whenever the base image moves:
+
+```diff
+ RUN if [ "${TARGETARCH}" = "arm64" ]; then \
+-      curl -fsSL -o /tmp/cuda-keyring.deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/sbsa/cuda-keyring_1.1-1_all.deb && \
++      . /etc/os-release && \
++      ubuntu_repo="ubuntu$(echo "${VERSION_ID}" | tr -d '.')" && \
++      curl -fsSL -o /tmp/cuda-keyring.deb "https://developer.download.nvidia.com/compute/cuda/repos/${ubuntu_repo}/sbsa/cuda-keyring_1.1-1_all.deb" && \
+       dpkg -i /tmp/cuda-keyring.deb && rm -f /tmp/cuda-keyring.deb; \
+     fi
+```
+
+Recorded here because it lived only as an uncommitted working-tree change on the GB10
+(`~/arm64_verify_final`, now committed on its `feat/arm64-docker-sync` branch as
+`85d66e0`, unpushed) and would have been lost with that checkout.
+
 **Related:** the [`docker_local` extras proposal](./docker-local-extras.md) documents exactly which packages are safe to install on ARM64 and why - this PR is the Docker-side half of the same fix; they're meant to land together (or at least reference each other), though each applies independently.
 
 ## Why
