@@ -39,6 +39,24 @@ All notable adapter-release changes are tracked here.
   `test_packaged_and_tracked_alpasim_overrides_stay_in_sync` derives its file
   list from the two override roots instead of a hand-maintained tuple that had
   omitted `models/__init__.py` — the one file that then drifted.
+- Fixed the ARM64 build path, which could not have worked as shipped. The re-authored
+  `local_checkout.patch` gates its arm64 install subset on `${TARGETARCH}`, but
+  upstream's `ARG TARGETARCH` is declared *before* `FROM base-${TARGETARCH}` and is
+  therefore not in scope for `RUN` steps in the stage that `FROM` opens. Every arm64
+  conditional expanded to `if [ "" = "arm64" ]` -- silently false -- so an aarch64 build
+  quietly took the x86 path. This presents as a step completing suspiciously fast rather
+  than as an error, which is how it survived review. `ARG TARGETARCH` is now re-declared
+  inside the stage.
+  Two further arm64 fixes moved into the applied patch for the same reason -- they only
+  ever lived in `third_party/alpasim_overrides/arm64-docker-build.patch`, which is an
+  upstream *proposal* that `alpabridge-setup` never applies, so an arm64 setup was
+  missing them entirely:
+  - The CUDA apt repo is configured on arm64, since `datacenter-gpu-manager-4-cuda12`
+    comes from it and the arm64 base image does not have it. The repo path derives from
+    the base image's own `/etc/os-release` instead of hardcoding `ubuntu2404`.
+  - The PyG compiled extensions step is skipped on arm64: its wheel index is pinned to
+    an x86 CUDA build (`2.8.0+cu128`) and publishes nothing for aarch64. Only
+    `alpasim-trafficsim` needs them and it is already excluded from the arm64 subset.
 - Fixed `alpabridge-setup` writing a stray `__init__.py` into the root of the user's
   AlpaSim checkout. `alpasim_overrides/__init__.py` is what makes the override payload an
   importable package inside AlpaBridge, but the copy step treated it as payload, so every
