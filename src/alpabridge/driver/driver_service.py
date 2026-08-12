@@ -18,7 +18,12 @@ from typing import Any
 import numpy as np
 
 from alpabridge.driver.policy_registry import available_policy_names, build_policy
-from alpabridge.simulator.alpasim_contract import DriveCommand, ModelPrediction
+from alpabridge.simulator.alpasim_contract import (
+    DriveCommand,
+    ModelPrediction,
+    prediction_headings,
+    prediction_trajectory_xy,
+)
 
 LOGGER = logging.getLogger("alpabridge_driver_service")
 DRIVER_TELEMETRY_SCHEMA = "alpabridge_driver_telemetry_v3"
@@ -282,7 +287,7 @@ class AlpaBridgeDriverService:
                 ),
                 "speed_mps": float(prediction_input.speed),
                 "trajectory_points": len(getattr(trajectory, "poses", []) or []),
-                "trajectory_future_points": len(prediction.trajectory_xy),
+                "trajectory_future_points": len(prediction_trajectory_xy(prediction)),
                 "trajectory_expected_future_points": int(
                     round(self.output_frequency_hz * self.horizon_seconds)
                 ),
@@ -361,8 +366,10 @@ def prediction_to_proto_trajectory(
     common_pb2: Any,
     horizon_seconds: float = 5.0,
 ) -> Any:
-    trajectory_xy = np.asarray(prediction.trajectory_xy, dtype=np.float64).reshape(-1, 2)
-    headings = np.asarray(prediction.headings, dtype=np.float64).reshape(-1)
+    # Read through the contract accessors: AlpaSim's ModelPrediction carries 6-DoF
+    # candidates, not a flat path, and only alpasim_contract should know that shape.
+    trajectory_xy = prediction_trajectory_xy(prediction)
+    headings = prediction_headings(prediction)
     if trajectory_xy.shape[0] < 1:
         raise ValueError("prediction trajectory must contain at least one point")
     if headings.shape != (trajectory_xy.shape[0],):

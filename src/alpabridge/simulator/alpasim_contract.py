@@ -22,15 +22,33 @@ except ImportError:
         UNKNOWN = 3
 
     class ModelPrediction:
+        """Mirrors AlpaSim's current ModelPrediction, deliberately.
+
+        This stub is what the test suite exercises when AlpaSim is not installed. It
+        previously kept the older `trajectory_xy`/`headings` shape, which meant every test
+        passed against an API AlpaSim had already removed -- the break only surfaced in a
+        live rollout, as `ModelPrediction.__init__() got an unexpected keyword argument
+        'trajectory_xy'`, after the renderer and physics had already come up. Keeping the
+        stub's signature identical to upstream's is what makes the suite meaningful.
+        """
+
         def __init__(
             self,
-            trajectory_xy: np.ndarray,
-            headings: np.ndarray,
+            candidate_positions: np.ndarray,
+            candidate_rotations: np.ndarray,
+            selected_index: int = 0,
             reasoning_text: str | None = None,
+            selected_plan: Any | None = None,
+            model_t0_us: int | None = None,
+            pose_local_to_rig_t0: Any | None = None,
         ) -> None:
-            self.trajectory_xy = trajectory_xy
-            self.headings = headings
+            self.candidate_positions = candidate_positions
+            self.candidate_rotations = candidate_rotations
+            self.selected_index = selected_index
             self.reasoning_text = reasoning_text
+            self.selected_plan = selected_plan
+            self.model_t0_us = model_t0_us
+            self.pose_local_to_rig_t0 = pose_local_to_rig_t0
 
     class BaseTrajectoryModel:
         @staticmethod
@@ -50,6 +68,72 @@ except ImportError:
 
     ModelConfig = Any
     PredictionInput = Any
+
+
+def make_model_prediction(
+    trajectory_xy: np.ndarray,
+    headings: np.ndarray,
+    reasoning_text: str | None = None,
+) -> ModelPrediction:
+    """Build AlpaSim's ModelPrediction from AlpaBridge's flat (x, y) + heading form.
+
+    AlpaBridge policies plan in 2D: an (T, 2) path plus one heading per point. AlpaSim's
+    August 2026 release replaced `trajectory_xy`/`headings` with full 6-DoF candidates --
+    `candidate_positions` (K, T, 3) and `candidate_rotations` (K, T, 3, 3), K being the
+    number of sampled trajectories. A single-trajectory policy reports itself as the only
+    candidate.
+
+    This is the ONE place in AlpaBridge that knows that shape. Policies keep returning what
+    they naturally produce, so an upstream change to the prediction contract is a change
+    here rather than in all six of them -- which is what let the previous break go unnoticed
+    until a live rollout.
+    """
+    positions_xy = np.asarray(trajectory_xy, dtype=np.float64).reshape(-1, 2)
+    yaw = np.asarray(headings, dtype=np.float64).reshape(-1)
+    if positions_xy.shape[0] < 1:
+        raise ValueError("prediction trajectory must contain at least one point")
+    if yaw.shape != (positions_xy.shape[0],):
+        raise ValueError("prediction headings must contain one value per trajectory point")
+
+    # (1, T, 3): planar path, z=0 in the rig frame.
+    positions = np.zeros((1, positions_xy.shape[0], 3), dtype=np.float64)
+    positions[0, :, :2] = positions_xy
+
+    # (1, T, 3, 3): yaw-only rotation about z, matching the planar plan.
+    cos_yaw = np.cos(yaw)
+    sin_yaw = np.sin(yaw)
+    rotations = np.zeros((1, yaw.shape[0], 3, 3), dtype=np.float64)
+    rotations[0, :, 0, 0] = cos_yaw
+    rotations[0, :, 0, 1] = -sin_yaw
+    rotations[0, :, 1, 0] = sin_yaw
+    rotations[0, :, 1, 1] = cos_yaw
+    rotations[0, :, 2, 2] = 1.0
+
+    return ModelPrediction(
+        candidate_positions=positions,
+        candidate_rotations=rotations,
+        selected_index=0,
+        reasoning_text=reasoning_text,
+    )
+
+
+def prediction_trajectory_xy(prediction: Any) -> np.ndarray:
+    """The selected candidate's planar path as (T, 2), whichever shape it arrived in."""
+    if hasattr(prediction, "candidate_positions"):
+        positions = np.asarray(prediction.candidate_positions, dtype=np.float64)
+        index = int(getattr(prediction, "selected_index", 0) or 0)
+        return positions[index][:, :2]
+    return np.asarray(prediction.trajectory_xy, dtype=np.float64).reshape(-1, 2)
+
+
+def prediction_headings(prediction: Any) -> np.ndarray:
+    """The selected candidate's yaw per point as (T,), whichever shape it arrived in."""
+    if hasattr(prediction, "candidate_rotations"):
+        rotations = np.asarray(prediction.candidate_rotations, dtype=np.float64)
+        index = int(getattr(prediction, "selected_index", 0) or 0)
+        selected = rotations[index]
+        return np.arctan2(selected[:, 1, 0], selected[:, 0, 0])
+    return np.asarray(prediction.headings, dtype=np.float64).reshape(-1)
 
 
 class SensorFreshnessGuard:

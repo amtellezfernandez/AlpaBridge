@@ -39,6 +39,25 @@ All notable adapter-release changes are tracked here.
   `test_packaged_and_tracked_alpasim_overrides_stay_in_sync` derives its file
   list from the two override roots instead of a hand-maintained tuple that had
   omitted `models/__init__.py` — the one file that then drifted.
+- **Fixed the actual interface break with AlpaSim `1e801ca`: every policy returned a
+  removed API.** Upstream replaced `ModelPrediction`'s `trajectory_xy`/`headings` with
+  6-DoF candidates -- `candidate_positions` (K, T, 3) and `candidate_rotations`
+  (K, T, 3, 3) -- so all six AlpaBridge policies died at the first `drive` call with
+  `ModelPrediction.__init__() got an unexpected keyword argument 'trajectory_xy'`, after
+  the renderer, physics and controller had already come up.
+  The whole suite passed anyway, and that is the important part: `alpasim_contract` falls
+  back to a local `ModelPrediction` stub when AlpaSim is not importable, and the stub still
+  had the old signature. Tests exercised the stub; only a live rollout touched the real
+  class. The stub now mirrors upstream's current signature exactly, so the suite tests the
+  contract that actually ships.
+  Policies keep returning the flat 2D plan they naturally produce. `make_model_prediction`
+  is now the single place that knows AlpaSim's prediction shape, with
+  `prediction_trajectory_xy` / `prediction_headings` for reading one back. An upstream
+  change to that contract is now one edit, not six.
+- Replaced stale `alpabridge-audit-run` advice that told you to "apply the route-waypoints
+  AlpaSim override" on a command-proxy frame. That override was retired -- AlpaSim provides
+  `PredictionInput.route` natively now -- so the advice pointed at a file that no longer
+  exists. It now explains what a command-proxy frame actually means.
 - Audited every remaining override against AlpaSim `1e801ca` rather than only the ones
   that failed loudly. Verified coherent: both patches apply; the `models/__init__.py` copy;
   all five driver configs under `simulator/alpasim_configs/driver/` validate against

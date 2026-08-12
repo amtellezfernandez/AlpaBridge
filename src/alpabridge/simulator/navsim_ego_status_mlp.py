@@ -14,7 +14,12 @@ except ImportError:  # pragma: no cover - exercised in dependency-light installs
     torch = None
     nn = None
 
-from .alpasim_contract import BaseTrajectoryModel, DriveCommand, ModelPrediction
+from .alpasim_contract import (
+    BaseTrajectoryModel,
+    DriveCommand,
+    ModelPrediction,
+    make_model_prediction,
+)
 
 NAVSIM_SOURCE_COMMIT = "0811876c274e8b058ab2be9b3dcd4d37bd23f177"
 NAVSIM_CHECKPOINT_REPOSITORY = "autonomousvision/navsim_baselines"
@@ -122,7 +127,7 @@ class NavsimEgoStatusMLPModel(BaseTrajectoryModel):
             "route_geometry_consumed": False,
             "source_commit": NAVSIM_SOURCE_COMMIT,
         }
-        return ModelPrediction(
+        return make_model_prediction(
             trajectory_xy=poses[:, :2],
             headings=poses[:, 2],
             reasoning_text=json.dumps(metadata, sort_keys=True),

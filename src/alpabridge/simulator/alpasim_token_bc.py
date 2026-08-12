@@ -26,6 +26,7 @@ from .alpasim_contract import (
     SensorFreshnessGuard,
     _yaw_from_quat_like,
     corrected_speed_mps,
+    make_model_prediction,
     resample_trajectory,
 )
 from .alpasim_signal import extract_alpasim_signal, scenario_from_command
@@ -389,7 +390,7 @@ class TokenBCAlpaSimModel(BaseTrajectoryModel):
             alpasim_signal=alpasim_signal,
             sensor_freshness=sensor_freshness,
         )
-        return ModelPrediction(trajectory_xy=trajectory_xy, headings=headings, reasoning_text=reasoning_text)
+        return make_model_prediction(trajectory_xy=trajectory_xy, headings=headings, reasoning_text=reasoning_text)
 
     def _append_selection_log(
         self,

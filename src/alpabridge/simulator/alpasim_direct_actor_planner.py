@@ -18,6 +18,7 @@ from .alpasim_contract import (
     PredictionInput,
     SensorFreshnessGuard,
     corrected_speed_mps,
+    make_model_prediction,
     prediction_scene_id,
     resample_trajectory,
 )
@@ -294,7 +295,7 @@ class DirectActorPlannerAlpaSimModel(BaseTrajectoryModel):
             "result": "ok",
         }
         self._append_log(reasoning_payload)
-        return ModelPrediction(
+        return make_model_prediction(
             trajectory_xy=trajectory_xy,
             headings=headings,
             reasoning_text=json.dumps(reasoning_payload, sort_keys=True),
