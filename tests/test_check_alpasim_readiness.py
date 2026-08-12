@@ -41,7 +41,12 @@ class CheckAlpaSimReadinessTests(unittest.TestCase):
         validate.assert_called_once_with(Path("/tmp/alpasim"))
         local_env.assert_called_once_with(Path("/tmp/alpasim"))
         docker.assert_called_once_with()
-        platform_check.assert_called_once_with()
+        # Readiness must ask about the deploy target the launcher would actually use:
+        # the ARM64 renderer blocker does not apply to the video-model deploy, and a
+        # readiness check that ignores that reports a failure the launch would not hit.
+        platform_check.assert_called_once_with(
+            deploy_target=check_alpasim_readiness._wizard_deploy_target()
+        )
         gpu_runtime.assert_called_once_with()
         image.assert_called_once_with()
         artifacts.assert_called_once_with(

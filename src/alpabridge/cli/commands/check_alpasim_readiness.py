@@ -19,6 +19,7 @@ from alpabridge.cli.commands.run_alpasim_local_external import (
     _scene_catalog_paths,
     _scene_ids,
     _validate_alpasim_checkout,
+    _wizard_deploy_target,
     alpasim_base_image_tag,
 )
 
@@ -88,7 +89,7 @@ def main() -> None:
     if not args.skip_local_env:
         _preflight_alpasim_local_environment(alpasim_root)
     _preflight_docker_access()
-    _preflight_platform_compatibility()
+    _preflight_platform_compatibility(deploy_target=_wizard_deploy_target())
     if not args.skip_image:
         _preflight_alpasim_base_image()
     _preflight_nvidia_container_runtime()

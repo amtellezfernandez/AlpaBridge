@@ -39,6 +39,15 @@ All notable adapter-release changes are tracked here.
   `test_packaged_and_tracked_alpasim_overrides_stay_in_sync` derives its file
   list from the two override roots instead of a hand-maintained tuple that had
   omitted `models/__init__.py` — the one file that then drifted.
+- Made `alpabridge-doctor` and `alpabridge-ready` renderer-aware too. Only the launcher had
+  been taught that the ARM64 block is a NuRec/sensorsim limitation, so on aarch64 both
+  readiness commands still reported `platform_compatibility: failed` for a deploy that does
+  not use that renderer -- a blocker the launch itself would not have hit. Both now resolve
+  the deploy target the way the launcher does. Verified on GB10: `platform_compatibility: ok`
+  for the video-model deploy, still `failed` for the default NuRec one.
+  The block's message also claimed AlpaBridge shipped no video-model deploy config, which
+  stopped being true when one was added in the same session; it now names the config and the
+  renderer-address override needed to use it.
 - Added `deploy=local_external_driver_video_model`: the first deployment shape that can run
   on ARM64. Both the policy *and* the renderer are external services, so the wizard manages
   only `[physics, trafficsim, controller, runtime]` -- all of which build and run natively on
