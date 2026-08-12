@@ -176,3 +176,45 @@ own Dockerfiles carry x86 assumptions (AlpaSim's did — four of them), the size
 checkpoint downloads, and disk headroom on the GB10. AlpaBridge also has no deploy config
 combining an external driver with a video-model renderer; that config is the concrete next
 piece of work.
+
+### Building the video-model renderer for ARM64: what to know before you start
+
+Checked 2026-08-12 against `NVIDIA/flashdreams` @ `ac214dd`, read-only, before committing to
+a build. The Dockerfiles themselves are close to arch-clean — far cleaner than AlpaSim's
+were:
+
+- `docker/Dockerfile` builds `FROM nvidia/cuda:13.2.1-cudnn-devel-ubuntu24.04`, which
+  publishes **both** amd64 and arm64 manifests.
+- Its apt set is arch-neutral, `uv` comes from a multi-arch image, and the AWS CLI step
+  already branches `x86_64` / `aarch64` explicitly.
+- It installs no Python dependencies at all; `docker/Dockerfile.alpasim` does that with a
+  single `uv sync --locked --package flashdreams-omnidreams --no-editable`.
+
+So the entire ARM64 question reduces to whether `uv.lock` resolves on aarch64. It did not,
+for exactly one package:
+
+**`transformer-engine-cu13` was pinned at `2.17.0`, which is wheel-only and x86_64-only —
+there is no sdist to build from.** It is not a porting problem: that package publishes
+aarch64 wheels for nearly every release, and `2.17.0` is one of only two recent versions
+missing one. `2.17.1` — the next patch — has
+`transformer_engine_cu13-2.17.1-py3-none-manylinux_2_28_aarch64.whl`, and FlashDreams'
+`pyproject` only asks for `>=2.12`, so the pin is a lockfile artifact rather than a
+constraint. One command fixes it:
+
+```bash
+uv lock --upgrade-package transformer-engine \
+        --upgrade-package transformer-engine-cu13 \
+        --upgrade-package transformer-engine-torch
+```
+
+After that, `uv sync --locked --package flashdreams-omnidreams --dry-run` resolves **130
+packages on aarch64 with no errors** (`transformer-engine-torch` is an sdist and compiles,
+which is why the base image installs `gcc g++ ninja-build`). This is worth proposing
+upstream to FlashDreams: nothing about the project requires the ARM-excluding pin.
+
+**Second trap, cross-repo:** AlpaSim's `docs/VIDEO_MODEL.md` says to build the base as
+`-t flashdreams-base:local`, but `Dockerfile.alpasim` declares
+`ARG FLASHDREAMS_BASE_IMAGE=flashdreams:local` and FlashDreams' own `docker/README.md` uses
+`flashdreams:local`. Follow AlpaSim's instructions verbatim and the second build looks for an
+image that does not exist. Either tag the base `flashdreams:local`, or pass
+`--build-arg FLASHDREAMS_BASE_IMAGE=flashdreams-base:local`.
