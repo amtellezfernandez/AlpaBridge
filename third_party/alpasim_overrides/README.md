@@ -24,7 +24,7 @@ not as an implicit runtime dependency on some separate legacy package.
 
 ## Contents
 
-- `route_waypoints.patch`, `local_checkout.patch` — `git format-patch`-style
+- `session_metadata.patch`, `local_checkout.patch` — `git format-patch`-style
   patches against the pinned AlpaSim release, applied by `alpabridge-setup`.
   Each is self-labeling: its `Subject:` line and commit body are the
   description, so there's no separate, driftable prose summary of what it
@@ -78,3 +78,19 @@ AlpaSim and are redistributed, with project-authored modifications, under the
 Apache License 2.0. See `LICENSES/THIRD_PARTY_NOTICES.md` and
 `LICENSES/Apache-2.0.txt` at
 the repository root. Everything else in the repository is BSD 3-Clause.
+
+## Baseline: re-verification owed after the August 2026 sync
+
+Both applied patches (`local_checkout.patch`, `session_metadata.patch`) were
+re-authored on 2026-08-12 against `NVlabs/alpasim` `main` @ `1e801ca` and verified
+to apply cleanly, in `sorted()` order, to a pristine checkout of it.
+
+The **proposals** in this directory (`*.md` + `.patch` pairs) still carry
+"verified against `3032e0c`" in their status lines, and `3032e0c` predates the
+August 2026 public sync — a 167-file release that rewrote `driver/main.py`
+(+390/-304), moved `EgoDriverService` from async `grpc.aio` to sync `grpc`,
+reworked `models/base.py`, and added the Alpamayo 2 driver. **Each proposal needs
+re-verification against current `main` before it is opened**, and
+`route-waypoints-in-prediction-input.md` has already turned out to be superseded
+by upstream's own implementation. Do not `git am` any of them onto a current
+checkout on the strength of the old status line.

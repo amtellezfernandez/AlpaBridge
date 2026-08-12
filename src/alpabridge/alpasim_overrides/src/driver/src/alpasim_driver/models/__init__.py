@@ -27,12 +27,14 @@ from .manual_model import ManualModel
 _LAZY_IMPORTS = {
     "Alpamayo15Model": ".alpamayo1_5_model",
     "Alpamayo1Model": ".alpamayo1_model",
+    "Alpamayo2Model": ".alpamayo2_model",
     "VAMModel": ".vam_model",
 }
 
 __all__ = [
     "Alpamayo15Model",
     "Alpamayo1Model",
+    "Alpamayo2Model",
     "BaseTrajectoryModel",
     "CameraFrame",
     "CameraImages",

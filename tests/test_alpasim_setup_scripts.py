@@ -837,11 +837,22 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
         packaged_root = ROOT / "src" / "alpabridge" / "alpasim_overrides"
         tracked_root = ROOT / "third_party" / "alpasim_overrides"
 
-        relative_paths = [
-            Path("src/wizard/alpasim_wizard/deployment/docker_compose.py"),
-            Path("route_waypoints.patch"),
-            Path("local_checkout.patch"),
-        ]
+        # Every file that exists in both roots belongs here. The list used to be
+        # hand-maintained and omitted the driver models/__init__.py override, which
+        # is exactly the file that then drifted: upstream added Alpamayo2Model to the
+        # real registry while both copies of the override silently kept shadowing it
+        # with a two-model lazy map. Derive the list instead of curating it.
+        relative_paths = sorted(
+            path.relative_to(packaged_root)
+            for path in packaged_root.rglob("*")
+            if path.is_file()
+            and "__pycache__" not in path.parts
+            and (tracked_root / path.relative_to(packaged_root)).is_file()
+        )
+        self.assertIn(
+            Path("src/driver/src/alpasim_driver/models/__init__.py"), relative_paths
+        )
+        self.assertIn(Path("local_checkout.patch"), relative_paths)
 
         for relative_path in relative_paths:
             with self.subTest(relative_path=relative_path):

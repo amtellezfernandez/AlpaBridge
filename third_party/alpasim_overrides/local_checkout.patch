@@ -1,6 +1,6 @@
-From 5554c0c00013cee2cac57940aac71cc579040697 Mon Sep 17 00:00:00 2001
+From 9921efb797886f6048b642d0f99a42b9cf080b1d Mon Sep 17 00:00:00 2001
 From: AlpaBridge maintainers <alpabridge@users.noreply.github.com>
-Date: Mon, 27 Jul 2026 21:19:22 +0200
+Date: Wed, 12 Aug 2026 12:00:00 +0200
 Subject: [PATCH] driver: local-checkout robustness for the external-driver dev
  loop
 
@@ -9,14 +9,33 @@ against a real local AlpaBridge development loop, where sessions can
 legitimately race or overlap with process restarts in ways the stock
 driver treats as fatal:
 
-- EgoDriverService session RPCs (close/submit_image/submit_egomotion/
-  submit_route/drive) now log-and-no-op on an unknown session instead of
-  raising KeyError, so a late message after a session ended (or before
-  alpabridge-driver has registered it) doesn't crash the service.
-- Dockerfile.amd64 / pyproject.toml: add a `docker_local` dependency
-  subset and an arm64 branch for building the runtime image on Grace
-  Blackwell hosts, where the full `--extra all` install pulls x86-only
-  and PyQt5-dependent packages that don't resolve.
+- EgoDriverService session RPCs (close_session/submit_image_observation/
+  submit_egomotion_observation/submit_route/drive) now log-and-no-op on an
+  unknown session instead of raising KeyError, so a late message after a
+  session ended (or before alpabridge-driver has registered it) doesn't
+  crash the service. `drive` returns upstream's own established no-op
+  value for this case, an empty Trajectory, rather than a new shape.
+- Dockerfile / pyproject.toml: add a `docker_local` dependency subset and
+  an arm64 branch for building the runtime image on Grace Blackwell hosts,
+  where the full `--extra all --extra recipes` install pulls x86-only and
+  PyQt5-dependent packages that don't resolve.
+
+Re-authored 2026-08-12 against alpasim main @ 1e801ca (August 2026 public
+sync). The previous revision of this patch was cut against 3032e0c and no
+longer applied to any of its three files:
+
+- EgoDriverService moved from async `grpc.aio.ServicerContext` to sync
+  `grpc.ServicerContext`, gained a `@log_call` decorator and a
+  `_sessions_lock`, and renamed `session.desired_cameras_logical_ids` to
+  `session.frame_caches`. close_session's own existence check was dropped
+  upstream, so its bare `del` now raises KeyError where it previously
+  raised a descriptive one -- the guard is still required, and is now taken
+  inside `_sessions_lock` to match upstream's locking of that dict.
+- pyproject.toml's `all` gained `alpasim-trafficsim` and a new `recipes`
+  model extra was added alongside it; `docker_local` now also documents why
+  trafficsim is excluded (torch_geometric/PyG, x86-hardcoded in Dockerfile).
+- The Dockerfile install line moved and became `--extra all --extra
+  recipes`; the x86 branch carries both extras forward.
 
 Two more local-checkout changes (models/__init__.py's lazy VAM/Alpamayo
 imports, and docker_compose.py's deployment tweaks) are carried as full
@@ -24,20 +43,20 @@ tracked file copies elsewhere in this override tree instead of hunks
 here - the copy step always runs last and wins, so a parallel patch hunk
 for either file was dead weight nothing ever exercised.
 ---
- Dockerfile                            | 15 +++++++++-
- pyproject.toml                        | 16 ++++++++++
- src/driver/src/alpasim_driver/main.py | 43 +++++++++++++++++++++++----
- 3 files changed, 67 insertions(+), 7 deletions(-)
+ Dockerfile                            | 15 ++++++++++-
+ pyproject.toml                        | 18 +++++++++++++
+ src/driver/src/alpasim_driver/main.py | 39 ++++++++++++++++++++++++---
+ 3 files changed, 67 insertions(+), 5 deletions(-)
 
 diff --git a/Dockerfile b/Dockerfile
-index b082361..6937d64 100644
+index 4992139..6aa0686 100644
 --- a/Dockerfile
 +++ b/Dockerfile
-@@ -43,7 +43,20 @@ WORKDIR /repo
+@@ -57,7 +57,20 @@ WORKDIR /repo
  
  RUN --mount=type=secret,id=netrc,target=/root/.netrc \
      --mount=type=cache,target=/root/.cache/uv \
--    sh -c 'if [ -f /root/.netrc ]; then export NETRC=/root/.netrc; fi && uv sync --extra all'
+-    sh -c 'if [ -f /root/.netrc ]; then export NETRC=/root/.netrc; fi && uv sync --extra all --extra recipes'
 +    sh -c '\
 +      if [ -f /root/.netrc ]; then export NETRC=/root/.netrc; fi && \
 +      if [ "${TARGETARCH}" = "arm64" ]; then \
@@ -50,17 +69,17 @@ index b082361..6937d64 100644
 +          -e /repo/src/runtime \
 +          -e /repo/src/physics; \
 +      else \
-+        uv sync --extra all; \
++        uv sync --extra all --extra recipes; \
 +      fi'
  
- ENV UV_CACHE_DIR=/tmp/uv-cache
- ENV UV_NO_SYNC=1
+ ARG PYTORCH_VERSION=2.8.0+cu128
+ ARG TORCH_CLUSTER_VERSION=1.6.3
 diff --git a/pyproject.toml b/pyproject.toml
-index beae9af..9ddf9d7 100644
+index 3f5231a..a9a1cdc 100644
 --- a/pyproject.toml
 +++ b/pyproject.toml
-@@ -35,6 +35,22 @@ all = [
-   "alpasim_wizard",
+@@ -37,6 +37,24 @@ all = [
+   "alpasim-trafficsim",
  ]
  
 +# Core packages needed inside headless local-external-driver Docker images.
@@ -70,6 +89,8 @@ index beae9af..9ddf9d7 100644
 +#   the runtime containers, and its dependency stack pulls x86-only packages such as
 +#   tensordict through the upstream learned-driver models.
 +# - alpasim_wizard: the wizard is launched on the host, not in the runtime image.
++# - alpasim-trafficsim: added upstream to `all`; pulls torch_geometric/torch-cluster,
++#   whose compiled PyG extensions are x86-hardcoded in the Dockerfile.
 +docker_local = [
 +  "alpasim_controller",
 +  "alpasim_eval",
@@ -79,30 +100,30 @@ index beae9af..9ddf9d7 100644
 +  "alpasim-physics",
 +]
 +
- # -- Plugin extras --
- transfuser = ["alpasim_transfuser"]
+ # -- Model extras --
+ recipes = ["alpasim_driver[recipes]"]
  
 diff --git a/src/driver/src/alpasim_driver/main.py b/src/driver/src/alpasim_driver/main.py
-index 3d21429..42dc554 100644
+index 9013bf2..eb08eac 100644
 --- a/src/driver/src/alpasim_driver/main.py
 +++ b/src/driver/src/alpasim_driver/main.py
-@@ -758,7 +758,11 @@ class EgoDriverService(EgodriverServiceServicer):
-         self, request: DriveSessionCloseRequest, context: grpc.aio.ServicerContext
+@@ -804,6 +804,12 @@ class EgoDriverService(EgodriverServiceServicer):
+         self, request: DriveSessionCloseRequest, context: grpc.ServicerContext
      ) -> Empty:
-         if request.session_uuid not in self._sessions:
--            raise KeyError(f"Session {request.session_uuid} does not exist.")
-+            logger.warning(
-+                "close_session for unknown session %s; treating as idempotent",
-+                request.session_uuid,
-+            )
-+            return Empty()
- 
-         logger.info(f"Closing session {request.session_uuid}")
-         del self._sessions[request.session_uuid]
-@@ -782,7 +786,14 @@ class EgoDriverService(EgodriverServiceServicer):
+         with self._sessions_lock:
++            if request.session_uuid not in self._sessions:
++                logger.warning(
++                    "close_session for unknown session %s; treating as idempotent",
++                    request.session_uuid,
++                )
++                return Empty()
+             logger.info(f"Closing session {request.session_uuid}")
+             del self._sessions[request.session_uuid]
+         return Empty()
+@@ -823,7 +829,14 @@ class EgoDriverService(EgodriverServiceServicer):
+         self, request: RolloutCameraImage, context: grpc.ServicerContext
      ) -> Empty:
          grpc_image = request.camera_image
-         image = Image.open(BytesIO(grpc_image.image_bytes))
 -        session = self._sessions[request.session_uuid]
 +        session = self._sessions.get(request.session_uuid)
 +        if session is None:
@@ -112,62 +133,54 @@ index 3d21429..42dc554 100644
 +                grpc_image.frame_end_us,
 +            )
 +            return Empty()
-         if grpc_image.logical_id not in session.desired_cameras_logical_ids:
+         if grpc_image.logical_id not in session.frame_caches:
              raise ValueError(f"Camera {grpc_image.logical_id} not in desired cameras")
  
-@@ -806,7 +817,15 @@ class EgoDriverService(EgodriverServiceServicer):
-     async def submit_egomotion_observation(
-         self, request: RolloutEgoTrajectory, context: grpc.aio.ServicerContext
+@@ -869,7 +882,13 @@ class EgoDriverService(EgodriverServiceServicer):
+     def submit_egomotion_observation(
+         self, request: RolloutEgoTrajectory, context: grpc.ServicerContext
      ) -> Empty:
 -        session = self._sessions[request.session_uuid]
 +        session = self._sessions.get(request.session_uuid)
 +        if session is None:
-+            last_ts = request.trajectory.poses[-1].timestamp_us if request.trajectory.poses else "unknown"
 +            logger.warning(
-+                "submit_egomotion_observation for unknown session %s at %s; ignoring late egomotion",
++                "submit_egomotion_observation for unknown session %s; ignoring late egomotion",
 +                request.session_uuid,
-+                last_ts,
 +            )
 +            return Empty()
  
          session.add_egoposes(request.trajectory)
  
-@@ -824,15 +843,22 @@ class EgoDriverService(EgodriverServiceServicer):
-         self, request: RouteRequest, context: grpc.aio.ServicerContext
+@@ -887,7 +906,13 @@ class EgoDriverService(EgodriverServiceServicer):
+         self, request: RouteRequest, context: grpc.ServicerContext
      ) -> Empty:
          logger.debug("submit_route: waypoint count=%s", len(request.route.waypoints))
+-        session = self._sessions[request.session_uuid]
 +        session = self._sessions.get(request.session_uuid)
 +        if session is None:
 +            logger.warning(
-+                "submit_route for unknown session %s; ignoring late route update",
++                "submit_route for unknown session %s; ignoring late route",
 +                request.session_uuid,
 +            )
 +            return Empty()
+         session.route = request.route
          if self._cfg.route is not None:
--            self._sessions[request.session_uuid].update_command_from_route(
-+            session.update_command_from_route(
-                 request.route,
-                 self._cfg.route.use_waypoint_commands,
-                 self._cfg.route.command_distance_threshold,
-                 self._cfg.route.min_lookahead_distance,
-             )
-         else:
--            self._sessions[request.session_uuid].update_command_from_route(
-+            session.update_command_from_route(
-                 request.route,
-                 use_waypoint_commands=False,
-             )
-@@ -854,7 +880,12 @@ class EgoDriverService(EgodriverServiceServicer):
-         self, request: DriveRequest, context: grpc.aio.ServicerContext
+             session.update_command_from_route(
+@@ -918,7 +943,13 @@ class EgoDriverService(EgodriverServiceServicer):
+     def drive(
+         self, request: DriveRequest, context: grpc.ServicerContext
      ) -> DriveResponse:
-         if request.session_uuid not in self._sessions:
--            raise KeyError(f"Session {request.session_uuid} not found")
+-        session = self._sessions[request.session_uuid]
++        session = self._sessions.get(request.session_uuid)
++        if session is None:
 +            logger.warning(
-+                "drive for unknown session %s at %s; returning empty trajectory",
++                "drive for unknown session %s; returning empty trajectory",
 +                request.session_uuid,
-+                request.time_query_us,
 +            )
 +            return DriveResponse(trajectory=Trajectory())
  
-         session = self._sessions[request.session_uuid]
- 
+         if not self._check_frames_ready(session):
+             empty_traj = Trajectory()
+-- 
+2.43.0
+

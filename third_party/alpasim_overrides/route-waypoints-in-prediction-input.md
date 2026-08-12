@@ -1,6 +1,31 @@
 # Proposed upstream PR: forward route waypoints (and session identifiers) into PredictionInput
 
-**Status:** drafted and fully verified against `NVlabs/alpasim` `main` (commit `3032e0c`), not yet opened. Waiting on confirmation from the Max/AlpaSim discussion before filing.
+**Status: SUPERSEDED IN PART — do not open.** Upstream implemented the route half itself
+in the August 2026 public sync (`NVlabs/alpasim` `main` @ `1e801ca`, changelog
+`11.08.26`). Kept per this directory's convention: the "why did we carry this" history
+survives rather than being deleted.
+
+What upstream now provides natively, making these hunks redundant:
+
+| this proposal added | upstream `1e801ca` |
+| --- | --- |
+| `PredictionInput.route_waypoints` | `PredictionInput.route` (the `Route` itself, waypoints in the rig frame) |
+| `Session.current_route` | `Session.route` |
+| `Session.route_waypoints_for_prediction()` | not needed — models read `route.waypoints` |
+| `PredictionInput.runtime_random_seed` | `PredictionInput.inference_seed` (session seed + zero-based inference count) — strictly better |
+
+AlpaBridge needed no consumer change for any of it: `route_waypoints_from_input` already
+probed `route` among its candidate attribute names and unwrapped `.waypoints`, and
+`prediction_runtime_metadata`'s seed candidates now list `inference_seed` first.
+
+**What survives**: session identity. Upstream's `Session` has `uuid` and `debug_scene_id`
+as required fields but forwards neither to the model, and `session_uuid` is load-bearing
+for `AlpaSimContractValidator`'s session-transition reset (without it the frozen-camera
+check carries state across a session boundary). That half now lives in
+`session_metadata.patch`, which replaced `route_waypoints.patch` as the applied override.
+
+Original status, for the record: drafted and fully verified against `3032e0c`, not opened,
+waiting on confirmation from the Max/AlpaSim discussion before filing.
 
 Related, already-open items for context:
 
