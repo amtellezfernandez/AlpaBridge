@@ -92,25 +92,23 @@ Both applied patches (`local_checkout.patch`, `session_metadata.patch`) were
 re-authored on 2026-08-12 against `NVlabs/alpasim` `main` @ `1e801ca` and verified
 to apply cleanly, in `sorted()` order, to a pristine checkout of it.
 
-The **proposals** in this directory (`*.md` + `.patch` pairs) still carry
-"verified against `3032e0c`" in their status lines, and `3032e0c` predates the
-August 2026 public sync — a 167-file release that rewrote `driver/main.py`
-(+390/-304), moved `EgoDriverService` from async `grpc.aio` to sync `grpc`,
-reworked `models/base.py`, and added the Alpamayo 2 driver. **Do not `git am` any
-proposal onto a current checkout on the strength of its old status line.**
-
-Measured 2026-08-12 with `git apply --check` against a pristine clone of `main`
-@ `1e801ca`. This says only whether a patch still *applies* — a green row still
-needs its verification steps re-run before the PR is opened:
+Re-cut 2026-08-12 against `main` @ `1e801ca` and verified with `git apply --check`
+on a pristine clone. Four were regenerated **from** AlpaBridge's applied override rather
+than hand-patched -- that override is the copy a real ARM64 `docker build` and a live
+closed-loop rollout actually exercised, so cutting the proposal from it is what keeps the
+two from drifting apart again.
 
 | proposal | applies to `1e801ca` | note |
 | --- | --- | --- |
-| `cameraframe-type-mismatch.patch` | yes | re-run verification, then openable |
-| `route-generator-plugin.patch` | yes | re-run verification, then openable |
-| `utils-rs-negative-zero-serialization.patch` | yes | re-run verification, then openable |
-| `session-event-idempotency.patch` | no | same `driver/main.py` rewrite that broke `local_checkout.patch`; the re-authored guards in that patch are the content to regenerate this from |
-| `lazy-model-imports.patch` | no | `models/__init__.py` gained `Alpamayo2Model`; must cover it, as the applied override now does |
-| `docker-local-extras.patch` | no | `pyproject.toml`'s `all` gained `alpasim-trafficsim` and a `recipes` extra was added; re-authored content already in `local_checkout.patch` |
-| `arm64-docker-build.patch` | no | **Content already re-authored into `local_checkout.patch` and verified by a real ARM64 build on the GB10 against `1e801ca`** (33.1GB image, all four arm64 branches confirmed firing, 7/7 packages importing, CUDA up on GB10). The fixes had to move into the applied override because setup never applies proposals. Re-cut this patch from that override before opening upstream — see that `.md` |
-| `plugin-config-passthrough.patch` | no | context drift only — `ModelConfig` replaced `use_classifier_free_guidance_nav: bool` with a weight-based field and expanded its docstring. The proposed `extra: dict[str, Any]` pass-through is still absent upstream, so the intent stands; only the hunk context needs refreshing |
-| `route-waypoints-in-prediction-input.patch` | no | superseded upstream — see that `.md`; do not reopen |
+| `session-event-idempotency.patch` | yes | re-cut; content verified by a live rollout (198 frames, session COMPLETED) |
+| `arm64-docker-build.patch` | yes | re-cut; verified by a real 33.1GB ARM64 build on GB10, all four arm64 branches confirmed firing |
+| `docker-local-extras.patch` | yes | re-cut against the `all` extra gaining `alpasim-trafficsim` |
+| `lazy-model-imports.patch` | yes | re-cut; now covers `Alpamayo2Model`, added in the August 2026 sync |
+| `plugin-config-passthrough.patch` | yes | re-cut; `ModelConfig` had replaced `use_classifier_free_guidance_nav` with a weight field |
+| `cameraframe-type-mismatch.patch` | yes | unchanged, still applies |
+| `route-generator-plugin.patch` | yes | unchanged, still applies |
+| `utils-rs-negative-zero-serialization.patch` | yes | unchanged, still applies |
+| `route-waypoints-in-prediction-input.patch` | **no, by design** | superseded upstream — see that `.md`; do not reopen |
+
+Each still needs its own verification steps re-run before it is opened; applying cleanly is
+necessary, not sufficient.

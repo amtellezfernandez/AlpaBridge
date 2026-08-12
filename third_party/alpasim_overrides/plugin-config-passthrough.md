@@ -1,6 +1,6 @@
 # Proposed upstream PR: a free-form pass-through field for third-party model config
 
-**Status:** drafted and fully verified against `NVlabs/alpasim` `main` (commit `3032e0c`), not yet opened.
+**Status:** re-cut 2026-08-12 against `1e801ca`, where `ModelConfig` replaced `use_classifier_free_guidance_nav` with a weight-based field. Applies cleanly to `main` @ `1e801ca`; not yet opened.
 
 ## Why
 
