@@ -1,13 +1,11 @@
 # Proposed upstream PR: ARM64-safe package sync in the Docker build
 
-**Status:** drafted and verified with a real `docker build` on real ARM64/Blackwell hardware (NVIDIA GB10) against `NVlabs/alpasim` `main` (commit `3032e0c`), not yet opened.
+**Status:** re-cut 2026-08-12; verified by a real ARM64 `docker build` on NVIDIA GB10 against `1e801ca` (33.1GB image, all four arm64 branches confirmed firing, 7/7 packages importing, CUDA up). Applies cleanly to `main` @ `1e801ca`; not yet opened.
 
-**The fixes are re-authored and verified against `main` @ `1e801ca`, but they now live in
-the applied override, not in the patch below.** The patch below is still cut against
-`3032e0c` and does not apply; it needs re-cutting from the applied override before it is
-opened upstream.
+**The fixes live in AlpaBridge's applied override as well as in the patch below**, and the
+patch below has been re-cut from that override so the two cannot drift apart.
 
-Why they moved: `alpabridge-setup` applies only the patches under
+Why they also had to move into the applied override: `alpabridge-setup` applies only the patches under
 `src/alpabridge/alpasim_overrides`. This directory holds *upstream proposals*, which setup
 never applies — so every arm64 fix that lived only here was missing from real arm64
 setups, while `local_checkout.patch`'s arm64 install branch depended on one of them

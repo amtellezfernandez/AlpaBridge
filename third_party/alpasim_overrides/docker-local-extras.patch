@@ -1,31 +1,33 @@
-From 23252f3509a6797d05e1c3522a4c3cbaf7ab8ca7 Mon Sep 17 00:00:00 2001
+From 771922e8ab302b2529a9c740ae0a242b327b3aa3 Mon Sep 17 00:00:00 2001
 From: AlpaBridge maintainers <alpabridge@users.noreply.github.com>
-Date: Mon, 27 Jul 2026 21:29:43 +0200
+Date: Wed, 12 Aug 2026 21:35:43 +0200
 Subject: [PATCH] packaging: add a docker_local extras group for headless
  runtime images
 
-There's no extras group scoped to exactly what a headless local-external-driver runtime image needs - only the wildcard --extra all, which pulls packages that don't belong in that image (or don't resolve on arm64). Add docker_local listing exactly what's needed, with a comment for each deliberate exclusion.
+`--extra all` pulls the full workspace into the runtime image, including packages a
+headless simulation container never runs: alpasim-tools (PyQt5), alpasim_driver and
+alpasim_plugins (whose learned-driver stack pulls x86-only wheels such as tensordict),
+alpasim_wizard (launched on the host), and alpasim-trafficsim (torch_geometric, whose PyG
+extensions the Dockerfile installs from an x86-pinned wheel index).
+
+Name that subset so image builds can ask for it directly instead of each deployment
+re-deriving it. No effect on existing `--extra all` builds.
 ---
- pyproject.toml | 18 ++++++++++++++++++
- 1 file changed, 18 insertions(+)
+ pyproject.toml | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
 
 diff --git a/pyproject.toml b/pyproject.toml
-index a927f9f..24cb228 100644
+index 3f5231a..52776e9 100644
 --- a/pyproject.toml
 +++ b/pyproject.toml
-@@ -37,6 +37,24 @@ all = [
+@@ -37,6 +37,19 @@ all = [
    "alpasim-trafficsim",
  ]
  
-+# Core packages needed inside headless local-external-driver Docker images.
-+# This intentionally excludes:
-+# - alpasim-tools: pulls PyQt5, which does not resolve on Linux aarch64
-+# - alpasim_driver / alpasim_plugins: the external driver runs on the host, not in
-+#   the runtime containers, and its dependency stack pulls x86-only packages such as
-+#   tensordict through the upstream learned-driver models.
-+# - alpasim_wizard: the wizard is launched on the host, not in the runtime image.
-+# - alpasim-trafficsim: disabled by default (trafficsim=disabled); add it back if
-+#   your deployment enables trafficsim=catk.
++# Core packages needed inside headless simulation Docker images.
++# Excludes alpasim-tools (PyQt5), alpasim_driver/alpasim_plugins (x86-only deps via the
++# learned-driver models; the driver can run on the host), alpasim_wizard (host-launched),
++# and alpasim-trafficsim (torch_geometric/PyG, x86-pinned in the Dockerfile).
 +docker_local = [
 +  "alpasim_controller",
 +  "alpasim_eval",
@@ -35,6 +37,9 @@ index a927f9f..24cb228 100644
 +  "alpasim-physics",
 +]
 +
- # -- Plugin extras --
- transfuser = ["alpasim_transfuser"]
+ # -- Model extras --
+ recipes = ["alpasim_driver[recipes]"]
  
+-- 
+2.43.0
+

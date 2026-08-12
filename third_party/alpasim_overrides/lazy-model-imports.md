@@ -1,6 +1,6 @@
 # Proposed upstream PR: lazy-import optional model backends in models/__init__.py
 
-**Status:** drafted and fully verified against `NVlabs/alpasim` `main` (commit `3032e0c`), not yet opened.
+**Status:** re-cut 2026-08-12 against `1e801ca`; now covers `Alpamayo2Model`, added in the August 2026 sync. Applies cleanly to `main` @ `1e801ca`; not yet opened.
 
 ## Why
 

@@ -1,16 +1,34 @@
-From 9ed42c74acc0c0e31941a94e8791c97207da9d7a Mon Sep 17 00:00:00 2001
+From 02fbd509c0f3c98d39664d7163be8f7ffe4f4ba3 Mon Sep 17 00:00:00 2001
 From: AlpaBridge maintainers <alpabridge@users.noreply.github.com>
-Date: Mon, 27 Jul 2026 21:29:43 +0200
-Subject: [PATCH] docker: install only the packages a headless runtime image
- needs on arm64
+Date: Wed, 12 Aug 2026 21:35:43 +0200
+Subject: [PATCH] docker: make the ARM64 image build actually work
 
-uv sync --extra all pulls every workspace package, including some that can't build on ARM64 (alpasim-tools needs PyQt5, no aarch64 wheel) and some not needed inside a runtime container at all (alpasim_driver/alpasim_plugins run on the host in an external-driver setup; alpasim_wizard is host-only too). On arm64, install the docker_local extras set explicitly (editable) instead of the wildcard --extra all sync.
+The Dockerfile selects an ARM64 base already, but the build fails past that point on
+aarch64. Four changes, all keyed off TARGETARCH so the x86_64 path is untouched:
+
+1. Re-declare `ARG TARGETARCH` after `FROM base-${TARGETARCH}`. The top-level declaration
+   is scoped to the pre-FROM context so the FROM can resolve; it is not in scope for RUN
+   steps in the stage that FROM opens. Without it every arm64 conditional below expands to
+   `if [ "" = "arm64" ]` and silently takes the x86 path -- which presents as a step
+   completing suspiciously fast rather than as an error.
+2. Configure NVIDIA's CUDA apt repo on arm64: datacenter-gpu-manager-4-cuda12 comes from
+   it and the ARM64 base image does not have it. The repo path is derived from the base
+   image's own /etc/os-release rather than hardcoded, so it follows the base image.
+3. Install an explicit package subset on arm64 instead of `--extra all --extra recipes`
+   (see the docker_local proposal for why each is excluded).
+4. Skip the PyG compiled extensions on arm64: that step's wheel index is pinned to an x86
+   CUDA build (2.8.0+cu128) and publishes nothing for aarch64. Only alpasim-trafficsim
+   needs them, and it is excluded above, so they are unneeded rather than unavailable.
+
+Verified by a real `docker build` on NVIDIA GB10 (Grace Blackwell) against main @ 1e801ca:
+33.1GB image, zero errors, all seven installed packages import on aarch64, torch
+2.13.0+cu130, and torch.cuda.is_available() true with --gpus all.
 ---
- Dockerfile | 36 +++++++++++++++++++++++++++++-------
- 1 file changed, 29 insertions(+), 7 deletions(-)
+ Dockerfile | 38 +++++++++++++++++++++++++++++++-------
+ 1 file changed, 31 insertions(+), 7 deletions(-)
 
 diff --git a/Dockerfile b/Dockerfile
-index 262f373..9d4f296 100644
+index 4992139..ffeabb5 100644
 --- a/Dockerfile
 +++ b/Dockerfile
 @@ -13,6 +13,7 @@ FROM nvcr.io/nvidia/pytorch:25.08-py3 AS base-arm64
@@ -21,22 +39,24 @@ index 262f373..9d4f296 100644
  
  COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
  COPY --from=dcgm-exporter /usr/bin/dcgm-exporter /usr/bin/dcgm-exporter
-@@ -22,6 +23,10 @@ RUN printf '%s\n' \
+@@ -22,6 +23,12 @@ RUN printf '%s\n' \
      >> /etc/dcgm-exporter/default-counters.csv
  
  ARG DEBIAN_FRONTEND=noninteractive
 +RUN if [ "${TARGETARCH}" = "arm64" ]; then \
-+      curl -fsSL -o /tmp/cuda-keyring.deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/sbsa/cuda-keyring_1.1-1_all.deb && \
++      . /etc/os-release && \
++      ubuntu_repo="ubuntu$(echo "${VERSION_ID}" | tr -d '.')" && \
++      curl -fsSL -o /tmp/cuda-keyring.deb "https://developer.download.nvidia.com/compute/cuda/repos/${ubuntu_repo}/sbsa/cuda-keyring_1.1-1_all.deb" && \
 +      dpkg -i /tmp/cuda-keyring.deb && rm -f /tmp/cuda-keyring.deb; \
 +    fi
  RUN apt-get update && apt-get install -y \
      git \
      ffmpeg \
-@@ -57,7 +62,20 @@ WORKDIR /repo
+@@ -57,7 +64,20 @@ WORKDIR /repo
  
  RUN --mount=type=secret,id=netrc,target=/root/.netrc \
      --mount=type=cache,target=/root/.cache/uv \
--    sh -c 'if [ -f /root/.netrc ]; then export NETRC=/root/.netrc; fi && uv sync --extra all'
+-    sh -c 'if [ -f /root/.netrc ]; then export NETRC=/root/.netrc; fi && uv sync --extra all --extra recipes'
 +    sh -c '\
 +      if [ -f /root/.netrc ]; then export NETRC=/root/.netrc; fi && \
 +      if [ "${TARGETARCH}" = "arm64" ]; then \
@@ -49,12 +69,12 @@ index 262f373..9d4f296 100644
 +          -e /repo/src/runtime \
 +          -e /repo/src/physics; \
 +      else \
-+        uv sync --extra all; \
++        uv sync --extra all --extra recipes; \
 +      fi'
  
  ARG PYTORCH_VERSION=2.8.0+cu128
  ARG TORCH_CLUSTER_VERSION=1.6.3
-@@ -66,12 +84,16 @@ ARG TORCH_SPARSE_VERSION=0.6.18
+@@ -66,12 +86,16 @@ ARG TORCH_SPARSE_VERSION=0.6.18
  
  # Install PyG compiled extensions (torch-cluster, torch-scatter, torch-sparse)
  # from pre-built wheels matching the installed torch + CUDA versions.
@@ -64,8 +84,8 @@ index 262f373..9d4f296 100644
 -        "torch-scatter==${TORCH_SCATTER_VERSION}" \
 -        "torch-sparse==${TORCH_SPARSE_VERSION}" \
 -        -f "$PYG_WHEEL_URL"
-+# Only trafficsim depends on these, and trafficsim is excluded from the arm64
-+# headless-runtime package set above, so skip this step on arm64.
++# Only alpasim-trafficsim needs these, and it is excluded from the arm64 package set
++# above; the wheel index is also pinned to an x86 CUDA build.
 +RUN if [ "${TARGETARCH}" != "arm64" ]; then \
 +      PYG_WHEEL_URL="https://data.pyg.org/whl/torch-${PYTORCH_VERSION}.html" && \
 +      uv pip install \
@@ -77,3 +97,6 @@ index 262f373..9d4f296 100644
  
  ENV UV_CACHE_DIR=/tmp/uv-cache
  ENV UV_NO_SYNC=1
+-- 
+2.43.0
+

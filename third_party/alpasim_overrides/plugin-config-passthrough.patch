@@ -1,16 +1,26 @@
-From c8afbf2a1e4a73e0eb37fc8ebe61a705f03e11d6 Mon Sep 17 00:00:00 2001
+From e4036960fad9cfd87ca611c7e9789d2b8bbb13e2 Mon Sep 17 00:00:00 2001
 From: AlpaBridge maintainers <alpabridge@users.noreply.github.com>
-Date: Mon, 27 Jul 2026 21:29:43 +0200
+Date: Wed, 12 Aug 2026 21:36:07 +0200
 Subject: [PATCH] driver: add a free-form pass-through field for third-party
- model config
+ model plugins
 
-model_type is resolved dynamically via the alpasim.models plugin registry, so a third party can register a whole new model class without touching driver code - but that model has no way to receive its own configuration, since OmegaConf's structured-config validation rejects any key not already declared on ModelConfig. Add a plain dict[str, Any] field; OmegaConf's strictness applies to a dataclass's declared fields, not to the contents of a dict-typed field, so this stays open to arbitrary keys without loosening validation on every other field.
+model_type resolves through the alpasim.models entry-point registry, so a third-party
+backend can be added without touching driver code -- but its configuration cannot. ModelConfig
+is a structured config, so OmegaConf rejects any key it does not declare, and a plugin has
+nowhere to put its own options.
+
+Add `model.extra`, a plain dict, so a plugin can take `model.extra.my_param` without
+ModelConfig having to know about it. Built-in backends are unaffected.
+
+Re-cut against main @ 1e801ca: the previous revision did not apply after ModelConfig
+replaced use_classifier_free_guidance_nav with a weight-based field and expanded its
+docstring.
 ---
- src/driver/src/alpasim_driver/schema.py | 7 +++++++
- 1 file changed, 7 insertions(+)
+ src/driver/src/alpasim_driver/schema.py | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
 diff --git a/src/driver/src/alpasim_driver/schema.py b/src/driver/src/alpasim_driver/schema.py
-index a38276a..29375b1 100644
+index d39cc39..f066532 100644
 --- a/src/driver/src/alpasim_driver/schema.py
 +++ b/src/driver/src/alpasim_driver/schema.py
 @@ -4,6 +4,7 @@
@@ -21,16 +31,18 @@ index a38276a..29375b1 100644
  
  from omegaconf import MISSING
  
-@@ -27,6 +28,12 @@ class ModelConfig:
-     tokenizer_path: str | None = None  # Only required for VAM
-     use_classifier_free_guidance_nav: bool = False  # A1.5 only
-     force_determinism: bool = False  # Alpamayo 1 only
-+    # Free-form pass-through for third-party model plugins. OmegaConf's
-+    # structured-config validation rejects unknown top-level keys on this
-+    # dataclass, but a plain dict field like this one accepts arbitrary
-+    # nested keys, so a plugin can take e.g. model.extra.my_param without
-+    # ModelConfig needing to know about it in advance.
+@@ -48,6 +49,11 @@ class ModelConfig:
+     # instruction to blend towards.
+     cfg_guidance_weight: float | None = None
+     force_determinism: bool = False  # Alpamayo models only
++    # Free-form pass-through for third-party model plugins. OmegaConf's structured-config
++    # validation rejects unknown keys on this dataclass, so a plugin cannot accept its own
++    # options without ModelConfig knowing them in advance; a plain dict field can carry
++    # arbitrary nested keys, e.g. model.extra.my_param.
 +    extra: dict[str, Any] = field(default_factory=dict)
- 
- 
- @dataclass
+     num_trajectory_samples: int = 1  # Alpamayo models only
+     # Where camera JPEGs are decoded.  ``cuda`` leaves the frames on the
+     # device, so the model's preprocessing resizes there too (Alpamayo models
+-- 
+2.43.0
+

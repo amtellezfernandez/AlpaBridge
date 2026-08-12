@@ -1,6 +1,6 @@
 # Proposed upstream PR: a `docker_local` extras group for headless runtime images
 
-**Status:** drafted and fully verified against `NVlabs/alpasim` `main` (commit `3032e0c`), not yet opened.
+**Status:** re-cut 2026-08-12 against `1e801ca`, whose `all` extra gained `alpasim-trafficsim`. Applies cleanly to `main` @ `1e801ca`; not yet opened.
 
 **Related:** the [ARM64 Docker build proposal](./arm64-docker-build.md) is the Docker-side half of this same fix - it installs exactly this package list (editable) instead of `uv sync --extra all` when building for ARM64. They're meant to be read together.
 

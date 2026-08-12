@@ -1,19 +1,31 @@
-From 45b9a9ac2e5e60cb8a289ab269dca5035a1fe045 Mon Sep 17 00:00:00 2001
+From a91d23136888be7396acc3632174f5de4e6eeaa4 Mon Sep 17 00:00:00 2001
 From: AlpaBridge maintainers <alpabridge@users.noreply.github.com>
-Date: Mon, 27 Jul 2026 21:29:43 +0200
+Date: Wed, 12 Aug 2026 21:36:07 +0200
 Subject: [PATCH] driver: lazily import optional model backends in
- models/__init__.py
+ models/__init__
 
-models/__init__ eagerly imports all four built-in model backends (VAM, Alpamayo 1/1.5) at package-import time, so the package fails to import in a minimal driver environment that doesn't have their optional dependencies installed. Import them lazily via __getattr__ instead, keeping base abstractions importable everywhere; the built-in backends stay available through their entry points when their deps are present.
+models/__init__ eagerly imports every built-in backend, so `from alpasim_driver.models
+import BaseTrajectoryModel` drags in VAM and all three Alpamayo models. In a minimal
+external-driver environment -- where the policy runs on the host and the heavyweight
+backends are deliberately not installed -- that import fails outright, even though the
+caller only wanted the base abstractions.
+
+Resolve the optional backends through a module __getattr__ instead. Every public name is
+unchanged and still in __all__, so `from alpasim_driver.models import Alpamayo2Model`
+behaves exactly as before when its dependencies are present; it just no longer costs an
+import when they are not.
+
+Note for reviewers: this file is one that must be kept in step as backends are added --
+Alpamayo2Model landed in the August 2026 sync and is included here.
 ---
- .../src/alpasim_driver/models/__init__.py     | 32 ++++++++++++++++---
- 1 file changed, 28 insertions(+), 4 deletions(-)
+ .../src/alpasim_driver/models/__init__.py     | 34 ++++++++++++++++---
+ 1 file changed, 29 insertions(+), 5 deletions(-)
 
 diff --git a/src/driver/src/alpasim_driver/models/__init__.py b/src/driver/src/alpasim_driver/models/__init__.py
-index 7d0aa0b..9e09e33 100644
+index 62b5b3c..9f9cc2e 100644
 --- a/src/driver/src/alpasim_driver/models/__init__.py
 +++ b/src/driver/src/alpasim_driver/models/__init__.py
-@@ -1,10 +1,19 @@
+@@ -1,11 +1,19 @@
  # SPDX-License-Identifier: Apache-2.0
  # Copyright (c) 2025-2026 NVIDIA Corporation
  
@@ -33,10 +45,11 @@ index 7d0aa0b..9e09e33 100644
  
 -from .alpamayo1_5_model import Alpamayo15Model
 -from .alpamayo1_model import Alpamayo1Model
+-from .alpamayo2_model import Alpamayo2Model
  from .base import (
      BaseTrajectoryModel,
      CameraFrame,
-@@ -14,7 +23,12 @@ from .base import (
+@@ -15,7 +23,13 @@ from .base import (
      PredictionInput,
  )
  from .manual_model import ManualModel
@@ -45,12 +58,13 @@ index 7d0aa0b..9e09e33 100644
 +_LAZY_IMPORTS = {
 +    "Alpamayo15Model": ".alpamayo1_5_model",
 +    "Alpamayo1Model": ".alpamayo1_model",
++    "Alpamayo2Model": ".alpamayo2_model",
 +    "VAMModel": ".vam_model",
 +}
  
  __all__ = [
      "Alpamayo15Model",
-@@ -28,3 +42,13 @@ __all__ = [
+@@ -30,3 +44,13 @@ __all__ = [
      "PredictionInput",
      "VAMModel",
  ]
@@ -64,3 +78,6 @@ index 7d0aa0b..9e09e33 100644
 +    value = getattr(module, name)
 +    globals()[name] = value
 +    return value
+-- 
+2.43.0
+

@@ -1,6 +1,6 @@
 # Proposed upstream PR: treat late/duplicate session events as idempotent, not fatal
 
-**Status:** drafted and fully verified against `NVlabs/alpasim` `main` (commit `3032e0c`), not yet opened.
+**Status:** re-cut 2026-08-12 from AlpaBridge's applied override; content verified by a live closed-loop rollout on `1e801ca` (198 frames, session COMPLETED, zero sensor failures). Applies cleanly to `main` @ `1e801ca`; not yet opened.
 
 **Note on scope vs. the email to Max:** the email's bullet only named `close_session`/`submit_image_observation`/`submit_egomotion_observation`/`submit_route`. The patch also idempotently handles `drive` hitting an unknown session (currently `raise KeyError(...)`) - same category of fix, so it's included here as a fifth case rather than left out.
 

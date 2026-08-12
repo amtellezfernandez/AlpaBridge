@@ -1,35 +1,47 @@
-From f934edeec3ed1588c32fea62d83a99a52fee316f Mon Sep 17 00:00:00 2001
+From ca83556778b11bf56c9f5667263c35adb265d7fb Mon Sep 17 00:00:00 2001
 From: AlpaBridge maintainers <alpabridge@users.noreply.github.com>
-Date: Mon, 27 Jul 2026 21:29:43 +0200
+Date: Wed, 12 Aug 2026 21:35:43 +0200
 Subject: [PATCH] driver: treat late/duplicate session events as idempotent,
  not fatal
 
-Five EgoDriverService RPC handlers (close_session, submit_image_observation, submit_egomotion_observation, submit_route, drive) raise KeyError when request.session_uuid isn't in self._sessions, so a message that arrives after a session ended (or before it's registered) crashes the service instead of being a normal, ignorable race. Log-and-no-op on an unknown session in all five instead.
+EgoDriverService raises on any RPC naming a session it does not have: close_session's
+bare `del` raises KeyError, and submit_image_observation/submit_egomotion_observation/
+submit_route/drive all index `self._sessions` directly. A message that arrives after a
+session ended, or before it was registered, is a normal race against process restarts in
+an external-driver setup, and it takes the whole service down.
+
+Log and no-op instead. `drive` returns the same empty Trajectory the service already
+returns for its insufficient-frames and missing-pose paths, so callers see a shape they
+already handle. The close_session guard is taken inside `_sessions_lock`, matching how
+that dict is locked elsewhere.
+
+Verified against main @ 1e801ca by a live closed-loop rollout (198 frames, session
+COMPLETED, zero sensor failures).
 ---
- src/driver/src/alpasim_driver/main.py | 47 +++++++++++++++++++++++----
- 1 file changed, 41 insertions(+), 6 deletions(-)
+ src/driver/src/alpasim_driver/main.py | 39 ++++++++++++++++++++++++---
+ 1 file changed, 35 insertions(+), 4 deletions(-)
 
 diff --git a/src/driver/src/alpasim_driver/main.py b/src/driver/src/alpasim_driver/main.py
-index 03546df..fd23409 100644
+index 9013bf2..eb08eac 100644
 --- a/src/driver/src/alpasim_driver/main.py
 +++ b/src/driver/src/alpasim_driver/main.py
-@@ -747,7 +747,11 @@ class EgoDriverService(EgodriverServiceServicer):
-         self, request: DriveSessionCloseRequest, context: grpc.aio.ServicerContext
+@@ -804,6 +804,12 @@ class EgoDriverService(EgodriverServiceServicer):
+         self, request: DriveSessionCloseRequest, context: grpc.ServicerContext
      ) -> Empty:
-         if request.session_uuid not in self._sessions:
--            raise KeyError(f"Session {request.session_uuid} does not exist.")
-+            logger.warning(
-+                "close_session for unknown session %s; treating as idempotent",
-+                request.session_uuid,
-+            )
-+            return Empty()
- 
-         logger.info(f"Closing session {request.session_uuid}")
-         del self._sessions[request.session_uuid]
-@@ -771,7 +775,14 @@ class EgoDriverService(EgodriverServiceServicer):
+         with self._sessions_lock:
++            if request.session_uuid not in self._sessions:
++                logger.warning(
++                    "close_session for unknown session %s; treating as idempotent",
++                    request.session_uuid,
++                )
++                return Empty()
+             logger.info(f"Closing session {request.session_uuid}")
+             del self._sessions[request.session_uuid]
+         return Empty()
+@@ -823,7 +829,14 @@ class EgoDriverService(EgodriverServiceServicer):
+         self, request: RolloutCameraImage, context: grpc.ServicerContext
      ) -> Empty:
          grpc_image = request.camera_image
-         image = Image.open(BytesIO(grpc_image.image_bytes))
 -        session = self._sessions[request.session_uuid]
 +        session = self._sessions.get(request.session_uuid)
 +        if session is None:
@@ -39,66 +51,54 @@ index 03546df..fd23409 100644
 +                grpc_image.frame_end_us,
 +            )
 +            return Empty()
-         if grpc_image.logical_id not in session.desired_cameras_logical_ids:
+         if grpc_image.logical_id not in session.frame_caches:
              raise ValueError(f"Camera {grpc_image.logical_id} not in desired cameras")
  
-@@ -795,7 +806,19 @@ class EgoDriverService(EgodriverServiceServicer):
-     async def submit_egomotion_observation(
-         self, request: RolloutEgoTrajectory, context: grpc.aio.ServicerContext
+@@ -869,7 +882,13 @@ class EgoDriverService(EgodriverServiceServicer):
+     def submit_egomotion_observation(
+         self, request: RolloutEgoTrajectory, context: grpc.ServicerContext
      ) -> Empty:
 -        session = self._sessions[request.session_uuid]
 +        session = self._sessions.get(request.session_uuid)
 +        if session is None:
-+            last_ts = (
-+                request.trajectory.poses[-1].timestamp_us
-+                if request.trajectory.poses
-+                else "unknown"
-+            )
 +            logger.warning(
-+                "submit_egomotion_observation for unknown session %s at %s; ignoring late egomotion",
++                "submit_egomotion_observation for unknown session %s; ignoring late egomotion",
 +                request.session_uuid,
-+                last_ts,
 +            )
 +            return Empty()
  
          session.add_egoposes(request.trajectory)
  
-@@ -813,15 +836,22 @@ class EgoDriverService(EgodriverServiceServicer):
-         self, request: RouteRequest, context: grpc.aio.ServicerContext
+@@ -887,7 +906,13 @@ class EgoDriverService(EgodriverServiceServicer):
+         self, request: RouteRequest, context: grpc.ServicerContext
      ) -> Empty:
          logger.debug("submit_route: waypoint count=%s", len(request.route.waypoints))
+-        session = self._sessions[request.session_uuid]
 +        session = self._sessions.get(request.session_uuid)
 +        if session is None:
 +            logger.warning(
-+                "submit_route for unknown session %s; ignoring late route update",
++                "submit_route for unknown session %s; ignoring late route",
 +                request.session_uuid,
 +            )
 +            return Empty()
+         session.route = request.route
          if self._cfg.route is not None:
--            self._sessions[request.session_uuid].update_command_from_route(
-+            session.update_command_from_route(
-                 request.route,
-                 self._cfg.route.use_waypoint_commands,
-                 self._cfg.route.command_distance_threshold,
-                 self._cfg.route.min_lookahead_distance,
-             )
-         else:
--            self._sessions[request.session_uuid].update_command_from_route(
-+            session.update_command_from_route(
-                 request.route,
-                 use_waypoint_commands=False,
-             )
-@@ -843,7 +873,12 @@ class EgoDriverService(EgodriverServiceServicer):
-         self, request: DriveRequest, context: grpc.aio.ServicerContext
+             session.update_command_from_route(
+@@ -918,7 +943,13 @@ class EgoDriverService(EgodriverServiceServicer):
+     def drive(
+         self, request: DriveRequest, context: grpc.ServicerContext
      ) -> DriveResponse:
-         if request.session_uuid not in self._sessions:
--            raise KeyError(f"Session {request.session_uuid} not found")
+-        session = self._sessions[request.session_uuid]
++        session = self._sessions.get(request.session_uuid)
++        if session is None:
 +            logger.warning(
-+                "drive for unknown session %s at %s; returning empty trajectory",
++                "drive for unknown session %s; returning empty trajectory",
 +                request.session_uuid,
-+                request.time_query_us,
 +            )
 +            return DriveResponse(trajectory=Trajectory())
  
-         session = self._sessions[request.session_uuid]
- 
+         if not self._check_frames_ready(session):
+             empty_traj = Trajectory()
+-- 
+2.43.0
+
