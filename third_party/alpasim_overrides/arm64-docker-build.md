@@ -2,18 +2,39 @@
 
 **Status:** drafted and verified with a real `docker build` on real ARM64/Blackwell hardware (NVIDIA GB10) against `NVlabs/alpasim` `main` (commit `3032e0c`), not yet opened.
 
-**Needs re-authoring before it is opened (checked 2026-08-12).** The patch no longer
-applies to `main` @ `1e801ca`: the August 2026 sync moved the install line to
-`uv sync --extra all --extra recipes`, added `alpasim-trafficsim` to the `all` extra,
-and upstream has since adopted the multi-stage arch split itself
-(`FROM nvcr.io/nvidia/pytorch:25.08-py3 AS base-arm64` / `FROM base-${TARGETARCH}`),
-so fix #3's scoping analysis must be re-checked against what upstream now does rather
-than against what it did at `3032e0c`. Re-verification requires another real ARM64
-`docker build` (the previous one produced a 33.3GB image); the GB10's root filesystem
-was at 96% / 171G free when this was written, so clear space first.
+**The fixes are re-authored and verified against `main` @ `1e801ca`, but they now live in
+the applied override, not in the patch below.** The patch below is still cut against
+`3032e0c` and does not apply; it needs re-cutting from the applied override before it is
+opened upstream.
 
-**One fix to fold in that is not yet in the patch below.** The arm64 CUDA keyring URL
-hardcodes the Ubuntu release, which breaks whenever the base image moves:
+Why they moved: `alpabridge-setup` applies only the patches under
+`src/alpabridge/alpasim_overrides`. This directory holds *upstream proposals*, which setup
+never applies — so every arm64 fix that lived only here was missing from real arm64
+setups, while `local_checkout.patch`'s arm64 install branch depended on one of them
+(`ARG TARGETARCH`) to fire at all. All four now live in `local_checkout.patch`:
+the in-stage `ARG TARGETARCH` re-declaration, the CUDA apt repo, the install subset, and
+the PyG skip.
+
+**Verified 2026-08-12 by a real ARM64 `docker build` on the GB10**, against a fresh clone
+of `1e801ca` with the overrides applied through AlpaBridge's own
+`_apply_local_alpasim_overrides` (installed from the built wheel, which itself confirms the
+wheel imports on aarch64):
+
+- Build succeeded end to end, zero errors, `alpasim-arm64-aug2026:latest`, 33.1GB.
+- Every arm64 conditional demonstrably fired, which is the point of fix #3 — the build log
+  shows the steps expanded as `if [ "arm64" = "arm64" ]` and `if [ "arm64" != "arm64" ]`,
+  i.e. `TARGETARCH` resolved rather than expanding empty. The PyG step correctly no-opped
+  in 0.2s and the install-subset step ran for 598s.
+- The CUDA keyring step derived `ubuntu2404` from the base image's `/etc/os-release` and
+  installed `cuda-keyring 1.1-1` successfully.
+- Functional check inside the image: all seven installed packages import on aarch64
+  (`alpasim_controller`, `alpasim_runtime`, `alpasim_physics`, `alpasim_grpc`,
+  `alpasim_utils`, `alpasim_plugins`, and `alpasim_eval` — whose import name is `eval`,
+  not `alpasim_eval`), `torch 2.13.0+cu130`, and with `--gpus all`,
+  `torch.cuda.is_available()` is True on `NVIDIA GB10`.
+
+**The fix that had never been captured anywhere.** The arm64 CUDA keyring URL hardcoded the
+Ubuntu release, which breaks whenever the base image moves:
 
 ```diff
  RUN if [ "${TARGETARCH}" = "arm64" ]; then \
