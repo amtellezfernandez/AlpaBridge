@@ -910,11 +910,20 @@ def _preflight_platform_compatibility() -> None:
     if os.getenv("ALPABRIDGE_ALLOW_UNSUPPORTED_ALPASIM_ARM", "").strip() == "1":
         return
     raise SystemExit(
-        "AlpaSim local external-driver rollouts are not currently supported on ARM hosts in this "
-        "repo because the required NRE sensorsim image is amd64-only. On DGX Spark / arm64 we "
-        "observed sensorsim either fail under emulation or stall before opening its gRPC port. "
-        "Run the AlpaSim matrix on an x86_64 host, or set ALPABRIDGE_ALLOW_UNSUPPORTED_ALPASIM_ARM=1 "
-        "to force the launch anyway."
+        "AlpaBridge's local external-driver rollouts do not run on ARM hosts yet. The blocker is "
+        "specifically the NuRec/sensorsim renderer: nvcr.io/nvidia/nre/nre-ga ships a single-arch "
+        "amd64 manifest, so there is nothing to run natively, and under emulation it fails or "
+        "stalls before opening its gRPC port. Everything else in the stack does build and run "
+        "natively on aarch64 -- runtime, controller, physics, trafficsim and the driver were "
+        "verified on NVIDIA GB10.\n"
+        "\n"
+        "This is a renderer limitation, not an architecture one. AlpaSim's other renderer "
+        "(runtime.renderer.kind=video_model, the OmniDreams/FlashDreams path) is built from "
+        "source rather than pulled as a prebuilt amd64 image, so it is the viable ARM route -- "
+        "see AlpaSim's docs/VIDEO_MODEL.md. AlpaBridge does not ship a deploy config for it yet.\n"
+        "\n"
+        "For now: run on an x86_64 host, or set ALPABRIDGE_ALLOW_UNSUPPORTED_ALPASIM_ARM=1 to "
+        "force the launch anyway."
     )
 
 
