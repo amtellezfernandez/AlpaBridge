@@ -966,6 +966,38 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
             self.assertFalse(_should_copy_override_path(patch_file))
             self.assertTrue(_should_copy_override_path(tracked_file))
 
+    def test_override_root_package_marker_is_not_copied_into_the_checkout(self) -> None:
+        """The override root's own `__init__.py` makes alpasim_overrides importable
+        inside AlpaBridge; it is not payload. Copying it dropped a stray `__init__.py`
+        at the root of the user's AlpaSim checkout. Nested `__init__.py` files are real
+        overrides (`src/driver/**/models/__init__.py`) and must still be copied."""
+        with tempfile.TemporaryDirectory() as tmp:
+            source_root = Path(tmp) / "overrides"
+            alpasim_root = Path(tmp) / "alpasim"
+            alpasim_root.mkdir(parents=True, exist_ok=True)
+
+            root_marker = source_root / "__init__.py"
+            nested_override = (
+                source_root / "src" / "driver" / "src" / "alpasim_driver" / "models" / "__init__.py"
+            )
+            for path in (root_marker, nested_override):
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("# payload\n", encoding="utf-8")
+
+            self.assertFalse(_should_copy_override_path(root_marker, source_root))
+            self.assertTrue(_should_copy_override_path(nested_override, source_root))
+
+            with patch(
+                "alpabridge.cli.commands.setup_alpasim_local_plugin.ALPASIM_OVERRIDE_ROOT",
+                source_root,
+            ):
+                _apply_local_alpasim_overrides(alpasim_root)
+
+            self.assertFalse((alpasim_root / "__init__.py").exists())
+            self.assertTrue(
+                (alpasim_root / nested_override.relative_to(source_root)).is_file()
+            )
+
     def test_apply_patch_is_idempotent_on_a_checkout_that_already_has_it(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             alpasim_root = _init_git_repo(Path(tmp) / "alpasim", {"module.py": "a = 1\nb = 2\n"})

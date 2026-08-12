@@ -212,7 +212,7 @@ def _apply_local_alpasim_overrides(alpasim_root: Path) -> None:
 
     copied: list[str] = []
     for source in ALPASIM_OVERRIDE_ROOT.rglob("*"):
-        if not _should_copy_override_path(source):
+        if not _should_copy_override_path(source, ALPASIM_OVERRIDE_ROOT):
             continue
         relative = source.relative_to(ALPASIM_OVERRIDE_ROOT)
         target = alpasim_root / relative
@@ -225,7 +225,7 @@ def _apply_local_alpasim_overrides(alpasim_root: Path) -> None:
             print(f"  {relative}")
 
 
-def _should_copy_override_path(source: Path) -> bool:
+def _should_copy_override_path(source: Path, root: Path | None = None) -> bool:
     if not source.is_file():
         return False
     if source.name in OVERRIDE_COPY_IGNORED_DIR_NAMES:
@@ -233,6 +233,13 @@ def _should_copy_override_path(source: Path) -> bool:
     if any(parent.name in OVERRIDE_COPY_IGNORED_DIR_NAMES for parent in source.parents):
         return False
     if source.suffix in OVERRIDE_COPY_IGNORED_SUFFIXES:
+        return False
+    # The override root's own `__init__.py` is what makes alpasim_overrides an importable
+    # package inside AlpaBridge - it is not payload. Copying it wrote a stray `__init__.py`
+    # into the root of the user's AlpaSim checkout (visible there as untracked noise, and
+    # enough to make Python treat the repo root as a package). Only the root-level one is
+    # excluded: `src/driver/**/models/__init__.py` is a genuine override and still copies.
+    if source.name == "__init__.py" and source.parent == (root or ALPASIM_OVERRIDE_ROOT):
         return False
     return True
 
