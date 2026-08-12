@@ -11,6 +11,7 @@ import types
 import unittest
 from io import StringIO
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -112,6 +113,10 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
             "fakepkg.context": types.ModuleType("fakepkg.context"),
             "fakepkg.services": types.ModuleType("fakepkg.services"),
             "fakepkg.utils": types.ModuleType("fakepkg.utils"),
+            # `from ..schema import RunMode` arrived with the August 2026 sync, when the
+            # override was rebased onto upstream's current file. A stub is enough: this
+            # harness only needs the module to import, not to deploy anything.
+            "fakepkg.schema": types.ModuleType("fakepkg.schema"),
         }
         fake_modules["alpasim_utils.paths"].find_repo_root = lambda _path: ROOT
         fake_modules["fakepkg.context"].WizardContext = object
@@ -119,6 +124,7 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
         fake_modules["fakepkg.services"].build_container_set = lambda *args, **kwargs: None
         fake_modules["fakepkg.utils"].LiteralStr = str
         fake_modules["fakepkg.utils"].write_yaml = lambda *args, **kwargs: None
+        fake_modules["fakepkg.schema"].RunMode = SimpleNamespace(SERVER="server")
 
         spec = importlib.util.spec_from_file_location(
             "fakepkg.deployment.docker_compose",
