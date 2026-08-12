@@ -1,58 +1,97 @@
-From 9921efb797886f6048b642d0f99a42b9cf080b1d Mon Sep 17 00:00:00 2001
+From 2e9085491ab65f78c8e2d2c0d6f74162710b7f99 Mon Sep 17 00:00:00 2001
 From: AlpaBridge maintainers <alpabridge@users.noreply.github.com>
 Date: Wed, 12 Aug 2026 12:00:00 +0200
-Subject: [PATCH] driver: local-checkout robustness for the external-driver dev
- loop
+Subject: [PATCH] driver: local-checkout robustness and ARM64 build support
 
-Bundles the fixes needed to run AlpaSim's local-external-driver path
-against a real local AlpaBridge development loop, where sessions can
-legitimately race or overlap with process restarts in ways the stock
-driver treats as fatal:
+Bundles the fixes needed to run AlpaSim's local-external-driver path against a
+real local AlpaBridge development loop, and to build the runtime image on ARM64
+(Grace Blackwell) hosts.
+
+Session lifecycle -- sessions can legitimately race or overlap with process
+restarts in ways the stock driver treats as fatal:
 
 - EgoDriverService session RPCs (close_session/submit_image_observation/
-  submit_egomotion_observation/submit_route/drive) now log-and-no-op on an
-  unknown session instead of raising KeyError, so a late message after a
-  session ended (or before alpabridge-driver has registered it) doesn't
-  crash the service. `drive` returns upstream's own established no-op
-  value for this case, an empty Trajectory, rather than a new shape.
-- Dockerfile / pyproject.toml: add a `docker_local` dependency subset and
-  an arm64 branch for building the runtime image on Grace Blackwell hosts,
-  where the full `--extra all --extra recipes` install pulls x86-only and
-  PyQt5-dependent packages that don't resolve.
+  submit_egomotion_observation/submit_route/drive) log-and-no-op on an unknown
+  session instead of raising KeyError, so a late message after a session ended
+  (or before alpabridge-driver has registered it) doesn't crash the service.
+  `drive` returns upstream's own established no-op value for this case, an empty
+  Trajectory, rather than a new shape.
 
-Re-authored 2026-08-12 against alpasim main @ 1e801ca (August 2026 public
-sync). The previous revision of this patch was cut against 3032e0c and no
-longer applied to any of its three files:
+ARM64 build -- the four changes an aarch64 `docker build` needs, all keyed off
+TARGETARCH so the x86 path is untouched:
 
-- EgoDriverService moved from async `grpc.aio.ServicerContext` to sync
-  `grpc.ServicerContext`, gained a `@log_call` decorator and a
-  `_sessions_lock`, and renamed `session.desired_cameras_logical_ids` to
-  `session.frame_caches`. close_session's own existence check was dropped
-  upstream, so its bare `del` now raises KeyError where it previously
-  raised a descriptive one -- the guard is still required, and is now taken
-  inside `_sessions_lock` to match upstream's locking of that dict.
-- pyproject.toml's `all` gained `alpasim-trafficsim` and a new `recipes`
-  model extra was added alongside it; `docker_local` now also documents why
-  trafficsim is excluded (torch_geometric/PyG, x86-hardcoded in Dockerfile).
-- The Dockerfile install line moved and became `--extra all --extra
-  recipes`; the x86 branch carries both extras forward.
+- `ARG TARGETARCH` re-declared after `FROM base-${TARGETARCH}`. The top-level
+  declaration is scoped to the pre-FROM context so the FROM can resolve; it is
+  NOT in scope for RUN steps inside the stage it opens. Without this, every
+  arm64 conditional below expands to `if [ "" = "arm64" ]` and silently takes
+  the x86 path -- a failure that presents as a step completing suspiciously
+  fast, not as an error.
+- CUDA apt repo configured on arm64, since datacenter-gpu-manager-4-cuda12 comes
+  from it and the arm64 base image doesn't have it. The repo path is derived from
+  the base image's own /etc/os-release rather than hardcoded, so it follows the
+  base image instead of breaking when it moves.
+- Install a package subset on arm64 instead of `uv sync --extra all --extra
+  recipes`: alpasim-tools pulls PyQt5, which doesn't resolve on linux aarch64;
+  alpasim_driver/alpasim_plugins pull x86-only packages such as tensordict via
+  the upstream learned-driver models, and the external driver runs on the host
+  anyway; alpasim_wizard is launched on the host; alpasim-trafficsim pulls
+  torch_geometric.
+- Skip the PyG compiled extensions on arm64. That step's wheel index is pinned
+  to an x86 CUDA build (2.8.0+cu128) and publishes nothing for aarch64. Only
+  alpasim-trafficsim needs them and it is excluded above, so they are unneeded
+  rather than merely unavailable.
+- pyproject.toml gains a `docker_local` extra naming the same headless runtime
+  subset, documenting why each exclusion is there.
 
-Two more local-checkout changes (models/__init__.py's lazy VAM/Alpamayo
-imports, and docker_compose.py's deployment tweaks) are carried as full
-tracked file copies elsewhere in this override tree instead of hunks
-here - the copy step always runs last and wins, so a parallel patch hunk
-for either file was dead weight nothing ever exercised.
+Re-authored 2026-08-12 against alpasim main @ 1e801ca (August 2026 public sync).
+The previous revision was cut against 3032e0c and no longer applied to any of its
+files: EgoDriverService moved from async `grpc.aio.ServicerContext` to sync
+`grpc.ServicerContext`, gained `@log_call` and a `_sessions_lock`, and renamed
+`session.desired_cameras_logical_ids` to `session.frame_caches`; close_session's
+own existence check was dropped upstream, so its bare `del` now raises KeyError
+where it previously raised a descriptive one, and the guard is taken inside
+`_sessions_lock` to match upstream's locking of that dict. On the build side,
+`all` gained alpasim-trafficsim, a `recipes` extra appeared, the install line
+became `--extra all --extra recipes`, and upstream adopted the multi-stage arch
+split itself.
+
+Two more local-checkout changes (models/__init__.py's lazy VAM/Alpamayo imports,
+and docker_compose.py's deployment tweaks) are carried as full tracked file copies
+elsewhere in this override tree instead of hunks here - the copy step always runs
+last and wins, so a parallel patch hunk for either file was dead weight nothing
+ever exercised.
 ---
- Dockerfile                            | 15 ++++++++++-
+ Dockerfile                            | 36 ++++++++++++++++++++-----
  pyproject.toml                        | 18 +++++++++++++
  src/driver/src/alpasim_driver/main.py | 39 ++++++++++++++++++++++++---
- 3 files changed, 67 insertions(+), 5 deletions(-)
+ 3 files changed, 82 insertions(+), 11 deletions(-)
 
 diff --git a/Dockerfile b/Dockerfile
-index 4992139..6aa0686 100644
+index 4992139..fdb921a 100644
 --- a/Dockerfile
 +++ b/Dockerfile
-@@ -57,7 +57,20 @@ WORKDIR /repo
+@@ -13,6 +13,7 @@ FROM nvcr.io/nvidia/pytorch:25.08-py3 AS base-arm64
+ FROM nvcr.io/nvidia/k8s/dcgm-exporter:4.4.1-4.6.0-ubuntu22.04@sha256:b7a4241c608253aa829041cc3575ea57082491251a4a626bcdddc68eaf9a3101 AS dcgm-exporter
+ ARG TARGETARCH
+ FROM base-${TARGETARCH}
++ARG TARGETARCH
+ 
+ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+ COPY --from=dcgm-exporter /usr/bin/dcgm-exporter /usr/bin/dcgm-exporter
+@@ -22,6 +23,12 @@ RUN printf '%s\n' \
+     >> /etc/dcgm-exporter/default-counters.csv
+ 
+ ARG DEBIAN_FRONTEND=noninteractive
++RUN if [ "${TARGETARCH}" = "arm64" ]; then \
++      . /etc/os-release && \
++      ubuntu_repo="ubuntu$(echo "${VERSION_ID}" | tr -d '.')" && \
++      curl -fsSL -o /tmp/cuda-keyring.deb "https://developer.download.nvidia.com/compute/cuda/repos/${ubuntu_repo}/sbsa/cuda-keyring_1.1-1_all.deb" && \
++      dpkg -i /tmp/cuda-keyring.deb && rm -f /tmp/cuda-keyring.deb; \
++    fi
+ RUN apt-get update && apt-get install -y \
+     git \
+     ffmpeg \
+@@ -57,7 +64,20 @@ WORKDIR /repo
  
  RUN --mount=type=secret,id=netrc,target=/root/.netrc \
      --mount=type=cache,target=/root/.cache/uv \
@@ -74,6 +113,27 @@ index 4992139..6aa0686 100644
  
  ARG PYTORCH_VERSION=2.8.0+cu128
  ARG TORCH_CLUSTER_VERSION=1.6.3
+@@ -66,12 +86,14 @@ ARG TORCH_SPARSE_VERSION=0.6.18
+ 
+ # Install PyG compiled extensions (torch-cluster, torch-scatter, torch-sparse)
+ # from pre-built wheels matching the installed torch + CUDA versions.
+-RUN PYG_WHEEL_URL="https://data.pyg.org/whl/torch-${PYTORCH_VERSION}.html" && \
+-    uv pip install \
+-        "torch-cluster==${TORCH_CLUSTER_VERSION}" \
+-        "torch-scatter==${TORCH_SCATTER_VERSION}" \
+-        "torch-sparse==${TORCH_SPARSE_VERSION}" \
+-        -f "$PYG_WHEEL_URL"
++RUN if [ "${TARGETARCH}" != "arm64" ]; then \
++      PYG_WHEEL_URL="https://data.pyg.org/whl/torch-${PYTORCH_VERSION}.html" && \
++      uv pip install \
++          "torch-cluster==${TORCH_CLUSTER_VERSION}" \
++          "torch-scatter==${TORCH_SCATTER_VERSION}" \
++          "torch-sparse==${TORCH_SPARSE_VERSION}" \
++          -f "$PYG_WHEEL_URL"; \
++    fi
+ 
+ ENV UV_CACHE_DIR=/tmp/uv-cache
+ ENV UV_NO_SYNC=1
 diff --git a/pyproject.toml b/pyproject.toml
 index 3f5231a..a9a1cdc 100644
 --- a/pyproject.toml
