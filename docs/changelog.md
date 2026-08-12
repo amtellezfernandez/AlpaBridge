@@ -39,6 +39,21 @@ All notable adapter-release changes are tracked here.
   `test_packaged_and_tracked_alpasim_overrides_stay_in_sync` derives its file
   list from the two override roots instead of a hand-maintained tuple that had
   omitted `models/__init__.py` — the one file that then drifted.
+- Assessed the two migrations the AlpaSim release calls for and confirmed both are
+  no-ops for AlpaBridge, rather than assuming either way:
+  - *"Alpamayo runs now reject camera images smaller than 320x576"* applies to the
+    built-in `driver=alpamayo*` models. AlpaBridge ships its own driver configs
+    (`simulator/alpasim_configs/driver/*.yaml`, `defaults: [_self_]`, own
+    `model_type`), so it never selects those; and its policies resize whatever the
+    renderer sends via `image_ops.resize_and_center_crop`, which cover-scales rather
+    than assuming a minimum source size. The `cameras=1cam` group AlpaBridge pins
+    from each preset's `inference.use_cameras` still exists alongside the new
+    `1cam_1080`, so `+cameras=1cam` still resolves.
+  - *"move custom `driver.rectification` intrinsics to matching
+    `runtime.extra_cameras`"* applies to Sensorsim/NuRec deployments that set
+    `driver.rectification`. AlpaBridge sets it nowhere, and its VaVAM support is its
+    own external-driver adapter (`simulator/vavam_model.py`), not upstream's
+    `driver=vavam_video_model` path, so there are no intrinsics to move.
 - Flagged in `third_party/alpasim_overrides/README.md` that the seven upstream
   proposals are still verified only against `3032e0c`, which predates this
   release, and must be re-verified before any is opened.
