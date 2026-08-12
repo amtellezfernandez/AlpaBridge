@@ -142,3 +142,37 @@ synthetic testing:
   roughly 1 in 5 does. Whether the official evaluator scores per-call
   latency, an aggregate throughput budget, or something else isn't documented
   publicly — this describes what was measured, not a compliance claim.
+
+
+## ARM64: the blocker is the renderer, not the architecture
+
+Investigated 2026-08-12 on NVIDIA GB10. Everything in the AlpaSim stack except one service
+builds and runs natively on aarch64 — runtime, controller, physics, trafficsim, plugins and
+grpc were verified inside a real 33.1GB ARM64 image (7/7 packages importing, `torch
+2.13.0+cu130`, `torch.cuda.is_available()` true on GB10).
+
+The single blocker is the **NuRec/sensorsim renderer**: `nvcr.io/nvidia/nre/nre-ga` publishes
+a *single-arch* manifest (schema v2, amd64), not a manifest list, so there is no aarch64
+image to run and nothing to rebuild — and under emulation it fails or stalls before opening
+its gRPC port (the three abandoned `qemu-x86_64` containers found idling on the GB10 for 11
+days were exactly this).
+
+**AlpaSim ships a second renderer that does not have this problem.**
+`runtime.renderer.kind=video_model` (OmniDreams, served via FlashDreams) replaces NuRec, and
+per AlpaSim's `docs/VIDEO_MODEL.md` FlashDreams *"publishes Dockerfiles but not pre-built
+images — we need to build them ourselves."* Built-from-source is precisely what makes an
+ARM64 target possible, the same way AlpaBridge's own `local_checkout.patch` made
+`alpasim-base` build on GB10. In `deploy=external_video_model` the renderer is an
+`external_services` entry rather than a wizard-managed container, and `run_sim_services`
+reduces to `[driver, physics, trafficsim, controller, runtime]` — all already verified on
+aarch64.
+
+Memory footprint favours the GB10 rather than working against it: the video-model path wants
+48GB of VRAM for VaVAM (96GB for Alpamayo 1.5), which suits GB10 unified memory and rules out
+a 16GB laptop GPU.
+
+**Not yet attempted**, and the honest unknowns before it can be claimed: whether FlashDreams'
+own Dockerfiles carry x86 assumptions (AlpaSim's did — four of them), the size of the model
+checkpoint downloads, and disk headroom on the GB10. AlpaBridge also has no deploy config
+combining an external driver with a video-model renderer; that config is the concrete next
+piece of work.

@@ -1356,7 +1356,14 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
             with patch("platform.machine", return_value="aarch64"):
                 with self.assertRaises(SystemExit) as ctx:
                     _preflight_platform_compatibility()
-        self.assertIn("amd64-only", str(ctx.exception))
+        message = str(ctx.exception)
+        # The block must name the renderer as the blocker and point at the ARM route, not
+        # read as "AlpaSim does not run on ARM" -- the rest of the stack is verified on GB10,
+        # and the video_model renderer is built from source rather than pulled as amd64.
+        self.assertIn("amd64", message)
+        self.assertIn("sensorsim", message)
+        self.assertIn("video_model", message)
+        self.assertIn("ALPABRIDGE_ALLOW_UNSUPPORTED_ALPASIM_ARM=1", message)
 
     def test_platform_preflight_allows_arm_with_override(self) -> None:
         with patch.dict(os.environ, {"ALPABRIDGE_ALLOW_UNSUPPORTED_ALPASIM_ARM": "1"}, clear=False):
