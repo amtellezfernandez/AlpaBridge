@@ -89,8 +89,21 @@ The **proposals** in this directory (`*.md` + `.patch` pairs) still carry
 "verified against `3032e0c`" in their status lines, and `3032e0c` predates the
 August 2026 public sync — a 167-file release that rewrote `driver/main.py`
 (+390/-304), moved `EgoDriverService` from async `grpc.aio` to sync `grpc`,
-reworked `models/base.py`, and added the Alpamayo 2 driver. **Each proposal needs
-re-verification against current `main` before it is opened**, and
-`route-waypoints-in-prediction-input.md` has already turned out to be superseded
-by upstream's own implementation. Do not `git am` any of them onto a current
-checkout on the strength of the old status line.
+reworked `models/base.py`, and added the Alpamayo 2 driver. **Do not `git am` any
+proposal onto a current checkout on the strength of its old status line.**
+
+Measured 2026-08-12 with `git apply --check` against a pristine clone of `main`
+@ `1e801ca`. This says only whether a patch still *applies* — a green row still
+needs its verification steps re-run before the PR is opened:
+
+| proposal | applies to `1e801ca` | note |
+| --- | --- | --- |
+| `cameraframe-type-mismatch.patch` | yes | re-run verification, then openable |
+| `route-generator-plugin.patch` | yes | re-run verification, then openable |
+| `utils-rs-negative-zero-serialization.patch` | yes | re-run verification, then openable |
+| `session-event-idempotency.patch` | no | same `driver/main.py` rewrite that broke `local_checkout.patch`; the re-authored guards in that patch are the content to regenerate this from |
+| `lazy-model-imports.patch` | no | `models/__init__.py` gained `Alpamayo2Model`; must cover it, as the applied override now does |
+| `docker-local-extras.patch` | no | `pyproject.toml`'s `all` gained `alpasim-trafficsim` and a `recipes` extra was added; re-authored content already in `local_checkout.patch` |
+| `arm64-docker-build.patch` | no | Dockerfile install line moved and became `--extra all --extra recipes`; re-authored content already in `local_checkout.patch` |
+| `plugin-config-passthrough.patch` | no | not yet diagnosed |
+| `route-waypoints-in-prediction-input.patch` | no | superseded upstream — see that `.md`; do not reopen |
