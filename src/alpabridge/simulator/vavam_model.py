@@ -18,6 +18,7 @@ from .alpasim_contract import (
     BaseTrajectoryModel,
     DriveCommand,
     ModelPrediction,
+    make_model_prediction,
     resample_trajectory,
 )
 from .image_ops import resize_and_center_crop
@@ -203,7 +204,7 @@ class VAVAMAlpaSimModel(BaseTrajectoryModel):
             "horizon_extrapolated": extrapolated,
             "reused_cached_inference": reused_cache,
         }
-        return ModelPrediction(
+        return make_model_prediction(
             trajectory_xy=trajectory_xy,
             headings=headings,
             reasoning_text=json.dumps(metadata, sort_keys=True),

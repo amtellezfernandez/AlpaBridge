@@ -16,7 +16,11 @@ from alpabridge.driver.driver_service import (
     prediction_to_proto_trajectory,
     run_self_test,
 )
-from alpabridge.simulator.alpasim_contract import DriveCommand, ModelPrediction
+from alpabridge.simulator.alpasim_contract import (
+    DriveCommand,
+    make_model_prediction,
+    prediction_trajectory_xy,
+)
 
 
 class _Repeated(list):
@@ -93,8 +97,8 @@ def test_driver_service_preserves_route_geometry_for_route_following() -> None:
     prediction = adapter.predict("session-a", time_now_us=1_000_000)
 
     assert prediction_input.route_waypoints[1]["y"] == 15.0
-    assert prediction.trajectory_xy.shape == (50, 2)
-    assert float(prediction.trajectory_xy[-1, 1]) > 10.0
+    assert prediction_trajectory_xy(prediction).shape == (50, 2)
+    assert float(prediction_trajectory_xy(prediction)[-1, 1]) > 10.0
 
 
 def test_driver_service_applies_command_only_route_at_shared_boundary() -> None:
@@ -151,7 +155,7 @@ def test_driver_service_maps_external_camera_id_to_internal_contract_key() -> No
 
     assert sorted(prediction_input.camera_images) == ["front"]
     assert prediction_input.camera_images["front"][0].timestamp_us == 2_000_000
-    assert prediction.trajectory_xy.shape == (50, 2)
+    assert prediction_trajectory_xy(prediction).shape == (50, 2)
 
 
 def test_driver_service_writes_drive_telemetry() -> None:
@@ -244,7 +248,7 @@ def test_driver_service_uses_pose_speed_when_recorded_dynamic_speed_is_zero() ->
     prediction = adapter.predict("session-speed", time_now_us=1_000_000)
 
     assert prediction_input.speed == pytest.approx(10.0)
-    assert float(prediction.trajectory_xy[-1, 0]) == pytest.approx(50.0)
+    assert float(prediction_trajectory_xy(prediction)[-1, 0]) == pytest.approx(50.0)
 
 
 @pytest.mark.parametrize(
@@ -399,7 +403,7 @@ def test_driver_service_selects_freshest_accepted_camera_alias() -> None:
 
 
 def test_prediction_to_proto_trajectory_rotates_ego_relative_offsets() -> None:
-    prediction = ModelPrediction(
+    prediction = make_model_prediction(
         trajectory_xy=np.asarray([[1.0, 0.0], [2.0, 0.0]], dtype=np.float32),
         headings=np.asarray([0.0, 0.0], dtype=np.float32),
     )
@@ -437,14 +441,13 @@ def test_prediction_to_proto_trajectory_rejects_invalid_outputs(
     headings: np.ndarray,
     message: str,
 ) -> None:
-    prediction = ModelPrediction(
-        trajectory_xy=trajectory,
-        headings=headings,
-    )
-
+    # Construction is inside the raises block on purpose: some of these are now caught
+    # when the prediction is built (empty path, heading/point count mismatch) rather than
+    # at conversion. What matters is that the pipeline rejects them with the same message,
+    # not which half of it holds the guard.
     with pytest.raises(ValueError, match=message):
         prediction_to_proto_trajectory(
-            prediction,
+            make_model_prediction(trajectory_xy=trajectory, headings=headings),
             current_pose=None,
             time_now_us=10_000,
             common_pb2=_FakeCommonPb2,
@@ -452,7 +455,7 @@ def test_prediction_to_proto_trajectory_rejects_invalid_outputs(
 
 
 def test_prediction_to_proto_trajectory_rejects_nonfinite_world_pose() -> None:
-    prediction = ModelPrediction(
+    prediction = make_model_prediction(
         trajectory_xy=np.asarray([[1.0, 0.0]], dtype=np.float64),
         headings=np.asarray([0.0], dtype=np.float64),
     )
@@ -467,7 +470,7 @@ def test_prediction_to_proto_trajectory_rejects_nonfinite_world_pose() -> None:
 
 
 def test_prediction_to_proto_trajectory_rejects_nonfinite_transformed_output() -> None:
-    prediction = ModelPrediction(
+    prediction = make_model_prediction(
         trajectory_xy=np.asarray(
             [
                 [np.finfo(np.float64).max, 0.0],

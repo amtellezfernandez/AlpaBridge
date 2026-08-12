@@ -309,8 +309,15 @@ def _advice(
         advice.append(
             "One or more frames used command-proxy or missing route geometry. Treat this run as adapter triage, not claim-valid evidence."
         )
+        # The route-waypoints override this used to recommend was retired: AlpaSim
+        # provides PredictionInput.route natively as of the August 2026 sync, and
+        # route_waypoints_from_input already reads it. A command-proxy frame now means
+        # the route geometry that arrived was unusable, not that an override is missing.
         advice.append(
-            "Apply the route-waypoints AlpaSim override and rerun until every audited frame reports route_source=alpasim_waypoints."
+            "Check the route AlpaSim actually sent: waypoints arrive in the rig frame at the "
+            "route's own timestamp, so a route that is never re-sent falls behind the ego and "
+            "stops yielding usable points. Compare route_waypoint_count with the filtered count "
+            "per frame in the driver log."
         )
         return advice
     advice.append(

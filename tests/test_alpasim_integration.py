@@ -31,7 +31,10 @@ from alpabridge.simulator.alpasim_contract import (
     ModelPrediction,
     SensorFreshnessGuard,
     corrected_speed_mps,
+    make_model_prediction,
     pose_history_speed_mps,
+    prediction_headings,
+    prediction_trajectory_xy,
     resample_trajectory,
 )
 from alpabridge.simulator.alpasim_direct_actor_planner import (
@@ -188,9 +191,9 @@ class AlpaSimIntegrationTests(unittest.TestCase):
             output = model.predict(prediction_input)
             log_row = json.loads(log_path.read_text(encoding="utf-8").splitlines()[0])
 
-        self.assertEqual(output.trajectory_xy.shape, (20, 2))
-        np.testing.assert_allclose(output.trajectory_xy[:, 1], np.zeros(20), atol=1e-6)
-        self.assertAlmostEqual(20.0, float(output.trajectory_xy[-1, 0]), places=5)
+        self.assertEqual(prediction_trajectory_xy(output).shape, (20, 2))
+        np.testing.assert_allclose(prediction_trajectory_xy(output)[:, 1], np.zeros(20), atol=1e-6)
+        self.assertAlmostEqual(20.0, float(prediction_trajectory_xy(output)[-1, 0]), places=5)
         self.assertEqual("constant_velocity", log_row["baseline"])
         self.assertEqual("alpasim_waypoints", log_row["route_source"])
         self.assertEqual(2, log_row["route_waypoint_count"])
@@ -222,7 +225,7 @@ class AlpaSimIntegrationTests(unittest.TestCase):
         output = model.predict(prediction_input)
 
         # ~10.84 m/s, not 0 - the trajectory should show real forward motion.
-        self.assertGreater(float(output.trajectory_xy[-1, 0]), 5.0)
+        self.assertGreater(float(prediction_trajectory_xy(output)[-1, 0]), 5.0)
 
     def test_baseline_models_implement_alpasim_command_encoder(self) -> None:
         model = ConstantVelocityAlpaSimModel(camera_ids=["front"], context_length=1, output_frequency_hz=4)
@@ -250,10 +253,10 @@ class AlpaSimIntegrationTests(unittest.TestCase):
         output = model.predict(prediction_input)
         reasoning = json.loads(output.reasoning_text)
 
-        self.assertEqual(output.trajectory_xy.shape, (20, 2))
+        self.assertEqual(prediction_trajectory_xy(output).shape, (20, 2))
         self.assertEqual("route_following", reasoning["baseline"])
-        self.assertGreater(float(output.trajectory_xy[-1, 1]), 19.0)
-        self.assertLess(abs(float(output.trajectory_xy[-1, 0])), 1e-5)
+        self.assertGreater(float(prediction_trajectory_xy(output)[-1, 1]), 19.0)
+        self.assertLess(abs(float(prediction_trajectory_xy(output)[-1, 0])), 1e-5)
 
     def test_route_following_command_only_ablation_ignores_route_geometry(self) -> None:
         model = RouteFollowingAlpaSimModel(
@@ -283,8 +286,8 @@ class AlpaSimIntegrationTests(unittest.TestCase):
         self.assertEqual("command_only_route", reasoning["route_contract_mode"])
         self.assertEqual("command_proxy", reasoning["route_source"])
         self.assertEqual(0, reasoning["route_waypoint_count"])
-        self.assertLess(abs(float(output.trajectory_xy[-1, 1])), 1e-5)
-        self.assertGreater(float(output.trajectory_xy[-1, 0]), 19.0)
+        self.assertLess(abs(float(prediction_trajectory_xy(output)[-1, 1])), 1e-5)
+        self.assertGreater(float(prediction_trajectory_xy(output)[-1, 0]), 19.0)
 
     @pytest.mark.temporal
     def test_resample_trajectory_preserves_native_runtime_samples(self) -> None:
@@ -436,7 +439,7 @@ class AlpaSimIntegrationTests(unittest.TestCase):
                     output_frequency_hz=self.output_frequency_hz,
                     horizon_seconds=self.horizon_seconds,
                 )
-                return ModelPrediction(
+                return make_model_prediction(
                     trajectory_xy=trajectory_xy,
                     headings=self._compute_headings_from_trajectory(trajectory_xy),
                     reasoning_text="resampled",
@@ -446,10 +449,10 @@ class AlpaSimIntegrationTests(unittest.TestCase):
 
         prediction = ResamplingAdapter(logged).predict(object())
 
-        self.assertEqual(prediction.trajectory_xy.shape, (12, 2))
-        self.assertEqual(prediction.headings.shape, (12,))
-        self.assertTrue(np.isfinite(prediction.headings).all())
-        self.assertGreater(np.count_nonzero(np.isclose(prediction.headings, np.pi / 2.0, atol=1e-6)), 0)
+        self.assertEqual(prediction_trajectory_xy(prediction).shape, (12, 2))
+        self.assertEqual(prediction_headings(prediction).shape, (12,))
+        self.assertTrue(np.isfinite(prediction_headings(prediction)).all())
+        self.assertGreater(np.count_nonzero(np.isclose(prediction_headings(prediction), np.pi / 2.0, atol=1e-6)), 0)
 
     @pytest.mark.temporal
     def test_output_shape_matches_runtime_contract(self) -> None:
@@ -563,7 +566,7 @@ class AlpaSimIntegrationTests(unittest.TestCase):
                     output_frequency_hz=self.output_frequency_hz,
                     horizon_seconds=self.horizon_seconds,
                 )
-                return ModelPrediction(
+                return make_model_prediction(
                     trajectory_xy=trajectory_xy,
                     headings=self._compute_headings_from_trajectory(trajectory_xy),
                     reasoning_text="replay_identity",
@@ -579,9 +582,9 @@ class AlpaSimIntegrationTests(unittest.TestCase):
 
         prediction = ReplayIdentityAdapter(logged).predict(object())
 
-        np.testing.assert_allclose(prediction.trajectory_xy, logged, atol=1e-6)
+        np.testing.assert_allclose(prediction_trajectory_xy(prediction), logged, atol=1e-6)
         np.testing.assert_allclose(
-            prediction.headings,
+            prediction_headings(prediction),
             BaseTrajectoryModel._compute_headings_from_trajectory(logged),
             atol=1e-6,
         )
@@ -633,7 +636,7 @@ class AlpaSimIntegrationTests(unittest.TestCase):
         output = model.predict(prediction_input)
         reasoning = json.loads(output.reasoning_text)
 
-        self.assertEqual(output.trajectory_xy.shape, (20, 2))
+        self.assertEqual(prediction_trajectory_xy(output).shape, (20, 2))
         self.assertEqual(reasoning["planner"], "selector_free_actor_aware_grid")
         self.assertNotIn("selected_maneuver", reasoning)
         self.assertGreater(reasoning["plan"]["progress_m"], 0.0)
@@ -863,7 +866,7 @@ class AlpaSimIntegrationTests(unittest.TestCase):
         self.assertEqual(2, reasoning["route_waypoint_count"])
         self.assertEqual("command_proxy", reasoning["route_source"])
         # Actually drove the straight-line fallback, not route geometry.
-        self.assertLess(abs(float(output.trajectory_xy[-1, 1])), 1e-5)
+        self.assertLess(abs(float(prediction_trajectory_xy(output)[-1, 1])), 1e-5)
 
     def test_mpc_planner_tracks_a_clear_straight_route_without_deviating(self) -> None:
         model = MPCPlannerAlpaSimModel(camera_ids=["front"], context_length=1, output_frequency_hz=4)
@@ -878,8 +881,8 @@ class AlpaSimIntegrationTests(unittest.TestCase):
         output = model.predict(prediction_input)
         reasoning = json.loads(output.reasoning_text)
 
-        self.assertEqual((20, 2), output.trajectory_xy.shape)
-        self.assertLess(float(np.max(np.abs(output.trajectory_xy[:, 1]))), 1e-5)
+        self.assertEqual((20, 2), prediction_trajectory_xy(output).shape)
+        self.assertLess(float(np.max(np.abs(prediction_trajectory_xy(output)[:, 1]))), 1e-5)
         self.assertEqual(0.0, reasoning["chosen_yaw_rate_rps"])
         self.assertEqual("candidate_rollout_mpc", reasoning["planner"])
 
@@ -909,8 +912,8 @@ class AlpaSimIntegrationTests(unittest.TestCase):
         # chosen plan - not just get logged and ignored.
         self.assertNotEqual(0.0, blocked_reasoning["chosen_yaw_rate_rps"])
         self.assertGreater(
-            float(np.max(np.abs(blocked_output.trajectory_xy[:, 1]))),
-            float(np.max(np.abs(clear_output.trajectory_xy[:, 1]))),
+            float(np.max(np.abs(prediction_trajectory_xy(blocked_output)[:, 1]))),
+            float(np.max(np.abs(prediction_trajectory_xy(clear_output)[:, 1]))),
         )
         self.assertEqual(1, blocked_reasoning["obstacle_count"])
 
@@ -922,8 +925,8 @@ class AlpaSimIntegrationTests(unittest.TestCase):
         left_output = model.predict(left_input)
         right_output = model.predict(right_input)
 
-        self.assertGreater(float(left_output.trajectory_xy[-1, 1]), 0.0)
-        self.assertLess(float(right_output.trajectory_xy[-1, 1]), 0.0)
+        self.assertGreater(float(prediction_trajectory_xy(left_output)[-1, 1]), 0.0)
+        self.assertLess(float(prediction_trajectory_xy(right_output)[-1, 1]), 0.0)
 
     def test_mpc_planner_accelerates_toward_cruise_speed_when_clear(self) -> None:
         model = MPCPlannerAlpaSimModel(
@@ -1244,8 +1247,8 @@ class AlpaSimIntegrationTests(unittest.TestCase):
             )
             prediction = adapter.predict(prediction_input)
 
-        self.assertEqual((20, 2), prediction.trajectory_xy.shape)
-        self.assertEqual((20,), prediction.headings.shape)
+        self.assertEqual((20, 2), prediction_trajectory_xy(prediction).shape)
+        self.assertEqual((20,), prediction_headings(prediction).shape)
         self.assertIsNotNone(prediction.reasoning_text)
         assert prediction.reasoning_text is not None
         self.assertIn('"selected_maneuver": "maintain"', prediction.reasoning_text)
@@ -1295,8 +1298,8 @@ class AlpaSimIntegrationTests(unittest.TestCase):
             raw_prediction = raw_adapter.predict(prediction_input)
             clamped_prediction = clamped_adapter.predict(prediction_input)
 
-        self.assertGreater(float(raw_prediction.trajectory_xy[:, 1].max()), 6.0)
-        self.assertLessEqual(float(clamped_prediction.trajectory_xy[:, 1].max()), 2.05)
+        self.assertGreater(float(prediction_trajectory_xy(raw_prediction)[:, 1].max()), 6.0)
+        self.assertLessEqual(float(prediction_trajectory_xy(clamped_prediction)[:, 1].max()), 2.05)
         self.assertIn('"trajectory_mode": "clamped_lateral"', clamped_prediction.reasoning_text or "")
 
     def test_token_bc_alpasim_adapter_hybrid_logs_selection_trace(self) -> None:
@@ -2382,7 +2385,7 @@ class AlpaSimIntegrationTests(unittest.TestCase):
 
         output = model.predict(prediction_input)
 
-        self.assertEqual(output.trajectory_xy.shape, (20, 2))
+        self.assertEqual(prediction_trajectory_xy(output).shape, (20, 2))
 
     def test_baseline_driver_camera_validation_rejects_a_missing_expected_camera(self) -> None:
         model = RouteFollowingAlpaSimModel(

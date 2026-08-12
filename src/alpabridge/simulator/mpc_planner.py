@@ -45,6 +45,7 @@ from .alpasim_contract import (
     PredictionInput,
     SensorFreshnessGuard,
     corrected_speed_mps,
+    make_model_prediction,
     prediction_runtime_metadata,
     prediction_scene_id,
     resample_trajectory,
@@ -231,7 +232,7 @@ class MPCPlannerAlpaSimModel(BaseTrajectoryModel):
             "result": "ok",
         }
         self._append_log(payload)
-        return ModelPrediction(
+        return make_model_prediction(
             trajectory_xy=trajectory_xy,
             headings=headings,
             reasoning_text=json.dumps(payload, sort_keys=True),
