@@ -5,6 +5,7 @@ import math
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from types import SimpleNamespace
+from typing import Any
 
 import numpy as np
 import pytest
@@ -263,19 +264,46 @@ def test_vavam_driver_service_requires_tokenizer_checkpoint(tmp_path: Path) -> N
         AlpaBridgeDriverService(model_name="vavam", checkpoint_path=checkpoint)
 
 
-def test_vavam_driver_service_dispatches_to_vavam_model(tmp_path: Path) -> None:
+def test_vavam_driver_service_dispatches_to_vavam_model(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Asserts dispatch directly, by substituting VAVAMAlpaSimModel and checking what it
+    was constructed with.
+
+    This used to assert `pytest.raises(ImportError, match="requires torch")` -- using the
+    model's own optional-dependency guard as a proxy for "dispatch reached the model". The
+    proxy only holds when torch is absent, which is true in CI and false for anyone who has
+    run ./scripts/bootstrap_alpasim_env.sh (it installs torch into this repo's venv). With
+    torch present, dispatch still happens correctly and the test failed anyway, on a later
+    `No module named 'vam'` from the real VideoActionModel import. Assert the thing the test
+    is named for instead of an error message that happens to accompany it.
+    """
     checkpoint = tmp_path / "vavam.pt"
     tokenizer_checkpoint = tmp_path / "vavam_tokenizer.jit"
     checkpoint.write_bytes(b"placeholder")
     tokenizer_checkpoint.write_bytes(b"placeholder")
 
-    with pytest.raises(ImportError, match="requires torch"):
-        AlpaBridgeDriverService(
-            model_name="vavam",
-            checkpoint_path=checkpoint,
-            tokenizer_checkpoint_path=tokenizer_checkpoint,
-            device="cpu",
-        )
+    constructed: dict[str, Any] = {}
+
+    class _StubVAVAMAlpaSimModel:
+        def __init__(self, **kwargs: Any) -> None:
+            constructed.update(kwargs)
+
+    import alpabridge.simulator.vavam_model as vavam_module
+
+    monkeypatch.setattr(vavam_module, "VAVAMAlpaSimModel", _StubVAVAMAlpaSimModel)
+
+    AlpaBridgeDriverService(
+        model_name="vavam",
+        checkpoint_path=checkpoint,
+        tokenizer_checkpoint_path=tokenizer_checkpoint,
+        device="cpu",
+    )
+
+    assert constructed, "vavam policy did not dispatch to VAVAMAlpaSimModel"
+    assert Path(constructed["checkpoint_path"]) == checkpoint
+    assert Path(constructed["tokenizer_checkpoint_path"]) == tokenizer_checkpoint
+    assert constructed["device"] == "cpu"
 
 
 def test_learned_policy_driver_service_records_pinned_checkpoint_hash(

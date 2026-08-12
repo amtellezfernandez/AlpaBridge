@@ -39,6 +39,32 @@ All notable adapter-release changes are tracked here.
   `test_packaged_and_tracked_alpasim_overrides_stay_in_sync` derives its file
   list from the two override roots instead of a hand-maintained tuple that had
   omitted `models/__init__.py` — the one file that then drifted.
+- Rebased the `docker_compose.py` override onto upstream's current file. The shipped
+  override was a fork of a much older upstream version and **hard-failed against AlpaSim
+  `1e801ca`**: it iterated `container_set.runtime`, which upstream made a single
+  `ContainerDefinition`, so a real rollout died with
+  `TypeError: 'ContainerDefinition' object is not iterable` before any container started.
+  Found by attempting an actual closed-loop rollout, not by reading the file -- the drift
+  had been sitting there since at least 2026-07-01 (upstream has not touched that file
+  since) and no test covered it.
+  Rebasing takes upstream's current file as the base and re-applies only AlpaBridge's four
+  intentional deltas (the `--array-job-dir` single-run normalisation, `pull_policy:
+  missing`, and `pid: host` plus all-GPU reservations on the runtime service). Everything
+  else the fork had silently reverted is now inherited: prometheus service handling,
+  `RunMode.SERVER` port publishing, the `_netrc_secret_file` helper, the `umask 0000`
+  command prefix, and escaping every `$` rather than only `\$`.
+- Fixed two tests that only passed because of what happened to be absent from the
+  environment:
+  - The `docker_compose.py` override loader now stubs `fakepkg.schema`, needed since the
+    rebased override inherits upstream's `from ..schema import RunMode`.
+  - `test_vavam_driver_service_dispatches_to_vavam_model` asserted
+    `pytest.raises(ImportError, match="requires torch")`, using the model's own
+    optional-dependency guard as a proxy for "dispatch reached the model". That proxy only
+    holds when torch is absent -- true in CI, false for anyone who has run
+    `./scripts/bootstrap_alpasim_env.sh`, which installs torch into this repo's venv. With
+    torch present the dispatch still worked and the test failed anyway, on a later
+    `No module named 'vam'`. It now substitutes `VAVAMAlpaSimModel` and asserts what it was
+    constructed with, which is the thing the test is named for.
 - Fixed the ARM64 build path, which could not have worked as shipped. The re-authored
   `local_checkout.patch` gates its arm64 install subset on `${TARGETARCH}`, but
   upstream's `ARG TARGETARCH` is declared *before* `FROM base-${TARGETARCH}` and is

@@ -15,13 +15,20 @@ from typing import Any
 from alpasim_utils.paths import find_repo_root
 
 from ..context import WizardContext
+from ..schema import RunMode
 from ..services import ContainerDefinition, build_container_set
 from ..utils import LiteralStr, write_yaml
 
 logger = logging.getLogger(__name__)
 
 
+def _netrc_secret_file() -> Path | None:
+    netrc_path = Path.home() / ".netrc"
+    return netrc_path if netrc_path.is_file() else None
+
+
 def _host_path_for_mount(volumes: list[str], container_path: str) -> str | None:
+    """Host path bound to ``container_path``, or None if it is not mounted."""
     for mount in volumes:
         parts = mount.split(":", 2)
         if len(parts) < 2:
@@ -33,7 +40,14 @@ def _host_path_for_mount(volumes: list[str], container_path: str) -> str | None:
 
 
 def _normalize_single_run_runtime_command(command: str, volumes: list[str]) -> str:
-    """Keep runtime aggregation in single-job mode when both mounts share one host dir."""
+    """Keep runtime aggregation in single-job mode when both mounts share one host dir.
+
+    AlpaBridge runs one scene per invocation with --log-dir and --array-job-dir pointing
+    at the same host directory. The runtime then writes its aggregate under
+    /mnt/array_job_dir while everything else lands under /mnt/log_dir, so the aggregate
+    ends up in a sibling path the run directory does not include. Collapsing the two when
+    they are the same host directory keeps a single-run rollout's output self-contained.
+    """
 
     log_dir_host = _host_path_for_mount(volumes, "/mnt/log_dir")
     array_job_dir_host = _host_path_for_mount(volumes, "/mnt/array_job_dir")
@@ -76,16 +90,21 @@ class DockerComposeDeployment:
         """Run docker compose up to deploy all services."""
         log_dir = self.context.cfg.wizard.log_dir
         compose_file = Path(log_dir) / self.docker_compose_filepath
-        command = ["docker", "compose", "-f", str(compose_file), "up"]
-        # Without --exit-code-from, `up` only returns once every service has
-        # exited on its own - but physics/renderer/controller are long-running
-        # servers, not one-shot jobs, so they never do, and the whole stack
-        # (and this process) sits there indefinitely after the runtime
-        # container that actually drives the rollout finishes. Matches
-        # upstream's own current deploy_all_services, which this override had
-        # fallen out of sync with.
+        command = [
+            "docker",
+            "compose",
+            "-f",
+            str(compose_file),
+            "up",
+        ]
         if self.container_set.runtime:
-            command.extend(["--remove-orphans", "--exit-code-from", "runtime-0"])
+            command.extend(
+                [
+                    "--remove-orphans",
+                    "--exit-code-from",
+                    "runtime-0",
+                ]
+            )
 
         if self.context.cfg.wizard.dry_run:
             logger.info("[DRY-RUN] Would execute: %s", shlex.join(command))
@@ -117,33 +136,46 @@ class DockerComposeDeployment:
             Docker Compose service configuration dict
         """
         ret: dict[str, Any] = {}
+        service_config = container.service_config
         use_host_network = self.context.cfg.wizard.debug_flags.use_localhost
         if use_host_network:
+            # Tell Docker to use the host network
             ret["network_mode"] = "host"
         else:
             ret["networks"] = ["microservices_network"]
         ret["volumes"] = [v.to_str() for v in container.volumes]
+        # AlpaBridge delta: local external-driver runs use images that are built here or
+        # loaded from a local tar, never pulled -- an upstream default of "always" turns
+        # every rollout into a registry round trip that fails without credentials.
         ret["pull_policy"] = "missing"
-        ret["image"] = container.service_config.image
+        ret["image"] = service_config.image
 
         repo_root = str(find_repo_root(__file__))
 
-        if not container.service_config.external_image:
+        if not service_config.external_image:
             build_config: dict[str, Any] = {
                 "context": repo_root,
                 "dockerfile": "Dockerfile",
-                "tags": [container.service_config.image],
+                "tags": [service_config.image],
             }
-            if Path.home().joinpath(".netrc").exists():
+            if _netrc_secret_file() is not None:
                 build_config["secrets"] = ["netrc"]
             ret["build"] = build_config
 
         if container.command:
             ret["entrypoint"] = "bash"
             command = container.command
+            # AlpaBridge delta, see _normalize_single_run_runtime_command.
             command = _normalize_single_run_runtime_command(command, ret["volumes"])
-            command = command.replace(r"\$", "$$")
+            # Escaping:
+            # We use \$ to declare fields that should not be interpreted by
+            # 'our' OmegaConf parser, but by downstream parsers in the service.
+            # Furhtermore, for docker-compose, we need to escape $ as $$
+            command = command.replace("$", "$$")
+            # Set permissive umask so files written to bind-mounted volumes
+            # are accessible by the host user (containers run as root).
             command = "umask 0000\n" + command
+            # Use literal scalar string for multi-line commands to get | format in YAML
             if "\n" in command:
                 command = LiteralStr(command)
             ret["command"] = ["-c", command]
@@ -153,8 +185,18 @@ class DockerComposeDeployment:
             ret["environment"] = container.environments
 
         addresses = container.get_all_addresses()
-        if addresses and use_host_network:
-            ports = [f"{addr.port}:{addr.port}" for addr in addresses]
+        publish_runtime_server_port = (
+            container.name == "runtime"
+            and self.context.cfg.wizard.run_mode == RunMode.SERVER
+        )
+        ports: list[str] = []
+        if not use_host_network and container.published_ports:
+            ports.extend(
+                f"{port}:{port}" for port in container.published_ports.values()
+            )
+        if addresses and (use_host_network or publish_runtime_server_port):
+            ports.extend(f"{addr.port}:{addr.port}" for addr in addresses)
+        if ports:
             ret["ports"] = ports
 
         if container.gpu is not None:
@@ -171,6 +213,20 @@ class DockerComposeDeployment:
                     }
                 }
             }
+        elif container.name == "prometheus" and self.context.num_gpus > 0:
+            ret["deploy"] = {
+                "resources": {
+                    "reservations": {
+                        "devices": [
+                            {
+                                "driver": "nvidia",
+                                "count": "all",
+                                "capabilities": ["gpu"],
+                            }
+                        ]
+                    }
+                }
+            }
         return ret
 
     def generate_docker_compose_yaml(self, container_set: Any) -> str:
@@ -182,16 +238,28 @@ class DockerComposeDeployment:
         Returns:
             Filename of the generated docker-compose.yaml
         """
+        # Build services in execution order
         services = {}
 
+        # Simulation services (runtime should start last)
         for c in container_set.sim or []:
             if c.command == "noop":
+                # Special logic to support renderer/physics combined process.
                 continue
             service = self._to_docker_compose_service(c)
             services[c.uuid] = service
 
-        for c in container_set.runtime or []:
-            service = self._to_docker_compose_service(c)
+        service = self._to_docker_compose_service(container_set.prometheus)
+        services[container_set.prometheus.uuid] = service
+
+        # Add runtime service last
+        if container_set.runtime is not None:
+            service = self._to_docker_compose_service(container_set.runtime)
+            # AlpaBridge deltas on the runtime service only:
+            # - pid=host so the runtime can see and signal the external driver process
+            #   running on the host rather than in a container namespace.
+            # - all GPUs rather than one device id: with the driver external, the runtime
+            #   still drives renderer/physics work that expects the full set.
             service["pid"] = "host"
             if any(container.gpu is not None for container in container_set.sim or []):
                 service["deploy"] = {
@@ -207,15 +275,17 @@ class DockerComposeDeployment:
                         }
                     }
                 }
-            services[c.uuid] = service
+            services[container_set.runtime.uuid] = service
 
+        # Create compose structure with ordered services
         compose: dict[str, Any] = {
             "networks": {"microservices_network": {"driver": "bridge"}},
-            "services": services,
+            "services": services,  # Services maintain insertion order in Python 3.7+
         }
-        if Path.home().joinpath(".netrc").exists():
+        if _netrc_secret_file() is not None:
             compose["secrets"] = {"netrc": {"file": "${HOME}/.netrc"}}
 
+        # Write to file
         filename = "docker-compose.yaml"
         log_dir = Path(self.context.cfg.wizard.log_dir)
         logger.info("Writing docker compose YAML to %s/%s", log_dir, filename)
