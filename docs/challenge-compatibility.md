@@ -190,27 +190,33 @@ were:
 - It installs no Python dependencies at all; `docker/Dockerfile.alpasim` does that with a
   single `uv sync --locked --package flashdreams-omnidreams --no-editable`.
 
-So the entire ARM64 question reduces to whether `uv.lock` resolves on aarch64. It did not,
-for exactly one package:
+So the entire ARM64 question reduces to what `uv sync --locked` does inside the container.
 
-**`transformer-engine-cu13` was pinned at `2.17.0`, which is wheel-only and x86_64-only —
-there is no sdist to build from.** It is not a porting problem: that package publishes
-aarch64 wheels for nearly every release, and `2.17.0` is one of only two recent versions
-missing one. `2.17.1` — the next patch — has
-`transformer_engine_cu13-2.17.1-py3-none-manylinux_2_28_aarch64.whl`, and FlashDreams'
-`pyproject` only asks for `>=2.12`, so the pin is a lockfile artifact rather than a
-constraint. One command fixes it:
+**The blocker turned out to be architecture-independent, and it is an upstream bug.** The
+build fails at `uv sync --locked` with *"the lockfile needs updating"* — the container
+resolves **255** packages against a **256**-package lock. Cause: `pyproject.toml` declares
+workspace members `flashdreams`, `integrations/*` and **`apps/*`**, but `Dockerfile.alpasim`
+copies only the first two, so `apps/t2v_demo` is missing and the workspace no longer matches
+the lock. One line fixes it:
 
-```bash
-uv lock --upgrade-package transformer-engine \
-        --upgrade-package transformer-engine-cu13 \
-        --upgrade-package transformer-engine-torch
+```dockerfile
+COPY apps ./apps
 ```
 
-After that, `uv sync --locked --package flashdreams-omnidreams --dry-run` resolves **130
-packages on aarch64 with no errors** (`transformer-engine-torch` is an sdist and compiles,
-which is why the base image installs `gcc g++ ninja-build`). This is worth proposing
-upstream to FlashDreams: nothing about the project requires the ARM-excluding pin.
+Verified this is not arch-specific and not self-inflicted: the *pristine, unmodified* lock
+fails the same way with the same 255/256 counts, and once `apps/` is copied the pristine lock
+builds cleanly on aarch64. Nothing else was needed. This is worth reporting to FlashDreams —
+`Dockerfile.alpasim` is broken as shipped at `ac214dd` on any architecture.
+
+**A separate latent ARM issue, not on this path.** `transformer-engine-cu13` is pinned at
+`2.17.0`, which is wheel-only and x86_64-only with no sdist. It does *not* block this build,
+because `transformer-engine` sits behind a `dev` extra that
+`uv sync --package flashdreams-omnidreams` never installs — an earlier revision of this note
+claimed it was the blocker, which was wrong. It would bite anyone resolving the dev extra on
+aarch64, and it is trivially avoidable: that package ships aarch64 wheels for nearly every
+release, `2.17.0` is one of only two recent versions missing one, `2.17.1` has one, and
+`pyproject` only requires `>=2.12`. Worth proposing upstream, but as a latent fix rather than
+a build blocker.
 
 **Second trap, cross-repo:** AlpaSim's `docs/VIDEO_MODEL.md` says to build the base as
 `-t flashdreams-base:local`, but `Dockerfile.alpasim` declares
