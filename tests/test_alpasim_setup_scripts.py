@@ -972,6 +972,64 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
             self.assertFalse(_should_copy_override_path(patch_file))
             self.assertTrue(_should_copy_override_path(tracked_file))
 
+    def test_retired_override_is_removed_only_when_unmodified(self) -> None:
+        """Setup only ever copies, so a retired override would otherwise live on forever in
+        every checkout that was ever set up. Removal is gated on the file still being
+        byte-identical to what AlpaBridge shipped, so a user's own file is never deleted."""
+        import hashlib
+
+        shipped = "retired override contents\n"
+        digest = hashlib.sha256(shipped.encode()).hexdigest()
+
+        with tempfile.TemporaryDirectory() as tmp:
+            alpasim_root = Path(tmp) / "alpasim"
+            alpasim_root.mkdir(parents=True)
+            unmodified = alpasim_root / "Retired.txt"
+            modified = alpasim_root / "RetiredEdited.txt"
+            unmodified.write_text(shipped, encoding="utf-8")
+            modified.write_text("someone edited this\n", encoding="utf-8")
+
+            with patch.dict(
+                setup_cmd.RETIRED_OVERRIDE_COPIES,
+                {"Retired.txt": digest, "RetiredEdited.txt": digest},
+                clear=True,
+            ):
+                removed = setup_cmd._remove_retired_alpasim_overrides(alpasim_root)
+
+            self.assertEqual(["Retired.txt"], removed)
+            self.assertFalse(unmodified.exists())
+            self.assertTrue(modified.exists(), "a locally modified file must not be deleted")
+
+    def test_override_payload_ships_no_forked_upstream_build_recipe(self) -> None:
+        """No Dockerfile in the override payload.
+
+        `Dockerfile.amd64` used to live here: a stale single-stage fork of a
+        pre-multi-arch upstream Dockerfile, referenced by no code path, whose own header
+        said to build it as `alpasim-base:0.66.0` -- the tag AlpaBridge pins. An image
+        built from it has no dcgm-exporter/prometheus, which upstream's compose now
+        always needs. Upstream's Dockerfile selects its base by TARGETARCH, so forking a
+        per-arch copy is both unnecessary and a trap. Build-recipe changes belong in
+        `local_checkout.patch`, which fails loudly when upstream moves.
+        """
+        for root in (
+            ROOT / "src" / "alpabridge" / "alpasim_overrides",
+            ROOT / "third_party" / "alpasim_overrides",
+        ):
+            offenders = [p.name for p in root.rglob("Dockerfile*") if p.is_file()]
+            self.assertEqual([], offenders, f"forked build recipe in {root}")
+
+    def test_arm_deploy_override_tracks_upstream_defines(self) -> None:
+        """The ARM deploy override re-lists upstream's whole renderer command, so any
+        value it pins as a literal silently stops following upstream. `--max-workers` was
+        hardcoded to 4 while base_config.yaml used ${defines.nre_max_workers}."""
+        text = (
+            ROOT
+            / "src/alpabridge/alpasim_overrides/src/wizard/configs/deploy"
+            / "local_arm_external_driver.yaml"
+        ).read_text(encoding="utf-8")
+        self.assertIn("--max-workers=${defines.nre_max_workers}", text)
+        self.assertNotIn("--max-workers=4", text)
+
     def test_override_root_package_marker_is_not_copied_into_the_checkout(self) -> None:
         """The override root's own `__init__.py` makes alpasim_overrides importable
         inside AlpaBridge; it is not payload. Copying it dropped a stray `__init__.py`

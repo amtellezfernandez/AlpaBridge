@@ -30,7 +30,9 @@ services:
       - "--no-enable-nrend"
       - "--download-cache-dir /tmp/nre-cache-dir"
       - "--cache-size=${defines.nre_cache_size}"
-      - "--max-workers=4"
+      # Track upstream's define rather than pinning a literal: base_config.yaml uses
+      # ${defines.nre_max_workers} here, and a hardcoded copy silently stops following it.
+      - "--max-workers=${defines.nre_max_workers}"
       - "--enable-editing-actors"
       - "--use-gsplat"
 

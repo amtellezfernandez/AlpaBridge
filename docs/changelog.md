@@ -39,6 +39,30 @@ All notable adapter-release changes are tracked here.
   `test_packaged_and_tracked_alpasim_overrides_stay_in_sync` derives its file
   list from the two override roots instead of a hand-maintained tuple that had
   omitted `models/__init__.py` — the one file that then drifted.
+- Audited every remaining override against AlpaSim `1e801ca` rather than only the ones
+  that failed loudly. Verified coherent: both patches apply; the `models/__init__.py` copy;
+  all five driver configs under `simulator/alpasim_configs/driver/` validate against
+  upstream's current `DriverConfig` structured schema; `run_sim_services` is upstream's list
+  minus `"driver"` (the documented external-driver intent); and `use_localhost`,
+  `external_services`, `runtime.endpoints.trafficsim.skip`, `startup_timeout_s`,
+  `defines.renderer_entrypoint` and `defines.nre_cache_size` all still exist upstream. Two
+  did not hold up:
+  - **Removed `Dockerfile.amd64`.** A stale single-stage fork of a pre-multi-arch upstream
+    `Dockerfile`, referenced by no code path, whose own header said to build it as
+    `alpasim-base:0.66.0` -- the tag AlpaBridge pins. It contains none of `dcgm-exporter`,
+    `datacenter-gpu-manager`, `prometheus`, `TARGETARCH` or the `recipes` extra, and
+    upstream's compose now *always* adds a prometheus service from that image, so an image
+    built from it could not run a rollout. Upstream's `Dockerfile` selects its base by
+    `TARGETARCH`, making a per-arch fork obsolete.
+  - **`local_arm_external_driver.yaml` pinned `--max-workers=4`** where upstream's
+    `base_config.yaml` uses `${defines.nre_max_workers}`. Same value today, but the override
+    re-lists upstream's entire renderer command, so any literal it pins silently stops
+    following upstream. It now references the define.
+- Retiring an override now actually takes effect. `alpabridge-setup` only ever *copied*
+  files, so a retired override survived forever in every checkout that had been set up --
+  the checkout kept obeying a file AlpaBridge had disowned. Setup now also removes retired
+  copies, gated on the file still being byte-identical to the version AlpaBridge shipped, so
+  it can never delete something the user wrote.
 - Rebased the `docker_compose.py` override onto upstream's current file. The shipped
   override was a fork of a much older upstream version and **hard-failed against AlpaSim
   `1e801ca`**: it iterated `container_set.runtime`, which upstream made a single
