@@ -4,6 +4,15 @@ All notable adapter-release changes are tracked here.
 
 ## Unreleased - 2026-08-13
 
+- Fixed `make test`/`make lint`/`make coverage` failing on a fresh clone with
+  `No module named pytest`: the dev tools live in the `dev` extra, which a plain
+  `uv sync` does not install, and the Makefile invoked `uv run python` against that
+  default env. CI never noticed because its workflow runs `uv sync --extra dev` before
+  calling make. The Makefile now requests the extra itself (`uv run --extra dev python`),
+  making the documented entry point self-sufficient. Found while standing up an aarch64
+  test runner; verified there end to end (fresh env, `make test` 341 passed / 19
+  dependency-light skips, `make lint` clean) — which also confirms the suite and the
+  lockfile are healthy on aarch64.
 - Corrected the explanation of the `ARG TARGETARCH` scoping bug everywhere it appears --
   the fix was always right, but both prior accounts of *why* were wrong, in ways a
   BuildKit-savvy reviewer would catch. Pinned with four minimal-repro probes: builtin

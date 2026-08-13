@@ -1,4 +1,7 @@
-PYTHON ?= $(shell if command -v uv >/dev/null 2>&1; then printf 'uv run python'; else printf 'python3'; fi)
+# `--extra dev` so a fresh clone can run these targets: pytest/ruff live in the dev
+# extra, which a plain `uv sync` does not install (CI works only because it runs
+# `uv sync --extra dev` before invoking make).
+PYTHON ?= $(shell if command -v uv >/dev/null 2>&1; then printf 'uv run --extra dev python'; else printf 'python3'; fi)
 CONFORMANCE_TESTS ?= tests/
 
 .PHONY: lint conformance coverage test smoke build verify clean
