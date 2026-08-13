@@ -111,6 +111,7 @@ class AlpaBridgeDriverService:
         tokenizer_checkpoint_path: str | Path | None = None,
         device: str = "cpu",
         route_contract_mode: str | None = None,
+        defer_model_load: bool = False,
     ) -> None:
         self.model_name = _normalize_model_name(model_name)
         self.camera_candidates = tuple(camera_ids)
@@ -150,7 +151,62 @@ class AlpaBridgeDriverService:
         self._lock = threading.RLock()
         self._sessions: dict[str, DriverSessionState] = {}
         self._telemetry = DriverTelemetry(telemetry_path)
-        self._model = self._build_model()
+
+        # Loading can be slow for checkpoint-backed policies. When deferred, the
+        # caller is free to bind and serve the gRPC port first, so readiness
+        # probes are answerable while the weights are still loading.
+        self._model: Any = None
+        self._model_error: BaseException | None = None
+        self._model_ready = threading.Event()
+        if defer_model_load:
+            threading.Thread(
+                target=self._load_model_in_background,
+                name="alpabridge-model-load",
+                daemon=True,
+            ).start()
+        else:
+            self._model = self._build_model()
+            self._model_ready.set()
+
+    def _load_model_in_background(self) -> None:
+        started = time.perf_counter()
+        try:
+            model = self._build_model()
+        except BaseException as exc:  # noqa: BLE001 - re-raised to callers of _require_model
+            self._model_error = exc
+            LOGGER.exception("AlpaBridge policy %s failed to load", self.model_name)
+            self._telemetry.record({"event": "model_load_failed", "error": repr(exc)})
+        else:
+            self._model = model
+            LOGGER.info(
+                "AlpaBridge policy %s loaded in %.1fs",
+                self.model_name,
+                time.perf_counter() - started,
+            )
+            self._telemetry.record(
+                {"event": "model_loaded", "seconds": time.perf_counter() - started}
+            )
+        finally:
+            self._model_ready.set()
+
+    def wait_for_model(self, timeout_s: float | None = None) -> bool:
+        """Block until the policy is loaded. False if it is still not ready."""
+        return self._model_ready.wait(timeout_s)
+
+    def _require_model(self) -> Any:
+        """Return the policy, waiting for a deferred load and failing loudly."""
+        if self._model is not None:
+            return self._model
+        timeout_s = float(os.getenv("ALPABRIDGE_DRIVER_MODEL_LOAD_TIMEOUT_S", "600"))
+        if not self._model_ready.wait(timeout_s):
+            raise TimeoutError(
+                f"policy {self.model_name} still loading after {timeout_s:.0f}s"
+            )
+        if self._model_error is not None:
+            raise RuntimeError(
+                f"policy {self.model_name} failed to load: {self._model_error!r}"
+            ) from self._model_error
+        return self._model
 
     def start_session(self, request: Any) -> None:
         session_uuid = str(request.session_uuid)
@@ -241,12 +297,12 @@ class AlpaBridgeDriverService:
 
     def predict(self, session_uuid: str, *, time_now_us: int) -> ModelPrediction:
         prediction_input = self.prediction_input(session_uuid, time_now_us=time_now_us)
-        return self._model.predict(prediction_input)
+        return self._require_model().predict(prediction_input)
 
     def drive_once_to_proto(self, session_uuid: str, *, time_now_us: int, common_pb2: Any) -> Any:
         start_ns = time.perf_counter_ns()
         prediction_input = self.prediction_input(session_uuid, time_now_us=time_now_us)
-        prediction = self._model.predict(prediction_input)
+        prediction = self._require_model().predict(prediction_input)
         trajectory = prediction_to_proto_trajectory(
             prediction,
             current_pose=self.latest_pose(session_uuid),
@@ -937,6 +993,10 @@ def _build_service_class(
             except KeyError as exc:
                 context.abort(grpc.StatusCode.NOT_FOUND, str(exc))
                 raise AssertionError("unreachable") from exc
+            except TimeoutError as exc:
+                # Still loading: retryable, and distinct from a bad request.
+                context.abort(grpc.StatusCode.UNAVAILABLE, str(exc))
+                raise AssertionError("unreachable") from exc
             except Exception as exc:
                 LOGGER.exception("AlpaBridge driver Drive failed")
                 context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(exc))
@@ -1023,6 +1083,15 @@ def main() -> None:
         )
         return
     grpc, api_version_message, common_pb2, egodriver_pb2, egodriver_pb2_grpc = _load_grpc_modules()
+    # Serving readiness is what the evaluator gates on, so load off the critical
+    # path by default and let the port come up immediately. Set
+    # ALPABRIDGE_DRIVER_EAGER_MODEL_LOAD=1 to load before serving, which surfaces
+    # construction errors at startup and is usually what you want locally.
+    eager = os.getenv("ALPABRIDGE_DRIVER_EAGER_MODEL_LOAD", "0").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+    }
     adapter = AlpaBridgeDriverService(
         model_name=args.model,
         telemetry_path=args.telemetry_path,
@@ -1030,6 +1099,7 @@ def main() -> None:
         checkpoint_path=args.checkpoint,
         tokenizer_checkpoint_path=args.tokenizer_checkpoint,
         device=args.device,
+        defer_model_load=not eager,
     )
     service_cls = _build_service_class(
         grpc=grpc,
