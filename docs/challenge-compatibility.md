@@ -313,3 +313,39 @@ Four things had to be fixed that no amount of reading would have found:
 `alpasim_waypoints`, so `alpabridge-audit-run` classes this as adapter triage, not claim-valid
 evidence. The same pattern appears on x86, so it is not ARM-specific, but this run demonstrates
 the deployment path rather than driving quality.
+
+### Two further constraints of the video-model path, found by running a 3-scene batch
+
+Running the whole `fresh_3scene` preset through one OmniDreams server gave
+`aggregate_status: partial` — 1 of 3 scenes completed in that batch. Both causes are worth
+knowing, and neither is ARM-specific:
+
+**1. The video-model path needs calibration data inside the USDZ that not every asset has.**
+The renderer parses camera intrinsics and rig-to-camera calibration from the USDZ, so a scene
+whose asset lacks them fails outright:
+
+```
+FileNotFoundError: clipgt/calibration_estimate.parquet not found in .../23d70002-....usdz
+```
+
+Checked all three assets with `unzip -l`: two carry the full `clipgt/*.parquet` set
+(`calibration_estimate`, `egomotion_estimate`, `lane`, `traffic_light`, …); `23d70002` carries
+none. So `fresh_3scene` contains one asset that cannot be used with a video-model renderer,
+while working fine under NuRec, which renders directly and needs no such conditioning. Check
+an asset before assuming a preset is usable here:
+
+```bash
+unzip -l <scene>.usdz | grep calibration_estimate.parquet
+```
+
+**2. One OmniDreams server serves one rollout session at a time.** The other scene failures
+were `Exception calling application: 'Session not found: <uuid>'` from the renderer — including
+for a scene that completes perfectly on its own. The server is stateful by design (it opens a
+rollout session, then generates video in chunks), so a multi-scene batch pointed at a single
+server loses the sessions that are not the active one. Run one scene per `alpabridge-launch`
+invocation, or scale renderer replicas to match. `runtime.endpoints.renderer.n_concurrent_rollouts: 1`
+in the deploy config describes the server's capacity; it does not serialise the batch for you.
+
+Both video-model-compatible scenes in the preset have completed on aarch64 — `clipgt-90d1908c`
+as a solo run and `clipgt-7b3070bd` within the batch — so the deployment path is proven for
+every asset that carries the required calibration.
