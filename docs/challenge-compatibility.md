@@ -242,13 +242,14 @@ docker run --rm --gpus all --network host --name fd-server \
 ALPABRIDGE_ALPASIM_DEPLOY_TARGET=local_external_driver_video_model \
 alpabridge-launch --mode both --model constant_velocity --scene-id <scene> \
   --wizard-arg '+chunking=8frame' \
-  --wizard-arg '+cameras=1cam' \
   --wizard-arg 'wizard.external_services.renderer=[localhost:50051]'
 ```
 
 Four requirements are easy to miss:
 
-- **The camera rig must equal the renderer's view count.** AlpaSim's video-model documentation
+- **The camera rig must equal the renderer's view count.** `alpabridge-launch` pins it from the
+  preset's declared `inference.use_cameras`, so do not pass `+cameras=` yourself — Hydra fails
+  with *"cameras appears more than once in the final defaults list"*. AlpaSim's video-model documentation
   says not to inject a `+cameras=` override, because the rig and calibration come from the
   recorded USDZ seed frames. Read literally that fails immediately: AlpaSim's runtime defaults
   to a 2-camera rig while a single-view server (`omnidreams-sv-…`) expects one, and the session

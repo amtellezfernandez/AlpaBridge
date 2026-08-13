@@ -120,6 +120,7 @@ class _BaselineDriverModel(BaseTrajectoryModel):
                     "baseline": self._BASELINE_NAME,
                     "command": _input_command(prediction_input),
                     "speed_mps": round(speed_mps, 4),
+            "reported_speed_mps": round(_reported_speed_mps(prediction_input), 4),
                     "result": "sensor_failure",
                     "sensor_error": str(exc),
                     "sensor_freshness": self._sensor_freshness_guard.last_diagnostics(),
@@ -139,6 +140,7 @@ class _BaselineDriverModel(BaseTrajectoryModel):
             "route_contract_mode": route_contract_mode,
             "command": _input_command(prediction_input),
             "speed_mps": round(speed_mps, 4),
+            "reported_speed_mps": round(_reported_speed_mps(prediction_input), 4),
             "alpasim_signal": alpasim_signal,
             "route_source": alpasim_signal.get("route_source"),
             "route_waypoint_count": alpasim_signal.get("route_waypoint_count"),
@@ -316,6 +318,17 @@ def _straight_trajectory(
     x = times * max(0.0, speed_mps)
     y = np.zeros_like(x)
     return np.stack((x, y), axis=1).astype(np.float32)
+
+
+def _reported_speed_mps(prediction_input: PredictionInput) -> float:
+    """The speed AlpaSim reported, before any pose-derived correction.
+
+    Logged next to the corrected value so it is visible whether the fallback in
+    `corrected_speed_mps` actually fired on a given frame. Without this the two are
+    indistinguishable in telemetry, so an upstream fix to the reported value -- or a
+    regression in it -- looks identical to the fallback quietly compensating.
+    """
+    return max(0.0, float(getattr(prediction_input, "speed", 0.0) or 0.0))
 
 
 def _input_speed_mps(prediction_input: PredictionInput) -> float:
