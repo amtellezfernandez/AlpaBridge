@@ -725,16 +725,42 @@ def _finite_vec2(value: Any) -> tuple[float, float] | None:
     return parsed if all(math.isfinite(item) for item in parsed) else None
 
 
+_FALLBACK_WARNINGS: set[str] = set()
+
+
+def _warn_once(key: str, message: str) -> None:
+    if key not in _FALLBACK_WARNINGS:
+        _FALLBACK_WARNINGS.add(key)
+        LOGGER.warning(message)
+
+
 def _image_array_from_bytes(image_bytes: bytes) -> np.ndarray:
     if not image_bytes:
         return np.zeros((1,), dtype=np.uint8)
+
     try:
         from io import BytesIO
 
         from PIL import Image
+    except ImportError:
+        # Distinct from a bad frame: without a decoder every frame for the rest
+        # of the process degrades, so say so once rather than per frame.
+        _warn_once(
+            "pillow-missing",
+            "Pillow is not installed, so camera frames reach policies as raw undecoded "
+            "bytes rather than an RGB array. Install alpabridge[driver] for any policy "
+            "that reads pixels.",
+        )
+        return np.frombuffer(image_bytes, dtype=np.uint8)
 
+    try:
         return np.asarray(Image.open(BytesIO(image_bytes)).convert("RGB"))
     except Exception:
+        _warn_once(
+            "image-decode-failed",
+            "Could not decode a camera frame; passing raw bytes through instead. "
+            "Further decode failures are not logged.",
+        )
         return np.frombuffer(image_bytes, dtype=np.uint8)
 
 

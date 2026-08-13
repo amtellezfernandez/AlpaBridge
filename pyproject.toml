@@ -49,6 +49,9 @@ alpasim = [
     "pyarrow>=16",
 ]
 viz = ["Pillow>=10", "matplotlib>=3.8"]
+# Serving the gRPC driver against a real simulator: every rollout streams JPEG
+# camera frames, which need a decoder.
+driver = ["Pillow>=10"]
 
 [project.entry-points."alpasim.models"]
 constant_velocity = "alpabridge.simulator.baseline_drivers:ConstantVelocityAlpaSimModel"
