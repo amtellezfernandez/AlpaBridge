@@ -144,137 +144,101 @@ synthetic testing:
   publicly — this describes what was measured, not a compliance claim.
 
 
-## ARM64: the blocker is the renderer, not the architecture
 
-Investigated 2026-08-12 on NVIDIA GB10. Everything in the AlpaSim stack except one service
-builds and runs natively on aarch64 — runtime, controller, physics, trafficsim, plugins and
-grpc were verified inside a real 33.1GB ARM64 image (7/7 packages importing, `torch
-2.13.0+cu130`, `torch.cuda.is_available()` true on GB10).
+## Running on ARM64 (aarch64)
 
-The single blocker is the **NuRec/sensorsim renderer**: `nvcr.io/nvidia/nre/nre-ga` publishes
-a *single-arch* manifest (schema v2, amd64), not a manifest list, so there is no aarch64
-image to run and nothing to rebuild — and under emulation it fails or stalls before opening
-its gRPC port (the three abandoned `qemu-x86_64` containers found idling on the GB10 for 11
-days were exactly this).
+Closed-loop rollouts run on aarch64, using AlpaSim's video-model renderer instead of the
+default NuRec/sensorsim one. This section is what a reader needs to reproduce that; it is not
+a claim about driving quality (see the caveat at the end).
 
-**AlpaSim ships a second renderer that does not have this problem.**
-`runtime.renderer.kind=video_model` (OmniDreams, served via FlashDreams) replaces NuRec, and
-per AlpaSim's `docs/VIDEO_MODEL.md` FlashDreams *"publishes Dockerfiles but not pre-built
-images — we need to build them ourselves."* Built-from-source is precisely what makes an
-ARM64 target possible, the same way AlpaBridge's own `local_checkout.patch` made
-`alpasim-base` build on GB10. In `deploy=external_video_model` the renderer is an
-`external_services` entry rather than a wizard-managed container, and `run_sim_services`
-reduces to `[driver, physics, trafficsim, controller, runtime]` — all already verified on
-aarch64.
+### Why the default renderer cannot be used
 
-Memory footprint favours the GB10 rather than working against it: the video-model path wants
-48GB of VRAM for VaVAM (96GB for Alpamayo 1.5), which suits GB10 unified memory and rules out
-a 16GB laptop GPU.
+`nvcr.io/nvidia/nre/nre-ga` is published as a **single-arch amd64 manifest** — schema v2, not a
+manifest list. There is no aarch64 image to run and, being prebuilt, nothing to rebuild. Under
+emulation it fails or stalls before opening its gRPC port.
 
-**Not yet attempted**, and the honest unknowns before it can be claimed: whether FlashDreams'
-own Dockerfiles carry x86 assumptions (AlpaSim's did — four of them), the size of the model
-checkpoint downloads, and disk headroom on the GB10. AlpaBridge also has no deploy config
-combining an external driver with a video-model renderer; that config is the concrete next
-piece of work.
+Every other service in the stack builds and runs natively on aarch64. Verified inside an ARM64
+image on an NVIDIA GB10: `alpasim_controller`, `alpasim_runtime`, `alpasim_physics`,
+`alpasim_grpc`, `alpasim_utils`, `alpasim_plugins` and `alpasim_eval` all import, with
+`torch.cuda.is_available()` true. So the constraint is a renderer limitation, not an
+architecture one.
 
-### Building the video-model renderer for ARM64: what to know before you start
+`alpabridge-doctor` reflects this: `platform_compatibility` fails on aarch64 for the NuRec
+deploy and passes for the video-model deploy.
 
-Checked 2026-08-12 against `NVIDIA/flashdreams` @ `ac214dd`, read-only, before committing to
-a build. The Dockerfiles themselves are close to arch-clean — far cleaner than AlpaSim's
-were:
+### The ARM64 route: the video-model renderer
 
-- `docker/Dockerfile` builds `FROM nvidia/cuda:13.2.1-cudnn-devel-ubuntu24.04`, which
-  publishes **both** amd64 and arm64 manifests.
-- Its apt set is arch-neutral, `uv` comes from a multi-arch image, and the AWS CLI step
-  already branches `x86_64` / `aarch64` explicitly.
-- It installs no Python dependencies at all; `docker/Dockerfile.alpasim` does that with a
-  single `uv sync --locked --package flashdreams-omnidreams --no-editable`.
+`runtime.renderer.kind=video_model` (OmniDreams, served via FlashDreams) replaces NuRec. It is
+**built from source rather than pulled as a prebuilt image**, which is what makes an aarch64
+target possible. Deployed as an external service, the wizard never needs an image for it at
+all, so it can also live on another host.
 
-So the entire ARM64 question reduces to what `uv sync --locked` does inside the container.
+AlpaBridge ships `deploy=local_external_driver_video_model` for this: both the policy and the
+renderer are external, leaving the wizard managing `[physics, trafficsim, controller, runtime]`.
 
-**The blocker turned out to be architecture-independent, and it is an upstream bug.** The
-build fails at `uv sync --locked` with *"the lockfile needs updating"* — the container
-resolves **255** packages against a **256**-package lock. Cause: `pyproject.toml` declares
-workspace members `flashdreams`, `integrations/*` and **`apps/*`**, but `Dockerfile.alpasim`
-copies only the first two, so `apps/t2v_demo` is missing and the workspace no longer matches
-the lock. One line fixes it:
+### Building the renderer image
+
+FlashDreams publishes Dockerfiles but no prebuilt images. Its base Dockerfile is already
+arch-clean: a multi-arch CUDA base, an arch-neutral apt set, multi-arch `uv`, and an AWS CLI
+step that branches on `aarch64`. It installs no Python dependencies; `docker/Dockerfile.alpasim`
+does that in one `uv sync --locked`.
+
+Two things need fixing first:
+
+**`Dockerfile.alpasim` does not copy the `apps/` workspace member.** `pyproject.toml` declares
+members `flashdreams`, `integrations/*` and `apps/*`, but only the first two are copied, so
+`apps/t2v_demo` is absent, the container resolves one fewer package than the lockfile pins, and
+`uv sync --locked` fails with *"the lockfile needs updating"*. This is not
+architecture-specific — it fails the same way on x86_64, with the pristine lockfile — and it is
+fixed by one line:
 
 ```dockerfile
 COPY apps ./apps
 ```
 
-Verified this is not arch-specific and not self-inflicted: the *pristine, unmodified* lock
-fails the same way with the same 255/256 counts, and once `apps/` is copied the pristine lock
-builds cleanly on aarch64. Nothing else was needed. This is worth reporting to FlashDreams —
-`Dockerfile.alpasim` is broken as shipped at `ac214dd` on any architecture.
+**The base image tag is inconsistent between projects.** AlpaSim's `docs/VIDEO_MODEL.md` builds
+the base as `flashdreams-base:local`, while FlashDreams' own README and `Dockerfile.alpasim`'s
+`ARG FLASHDREAMS_BASE_IMAGE` default both use `flashdreams:local`. Pick one, or pass
+`--build-arg FLASHDREAMS_BASE_IMAGE=<tag>` explicitly.
 
-**A separate latent ARM issue, not on this path.** `transformer-engine-cu13` is pinned at
-`2.17.0`, which is wheel-only and x86_64-only with no sdist. It does *not* block this build,
-because `transformer-engine` sits behind a `dev` extra that
-`uv sync --package flashdreams-omnidreams` never installs — an earlier revision of this note
-claimed it was the blocker, which was wrong. It would bite anyone resolving the dev extra on
-aarch64, and it is trivially avoidable: that package ships aarch64 wheels for nearly every
-release, `2.17.0` is one of only two recent versions missing one, `2.17.1` has one, and
-`pyproject` only requires `>=2.12`. Worth proposing upstream, but as a latent fix rather than
-a build blocker.
+Separately, `transformer-engine-cu13` is pinned at a version whose only wheel is
+`manylinux_2_28_x86_64`, with no sdist. It does not affect this build, because
+`transformer-engine` sits behind a `dev` extra that `uv sync --package flashdreams-omnidreams`
+does not install — but it will block anyone resolving that extra on aarch64. Adjacent patch
+releases do publish aarch64 wheels and the project only requires a lower bound, so the pin is a
+lockfile artifact rather than a constraint.
 
-**Second trap, cross-repo:** AlpaSim's `docs/VIDEO_MODEL.md` says to build the base as
-`-t flashdreams-base:local`, but `Dockerfile.alpasim` declares
-`ARG FLASHDREAMS_BASE_IMAGE=flashdreams:local` and FlashDreams' own `docker/README.md` uses
-`flashdreams:local`. Follow AlpaSim's instructions verbatim and the second build looks for an
-image that does not exist. Either tag the base `flashdreams:local`, or pass
-`--build-arg FLASHDREAMS_BASE_IMAGE=flashdreams-base:local`.
+### Fetching the model weights
 
-### End-to-end ARM64 status: everything technical works; the gate is model access
+The weights are gated on Hugging Face (`gated: auto`); the account must accept the model's terms
+before the download will succeed. An unaccepted account gets `403` on the artifact while the
+repository's metadata endpoint still returns `200`, so check the artifact itself, not the repo.
 
-Attempted on GB10 (2026-08-13). The OmniDreams gRPC server starts from the ARM64 image and
-gets all the way to fetching weights — torch, CUDA and the `omnidreams` package all load on
-aarch64, with no architecture error anywhere in the traceback. It then stops here:
-
-```
-httpx.HTTPStatusError: Client error '403 Forbidden' for url
-'https://huggingface.co/nvidia/omni-dreams-models/resolve/main/single_view/2b_res720p_30fps_i2v_hdmap_distilled.pt'
-```
-
-`nvidia/omni-dreams-models` is `gated: auto`. Measured from the GB10: the artifact returns
-**403 with** the host's HF token and **401 without** it, while the repo's metadata API returns
-200 either way. So the token is valid and being sent — the account simply has not been
-granted the gate. That is a licence acceptance on huggingface.co for the account whose token
-is in `~/.cache/huggingface/token`, and nothing in this repo can substitute for it.
-
-Everything up to that point is verified working on aarch64:
-
-| step | state |
-| --- | --- |
-| `flashdreams-base:local` (9.15GB) | built |
-| `flashdreams-alpasim:local` (15GB) | built; `torch 2.12.1+cu130`, CUDA true on GB10 |
-| AlpaSim host venv incl. `alpasim_driver`/`vam`/`lightning` | installs on aarch64 |
-| `alpabridge-doctor` `platform_compatibility` | `ok` for the video-model deploy, `failed` for NuRec |
-| OmniDreams server import + CUDA init | reaches weight download |
-| model weights | **blocked: HF gate not granted** |
-
-**A gap the attempt exposed in this deploy config**, now documented in the config itself: it
-is incomplete without a chunking preset (`--wizard-arg '+chunking=8frame'`). The video model
-generates in blocks, and the preset keeps `chunk_frames`/`first_chunk_frames` aligned with
-`control_timestep_us` and `force_gt_duration_us`. Those are a matched set — `first_chunk_frames`
-is constrained by the server's VAE temporal compression ratio of 4 — and the right values
-depend on the `--num_frames_per_block` the server was started with, so they are deliberately
-not inlined.
-
-### ARM64 end to end: achieved
-
-A full closed-loop AlpaSim rollout ran on an NVIDIA GB10 (aarch64) on 2026-08-13, with camera
-frames generated by the OmniDreams video world model running natively on that host:
-
-```
-Session COMPLETED: scene=clipgt-90d1908c-... simulated 19.82 sim seconds in 536.32s (0.04x real time)
-aggregate_status: completed | wizard_returncode: 0
-frames: 73 | sensor pipeline ok: True | sensor failures: 0 | result counts: {'ok': 73}
-```
-
-The working invocation:
+**Download the weights on the host rather than letting the container do it.** In-container
+downloads have been observed to stall partway through a multi-GB file with no further log
+output. A host-side `hf download` resumes and completes. If a container has already written to
+the shared cache, it will own those paths as root; where there is no passwordless sudo, Docker
+itself is the way to hand them back:
 
 ```bash
+docker run --rm -v "$HOME/.cache/huggingface:/hf" <image> \
+  chown -R "$(id -u):$(id -g)" /hf/hub/models--<org>--<repo>
+```
+
+### Running a rollout
+
+Start the renderer, then launch. Both must agree on the camera count and the chunk size:
+
+```bash
+docker run --rm --gpus all --network host --name fd-server \
+  -e HF_TOKEN="$(cat ~/.cache/huggingface/token)" \
+  -v "$HOME/.cache/huggingface:/root/.cache/huggingface" \
+  flashdreams-alpasim:local \
+  /opt/flashdreams/bin/torchrun --standalone --nnodes=1 --nproc_per_node=1 \
+  -m omnidreams.grpc.server \
+  --pipeline_config_name omnidreams-sv-2steps-chunk2-loc6-lightvae-lighttae-perf \
+  --host 0.0.0.0 --port 50051 --output_format jpeg --jpeg_quality 90
+
 ALPABRIDGE_ALPASIM_DEPLOY_TARGET=local_external_driver_video_model \
 alpabridge-launch --mode both --model constant_velocity --scene-id <scene> \
   --wizard-arg '+chunking=8frame' \
@@ -282,70 +246,60 @@ alpabridge-launch --mode both --model constant_velocity --scene-id <scene> \
   --wizard-arg 'wizard.external_services.renderer=[localhost:50051]'
 ```
 
-with the renderer started from the ARM64 image:
+Four requirements are easy to miss:
 
-```bash
-docker run --rm --gpus all --network host --name fd-server \
-  -e HF_TOKEN="$(cat ~/.cache/huggingface/token)" \
-  -v $HOME/.cache/huggingface:/root/.cache/huggingface \
-  flashdreams-alpasim:local \
-  /opt/flashdreams/bin/torchrun --standalone --nnodes=1 --nproc_per_node=1 \
-  -m omnidreams.grpc.server \
-  --pipeline_config_name omnidreams-sv-2steps-chunk2-loc6-lightvae-lighttae-perf \
-  --host 0.0.0.0 --port 50051 --output_format jpeg --jpeg_quality 90
-```
+- **The camera rig must equal the renderer's view count.** AlpaSim's video-model documentation
+  says not to inject a `+cameras=` override, because the rig and calibration come from the
+  recorded USDZ seed frames. Read literally that fails immediately: AlpaSim's runtime defaults
+  to a 2-camera rig while a single-view server (`omnidreams-sv-…`) expects one, and the session
+  dies on the first render call with `Expected 1 camera names, got 2` before producing a frame.
+  Pin the rig to the server's view count — `1cam` for a single-view pipeline, or run an
+  `omnidreams-mv-…` pipeline and pin a rig matching it.
+- **`+chunking=<n>frame` is mandatory** and must match the server's `--num_frames_per_block`.
+  The preset keeps `chunk_frames`/`first_chunk_frames` aligned with `control_timestep_us` and
+  `force_gt_duration_us`; those are a matched set, since `first_chunk_frames` is constrained by
+  the server's VAE temporal compression ratio.
+- **AlpaBridge must be installed into the AlpaSim virtualenv**, not only the host one, or the
+  wizard cannot discover its Hydra config provider and fails with
+  `Could not find 'driver/<model>'`. `alpabridge-setup` does this; a hand-rolled venv does not.
+- **One server serves one rollout session at a time.** The renderer is stateful by design — it
+  opens a session, then generates video in chunks — so a multi-scene batch pointed at a single
+  server fails every session but the active one with `Session not found: <uuid>`. Run one scene
+  per invocation, or scale renderer replicas.
+  `runtime.endpoints.renderer.n_concurrent_rollouts` describes the server's capacity; it does
+  not serialise a batch.
 
-Four things had to be fixed that no amount of reading would have found:
+### Scene assets need calibration data
 
-1. **The weight download stalls inside the container** (stuck at 67MB of 4.1GB, no log movement).
-   Fetch host-side with `hf download`, which resumes. That first needs the cache chowned back:
-   the container writes it as root, and with no passwordless sudo on the host, Docker itself is
-   the escalation (`docker run --rm -v ~/.cache/huggingface:/hf <image> chown -R uid:gid /hf/...`).
-2. **AlpaBridge must be installed into the *AlpaSim* venv**, not just the host venv, or the
-   wizard cannot discover its Hydra config provider and fails with
-   `Could not find 'driver/constant_velocity'`. `alpabridge-setup` does this; a hand-rolled
-   venv bootstrap does not.
-3. **The camera rig must equal the renderer's view count** — see the deploy config. The docs'
-   "do not inject `+cameras=`" is wrong as stated for a single-view server.
-4. **`+chunking=<n>frame` is mandatory**, and must match the server's `--num_frames_per_block`.
-
-**Caveat on the result:** 22 of 73 frames reported `route_source=command_proxy` rather than
-`alpasim_waypoints`, so `alpabridge-audit-run` classes this as adapter triage, not claim-valid
-evidence. The same pattern appears on x86, so it is not ARM-specific, but this run demonstrates
-the deployment path rather than driving quality.
-
-### Two further constraints of the video-model path, found by running a 3-scene batch
-
-Running the whole `fresh_3scene` preset through one OmniDreams server gave
-`aggregate_status: partial` — 1 of 3 scenes completed in that batch. Both causes are worth
-knowing, and neither is ARM-specific:
-
-**1. The video-model path needs calibration data inside the USDZ that not every asset has.**
-The renderer parses camera intrinsics and rig-to-camera calibration from the USDZ, so a scene
-whose asset lacks them fails outright:
+The video-model renderer parses camera intrinsics and rig-to-camera calibration out of the USDZ,
+so an asset that lacks them cannot be used with it:
 
 ```
-FileNotFoundError: clipgt/calibration_estimate.parquet not found in .../23d70002-....usdz
+FileNotFoundError: clipgt/calibration_estimate.parquet not found in .../<uuid>.usdz
 ```
 
-Checked all three assets with `unzip -l`: two carry the full `clipgt/*.parquet` set
-(`calibration_estimate`, `egomotion_estimate`, `lane`, `traffic_light`, …); `23d70002` carries
-none. So `fresh_3scene` contains one asset that cannot be used with a video-model renderer,
-while working fine under NuRec, which renders directly and needs no such conditioning. Check
-an asset before assuming a preset is usable here:
+Assets vary on this: some carry a full `clipgt/*.parquet` set (`calibration_estimate`,
+`egomotion_estimate`, `lane`, `traffic_light`, …) and some carry none. An asset without them
+still works under NuRec, which renders directly and needs no such conditioning. Check before
+assuming a scene preset is usable here:
 
 ```bash
 unzip -l <scene>.usdz | grep calibration_estimate.parquet
 ```
 
-**2. One OmniDreams server serves one rollout session at a time.** The other scene failures
-were `Exception calling application: 'Session not found: <uuid>'` from the renderer — including
-for a scene that completes perfectly on its own. The server is stateful by design (it opens a
-rollout session, then generates video in chunks), so a multi-scene batch pointed at a single
-server loses the sessions that are not the active one. Run one scene per `alpabridge-launch`
-invocation, or scale renderer replicas to match. `runtime.endpoints.renderer.n_concurrent_rollouts: 1`
-in the deploy config describes the server's capacity; it does not serialise the batch for you.
+### Verified result
 
-Both video-model-compatible scenes in the preset have completed on aarch64 — `clipgt-90d1908c`
-as a solo run and `clipgt-7b3070bd` within the batch — so the deployment path is proven for
-every asset that carries the required calibration.
+On an NVIDIA GB10 (aarch64), with camera frames generated by the video model on that host:
+
+```
+Session COMPLETED — simulated 19.82 sim seconds in 536.32s wall clock (0.04x real time)
+aggregate_status: completed   wizard_returncode: 0
+frames: 73   sensor pipeline ok: True   sensor failures: 0   result counts: {'ok': 73}
+```
+
+`alpabridge-doctor` reports `alpasim environment: valid` for this deploy on that host.
+
+**Caveat.** 22 of those 73 frames reported `route_source=command_proxy` rather than
+`alpasim_waypoints`, so `alpabridge-audit-run` classes the run as adapter triage rather than
+claim-valid evidence. The same pattern appears on x86_64, so it is not architecture-related.
+This demonstrates the deployment path, not driving quality.

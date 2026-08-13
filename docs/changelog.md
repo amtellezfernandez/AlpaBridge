@@ -45,25 +45,23 @@ All notable adapter-release changes are tracked here.
   not use that renderer -- a blocker the launch itself would not have hit. Both now resolve
   the deploy target the way the launcher does. Verified on GB10: `platform_compatibility: ok`
   for the video-model deploy, still `failed` for the default NuRec one.
-  The block's message also claimed AlpaBridge shipped no video-model deploy config, which
-  stopped being true when one was added in the same session; it now names the config and the
-  renderer-address override needed to use it.
+  The block's message now also names the video-model deploy config and the renderer-address
+  override needed to use it, instead of stating that no such config exists.
 - Added `deploy=local_external_driver_video_model`: the first deployment shape that can run
   on ARM64. Both the policy *and* the renderer are external services, so the wizard manages
   only `[physics, trafficsim, controller, runtime]` -- all of which build and run natively on
   aarch64 (verified on GB10). It selects AlpaSim's `runtime.renderer.kind=video_model`
   (OmniDreams/FlashDreams), which is built from source rather than pulled as the amd64-only
   NuRec image, and that is the whole reason an ARM target is possible.
-  Two launcher changes fall out of the config, and both are the kind of thing that would
-  only have surfaced *after* an ARM64 image build:
-  - `+cameras=<n>cam` is no longer injected on this deploy. AlpaSim's video-model renderer
-    derives the camera rig and calibration from the recorded USDZ seed frames, and its docs
-    state plainly that a separate override must not be added -- it desynchronises the HD-map
-    conditioning render from the visual seed frame and the generated video drifts. Enforced
-    inside `_wizard_command` rather than at the call site, so no future caller has to
-    remember it. Every other deploy still pins the rig.
+  Two launcher changes go with it:
   - The ARM64 preflight no longer blocks this target. That block exists because the
     NuRec/sensorsim image is amd64-only; this deploy has no sensorsim container at all.
+  - The camera rig stays pinned here as on every other deploy, and must equal the renderer's
+    view count. AlpaSim's video-model documentation says not to inject a `+cameras=` override
+    because the rig comes from the recorded USDZ seed frames; read literally that fails before
+    a frame is produced, since AlpaSim's runtime defaults to a 2-camera rig while a single-view
+    OmniDreams server expects one (`Expected 1 camera names, got 2`). Pin `1cam` for a
+    single-view pipeline, or run a multi-view pipeline and pin a matching rig.
 - **Fixed the actual interface break with AlpaSim `1e801ca`: every policy returned a
   removed API.** Upstream replaced `ModelPrediction`'s `trajectory_xy`/`headings` with
   6-DoF candidates -- `candidate_positions` (K, T, 3) and `candidate_rotations`
