@@ -1,4 +1,4 @@
-From f9df60080a0b3c7cc26733c643ea55b39c271af2 Mon Sep 17 00:00:00 2001
+From a0e7c0ac88db1e03d1359f73f7630e42f83d89fd Mon Sep 17 00:00:00 2001
 From: AlpaBridge maintainers <alpabridge@users.noreply.github.com>
 Date: Thu, 13 Aug 2026 12:00:00 +0200
 Subject: [PATCH] driver: local-checkout robustness and ARM64 build support
@@ -20,12 +20,16 @@ restarts in ways the stock driver treats as fatal:
 ARM64 build -- the four changes an aarch64 `docker build` needs, all keyed off
 TARGETARCH so the x86 path is untouched:
 
-- `ARG TARGETARCH` re-declared after `FROM base-${TARGETARCH}`. The top-level
-  declaration is scoped to the pre-FROM context so the FROM can resolve; it is
-  NOT in scope for RUN steps inside the stage it opens. Without this, every
-  arm64 conditional below expands to `if [ "" = "arm64" ]` and silently takes
-  the x86 path -- a failure that presents as a step completing suspiciously
-  fast, not as an error.
+- `ARG TARGETARCH` re-declared inside the final stage. BuildKit's builtin
+  platform args are always available to FROM lines, so `FROM base-${TARGETARCH}`
+  resolves without any ARG at all -- but an ARG line after a FROM belongs to that
+  stage, visible to RUN only there and in stages derived from it. The existing
+  declaration sits inside the dcgm-exporter stage, which the final stage does not
+  derive from, so every arm64 conditional below expands to `if [ "" = "arm64" ]`
+  and silently takes the x86 path -- a failure that presents as a step completing
+  suspiciously fast, not as an error. Mechanism verified with minimal-repro
+  Dockerfiles covering global, ancestor-stage, non-ancestor-stage and no-ARG
+  placements.
 - CUDA apt repo configured on arm64, since datacenter-gpu-manager-4-cuda12 comes
   from it and the arm64 base image doesn't have it. The repo path is derived from
   the base image's own /etc/os-release rather than hardcoded, so it follows the
