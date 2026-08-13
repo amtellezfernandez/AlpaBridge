@@ -47,6 +47,15 @@ All notable adapter-release changes are tracked here.
   for the video-model deploy, still `failed` for the default NuRec one.
   The block's message now also names the video-model deploy config and the renderer-address
   override needed to use it, instead of stating that no such config exists.
+- Drive telemetry now records `reported_speed_mps` next to `speed_mps`, so it is visible per
+  frame whether `corrected_speed_mps`'s pose-derived fallback fired. Previously the two were
+  indistinguishable in the log, which meant an upstream fix to the reported value looked
+  identical to the fallback quietly compensating for a broken one. Measuring this on AlpaSim
+  `1e801ca` showed the upstream defect is still live: `DynamicState` reports `0.0` for frames
+  1-7 of a session while the vehicle travels ~11 m/s (7 of 73 frames), recovering at frame 8.
+  Frame 0 is correct, because the runtime seeds initial dynamics from ground-truth derivatives
+  over the context window; the hole is the window after that seeding is consumed and before the
+  live estimate has enough history.
 - Added `deploy=local_external_driver_video_model`: the first deployment shape that can run
   on ARM64. Both the policy *and* the renderer are external services, so the wizard manages
   only `[physics, trafficsim, controller, runtime]` -- all of which build and run natively on
