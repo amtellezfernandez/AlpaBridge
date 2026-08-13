@@ -70,10 +70,24 @@ runtime:
     planner_delay_us: 0
     assert_zero_decision_delay: true
 
-# NOTE: this deploy is incomplete on its own -- it must be combined with a chunking preset:
+# NOTE: this deploy is incomplete on its own. A working launch, verified end to end on an
+# NVIDIA GB10 (aarch64) against an OmniDreams server, looks like:
 #
-#   alpabridge-launch ... --wizard-arg '+chunking=8frame'
+#   alpabridge-launch --mode both --model constant_velocity --scene-id <id> \
+#     --wizard-arg '+chunking=8frame' \
+#     --wizard-arg '+cameras=1cam' \
+#     --wizard-arg 'wizard.external_services.renderer=[localhost:50051]'
 #
+# On `+cameras`: AlpaSim's docs/VIDEO_MODEL.md says not to inject a cameras override, because
+# the rig and calibration come from the recorded USDZ seed frames. Taken literally that is
+# wrong, and it fails immediately. AlpaSim's runtime defaults to a 2-camera rig while a
+# single-view OmniDreams server (`omnidreams-sv-...`) expects 1, so the session dies on the
+# first render call with "Expected 1 camera names, got 2" before a frame is produced. Pinning
+# the rig to the server's view count is required. The real rule is: the rig must EQUAL the
+# renderer's view count -- pin `1cam` for a single-view server, or run an `omnidreams-mv-...`
+# pipeline and pin a rig that matches it.
+#
+# On `+chunking`:
 # The video model generates in blocks, and the preset is what keeps
 # `runtime.renderer.video_model_config.{chunk_frames,first_chunk_frames}` aligned with
 # `runtime.simulation_config.control_timestep_us` (chunk_frames * 33_333 at 30 FPS) and

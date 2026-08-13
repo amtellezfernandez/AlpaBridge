@@ -1351,13 +1351,17 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
             with patch("platform.machine", return_value="x86_64"):
                 self.assertEqual("custom_profile", _wizard_deploy_target())
 
-    def test_video_model_deploy_does_not_inject_a_cameras_override(self) -> None:
-        """AlpaSim's video-model renderer takes its camera rig and calibration from the
-        recorded USDZ seed frames, and its docs are explicit that a separate `+cameras=`
-        override must not be injected: it desynchronises the HD-map conditioning render
-        from the visual seed frame and the generated video drifts. Every other deploy
-        target still pins the rig, because AlpaSim's driver framework rejects camera frames
-        outside a model's declared use_cameras."""
+    def test_camera_rig_is_pinned_on_every_deploy_including_video_model(self) -> None:
+        """The rig must equal the renderer's view count, on every deploy.
+
+        AlpaSim's video-model docs say not to inject a `+cameras=` override, since the rig
+        comes from the recorded USDZ seed frames. An earlier revision took that literally and
+        suppressed it for the video-model deploy. A real rollout on GB10 proved that wrong:
+        AlpaSim's runtime defaults to a 2-camera rig, the single-view OmniDreams server
+        expects 1, and the session dies on the first render call with "Expected 1 camera
+        names, got 2" before producing a frame. Pinning `+cameras=1cam` to match the preset's
+        declared use_cameras completed the rollout end to end.
+        """
         common = dict(
             alpasim_wizard=Path("/tmp/alpasim/.venv/bin/alpasim_wizard"),
             wizard_driver="constant_velocity",
@@ -1370,11 +1374,9 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
             dry_run=False,
             camera_group="1cam",
         )
-        video = _wizard_command(deploy_target=launch_cmd.VIDEO_MODEL_DEPLOY_TARGET, **common)
-        nurec = _wizard_command(deploy_target="local_external_driver", **common)
-
-        self.assertFalse([a for a in video if a.startswith("+cameras=")])
-        self.assertIn("+cameras=1cam", nurec)
+        for target in (launch_cmd.VIDEO_MODEL_DEPLOY_TARGET, "local_external_driver"):
+            with self.subTest(deploy_target=target):
+                self.assertIn("+cameras=1cam", _wizard_command(deploy_target=target, **common))
 
     def test_platform_preflight_allows_arm_for_the_video_model_deploy(self) -> None:
         """The ARM64 block exists because the NuRec/sensorsim renderer ships a single-arch

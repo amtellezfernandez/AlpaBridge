@@ -1090,13 +1090,21 @@ def _wizard_command(
         f"wizard.dry_run={'true' if dry_run else 'false'}",
         f"scenes.scene_ids={json.dumps(scene_ids)}",
     ]
-    # AlpaSim's video-model renderer takes its camera rig and calibration from the recorded
-    # USDZ seed frames, and its docs are explicit that a separate `+cameras=<...>` override
-    # must not be injected: it desynchronises the HD-map conditioning render from the
-    # visual seed frame and the generated video drifts. The driver preset's own view count
-    # is what has to match instead. Enforced here rather than at the call site so no
-    # future caller has to remember it.
-    if camera_group and not _uses_video_model_renderer(deploy_target):
+    # The camera group is pinned on every deploy, including the video-model one.
+    #
+    # AlpaSim's video-model docs say not to inject a `+cameras=` override, because the rig
+    # and calibration come from the recorded USDZ seed frames and overriding them
+    # desynchronises the HD-map conditioning render from the visual seed frame. An earlier
+    # revision took that literally and suppressed the override here. A real rollout on GB10
+    # showed that is wrong: AlpaSim's runtime defaults to a 2-camera rig, the single-view
+    # OmniDreams server expects 1, and the session dies on the first render call with
+    # "Expected 1 camera names, got 2" before a frame is produced. Passing `+cameras=1cam`
+    # -- matching the preset's declared `inference.use_cameras` -- completed the rollout.
+    #
+    # So the rule is narrower than the doc states: the rig must equal the renderer's view
+    # count. For a single-view server that means pinning it, exactly as the NuRec path
+    # already does. Running a multi-view pipeline instead would need a rig to match it.
+    if camera_group:
         # "cameras" isn't in base_config.yaml's own `defaults:` list (unlike
         # deploy/driver/topology, which are declared there as overridable
         # placeholders), so Hydra requires `+` to add it rather than `=` to
