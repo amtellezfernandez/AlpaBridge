@@ -1,5 +1,5 @@
-From 02fbd509c0f3c98d39664d7163be8f7ffe4f4ba3 Mon Sep 17 00:00:00 2001
-From: AlpaBridge maintainers <alpabridge@users.noreply.github.com>
+From 6c3879f4812948fcc36e2cbca53d385a4f524d08 Mon Sep 17 00:00:00 2001
+From: amtellezfernandez <177202985+amtellezfernandez@users.noreply.github.com>
 Date: Wed, 12 Aug 2026 21:35:43 +0200
 Subject: [PATCH] docker: make the ARM64 image build actually work
 
@@ -24,11 +24,11 @@ Verified by a real `docker build` on NVIDIA GB10 (Grace Blackwell) against main 
 33.1GB image, zero errors, all seven installed packages import on aarch64, torch
 2.13.0+cu130, and torch.cuda.is_available() true with --gpus all.
 ---
- Dockerfile | 38 +++++++++++++++++++++++++++++++-------
- 1 file changed, 31 insertions(+), 7 deletions(-)
+ Dockerfile | 42 +++++++++++++++++++++++++++++++++++-------
+ 1 file changed, 35 insertions(+), 7 deletions(-)
 
 diff --git a/Dockerfile b/Dockerfile
-index 4992139..ffeabb5 100644
+index 4992139..f0cea5f 100644
 --- a/Dockerfile
 +++ b/Dockerfile
 @@ -13,6 +13,7 @@ FROM nvcr.io/nvidia/pytorch:25.08-py3 AS base-arm64
@@ -52,8 +52,14 @@ index 4992139..ffeabb5 100644
  RUN apt-get update && apt-get install -y \
      git \
      ffmpeg \
-@@ -57,7 +64,20 @@ WORKDIR /repo
+@@ -55,9 +62,26 @@ RUN uv run compile-protos --no-sync
  
+ WORKDIR /repo
+ 
++# The arm64 branch installs its package subset explicitly rather than selecting an
++# extra through `uv sync`: syncing through the project resolution yields a +cpu
++# torch build on aarch64, while the direct install resolves an aarch64 CUDA build
++# (measured on GB10: 2.8.0+cpu via sync vs 2.13.0+cu130 with CUDA available).
  RUN --mount=type=secret,id=netrc,target=/root/.netrc \
      --mount=type=cache,target=/root/.cache/uv \
 -    sh -c 'if [ -f /root/.netrc ]; then export NETRC=/root/.netrc; fi && uv sync --extra all --extra recipes'
@@ -74,7 +80,7 @@ index 4992139..ffeabb5 100644
  
  ARG PYTORCH_VERSION=2.8.0+cu128
  ARG TORCH_CLUSTER_VERSION=1.6.3
-@@ -66,12 +86,16 @@ ARG TORCH_SPARSE_VERSION=0.6.18
+@@ -66,12 +90,16 @@ ARG TORCH_SPARSE_VERSION=0.6.18
  
  # Install PyG compiled extensions (torch-cluster, torch-scatter, torch-sparse)
  # from pre-built wheels matching the installed torch + CUDA versions.

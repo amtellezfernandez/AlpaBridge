@@ -1,6 +1,6 @@
-From 2e9085491ab65f78c8e2d2c0d6f74162710b7f99 Mon Sep 17 00:00:00 2001
+From f9df60080a0b3c7cc26733c643ea55b39c271af2 Mon Sep 17 00:00:00 2001
 From: AlpaBridge maintainers <alpabridge@users.noreply.github.com>
-Date: Wed, 12 Aug 2026 12:00:00 +0200
+Date: Thu, 13 Aug 2026 12:00:00 +0200
 Subject: [PATCH] driver: local-checkout robustness and ARM64 build support
 
 Bundles the fixes needed to run AlpaSim's local-external-driver path against a
@@ -30,30 +30,25 @@ TARGETARCH so the x86 path is untouched:
   from it and the arm64 base image doesn't have it. The repo path is derived from
   the base image's own /etc/os-release rather than hardcoded, so it follows the
   base image instead of breaking when it moves.
-- Install a package subset on arm64 instead of `uv sync --extra all --extra
-  recipes`: alpasim-tools pulls PyQt5, which doesn't resolve on linux aarch64;
-  alpasim_driver/alpasim_plugins pull x86-only packages such as tensordict via
-  the upstream learned-driver models, and the external driver runs on the host
-  anyway; alpasim_wizard is launched on the host; alpasim-trafficsim pulls
-  torch_geometric.
+- Install an explicit package subset on arm64 instead of `uv sync --extra all
+  --extra recipes`: alpasim-tools pulls PyQt5, which doesn't resolve on linux
+  aarch64; alpasim_driver/alpasim_plugins pull x86-only packages such as
+  tensordict via the upstream learned-driver models, and the external driver
+  runs on the host anyway; alpasim_wizard is launched on the host;
+  alpasim-trafficsim pulls torch_geometric. The subset is installed explicitly
+  rather than declared as an extra and consumed via `uv sync`, because syncing
+  through the project resolution installs a +cpu torch build on aarch64 while
+  the direct install resolves an aarch64 CUDA build (measured on GB10:
+  2.8.0+cpu via sync vs 2.13.0+cu130 with CUDA available).
 - Skip the PyG compiled extensions on arm64. That step's wheel index is pinned
   to an x86 CUDA build (2.8.0+cu128) and publishes nothing for aarch64. Only
   alpasim-trafficsim needs them and it is excluded above, so they are unneeded
   rather than merely unavailable.
-- pyproject.toml gains a `docker_local` extra naming the same headless runtime
-  subset, documenting why each exclusion is there.
 
-Re-authored 2026-08-12 against alpasim main @ 1e801ca (August 2026 public sync).
-The previous revision was cut against 3032e0c and no longer applied to any of its
-files: EgoDriverService moved from async `grpc.aio.ServicerContext` to sync
-`grpc.ServicerContext`, gained `@log_call` and a `_sessions_lock`, and renamed
-`session.desired_cameras_logical_ids` to `session.frame_caches`; close_session's
-own existence check was dropped upstream, so its bare `del` now raises KeyError
-where it previously raised a descriptive one, and the guard is taken inside
-`_sessions_lock` to match upstream's locking of that dict. On the build side,
-`all` gained alpasim-trafficsim, a `recipes` extra appeared, the install line
-became `--extra all --extra recipes`, and upstream adopted the multi-stage arch
-split itself.
+Re-authored 2026-08-12 against alpasim main @ 1e801ca (August 2026 public sync);
+2026-08-13: dropped the docker_local pyproject extra this patch previously also
+added -- it was never consumed by the Dockerfile, and the torch measurement above
+means it must not become the install path on aarch64.
 
 Two more local-checkout changes (models/__init__.py's lazy VAM/Alpamayo imports,
 and docker_compose.py's deployment tweaks) are carried as full tracked file copies
@@ -61,13 +56,12 @@ elsewhere in this override tree instead of hunks here - the copy step always run
 last and wins, so a parallel patch hunk for either file was dead weight nothing
 ever exercised.
 ---
- Dockerfile                            | 36 ++++++++++++++++++++-----
- pyproject.toml                        | 18 +++++++++++++
- src/driver/src/alpasim_driver/main.py | 39 ++++++++++++++++++++++++---
- 3 files changed, 82 insertions(+), 11 deletions(-)
+ Dockerfile                            | 40 ++++++++++++++++++++++-----
+ src/driver/src/alpasim_driver/main.py | 39 +++++++++++++++++++++++---
+ 2 files changed, 68 insertions(+), 11 deletions(-)
 
 diff --git a/Dockerfile b/Dockerfile
-index 4992139..fdb921a 100644
+index 4992139..d215c6b 100644
 --- a/Dockerfile
 +++ b/Dockerfile
 @@ -13,6 +13,7 @@ FROM nvcr.io/nvidia/pytorch:25.08-py3 AS base-arm64
@@ -91,8 +85,14 @@ index 4992139..fdb921a 100644
  RUN apt-get update && apt-get install -y \
      git \
      ffmpeg \
-@@ -57,7 +64,20 @@ WORKDIR /repo
+@@ -55,9 +62,26 @@ RUN uv run compile-protos --no-sync
  
+ WORKDIR /repo
+ 
++# The arm64 branch installs its package subset explicitly rather than selecting an
++# extra through `uv sync`: syncing through the project resolution yields a +cpu
++# torch build on aarch64, while the direct install resolves an aarch64 CUDA build
++# (measured on GB10: 2.8.0+cpu via sync vs 2.13.0+cu130 with CUDA available).
  RUN --mount=type=secret,id=netrc,target=/root/.netrc \
      --mount=type=cache,target=/root/.cache/uv \
 -    sh -c 'if [ -f /root/.netrc ]; then export NETRC=/root/.netrc; fi && uv sync --extra all --extra recipes'
@@ -113,7 +113,7 @@ index 4992139..fdb921a 100644
  
  ARG PYTORCH_VERSION=2.8.0+cu128
  ARG TORCH_CLUSTER_VERSION=1.6.3
-@@ -66,12 +86,14 @@ ARG TORCH_SPARSE_VERSION=0.6.18
+@@ -66,12 +90,14 @@ ARG TORCH_SPARSE_VERSION=0.6.18
  
  # Install PyG compiled extensions (torch-cluster, torch-scatter, torch-sparse)
  # from pre-built wheels matching the installed torch + CUDA versions.
@@ -134,35 +134,6 @@ index 4992139..fdb921a 100644
  
  ENV UV_CACHE_DIR=/tmp/uv-cache
  ENV UV_NO_SYNC=1
-diff --git a/pyproject.toml b/pyproject.toml
-index 3f5231a..a9a1cdc 100644
---- a/pyproject.toml
-+++ b/pyproject.toml
-@@ -37,6 +37,24 @@ all = [
-   "alpasim-trafficsim",
- ]
- 
-+# Core packages needed inside headless local-external-driver Docker images.
-+# This intentionally excludes:
-+# - alpasim-tools: pulls PyQt5, which does not resolve on Linux aarch64
-+# - alpasim_driver / alpasim_plugins: the external driver runs on the host, not in
-+#   the runtime containers, and its dependency stack pulls x86-only packages such as
-+#   tensordict through the upstream learned-driver models.
-+# - alpasim_wizard: the wizard is launched on the host, not in the runtime image.
-+# - alpasim-trafficsim: added upstream to `all`; pulls torch_geometric/torch-cluster,
-+#   whose compiled PyG extensions are x86-hardcoded in the Dockerfile.
-+docker_local = [
-+  "alpasim_controller",
-+  "alpasim_eval",
-+  "alpasim_grpc",
-+  "alpasim-runtime",
-+  "alpasim_utils",
-+  "alpasim-physics",
-+]
-+
- # -- Model extras --
- recipes = ["alpasim_driver[recipes]"]
- 
 diff --git a/src/driver/src/alpasim_driver/main.py b/src/driver/src/alpasim_driver/main.py
 index 9013bf2..eb08eac 100644
 --- a/src/driver/src/alpasim_driver/main.py

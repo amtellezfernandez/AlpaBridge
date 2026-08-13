@@ -1,6 +1,12 @@
 # Proposed upstream PR: a `docker_local` extras group for headless runtime images
 
-**Status:** re-cut 2026-08-12 against `1e801ca`, whose `all` extra gained `alpasim-trafficsim`. Applies cleanly to `main` @ `1e801ca`; not yet opened.
+**Status: ON HOLD — do not open as-is.** Measured on GB10 (2026-08-13): consuming a
+package subset via `uv sync --extra <subset>` installs a `+cpu` torch build on aarch64
+(`2.8.0+cpu`, `torch.version.cuda == None`), while installing the same packages directly
+resolves an aarch64 CUDA build (`2.13.0+cu130`, CUDA available). So this extra must not
+become the arm64 install path until torch sourcing handles aarch64 explicitly — the ARM64
+Dockerfile PR installs the subset directly and documents this measurement inline. The extra
+may still have value for x86 image slimming; re-verify torch resolution there before opening.
 
 **Related:** the [ARM64 Docker build proposal](./arm64-docker-build.md) is the Docker-side half of this same fix - it installs exactly this package list (editable) instead of `uv sync --extra all` when building for ARM64. They're meant to be read together.
 
