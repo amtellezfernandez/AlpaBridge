@@ -2,6 +2,25 @@
 
 All notable adapter-release changes are tracked here.
 
+## Unreleased - 2026-08-13
+
+- Resolved a three-way duplication around the arm64 package subset, prompted by asking why
+  the applied override and the upstream proposals solved the same problem differently:
+  `local_checkout.patch` declared a `docker_local` extra in pyproject and then never consumed
+  it (its Dockerfile branch uses an explicit install list), the ARM64 upstream PR shipped only
+  the list, and `docker-local-extras.patch` shipped only the extra.
+  Before unifying on the "cleaner" extra, the extra-based design was built and tested on GB10
+  -- and it fails in a way none of the documents knew: **`uv sync --extra <subset>` installs a
+  `+cpu` torch build on aarch64** (`2.8.0+cpu`, no CUDA), while the direct install resolves an
+  aarch64 CUDA build (`2.13.0+cu130`, CUDA available on GB10). The explicit install list is
+  therefore the correct design, not an accident, and is now documented as such where a
+  reviewer will look: a rationale comment in the Dockerfile hunk of `local_checkout.patch`,
+  the same comment in upstream PR #129's Dockerfile, and a measurement note in its body.
+  The never-consumed `docker_local` extra is removed from `local_checkout.patch` (one source
+  of truth), `docker-local-extras.md` is marked ON HOLD with the measurement, and
+  `arm64-docker-build.patch` is regenerated from the PR branch itself so proposal and PR
+  cannot drift apart.
+
 ## Unreleased - 2026-08-12
 
 - Re-baselined the AlpaSim overrides onto `NVlabs/alpasim` `main` @ `1e801ca`

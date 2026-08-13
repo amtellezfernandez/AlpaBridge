@@ -102,7 +102,7 @@ two from drifting apart again.
 | --- | --- | --- |
 | `session-event-idempotency.patch` | yes | re-cut; content verified by a live rollout (198 frames, session COMPLETED) |
 | `arm64-docker-build.patch` | yes | re-cut; verified by a real 33.1GB ARM64 build on GB10, all four arm64 branches confirmed firing |
-| `docker-local-extras.patch` | yes | re-cut against the `all` extra gaining `alpasim-trafficsim` |
+| `docker-local-extras.patch` | yes | **on hold** — measured on GB10 that consuming an extra via `uv sync` yields `+cpu` torch on aarch64; see that `.md` |
 | `lazy-model-imports.patch` | yes | re-cut; now covers `Alpamayo2Model`, added in the August 2026 sync |
 | `plugin-config-passthrough.patch` | yes | re-cut; `ModelConfig` had replaced `use_classifier_free_guidance_nav` with a weight field |
 | `cameraframe-type-mismatch.patch` | yes | unchanged, still applies |

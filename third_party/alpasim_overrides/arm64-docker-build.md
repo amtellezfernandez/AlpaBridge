@@ -2,7 +2,7 @@
 
 **Status:** applies cleanly to `NVlabs/alpasim` `main` @ `1e801ca`; verified by a real ARM64 `docker build` on NVIDIA GB10 (Grace Blackwell) hardware, producing a working image in which all installed packages import and CUDA is available. Not yet opened.
 
-**Related:** the [`docker_local` extras proposal](./docker-local-extras.md) documents exactly which packages are safe to install on ARM64 and why - this PR is the Docker-side half of the same fix; they're meant to land together (or at least reference each other), though each applies independently.
+**Related:** the [`docker_local` extras proposal](./docker-local-extras.md) documents the same package subset, but the two must NOT land together as the install path: measured on GB10, `uv sync --extra <subset>` installs a `+cpu` torch on aarch64 while the direct install used here resolves an aarch64 CUDA build. That proposal is on hold; this PR documents the measurement in the Dockerfile itself.
 
 ## Why
 
