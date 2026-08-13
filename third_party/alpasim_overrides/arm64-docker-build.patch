@@ -1,4 +1,4 @@
-From 6c3879f4812948fcc36e2cbca53d385a4f524d08 Mon Sep 17 00:00:00 2001
+From c6657753af17e0bc4c787c1ae23a6ec363b362e6 Mon Sep 17 00:00:00 2001
 From: amtellezfernandez <177202985+amtellezfernandez@users.noreply.github.com>
 Date: Wed, 12 Aug 2026 21:35:43 +0200
 Subject: [PATCH] docker: make the ARM64 image build actually work
@@ -6,11 +6,16 @@ Subject: [PATCH] docker: make the ARM64 image build actually work
 The Dockerfile selects an ARM64 base already, but the build fails past that point on
 aarch64. Four changes, all keyed off TARGETARCH so the x86_64 path is untouched:
 
-1. Re-declare `ARG TARGETARCH` after `FROM base-${TARGETARCH}`. The top-level declaration
-   is scoped to the pre-FROM context so the FROM can resolve; it is not in scope for RUN
-   steps in the stage that FROM opens. Without it every arm64 conditional below expands to
-   `if [ "" = "arm64" ]` and silently takes the x86 path -- which presents as a step
-   completing suspiciously fast rather than as an error.
+1. Re-declare `ARG TARGETARCH` inside the final stage. BuildKit's builtin
+   platform args are always available to FROM lines, so `FROM base-${TARGETARCH}`
+   resolves without any ARG at all -- but an ARG line after a FROM belongs to that
+   stage, and is visible to RUN only there and in stages derived from it. The
+   existing declaration sits inside the dcgm-exporter stage, which the final stage
+   does not derive from, so any arch conditional there compares against the empty
+   string on every architecture -- presenting as a step that completes suspiciously
+   fast rather than as an error. Verified with minimal-repro Dockerfiles covering
+   global, ancestor-stage, non-ancestor-stage and no-ARG placements.
+
 2. Configure NVIDIA's CUDA apt repo on arm64: datacenter-gpu-manager-4-cuda12 comes from
    it and the ARM64 base image does not have it. The repo path is derived from the base
    image's own /etc/os-release rather than hardcoded, so it follows the base image.

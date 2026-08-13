@@ -4,6 +4,19 @@ All notable adapter-release changes are tracked here.
 
 ## Unreleased - 2026-08-13
 
+- Corrected the explanation of the `ARG TARGETARCH` scoping bug everywhere it appears --
+  the fix was always right, but both prior accounts of *why* were wrong, in ways a
+  BuildKit-savvy reviewer would catch. Pinned with four minimal-repro probes: builtin
+  platform args always resolve in `FROM` lines with no `ARG` at all; an `ARG` after a
+  `FROM` belongs to that stage and is inherited only by stages *derived from* it; stage
+  count and position are irrelevant. Upstream's declaration sits inside the dcgm-exporter
+  stage, which the final stage does not derive from -- hence empty in its `RUN` steps.
+  This replaces both the original "three or more named stages" account and the later
+  "pre-FROM scope" account, in `arm64-docker-build.md`, `local_checkout.patch`'s commit
+  message, and upstream PR #129's commit and description. Prompted by auditing whether a
+  standalone split of the fix was worth opening; the audit also found `TARGETARCH` has no
+  in-stage consumer on upstream main, so the standalone split is parked as dead code --
+  the fix stays inside #129 where its consumers exist.
 - Resolved a three-way duplication around the arm64 package subset, prompted by asking why
   the applied override and the upstream proposals solved the same problem differently:
   `local_checkout.patch` declared a `docker_local` extra in pyproject and then never consumed
@@ -161,8 +174,12 @@ All notable adapter-release changes are tracked here.
     constructed with, which is the thing the test is named for.
 - Fixed the ARM64 build path, which could not have worked as shipped. The re-authored
   `local_checkout.patch` gates its arm64 install subset on `${TARGETARCH}`, but
-  upstream's `ARG TARGETARCH` is declared *before* `FROM base-${TARGETARCH}` and is
-  therefore not in scope for `RUN` steps in the stage that `FROM` opens. Every arm64
+  upstream's `ARG TARGETARCH` line belongs to the stage it appears in (dcgm-exporter),
+  which the final stage does not derive from, so it is not in scope for `RUN` steps
+  there. (Mechanism pinned 2026-08-13 with four minimal-repro probes: builtin platform
+  args always resolve in `FROM` lines with no `ARG` at all; a stage's `ARG` is inherited
+  only by stages derived from it; stage count and position relative to the `FROM` are
+  irrelevant.) Every arm64
   conditional expanded to `if [ "" = "arm64" ]` -- silently false -- so an aarch64 build
   quietly took the x86 path. This presents as a step completing suspiciously fast rather
   than as an error, which is how it survived review. `ARG TARGETARCH` is now re-declared
