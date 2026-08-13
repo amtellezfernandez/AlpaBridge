@@ -28,9 +28,34 @@ class instead of copied - that duplication was accidental, this one isn't.
 
 from __future__ import annotations
 
+import logging
+import os
 from dataclasses import dataclass
 from types import SimpleNamespace
 from typing import Any, Callable, Protocol
+
+LOGGER = logging.getLogger("alpabridge_policy_registry")
+
+
+def _env_float(name: str, default: float) -> float:
+    """Read a float tuning override from the environment.
+
+    The standalone driver has no Hydra config, so values that `from_config`
+    exposes to in-process users are otherwise unreachable behind the gRPC
+    boundary — reachable only by editing this file and rebuilding the image.
+    """
+    raw = os.environ.get(name)
+    if raw is None or not raw.strip():
+        return default
+    try:
+        value = float(raw)
+    except ValueError:
+        LOGGER.warning("%s=%r is not a number; using %s", name, raw, default)
+        return default
+    if value <= 0:
+        LOGGER.warning("%s=%s must be positive; using %s", name, value, default)
+        return default
+    return value
 
 
 class PolicyContext(Protocol):
@@ -115,6 +140,21 @@ def _build_mpc_planner(adapter: PolicyContext) -> Any:
     from alpabridge.simulator.mpc_planner import MPCPlannerAlpaSimModel, MPCPlannerConfig
 
     resample = _resample_config(adapter)
+    defaults = MPCPlannerConfig()
+    max_speed_mps = _env_float(
+        "ALPABRIDGE_MPC_MAX_SPEED_MPS", defaults.max_speed_mps
+    )
+    cruise_speed_mps = _env_float(
+        "ALPABRIDGE_MPC_CRUISE_SPEED_MPS", defaults.target_cruise_speed_mps
+    )
+    if cruise_speed_mps > max_speed_mps:
+        LOGGER.warning(
+            "cruise speed %s exceeds max speed %s; clamping",
+            cruise_speed_mps,
+            max_speed_mps,
+        )
+        cruise_speed_mps = max_speed_mps
+
     return MPCPlannerAlpaSimModel(
         camera_ids=[adapter.model_camera_id],
         context_length=1,
@@ -122,6 +162,8 @@ def _build_mpc_planner(adapter: PolicyContext) -> Any:
         config=MPCPlannerConfig(
             horizon_seconds=resample.horizon_seconds,
             point_count=resample.point_count,
+            max_speed_mps=max_speed_mps,
+            target_cruise_speed_mps=cruise_speed_mps,
         ),
     )
 
