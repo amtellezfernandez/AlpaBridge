@@ -46,6 +46,9 @@ class ModelLoadError(RuntimeError):
 class DriverCameraFrame:
     timestamp_us: int
     image: np.ndarray
+    # The rig camera this frame came from. Policies receive frames under a
+    # single key, so this is the only way back to the matching calibration.
+    source_camera_id: str = ""
 
 
 @dataclass
@@ -273,6 +276,7 @@ class AlpaBridgeDriverService:
         frame = DriverCameraFrame(
             timestamp_us=int(getattr(grpc_image, "frame_end_us", 0) or 0),
             image=_image_array_from_bytes(getattr(grpc_image, "image_bytes", b"")),
+            source_camera_id=camera_id,
         )
         delivered = _delivered_image_size(frame.image)
         with self._lock:
