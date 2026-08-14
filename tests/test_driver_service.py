@@ -569,3 +569,55 @@ class TestDeferredModelLoad:
         assert service.wait_for_model(5) is True, "waiters must not hang on failure"
         with pytest.raises(ModelLoadError):
             service._require_model()
+
+
+class TestWarmupReferenceSpeed:
+    """The evaluator drives the ego along the recorded human trajectory for the
+    first ~1.7 s while still calling drive(), so the session's opening speeds
+    are the human's own pace for the scene. The reference must be per-session:
+    the evaluator runs two concurrent rollouts per replica against one adapter."""
+
+    def _egomotion(
+        self, service: AlpaBridgeDriverService, uuid: str, t_us: int, x: float
+    ) -> None:
+        pose = SimpleNamespace(
+            timestamp_us=t_us,
+            pose=SimpleNamespace(
+                vec=SimpleNamespace(x=x, y=0.0, z=0.0),
+                quat=SimpleNamespace(w=1.0, x=0.0, y=0.0, z=0.0),
+            ),
+        )
+        request = SimpleNamespace(
+            session_uuid=uuid,
+            trajectory=SimpleNamespace(poses=[pose]),
+            dynamic_states=[],
+        )
+        service.submit_egomotion_observation(request)
+
+    def test_reference_is_the_max_of_the_warmup_window(self) -> None:
+        service = AlpaBridgeDriverService(model_name="route_following")
+        service.start_session(SimpleNamespace(session_uuid="s1", random_seed=0))
+        # Accelerating human: 2 m/s then 4 m/s between consecutive 100 ms poses.
+        self._egomotion(service, "s1", 1_000_000, 0.0)
+        self._egomotion(service, "s1", 1_100_000, 0.2)
+        first = service.prediction_input("s1", time_now_us=1_100_000)
+        self._egomotion(service, "s1", 1_200_000, 0.6)
+        second = service.prediction_input("s1", time_now_us=1_200_000)
+
+        assert first.reference_speed_mps == pytest.approx(2.0, abs=0.2)
+        assert second.reference_speed_mps == pytest.approx(4.0, abs=0.2)
+
+    def test_reference_is_isolated_between_sessions(self) -> None:
+        service = AlpaBridgeDriverService(model_name="route_following")
+        service.start_session(SimpleNamespace(session_uuid="fast", random_seed=0))
+        service.start_session(SimpleNamespace(session_uuid="slow", random_seed=0))
+        self._egomotion(service, "fast", 1_000_000, 0.0)
+        self._egomotion(service, "fast", 1_100_000, 1.0)  # 10 m/s
+        self._egomotion(service, "slow", 1_000_000, 0.0)
+        self._egomotion(service, "slow", 1_100_000, 0.1)  # 1 m/s
+
+        fast = service.prediction_input("fast", time_now_us=1_100_000)
+        slow = service.prediction_input("slow", time_now_us=1_100_000)
+
+        assert fast.reference_speed_mps == pytest.approx(10.0, abs=0.5)
+        assert slow.reference_speed_mps == pytest.approx(1.0, abs=0.2)

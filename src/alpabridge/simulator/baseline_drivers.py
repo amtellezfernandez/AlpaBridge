@@ -205,11 +205,17 @@ class RouteFollowingAlpaSimModel(_BaselineDriverModel):
                 point_count=self._point_count(),
             )
         else:
+            env_target, _ = _ramp_settings()
             trajectory = _sample_route(
                 route_points,
                 speed_mps=speed_mps,
                 horizon_seconds=self._horizon_seconds(),
                 point_count=self._point_count(),
+                target_speed_override_mps=effective_ramp_target_mps(
+                    getattr(prediction_input, "reference_speed_mps", None),
+                    target_speed_mps=env_target,
+                    scale=_ramp_scale(),
+                ),
             )
         return resample_trajectory(trajectory, self._output_frequency_hz, self._horizon_seconds())
 
@@ -298,12 +304,53 @@ def _ramp_settings() -> tuple[float, float]:
     return max(0.0, target), max(0.0, accel)
 
 
+def _ramp_scale() -> float:
+    """Multiplier on the session's warmup reference speed, 0 = disabled.
+
+    An absolute target ramps a scene the human drove at 3.7 m/s to the same
+    9 m/s as one driven at 8.5, and the slow scene is slow for a reason. The
+    scale anchors the target to the human's own warmup pace instead; when both
+    the scale and the absolute target are set, the tighter one wins.
+    """
+    try:
+        scale = float(os.environ.get("ALPABRIDGE_RF_TARGET_SPEED_SCALE", "0") or 0.0)
+    except ValueError:
+        return 0.0
+    if not math.isfinite(scale) or scale <= 0.0:
+        return 0.0
+    return scale
+
+
+def effective_ramp_target_mps(
+    reference_speed_mps: float | None,
+    *,
+    target_speed_mps: float,
+    scale: float,
+) -> float:
+    """Combine the absolute target with the scaled per-scene reference.
+
+    Returns the absolute target untouched when the scale is unusable, so
+    behaviour without the scale is unchanged. With only the scale, the target
+    is scale x reference. With both, the tighter bound wins - the scale exists
+    to stop the absolute target from tripling the pace of a slow scene.
+    """
+    scaled = 0.0
+    if scale > 0.0 and reference_speed_mps and math.isfinite(reference_speed_mps):
+        scaled = scale * max(0.0, reference_speed_mps)
+    if scaled <= 0.0:
+        return target_speed_mps
+    if target_speed_mps <= 0.0:
+        return scaled
+    return min(target_speed_mps, scaled)
+
+
 def _sample_route(
     points: list[tuple[float, float]],
     *,
     speed_mps: float,
     horizon_seconds: float,
     point_count: int,
+    target_speed_override_mps: float | None = None,
 ) -> np.ndarray:
     segment_lengths = [
         math.dist(points[index], points[index + 1]) for index in range(len(points) - 1)
@@ -329,6 +376,8 @@ def _sample_route(
     # locks the launch speed in for the whole rollout. The ramp (opt-in)
     # accelerates toward a target speed instead.
     target_speed_mps, accel_mps2 = _ramp_settings()
+    if target_speed_override_mps is not None:
+        target_speed_mps = target_speed_override_mps
     target_distances = _ramped_distances(
         times_s,
         speed_mps=speed_mps,

@@ -33,6 +33,10 @@ from alpabridge.simulator.alpasim_contract import (
 LOGGER = logging.getLogger("alpabridge_driver_service")
 DRIVER_TELEMETRY_SCHEMA = "alpabridge_driver_telemetry_v3"
 
+# Number of leading drive() calls whose observed speed is treated as the
+# force-GT warmup window (~2 s at 10 Hz against the evaluator's 1.7 s).
+_WARMUP_SPEED_WINDOW = 20
+
 
 class ModelLoadError(RuntimeError):
     """The policy could not be constructed.
@@ -64,6 +68,7 @@ class DriverSessionState:
     ego_pose_history: list[Any] = field(default_factory=list)
     dynamic_states: list[tuple[int, Any]] = field(default_factory=list)
     route_waypoints: list[dict[str, float]] = field(default_factory=list)
+    warmup_speeds_mps: list[float] = field(default_factory=list)
     command: Any = DriveCommand.STRAIGHT
 
 
@@ -430,6 +435,16 @@ class AlpaBridgeDriverService:
             ego_pose_history,
             dynamic_states,
         )
+        # For the first ~2 s the evaluator drives the ego along the recorded
+        # human trajectory (force-GT warmup) while still calling drive(), so the
+        # session's opening speeds are the human's own pace for this scene. The
+        # max over that window is an in-band, perception-free reference for how
+        # fast the scene was actually driven - the route, by contrast, is a
+        # fixed-geometry window and carries no scene signal at all.
+        with self._lock:
+            if len(session.warmup_speeds_mps) < _WARMUP_SPEED_WINDOW:
+                session.warmup_speeds_mps.append(float(speed))
+            reference_speed_mps = max(session.warmup_speeds_mps, default=0.0)
 
         return SimpleNamespace(
             camera_images=camera_images,
@@ -442,6 +457,7 @@ class AlpaBridgeDriverService:
             acceleration_xy=acceleration_xy,
             ego_pose_history=ego_pose_history,
             route_waypoints=route_waypoints,
+            reference_speed_mps=reference_speed_mps,
             structured_hazards=[],
             session_uuid=session_uuid,
             runtime_random_seed=random_seed,

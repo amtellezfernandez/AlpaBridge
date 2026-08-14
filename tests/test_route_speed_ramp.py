@@ -14,9 +14,11 @@ import numpy as np
 import pytest
 
 from alpabridge.simulator.baseline_drivers import (
+    _ramp_scale,
     _ramp_settings,
     _ramped_distances,
     _sample_route,
+    effective_ramp_target_mps,
 )
 
 TIMES = np.linspace(0.25, 5.0, 20)
@@ -113,3 +115,45 @@ class TestSampleRouteWithRamp:
         times = np.linspace(0.25, 5.0, 20)
 
         assert np.allclose(samples[:, 0], times * 4.0, atol=1e-4)
+
+
+class TestEffectiveRampTarget:
+    """The absolute target ramps every scene to the same speed; the scale
+    anchors it to the session's warmup reference — the human's own pace during
+    force-GT — and the tighter bound wins."""
+
+    def test_disabled_when_neither_knob_is_set(self) -> None:
+        assert effective_ramp_target_mps(5.0, target_speed_mps=0.0, scale=0.0) == 0.0
+
+    def test_absolute_only_is_unchanged_behaviour(self) -> None:
+        assert effective_ramp_target_mps(5.0, target_speed_mps=9.0, scale=0.0) == 9.0
+
+    def test_scale_only_uses_the_reference(self) -> None:
+        assert effective_ramp_target_mps(
+            3.7, target_speed_mps=0.0, scale=2.0
+        ) == pytest.approx(7.4)
+
+    def test_both_set_takes_the_tighter_bound(self) -> None:
+        # Slow scene: 2 x 1.2 = 2.4 beats the 9.0 absolute.
+        assert effective_ramp_target_mps(
+            1.2, target_speed_mps=9.0, scale=2.0
+        ) == pytest.approx(2.4)
+        # Fast scene: the absolute cap holds.
+        assert effective_ramp_target_mps(
+            8.5, target_speed_mps=9.0, scale=2.0
+        ) == pytest.approx(9.0)
+
+    @pytest.mark.parametrize("reference", [None, 0.0, float("nan")])
+    def test_unusable_reference_falls_back_to_the_absolute_target(
+        self, reference: float | None
+    ) -> None:
+        assert effective_ramp_target_mps(reference, target_speed_mps=9.0, scale=2.0) == 9.0
+
+    def test_ramp_scale_env_parsing(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.delenv("ALPABRIDGE_RF_TARGET_SPEED_SCALE", raising=False)
+        assert _ramp_scale() == 0.0
+        monkeypatch.setenv("ALPABRIDGE_RF_TARGET_SPEED_SCALE", "2.0")
+        assert _ramp_scale() == 2.0
+        for bad in ("junk", "nan", "-1", ""):
+            monkeypatch.setenv("ALPABRIDGE_RF_TARGET_SPEED_SCALE", bad)
+            assert _ramp_scale() == 0.0
