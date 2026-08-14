@@ -29,6 +29,7 @@ class instead of copied - that duplication was accidental, this one isn't.
 from __future__ import annotations
 
 import logging
+import math
 import os
 from dataclasses import dataclass
 from types import SimpleNamespace
@@ -52,8 +53,13 @@ def _env_float(name: str, default: float) -> float:
     except ValueError:
         LOGGER.warning("%s=%r is not a number; using %s", name, raw, default)
         return default
-    if value <= 0:
-        LOGGER.warning("%s=%s must be positive; using %s", name, value, default)
+    # NaN fails every comparison, so `value <= 0` does not reject it and it would
+    # reach the planner and poison candidate rollouts silently. inf passes the
+    # positivity check for the same reason it is useless as a speed.
+    if not math.isfinite(value) or value <= 0:
+        LOGGER.warning(
+            "%s=%s must be a positive finite number; using %s", name, value, default
+        )
         return default
     return value
 
@@ -154,6 +160,13 @@ def _env_float_tuple(name: str, default: tuple[float, ...]) -> tuple[float, ...]
         return default
     if not values:
         LOGGER.warning("%s=%r parsed to an empty set; using %s", name, raw, default)
+        return default
+    # Candidate sets are allowed to contain zero and negatives — decelerations and
+    # left yaw rates are meaningful — so only finiteness is checked here.
+    if not all(math.isfinite(value) for value in values):
+        LOGGER.warning(
+            "%s=%r contains a non-finite value; using %s", name, raw, default
+        )
         return default
     return values
 
