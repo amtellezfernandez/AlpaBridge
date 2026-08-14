@@ -76,8 +76,8 @@ def test_scaling_moves_the_pixel_terms_and_leaves_the_rest() -> None:
     calibration = calibration_from_available_camera(_pinhole_camera())
     assert calibration is not None
 
-    # The official set delivers 1916x1080 on some scenes: width scales, height
-    # does not, so the two axes must be treated separately.
+    # A delivered width that differs from the declared one while the height
+    # matches: the two axes must be treated separately.
     scaled = calibration.scaled_to(1916, 1080)
 
     assert scaled.width == 1916
