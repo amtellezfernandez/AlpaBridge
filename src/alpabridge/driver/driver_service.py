@@ -20,6 +20,7 @@ import numpy as np
 from alpabridge.driver.camera_calibration import (
     CameraCalibration,
     calibrations_from_session_request,
+    camera_protos_from_session_request,
 )
 from alpabridge.driver.policy_registry import available_policy_names, build_policy
 from alpabridge.simulator.alpasim_contract import (
@@ -58,6 +59,7 @@ class DriverSessionState:
     debug_scene_id: str | None = None
     camera_images: dict[str, list[DriverCameraFrame]] = field(default_factory=dict)
     camera_calibrations: dict[str, CameraCalibration] = field(default_factory=dict)
+    camera_protos: dict[str, Any] = field(default_factory=dict)
     delivered_image_size: dict[str, tuple[int, int]] = field(default_factory=dict)
     ego_pose_history: list[Any] = field(default_factory=list)
     dynamic_states: list[tuple[int, Any]] = field(default_factory=list)
@@ -237,6 +239,7 @@ class AlpaBridgeDriverService:
         debug_info = getattr(request, "debug_info", None)
         debug_scene_id = getattr(debug_info, "scene_id", None) if debug_info is not None else None
         calibrations = calibrations_from_session_request(request)
+        camera_protos = camera_protos_from_session_request(request)
         if not calibrations:
             # Only pixel-reading policies need this, so it is a warning and not a
             # refusal; the geometric baselines run fine without a rig.
@@ -251,6 +254,7 @@ class AlpaBridgeDriverService:
                 random_seed=int(getattr(request, "random_seed", 0) or 0),
                 debug_scene_id=str(debug_scene_id) if debug_scene_id else None,
                 camera_calibrations=calibrations,
+                camera_protos=camera_protos,
             )
         self._telemetry.record(
             {
@@ -415,6 +419,7 @@ class AlpaBridgeDriverService:
             camera_calibrations = _calibrations_for_delivered_images(
                 session.camera_calibrations, session.delivered_image_size
             )
+            camera_protos = dict(session.camera_protos)
         if self.route_contract_mode == "command_only_route":
             route_waypoints = []
         speed, velocity_xy, acceleration_xy = _estimate_ego_kinematics(
@@ -425,6 +430,7 @@ class AlpaBridgeDriverService:
         return SimpleNamespace(
             camera_images=camera_images,
             camera_calibrations=camera_calibrations,
+            camera_protos=camera_protos,
             command=command,
             speed=speed,
             acceleration=float(math.hypot(*acceleration_xy)),

@@ -22,6 +22,7 @@ from .alpasim_contract import (
     make_model_prediction,
     resample_trajectory,
 )
+from .camera_rectification import build_rectifier, rectification_disabled, rectify_image
 from .image_ops import resize_and_center_crop
 from .inference_rate_cache import PoseReanchoredInferenceCache
 
@@ -167,6 +168,9 @@ class VAVAMAlpaSimModel(BaseTrajectoryModel):
         self._dtype = torch.float16 if self._use_autocast else torch.float32
         self._vam, self._tokenizer, self._transform = self._load()
         self._inference_cache = PoseReanchoredInferenceCache(min_interval_s=VAVAM_NATIVE_PERIOD_S)
+        # One rectifier per camera and delivered size; building one is expensive
+        # and the pair is fixed for a rollout.
+        self._rectifiers: dict[tuple[str, tuple[int, int]], Any] = {}
 
     @property
     def camera_ids(self) -> list[str]:
@@ -224,6 +228,7 @@ class VAVAMAlpaSimModel(BaseTrajectoryModel):
             _check_optical_centre(
                 prediction_input, prediction_input.camera_images, self.camera_ids[0]
             )
+            image = self._rectified(prediction_input, image)
             return self._run_inference(image, command_id)
 
         native_trajectory_xy, reused_cache = self._inference_cache.get(prediction_input, _infer)
@@ -260,6 +265,27 @@ class VAVAMAlpaSimModel(BaseTrajectoryModel):
             headings=headings,
             reasoning_text=json.dumps(metadata, sort_keys=True),
         )
+
+    def _rectified(self, prediction_input: Any, image: np.ndarray) -> np.ndarray:
+        """Rectify the frame into the pinhole view VAVAM was trained on.
+
+        VAVAM expects rectified, roughly centred pinhole images; the rig renders
+        f-theta. Rectifying is therefore the default, and every way it can fail
+        returns the frame as rendered - which is what this adapter did before
+        rectification existed, so a failure is never worse than not having it.
+        """
+        if image.ndim < 2 or rectification_disabled():
+            return image
+        frames = prediction_input.camera_images.get(self.camera_ids[0]) or []
+        source_id = getattr(frames[-1], "source_camera_id", "") if frames else ""
+        if not source_id:
+            return image
+        source_hw = (int(image.shape[0]), int(image.shape[1]))
+        key = (source_id, source_hw)
+        if key not in self._rectifiers:
+            protos = getattr(prediction_input, "camera_protos", None) or {}
+            self._rectifiers[key] = build_rectifier(protos.get(source_id), source_hw)
+        return rectify_image(self._rectifiers[key], image)
 
     def _run_inference(self, image: np.ndarray, command_id: int) -> np.ndarray:
         cropped = resize_and_center_crop(image, VAVAM_EXPECTED_HEIGHT, VAVAM_EXPECTED_WIDTH)

@@ -129,6 +129,29 @@ def calibration_from_available_camera(camera: Any) -> CameraCalibration | None:
     )
 
 
+def camera_protos_from_session_request(request: Any) -> dict[str, Any]:
+    """Keep the raw `AvailableCamera` messages, keyed by logical id.
+
+    The parsed calibration is what a policy reasons with, but rectification is
+    built from the original message: it needs the f-theta polynomial, which
+    `CameraCalibration` deliberately does not carry.
+    """
+    spec = getattr(request, "rollout_spec", None)
+    vehicle = getattr(spec, "vehicle", None) if spec is not None else None
+    cameras = getattr(vehicle, "available_cameras", None) if vehicle is not None else None
+    if not cameras:
+        return {}
+    protos: dict[str, Any] = {}
+    for camera in cameras:
+        intrinsics = getattr(camera, "intrinsics", None)
+        logical_id = str(
+            getattr(intrinsics, "logical_id", "") or getattr(camera, "logical_id", "")
+        )
+        if logical_id:
+            protos[logical_id] = camera
+    return protos
+
+
 def calibrations_from_session_request(request: Any) -> dict[str, CameraCalibration]:
     """Collect every usable calibration from a `DriveSessionRequest`.
 

@@ -42,6 +42,8 @@ dev = [
     # The decode path and anything testing it need a decoder; without this the
     # conformance tier silently skips every pixel-facing test.
     "Pillow>=10",
+    # CI must actually exercise rectification rather than skip past it.
+    "opencv-python-headless>=4.10",
     "pre-commit>=3.7",
     "pytest>=7.4",
     "pytest-cov>=5.0",
@@ -52,6 +54,9 @@ alpasim = [
     "pyarrow>=16",
 ]
 viz = ["Pillow>=10", "matplotlib>=3.8"]
+# f-theta -> pinhole rectification. Optional: without it frames reach policies
+# as rendered, which is what happened before rectification existed.
+rectify = ["opencv-python-headless>=4.10"]
 # Serving the gRPC driver against a real simulator: every rollout streams JPEG
 # camera frames, which need a decoder.
 driver = ["Pillow>=10"]
@@ -124,6 +129,10 @@ fail_under = 33
 [tool.ruff]
 line-length = 100
 target-version = "py310"
+# Vendored code stays byte-identical to upstream so it can be diffed when the
+# reference moves; linting or formatting it would defeat that. See
+# src/alpabridge/third_party/NOTICE.
+extend-exclude = ["src/alpabridge/third_party"]
 
 [tool.ruff.lint]
 select = ["F", "I"]
