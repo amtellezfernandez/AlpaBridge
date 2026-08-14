@@ -1,0 +1,23 @@
+alpasim_rectification.py
+------------------------
+
+Vendored verbatim from NVlabs/alpasim, no modifications.
+
+  repository: https://github.com/NVlabs/alpasim
+  branch:     e2e_challenge
+  path:       e2e_challenge/sample_submission_vavam/vavam_challenge/rectification.py
+  commit:     d9bc5cf714 (2026-06-26)
+  sha256:     15e75cc900af5721... (of the file as vendored)
+
+Copyright (c) 2025-2026 NVIDIA Corporation, licensed Apache-2.0. The SPDX
+identifier and copyright line are retained in the file itself. AlpaBridge is
+BSD-3-Clause; this file keeps its own licence.
+
+Adopted rather than reimplemented so f-theta rectification matches the
+reference submission's behaviour exactly. Keeping it byte-identical means it
+can be diffed against upstream when the reference moves, which a rewrite could
+not offer. Any AlpaBridge-side behaviour lives in
+`alpabridge/simulator/camera_rectification.py`, never here.
+
+It imports `cv2` and `alpasim_grpc`, neither of which AlpaBridge requires: the
+wrapper imports this module lazily and degrades when they are absent.
