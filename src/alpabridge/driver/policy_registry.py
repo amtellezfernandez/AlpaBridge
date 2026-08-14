@@ -136,11 +136,39 @@ def _build_route_following(adapter: PolicyContext) -> Any:
     return _baseline_factory(RouteFollowingAlpaSimModel)(adapter)
 
 
+def _env_float_tuple(name: str, default: tuple[float, ...]) -> tuple[float, ...]:
+    """Read a comma-separated float tuple override from the environment.
+
+    Candidate sets, unlike scalars, cannot be usefully clamped: an empty or
+    unparseable set would leave the planner with nothing to choose from, and
+    MPCPlannerConfig rejects that outright. So anything malformed warns and
+    falls back to the default rather than raising mid-rollout.
+    """
+    raw = os.environ.get(name)
+    if raw is None or not raw.strip():
+        return default
+    try:
+        values = tuple(float(part) for part in raw.split(",") if part.strip())
+    except ValueError:
+        LOGGER.warning("%s=%r is not a comma-separated float list; using %s", name, raw, default)
+        return default
+    if not values:
+        LOGGER.warning("%s=%r parsed to an empty set; using %s", name, raw, default)
+        return default
+    return values
+
+
 def _build_mpc_planner(adapter: PolicyContext) -> Any:
     from alpabridge.simulator.mpc_planner import MPCPlannerAlpaSimModel, MPCPlannerConfig
 
     resample = _resample_config(adapter)
     defaults = MPCPlannerConfig()
+    accels_mps2 = _env_float_tuple(
+        "ALPABRIDGE_MPC_ACCELS_MPS2", defaults.accels_mps2
+    )
+    yaw_rates_rps = _env_float_tuple(
+        "ALPABRIDGE_MPC_YAW_RATES_RPS", defaults.yaw_rates_rps
+    )
     max_speed_mps = _env_float(
         "ALPABRIDGE_MPC_MAX_SPEED_MPS", defaults.max_speed_mps
     )
@@ -164,6 +192,8 @@ def _build_mpc_planner(adapter: PolicyContext) -> Any:
             point_count=resample.point_count,
             max_speed_mps=max_speed_mps,
             target_cruise_speed_mps=cruise_speed_mps,
+            accels_mps2=accels_mps2,
+            yaw_rates_rps=yaw_rates_rps,
         ),
     )
 
