@@ -10,6 +10,7 @@ from alpabridge.driver.policy_registry import (
     _env_float_tuple,
     available_policy_names,
     build_policy,
+    load_external_policy_modules,
     register_policy,
 )
 
@@ -206,3 +207,35 @@ class TestDirectActorPlanner:
 
         assert model._config.speed_scales == (0.0, 0.5, 1.0, 1.5, 2.0)
         assert model._config.lateral_offsets_m == (-2.0, 0.0, 2.0)
+
+
+class TestExternalPolicyModules:
+    """Out-of-tree policies register by import, and `main()` snapshots the
+    registry into --model's choices before any of them would be imported."""
+
+    def test_no_spec_imports_nothing(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.delenv("ALPABRIDGE_EXTRA_POLICY_MODULES", raising=False)
+
+        assert load_external_policy_modules() == ()
+
+    def test_blank_spec_imports_nothing(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("ALPABRIDGE_EXTRA_POLICY_MODULES", "   ")
+
+        assert load_external_policy_modules() == ()
+
+    def test_imports_named_modules_and_skips_empty_entries(self) -> None:
+        # Any importable module proves the import happened; a policy module
+        # differs only in having register_policy at import time.
+        assert load_external_policy_modules("json, ,copy") == ("json", "copy")
+
+    def test_registration_during_import_becomes_selectable(self) -> None:
+        name = "external_policy_registered_during_import"
+        register_policy(DriverPolicy(name, lambda adapter: adapter))
+
+        assert name in available_policy_names()
+
+    def test_unimportable_module_is_fatal(self) -> None:
+        # Starting on a different policy than the operator asked for is worse
+        # than refusing to start.
+        with pytest.raises(ModuleNotFoundError):
+            load_external_policy_modules("alpabridge_no_such_policy_module")

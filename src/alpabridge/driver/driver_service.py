@@ -22,7 +22,11 @@ from alpabridge.driver.camera_calibration import (
     calibrations_from_session_request,
     camera_protos_from_session_request,
 )
-from alpabridge.driver.policy_registry import available_policy_names, build_policy
+from alpabridge.driver.policy_registry import (
+    available_policy_names,
+    build_policy,
+    load_external_policy_modules,
+)
 from alpabridge.simulator.alpasim_contract import (
     DriveCommand,
     ModelPrediction,
@@ -1142,6 +1146,10 @@ def _build_service_class(
 
 
 def main() -> None:
+    # Before the parser is built: --model's choices are snapshotted from the
+    # registry here, so an out-of-tree policy has to register during import or
+    # it is not selectable at all.
+    load_external_policy_modules()
     parser = argparse.ArgumentParser(description="Serve an AlpaBridge policy behind AlpaSim's external-driver gRPC interface.")
     parser.add_argument(
         "--model",

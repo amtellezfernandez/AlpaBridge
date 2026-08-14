@@ -28,6 +28,7 @@ class instead of copied - that duplication was accidental, this one isn't.
 
 from __future__ import annotations
 
+import importlib
 import logging
 import math
 import os
@@ -91,6 +92,37 @@ def register_policy(policy: DriverPolicy) -> None:
     if policy.name in _REGISTRY:
         raise ValueError(f"policy {policy.name!r} is already registered")
     _REGISTRY[policy.name] = policy
+
+
+def load_external_policy_modules(spec: str | None = None) -> tuple[str, ...]:
+    """Import modules named in ``ALPABRIDGE_EXTRA_POLICY_MODULES`` so their
+    ``register_policy`` calls run before the CLI enumerates the choices.
+
+    The registry is populated by import side effect, which works fine for the
+    policies that ship here but leaves out-of-tree ones unreachable: the
+    standalone driver's ``--model`` choices are built from
+    ``available_policy_names()`` inside ``main()``, so a policy defined in
+    another distribution is never offered unless something imported it first.
+    Callers could wrap ``main()`` in their own entry point to do that, but then
+    every deployment reimplements the same shim. A comma-separated module list
+    is the smaller contract, and it keeps policies that are not ours out of
+    this file.
+
+    Import failures are fatal rather than warned past: a driver that silently
+    starts on a different policy than the operator asked for is worse than one
+    that refuses to start.
+    """
+    raw = os.environ.get("ALPABRIDGE_EXTRA_POLICY_MODULES") if spec is None else spec
+    if not raw or not raw.strip():
+        return ()
+    loaded: list[str] = []
+    for name in (part.strip() for part in raw.split(",")):
+        if not name:
+            continue
+        importlib.import_module(name)
+        LOGGER.info("imported external policy module %s", name)
+        loaded.append(name)
+    return tuple(loaded)
 
 
 def available_policy_names() -> tuple[str, ...]:
