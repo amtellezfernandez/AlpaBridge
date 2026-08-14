@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import math
+import threading
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from types import SimpleNamespace
@@ -12,6 +13,8 @@ import pytest
 
 from alpabridge.driver.driver_service import (
     DRIVER_TELEMETRY_SCHEMA,
+    AlpaBridgeDriverService,
+    ModelLoadError,
     AlpaBridgeDriverService,
     prediction_to_proto_trajectory,
     run_self_test,
@@ -493,3 +496,77 @@ def test_prediction_to_proto_trajectory_rejects_nonfinite_transformed_output() -
             time_now_us=10_000,
             common_pb2=_FakeCommonPb2,
         )
+
+
+class TestDeferredModelLoad:
+    """The evaluator gates on get_version answering within its readiness window
+    while several replicas cold-start on one GPU, so a slow policy load must not
+    hold the gRPC port. What must never happen is a driver that quietly serves
+    something other than the policy it claims."""
+
+    def test_eager_construction_is_unchanged(self) -> None:
+        service = AlpaBridgeDriverService(model_name="route_following")
+
+        assert service.wait_for_model(0) is True
+        assert service._require_model() is not None
+
+    def test_deferred_construction_returns_before_the_policy_is_ready(self) -> None:
+        release = threading.Event()
+        built = threading.Event()
+
+        class SlowService(AlpaBridgeDriverService):
+            def _build_model(self) -> Any:
+                release.wait(5)
+                built.set()
+                return SimpleNamespace(name="slow-policy")
+
+        service = SlowService(model_name="route_following", defer_model_load=True)
+        try:
+            # The constructor must not have waited on the load.
+            assert service.wait_for_model(0) is False
+            assert built.is_set() is False
+        finally:
+            release.set()
+
+        assert service.wait_for_model(5) is True
+        assert service._require_model().name == "slow-policy"
+
+    def test_a_still_loading_policy_raises_rather_than_substituting_one(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("ALPABRIDGE_DRIVER_MODEL_LOAD_TIMEOUT_S", "0.05")
+        service = AlpaBridgeDriverService.__new__(AlpaBridgeDriverService)
+        service.model_name = "slow"
+        service._model = None
+        service._model_error = None
+        service._model_ready = threading.Event()
+
+        with pytest.raises(TimeoutError, match="still loading"):
+            service._require_model()
+
+    def test_a_failed_load_surfaces_the_original_error(self) -> None:
+        service = AlpaBridgeDriverService.__new__(AlpaBridgeDriverService)
+        service.model_name = "broken"
+        service._model = None
+        service._model_error = ValueError("checkpoint missing")
+        service._model_ready = threading.Event()
+        service._model_ready.set()
+
+        with pytest.raises(ModelLoadError, match="checkpoint missing") as excinfo:
+            service._require_model()
+
+        # Distinct from a RuntimeError raised by a working policy, so the gRPC
+        # layer can report it as FAILED_PRECONDITION rather than a bad request.
+        assert isinstance(excinfo.value, RuntimeError)
+        assert isinstance(excinfo.value.__cause__, ValueError)
+
+    def test_a_background_load_failure_still_releases_waiters(self) -> None:
+        class BrokenService(AlpaBridgeDriverService):
+            def _build_model(self) -> Any:
+                raise ValueError("checkpoint missing")
+
+        service = BrokenService(model_name="route_following", defer_model_load=True)
+
+        assert service.wait_for_model(5) is True, "waiters must not hang on failure"
+        with pytest.raises(ModelLoadError):
+            service._require_model()
