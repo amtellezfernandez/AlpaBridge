@@ -12,6 +12,7 @@ from typing import ClassVar
 
 import numpy as np
 import pytest
+
 from alpabridge.simulator.baseline_drivers import (
     _ramp_settings,
     _ramped_distances,
