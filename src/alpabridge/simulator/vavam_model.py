@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import platform
 from collections import OrderedDict
 from contextlib import nullcontext
@@ -51,11 +52,58 @@ def vavam_command_id(command: Any) -> int:
     return _COMMAND_TO_VAVAM_ID.get(index, _COMMAND_TO_VAVAM_ID[int(DriveCommand.UNKNOWN)])
 
 
+LOGGER = logging.getLogger("alpabridge_vavam")
+
+# Half of the tightest crop this model takes; beyond it, centre-cropping starts
+# discarding what the optical centre is looking at.
+_OPTICAL_CENTRE_WARN_PX = 50.0
+_CENTRE_WARNINGS: set[str] = set()
+
+
+def _warn_once(key: str, message: str) -> None:
+    if key not in _CENTRE_WARNINGS:
+        _CENTRE_WARNINGS.add(key)
+        LOGGER.warning(message)
+
+
 def latest_camera_image(camera_images: dict[str, list[Any]], camera_id: str) -> np.ndarray:
     frames = camera_images.get(camera_id) or []
     if not frames:
         raise ValueError(f"no camera frames available for {camera_id!r}")
     return np.asarray(frames[-1].image)
+
+
+def _check_optical_centre(
+    prediction_input: Any, camera_images: dict[str, list[Any]], camera_id: str
+) -> float | None:
+    """Report how far this camera's optical centre sits from the frame centre.
+
+    VAVAM was trained on rectified, near-centred pinhole frames, and this
+    adapter feeds it whatever the rig delivers. Where the two disagree the
+    model is out of distribution, and nothing downstream would say so.
+
+    Frames reach a policy under a single key regardless of which rig camera
+    produced them, so the frame's own `source_camera_id` is what pairs it with
+    a calibration. Returns the offset in pixels, or None when unknown.
+    """
+    frames = camera_images.get(camera_id) or []
+    if not frames:
+        return None
+    calibrations = getattr(prediction_input, "camera_calibrations", None) or {}
+    source_id = getattr(frames[-1], "source_camera_id", "")
+    calibration = calibrations.get(source_id) if source_id else None
+    if calibration is None:
+        return None
+    offset = abs(calibration.principal_point_y - calibration.height / 2.0)
+    if offset > _OPTICAL_CENTRE_WARN_PX:
+        _warn_once(
+            f"optical-centre-offset-{source_id}",
+            f"{source_id} places its optical centre {offset:.0f} px from the frame "
+            "centre, and this adapter does not rectify. The horizon therefore sits "
+            "away from where a pinhole-trained model expects it; cropping cannot "
+            "correct this, only rectification can.",
+        )
+    return offset
 
 
 class VAVAMAlpaSimModel(BaseTrajectoryModel):
@@ -173,6 +221,9 @@ class VAVAMAlpaSimModel(BaseTrajectoryModel):
         def _infer() -> np.ndarray:
             command_id = self._encode_command(prediction_input.command)
             image = latest_camera_image(prediction_input.camera_images, self.camera_ids[0])
+            _check_optical_centre(
+                prediction_input, prediction_input.camera_images, self.camera_ids[0]
+            )
             return self._run_inference(image, command_id)
 
         native_trajectory_xy, reused_cache = self._inference_cache.get(prediction_input, _infer)
