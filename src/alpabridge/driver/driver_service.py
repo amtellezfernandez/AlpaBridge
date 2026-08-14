@@ -29,6 +29,15 @@ LOGGER = logging.getLogger("alpabridge_driver_service")
 DRIVER_TELEMETRY_SCHEMA = "alpabridge_driver_telemetry_v3"
 
 
+class ModelLoadError(RuntimeError):
+    """The policy could not be constructed.
+
+    Distinct from a RuntimeError raised by a working policy, so the gRPC layer
+    can report a driver that will never serve as FAILED_PRECONDITION rather than
+    misreporting it as a malformed request.
+    """
+
+
 @dataclass
 class DriverCameraFrame:
     timestamp_us: int
@@ -197,13 +206,19 @@ class AlpaBridgeDriverService:
         """Return the policy, waiting for a deferred load and failing loudly."""
         if self._model is not None:
             return self._model
-        timeout_s = float(os.getenv("ALPABRIDGE_DRIVER_MODEL_LOAD_TIMEOUT_S", "600"))
+        # This wait happens inside drive(), which is budgeted at 100 ms, and the
+        # AlpaSim E2E challenge caps a whole PAI evaluation at ~1031 s wall of
+        # which only ~250 s is driver time. Blocking here for minutes would end
+        # the run rather than rescue it, so the default is a small fraction of
+        # that budget: better to fail one call as UNAVAILABLE than to spend the
+        # evaluation waiting.
+        timeout_s = float(os.getenv("ALPABRIDGE_DRIVER_MODEL_LOAD_TIMEOUT_S", "30"))
         if not self._model_ready.wait(timeout_s):
             raise TimeoutError(
                 f"policy {self.model_name} still loading after {timeout_s:.0f}s"
             )
         if self._model_error is not None:
-            raise RuntimeError(
+            raise ModelLoadError(
                 f"policy {self.model_name} failed to load: {self._model_error!r}"
             ) from self._model_error
         return self._model
@@ -988,6 +1003,12 @@ def _build_service_class(
             except TimeoutError as exc:
                 # Still loading: retryable, and distinct from a bad request.
                 context.abort(grpc.StatusCode.UNAVAILABLE, str(exc))
+                raise AssertionError("unreachable") from exc
+            except ModelLoadError as exc:
+                # The policy will never serve. Not retryable, and emphatically
+                # not the caller's fault, so neither UNAVAILABLE nor a bad request.
+                LOGGER.error("AlpaBridge driver has no usable policy: %s", exc)
+                context.abort(grpc.StatusCode.FAILED_PRECONDITION, str(exc))
                 raise AssertionError("unreachable") from exc
             except Exception as exc:
                 LOGGER.exception("AlpaBridge driver Drive failed")
