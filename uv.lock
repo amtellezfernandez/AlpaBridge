@@ -25,6 +25,7 @@ alpasim = [
 ]
 dev = [
     { name = "build" },
+    { name = "pillow" },
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -45,6 +46,7 @@ requires-dist = [
     { name = "huggingface-hub", marker = "extra == 'alpasim'", specifier = ">=0.30" },
     { name = "matplotlib", marker = "extra == 'viz'", specifier = ">=3.8" },
     { name = "numpy", specifier = ">=1.26" },
+    { name = "pillow", marker = "extra == 'dev'", specifier = ">=10" },
     { name = "pillow", marker = "extra == 'driver'", specifier = ">=10" },
     { name = "pillow", marker = "extra == 'viz'", specifier = ">=10" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=3.7" },
