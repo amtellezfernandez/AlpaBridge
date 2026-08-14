@@ -14,6 +14,7 @@ from alpabridge.simulator.vavam_model import VAVAMAlpaSimModel
 @pytest.fixture(autouse=True)
 def _forget_warnings() -> None:
     rect._WARNED.clear()
+    vavam_model._CENTRE_WARNINGS.clear()
 
 
 def _frame(height: int = 4, width: int = 6) -> np.ndarray:
@@ -204,3 +205,63 @@ def test_an_undecodable_frame_is_left_alone() -> None:
 
     image = np.zeros((1,), dtype=np.uint8)
     assert model._rectified(prediction_input, image) is image
+
+
+def _calibrated_input(offset_y: float, source_camera_id: str) -> SimpleNamespace:
+    frame = SimpleNamespace(image=None, source_camera_id=source_camera_id)
+    return SimpleNamespace(
+        camera_images={"front": [frame]},
+        camera_protos={source_camera_id: object()},
+        camera_calibrations={
+            source_camera_id: SimpleNamespace(
+                principal_point_x=960.0,
+                principal_point_y=540.0 + offset_y,
+                width=1920,
+                height=1080,
+            )
+        },
+    )
+
+
+def test_an_unrectified_frame_with_an_off_centre_axis_warns_once(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """The opt-out is a footgun on such a camera, so it must not be silent."""
+    model = _model_with()
+    prediction_input = _calibrated_input(200.0, "camera_off_centre")
+    image = _frame(1080, 1920)
+
+    with patch.dict("os.environ", {"ALPABRIDGE_DISABLE_RECTIFICATION": "1"}, clear=False):
+        with caplog.at_level("WARNING"):
+            model._rectified(prediction_input, image)
+            model._rectified(prediction_input, image)
+
+    warnings = [r for r in caplog.records if "unrectified" in r.getMessage()]
+    assert len(warnings) == 1
+
+
+def test_a_centred_camera_does_not_warn_when_unrectified(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    model = _model_with()
+    prediction_input = _calibrated_input(0.0, "camera_centred")
+    image = _frame(1080, 1920)
+
+    with patch.dict("os.environ", {"ALPABRIDGE_DISABLE_RECTIFICATION": "1"}, clear=False):
+        with caplog.at_level("WARNING"):
+            model._rectified(prediction_input, image)
+
+    assert [r for r in caplog.records if "unrectified" in r.getMessage()] == []
+
+
+def test_a_rectified_frame_does_not_warn(caplog: pytest.LogCaptureFixture) -> None:
+    model = _model_with()
+    prediction_input = _calibrated_input(200.0, "camera_off_centre_rectified")
+    image = _frame(1080, 1920)
+
+    with patch.object(vavam_model, "build_rectifier") as build:
+        build.return_value = SimpleNamespace(rectify=lambda _: _frame(900, 1600))
+        with caplog.at_level("WARNING"):
+            model._rectified(prediction_input, image)
+
+    assert [r for r in caplog.records if "unrectified" in r.getMessage()] == []

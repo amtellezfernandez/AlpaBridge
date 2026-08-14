@@ -60,21 +60,14 @@ def test_no_frames_reports_nothing() -> None:
     assert _check_optical_centre(prediction_input, prediction_input.camera_images, "front") is None
 
 
-@pytest.mark.parametrize(("principal_point_y", "expect_warning"), [(743.2, True), (545.0, False)])
-def test_a_far_optical_centre_says_so_once(
-    caplog: pytest.LogCaptureFixture, principal_point_y: float, expect_warning: bool
+def test_measuring_the_offset_does_not_warn_on_its_own(
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
-    from alpabridge.simulator import vavam_model
-
-    camera_id = f"camera_probe_{principal_point_y}"
-    vavam_model._CENTRE_WARNINGS.discard(f"optical-centre-offset-{camera_id}")
-    prediction_input = _prediction_input(camera_id, {camera_id: _calibration(principal_point_y)})
+    """Only an unrectified frame makes the offset worth reporting."""
+    camera_id = "camera_front_wide_120fov"
+    prediction_input = _prediction_input(camera_id, {camera_id: _calibration(743.2)})
 
     with caplog.at_level("WARNING"):
         _check_optical_centre(prediction_input, prediction_input.camera_images, "front")
-        _check_optical_centre(prediction_input, prediction_input.camera_images, "front")
 
-    warnings = [r for r in caplog.records if "optical centre" in r.getMessage()]
-    assert len(warnings) == (1 if expect_warning else 0)
-    if expect_warning:
-        assert "only rectification can" in warnings[0].getMessage()
+    assert caplog.records == []

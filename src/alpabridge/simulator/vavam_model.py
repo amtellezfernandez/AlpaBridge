@@ -79,9 +79,9 @@ def _check_optical_centre(
 ) -> float | None:
     """Report how far this camera's optical centre sits from the frame centre.
 
-    VAVAM was trained on rectified, near-centred pinhole frames, and this
-    adapter feeds it whatever the rig delivers. Where the two disagree the
-    model is out of distribution, and nothing downstream would say so.
+    VAVAM was trained on rectified, near-centred pinhole frames. An offset only
+    matters when the frame reaches the model unrectified, so this measures and
+    the caller decides whether it is worth reporting.
 
     Frames reach a policy under a single key regardless of which rig camera
     produced them, so the frame's own `source_camera_id` is what pairs it with
@@ -96,14 +96,6 @@ def _check_optical_centre(
     if calibration is None:
         return None
     offset = abs(calibration.principal_point_y - calibration.height / 2.0)
-    if offset > _OPTICAL_CENTRE_WARN_PX:
-        _warn_once(
-            f"optical-centre-offset-{source_id}",
-            f"{source_id} places its optical centre {offset:.0f} px from the frame "
-            "centre, and this adapter does not rectify. The horizon therefore sits "
-            "away from where a pinhole-trained model expects it; cropping cannot "
-            "correct this, only rectification can.",
-        )
     return offset
 
 
@@ -225,9 +217,6 @@ class VAVAMAlpaSimModel(BaseTrajectoryModel):
         def _infer() -> np.ndarray:
             command_id = self._encode_command(prediction_input.command)
             image = latest_camera_image(prediction_input.camera_images, self.camera_ids[0])
-            _check_optical_centre(
-                prediction_input, prediction_input.camera_images, self.camera_ids[0]
-            )
             image = self._rectified(prediction_input, image)
             return self._run_inference(image, command_id)
 
@@ -274,7 +263,12 @@ class VAVAMAlpaSimModel(BaseTrajectoryModel):
         returns the frame as rendered - which is what this adapter did before
         rectification existed, so a failure is never worse than not having it.
         """
-        if image.ndim < 2 or rectification_disabled():
+        if image.ndim < 2:
+            return image
+        if rectification_disabled():
+            frames = prediction_input.camera_images.get(self.camera_ids[0]) or []
+            source_id = getattr(frames[-1], "source_camera_id", "") if frames else ""
+            self._warn_unrectified(prediction_input, source_id)
             return image
         frames = prediction_input.camera_images.get(self.camera_ids[0]) or []
         source_id = getattr(frames[-1], "source_camera_id", "") if frames else ""
@@ -285,7 +279,27 @@ class VAVAMAlpaSimModel(BaseTrajectoryModel):
         if key not in self._rectifiers:
             protos = getattr(prediction_input, "camera_protos", None) or {}
             self._rectifiers[key] = build_rectifier(protos.get(source_id), source_hw)
-        return rectify_image(self._rectifiers[key], image)
+        rectified = rectify_image(self._rectifiers[key], image)
+        if rectified is image:
+            # Nothing rectified this frame, and an off-centre optical axis is
+            # precisely what rectification was going to correct.
+            self._warn_unrectified(prediction_input, source_id)
+        return rectified
+
+    def _warn_unrectified(self, prediction_input: Any, source_id: str) -> None:
+        """Say so when a frame the rig placed off-centre reaches the model raw."""
+        offset = _check_optical_centre(
+            prediction_input, prediction_input.camera_images, self.camera_ids[0]
+        )
+        if offset is None or offset <= _OPTICAL_CENTRE_WARN_PX:
+            return
+        _warn_once(
+            f"unrectified-offset-{source_id}",
+            f"{source_id} reaches the model unrectified with its optical centre "
+            f"{offset:.0f} px from the frame centre, so the horizon sits away from "
+            "where a pinhole-trained model expects it. Resizing and cropping cannot "
+            "correct a projection difference.",
+        )
 
     def _run_inference(self, image: np.ndarray, command_id: int) -> np.ndarray:
         cropped = resize_and_center_crop(image, VAVAM_EXPECTED_HEIGHT, VAVAM_EXPECTED_WIDTH)
