@@ -332,6 +332,10 @@ class AlpaBridgeDriverService:
                 "event": "route",
                 "session_uuid": session.session_uuid,
                 "route_waypoint_count": len(waypoints),
+                "route_arc_length_m": round(route_arc_length_m(waypoints), 3),
+                "route_far_point_m": round(
+                    math.hypot(waypoints[-1]["x"], waypoints[-1]["y"]) if waypoints else 0.0, 3
+                ),
                 "route_source": "alpasim_waypoints" if len(waypoints) >= 2 else "command_proxy",
                 "route_geometry_required": self.route_geometry_required,
             }
@@ -651,6 +655,20 @@ def run_self_test(
         }
     )
     return summary
+
+
+def route_arc_length_m(waypoints: list[dict[str, float]]) -> float:
+    """Ground-plane arc length of a route polyline.
+
+    The route is built from the recorded drive and extended along lane centres
+    to a fixed lookahead, so it stops being full-length when the recording
+    itself runs short. That makes its extent an in-band signal about how far
+    there is left to go — unlike the waypoint count, which is constant.
+    """
+    total = 0.0
+    for start, end in zip(waypoints, waypoints[1:]):
+        total += math.hypot(end["x"] - start["x"], end["y"] - start["y"])
+    return total
 
 
 def _route_waypoints_from_proto(route: Any) -> list[dict[str, float]]:
