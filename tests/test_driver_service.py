@@ -337,6 +337,83 @@ def test_learned_policy_driver_service_records_pinned_checkpoint_hash(
     assert adapter.device == "cpu"
 
 
+class TestDirectoryCheckpointHash:
+    """Checkpoints published on the Hugging Face hub are directories of shards,
+    not single files, and the recorded provenance hash has to survive that."""
+
+    @staticmethod
+    def _service(path: Path, monkeypatch: pytest.MonkeyPatch) -> AlpaBridgeDriverService:
+        monkeypatch.setattr(
+            AlpaBridgeDriverService, "_build_model", lambda _self: object()
+        )
+        return AlpaBridgeDriverService(
+            model_name="token_dagger_bc", checkpoint_path=path, device="cpu"
+        )
+
+    def test_single_file_hash_is_unchanged(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        checkpoint = tmp_path / "policy.pt"
+        checkpoint.write_bytes(b"pinned learned policy checkpoint")
+
+        adapter = self._service(checkpoint, monkeypatch)
+
+        assert (
+            adapter.checkpoint_sha256
+            == "d6c9c340aea7e04bc485aad78a301182aacc2a8dce0f09a210fa042375c54cca"
+        )
+
+    def test_directory_checkpoint_hashes_instead_of_raising(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        checkpoint = tmp_path / "hub_model"
+        (checkpoint / "nested").mkdir(parents=True)
+        (checkpoint / "model-00001.safetensors").write_bytes(b"shard one")
+        (checkpoint / "model-00002.safetensors").write_bytes(b"shard two")
+        (checkpoint / "nested" / "tokenizer.json").write_text("{}")
+
+        adapter = self._service(checkpoint, monkeypatch)
+
+        assert adapter.checkpoint_sha256 is not None
+        assert len(adapter.checkpoint_sha256) == 64
+
+    def test_hash_is_stable_across_repacked_copies(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # Written in a different order, so a hash that depended on directory
+        # iteration order would differ between the two.
+        first = tmp_path / "a"
+        second = tmp_path / "b"
+        for root, order in ((first, ("x", "y", "z")), (second, ("z", "y", "x"))):
+            root.mkdir()
+            for name in order:
+                (root / f"{name}.bin").write_bytes(name.encode())
+
+        assert (
+            self._service(first, monkeypatch).checkpoint_sha256
+            == self._service(second, monkeypatch).checkpoint_sha256
+        )
+
+    def test_contents_and_names_both_affect_the_hash(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        base = tmp_path / "base"
+        base.mkdir()
+        (base / "shard.bin").write_bytes(b"weights")
+        baseline = self._service(base, monkeypatch).checkpoint_sha256
+
+        changed_content = tmp_path / "content"
+        changed_content.mkdir()
+        (changed_content / "shard.bin").write_bytes(b"different")
+
+        renamed = tmp_path / "renamed"
+        renamed.mkdir()
+        (renamed / "other.bin").write_bytes(b"weights")
+
+        assert self._service(changed_content, monkeypatch).checkpoint_sha256 != baseline
+        assert self._service(renamed, monkeypatch).checkpoint_sha256 != baseline
+
+
 def test_driver_self_test_reports_non_benchmark_latency_summary() -> None:
     summary = run_self_test(model_name="route_following", iterations=3)
 

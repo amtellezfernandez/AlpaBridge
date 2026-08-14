@@ -160,7 +160,9 @@ class AlpaBridgeDriverService:
             Path(checkpoint_path).expanduser().resolve() if checkpoint_path else None
         )
         self.checkpoint_sha256 = (
-            _sha256_file(self.checkpoint_path) if self.checkpoint_path is not None else None
+            _sha256_checkpoint(self.checkpoint_path)
+            if self.checkpoint_path is not None
+            else None
         )
         self.tokenizer_checkpoint_path = (
             Path(tokenizer_checkpoint_path).expanduser().resolve()
@@ -1005,6 +1007,31 @@ def _sha256_file(path: Path) -> str:
     with path.open("rb") as handle:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _sha256_checkpoint(path: Path) -> str:
+    """Hash a checkpoint that may be a single file or a directory of shards.
+
+    Single-file checkpoints hash as themselves, so recorded provenance for the
+    policies that ship here is unchanged. Directory checkpoints - the normal
+    shape for anything published on the Hugging Face hub, where weights arrive
+    as several safetensors shards beside their tokenizer and config - hash as
+    the digest of their sorted (relative path, file digest) pairs. Sorting is
+    what makes it reproducible: directory iteration order is not stable across
+    filesystems, and a checkpoint hash that changes between machines is worse
+    than no hash at all.
+
+    Paths are included alongside contents so that renaming a shard, or moving
+    a file between the checkpoint root and a subdirectory, is visible.
+    """
+    if path.is_file():
+        return _sha256_file(path)
+    digest = hashlib.sha256()
+    for entry in sorted(p for p in path.rglob("*") if p.is_file()):
+        digest.update(str(entry.relative_to(path)).encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(_sha256_file(entry).encode("ascii"))
     return digest.hexdigest()
 
 
