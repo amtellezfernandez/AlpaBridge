@@ -467,6 +467,44 @@ def _current_pose_timestamp_us(prediction_input: Any) -> int | None:
     return None
 
 
+def pose_xy_yaw(pose: Any) -> tuple[float, float, float] | None:
+    """Public (x, y, yaw) accessor for one entry of ``ego_pose_history``.
+
+    AlpaSim has shipped ego poses under several shapes - bare ``x``/``y``, a
+    ``vec``, a ``position``, a ``translation``, with heading either as a scalar
+    or only as a quaternion - and a policy that recognises fewer of them than
+    the simulator emits does not raise. It silently gets no pose history, which
+    for anything doing dead reckoning or re-anchoring a cached plan means an
+    error that accumulates rather than announces itself.
+
+    So the shape handling lives here once, beside the speed estimator that
+    already needed it, rather than being re-derived (worse) by each policy.
+    """
+    return _pose_like_to_signature(pose)
+
+
+def pose_history_xy_yaw(ego_pose_history: Any) -> list[tuple[int, float, float, float]]:
+    """``ego_pose_history`` as timestamp-sorted ``(timestamp_us, x, y, yaw)``.
+
+    Entries without both a timestamp and a usable position are dropped: a pose
+    that cannot be placed in time is not usable for interpolation, and silently
+    keeping it would put an out-of-order point into an otherwise monotonic
+    series.
+    """
+    parsed: list[tuple[int, float, float, float]] = []
+    for pose in list(ego_pose_history or []):
+        signature = _pose_like_to_signature(pose)
+        timestamp = getattr(pose, "timestamp_us", None)
+        if signature is None or timestamp is None:
+            continue
+        try:
+            parsed.append((int(timestamp), signature[0], signature[1], signature[2]))
+        except (TypeError, ValueError):
+            continue
+    parsed.sort(key=lambda row: row[0])
+    return parsed
+
+
 def pose_history_speed_mps(ego_pose_history: Any) -> float | None:
     """Estimate ground speed (m/s) from the last two dated poses in history.
 

@@ -33,6 +33,8 @@ from alpabridge.simulator.alpasim_contract import (
     corrected_speed_mps,
     make_model_prediction,
     pose_history_speed_mps,
+    pose_history_xy_yaw,
+    pose_xy_yaw,
     prediction_headings,
     prediction_trajectory_xy,
     resample_trajectory,
@@ -2625,3 +2627,46 @@ _skip_torch_dependent_tests_if_needed()
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestPublicPoseAccessors:
+    """Policies outside this tree need ego poses too. A policy that recognises
+    fewer pose shapes than the simulator emits does not raise -- it silently
+    gets no history, which for dead reckoning or re-anchoring a cached plan is
+    an error that accumulates instead of announcing itself."""
+
+    def test_reads_the_plain_shape(self) -> None:
+        pose = SimpleNamespace(pose=SimpleNamespace(x=1.0, y=2.0, yaw=0.5))
+
+        assert pose_xy_yaw(pose) == (1.0, 2.0, 0.5)
+
+    def test_reads_a_translation_with_quaternion_heading(self) -> None:
+        pose = SimpleNamespace(
+            translation=SimpleNamespace(x=3.0, y=4.0),
+            quat=SimpleNamespace(w=1.0, x=0.0, y=0.0, z=0.0),
+        )
+
+        result = pose_xy_yaw(pose)
+
+        assert result is not None
+        assert (result[0], result[1]) == (3.0, 4.0)
+
+    def test_unusable_pose_is_none_not_an_exception(self) -> None:
+        assert pose_xy_yaw(SimpleNamespace()) is None
+
+    def test_history_is_sorted_by_timestamp(self) -> None:
+        later = SimpleNamespace(timestamp_us=2, pose=SimpleNamespace(x=1.0, y=1.0, yaw=0.0))
+        earlier = SimpleNamespace(timestamp_us=1, pose=SimpleNamespace(x=0.0, y=0.0, yaw=0.0))
+
+        assert [row[0] for row in pose_history_xy_yaw([later, earlier])] == [1, 2]
+
+    def test_entries_without_a_timestamp_or_position_are_dropped(self) -> None:
+        good = SimpleNamespace(timestamp_us=1, pose=SimpleNamespace(x=0.0, y=0.0, yaw=0.0))
+        no_time = SimpleNamespace(pose=SimpleNamespace(x=5.0, y=5.0, yaw=0.0))
+        no_position = SimpleNamespace(timestamp_us=2)
+
+        assert len(pose_history_xy_yaw([good, no_time, no_position])) == 1
+
+    def test_empty_history_is_empty_not_none(self) -> None:
+        assert pose_history_xy_yaw(None) == []
+        assert pose_history_xy_yaw([]) == []
