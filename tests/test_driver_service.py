@@ -15,7 +15,6 @@ from alpabridge.driver.driver_service import (
     DRIVER_TELEMETRY_SCHEMA,
     AlpaBridgeDriverService,
     ModelLoadError,
-    AlpaBridgeDriverService,
     prediction_to_proto_trajectory,
     run_self_test,
 )
