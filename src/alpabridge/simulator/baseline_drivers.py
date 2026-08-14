@@ -211,10 +211,13 @@ class RouteFollowingAlpaSimModel(_BaselineDriverModel):
                 speed_mps=speed_mps,
                 horizon_seconds=self._horizon_seconds(),
                 point_count=self._point_count(),
-                target_speed_override_mps=effective_ramp_target_mps(
-                    getattr(prediction_input, "reference_speed_mps", None),
-                    target_speed_mps=env_target,
-                    scale=_ramp_scale(),
+                target_speed_override_mps=_ramp_up_only(
+                    effective_ramp_target_mps(
+                        getattr(prediction_input, "reference_speed_mps", None),
+                        target_speed_mps=env_target,
+                        scale=_ramp_scale(),
+                    ),
+                    current_speed_mps=speed_mps,
                 ),
             )
         return resample_trajectory(trajectory, self._output_frequency_hz, self._horizon_seconds())
@@ -342,6 +345,20 @@ def effective_ramp_target_mps(
     if target_speed_mps <= 0.0:
         return scaled
     return min(target_speed_mps, scaled)
+
+
+def _ramp_up_only(target_speed_mps: float, *, current_speed_mps: float) -> float:
+    """Disable the ramp instead of letting it brake.
+
+    Measured: a scene launched at ~20 m/s scored a perfect 1.0 with the stock
+    constant-speed sampler, and 0.5692 when a 9 m/s target dragged it down -
+    braking pushed it 4 m off the reference and the record truncated. The ramp
+    exists to lift a speed-locked launch, so a target at or below the current
+    speed reverts to the historical behaviour rather than becoming a brake.
+    """
+    if 0.0 < target_speed_mps <= max(0.0, current_speed_mps):
+        return 0.0
+    return target_speed_mps
 
 
 def _sample_route(

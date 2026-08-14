@@ -16,6 +16,7 @@ import pytest
 from alpabridge.simulator.baseline_drivers import (
     _ramp_scale,
     _ramp_settings,
+    _ramp_up_only,
     _ramped_distances,
     _sample_route,
     effective_ramp_target_mps,
@@ -157,3 +158,21 @@ class TestEffectiveRampTarget:
         for bad in ("junk", "nan", "-1", ""):
             monkeypatch.setenv("ALPABRIDGE_RF_TARGET_SPEED_SCALE", bad)
             assert _ramp_scale() == 0.0
+
+
+class TestRampUpOnly:
+    """A target at or below the current speed disables the ramp instead of
+    braking — measured on a ~20 m/s launch, a 9 m/s cap turned a perfect scene
+    into 0.5692 by dragging it off the reference."""
+
+    def test_target_below_current_speed_disables(self) -> None:
+        assert _ramp_up_only(9.0, current_speed_mps=20.0) == 0.0
+
+    def test_target_equal_to_current_speed_disables(self) -> None:
+        assert _ramp_up_only(9.0, current_speed_mps=9.0) == 0.0
+
+    def test_target_above_current_speed_passes_through(self) -> None:
+        assert _ramp_up_only(9.0, current_speed_mps=2.0) == 9.0
+
+    def test_disabled_target_stays_disabled(self) -> None:
+        assert _ramp_up_only(0.0, current_speed_mps=5.0) == 0.0
