@@ -18,6 +18,7 @@ def test_available_policy_names_includes_all_built_in_policies() -> None:
     assert set(names) == {
         "constant_velocity",
         "route_following",
+        "direct_actor_planner",
         "mpc_planner",
         "token_dagger_bc",
         "navsim_ego_status_mlp",
@@ -156,3 +157,50 @@ class TestEnvOverrides:
         monkeypatch.setenv("ALPABRIDGE_TEST_TUPLE", raw)
 
         assert _env_float_tuple("ALPABRIDGE_TEST_TUPLE", default) == default
+
+
+class TestDirectActorPlanner:
+    """The direct planner was reachable only in-process through the
+    ``alpasim.models`` entry point, so the standalone gRPC driver could not
+    serve it at all. Its speed candidates are multipliers on the current speed,
+    which is the same longitudinal ceiling the route follower's ramp lifts —
+    so both candidate sets are configurable rather than baked in."""
+
+    def test_is_registered_and_needs_no_checkpoint(self) -> None:
+        assert "direct_actor_planner" in available_policy_names()
+
+    def test_builds_with_stock_candidate_sets(self) -> None:
+        from alpabridge.simulator.alpasim_direct_actor_planner import DirectPlannerConfig
+
+        adapter = SimpleNamespace(
+            model_camera_id="camera_front_wide_120fov",
+            checkpoint_path=None,
+            tokenizer_checkpoint_path=None,
+            device="cpu",
+            output_frequency_hz=4,
+            horizon_seconds=5.0,
+        )
+
+        model = build_policy("direct_actor_planner", adapter)
+
+        assert model._config.speed_scales == DirectPlannerConfig().speed_scales
+        assert model._config.lateral_offsets_m == DirectPlannerConfig().lateral_offsets_m
+
+    def test_candidate_sets_are_overridable(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("ALPABRIDGE_DAP_SPEED_SCALES", "0,0.5,1.0,1.5,2.0")
+        monkeypatch.setenv("ALPABRIDGE_DAP_LATERAL_OFFSETS_M", "-2,0,2")
+        adapter = SimpleNamespace(
+            model_camera_id="camera_front_wide_120fov",
+            checkpoint_path=None,
+            tokenizer_checkpoint_path=None,
+            device="cpu",
+            output_frequency_hz=4,
+            horizon_seconds=5.0,
+        )
+
+        model = build_policy("direct_actor_planner", adapter)
+
+        assert model._config.speed_scales == (0.0, 0.5, 1.0, 1.5, 2.0)
+        assert model._config.lateral_offsets_m == (-2.0, 0.0, 2.0)

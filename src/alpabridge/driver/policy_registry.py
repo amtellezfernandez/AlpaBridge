@@ -246,7 +246,40 @@ def _build_vavam(adapter: PolicyContext) -> Any:
     )
 
 
+def _build_direct_actor_planner(adapter: PolicyContext) -> Any:
+    from alpabridge.simulator.alpasim_direct_actor_planner import (
+        DirectActorPlannerAlpaSimModel,
+        DirectPlannerConfig,
+    )
+
+    resample = _resample_config(adapter)
+    defaults = DirectPlannerConfig()
+    # speed_scales are multipliers on the *current* speed, so the stock ceiling
+    # of 1.2 caps this planner at 1.2x whatever speed the session began with -
+    # the same longitudinal ceiling the route follower's ramp exists to lift.
+    # Exposing both candidate sets is what makes that testable from a container.
+    speed_scales = _env_float_tuple(
+        "ALPABRIDGE_DAP_SPEED_SCALES", defaults.speed_scales
+    )
+    lateral_offsets_m = _env_float_tuple(
+        "ALPABRIDGE_DAP_LATERAL_OFFSETS_M", defaults.lateral_offsets_m
+    )
+
+    return DirectActorPlannerAlpaSimModel(
+        camera_ids=[adapter.model_camera_id],
+        context_length=1,
+        output_frequency_hz=adapter.output_frequency_hz,
+        planner_config=DirectPlannerConfig(
+            horizon_seconds=resample.horizon_seconds,
+            point_count=resample.point_count,
+            speed_scales=speed_scales,
+            lateral_offsets_m=lateral_offsets_m,
+        ),
+    )
+
+
 register_policy(DriverPolicy("constant_velocity", _build_constant_velocity))
+register_policy(DriverPolicy("direct_actor_planner", _build_direct_actor_planner))
 register_policy(DriverPolicy("route_following", _build_route_following))
 register_policy(DriverPolicy("mpc_planner", _build_mpc_planner))
 register_policy(
