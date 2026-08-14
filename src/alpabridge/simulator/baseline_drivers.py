@@ -250,6 +250,54 @@ def _route_contract_mode() -> str:
     )
 
 
+def _ramped_distances(
+    times_s: np.ndarray,
+    *,
+    speed_mps: float,
+    target_speed_mps: float,
+    accel_mps2: float,
+) -> np.ndarray:
+    """Distance along the path at each time under a capped linear speed ramp.
+
+    With the ramp disabled (target <= 0) this is exactly ``t * v0``, the
+    historical constant-speed profile. Otherwise speed moves from ``v0`` toward
+    the target at ``accel_mps2`` (either direction) and holds there:
+    closed-form integration of a trapezoidal speed profile.
+    """
+    v0 = max(0.0, speed_mps)
+    if target_speed_mps <= 0.0 or accel_mps2 <= 0.0 or abs(target_speed_mps - v0) < 1e-9:
+        return times_s * v0
+    vt = max(0.0, target_speed_mps)
+    a = accel_mps2 if vt > v0 else -accel_mps2
+    t_ramp = (vt - v0) / a
+    ramp = times_s <= t_ramp
+    distances = np.empty_like(times_s)
+    distances[ramp] = v0 * times_s[ramp] + 0.5 * a * times_s[ramp] ** 2
+    d_ramp_end = v0 * t_ramp + 0.5 * a * t_ramp**2
+    distances[~ramp] = d_ramp_end + vt * (times_s[~ramp] - t_ramp)
+    return distances
+
+
+def _ramp_settings() -> tuple[float, float]:
+    """Target speed and acceleration for the route follower's speed ramp.
+
+    Disabled by default (target 0), which reproduces the historical
+    constant-speed behaviour byte for byte. The environment is the only
+    configuration surface the standalone gRPC driver has.
+    """
+    try:
+        target = float(os.environ.get("ALPABRIDGE_RF_TARGET_SPEED_MPS", "0") or 0.0)
+    except ValueError:
+        target = 0.0
+    try:
+        accel = float(os.environ.get("ALPABRIDGE_RF_ACCEL_MPS2", "1.5") or 1.5)
+    except ValueError:
+        accel = 1.5
+    if not (math.isfinite(target) and math.isfinite(accel)):
+        return 0.0, 1.5
+    return max(0.0, target), max(0.0, accel)
+
+
 def _sample_route(
     points: list[tuple[float, float]],
     *,
@@ -271,12 +319,22 @@ def _sample_route(
     cumulative = [0.0]
     for length in segment_lengths:
         cumulative.append(cumulative[-1] + length)
-    target_distances = np.linspace(
+    times_s = np.linspace(
         horizon_seconds / point_count,
         horizon_seconds,
         point_count,
-        dtype=np.float32,
-    ) * max(0.0, speed_mps)
+        dtype=np.float64,
+    )
+    # The historical sampler multiplied this grid by the current speed, which
+    # locks the launch speed in for the whole rollout. The ramp (opt-in)
+    # accelerates toward a target speed instead.
+    target_speed_mps, accel_mps2 = _ramp_settings()
+    target_distances = _ramped_distances(
+        times_s,
+        speed_mps=speed_mps,
+        target_speed_mps=target_speed_mps,
+        accel_mps2=accel_mps2,
+    ).astype(np.float32)
     samples = [_point_at_distance(points, cumulative, float(distance)) for distance in target_distances]
     return np.asarray(samples, dtype=np.float32)
 
