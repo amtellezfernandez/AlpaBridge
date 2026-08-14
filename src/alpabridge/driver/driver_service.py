@@ -17,6 +17,10 @@ from typing import Any
 
 import numpy as np
 
+from alpabridge.driver.camera_calibration import (
+    CameraCalibration,
+    calibrations_from_session_request,
+)
 from alpabridge.driver.policy_registry import available_policy_names, build_policy
 from alpabridge.simulator.alpasim_contract import (
     DriveCommand,
@@ -50,6 +54,8 @@ class DriverSessionState:
     random_seed: int = 0
     debug_scene_id: str | None = None
     camera_images: dict[str, list[DriverCameraFrame]] = field(default_factory=dict)
+    camera_calibrations: dict[str, CameraCalibration] = field(default_factory=dict)
+    delivered_image_size: dict[str, tuple[int, int]] = field(default_factory=dict)
     ego_pose_history: list[Any] = field(default_factory=list)
     dynamic_states: list[tuple[int, Any]] = field(default_factory=list)
     route_waypoints: list[dict[str, float]] = field(default_factory=list)
@@ -227,11 +233,21 @@ class AlpaBridgeDriverService:
         session_uuid = str(request.session_uuid)
         debug_info = getattr(request, "debug_info", None)
         debug_scene_id = getattr(debug_info, "scene_id", None) if debug_info is not None else None
+        calibrations = calibrations_from_session_request(request)
+        if not calibrations:
+            # Only pixel-reading policies need this, so it is a warning and not a
+            # refusal; the geometric baselines run fine without a rig.
+            _warn_once(
+                "camera-calibration-absent",
+                "This session carried no usable camera calibration, so policies "
+                "reading pixels have no intrinsics to work from.",
+            )
         with self._lock:
             self._sessions[session_uuid] = DriverSessionState(
                 session_uuid=session_uuid,
                 random_seed=int(getattr(request, "random_seed", 0) or 0),
                 debug_scene_id=str(debug_scene_id) if debug_scene_id else None,
+                camera_calibrations=calibrations,
             )
         self._telemetry.record(
             {
@@ -258,10 +274,13 @@ class AlpaBridgeDriverService:
             timestamp_us=int(getattr(grpc_image, "frame_end_us", 0) or 0),
             image=_image_array_from_bytes(getattr(grpc_image, "image_bytes", b"")),
         )
+        delivered = _delivered_image_size(frame.image)
         with self._lock:
             frames = session.camera_images.setdefault(camera_id, [])
             frames.append(frame)
             del frames[:-1]
+            if delivered is not None:
+                session.delivered_image_size[camera_id] = delivered
         self._telemetry.record(
             {
                 "event": "image",
@@ -389,6 +408,9 @@ class AlpaBridgeDriverService:
             command = session.command
             random_seed = session.random_seed
             debug_scene_id = session.debug_scene_id
+            camera_calibrations = _calibrations_for_delivered_images(
+                session.camera_calibrations, session.delivered_image_size
+            )
         if self.route_contract_mode == "command_only_route":
             route_waypoints = []
         speed, velocity_xy, acceleration_xy = _estimate_ego_kinematics(
@@ -398,6 +420,7 @@ class AlpaBridgeDriverService:
 
         return SimpleNamespace(
             camera_images=camera_images,
+            camera_calibrations=camera_calibrations,
             command=command,
             speed=speed,
             acceleration=float(math.hypot(*acceleration_xy)),
@@ -841,6 +864,41 @@ def _image_array_from_bytes(image_bytes: bytes) -> np.ndarray:
             "Further decode failures are not logged.",
         )
         return np.frombuffer(image_bytes, dtype=np.uint8)
+
+
+def _delivered_image_size(image: np.ndarray) -> tuple[int, int] | None:
+    """(width, height) of a decoded frame, or None for the 1-D fallbacks."""
+    if image.ndim < 2:
+        return None
+    return int(image.shape[1]), int(image.shape[0])
+
+
+def _calibrations_for_delivered_images(
+    calibrations: dict[str, CameraCalibration],
+    delivered: dict[str, tuple[int, int]],
+) -> dict[str, CameraCalibration]:
+    """Express each calibration for the image size that actually arrived.
+
+    The declared resolution is the native camera's; the challenge rig delivers
+    JPEGs whose width can differ per scene, and intrinsics are only meaningful
+    against the image they are applied to.
+    """
+    scaled: dict[str, CameraCalibration] = {}
+    for camera_id, calibration in calibrations.items():
+        size = delivered.get(camera_id)
+        if size is None:
+            scaled[camera_id] = calibration
+            continue
+        try:
+            scaled[camera_id] = calibration.scaled_to(*size)
+        except ValueError:
+            _warn_once(
+                f"calibration-scale-failed-{camera_id}",
+                f"Could not scale the calibration for {camera_id} to the delivered "
+                f"{size[0]}x{size[1]} image; passing it through unscaled.",
+            )
+            scaled[camera_id] = calibration
+    return scaled
 
 
 def _pose_origin_and_yaw(pose_at_time: Any | None) -> tuple[float, float, float, float]:
