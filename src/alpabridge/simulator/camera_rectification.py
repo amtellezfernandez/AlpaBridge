@@ -1,9 +1,9 @@
 """Rectify f-theta rig frames into the pinhole view a policy expects.
 
-The rig's 120 degree cameras are f-theta and place their optical centre about
-200 px below the frame centre; models like VAVAM were trained on rectified,
-roughly centred pinhole images. Feeding one the other is a silent domain gap
-that no amount of cropping fixes.
+Rigs can render f-theta frames whose optical centre sits away from the frame
+centre, while models like VAVAM were trained on rectified, roughly centred
+pinhole images. Feeding one the other is a silent domain gap that resizing and
+cropping cannot close, since they do not change the projection.
 
 The transform itself is AlpaSim's, vendored verbatim under
 `alpabridge/third_party/` so it matches the reference submission exactly. This

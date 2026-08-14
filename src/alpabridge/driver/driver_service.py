@@ -889,9 +889,9 @@ def _calibrations_for_delivered_images(
 ) -> dict[str, CameraCalibration]:
     """Express each calibration for the image size that actually arrived.
 
-    The declared resolution is the native camera's; the challenge rig delivers
-    JPEGs whose width can differ per scene, and intrinsics are only meaningful
-    against the image they are applied to.
+    The declared resolution is the native camera's; a rig can deliver JPEGs of a
+    different size, and intrinsics are only meaningful against the image they
+    are applied to.
     """
     scaled: dict[str, CameraCalibration] = {}
     for camera_id, calibration in calibrations.items():
