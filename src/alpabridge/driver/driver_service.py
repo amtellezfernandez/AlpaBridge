@@ -736,6 +736,14 @@ def _warn_once(key: str, message: str) -> None:
 
 def _image_array_from_bytes(image_bytes: bytes) -> np.ndarray:
     if not image_bytes:
+        # The third degradation in this function, and the only one that stayed
+        # silent: a policy reading pixels cannot tell this placeholder from a
+        # decoded frame except by shape.
+        _warn_once(
+            "image-bytes-empty",
+            "A camera frame arrived with no image bytes; passing a placeholder array "
+            "instead. Further empty frames are not logged.",
+        )
         return np.zeros((1,), dtype=np.uint8)
 
     try:
