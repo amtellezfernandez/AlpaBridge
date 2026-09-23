@@ -8,6 +8,7 @@ this does not validate rendering, physics, or road validity in a dataset scene.
 from __future__ import annotations
 
 import asyncio
+import importlib
 import io
 import math
 from concurrent import futures
@@ -21,6 +22,11 @@ pytest.importorskip("alpasim_runtime")
 plugins = pytest.importorskip("alpasim_plugins")
 if not hasattr(plugins, "route_generators"):
     pytest.skip("Requires AlpaSim PR #179", allow_module_level=True)
+if hasattr(importlib.import_module("alpasim_runtime.config"), "RouteGeneratorType"):
+    pytest.skip(
+        "Requires AlpaSim PR #179 with plugins selected by route_generator_type",
+        allow_module_level=True,
+    )
 
 import grpc  # noqa: E402
 from alpasim_grpc import API_VERSION_MESSAGE  # noqa: E402
@@ -28,7 +34,6 @@ from alpasim_grpc.v0 import common_pb2, egodriver_pb2, egodriver_pb2_grpc  # noq
 from alpasim_grpc.v0.logging_pb2 import RolloutMetadata  # noqa: E402
 from alpasim_runtime.broadcaster import MessageBroadcaster  # noqa: E402
 from alpasim_runtime.config import (  # noqa: E402
-    RouteGeneratorType,
     RuntimeCameraConfig,
     SimulationConfig,
     VehicleConfig,
@@ -176,10 +181,7 @@ def test_custom_route_reaches_alpabridge_over_grpc(
                     control_timestep_us=100_000,
                     force_gt_duration_us=0,
                     cameras=[RuntimeCameraConfig(logical_id="front")],
-                    route_generator_type=RouteGeneratorType.RECORDED
-                    if plugin_name is None
-                    else RouteGeneratorType.NONE,
-                    route_generator_plugin=plugin_name,
+                    route_generator_type="RECORDED" if plugin_name is None else plugin_name,
                     route_start_offset_m=offset,
                 )
             )

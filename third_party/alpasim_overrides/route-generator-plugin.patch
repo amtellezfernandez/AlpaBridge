@@ -1,7 +1,7 @@
 From 2859351158b6f4cc01bc3e2911c9609435c9438d Mon Sep 17 00:00:00 2001
 From: amtellezfernandez <amtellezfernandez@users.noreply.github.com>
 Date: Thu, 10 Sep 2026 17:41:45 +0200
-Subject: [PATCH 1/3] runtime: make route generators plugin-selectable
+Subject: [PATCH 1/5] runtime: make route generators plugin-selectable
 
 ---
  src/plugins/alpasim_plugins/plugins.py        |  2 ++
@@ -168,7 +168,7 @@ index d61e890..7abb6ec 100644
 From 5163c4b89faf8bdc29bd1e3f90d235deec2e9129 Mon Sep 17 00:00:00 2001
 From: amtellezfernandez <amtellezfernandez@users.noreply.github.com>
 Date: Thu, 10 Sep 2026 18:05:28 +0200
-Subject: [PATCH 2/3] runtime: harden route generator plugin integration
+Subject: [PATCH 2/5] runtime: harden route generator plugin integration
 
 ---
  docs/PLUGIN_SYSTEM.md                         |  47 ++++++++
@@ -478,7 +478,7 @@ index 7abb6ec..4f77a3f 100644
 From 6b2e0b886d150b116c237ba48edd4de3192c8808 Mon Sep 17 00:00:00 2001
 From: amtellezfernandez <amtellezfernandez@users.noreply.github.com>
 Date: Thu, 10 Sep 2026 18:29:35 +0200
-Subject: [PATCH 3/3] ci: exercise optional route plugins in runtime tests
+Subject: [PATCH 3/5] ci: exercise optional route plugins in runtime tests
 
 ---
  .github/workflows/test.yml | 8 +++++++-
@@ -506,3 +506,574 @@ index 5789cab..64f8713 100644
  
 -- 
 2.34.1
+
+
+From 2146d2c97bb611aad8a4b538f49312c2e738589a Mon Sep 17 00:00:00 2001
+From: amtellezfernandez <177202985+amtellezfernandez@users.noreply.github.com>
+Date: Wed, 23 Sep 2026 20:21:45 +0200
+Subject: [PATCH 4/5] runtime: select route plugins through
+ route_generator_type
+
+Drop the RouteGeneratorType enum and the parallel route_generator_plugin
+field. route_generator_type is now a string: MAP, RECORDED and NONE keep
+their built-in meaning, and any other name resolves to an
+alpasim.route_generators entry point.
+
+The enum rejected an unknown value when the config was parsed. To keep
+that, parse_simulator_config resolves a plugin name at startup, so a typo
+fails before services start rather than once per rollout. Built-in
+routing still does not import alpasim_plugins; an unknown name without it
+installed raises a ValueError instead of an ImportError.
+---
+ docs/PLUGIN_SYSTEM.md                         | 13 +--
+ src/runtime/alpasim_runtime/config.py         | 12 +--
+ src/runtime/alpasim_runtime/event_loop.py     |  1 -
+ .../alpasim_runtime/route_generator.py        | 79 +++++++++++++------
+ .../alpasim_runtime/runtime_context.py        | 14 ++++
+ .../alpasim_runtime/unbound_rollout.py        |  5 +-
+ src/runtime/tests/test_event_loop.py          |  1 -
+ src/runtime/tests/test_route_generator.py     | 24 +++---
+ src/runtime/tests/test_validation.py          | 41 +++++++++-
+ src/runtime/tests/test_worker_pool.py         |  1 +
+ src/wizard/configs/base_config.yaml           |  2 +-
+ 11 files changed, 136 insertions(+), 57 deletions(-)
+
+diff --git a/docs/PLUGIN_SYSTEM.md b/docs/PLUGIN_SYSTEM.md
+index a99070d..98d4491 100644
+--- a/docs/PLUGIN_SYSTEM.md
++++ b/docs/PLUGIN_SYSTEM.md
+@@ -121,14 +121,17 @@ the runtime user configuration:
+ 
+ ```yaml
+ simulation_config:
+-  route_generator_plugin: custom
++  route_generator_type: custom
+   route_start_offset_m: 0.0
+ ```
+ 
+-When set, `route_generator_plugin` overrides `route_generator_type`, including
+-`NONE`. An unknown name raises `PluginNotFoundError`; it does not fall back to a
+-built-in generator. When unset or `null`, the existing `MAP`/`RECORDED`/`NONE`
+-selection is used and the runtime does not need `alpasim_plugins` for routing.
++`route_generator_type` accepts the built-in names `MAP`, `RECORDED` and `NONE`,
++or the name of a registered route plugin. The built-in names are reserved: a
++plugin registered under one can never be selected, and the runtime logs a
++warning at startup. The name is resolved when the configuration is parsed, so an
++unknown name raises `PluginNotFoundError` before any rollout starts; it does not
++fall back to a built-in generator. Built-in routing does not need
++`alpasim_plugins` installed.
+ 
+ ### Adding Hydra configs
+ 
+diff --git a/src/runtime/alpasim_runtime/config.py b/src/runtime/alpasim_runtime/config.py
+index ef097ef..75d1b45 100644
+--- a/src/runtime/alpasim_runtime/config.py
++++ b/src/runtime/alpasim_runtime/config.py
+@@ -259,12 +259,6 @@ class PhysicsUpdateMode(Enum):
+     ALL_ACTORS = 2
+ 
+ 
+-class RouteGeneratorType(Enum):
+-    MAP = 0
+-    RECORDED = 1
+-    NONE = 2
+-
+-
+ class RenderBundling(Enum):
+     """Which sensorsim bundled-render RPC to use for a control step.
+ 
+@@ -341,11 +335,9 @@ class SimulationConfig:
+         0  # models time delays from image capture to planner output to controller
+     )
+ 
+-    route_generator_type: RouteGeneratorType = RouteGeneratorType.MAP
++    # "MAP", "RECORDED", "NONE", or the name of an alpasim.route_generators plugin.
++    route_generator_type: str = "MAP"
+     route_start_offset_m: float = 0.0
+-    # Optional alpasim.route_generators entry point; overrides route_generator_type,
+-    # including NONE. Unset preserves built-in routing without alpasim_plugins.
+-    route_generator_plugin: str | None = None
+ 
+     # Whether to send optional messages to the driver
+     send_recording_ground_truth: bool = False
+diff --git a/src/runtime/alpasim_runtime/event_loop.py b/src/runtime/alpasim_runtime/event_loop.py
+index 402be58..a752a27 100644
+--- a/src/runtime/alpasim_runtime/event_loop.py
++++ b/src/runtime/alpasim_runtime/event_loop.py
+@@ -174,7 +174,6 @@ class EventBasedRollout:
+             vector_map=self.unbound.vector_map,
+             route_generator_type=self.unbound.route_generator_type,
+             route_start_offset_m=self.unbound.route_start_offset_m,
+-            route_generator_plugin=self.unbound.route_generator_plugin,
+         )
+ 
+         self._runtime_evaluator = RuntimeEvaluator(
+diff --git a/src/runtime/alpasim_runtime/route_generator.py b/src/runtime/alpasim_runtime/route_generator.py
+index 57e64ff..7702a31 100644
+--- a/src/runtime/alpasim_runtime/route_generator.py
++++ b/src/runtime/alpasim_runtime/route_generator.py
+@@ -4,16 +4,55 @@
+ import logging
+ import math
+ from abc import ABC, abstractmethod
+-from typing import final
++from typing import Any, final
+ 
+ import numpy as np
+-from alpasim_runtime.config import RouteGeneratorType
+ from alpasim_utils.geometry import Polyline, Pose
+ from trajdata.maps import VectorMap
+ from trajdata.maps.vec_map_elements import RoadLane
+ 
+ logger = logging.getLogger(__name__)
+ 
++BUILTIN_ROUTE_GENERATOR_TYPES = ("MAP", "RECORDED", "NONE")
++
++
++def resolve_route_generator_plugin(route_generator_type: str) -> Any:
++    """Return the alpasim.route_generators plugin class for a non-built-in type.
++
++    Raises:
++      ValueError: alpasim_plugins is not installed.
++      PluginNotFoundError: no plugin is registered under this name.
++    """
++    # Built-in routing must not require alpasim_plugins, so import lazily.
++    try:
++        from alpasim_plugins import route_generators
++    except ImportError as exc:
++        raise ValueError(
++            f"Invalid route generator type: {route_generator_type!r} is not "
++            "MAP, RECORDED or NONE, and alpasim_plugins is not installed"
++        ) from exc
++    return route_generators.get(route_generator_type)
++
++
++def warn_on_shadowed_route_plugins() -> None:
++    """Warn about route plugins registered under a reserved built-in name.
++
++    Built-in names always win, so such a plugin can never be selected.
++    """
++    try:
++        from alpasim_plugins import route_generators
++    except ImportError:
++        return
++    shadowed = sorted(
++        set(route_generators.get_names()) & set(BUILTIN_ROUTE_GENERATOR_TYPES)
++    )
++    if shadowed:
++        logger.warning(
++            "Route generator plugins %s use reserved built-in names and can "
++            "never be selected; rename their alpasim.route_generators entry points",
++            shadowed,
++        )
++
+ 
+ class RouteGenerator(ABC):
+     """
+@@ -39,48 +78,42 @@ class RouteGenerator(ABC):
+         cls,
+         recorded_waypoints_in_local: np.ndarray,
+         vector_map: VectorMap | None,
+-        route_generator_type: RouteGeneratorType,
++        route_generator_type: str,
+         route_start_offset_m: float = 0.0,
+-        route_generator_plugin: str | None = None,
+     ) -> "RouteGenerator | None":
+         """
+         Factory method to create a RouteGenerator
+         Args:
+           recorded_waypoints_in_local: the waypoints in the local frame. (N, 3) array
+           vector_map: the map data, or None when the scene has no map
+-          route_generator_type: the type of route generator to create
+-          route_start_offset_m: approximate distance ahead of the ego projection where routes start
+-          route_generator_plugin: name of an alpasim.route_generators entry point.
+-            When set, overrides route_generator_type (including NONE). The plugin
+-            must expose from_context(recorded_waypoints_in_local, vector_map,
++          route_generator_type: "MAP", "RECORDED", "NONE", or the name of an
++            alpasim.route_generators entry point. A plugin must expose
++            from_context(recorded_waypoints_in_local, vector_map,
+             *, route_start_offset_m=0.0), returning a RouteGenerator instance.
++          route_start_offset_m: approximate distance ahead of the ego projection where routes start
+         Returns:
+           A route generator of the specified type, or None if route generation is disabled
+         """
+-        if route_generator_plugin is not None:
+-            from alpasim_plugins import route_generators
+-
+-            plugin_cls = route_generators.get(route_generator_plugin)
+-            return plugin_cls.from_context(
+-                recorded_waypoints_in_local,
+-                vector_map,
+-                route_start_offset_m=route_start_offset_m,
+-            )
+-        if route_generator_type == RouteGeneratorType.NONE:
++        if route_generator_type == "NONE":
+             return None
+-        elif route_generator_type == RouteGeneratorType.RECORDED:
++        elif route_generator_type == "RECORDED":
+             return RouteGeneratorRecorded(
+                 recorded_waypoints_in_local,
+                 route_start_offset_m=route_start_offset_m,
+             )
+-        elif route_generator_type == RouteGeneratorType.MAP:
++        elif route_generator_type == "MAP":
+             return RouteGeneratorMap(
+                 recorded_waypoints_in_local,
+                 vector_map,
+                 route_start_offset_m=route_start_offset_m,
+             )
+-        else:
+-            raise ValueError(f"Invalid route generator type: {route_generator_type}")
++
++        plugin_cls = resolve_route_generator_plugin(route_generator_type)
++        return plugin_cls.from_context(
++            recorded_waypoints_in_local,
++            vector_map,
++            route_start_offset_m=route_start_offset_m,
++        )
+ 
+     def __init__(
+         self, rig_waypoints_in_local: np.ndarray, route_start_offset_m: float = 0.0
+diff --git a/src/runtime/alpasim_runtime/runtime_context.py b/src/runtime/alpasim_runtime/runtime_context.py
+index 58488fd..386ce1c 100644
+--- a/src/runtime/alpasim_runtime/runtime_context.py
++++ b/src/runtime/alpasim_runtime/runtime_context.py
+@@ -19,6 +19,11 @@ from alpasim_runtime.config import (
+     UserSimulatorConfig,
+ )
+ from alpasim_runtime.endpoints import get_endpoint_addresses
++from alpasim_runtime.route_generator import (
++    BUILTIN_ROUTE_GENERATOR_TYPES,
++    resolve_route_generator_plugin,
++    warn_on_shadowed_route_plugins,
++)
+ from alpasim_runtime.scene_loader import SceneLoader, build_scene_loader
+ from alpasim_runtime.validation import (
+     gather_versions_from_addresses,
+@@ -185,6 +190,14 @@ def validate_renderer_config(config: SimulatorConfig) -> None:
+         )
+ 
+ 
++def validate_route_generator_config(config: SimulatorConfig) -> None:
++    """Resolve a plugin route_generator_type at startup, not once per rollout."""
++    route_generator_type = config.user.simulation_config.route_generator_type
++    if route_generator_type not in BUILTIN_ROUTE_GENERATOR_TYPES:
++        resolve_route_generator_plugin(route_generator_type)
++    warn_on_shadowed_route_plugins()
++
++
+ def validate_scene_affinity_config(config: SimulatorConfig) -> None:
+     """Validate scene-affine dispatch bounds and renderer compatibility."""
+     affine = config.user.scene_affine_dispatch
+@@ -242,6 +255,7 @@ def parse_simulator_config(
+     network_config = typed_parse_config(network_config_path, NetworkSimulatorConfig)
+     config = SimulatorConfig(user=user_config, network=network_config)
+     validate_renderer_config(config)
++    validate_route_generator_config(config)
+     validate_scene_affinity_config(config)
+     return config
+ 
+diff --git a/src/runtime/alpasim_runtime/unbound_rollout.py b/src/runtime/alpasim_runtime/unbound_rollout.py
+index 8b1c8d4..846993c 100644
+--- a/src/runtime/alpasim_runtime/unbound_rollout.py
++++ b/src/runtime/alpasim_runtime/unbound_rollout.py
+@@ -15,7 +15,6 @@ from alpasim_grpc.v0.logging_pb2 import RolloutMetadata
+ from alpasim_runtime.config import (
+     PhysicsUpdateMode,
+     RenderBundling,
+-    RouteGeneratorType,
+     RuntimeCameraConfig,
+     SimulationConfig,
+     VehicleConfig,
+@@ -194,9 +193,8 @@ class UnboundRollout:
+     transform_ego_coords_ds_to_aabb: Pose
+     ego_aabb: AABB
+     planner_delay_us: int
+-    route_generator_type: RouteGeneratorType
++    route_generator_type: str
+     route_start_offset_m: float
+-    route_generator_plugin: str | None
+     send_recording_ground_truth: bool
+     nre_runid: str
+     nre_version: str
+@@ -366,7 +364,6 @@ class UnboundRollout:
+             pose_reporting_interval_us=simulation_config.pose_reporting_interval_us,
+             route_generator_type=simulation_config.route_generator_type,
+             route_start_offset_m=simulation_config.route_start_offset_m,
+-            route_generator_plugin=simulation_config.route_generator_plugin,
+             send_recording_ground_truth=simulation_config.send_recording_ground_truth,
+             vehicle_config=vehicle,
+             vector_map=vector_map,
+diff --git a/src/runtime/tests/test_event_loop.py b/src/runtime/tests/test_event_loop.py
+index 7ceed7a..787abd3 100644
+--- a/src/runtime/tests/test_event_loop.py
++++ b/src/runtime/tests/test_event_loop.py
+@@ -112,7 +112,6 @@ def test_initial_ego_context_uses_all_gt_samples_through_first_policy(
+         planner_delay_us=0,
+         vector_map=None,
+         route_generator_type="RECORDED",
+-        route_generator_plugin=None,
+         route_start_offset_m=0.0,
+         rollout_uuid="rollout",
+         scene_id="scene",
+diff --git a/src/runtime/tests/test_route_generator.py b/src/runtime/tests/test_route_generator.py
+index 4f77a3f..566e318 100644
+--- a/src/runtime/tests/test_route_generator.py
++++ b/src/runtime/tests/test_route_generator.py
+@@ -9,7 +9,6 @@ from unittest.mock import MagicMock
+ 
+ import numpy as np
+ import pytest
+-from alpasim_runtime.config import RouteGeneratorType
+ from alpasim_runtime.route_generator import (
+     RouteGenerator,
+     RouteGeneratorMap,
+@@ -57,16 +56,15 @@ def route_plugin_package(tmp_path, monkeypatch):
+ 
+ 
+ @pytest.mark.parametrize("vector_map", [None, object()])
+-def test_route_generator_plugin_takes_precedence(
++def test_route_generator_type_selects_plugin(
+     route_plugin_package, rig_waypoints_in_local, vector_map
+ ):
+     assert "custom" in route_plugin_package.route_generators.get_names()
+     generator = RouteGenerator.create(
+         rig_waypoints_in_local,
+         vector_map,
+-        RouteGeneratorType.NONE,
++        "custom",
+         route_start_offset_m=40.0,
+-        route_generator_plugin="custom",
+     )
+     assert isinstance(generator, CustomRouteGenerator)
+     assert generator.vector_map is vector_map
+@@ -79,7 +77,7 @@ def test_route_generator_plugin_takes_precedence(
+     assert np.linalg.norm(route.waypoints[0]) >= 40.0
+ 
+ 
+-def test_unknown_route_generator_plugin_does_not_fall_back(
++def test_unknown_route_generator_type_does_not_fall_back(
+     route_plugin_package, rig_waypoints_in_local
+ ):
+     with pytest.raises(
+@@ -89,8 +87,7 @@ def test_unknown_route_generator_plugin_does_not_fall_back(
+         RouteGenerator.create(
+             rig_waypoints_in_local,
+             None,
+-            RouteGeneratorType.RECORDED,
+-            route_generator_plugin="missing-route-plugin",
++            "missing-route-plugin",
+         )
+ 
+ 
+@@ -105,17 +102,22 @@ def test_builtin_routes_without_plugin_package():
+                 import sys
+                 sys.modules["alpasim_plugins"] = None
+                 import numpy as np
+-                from alpasim_runtime.config import RouteGeneratorType
+                 from alpasim_runtime.route_generator import RouteGenerator, RouteGeneratorRecorded
+                 from alpasim_utils.geometry import Pose
+ 
+                 waypoints = np.array([[0., 0., 0.], [100., 0., 0.]])
+-                assert RouteGenerator.create(waypoints, None, RouteGeneratorType.NONE) is None
+-                generator = RouteGenerator.create(waypoints, None, RouteGeneratorType.RECORDED)
++                assert RouteGenerator.create(waypoints, None, "NONE") is None
++                generator = RouteGenerator.create(waypoints, None, "RECORDED")
+                 assert isinstance(generator, RouteGeneratorRecorded)
+                 pose = Pose(np.zeros(3), np.array([0., 0., 0., 1.]))
+                 route = generator.generate_route(0, pose)
+                 np.testing.assert_allclose(route.waypoints[-1], [80., 0., 0.])
++                try:
++                    RouteGenerator.create(waypoints, None, "custom")
++                except ValueError as exc:
++                    assert "alpasim_plugins is not installed" in str(exc)
++                else:
++                    raise AssertionError("unknown route type without plugins must raise")
+                 """
+             ),
+         ],
+@@ -145,7 +147,7 @@ def test_route_generator_none_skips_waypoint_validation():
+     route_generator = RouteGenerator.create(
+         np.zeros((1, 3)),
+         vector_map=MagicMock(),
+-        route_generator_type=RouteGeneratorType.NONE,
++        route_generator_type="NONE",
+     )
+ 
+     assert route_generator is None
+diff --git a/src/runtime/tests/test_validation.py b/src/runtime/tests/test_validation.py
+index 52de6b4..f30bb1d 100644
+--- a/src/runtime/tests/test_validation.py
++++ b/src/runtime/tests/test_validation.py
+@@ -26,7 +26,10 @@ from alpasim_runtime.config import (
+     UserSimulatorConfig,
+     VideoModelConfig,
+ )
+-from alpasim_runtime.runtime_context import validate_renderer_config
++from alpasim_runtime.runtime_context import (
++    validate_renderer_config,
++    validate_route_generator_config,
++)
+ from alpasim_runtime.validation import (
+     _log_awaitable_progress,
+     gather_versions_from_addresses,
+@@ -465,3 +468,39 @@ def test_force_gt_cache_rejects_video_model_renderer() -> None:
+     )
+     with pytest.raises(ValueError, match="only supported by the sensorsim"):
+         validate_renderer_config(config)
++
++
++@pytest.mark.parametrize("route_generator_type", ["MAP", "RECORDED", "NONE"])
++def test_route_generator_config_accepts_builtins(route_generator_type: str) -> None:
++    config = _make_simulator_config()
++    config.user.simulation_config.route_generator_type = route_generator_type
++    validate_route_generator_config(config)
++
++
++def test_route_generator_config_accepts_registered_plugin(monkeypatch) -> None:
++    plugins = pytest.importorskip("alpasim_plugins")
++    monkeypatch.setattr(plugins.route_generators, "_cache", {"custom": object()})
++    config = _make_simulator_config()
++    config.user.simulation_config.route_generator_type = "custom"
++    validate_route_generator_config(config)
++
++
++def test_route_generator_config_rejects_unknown_type_at_startup(monkeypatch) -> None:
++    # A typo must fail before services start, not as one failure per rollout.
++    plugins = pytest.importorskip("alpasim_plugins")
++    monkeypatch.setattr(plugins.route_generators, "_cache", {})
++    config = _make_simulator_config()
++    config.user.simulation_config.route_generator_type = "map"
++    with pytest.raises(plugins.PluginNotFoundError, match="'map' not found"):
++        validate_route_generator_config(config)
++
++
++def test_route_generator_config_warns_on_reserved_plugin_name(
++    monkeypatch, caplog
++) -> None:
++    plugins = pytest.importorskip("alpasim_plugins")
++    monkeypatch.setattr(plugins.route_generators, "_cache", {"MAP": object()})
++    config = _make_simulator_config()
++    with caplog.at_level("WARNING", logger="alpasim_runtime.route_generator"):
++        validate_route_generator_config(config)
++    assert "['MAP'] use reserved built-in names" in caplog.text
+diff --git a/src/runtime/tests/test_worker_pool.py b/src/runtime/tests/test_worker_pool.py
+index 36b3e7b..fce8eef 100644
+--- a/src/runtime/tests/test_worker_pool.py
++++ b/src/runtime/tests/test_worker_pool.py
+@@ -75,6 +75,7 @@ def _make_config_mock(nr_workers: int = 1) -> MagicMock:
+     config.user.scene_affine_dispatch.max_renderers_per_scene = 2
+     config.user.scene_affine_dispatch.max_scenes_per_renderer = None
+     config.user.simulation_config.force_gt_frame_cache.enabled = False
++    config.user.simulation_config.route_generator_type = "MAP"
+     config.user.renderer = RendererConfig(kind=RendererKind.sensorsim)
+     config.user.endpoints.driver.skip = False
+     config.user.endpoints.driver.n_concurrent_rollouts = 2
+diff --git a/src/wizard/configs/base_config.yaml b/src/wizard/configs/base_config.yaml
+index f706faf..a0f55d7 100644
+--- a/src/wizard/configs/base_config.yaml
++++ b/src/wizard/configs/base_config.yaml
+@@ -339,7 +339,7 @@ runtime:
+ 
+     physics_update_mode: "EGO_ONLY"
+ 
+-    route_generator_type: "MAP" # "NONE", "MAP", or "RECORDED"
++    route_generator_type: "MAP" # "NONE", "MAP", "RECORDED", or a route-generator plugin name
+     route_start_offset_m: 0.0 # Along-route distance ahead of ego where submitted routes start
+ 
+     vehicle: null # use values from the .usdz file (original dimensions)
+-- 
+2.34.1
+
+
+From be78f3a88c74611ecd9453e992bbd39223d5c07f Mon Sep 17 00:00:00 2001
+From: amtellezfernandez <177202985+amtellezfernandez@users.noreply.github.com>
+Date: Wed, 23 Sep 2026 20:35:38 +0200
+Subject: [PATCH 5/5] plugins: report entry points that fail to load instead of
+ "not found"
+
+PluginRegistry swallowed load exceptions with a warning, so requesting a
+plugin whose module raised on import produced "not found ... Available:
+[]", pointing at installation rather than at the import error. Record the
+failure and raise PluginNotFoundError with the original exception.
+---
+ src/plugins/alpasim_plugins/plugins.py |  9 +++++++++
+ src/plugins/tests/test_plugins.py      | 21 +++++++++++++++++++++
+ 2 files changed, 30 insertions(+)
+
+diff --git a/src/plugins/alpasim_plugins/plugins.py b/src/plugins/alpasim_plugins/plugins.py
+index 9aad21a..bca5b9e 100644
+--- a/src/plugins/alpasim_plugins/plugins.py
++++ b/src/plugins/alpasim_plugins/plugins.py
+@@ -41,6 +41,8 @@ class PluginRegistry:
+         """
+         self._group = group
+         self._cache: dict[str, Any] | None = None
++        # Entry points that are registered but raised on load, by name.
++        self._load_errors: dict[str, str] = {}
+ 
+     def get_available(self) -> dict[str, Any]:
+         """Get all available plugins in this group.
+@@ -50,6 +52,7 @@ class PluginRegistry:
+         """
+         if self._cache is None:
+             self._cache = {}
++            self._load_errors = {}
+             eps = entry_points(group=self._group)
+             for ep in eps:
+                 if ep.name in self._cache:
+@@ -62,6 +65,7 @@ class PluginRegistry:
+                     self._cache[ep.name] = ep.load()
+                     logger.debug("Loaded plugin %s:%s", self._group, ep.name)
+                 except Exception as e:
++                    self._load_errors[ep.name] = f"{type(e).__name__}: {e}"
+                     logger.warning("Failed to load %s:%s: %s", self._group, ep.name, e)
+         return self._cache
+ 
+@@ -80,6 +84,11 @@ class PluginRegistry:
+             PluginNotFoundError: If plugin not found.
+         """
+         available = self.get_available()
++        if name in self._load_errors:
++            raise PluginNotFoundError(
++                f"Plugin '{name}' in {self._group} is installed but failed to "
++                f"load: {self._load_errors[name]}"
++            )
+         if name not in available:
+             raise PluginNotFoundError(
+                 f"Plugin '{name}' not found in {self._group}. "
+diff --git a/src/plugins/tests/test_plugins.py b/src/plugins/tests/test_plugins.py
+index 2581125..f2278cd 100644
+--- a/src/plugins/tests/test_plugins.py
++++ b/src/plugins/tests/test_plugins.py
+@@ -23,6 +23,27 @@ def test_plugin_registry_nonexistent_group_returns_empty() -> None:
+         registry.get("anything")
+ 
+ 
++def test_plugin_registry_reports_load_failure(tmp_path, monkeypatch) -> None:
++    """A registered plugin that fails to import is not reported as missing."""
++    metadata = tmp_path / "broken_plugin-1.0.dist-info"
++    metadata.mkdir()
++    (metadata / "METADATA").write_text(
++        "Metadata-Version: 2.1\nName: broken-plugin\nVersion: 1.0\n"
++    )
++    (metadata / "entry_points.txt").write_text(
++        "[alpasim.test.broken]\nbroken = no_such_module_xyz:Thing\n"
++    )
++    monkeypatch.syspath_prepend(str(tmp_path))
++    registry = PluginRegistry("alpasim.test.broken")
++    assert registry.get_names() == []
++    with pytest.raises(
++        PluginNotFoundError,
++        match="'broken' in alpasim.test.broken is installed but failed to load: "
++        "ModuleNotFoundError",
++    ):
++        registry.get("broken")
++
++
+ def test_plugin_registry_get_names_sorted() -> None:
+     """get_names() returns sorted list."""
+     registry = PluginRegistry("alpasim.scorers")  # typically empty
+-- 
+2.34.1
+

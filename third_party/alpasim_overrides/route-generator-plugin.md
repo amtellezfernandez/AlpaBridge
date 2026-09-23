@@ -2,9 +2,16 @@
 
 **Status:** implemented as [PR #179](https://github.com/NVlabs/alpasim/pull/179)
 for [issue #150](https://github.com/NVlabs/alpasim/issues/150). The accompanying
-patch is a three-commit `git am` mailbox exported from PR head `6b2e0b8`,
-based on upstream `affc2eab`. It is proposal material, not an automatically
-applied AlpaBridge setup override.
+patch is a five-commit `git am` mailbox exported from PR head `be78f3a`,
+based on upstream `affc2eab`; applied there it reproduces the PR head tree
+exactly. It is proposal material, not an automatically applied AlpaBridge
+setup override.
+
+The first three commits are the original proposal. The last two follow the
+maintainer's review: plugins are selected through the existing
+`route_generator_type` field rather than a parallel override field, and the
+plugin registry reports entry points that fail to import instead of calling
+them "not found".
 
 ## Motivation and scope
 
@@ -32,14 +39,18 @@ A package registers a class in the `alpasim.route_generators` entry-point group.
 Its `from_context(recorded_waypoints_in_local, vector_map,
 *, route_start_offset_m=0.0)` method returns a RouteGenerator. The map can be None.
 
-The optional `SimulationConfig.route_generator_plugin` name is forwarded through
-UnboundRollout and EventBasedRollout. When set it takes precedence over the
-built-in enum, including NONE. When unset the existing selection applies and
+`SimulationConfig.route_generator_type` is a string. `MAP`, `RECORDED` and
+`NONE` keep their built-in meaning; any other value names a plugin. The
+`RouteGeneratorType` enum is removed. Built-in names are reserved: a plugin
+registered under one can never be selected, and startup logs a warning. Built-in
 routing does not import the optional plugin package.
 
-The registry is publicly exported from alpasim_plugins and included in plugin
-information. Unknown names raise PluginNotFoundError. The upstream documentation
-includes registration and configuration examples.
+The name is resolved in `parse_simulator_config`, so an unknown name raises
+PluginNotFoundError before services start, as the enum did, rather than once
+per rollout. Without alpasim_plugins installed, a non-built-in name raises
+ValueError. The registry is publicly exported from alpasim_plugins and included
+in plugin information. The upstream documentation includes registration and
+configuration examples.
 
 ## Executed integration test
 
@@ -65,7 +76,24 @@ traffic simulation, dataset road-validity check, or complete closed-loop run is
 performed. Short recorded routes can carry NaN padding; the driver intentionally
 filters it. Float32 frame transforms are compared with a 0.1 mm tolerance.
 
-## Validation on 2026-09-10
+## Validation on 2026-09-23 (PR head `be78f3a`)
+
+- AlpaSim runtime suite: 522 passed, including the two MAP route tests on their
+  Git LFS scene fixtures (one test deselected by the suite's own configuration).
+- AlpaSim plugin tests: 9 passed; two driver-model registry tests fail only
+  because the environment's installed driver package predates the branch, and
+  fail identically without these changes.
+- This repository's integration test: 4 passed. Against the original PR head
+  `6b2e0b8` it skips with a message naming the required design.
+- AlpaBridge complete suite against the PR branch: 477 passed, 34 subtests
+  passed. `tests/test_alpasim_integration.py` runs without the AlpaSim source
+  trees on `PYTHONPATH`, whose own `tests` packages otherwise shadow this
+  repository's.
+- black 24.10.0, isort 5.13.2 and flake8 7.1.1 at the upstream pre-commit
+  settings pass on every changed Python file; Ruff passes for the AlpaBridge
+  test.
+
+## Validation on 2026-09-10 (original PR head `6b2e0b8`)
 
 - AlpaBridge complete suite in the shared AlpaSim environment: 478 passed,
   34 subtests passed, including all four new gRPC integration cases.
