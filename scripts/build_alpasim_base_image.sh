@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 export ALPASIM_ROOT="${ALPASIM_ROOT:-$ROOT/workspace/alpasim}"
-IMAGE_TAG="${ALPASIM_BASE_IMAGE_TAG:-alpasim-base:0.66.0}"
+IMAGE_TAG="${ALPASIM_BASE_IMAGE_TAG:-alpasim-base:0.134.0}"
 LOCK_DIR="${ALPASIM_ROOT}/.build-alpasim-base-image.lock"
 DOCKER_PROGRESS="${ALPASIM_DOCKER_PROGRESS:-auto}"
 

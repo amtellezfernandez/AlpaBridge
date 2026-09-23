@@ -31,7 +31,7 @@ not as an implicit runtime dependency on some separate legacy package.
   changes to keep in sync - read the patch file itself (`head -20 <patch>`).
 - (`Dockerfile.amd64` was removed 2026-08-12. It was a stale single-stage fork of a
   pre-multi-arch upstream `Dockerfile`, referenced by no code path, and its own header told
-  you to build it as `alpasim-base:0.66.0` — the exact tag AlpaBridge pins. An image built
+  you to build it as `alpasim-base:0.66.0` — the exact tag AlpaBridge pinned then. An image built
   that way has none of `dcgm-exporter`, `datacenter-gpu-manager`, `prometheus`,
   `TARGETARCH` or the `recipes` extra, and upstream's compose now *always* adds a
   prometheus service from that image, so it could not run a rollout. Upstream's own
@@ -86,11 +86,26 @@ Apache License 2.0. See `LICENSES/THIRD_PARTY_NOTICES.md` and
 `LICENSES/Apache-2.0.txt` at
 the repository root. Everything else in the repository is BSD 3-Clause.
 
-## Baseline: re-verification owed after the August 2026 sync
+## Active override audit against September 2026 main
 
 Both applied patches (`local_checkout.patch`, `session_metadata.patch`) were
-re-authored on 2026-08-12 against `NVlabs/alpasim` `main` @ `1e801ca` and verified
-to apply cleanly, in `sorted()` order, to a pristine checkout of it.
+re-authored on 2026-08-12 against `NVlabs/alpasim` `main` @ `1e801ca`. They
+still apply cleanly, in `sorted()` order, to a pristine checkout of current
+`main` @ `affc2eab`.
+
+The active override surface was reviewed against that exact commit on
+2026-09-10:
+
+| active delta | upstream status | disposition |
+| --- | --- | --- |
+| late/duplicate session RPC handling | upstream still indexes sessions directly | keep |
+| ARM64 runtime-image build fixes | final Docker stage still lacks the required architecture handling | keep |
+| `PredictionInput` session identity | upstream still exposes neither session UUID nor debug scene ID to policies | keep |
+| lazy optional policy imports | upstream still imports every heavyweight policy eagerly | keep |
+| single-run aggregate path normalization | no upstream equivalent | keep |
+| runtime host PID namespace and GPU exposure | no upstream equivalent for this external-driver deployment | keep |
+| local external-driver deployment profiles | absent upstream | keep |
+| forced Compose `pull_policy=missing` | upstream schema now defaults to `missing` and supports per-service policy | removed |
 
 Re-cut 2026-08-12 against `main` @ `1e801ca` and verified with `git apply --check`
 on a pristine clone. Four were regenerated **from** AlpaBridge's applied override rather

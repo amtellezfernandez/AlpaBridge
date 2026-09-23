@@ -23,7 +23,7 @@ SCENE_PRESET_ROOT = package_path("simulator", "alpasim_scene_presets")
 CONFIG_ROOT = package_path("simulator", "alpasim_configs", "driver")
 RUN_STATUS_FILENAME = "run-status.json"
 LOCAL_USDZ_CACHE_MANIFEST = "alpabridge-local-usdz-cache-manifest.json"
-DEFAULT_ALPASIM_BASE_IMAGE_TAG = "alpasim-base:0.66.0"
+DEFAULT_ALPASIM_BASE_IMAGE_TAG = "alpasim-base:0.134.0"
 
 
 def alpasim_base_image_tag() -> str:

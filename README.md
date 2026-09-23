@@ -176,6 +176,12 @@ uv run alpabridge-ready --alpasim-root /path/to/alpasim \
 `alpabridge-ready` checks your machine, Docker/GPU access, and the scenes
 you picked.
 
+The official E2E Challenge code lives on AlpaSim's separate
+`e2e_challenge` branch. Use
+`scripts/bootstrap_alpasim_challenge_checkout.sh` for that pinned checkout;
+the normal bootstrap remains pinned separately to a tested AlpaSim `main`
+commit.
+
 ## Get Scene Data
 
 Only needed for running a policy inside AlpaSim itself above

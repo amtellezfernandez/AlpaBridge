@@ -481,7 +481,7 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
 
     def test_preflight_alpasim_base_image_rejects_missing_image(self) -> None:
         missing = subprocess.CompletedProcess(
-            ["docker", "image", "inspect", "alpasim-base:0.66.0"],
+            ["docker", "image", "inspect", "alpasim-base:0.134.0"],
             1,
             "",
             "No such image",
@@ -493,7 +493,7 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
 
     def test_preflight_alpasim_base_image_accepts_existing_image(self) -> None:
         present = subprocess.CompletedProcess(
-            ["docker", "image", "inspect", "alpasim-base:0.66.0"],
+            ["docker", "image", "inspect", "alpasim-base:0.134.0"],
             0,
             "[]",
             "",
@@ -785,7 +785,7 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
             metadata = json.loads((run_dir / "launch-metadata.json").read_text(encoding="utf-8"))
             self.assertEqual(str(alpasim_root.resolve()), metadata["provenance"]["alpasim_checkout"]["root"])
             self.assertIn("git_commit", metadata["provenance"]["alpasim_checkout"])
-            self.assertEqual("alpasim-base:0.66.0", metadata["provenance"]["docker_image"]["tag"])
+            self.assertEqual("alpasim-base:0.134.0", metadata["provenance"]["docker_image"]["tag"])
             self.assertIn("present", metadata["provenance"]["docker_image"])
             self.assertTrue((run_dir / "driver-command.sh").is_file())
             self.assertTrue((run_dir / "wizard-command.sh").is_file())
@@ -838,6 +838,22 @@ class AlpaSimSetupScriptTests(unittest.TestCase):
 
         self.assertIn("--array-job-dir=/mnt/log_dir", normalized)
         self.assertNotIn("--array-job-dir=/mnt/array_job_dir", normalized)
+
+    def test_runtime_override_preserves_configured_pull_policy(self) -> None:
+        override = (
+            ROOT
+            / "src"
+            / "alpabridge"
+            / "alpasim_overrides"
+            / "src"
+            / "wizard"
+            / "alpasim_wizard"
+            / "deployment"
+            / "docker_compose.py"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn('ret["pull_policy"] = service_config.pull_policy', override)
+        self.assertNotIn('ret["pull_policy"] = "missing"', override)
 
     def test_packaged_and_tracked_alpasim_overrides_stay_in_sync(self) -> None:
         packaged_root = ROOT / "src" / "alpabridge" / "alpasim_overrides"

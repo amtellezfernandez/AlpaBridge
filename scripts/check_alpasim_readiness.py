@@ -55,7 +55,7 @@ def main() -> None:
     print(f"  HF_TOKEN: {token_state}")
     print("  docker: accessible")
     print("  gpu runtime: accessible")
-    print(f"  image: {'skipped' if args.skip_image else 'alpasim-base:0.66.0'}")
+    print(f"  image: {'skipped' if args.skip_image else _cmd.alpasim_base_image_tag()}")
     print(f"  local AlpaSim env: {'skipped' if args.skip_local_env else 'checked'}")
     print(f"  scene artifacts: {'skipped' if args.skip_scene_artifacts else 'checked'}")
 

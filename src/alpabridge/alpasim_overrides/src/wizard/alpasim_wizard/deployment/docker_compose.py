@@ -144,10 +144,7 @@ class DockerComposeDeployment:
         else:
             ret["networks"] = ["microservices_network"]
         ret["volumes"] = [v.to_str() for v in container.volumes]
-        # AlpaBridge delta: local external-driver runs use images that are built here or
-        # loaded from a local tar, never pulled -- an upstream default of "always" turns
-        # every rollout into a registry round trip that fails without credentials.
-        ret["pull_policy"] = "missing"
+        ret["pull_policy"] = service_config.pull_policy
         ret["image"] = service_config.image
 
         repo_root = str(find_repo_root(__file__))

@@ -7,6 +7,18 @@ The image needs the official AlpaSim gRPC Python package as a build input. Keep
 that code in an AlpaSim checkout and pass it as a Docker BuildKit named context;
 do not vendor it into AlpaBridge.
 
+The challenge is maintained on AlpaSim's separate `e2e_challenge` branch, not
+in `main` or the tagged simulator releases. Create or update the pinned
+challenge checkout with:
+
+```bash
+bash scripts/bootstrap_alpasim_challenge_checkout.sh
+```
+
+By default this uses `workspace/alpasim-e2e` at `2023534`. Override
+`ALPASIM_ROOT` or `ALPASIM_UPSTREAM_REF` when intentionally testing another
+checkout or challenge revision.
+
 ## Policies
 
 The driver serves whatever policy is selected via `--model`/`ALPABRIDGE_DRIVER_MODEL`,
@@ -29,7 +41,7 @@ case before shipping a real submission.
 ## Build
 
 ```bash
-ALPASIM_ROOT=/path/to/alpasim \
+ALPASIM_ROOT=/path/to/alpasim-e2e \
   bash integrations/alpasim_e2e_challenge/build_image.sh
 ```
 
