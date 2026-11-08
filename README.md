@@ -315,3 +315,10 @@ come from third parties keep their own
 This is an independent project — it is not affiliated with, endorsed by, or
 sponsored by Waymo or NVIDIA. It does not include or redistribute Waymo
 datasets, AlpaSim binaries, gated scene files, or policy checkpoints.
+
+## Optional BenchStudio evaluation
+
+Use `import benchstudio as bs` and `bs.pipeline("alpasim", ...)` for scene batches
+with retained process logs and native AlpaBridge accounting. See
+[the Python and CLI guide](docs/benchstudio.md) for installation, checks and limitations.
+BenchStudio remains optional; existing AlpaBridge commands work independently.
