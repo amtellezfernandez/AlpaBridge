@@ -82,6 +82,7 @@ def execute_batch(args: argparse.Namespace) -> dict[str, Any]:
         "created_at": datetime.now().isoformat(timespec="seconds"),
         "mode": args.mode,
         "executor": getattr(args, "executor", "subprocess"),
+        "run_id": getattr(args, "run_id", None),
         "model": args.model,
         "scene_preset": args.scene_preset,
         "scene_ids": scene_ids,

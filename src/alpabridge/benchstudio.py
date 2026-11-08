@@ -1,50 +1,97 @@
 """Optional BenchStudio integration; importing AlpaBridge never requires BenchStudio."""
 from __future__ import annotations
 
-from dataclasses import dataclass
-from pathlib import Path
+import json
 import shutil
 import sys
+from dataclasses import dataclass
+from pathlib import Path
 
 from alpabridge.cli.commands import run_alpasim_scene_batch as batch
 from alpabridge.cli.commands.run_alpasim_local_external import MODEL_PRESETS
 
 
 @dataclass(frozen=True)
-class Preparation:
-    """Static configuration checks only, not a native simulator qualification."""
-    issues: tuple[str, ...]
-    native_verified: bool = False
-
-    @property
-    def technical_ready(self):
-        return not self.issues
-
-    def summary(self):
-        return "\n".join(self.issues) if self.issues else (
-            "Configuration ready. Native simulator, driver and GPU remain unverified.")
-
-
-@dataclass(frozen=True)
 class BatchResult:
+    """Retained native accounting, metrics and audit; no generic success scoring."""
     report: dict
+    audit: dict | None = None
 
     @property
-    def successful(self):
+    def completed(self):
         return (not self.report["failed_runs"]
                 and len(self.report["completed_runs"]) == self.report["scene_count"])
 
+    @property
+    def successful(self):
+        # Completed processes/artifacts alone cannot establish a clean native run.
+        return self.completed and self.audit is not None and self.audit["clean_closed_loop_batch"] is True
+
+    @property
+    def metrics(self):
+        return {} if self.audit is None else self.audit["metrics"]
+
     def summary(self):
-        return (f"{len(self.report['completed_runs'])}/{self.report['scene_count']} scenes completed; "
-                f"{len(self.report['failed_runs'])} failed. Native metrics: {self.report['batch_dir']}")
+        state = "passed" if self.successful else "not passed"
+        lines = [
+            f"{len(self.report['completed_runs'])}/{self.report['scene_count']} scenes completed; "
+            f"{len(self.report['failed_runs'])} failed; native artifact audit {state}. "
+            f"Results: {self.report['batch_dir']}"
+        ]
+        metrics = "; ".join(
+            f"{name}={value['mean']} (n={value['count']})"
+            for name, value in self.metrics.items()
+        )
+        lines.append("Metrics: " + metrics if metrics else "No retained metrics.")
+        if self.audit is not None:
+            lines.append(self.audit["claim_boundary"])
+        return "\n".join(lines)
+
+    @classmethod
+    def from_directory(cls, directory):
+        """Read native artifacts and compute their existing offline batch summary."""
+        from alpabridge.cli.commands.batch_summary import build_summary
+        root = Path(directory).resolve()
+        report = json.loads((root / "batch-status.json").read_text("utf-8"))
+        if not isinstance(report, dict) or report.get("schema") != "alpasim_scene_batch_summary_v1":
+            raise ValueError("unsupported AlpaSim batch status")
+        runs = report.get("runs")
+        count = report.get("scene_count")
+        if (not isinstance(runs, list) or type(count) is not int or count < 1
+                or len(runs) > count or any(not isinstance(row, dict)
+                    or not isinstance(row.get("run_dir"), str) or not row["run_dir"] for row in runs)):
+            raise ValueError("malformed AlpaSim batch accounting")
+        identities = [row.get("scene_id") for row in runs]
+        if any(not isinstance(scene, str) or not scene for scene in identities) or len(set(identities)) != len(identities):
+            raise ValueError("missing or duplicate scene identity in batch status")
+        # Derive operational counts from retained rows, never trust redundant lists.
+        report = {**report, "batch_dir": str(root),
+                  "completed_runs": [row["run_dir"] for row in runs if row.get("result") in ("completed", "skipped_completed")],
+                  "failed_runs": [row["run_dir"] for row in runs if row.get("result") == "failed"]}
+        return cls(report, build_summary(batch_dir=root))
 
 
 class AlpaSimPipeline:
     """Use native scene selection, retries and scoring with BenchStudio processes."""
 
-    def __init__(self, *, model, output_dir, alpasim_root, scene_ids=(),
+    def __init__(self, *, model, alpasim_root, output_dir=None, config=None, scene_ids=(),
                  scene_preset="fresh_3scene", checkpoint=None, oracle_actor_proxy=None,
-                 python=sys.executable, max_retries=1, timeout=900, topology="1gpu"):
+                 python=sys.executable, max_retries=1, timeout=None, topology="1gpu"):
+        run_id = None
+        if config is not None:
+            bs = batch._benchstudio()
+            if not isinstance(config, bs.EvaluationConfig):
+                raise TypeError("config must be bs.EvaluationConfig")
+            if output_dir is not None or timeout is not None:
+                raise ValueError("output_dir and timeout belong in config when config is supplied")
+            if config.batch_size is not None or config.concurrency != 1:
+                raise ValueError("AlpaSim scene batches support sequential execution, not batching/concurrency")
+            output_dir, timeout, run_id = config.output_dir, config.timeout, config.run_id
+        if output_dir is None:
+            raise ValueError("provide output_dir or config.output_dir")
+        timeout = 900 if timeout is None else timeout
+        if type(timeout) is float and timeout.is_integer():
+            timeout = int(timeout)
         if model not in batch.PUBLIC_RELEASE_MODELS:
             raise ValueError(f"Unsupported AlpaSim model: {model}")
         if scene_preset not in batch.SCENE_PRESETS:
@@ -68,7 +115,10 @@ class AlpaSimPipeline:
             if value is not None:
                 argv.extend([flag, str(Path(value).resolve())])
         self.args = batch._build_parser().parse_args(argv)
+        self.args.run_id = run_id or Path(output_dir).name
         scenes = batch._selected_scene_ids(self.args)
+        if len(set(scenes)) != len(scenes):
+            raise ValueError("scene identifiers must be unique within a batch")
         if any(not scene or scene in (".", "..") or "/" in scene or "\\" in scene for scene in scenes):
             raise ValueError("scene identifiers cannot contain path separators")
 
@@ -91,14 +141,19 @@ class AlpaSimPipeline:
                 issues.append(f"{args.model} requires {name}")
             elif path is not None and not path.is_file():
                 issues.append(f"{name} file is missing")
-        return Preparation(tuple(issues))
+        bs = batch._benchstudio()
+        if not callable(getattr(bs.EvaluationCheck, "summary", None)):
+            raise RuntimeError("Upgrade BenchStudio to the reviewed shared evaluation-check API")
+        return bs.EvaluationCheck(not issues, tuple(issues),
+                                  len(batch._selected_scene_ids(args)), "native")
 
     def run(self):
         report = self.check()
         if not report.technical_ready:
             raise RuntimeError(report.summary())
         # Native driver readiness and artifact audits remain authoritative.
-        return BatchResult(batch.execute_batch(self.args))
+        batch.execute_batch(self.args)
+        return BatchResult.from_directory(self.args.batch_dir)
 
     __call__ = run
 
@@ -110,7 +165,7 @@ class RecipeFactory:
     @staticmethod
     def add_cli_args(parser):
         parser.add_argument("--model", choices=batch.PUBLIC_RELEASE_MODELS, required=True)
-        parser.add_argument("--output-dir", required=True)
+        parser.add_argument("--output-dir", "--output", dest="output_dir", required=True)
         parser.add_argument("--alpasim-root", required=True)
         parser.add_argument("--scene-id", action="append", default=[])
         parser.add_argument("--scene-preset", choices=tuple(batch.SCENE_PRESETS), default="fresh_3scene")
@@ -120,13 +175,22 @@ class RecipeFactory:
         parser.add_argument("--max-retries", type=int, default=1)
         parser.add_argument("--timeout", type=int, default=900)
         parser.add_argument("--topology", default="1gpu")
+        parser.add_argument("--run-id", default="evaluation")
 
     @staticmethod
     def options_from_args(args):
         options = {name: getattr(args, name) for name in (
             "model", "output_dir", "alpasim_root", "scene_preset", "checkpoint",
             "oracle_actor_proxy", "python", "max_retries", "timeout", "topology")}
-        return {**options, "scene_ids": args.scene_id}
+        bs = batch._benchstudio()
+        output_dir = options.pop("output_dir")
+        timeout = options.pop("timeout")
+        return {**options, "scene_ids": args.scene_id,
+                "config": bs.EvaluationConfig(run_id=args.run_id, output_dir=output_dir, timeout=timeout)}
+
+    @staticmethod
+    def open_run(directory):
+        return BatchResult.from_directory(directory)
 
 
 recipe = RecipeFactory()
