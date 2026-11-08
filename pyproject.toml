@@ -61,6 +61,9 @@ rectify = ["opencv-python-headless>=4.10"]
 # camera frames, which need a decoder.
 driver = ["Pillow>=10"]
 
+[project.entry-points."benchstudio.pipelines"]
+alpasim = "alpabridge.benchstudio:recipe"
+
 [project.entry-points."alpasim.models"]
 constant_velocity = "alpabridge.simulator.baseline_drivers:ConstantVelocityAlpaSimModel"
 route_following = "alpabridge.simulator.baseline_drivers:RouteFollowingAlpaSimModel"

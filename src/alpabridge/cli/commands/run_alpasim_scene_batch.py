@@ -5,6 +5,7 @@ import argparse
 import json
 import subprocess
 import sys
+import tempfile
 from collections import Counter
 from datetime import datetime
 from pathlib import Path
@@ -30,6 +31,7 @@ def _build_parser() -> argparse.ArgumentParser:
             "statistical unit for downstream transfer audits."
         )
     )
+    parser.add_argument("--executor", choices=("subprocess", "benchstudio"), default="subprocess")
     parser.add_argument("--mode", choices=("print", "both"), default="print")
     parser.add_argument("--model", choices=PUBLIC_RELEASE_MODELS, required=True)
     parser.add_argument("--scene-preset", choices=tuple(SCENE_PRESETS), default="fresh_3scene")
@@ -62,6 +64,15 @@ def _parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = _parse_args()
+    summary = execute_batch(args)
+    print(json.dumps(summary, indent=2, sort_keys=True))
+    return 0 if not summary["failed_runs"] else 1
+
+
+def execute_batch(args: argparse.Namespace) -> dict[str, Any]:
+    """Execute with existing native accounting; optionally use BenchStudio processes."""
+    if getattr(args, "executor", "subprocess") == "benchstudio":
+        _benchstudio()
     scene_ids = _selected_scene_ids(args)
     batch_dir = _resolve_batch_dir(args)
     _prepare_batch_dir(batch_dir, allow_existing=args.allow_existing_batch_dir)
@@ -70,6 +81,7 @@ def main() -> int:
         "schema": "alpasim_scene_batch_v1",
         "created_at": datetime.now().isoformat(timespec="seconds"),
         "mode": args.mode,
+        "executor": getattr(args, "executor", "subprocess"),
         "model": args.model,
         "scene_preset": args.scene_preset,
         "scene_ids": scene_ids,
@@ -120,7 +132,8 @@ def main() -> int:
             continue
 
         run_dir.mkdir(parents=True, exist_ok=True)
-        returncode, attempts = _run_scene_with_retries(command, cwd=RUNNER_CWD, max_retries=args.max_retries)
+        returncode, attempts = _run_scene_with_retries(command, cwd=RUNNER_CWD, max_retries=args.max_retries,
+                                                     executor=getattr(args, "executor", "subprocess"))
         result = "completed" if returncode == 0 else "failed"
         diagnostics = _scene_diagnostics(run_dir)
         statuses.append(
@@ -154,8 +167,7 @@ def main() -> int:
         statuses=statuses,
     )
     _write_json(batch_dir / "batch-status.json", summary)
-    print(json.dumps(summary, indent=2, sort_keys=True))
-    return 0 if not summary["failed_runs"] else 1
+    return summary
 
 
 def _selected_scene_ids(args: argparse.Namespace) -> list[str]:
@@ -240,12 +252,40 @@ def _scene_status(run_dir: Path) -> str:
     return "missing"
 
 
-def _run_scene_with_retries(command: list[str], *, cwd: Path, max_retries: int) -> tuple[int, int]:
+def _benchstudio():
+    try:
+        import benchstudio as bs
+    except ImportError as error:
+        raise RuntimeError("Install the reviewed BenchStudio distribution to select this executor") from error
+    if not callable(getattr(bs.ProcessCommand, "execute", None)):
+        raise RuntimeError("This executor requires BenchStudio with ProcessCommand.execute support")
+    return bs
+
+
+def _run_scene_with_retries(command: list[str], *, cwd: Path, max_retries: int,
+                            executor: str = "subprocess") -> tuple[int, int]:
+    if executor not in ("subprocess", "benchstudio"):
+        raise ValueError("unknown process executor")
     attempts = 0
     last_returncode = 0
     for _ in range(max(0, int(max_retries)) + 1):
         attempts += 1
-        last_returncode = subprocess.run(command, cwd=cwd, check=False).returncode
+        if executor == "benchstudio":
+            bs = _benchstudio()
+            run_dir = _extract_run_dir(command)
+            if run_dir is None:
+                raise ValueError("BenchStudio scene execution requires its native run directory")
+            log_root = run_dir / "process-logs"
+            log_root.mkdir(parents=True, exist_ok=True)
+            logs = Path(tempfile.mkdtemp(prefix="attempt-", dir=log_root))
+            try:
+                result = bs.ProcessCommand("scene", tuple(command), cwd).execute(logs, check=False)
+            except BaseException:
+                _cleanup_failed_scene(command, cwd=cwd)
+                raise
+            last_returncode = result.returncode
+        else:
+            last_returncode = subprocess.run(command, cwd=cwd, check=False).returncode
         if last_returncode == 0 and _scene_artifacts_complete(command):
             break
         last_returncode = 1
