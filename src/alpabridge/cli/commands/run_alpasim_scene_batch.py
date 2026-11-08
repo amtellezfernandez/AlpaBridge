@@ -5,7 +5,6 @@ import argparse
 import json
 import subprocess
 import sys
-import tempfile
 from collections import Counter
 from datetime import datetime
 from pathlib import Path
@@ -64,6 +63,11 @@ def _parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = _parse_args()
+    if getattr(args, "executor", "subprocess") == "benchstudio" and args.mode == "both":
+        from alpabridge.benchstudio import run_with_engine
+        result = run_with_engine(args)
+        print(json.dumps(result.report, indent=2, sort_keys=True))
+        return 0 if result.successful else 1
     summary = execute_batch(args)
     print(json.dumps(summary, indent=2, sort_keys=True))
     return 0 if not summary["failed_runs"] else 1
@@ -71,30 +75,14 @@ def main() -> int:
 
 def execute_batch(args: argparse.Namespace) -> dict[str, Any]:
     """Execute with existing native accounting; optionally use BenchStudio processes."""
-    if getattr(args, "executor", "subprocess") == "benchstudio":
-        _benchstudio()
+    if getattr(args, "executor", "subprocess") == "benchstudio" and args.mode == "both":
+        from alpabridge.benchstudio import run_with_engine
+        return run_with_engine(args).report
     scene_ids = _selected_scene_ids(args)
     batch_dir = _resolve_batch_dir(args)
     _prepare_batch_dir(batch_dir, allow_existing=args.allow_existing_batch_dir)
 
-    manifest = {
-        "schema": "alpasim_scene_batch_v1",
-        "created_at": datetime.now().isoformat(timespec="seconds"),
-        "mode": args.mode,
-        "executor": getattr(args, "executor", "subprocess"),
-        "run_id": getattr(args, "run_id", None),
-        "model": args.model,
-        "scene_preset": args.scene_preset,
-        "scene_ids": scene_ids,
-        "topology": args.topology,
-        "timeout": args.timeout,
-        "max_retries": args.max_retries,
-        "baseport": args.baseport,
-        "port": args.port,
-        "wizard_args": list(args.wizard_arg),
-        "oracle_actor_proxy": str(args.oracle_actor_proxy) if args.oracle_actor_proxy else None,
-        "runs": [],
-    }
+    manifest = _batch_manifest(args, scene_ids)
     _write_json(batch_dir / "batch-manifest.json", manifest)
 
     statuses: list[dict[str, Any]] = []
@@ -133,8 +121,7 @@ def execute_batch(args: argparse.Namespace) -> dict[str, Any]:
             continue
 
         run_dir.mkdir(parents=True, exist_ok=True)
-        returncode, attempts = _run_scene_with_retries(command, cwd=RUNNER_CWD, max_retries=args.max_retries,
-                                                     executor=getattr(args, "executor", "subprocess"))
+        returncode, attempts = _run_scene_with_retries(command, cwd=RUNNER_CWD, max_retries=args.max_retries)
         result = "completed" if returncode == 0 else "failed"
         diagnostics = _scene_diagnostics(run_dir)
         statuses.append(
@@ -169,6 +156,27 @@ def execute_batch(args: argparse.Namespace) -> dict[str, Any]:
     )
     _write_json(batch_dir / "batch-status.json", summary)
     return summary
+
+
+def _batch_manifest(args, scene_ids):
+    return {
+        "schema": "alpasim_scene_batch_v1",
+        "created_at": datetime.now().isoformat(timespec="seconds"),
+        "mode": args.mode,
+        "executor": getattr(args, "executor", "subprocess"),
+        "run_id": getattr(args, "run_id", None),
+        "model": args.model,
+        "scene_preset": args.scene_preset,
+        "scene_ids": scene_ids,
+        "topology": args.topology,
+        "timeout": args.timeout,
+        "max_retries": args.max_retries,
+        "baseport": args.baseport,
+        "port": args.port,
+        "wizard_args": list(args.wizard_arg),
+        "oracle_actor_proxy": str(args.oracle_actor_proxy) if args.oracle_actor_proxy else None,
+        "runs": [],
+    }
 
 
 def _selected_scene_ids(args: argparse.Namespace) -> list[str]:
@@ -263,30 +271,13 @@ def _benchstudio():
     return bs
 
 
-def _run_scene_with_retries(command: list[str], *, cwd: Path, max_retries: int,
-                            executor: str = "subprocess") -> tuple[int, int]:
-    if executor not in ("subprocess", "benchstudio"):
-        raise ValueError("unknown process executor")
+def _run_scene_with_retries(command: list[str], *, cwd: Path, max_retries: int) -> tuple[int, int]:
+    """Legacy executor only; the BenchStudio route uses EvaluationEngine."""
     attempts = 0
     last_returncode = 0
     for _ in range(max(0, int(max_retries)) + 1):
         attempts += 1
-        if executor == "benchstudio":
-            bs = _benchstudio()
-            run_dir = _extract_run_dir(command)
-            if run_dir is None:
-                raise ValueError("BenchStudio scene execution requires its native run directory")
-            log_root = run_dir / "process-logs"
-            log_root.mkdir(parents=True, exist_ok=True)
-            logs = Path(tempfile.mkdtemp(prefix="attempt-", dir=log_root))
-            try:
-                result = bs.ProcessCommand("scene", tuple(command), cwd).execute(logs, check=False)
-            except BaseException:
-                _cleanup_failed_scene(command, cwd=cwd)
-                raise
-            last_returncode = result.returncode
-        else:
-            last_returncode = subprocess.run(command, cwd=cwd, check=False).returncode
+        last_returncode = subprocess.run(command, cwd=cwd, check=False).returncode
         if last_returncode == 0 and _scene_artifacts_complete(command):
             break
         last_returncode = 1
@@ -294,12 +285,17 @@ def _run_scene_with_retries(command: list[str], *, cwd: Path, max_retries: int,
     return int(last_returncode), attempts
 
 
-def _cleanup_failed_scene(command: list[str], *, cwd: Path) -> None:
+def _cleanup_failed_scene(command: list[str], *, cwd: Path, strict: bool = False) -> None:
     run_dir = _extract_run_dir(command)
     if run_dir is None:
         return
     compose_path = run_dir / "docker-compose.yaml"
     if not compose_path.is_file():
+        return
+    if strict:
+        bs = _benchstudio()
+        bs.ProcessCommand("cleanup", ("docker", "compose", "-f", str(compose_path), "down", "-v"),
+                          cwd, timeout=30).run(run_dir / "cleanup-logs")
         return
     subprocess.run(
         ["docker", "compose", "-f", str(compose_path), "down", "-v"],
