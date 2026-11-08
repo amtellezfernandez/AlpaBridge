@@ -25,7 +25,7 @@ def test_missing_checkpoint_blocks_before_execution(tmp_path, monkeypatch):
     monkeypatch.setattr("alpabridge.benchstudio.shutil.which", lambda value: str(value))
     pipeline = AlpaSimPipeline(model="token_dagger_bc", output_dir=tmp_path / "out",
                               alpasim_root=tmp_path, scene_ids=("fake-scene",))
-    with pytest.raises(RuntimeError, match="requires checkpoint"):
+    with pytest.raises(ValueError, match="requires checkpoint"):
         pipeline.run()
     assert not (tmp_path / "out").exists()
 
@@ -37,18 +37,22 @@ def test_native_scene_contract_with_real_stdlib_process(tmp_path, monkeypatch, c
             'p.joinpath("aggregate").mkdir(parents=True,exist_ok=True); '
             + ('p.joinpath("aggregate/metrics_results.txt").write_text("synthetic"); ' if complete else '')
             + f'print("synthetic driver"); sys.exit({exit_code})')
-    command = [sys.executable, "-c", code, "--run-dir", str(run)]
+    monkeypatch.setattr("alpabridge.benchstudio.shutil.which", lambda value: str(value))
+    monkeypatch.setattr(batch, "_scene_command", lambda args, scene_id, run_dir:
+        [sys.executable, "-c", code, "--run-dir", str(run_dir)])
     cleanups = []
     monkeypatch.setattr(batch, "_cleanup_failed_scene", lambda *a, **kw: cleanups.append(True))
-    status, attempts = batch._run_scene_with_retries(command, cwd=tmp_path, max_retries=1,
-                                                    executor="benchstudio")
+    pipeline = AlpaSimPipeline(model="route_following", alpasim_root=tmp_path,
+                              output_dir=run, scene_ids=("fake-scene",), max_retries=1)
+    result = pipeline.run()
     success = complete and exit_code == 0
-    assert status == (0 if success else 1)
-    assert attempts == (1 if success else 2)
-    receipts = list(run.glob("process-logs/attempt-*/scene.receipt.json"))
+    assert result.completed == success
+    attempts = 1 if success else 2
+    assert result.report["runs"][0]["attempts"] == attempts
+    receipts = list(run.glob("*/attempt-*/process-logs/scene.receipt.json"))
     assert len(receipts) == attempts
     assert all(json.loads(path.read_text())["exit_code"] == exit_code for path in receipts)
-    assert len(cleanups) == (0 if success else 2)
+    assert len(cleanups) == attempts
 
 
 def test_pipeline_discovery_cli_and_batch_accounting(tmp_path, monkeypatch):
@@ -95,9 +99,11 @@ def test_interruption_cleans_native_containers_without_retry(tmp_path, monkeypat
         raise KeyboardInterrupt()
     monkeypatch.setattr(bs.ProcessCommand, "execute", interrupt)
     monkeypatch.setattr(batch, "_cleanup_failed_scene", lambda *a, **kw: cleanups.append(True))
+    monkeypatch.setattr("alpabridge.benchstudio.shutil.which", lambda value: str(value))
+    pipeline = AlpaSimPipeline(model="route_following", alpasim_root=tmp_path,
+                              output_dir=tmp_path / "out", scene_ids=("fake-scene",), max_retries=5)
     with pytest.raises(KeyboardInterrupt):
-        batch._run_scene_with_retries(["fake", "--run-dir", str(tmp_path / "run")],
-                                     cwd=tmp_path, max_retries=5, executor="benchstudio")
+        pipeline.run()
     assert cleanups == [True]
 
 

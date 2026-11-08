@@ -2,15 +2,16 @@
 
 AlpaBridge provides the installed `alpasim` pipeline. It uses BenchStudio's
 process ownership, separate stdout/stderr logs and structured execution receipts,
-while retaining AlpaBridge's scene selection, native launcher, retries, Docker
-cleanup, artifact audits and batch summaries. No extra operator script is needed.
+while retaining AlpaBridge's scene selection, per-scene native launcher, Docker
+cleanup, artifact audits and batch summaries. The existing BenchStudio engine
+owns case ordering, retry scheduling and execution receipts. No extra operator script is needed.
 
 Install AlpaBridge in the operator environment (`python -m pip install -e .`).
 Install the reviewed BenchStudio distribution separately: it must provide
 `ProcessCommand.execute`, shared `EvaluationCheck.summary` and native result reading. BenchStudio is currently private; this optional
 integration does not add an inaccessible dependency to AlpaBridge's public install.
-Reviewed core implementation: [BenchStudio #36](https://github.com/amtellezfernandez/BenchStudio/pull/36),
-commit `febcda93c8da996026a052edc08382a1af6a5cc3`.
+Reviewed core implementation: [BenchStudio #37](https://github.com/amtellezfernandez/BenchStudio/pull/37),
+commit `dc89e9f4ee3e45f56d47eaa7ea738ad92e789879`.
 It does not change either project's license. The default `alpabridge-batch`
 executor remains available without BenchStudio.
 
@@ -27,7 +28,7 @@ evaluation = bs.pipeline(
 )
 print(evaluation.check().summary())
 # Explicit execution, after provisioning the native stack:
-results = evaluation.run()
+results = evaluation()
 print(results.summary())
 ```
 
@@ -52,8 +53,8 @@ their native checkpoint/oracle-proxy requirements. Configure them with `checkpoi
 and `oracle_actor_proxy=` (CLI: `--checkpoint`, `--oracle-actor-proxy`).
 The integration does not automatically download arbitrary checkpoints.
 
-Each attempt retains `process-logs/attempt-*/scene.{stdout.log,stderr.log,receipt.json}`
-under its scene directory; output is retained there rather than streamed to the
+Each attempt retains `SCENE/attempt-NNNN/process-logs/scene.{stdout.log,stderr.log,receipt.json}`
+under its batch directory; output is retained there rather than streamed to the
 terminal. Native `batch-manifest.json` and `batch-status.json` remain authoritative
 for scene accounting. `results.report` contains that native summary.
 `results.completed` means all selected scenes completed the operational artifact
@@ -103,3 +104,43 @@ metric reports its actual coverage count. These are local trusted-host artifacts
 not a signed BenchStudio system-run manifest or independent evaluator qualification.
 The default `bs.open_run(path)` retains its original digest-verified system format;
 select `backend="alpasim"` explicitly to read this native format.
+
+## Shared case-execution engine
+
+The installed pipeline exposes `evaluation.engine`, the existing
+`bs.EvaluationEngine`. Its adapter implements `execute_case(...)`; there is no
+public session object and no invocation of the old batch/retry loop on this route.
+`alpabridge-batch --executor benchstudio --mode both` delegates to the same engine.
+The standalone subprocess executor and print-only preview preserve their public
+package compatibility path.
+
+The engine owns case dispatch, retry/continuation policy, output reservation,
+attempt receipts and worker startup/shutdown. A backend can retain loaded weights,
+servers or compiled state across cases while isolating simulator or conversation
+state per request. This AlpaSim adapter currently keeps the existing complete native
+launcher per scene; warm-model reuse has not been implemented or measured here.
+
+Each attempt gets its own directory. A stale aggregate from an earlier failed
+attempt cannot make a later attempt appear complete. Native batch reports reference
+the latest attempt; earlier receipts and artifacts remain retained. Request cleanup
+runs on success, failure, timeout and interruption. Docker cleanup uses a retained
+BenchStudio process with a 30-second command deadline; a nonzero cleanup exit is an
+incident that stops execution rather than being silently ignored.
+
+Core `EvaluationConfig.max_retries` defaults to zero and `continue_on_error` to
+false. AlpaBridge's compatibility arguments and existing CLI retain their native
+retry default of one; set `max_retries=0` or `--max-retries 0` to disable it. When
+supplying config, put retry settings there. Only incomplete operational results
+are retryable. Model/task failure is not a retry condition. Exceptions, deadline
+incidents and interruption stop without retrying.
+
+The adapter enforces `config.timeout` on each scene command. The native wizard
+still receives its timeout flag independently; the outer command deadline includes
+that command's setup. These changed lifecycle/deadline semantics and per-attempt
+directories require native validation before scientific use. Arbitrary filesystem
+operations are not bounded by a whole-machine deadline.
+
+`execution.json` and `cases.jsonl` sit alongside native reports. Existing-output
+recovery, concurrent backend execution, model batching and GPU allocation are not
+implemented on this route. Unsupported options are refused. The scientific
+paper/E0 paths, their pinned packages and permissions remain unchanged.

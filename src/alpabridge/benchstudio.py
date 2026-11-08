@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import shutil
 import sys
+from functools import cached_property
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -72,21 +73,23 @@ class BatchResult:
 
 
 class AlpaSimPipeline:
-    """Use native scene selection, retries and scoring with BenchStudio processes."""
+    """Use the shared engine with native scene selection and scoring semantics."""
 
     def __init__(self, *, model, alpasim_root, output_dir=None, config=None, scene_ids=(),
                  scene_preset="fresh_3scene", checkpoint=None, oracle_actor_proxy=None,
-                 python=sys.executable, max_retries=1, timeout=None, topology="1gpu"):
+                 python=sys.executable, max_retries=None, timeout=None, topology="1gpu"):
         run_id = None
+        continue_on_error = False
         if config is not None:
             bs = batch._benchstudio()
             if not isinstance(config, bs.EvaluationConfig):
                 raise TypeError("config must be bs.EvaluationConfig")
-            if output_dir is not None or timeout is not None:
-                raise ValueError("output_dir and timeout belong in config when config is supplied")
+            if output_dir is not None or timeout is not None or max_retries is not None:
+                raise ValueError("output_dir, timeout and max_retries belong in config when config is supplied")
             if config.batch_size is not None or config.concurrency != 1:
                 raise ValueError("AlpaSim scene batches support sequential execution, not batching/concurrency")
             output_dir, timeout, run_id = config.output_dir, config.timeout, config.run_id
+            max_retries, continue_on_error = config.max_retries, config.continue_on_error
         if output_dir is None:
             raise ValueError("provide output_dir or config.output_dir")
         timeout = 900 if timeout is None else timeout
@@ -98,6 +101,7 @@ class AlpaSimPipeline:
             raise ValueError(f"Unsupported scene preset: {scene_preset}")
         if isinstance(scene_ids, str):
             raise TypeError("scene_ids must be a sequence, not one string")
+        max_retries = 1 if max_retries is None else max_retries
         if type(max_retries) is not int or max_retries < 0:
             raise ValueError("max_retries must be a nonnegative integer")
         if type(timeout) is not int or timeout <= 0:
@@ -116,46 +120,144 @@ class AlpaSimPipeline:
                 argv.extend([flag, str(Path(value).resolve())])
         self.args = batch._build_parser().parse_args(argv)
         self.args.run_id = run_id or Path(output_dir).name
+        self.args.continue_on_error = continue_on_error
         scenes = batch._selected_scene_ids(self.args)
         if len(set(scenes)) != len(scenes):
             raise ValueError("scene identifiers must be unique within a batch")
         if any(not scene or scene in (".", "..") or "/" in scene or "\\" in scene for scene in scenes):
             raise ValueError("scene identifiers cannot contain path separators")
 
+    @cached_property
+    def engine(self):
+        bs, _ = _execution_api()
+        return bs.EvaluationEngine(backend=AlpaSimBackend(self.args), config=_engine_config(self.args))
+
     def check(self):
-        """Read configuration and filesystem only; launch no native service."""
-        args, issues = self.args, []
-        if not args.alpasim_root.is_dir():
-            issues.append("AlpaSim checkout directory is missing")
-        if shutil.which(args.python) is None:
-            issues.append("Selected Python executable is missing")
-        if shutil.which("docker") is None:
-            issues.append("Docker executable is missing")
-        if args.batch_dir.exists():
-            issues.append("Output directory already exists; select a fresh batch directory")
-        preset = MODEL_PRESETS[args.model]
-        for name, required in (("checkpoint", preset.get("checkpoint_required")),
-                               ("oracle_actor_proxy", preset.get("requires_oracle_actor_proxy"))):
-            path = getattr(args, name)
-            if required and path is None:
-                issues.append(f"{args.model} requires {name}")
-            elif path is not None and not path.is_file():
-                issues.append(f"{name} file is missing")
-        bs = batch._benchstudio()
-        if not callable(getattr(bs.EvaluationCheck, "summary", None)):
-            raise RuntimeError("Upgrade BenchStudio to the reviewed shared evaluation-check API")
-        return bs.EvaluationCheck(not issues, tuple(issues),
-                                  len(batch._selected_scene_ids(args)), "native")
+        return self.engine.check()
 
     def run(self):
-        report = self.check()
-        if not report.technical_ready:
-            raise RuntimeError(report.summary())
-        # Native driver readiness and artifact audits remain authoritative.
-        batch.execute_batch(self.args)
-        return BatchResult.from_directory(self.args.batch_dir)
+        return self.engine.run()
 
     __call__ = run
+
+
+def _execution_api():
+    bs = batch._benchstudio()
+    try:
+        from benchstudio.backends import CaseResult
+    except ImportError as error:
+        raise RuntimeError("Upgrade BenchStudio to the reviewed case-execution engine") from error
+    return bs, CaseResult
+
+
+def _engine_config(args):
+    bs = batch._benchstudio()
+    return bs.EvaluationConfig(run_id=args.run_id, output_dir=args.batch_dir,
+                              timeout=args.timeout, max_retries=args.max_retries,
+                              continue_on_error=args.continue_on_error)
+
+
+def _static_issues(args):
+    issues = []
+    if not args.alpasim_root or not args.alpasim_root.is_dir():
+        issues.append("AlpaSim checkout directory is missing")
+    if shutil.which(args.python) is None:
+        issues.append("Selected Python executable is missing")
+    if shutil.which("docker") is None:
+        issues.append("Docker executable is missing")
+    preset = MODEL_PRESETS[args.model]
+    for name, required in (("checkpoint", preset.get("checkpoint_required")),
+                           ("oracle_actor_proxy", preset.get("requires_oracle_actor_proxy"))):
+        path = getattr(args, name)
+        if required and path is None:
+            issues.append(f"{args.model} requires {name}")
+        elif path is not None and not path.is_file():
+            issues.append(f"{name} file is missing")
+    if args.allow_existing_batch_dir or args.rerun_existing:
+        issues.append("the shared engine requires a fresh batch; existing-output recovery is not supported")
+    return issues
+
+
+class AlpaSimBackend:
+    """Per-case native execution and reports; scheduling belongs to BenchStudio."""
+    supports_timeout = True
+
+    def __init__(self, args):
+        self.args = args
+        self.cases = tuple(batch._selected_scene_ids(args))
+        if (len(set(self.cases)) != len(self.cases) or any(
+                not case or case in (".", "..") or "/" in case or "\\" in case for case in self.cases)):
+            raise ValueError("scene identities must be unique and cannot contain path separators")
+        self.indices = {case: i for i, case in enumerate(self.cases, start=args.scene_offset + 1)}
+        self.statuses = {}
+
+    def check(self, config):
+        return _static_issues(self.args)
+
+    def start(self, config):
+        self.statuses = {}
+        batch._write_json(self.args.batch_dir / "batch-manifest.json",
+                          batch._batch_manifest(self.args, list(self.cases)))
+        self._save()
+
+    def execute_case(self, case, *, attempt, config):
+        bs, CaseResult = _execution_api()
+        run_dir = self._run_dir(case, attempt)
+        run_dir.mkdir(parents=True, exist_ok=False)
+        command = batch._scene_command(self.args, scene_id=case, run_dir=run_dir)
+        try:
+            result = bs.ProcessCommand("scene", tuple(command), batch.RUNNER_CWD,
+                                       timeout=config.timeout).execute(run_dir / "process-logs", check=False)
+            outcome = CaseResult(result.returncode == 0 and batch._scene_artifacts_complete(command),
+                                    {"returncode": result.returncode, "command": command})
+        except BaseException as error:
+            try:
+                batch._cleanup_failed_scene(command, cwd=batch.RUNNER_CWD, strict=True)
+            except BaseException as cleanup_error:
+                raise error from cleanup_error
+            raise
+        else:
+            batch._cleanup_failed_scene(command, cwd=batch.RUNNER_CWD, strict=True)
+            return outcome
+
+    def close(self):
+        # The native launcher currently owns a complete process per scene. There
+        # is no shared server to close here; reusable workers can own one instead.
+        pass
+
+    def _run_dir(self, case, attempt):
+        return self.args.batch_dir / f"{self.indices[case]:03d}_{case}" / f"attempt-{attempt:04d}"
+
+    def record(self, case, result, *, attempt):
+        run_dir = self._run_dir(case, attempt)
+        output = result.output or {}
+        self.statuses[case] = {
+            "index": self.indices[case], "scene_id": case, "run_dir": str(run_dir),
+            "command": output.get("command", []), "status": batch._scene_status(run_dir),
+            "result": "completed" if result.completed else "failed",
+            "returncode": output.get("returncode", 1) if result.completed else (output.get("returncode") or 1),
+            "attempts": attempt, "diagnostics": batch._scene_diagnostics(run_dir),
+        }
+        self._save()
+
+    def _save(self):
+        summary = batch._build_batch_summary(batch_dir=self.args.batch_dir,
+            mode=self.args.mode, model=self.args.model, scene_count=len(self.cases),
+            statuses=list(self.statuses.values()))
+        batch._write_json(self.args.batch_dir / "batch-status.json", summary)
+
+    def finish(self):
+        return BatchResult.from_directory(self.args.batch_dir)
+
+
+def run_with_engine(args):
+    """Compatibility native CLI route; the batch loop executes only in BenchStudio."""
+    from copy import copy
+    args = copy(args)
+    args.batch_dir = batch._resolve_batch_dir(args)
+    args.run_id = getattr(args, "run_id", None) or args.batch_dir.name
+    bs, _ = _execution_api()
+    return bs.EvaluationEngine(backend=AlpaSimBackend(args), config=_engine_config(args)).run()
 
 
 class RecipeFactory:
@@ -185,8 +287,9 @@ class RecipeFactory:
         bs = batch._benchstudio()
         output_dir = options.pop("output_dir")
         timeout = options.pop("timeout")
+        max_retries = options.pop("max_retries")
         return {**options, "scene_ids": args.scene_id,
-                "config": bs.EvaluationConfig(run_id=args.run_id, output_dir=output_dir, timeout=timeout)}
+                "config": bs.EvaluationConfig(run_id=args.run_id, output_dir=output_dir, timeout=timeout, max_retries=max_retries)}
 
     @staticmethod
     def open_run(directory):
