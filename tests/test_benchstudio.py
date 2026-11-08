@@ -72,10 +72,14 @@ def test_pipeline_discovery_cli_and_batch_accounting(tmp_path, monkeypatch):
                  "--scene-id", "fake-scene", "--check"]) == 0
     assert not (tmp_path / "out").exists()
     result = evaluation.run()
-    assert result.successful
+    assert result.completed
+    assert not result.successful  # Artifact presence alone is not a clean native audit.
     assert result.report["scene_count"] == 1
     assert "1/1 scenes completed" in result.summary()
     assert json.loads((tmp_path / "out/batch-manifest.json").read_text())["executor"] == "benchstudio"
+    reopened = bs.open_run(tmp_path / "out", backend="alpasim")
+    assert reopened.metrics == result.metrics
+    assert reopened.audit["aggregate"] == result.audit["aggregate"]
 
 
 def test_partial_batch_is_not_success():
