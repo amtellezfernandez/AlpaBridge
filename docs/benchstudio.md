@@ -10,8 +10,8 @@ Install AlpaBridge in the operator environment (`python -m pip install -e .`).
 Install the reviewed BenchStudio distribution separately: it must provide
 `ProcessCommand.execute`, shared `EvaluationCheck.summary` and native result reading. BenchStudio is currently private; this optional
 integration does not add an inaccessible dependency to AlpaBridge's public install.
-Reviewed core implementation: [BenchStudio #37](https://github.com/amtellezfernandez/BenchStudio/pull/37),
-commit `dc89e9f4ee3e45f56d47eaa7ea738ad92e789879`.
+Reviewed core implementation: [BenchStudio #39](https://github.com/amtellezfernandez/BenchStudio/pull/39),
+commit `d5df7645ebfb79fbe728f26c58a89db173dd3f43`.
 It does not change either project's license. The default `alpabridge-batch`
 executor remains available without BenchStudio.
 
@@ -144,3 +144,30 @@ operations are not bounded by a whole-machine deadline.
 recovery, concurrent backend execution, model batching and GPU allocation are not
 implemented on this route. Unsupported options are refused. The scientific
 paper/E0 paths, their pinned packages and permissions remain unchanged.
+
+## A complete scene benchmark
+
+`evaluation.benchmark` now exposes a complete executable `bs.Benchmark`. Its
+calendar contains all selected scene identities and their execution-group mapping;
+it does not represent the evaluation as one inference call. Python and the
+installed CLI bind that benchmark and the native system configuration to the same
+engine. `evaluation.benchmark.describe()` is read-only.
+
+The engine retains the declared calendar in `benchmark.json` and distinguishes
+planned experimental units from execution groups. AlpaSim currently uses one group
+per scene; other native protocols can group many episodes into a single native
+program without changing the engine. Generic receipts describe operational jobs,
+not per-episode scientific outcome coverage. Native batch accounting and audits
+remain the source of actual scene results.
+
+`results.benchmark` contains the retained plan and is available after
+`bs.open_run(..., backend="alpasim")`. Older native batches without a plan remain
+readable. Use `benchmark_revision`, `evaluator_revision` and `environment_revision`
+(or the corresponding CLI flags) to record reviewed declarations. The defaults are
+interface revision labels, and the environment explicitly defaults to
+`UNVERIFIED_NATIVE_ENVIRONMENT`; none certifies a native stack. A protocol digest
+binds declarations and planned identities, not a scientific release.
+
+The native infrastructure retry policy is explicit in this benchmark. Other
+protocols default to refusing automatic retries. The paper's LIBERO states,
+qualification, release permissions and frozen evidence remain unchanged.

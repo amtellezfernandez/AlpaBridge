@@ -54,6 +54,9 @@ def test_native_cli_selecting_benchstudio_uses_the_same_engine(tmp_path, monkeyp
     assert len(report["completed_runs"]) == 1
     assert (tmp_path / "out/execution.json").exists()
     assert (tmp_path / "out/cases.jsonl").exists()
+    plan = json.loads((tmp_path / "out/benchmark.json").read_text())
+    assert plan["mode"] == "protocol" and plan["case_count"] == 1
+    assert plan["cases"][0]["dimensions"]["scene"] == "fake-a"
 
 
 def test_native_cli_rejects_completed_but_unaudited_results(tmp_path, monkeypatch):
@@ -67,6 +70,28 @@ def test_native_cli_rejects_completed_but_unaudited_results(tmp_path, monkeypatc
     assert batch.main() == 1
     report = json.loads((tmp_path / "out/batch-status.json").read_text())
     assert len(report["completed_runs"]) == 1
+
+
+def test_alpasim_exposes_a_complete_scene_benchmark(tmp_path, monkeypatch):
+    pipeline = configure(tmp_path, monkeypatch, scenes=("fake-a", "fake-b"))
+    check = pipeline.check()
+    assert check.mode == "protocol" and check.cases == check.executions == 2
+    assert pipeline.engine.benchmark is pipeline.benchmark
+    assert len(pipeline.benchmark.cases) == 2
+    assert pipeline.benchmark.environment_revision == "UNVERIFIED_NATIVE_ENVIRONMENT"
+    assert not check.native_verified
+
+
+def test_alpasim_revisions_are_explicit_declarations(tmp_path):
+    pipeline = AlpaSimPipeline(model="route_following", alpasim_root=tmp_path,
+        output_dir=tmp_path / "out", scene_ids=("fake-a", "fake-b"),
+        benchmark_revision="reviewed-calendar-r2", evaluator_revision="native-audit-r3",
+        environment_revision="caller-stack-r4")
+    plan = pipeline.benchmark.describe()
+    assert plan["revision"] == "reviewed-calendar-r2"
+    assert plan["environment_revision"] == "caller-stack-r4"
+    assert plan["evaluator_revision"] == "native-audit-r3"
+    assert not (tmp_path / "out").exists()
 
 
 def test_timeout_cleans_and_stops_without_using_retry_budget(tmp_path, monkeypatch):

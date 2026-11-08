@@ -17,6 +17,7 @@ class BatchResult:
     """Retained native accounting, metrics and audit; no generic success scoring."""
     report: dict
     audit: dict | None = None
+    benchmark: dict | None = None
 
     @property
     def completed(self):
@@ -69,7 +70,13 @@ class BatchResult:
         report = {**report, "batch_dir": str(root),
                   "completed_runs": [row["run_dir"] for row in runs if row.get("result") in ("completed", "skipped_completed")],
                   "failed_runs": [row["run_dir"] for row in runs if row.get("result") == "failed"]}
-        return cls(report, build_summary(batch_dir=root))
+        plan_path = root / "benchmark.json"
+        plan = json.loads(plan_path.read_text("utf-8")) if plan_path.exists() else None
+        if plan is not None and (not isinstance(plan, dict)
+                or plan.get("schema") != "benchstudio.benchmark.v1"
+                or plan.get("mode") != "protocol" or plan.get("case_count") != count):
+            raise ValueError("native batch does not match its retained benchmark plan")
+        return cls(report, build_summary(batch_dir=root), plan)
 
 
 class AlpaSimPipeline:
@@ -77,7 +84,10 @@ class AlpaSimPipeline:
 
     def __init__(self, *, model, alpasim_root, output_dir=None, config=None, scene_ids=(),
                  scene_preset="fresh_3scene", checkpoint=None, oracle_actor_proxy=None,
-                 python=sys.executable, max_retries=None, timeout=None, topology="1gpu"):
+                 python=sys.executable, max_retries=None, timeout=None, topology="1gpu",
+                 benchmark_revision="alpabridge-scene-protocol-v1",
+                 evaluator_revision="alpabridge-native-batch-audit-v1",
+                 environment_revision="UNVERIFIED_NATIVE_ENVIRONMENT"):
         run_id = None
         continue_on_error = False
         if config is not None:
@@ -121,6 +131,9 @@ class AlpaSimPipeline:
         self.args = batch._build_parser().parse_args(argv)
         self.args.run_id = run_id or Path(output_dir).name
         self.args.continue_on_error = continue_on_error
+        self.args.benchmark_revision = benchmark_revision
+        self.args.evaluator_revision = evaluator_revision
+        self.args.environment_revision = environment_revision
         scenes = batch._selected_scene_ids(self.args)
         if len(set(scenes)) != len(scenes):
             raise ValueError("scene identifiers must be unique within a batch")
@@ -128,9 +141,12 @@ class AlpaSimPipeline:
             raise ValueError("scene identifiers cannot contain path separators")
 
     @cached_property
+    def benchmark(self):
+        return _benchmark(self.args)
+
+    @cached_property
     def engine(self):
-        bs, _ = _execution_api()
-        return bs.EvaluationEngine(backend=AlpaSimBackend(self.args), config=_engine_config(self.args))
+        return _make_engine(self.args, self.benchmark)
 
     def check(self):
         return self.engine.check()
@@ -148,6 +164,44 @@ def _execution_api():
     except ImportError as error:
         raise RuntimeError("Upgrade BenchStudio to the reviewed case-execution engine") from error
     return bs, CaseResult
+
+
+class AlpaSimProtocol:
+    """A collection of scenes, not a single model call or success trial."""
+    supports_retries = True  # Explicit native infrastructure retry policy.
+
+    def __init__(self, scene_ids):
+        try:
+            from benchstudio.backends import BenchmarkCase
+        except ImportError as error:
+            raise RuntimeError("Upgrade BenchStudio to executable benchmark protocols") from error
+        self.cases = tuple(BenchmarkCase(scene, {"scene": scene}) for scene in scene_ids)
+
+    def bind(self, system, *, benchmark, config):
+        from copy import copy
+        # This integration's system is the native launcher configuration selected
+        # by AlpaSimPipeline, not a generic scalar inference callback.
+        args = copy(system)
+        if config.output_dir is None:
+            raise ValueError("AlpaSim requires an output directory")
+        args.batch_dir = config.output_dir
+        return AlpaSimBackend(args)
+
+
+def _benchmark(args):
+    bs, _ = _execution_api()
+    return bs.Benchmark(
+        "alpasim-scenes", getattr(args, "benchmark_revision", "alpabridge-scene-protocol-v1"),
+        evaluator_revision=getattr(args, "evaluator_revision", "alpabridge-native-batch-audit-v1"),
+        environment_revision=getattr(args, "environment_revision", "UNVERIFIED_NATIVE_ENVIRONMENT"),
+        protocol=AlpaSimProtocol(batch._selected_scene_ids(args)),
+    )
+
+
+def _make_engine(args, benchmark=None):
+    bs, _ = _execution_api()
+    return bs.EvaluationEngine(system=args, benchmark=benchmark or _benchmark(args),
+                               config=_engine_config(args))
 
 
 def _engine_config(args):
@@ -256,8 +310,7 @@ def run_with_engine(args):
     args = copy(args)
     args.batch_dir = batch._resolve_batch_dir(args)
     args.run_id = getattr(args, "run_id", None) or args.batch_dir.name
-    bs, _ = _execution_api()
-    return bs.EvaluationEngine(backend=AlpaSimBackend(args), config=_engine_config(args)).run()
+    return _make_engine(args).run()
 
 
 class RecipeFactory:
@@ -278,12 +331,16 @@ class RecipeFactory:
         parser.add_argument("--timeout", type=int, default=900)
         parser.add_argument("--topology", default="1gpu")
         parser.add_argument("--run-id", default="evaluation")
+        parser.add_argument("--benchmark-revision", default="alpabridge-scene-protocol-v1")
+        parser.add_argument("--evaluator-revision", default="alpabridge-native-batch-audit-v1")
+        parser.add_argument("--environment-revision", default="UNVERIFIED_NATIVE_ENVIRONMENT")
 
     @staticmethod
     def options_from_args(args):
         options = {name: getattr(args, name) for name in (
             "model", "output_dir", "alpasim_root", "scene_preset", "checkpoint",
-            "oracle_actor_proxy", "python", "max_retries", "timeout", "topology")}
+            "oracle_actor_proxy", "python", "max_retries", "timeout", "topology",
+            "benchmark_revision", "evaluator_revision", "environment_revision")}
         bs = batch._benchstudio()
         output_dir = options.pop("output_dir")
         timeout = options.pop("timeout")
